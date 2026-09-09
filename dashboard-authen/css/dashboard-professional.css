@@ -609,6 +609,17 @@ body {
     padding: clamp(16px, 2vw, 26px);
 }
 
+/* The shared dashboard container already supplies the page surface. Avoid a
+   second card layer and duplicated padding on the two matrix report views. */
+#analytics.detail-report-page > .detail-report-shell,
+#classMatrix.detail-report-page > .detail-report-shell {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
 .detail-report-header,
 .class-matrix-header {
     gap: 22px;
@@ -1428,5 +1439,505 @@ body.report-export-open {
     .roster-table-wrapper {
         max-height: none;
         overflow: visible !important;
+    }
+}
+
+/* Overview analytics: compact KPI drill-down and linked region charts */
+#overview .activity-kpis {
+    margin-bottom: 16px;
+}
+
+#overview .kpi-card-action {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    appearance: none;
+    width: 100%;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+#overview .kpi-card-action > span {
+    display: block;
+}
+
+#overview .kpi-card-action:hover,
+#overview .kpi-card-action:focus-visible {
+    border-color: #8eafea;
+    box-shadow: 0 0 0 3px rgba(47, 111, 237, .1), var(--ui-shadow-sm);
+    outline: none;
+}
+
+#overview .kpi-action-hint {
+    margin-top: auto;
+    padding-top: 8px;
+    color: #245dce;
+    font-size: 11px;
+    font-weight: 760;
+}
+
+#overview .overview-analysis-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2.1fr) minmax(310px, .9fr);
+    gap: 14px;
+    align-items: stretch;
+}
+
+#overview .region-usage-card,
+#overview .region-race-card {
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-lg);
+    background: var(--ui-surface);
+    box-shadow: var(--ui-shadow-sm);
+}
+
+#overview .region-usage-header {
+    gap: 18px;
+    margin-bottom: 12px;
+}
+
+#overview .region-usage-header h3,
+#overview .region-race-header h3 {
+    margin: 3px 0 5px;
+    color: var(--ui-text);
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+#overview .region-race-header p,
+#overview .region-usage-header p {
+    margin: 0;
+    color: var(--ui-muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+#overview .region-usage-year-field {
+    flex-basis: 124px;
+}
+
+#overview .region-usage-insights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+#overview .region-usage-insights article {
+    padding: 9px 11px;
+    border-radius: 10px;
+}
+
+#overview .region-usage-insights strong {
+    font-size: 15px;
+}
+
+#overview .region-usage-chart {
+    min-width: 720px;
+}
+
+#overview .region-usage-svg {
+    min-width: 720px;
+}
+
+#overview .region-usage-legend {
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    max-height: 116px;
+    margin-top: 9px;
+}
+
+#overview .region-usage-legend-item {
+    min-height: 34px;
+    padding: 5px 8px;
+    cursor: pointer;
+}
+
+#overview .region-usage-legend-item.is-selected {
+    border-color: #8eafea;
+    background: #eef5ff;
+    box-shadow: inset 3px 0 0 #2f6fed;
+}
+
+#overview .region-usage-note,
+#overview .region-race-note {
+    margin: 9px 0 0;
+    color: var(--ui-muted);
+    font-size: 11px;
+}
+
+#overview .region-race-card {
+    display: flex;
+    flex-direction: column;
+}
+
+#overview .region-race-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    margin: 14px 0 9px;
+    padding: 0 12px;
+    border: 1px solid #d6dfec;
+    border-radius: 9px;
+    color: #43526a;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 740;
+    cursor: pointer;
+}
+
+#overview .region-race-all:hover,
+#overview .region-race-all:focus-visible,
+#overview .region-race-all.is-selected {
+    border-color: #8eafea;
+    color: #1f57c7;
+    background: #eef5ff;
+    outline: none;
+}
+
+#overview .region-race-chart {
+    display: grid;
+    gap: 5px;
+    max-height: 390px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+#overview .region-race-row {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 42px;
+    gap: 8px;
+    align-items: center;
+    min-height: 54px;
+    padding: 7px 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--ui-text);
+    background: #f8fafc;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+#overview .region-race-row:hover,
+#overview .region-race-row:focus-visible,
+#overview .region-race-row.is-selected {
+    border-color: #b7caeb;
+    background: #fff;
+    outline: none;
+}
+
+#overview .region-race-row.is-selected {
+    box-shadow: inset 3px 0 0 #2f6fed;
+}
+
+#overview .region-race-rank {
+    display: grid;
+    width: 22px;
+    height: 22px;
+    place-items: center;
+    border-radius: 7px;
+    color: #65748b;
+    background: #e9eef6;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#overview .region-race-content,
+#overview .region-race-label {
+    display: block;
+    min-width: 0;
+}
+
+#overview .region-race-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+#overview .region-race-label strong {
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#overview .region-race-label small {
+    flex: 0 0 auto;
+    color: var(--ui-muted);
+    font-size: 9px;
+}
+
+#overview .region-race-track {
+    display: block;
+    height: 6px;
+    margin-top: 6px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #e5ebf4;
+}
+
+#overview .region-race-track i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--race-color, #2f6fed);
+}
+
+#overview .region-race-value {
+    color: #21324f;
+    font-size: 14px;
+    text-align: right;
+}
+
+#overview .region-race-value::after {
+    display: block;
+    color: var(--ui-muted);
+    font-size: 8px;
+    font-weight: 650;
+    content: 'lượt/KTV';
+}
+
+#overview .region-race-empty {
+    display: grid;
+    min-height: 180px;
+    place-items: center;
+    color: var(--ui-muted);
+    font-size: 12px;
+}
+
+#overview .overview-monthly-card {
+    margin-top: 14px;
+    padding: 18px;
+    border-top: 1px solid var(--ui-border);
+    background: #fff;
+    box-shadow: var(--ui-shadow-sm);
+}
+
+#overview .overview-monthly-card[hidden] {
+    display: none !important;
+}
+
+#overview .overview-monthly-card .ktv-monthly-header h4 {
+    margin: 3px 0 4px;
+    font-size: 18px;
+}
+
+#overview .overview-monthly-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#overview .overview-monthly-close {
+    min-height: 34px;
+    padding: 0 11px;
+    border: 1px solid #d6dfec;
+    border-radius: 9px;
+    color: #52627a;
+    background: #fff;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 740;
+    cursor: pointer;
+}
+
+#overview .overview-monthly-close:hover,
+#overview .overview-monthly-close:focus-visible {
+    border-color: #8eafea;
+    color: #245dce;
+    outline: none;
+}
+
+@media (max-width: 1180px) {
+    #overview .overview-analysis-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #overview .region-race-chart {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-height: 280px;
+    }
+}
+
+@media (max-width: 760px) {
+    #overview .region-usage-insights,
+    #overview .region-race-chart {
+        grid-template-columns: 1fr;
+    }
+
+    #overview .overview-monthly-actions {
+        width: 100%;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    #overview .region-race-label small {
+        display: none;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Compact information hierarchy shared by every dashboard view
+   -------------------------------------------------------------------------- */
+
+.content {
+    padding: clamp(16px, 1.8vw, 24px);
+}
+
+.dashboard-master-container {
+    gap: 14px;
+    padding: clamp(12px, 1.5vw, 18px);
+}
+
+.section-title,
+#overview .section-title {
+    min-height: 0;
+    margin-bottom: 14px;
+    padding: 17px 19px;
+}
+
+.section-title h2,
+#overview .section-title h2 {
+    font-size: clamp(19px, 1.45vw, 22px);
+}
+
+.section-title span,
+#overview .section-title > div:first-child > span {
+    margin-top: 4px;
+    font-size: 12.5px;
+}
+
+.kpi-section-heading {
+    margin-bottom: 10px;
+}
+
+#overview .kpi-card,
+#overview .kpi-card:nth-child(n) {
+    min-height: 132px;
+    padding: 16px;
+}
+
+#analytics .detail-report-header,
+#classMatrix .detail-report-header {
+    gap: 16px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    box-shadow: none;
+}
+
+#analytics .detail-report-header h2,
+#classMatrix .detail-report-header h2 {
+    margin: 4px 0 3px;
+    font-size: clamp(20px, 1.65vw, 25px);
+}
+
+.detail-report-period {
+    min-width: 196px;
+    padding: 10px 12px;
+    box-shadow: none;
+}
+
+.detail-report-summary {
+    gap: 10px;
+    margin-block: 14px;
+}
+
+.detail-report-stat {
+    min-height: 78px;
+    padding: 13px 15px;
+}
+
+.detail-report-table-header {
+    gap: 14px;
+    padding: 13px 16px;
+}
+
+.detail-report-table-header h3 {
+    font-size: 15px;
+}
+
+.detail-report-table-header > div:first-child > span {
+    margin-top: 3px;
+    font-size: 11.5px;
+}
+
+.panel-header {
+    gap: 12px;
+    padding: 13px 16px;
+}
+
+.panel-body {
+    padding: 0 16px 14px;
+}
+
+.panel-subtitle {
+    display: block;
+    margin-top: 3px;
+    color: var(--ui-muted);
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+.instructor-class-manager {
+    gap: 14px 20px;
+    padding: 15px 17px;
+    border-radius: 14px;
+    box-shadow: none;
+}
+
+.instructor-progress-header {
+    gap: 14px;
+    padding: 14px 17px;
+}
+
+.roster-panel {
+    padding: clamp(12px, 1.4vw, 18px);
+}
+
+.roster-toolbar {
+    margin-bottom: 10px;
+}
+
+.class-insights {
+    gap: 10px;
+}
+
+.class-insight-card {
+    padding: 14px;
+    box-shadow: none;
+}
+
+@media (max-width: 760px) {
+    .content {
+        padding: 12px 10px 20px;
+    }
+
+    .dashboard-master-container {
+        padding: 10px;
+    }
+
+    .section-title,
+    #overview .section-title,
+    #analytics .detail-report-header,
+    #classMatrix .detail-report-header,
+    .instructor-class-manager,
+    .instructor-progress-header {
+        padding: 14px;
+    }
+
+    .detail-report-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .detail-report-stat {
+        min-height: 72px;
+        padding: 11px 12px;
     }
 }

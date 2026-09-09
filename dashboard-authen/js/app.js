@@ -71,7 +71,17 @@ const state = {
     // Class Matrix state
     classMatrixSelectedClass: '',
     classMatrixSelectedDevices: null,
-    classMatrixSearch: '',
+    classOverviewSearch: '',
+    classOverviewSelectedClasses: null,
+    classMatrixKtvSearch: '',
+    classMatrixSelectedKtvs: null,
+    classMatrixProgressFilter: null,
+    classMatrixPersonnelSort: 'name_asc',
+    classMatrixPersonnelSortDirection: 'asc',
+    classMatrixDeviceStatSearch: '',
+    classMatrixDeviceStatSort: 'completed_desc',
+    classOverviewSort: 'name',
+    classOverviewSortDirection: 'asc',
 
     // Learner table filters & sort
     learnerSelectedKtvs: new Set(),
@@ -101,6 +111,8 @@ const state = {
 
     detailReportExpandedRegions: new Set(['TDDT', 'TNMT']),
     regionUsageYear: now.getFullYear(),
+    overviewSelectedRegion: '',
+    overviewMonthlyExpanded: false,
 
     filtersBound: false,
     popoversInitialized: false,
@@ -478,6 +490,7 @@ function mapReportMetrics(metric) {
     return {
         assigned: Number(metric?.assigned_count) || 0,
         graded: Number(metric?.graded_count) || 0,
+        passed: Number(metric?.passed_count) || 0,
         activityCompleted: Number(metric?.activity_completed_count) || 0,
         ungradedCompleted: Number(metric?.ungraded_completed_count) || 0,
         totalSessions: practiceAttempts,
@@ -509,11 +522,7 @@ function renderKpis() {
         { key: 'totalSessions', valueId: 'kpiSessions', comparisonId: 'kpiSessionsComparison', contextId: 'kpiSessionsContext', type: 'count', unit: 'phiên' },
         { key: 'guideSessions', valueId: 'kpiGuideSessions', comparisonId: 'kpiGuideSessionsComparison', contextId: 'kpiGuideSessionsContext', type: 'count', unit: 'lượt' },
         { key: 'learners', valueId: 'kpiLearners', comparisonId: 'kpiLearnersComparison', contextId: 'kpiLearnersContext', type: 'count', unit: 'KTV' },
-        { key: 'completed', valueId: 'kpiCompleted', comparisonId: 'kpiCompletedComparison', contextId: 'kpiCompletedContext', type: 'count', unit: 'bài' },
-        { key: 'rate', valueId: 'kpiCompletionRate', comparisonId: 'kpiCompletionRateComparison', contextId: 'kpiCompletionRateContext', type: 'rate', unit: '%' },
-        { key: 'passRate', valueId: 'kpiPassRate', comparisonId: 'kpiPassRateComparison', contextId: 'kpiPassRateContext', type: 'rate', unit: '%' },
-        { key: 'firstTryRate', valueId: 'kpiFirstTryRate', comparisonId: 'kpiFirstTryRateComparison', contextId: 'kpiFirstTryRateContext', type: 'rate', unit: '%' },
-        { key: 'avgDuration', valueId: 'kpiAvgDuration', comparisonId: 'kpiAvgDurationComparison', contextId: 'kpiAvgDurationContext', type: 'duration', unit: 'giây', lowerIsBetter: true }
+        { key: 'passRate', valueId: 'kpiPassRate', comparisonId: 'kpiPassRateComparison', contextId: 'kpiPassRateContext', type: 'rate', unit: '%' }
     ];
 
     const reportPeriod = dashboardReport?.meta?.period;
@@ -592,16 +601,8 @@ function renderKpis() {
         }
 
         if (contextElement) {
-            if (definition.key === 'avgDuration' && !currentMetrics.durationReliable) {
-                const known = formatNumber.format(currentMetrics.durationKnown || 0);
-                const attempts = formatNumber.format(currentMetrics.durationAttempts || 0);
-                contextElement.textContent = `${periods.currentLabel} • ${known}/${attempts} lượt có thời lượng • Chưa đủ mẫu tin cậy`;
-            } else if (definition.key === 'completed' || definition.key === 'rate') {
-                contextElement.textContent = `${periods.currentLabel} • Lũy kế đến cuối kỳ: ${formatNumber.format(currentMetrics.completed)}/${formatNumber.format(currentMetrics.assigned)} cặp KTV–Lab đã đạt`;
-            } else if (definition.key === 'passRate') {
-                contextElement.textContent = `${periods.currentLabel} • ${formatNumber.format(currentMetrics.graded)} lượt đã có kết quả chấm`;
-            } else if (definition.key === 'firstTryRate') {
-                contextElement.textContent = `${periods.currentLabel} • ${formatNumber.format(currentMetrics.completed)} cặp KTV–Lab đã đạt lũy kế làm mẫu`;
+            if (definition.key === 'passRate') {
+                contextElement.textContent = `${periods.currentLabel} • ${formatNumber.format(currentMetrics.passed)}/${formatNumber.format(currentMetrics.totalSessions)} lượt thực hành đạt`;
             } else {
                 contextElement.textContent = `${periods.currentLabel} • Lũy kế ${formatMetric(lifetimeValue, definition)}${definition.type === 'count' ? ` ${definition.unit}` : ''}`;
             }
@@ -619,7 +620,7 @@ function renderDashboardDataNotice(currentMetrics) {
     if (state.dashboardReportStatus === 'stale') {
         messages.push('Báo cáo tổng hợp chưa cập nhật được; hệ thống đang giữ bản dữ liệu thành công gần nhất.');
     } else if (state.dashboardReportStatus === 'unavailable') {
-        messages.push('Không tải được báo cáo tổng hợp; các KPI được để trống thay vì tính bằng công thức dự phòng khác nghiệp vụ.');
+        messages.push('Không tải được báo cáo tổng hợp; các chỉ số được để trống để tránh hiển thị sai nghiệp vụ.');
     }
     const unassignedRegions = currentMetrics ? (dashboardReport?.matrix?.rows || []).filter(row => {
         const region = row?.region || {};
@@ -860,51 +861,59 @@ function hideLearnerDetail() {
 }
 
 function renderOverviewMonthlyTrend(rows) {
+    const card = document.getElementById('overviewMonthlyCard');
     const container = document.getElementById('overviewMonthlyTrend');
     const summary = document.getElementById('overviewMonthlySummary');
-    if (!container) return;
+    const scope = document.getElementById('overviewMonthlyScope');
+    const trigger = document.getElementById('overviewSessionsDrilldown');
+    if (!container || !card) return;
+
+    card.hidden = !state.overviewMonthlyExpanded;
+    trigger?.setAttribute('aria-expanded', String(state.overviewMonthlyExpanded));
+    if (!state.overviewMonthlyExpanded) return;
 
     container.classList.remove('is-empty');
 
     const selectedDate = state.startDate ? parseDate(state.startDate) : now;
     const selectedKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}`;
-    const reportYear = selectedDate.getFullYear();
+    const reportYear = state.regionUsageYear || selectedDate.getFullYear();
     const today = new Date();
-    const reportYearFromMeta = dashboardReport?.meta?.period?.from
-        ? parseDate(dashboardReport.meta.period.from).getFullYear()
-        : null;
-    if (!Array.isArray(dashboardReport?.monthly) || reportYearFromMeta !== reportYear) {
-        container.classList.add('is-empty');
-        container.innerHTML = `<div class="empty">${state.dashboardReportStatus === 'loading' ? 'Đang tải xu hướng hoạt động...' : 'Không tải được dữ liệu xu hướng cho năm đã chọn.'}</div>`;
-        if (summary) summary.innerHTML = '';
-        return;
-    }
-    const monthlyReport = new Map((dashboardReport?.monthly || []).map(item => [item.month, item]));
+    const selectedRegion = state.overviewSelectedRegion;
+    const availableRegions = new Set(getRegionUsageSeries(reportYear).map(item => item.region));
+    if (selectedRegion && !availableRegions.has(selectedRegion)) state.overviewSelectedRegion = '';
+    const effectiveRegion = state.overviewSelectedRegion;
+    if (scope) scope.textContent = effectiveRegion || 'Tất cả khu vực';
+
+    const monthlySessions = new Map();
+    const monthlyPassedSessions = new Map();
+    rows.forEach(session => {
+        const date = parseDate(session.date);
+        if (date.getTime() <= 0 || date.getFullYear() !== reportYear) return;
+        if (session.mode !== 'Thực hành' && session.mode !== 'practice') return;
+        if (effectiveRegion && getLearnerRegion(session.learner) !== effectiveRegion) return;
+        const monthIndex = date.getMonth();
+        monthlySessions.set(monthIndex, (monthlySessions.get(monthIndex) || 0) + 1);
+        if (isSuccessfulSession(session)) {
+            monthlyPassedSessions.set(monthIndex, (monthlyPassedSessions.get(monthIndex) || 0) + 1);
+        }
+    });
+
     const periods = Array.from({ length: 12 }, (_, index) => {
         const date = new Date(reportYear, index, 1);
-        const reportMonth = monthlyReport.get(`${reportYear}-${String(index + 1).padStart(2, '0')}`);
-        const metrics = reportMonth ? {
-                totalSessions: Number(reportMonth.practice_attempts) || 0,
-                learners: Number(reportMonth.participating_technicians) || 0,
-                completed: Number(reportMonth.completed_count) || 0,
-                rate: reportMonth.completion_rate === null ? null : Number(reportMonth.completion_rate),
-                passRate: reportMonth.pass_rate === null ? null : Number(reportMonth.pass_rate),
-                firstTryRate: reportMonth.first_try_rate === null ? null : Number(reportMonth.first_try_rate),
-                avgDuration: reportMonth.avg_duration_sec === null ? null : Number(reportMonth.avg_duration_sec)
-            } : { totalSessions: 0, learners: 0, completed: 0, rate: null, passRate: null, firstTryRate: null, avgDuration: null };
         return {
             date,
             key: `${date.getFullYear()}-${date.getMonth()}`,
             label: `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`,
             shortLabel: `T${String(date.getMonth() + 1).padStart(2, '0')}`,
-            isFuture: Boolean(reportMonth?.is_future) || date > new Date(today.getFullYear(), today.getMonth(), 1),
-            ...metrics
+            isFuture: date > new Date(today.getFullYear(), today.getMonth(), 1),
+            totalSessions: monthlySessions.get(index) || 0,
+            passedSessions: monthlyPassedSessions.get(index) || 0
         };
     });
 
     if (periods.every(period => period.totalSessions === 0)) {
         container.classList.add('is-empty');
-        container.innerHTML = `<div class="empty">Không có dữ liệu trong năm ${reportYear}.</div>`;
+        container.innerHTML = `<div class="empty">Không có lượt thực hành của ${escapeHTML(effectiveRegion || 'toàn hệ thống')} trong năm ${reportYear}.</div>`;
         if (summary) summary.innerHTML = '';
         return;
     }
@@ -914,13 +923,13 @@ function renderOverviewMonthlyTrend(rows) {
         const height = period.totalSessions ? Math.max(12, Math.round((period.totalSessions / maxSessions) * 100)) : 0;
         const isSelected = period.key === selectedKey;
         return `
-            <div class="ktv-month-column ${isSelected ? 'selected' : ''} ${period.isFuture ? 'future' : ''}" title="${period.label}: ${period.totalSessions} lượt thực hành, ${period.completed} bài hoàn thành lũy kế">
+            <div class="ktv-month-column ${isSelected ? 'selected' : ''} ${period.isFuture ? 'future' : ''}" title="${period.label}: ${period.totalSessions} lượt thực hành, ${period.passedSessions} lượt đạt">
                 <strong>${period.totalSessions}</strong>
                 <div class="ktv-month-bar-track">
                     <div class="ktv-month-bar" style="height: ${height}%;"></div>
                 </div>
                 <span class="ktv-month-label">${period.shortLabel}</span>
-                <span class="ktv-month-rate">${period.rate === null ? '—' : `${period.rate}% HT`}</span>
+                <span class="ktv-month-rate">${period.passedSessions} đạt</span>
             </div>
         `;
     }).join('');
@@ -931,12 +940,12 @@ function renderOverviewMonthlyTrend(rows) {
     const previousPeriod = periods[Math.max(0, selectedIndex - 1)];
     const difference = currentPeriod.totalSessions - previousPeriod.totalSessions;
     const changeClass = difference > 0 ? 'positive' : (difference < 0 ? 'negative' : 'neutral');
-    const changeText = difference === 0 ? 'Không đổi' : `${difference > 0 ? '↑' : '↓'} ${Math.abs(difference)} phiên`;
+    const changeText = difference === 0 ? 'Không đổi' : `${difference > 0 ? '↑' : '↓'} ${Math.abs(difference)} lượt`;
     if (summary) {
         summary.className = `ktv-monthly-summary ${changeClass}`;
         summary.innerHTML = `
             <strong>${currentPeriod.label}</strong>
-            <span>${changeText} so với tháng trước</span>
+            <span>${changeText} so với tháng trước · ${currentPeriod.passedSessions} lượt đạt</span>
         `;
     }
 }
@@ -1570,11 +1579,11 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
         const cssClass = rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low');
         const attempted = Number(cell.attempted_count) || 0;
         const attempts = Number(cell.attempt_count) || 0;
-        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${completed}/${assigned} KTV hoàn thành • ${attempted} KTV đã thực hành • ${attempts} lượt thực hành`)}"><strong>${completed}/${assigned}</strong><span>${rate}% HT</span></td>`;
+        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${completed}/${assigned} KTV hoàn thành • ${attempted} KTV đã thực hành • ${attempts} lượt thực hành`)}"><strong>${completed}/${assigned}</strong><span>${rate}%</span></td>`;
     };
     els.detailReportHead.innerHTML = `
         <tr class="report-device-header-row">
-            <th class="report-region-head" rowspan="2" scope="col"><strong>Khu vực/CNx</strong></th>
+            <th class="report-region-head" rowspan="2" scope="col"><strong>Khu vực / CN</strong></th>
             ${groups.map((group, index) => `<th class="report-device-group report-device-tone-${index % 5}" colspan="${(group.labs || []).length}" scope="colgroup">${escapeHTML(group.device?.name || group.device_name || '')}<span>${(group.labs || []).length} bài lab</span></th>`).join('')}
             <th class="report-summary-head" rowspan="2" scope="col">Tổng</th>
         </tr>
@@ -1705,7 +1714,7 @@ function renderDetailReportMetricCell(cell, extraClass = '') {
     return `
         <td class="report-metric-cell ${getDetailReportCellClass(cell)} ${extraClass}" title="${escapeHTML(title)}">
             <strong>${formatNumber.format(cell.completed)}/${formatNumber.format(cell.eligible)}</strong>
-            <span>${cell.rate}% HT</span>
+            <span>${cell.rate}%</span>
         </td>
     `;
 }
@@ -1749,7 +1758,7 @@ function renderDetailedReport(rows) {
     els.detailReportHead.innerHTML = `
         <tr class="report-device-header-row">
             <th class="report-region-head" rowspan="2" scope="col">
-                <strong>Khu vực/CNx</strong>
+                <strong>Khu vực / CN</strong>
             </th>
             ${groups.map((group, index) => `
                 <th class="report-device-group report-device-tone-${index % 5}" colspan="${group.labs.length}" scope="colgroup">
@@ -1849,12 +1858,8 @@ function getRegionUsageYears() {
     return [...years].sort((left, right) => right - left);
 }
 
-function isCompletedDeviceUsageSession(session) {
-    const isPractice = session?.mode === 'Thực hành' || session?.mode === 'practice';
-    const completed = session?.rawStatus
-        ? session.rawStatus === 'completed'
-        : session?.status === 'Đạt' || session?.status === 'Chưa có kết quả';
-    return isPractice && completed;
+function isPracticeSession(session) {
+    return session?.mode === 'Thực hành' || session?.mode === 'practice';
 }
 
 function getRegionUsageSeries(year) {
@@ -1866,8 +1871,8 @@ function getRegionUsageSeries(year) {
             headcountByRegion.set(region, (headcountByRegion.get(region) || 0) + 1);
         });
 
-    const validSessionsByRegionMonth = new Map();
-    const participatingLearnersByRegionMonth = new Map();
+    const practiceSessionsByRegionMonth = new Map();
+    const passedLearnersByRegionMonth = new Map();
 
     sessions.forEach(session => {
         const date = parseDate(session.date);
@@ -1881,11 +1886,11 @@ function getRegionUsageSeries(year) {
         const learnerIdentity = String(session.learner || session.technicianId || '').trim().toLowerCase();
         if (!learnerIdentity) return;
 
-        if (isCompletedDeviceUsageSession(session)) {
-            validSessionsByRegionMonth.set(bucketKey, (validSessionsByRegionMonth.get(bucketKey) || 0) + 1);
-            if (!participatingLearnersByRegionMonth.has(bucketKey)) participatingLearnersByRegionMonth.set(bucketKey, new Set());
-            participatingLearnersByRegionMonth.get(bucketKey).add(learnerIdentity);
-        }
+        if (!isPracticeSession(session)) return;
+        practiceSessionsByRegionMonth.set(bucketKey, (practiceSessionsByRegionMonth.get(bucketKey) || 0) + 1);
+        if (!isSuccessfulSession(session)) return;
+        if (!passedLearnersByRegionMonth.has(bucketKey)) passedLearnersByRegionMonth.set(bucketKey, new Set());
+        passedLearnersByRegionMonth.get(bucketKey).add(learnerIdentity);
     });
 
     const currentYear = now.getFullYear();
@@ -1896,34 +1901,85 @@ function getRegionUsageSeries(year) {
             const months = Array.from({ length: 12 }, (_, monthIndex) => {
                 if (monthIndex >= observedMonthCount) return null;
                 const bucketKey = `${region}\u001f${monthIndex}`;
-                const validSessions = validSessionsByRegionMonth.get(bucketKey) || 0;
-                const participatingLearners = participatingLearnersByRegionMonth.get(bucketKey)?.size || 0;
+                const practiceSessions = practiceSessionsByRegionMonth.get(bucketKey) || 0;
+                const passedLearners = passedLearnersByRegionMonth.get(bucketKey)?.size || 0;
                 return {
                     month: monthIndex + 1,
-                    validSessions,
-                    participatingLearners,
+                    practiceSessions,
+                    passedLearners,
                     headcount,
-                    rate: headcount > 0 ? Math.round((validSessions / headcount) * 10) / 10 : 0,
-                    participationRate: headcount > 0
-                        ? Math.round((participatingLearners / headcount) * 1000) / 10
+                    rate: headcount > 0
+                        ? Math.round((passedLearners / headcount) * 1000) / 10
                         : 0
                 };
             });
             const observedMonths = months.filter(Boolean);
-            const validSessions = observedMonths.reduce((sum, month) => sum + month.validSessions, 0);
-            const averageRate = headcount > 0 && observedMonths.length > 0
-                ? Math.round((validSessions / (headcount * observedMonths.length)) * 10) / 10
+            const practiceSessions = observedMonths.reduce((sum, month) => sum + month.practiceSessions, 0);
+            const sessionsPerKtv = headcount > 0
+                ? Math.round((practiceSessions / headcount) * 10) / 10
                 : 0;
             return {
                 region,
                 headcount,
                 color: REGION_USAGE_COLORS[colorIndex % REGION_USAGE_COLORS.length],
                 months,
-                validSessions,
-                averageRate
+                practiceSessions,
+                sessionsPerKtv
             };
         })
         .filter(item => item.headcount > 0);
+}
+
+function selectOverviewRegion(region, { revealTrend = true, focusTrend = false } = {}) {
+    state.overviewSelectedRegion = region || '';
+    if (revealTrend) state.overviewMonthlyExpanded = true;
+    renderRegionUsageChart();
+    renderOverviewMonthlyTrend(sessions);
+    if (focusTrend && state.overviewMonthlyExpanded) {
+        window.requestAnimationFrame(() => {
+            document.getElementById('overviewMonthlyCard')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    }
+}
+
+function renderRegionRaceChart(series) {
+    const container = document.getElementById('regionRaceChart');
+    const reset = document.getElementById('overviewRegionReset');
+    if (!container || !reset) return;
+
+    const ranked = [...series].sort((left, right) => (
+        right.sessionsPerKtv - left.sessionsPerKtv
+        || right.practiceSessions - left.practiceSessions
+        || left.region.localeCompare(right.region, 'vi')
+    ));
+    const maxRate = Math.max(1, ...ranked.map(item => item.sessionsPerKtv));
+    reset.classList.toggle('is-selected', !state.overviewSelectedRegion);
+    reset.setAttribute('aria-pressed', String(!state.overviewSelectedRegion));
+
+    if (!ranked.length) {
+        container.innerHTML = '<div class="region-race-empty">Chưa có dữ liệu khu vực.</div>';
+        return;
+    }
+
+    container.innerHTML = ranked.map((item, index) => {
+        const width = item.sessionsPerKtv > 0 ? Math.max(4, (item.sessionsPerKtv / maxRate) * 100) : 0;
+        const selected = state.overviewSelectedRegion === item.region;
+        return `
+            <button type="button" class="region-race-row ${selected ? 'is-selected' : ''}"
+                data-overview-region="${escapeHTML(item.region)}" aria-pressed="${selected}">
+                <span class="region-race-rank">${index + 1}</span>
+                <span class="region-race-content">
+                    <span class="region-race-label"><strong>${escapeHTML(item.region)}</strong><small>${item.practiceSessions} lượt / ${item.headcount} KTV</small></span>
+                    <span class="region-race-track"><i style="width:${width.toFixed(1)}%; --race-color:${item.color}"></i></span>
+                </span>
+                <strong class="region-race-value">${item.sessionsPerKtv.toFixed(1)}</strong>
+            </button>
+        `;
+    }).join('');
+
+    container.querySelectorAll('[data-overview-region]').forEach(button => {
+        button.addEventListener('click', () => selectOverviewRegion(button.dataset.overviewRegion, { focusTrend: true }));
+    });
 }
 
 function renderRegionUsageChart() {
@@ -1949,30 +2005,20 @@ function renderRegionUsageChart() {
 
     const series = getRegionUsageSeries(state.regionUsageYear);
     if (!series.length) {
-        container.innerHTML = '<div class="region-usage-empty">Chưa có danh mục nhân sự theo khu vực để tính tần suất sử dụng.</div>';
+        container.innerHTML = '<div class="region-usage-empty">Chưa có danh mục nhân sự theo khu vực để tính tỷ lệ.</div>';
         legend.innerHTML = '';
         insights.innerHTML = '';
+        renderRegionRaceChart([]);
         return;
     }
 
-    const allObservedPoints = series.flatMap(item => item.months.filter(Boolean));
-    const peakRate = Math.max(0, ...allObservedPoints.map(point => point.rate));
-
-    let yMax = 2.0;
-    let yTicks = [0.0, 0.5, 1.0, 1.5, 2.0];
-    if (peakRate > 10.0) {
-        yMax = Math.ceil(peakRate / 4) * 4;
-        yTicks = Array.from({ length: 5 }, (_, index) => Math.round((yMax * index / 4) * 10) / 10);
-    } else if (peakRate > 6.0) {
-        yMax = 10.0;
-        yTicks = [0.0, 2.5, 5.0, 7.5, 10.0];
-    } else if (peakRate > 4.0) {
-        yMax = 6.0;
-        yTicks = [0.0, 1.5, 3.0, 4.5, 6.0];
-    } else if (peakRate > 2.0) {
-        yMax = 4.0;
-        yTicks = [0.0, 1.0, 2.0, 3.0, 4.0];
+    if (state.overviewSelectedRegion && !series.some(item => item.region === state.overviewSelectedRegion)) {
+        state.overviewSelectedRegion = '';
     }
+    renderRegionRaceChart(series);
+
+    const yMax = 100;
+    const yTicks = [0, 25, 50, 75, 100];
 
     const width = 1080;
     const height = 410;
@@ -1989,7 +2035,7 @@ function renderRegionUsageChart() {
         const y = yAt(value);
         return `
             <line x1="${plot.left}" y1="${y}" x2="${width - plot.right}" y2="${y}" class="region-usage-grid-line" />
-            <text x="${plot.left - 13}" y="${y + 4}" text-anchor="end" class="region-usage-axis-label">${value.toFixed(1)}</text>
+            <text x="${plot.left - 13}" y="${y + 4}" text-anchor="end" class="region-usage-axis-label">${value}%</text>
         `;
     }).join('');
     const monthLabels = Array.from({ length: 12 }, (_, monthIndex) => `
@@ -2003,10 +2049,10 @@ function renderRegionUsageChart() {
         const circles = points.map(point => `
             <circle class="region-usage-point ${point.month - 1 === selectedMonthIndex ? 'is-selected-month' : ''}" cx="${point.x}" cy="${point.y}" r="${point.month - 1 === selectedMonthIndex ? '6' : '4.5'}" tabindex="0"
                 data-region="${escapeHTML(item.region)}" data-month="${point.month}" data-rate="${point.rate.toFixed(1)}"
-                data-sessions="${point.validSessions}" data-participants="${point.participatingLearners}"
-                data-participation-rate="${point.participationRate.toFixed(1)}" data-headcount="${item.headcount}"
-                aria-label="${escapeHTML(`${item.region}, tháng ${point.month}: ${point.rate.toFixed(1)} lượt/KTV, ${point.participationRate.toFixed(1)}% KTV tham gia`)}">
-                <title>${escapeHTML(`${item.region} • Tháng ${point.month}: ${point.rate.toFixed(1)} lượt/KTV (${point.validSessions} phiên hợp lệ / ${item.headcount} KTV, ${point.participationRate.toFixed(1)}% tham gia)`)}</title>
+                data-sessions="${point.practiceSessions}" data-passed-learners="${point.passedLearners}"
+                data-headcount="${item.headcount}"
+                aria-label="${escapeHTML(`${item.region}, tháng ${point.month}: ${point.rate.toFixed(1)}%, ${point.passedLearners} trên ${item.headcount} KTV có lượt đạt`)}">
+                <title>${escapeHTML(`${item.region} • Tháng ${point.month}: ${point.rate.toFixed(1)}% (${point.passedLearners}/${item.headcount} KTV có ít nhất 1 phiên đạt)`)}</title>
             </circle>
         `).join('');
         return `
@@ -2019,31 +2065,35 @@ function renderRegionUsageChart() {
 
     container.innerHTML = `
         <svg class="region-usage-svg" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="regionUsageSvgTitle regionUsageSvgDesc">
-            <title id="regionUsageSvgTitle">Tần suất sử dụng theo khu vực năm ${state.regionUsageYear}</title>
-            <desc id="regionUsageSvgDesc">Biểu đồ đường gồm ${series.length} khu vực, trục ngang là 12 tháng và trục dọc là số phiên thực hành hợp lệ trung bình trên mỗi KTV đang công tác.</desc>
-            <text x="18" y="${plot.top + plotHeight / 2}" text-anchor="middle" class="region-usage-y-title" transform="rotate(-90 18 ${plot.top + plotHeight / 2})">Tần suất (lượt/KTV)</text>
+            <title id="regionUsageSvgTitle">Tỷ lệ KTV thực hành đạt theo khu vực năm ${state.regionUsageYear}</title>
+            <desc id="regionUsageSvgDesc">Biểu đồ đường gồm ${series.length} khu vực, trục ngang là 12 tháng và trục dọc là tỷ lệ KTV có ít nhất một lượt thực hành đạt trên tổng số KTV khu vực.</desc>
+            <text x="18" y="${plot.top + plotHeight / 2}" text-anchor="middle" class="region-usage-y-title" transform="rotate(-90 18 ${plot.top + plotHeight / 2})">KTV thực hành đạt (%)</text>
             ${grid}
             ${monthLabels}
             ${lines}
         </svg>
     `;
 
-    const ranked = series
-        .filter(item => item.headcount > 0)
-        .sort((left, right) => right.averageRate - left.averageRate || left.region.localeCompare(right.region, 'vi'));
-    const highest = ranked[0];
-    const lowest = ranked[ranked.length - 1];
-    const totalValidSessions = series.reduce((sum, item) => sum + item.validSessions, 0);
+    const focusMonthIndex = selectedMonthIndex >= 0
+        ? selectedMonthIndex
+        : Math.max(0, Math.min(11, state.regionUsageYear === now.getFullYear() ? now.getMonth() : 11));
+    const rankedForMonth = [...series].sort((left, right) => (
+        (right.months[focusMonthIndex]?.rate || 0) - (left.months[focusMonthIndex]?.rate || 0)
+    ));
+    const highest = rankedForMonth[0];
+    const totalHeadcount = series.reduce((sum, item) => sum + item.headcount, 0);
+    const totalPassedLearners = series.reduce((sum, item) => sum + (item.months[focusMonthIndex]?.passedLearners || 0), 0);
+    const systemRate = totalHeadcount ? Math.round((totalPassedLearners / totalHeadcount) * 1000) / 10 : 0;
     insights.innerHTML = `
-        <article><span>Sử dụng nhiều nhất</span><strong>${highest ? escapeHTML(highest.region) : '—'}</strong><small>${highest ? `${highest.averageRate.toFixed(1)} lượt/KTV/tháng` : 'Chưa có khu vực hợp lệ'}</small></article>
-        <article><span>Sử dụng ít nhất</span><strong>${lowest ? escapeHTML(lowest.region) : '—'}</strong><small>${lowest ? `${lowest.averageRate.toFixed(1)} lượt/KTV/tháng` : 'Chưa có khu vực hợp lệ'}</small></article>
-        <article><span>Tổng phiên hợp lệ</span><strong>${formatNumber.format(totalValidSessions)}</strong><small>${ranked.length} khu vực có nhân sự trong năm ${state.regionUsageYear}</small></article>
+        <article><span>Cao nhất · Tháng ${focusMonthIndex + 1}</span><strong>${highest ? escapeHTML(highest.region) : '—'}</strong><small>${highest ? `${(highest.months[focusMonthIndex]?.rate || 0).toFixed(1)}% KTV thực hành đạt` : 'Chưa có khu vực hợp lệ'}</small></article>
+        <article><span>Toàn hệ thống · Tháng ${focusMonthIndex + 1}</span><strong>${systemRate.toFixed(1)}%</strong><small>${totalPassedLearners}/${totalHeadcount} KTV thực hành đạt</small></article>
     `;
     legend.innerHTML = series.map(item => `
-        <button type="button" class="region-usage-legend-item" data-legend-region="${escapeHTML(item.region)}">
+        <button type="button" class="region-usage-legend-item ${state.overviewSelectedRegion === item.region ? 'is-selected' : ''}"
+            data-legend-region="${escapeHTML(item.region)}" aria-pressed="${state.overviewSelectedRegion === item.region}">
             <i style="--legend-color:${item.color}"></i>
             <span>${escapeHTML(item.region)}</span>
-            <small>${item.headcount > 0 ? `${item.averageRate.toFixed(1)} lượt/KTV/tháng` : 'Chưa có nhân sự'}</small>
+            <small>${(item.months[focusMonthIndex]?.rate || 0).toFixed(1)}%</small>
         </button>
     `).join('');
 
@@ -2058,10 +2108,11 @@ function renderRegionUsageChart() {
         button.addEventListener('mouseleave', () => setSeriesFocus(''));
         button.addEventListener('focus', () => setSeriesFocus(button.dataset.legendRegion));
         button.addEventListener('blur', () => setSeriesFocus(''));
+        button.addEventListener('click', () => selectOverviewRegion(button.dataset.legendRegion, { focusTrend: true }));
     });
 
     const showTooltip = (point, event) => {
-        tooltip.innerHTML = `<strong>${escapeHTML(point.dataset.region)} · Tháng ${point.dataset.month}</strong><span>${point.dataset.rate} lượt/KTV</span><small>${point.dataset.sessions} phiên hợp lệ / ${point.dataset.headcount} KTV · ${point.dataset.participationRate}% tham gia (${point.dataset.participants} KTV)</small>`;
+        tooltip.innerHTML = `<strong>${escapeHTML(point.dataset.region)} · Tháng ${point.dataset.month}</strong><span>${point.dataset.rate}%</span><small>${point.dataset.passedLearners}/${point.dataset.headcount} KTV có lượt đạt · ${point.dataset.sessions} phiên thực hành</small>`;
         tooltip.hidden = false;
         const chartRect = container.getBoundingClientRect();
         const pointRect = point.getBoundingClientRect();
@@ -2079,6 +2130,7 @@ function renderRegionUsageChart() {
         point.addEventListener('mouseleave', () => { tooltip.hidden = true; setSeriesFocus(''); });
         point.addEventListener('focus', event => showTooltip(point, event));
         point.addEventListener('blur', () => { tooltip.hidden = true; setSeriesFocus(''); });
+        point.addEventListener('click', () => selectOverviewRegion(point.dataset.region, { focusTrend: true }));
     });
 }
 
@@ -2086,6 +2138,22 @@ function initRegionUsageChart() {
     document.getElementById('regionUsageYear')?.addEventListener('change', event => {
         state.regionUsageYear = Number(event.target.value) || now.getFullYear();
         renderRegionUsageChart();
+        renderOverviewMonthlyTrend(sessions);
+    });
+    document.getElementById('overviewSessionsDrilldown')?.addEventListener('click', () => {
+        state.overviewMonthlyExpanded = true;
+        renderOverviewMonthlyTrend(sessions);
+        window.requestAnimationFrame(() => {
+            document.getElementById('overviewMonthlyCard')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    });
+    document.getElementById('overviewMonthlyClose')?.addEventListener('click', () => {
+        state.overviewMonthlyExpanded = false;
+        renderOverviewMonthlyTrend(sessions);
+        document.getElementById('overviewSessionsDrilldown')?.focus({ preventScroll: true });
+    });
+    document.getElementById('overviewRegionReset')?.addEventListener('click', () => {
+        selectOverviewRegion('', { revealTrend: state.overviewMonthlyExpanded });
     });
 }
 
@@ -2266,6 +2334,7 @@ function mapApiSessions(apiSessions = []) {
             duration: item.duration_sec === null || item.duration_sec === undefined
                 ? null
                 : Number(item.duration_sec),
+            score: item.score === null || item.score === undefined ? null : Number(item.score),
             isPassed,
             firstTry: item.completed_first_try === null || item.completed_first_try === undefined
                 ? null
@@ -2330,7 +2399,7 @@ function setRefreshButtonBusy(busy) {
     if (!button) return;
     button.disabled = busy;
     button.classList.toggle('is-busy', busy);
-    button.setAttribute('aria-label', busy ? 'Đang làm mới dữ liệu dashboard' : 'Làm mới dữ liệu dashboard');
+    button.setAttribute('aria-label', busy ? 'Đang làm mới dữ liệu' : 'Làm mới dữ liệu');
 }
 
 function setDashboardLoading(visible, message = '') {
@@ -2826,6 +2895,7 @@ function openHeaderFilterPopover(wrapper) {
 function enhanceHeaderFilterPopovers(root = document) {
     root.querySelectorAll('thead .popover-filter-wrapper').forEach(wrapper => {
         if (wrapper.closest('#rosterListPanel')) return;
+        if (wrapper.classList.contains('ktv-header-filter')) return;
         const trigger = wrapper.querySelector('.popover-trigger-btn');
         const dropdown = wrapper.querySelector('.popover-dropdown');
         if (!trigger || !dropdown || dropdown.dataset.headerFilterEnhanced === 'true') return;
@@ -3522,7 +3592,7 @@ function sortInstructorDeviceGroups(groups) {
         });
 }
 
-function getInstructorDeviceGroups(selectedClass = null) {
+function getInstructorDeviceGroups(selectedClass = null, { includeAllActive = false } = {}) {
     const groups = [];
     const groupMap = new Map();
     const ensureGroup = (deviceName) => {
@@ -3535,7 +3605,7 @@ function getInstructorDeviceGroups(selectedClass = null) {
         return groupMap.get(name);
     };
 
-    if (state.assignmentsLoaded) {
+    if (state.assignmentsLoaded && !includeAllActive) {
         const members = new Set(selectedClass?.members || []);
         trainingAssignments
             .filter(item => !selectedClass || (item.classCode === selectedClass.code && members.has(item.learner)))
@@ -3546,12 +3616,18 @@ function getInstructorDeviceGroups(selectedClass = null) {
         return sortInstructorDeviceGroups(groups.filter(group => group.labs.length));
     }
 
+    // dashboard/all only exposes active devices and active labs. The KTV-by-class
+    // report requests this complete catalog regardless of class assignments.
     deviceCatalog.forEach(item => {
         const group = ensureGroup(item.device || item.device_name || item.model);
         (item.labs || []).forEach(lab => {
             if (lab && !group.labs.includes(lab)) group.labs.push(lab);
         });
     });
+    if (groups.length) return sortInstructorDeviceGroups(groups);
+
+    // Compatibility fallback for an installation whose catalog tables have not
+    // been initialized yet.
     sessions.forEach(item => {
         const group = ensureGroup(item.device);
         if (item.lab && !group.labs.includes(item.lab)) group.labs.push(item.lab);
@@ -3566,14 +3642,11 @@ function saveInstructorClasses() {
 
 const searchableFilterSelectIds = [
     'instructorClassSelect',
-    'instructorDeviceSelect',
-    'classMatrixClassSelect',
-    'classMatrixDeviceSelect'
+    'instructorDeviceSelect'
 ];
 
 const multiSelectFilterIds = new Set([
-    'instructorDeviceSelect',
-    'classMatrixDeviceSelect'
+    'instructorDeviceSelect'
 ]);
 
 function enhanceDashboardTables(root = document) {
@@ -3581,7 +3654,9 @@ function enhanceDashboardTables(root = document) {
     tables.forEach(table => {
         if (table.dataset.unifiedTable === 'true') return;
         table.dataset.unifiedTable = 'true';
-        table.classList.add('unified-data-table');
+        // The class matrix owns fixed/sticky column widths. Applying the generic
+        // table rules here expands STT and breaks sticky offsets while scrolling.
+        if (!table.matches('.class-matrix-table')) table.classList.add('unified-data-table');
 
         const existingScroll = table.closest(
             '.unified-table-scroll, .detail-report-scroll, .instructor-progress-scroll, .roster-table-wrapper, .learner-history'
@@ -3812,6 +3887,7 @@ function enhanceSearchableFilterSelect(select) {
         }
     });
     select.addEventListener('change', sync);
+    select.addEventListener('searchable-sync', sync);
     new MutationObserver(sync).observe(select, { childList: true, subtree: true, attributes: true });
     sync();
 }
@@ -4047,11 +4123,11 @@ function renderInstructorClassProgress() {
     }
 
     summary.innerHTML = `
-        <span class="instructor-summary-chip"><strong>${progressRows.length}${filtersActive ? `/${allProgressRows.length}` : ''}</strong> KTV hiển thị</span>
+        <span class="instructor-summary-chip"><strong>${progressRows.length}${filtersActive ? `/${allProgressRows.length}` : ''}</strong> KTV</span>
         <span class="instructor-summary-chip"><strong>${selectedGroups.length}</strong> thiết bị</span>
         <span class="instructor-summary-chip"><strong>${columns.length}</strong> bài lab</span>
-        <span class="instructor-summary-chip"><strong>${completed}/${total}</strong> bài đã đạt</span>
-        <span class="instructor-summary-chip"><strong>${rate === null ? '—' : `${rate}%`}</strong> tiến độ lớp</span>
+        <span class="instructor-summary-chip"><strong>${completed}/${total}</strong> bài đạt</span>
+        <span class="instructor-summary-chip"><strong>${rate === null ? '—' : `${rate}%`}</strong> hoàn thành</span>
     `;
 
     head.innerHTML = `
@@ -4246,36 +4322,29 @@ function getClassMatrixData() {
     initializeInstructorClasses();
 
     let classes = state.instructorClasses || [];
-    if (!classes.length) {
-        classes = getDatabaseInstructorClasses();
-    }
+    if (!classes.length) classes = getDatabaseInstructorClasses();
     const allClassLearners = state.assignmentsLoaded
         ? [...new Set(classes.flatMap(item => item.members || []))]
         : getInstructorLearners();
 
-    if (!state.classMatrixSelectedClass && classes.length) {
-        state.classMatrixSelectedClass = classes[0].id;
-    }
+    if (!state.classMatrixSelectedClass) state.classMatrixSelectedClass = 'all';
 
     let selectedClass = classes.find(c => c.id === state.classMatrixSelectedClass) || null;
-    let learners = [];
-    if (state.classMatrixSelectedClass === 'all') {
-        learners = allClassLearners;
-    } else if (selectedClass) {
-        learners = selectedClass.members || [];
-    } else if (classes.length) {
+    if (!selectedClass && state.classMatrixSelectedClass !== 'all' && classes.length) {
         selectedClass = classes[0];
         state.classMatrixSelectedClass = selectedClass.id;
-        learners = selectedClass.members || [];
-    } else {
-        learners = getInstructorLearners();
     }
+    const learners = selectedClass ? (selectedClass.members || []) : allClassLearners;
 
-    const allGroups = getInstructorDeviceGroups(selectedClass);
+    const allGroups = getInstructorDeviceGroups(null, { includeAllActive: true });
     const availableDevices = allGroups.map(group => group.device);
-    if (state.classMatrixSelectedDevices === null) state.classMatrixSelectedDevices = [...availableDevices];
-    state.classMatrixSelectedDevices = state.classMatrixSelectedDevices.filter(device => availableDevices.includes(device));
-    const selectedGroups = allGroups.filter(group => state.classMatrixSelectedDevices.includes(group.device));
+    const selectedDeviceNames = state.classMatrixSelectedDevices === null
+        ? [...availableDevices]
+        : state.classMatrixSelectedDevices.filter(device => availableDevices.includes(device));
+    if (state.classMatrixSelectedDevices !== null) state.classMatrixSelectedDevices = selectedDeviceNames;
+    const selectedGroups = allGroups.filter(group =>
+        selectedDeviceNames.includes(group.device) && group.labs.length
+    );
 
     const columns = selectedGroups.flatMap((group, groupIndex) => (group.labs || []).map((lab, labIndex) => ({
         device: group.device,
@@ -4284,9 +4353,11 @@ function getClassMatrixData() {
         isFirst: labIndex === 0,
         isLast: labIndex === group.labs.length - 1
     })));
+    const overviewColumns = allGroups.flatMap(group => (group.labs || []).map(lab => ({
+        device: group.device,
+        lab
+    })));
 
-    // Filter learners by search
-    const search = (state.classMatrixSearch || '').trim().toLowerCase();
     const mappedLearners = learners.map(email => {
         const tech = technicianByIdentity.get(String(email).toLowerCase());
         const name = tech?.displayName || getLearnerName(email) || email;
@@ -4297,136 +4368,227 @@ function getClassMatrixData() {
         return { email, tech, name, code, region, classCode, className };
     });
 
-    const filteredLearners = search
-        ? mappedLearners.filter(l =>
-            l.name.toLowerCase().includes(search) ||
-            l.email.toLowerCase().includes(search) ||
-            l.code.toLowerCase().includes(search) ||
-            l.region.toLowerCase().includes(search)
-        )
-        : mappedLearners;
-
-    // Build assignment map if trainingAssignments exists
-    const assignmentMap = new Map();
-    const assignmentByLearnerLab = new Map();
-    if (state.assignmentsLoaded) {
-        trainingAssignments.forEach(a => {
-            const key = `${String(a.classCode || '')}\u001f${String(a.learner || '').toLowerCase()}\u001f${a.device}\u001f${a.lab}`;
-            assignmentMap.set(key, a);
-            const globalKey = `${String(a.learner || '').toLowerCase()}\u001f${a.device}\u001f${a.lab}`;
-            const existing = assignmentByLearnerLab.get(globalKey);
-            if (!existing || (!existing.completed && a.completed)) assignmentByLearnerLab.set(globalKey, a);
-        });
+    const availableKtvIds = new Set(mappedLearners.map(learner => learner.email));
+    if (state.classMatrixSelectedKtvs instanceof Set) {
+        state.classMatrixSelectedKtvs = new Set(
+            [...state.classMatrixSelectedKtvs].filter(email => availableKtvIds.has(email))
+        );
     }
+    const searchedLearners = state.classMatrixSelectedKtvs === null
+        ? mappedLearners
+        : mappedLearners.filter(learner => state.classMatrixSelectedKtvs.has(learner.email));
 
-    // Index sessions once so every learner/lab cell is an O(1) lookup.
     const sessionsByCell = new Map();
     sessions.forEach(s => {
-        if (s.mode === 'Hướng dẫn') return;
-        if (state.assignmentsLoaded && state.classMatrixSelectedClass === 'all' && !s.assignmentClassCodes.length) return;
-        if (
-            state.classMatrixSelectedClass !== 'all'
-            && selectedClass?.code
-            && !s.assignmentClassCodes.includes(String(selectedClass.code))
-        ) return;
+        if (s.mode !== 'Thực hành' && s.mode !== 'practice') return;
         const learnerKey = String(s.learner || '').toLowerCase();
         const cellKey = `${learnerKey}\u001f${s.device}\u001f${s.lab}`;
         if (!sessionsByCell.has(cellKey)) sessionsByCell.set(cellKey, []);
         sessionsByCell.get(cellKey).push(s);
     });
 
-    let totalClassAttempts = 0;
-    const labStats = new Map(); // colKey -> { assigned, completed, attempted, attempts }
-    columns.forEach(col => {
-        labStats.set(`${col.device}\u001f${col.lab}`, { assigned: 0, completed: 0, attempted: 0, attempts: 0 });
+    const activeDeviceNames = new Set(allGroups.map(group => group.device));
+    const assignmentsByClass = new Map();
+    const assignmentByCell = new Map();
+    trainingAssignments.forEach(assignment => {
+        if (!assignment.classCode || !activeDeviceNames.has(assignment.device)) return;
+        if (!assignmentsByClass.has(assignment.classCode)) assignmentsByClass.set(assignment.classCode, []);
+        assignmentsByClass.get(assignment.classCode).push(assignment);
+        assignmentByCell.set(
+            `${assignment.classCode}\u001f${String(assignment.learner).toLowerCase()}\u001f${assignment.device}\u001f${assignment.lab}`,
+            assignment
+        );
     });
 
-    const rows = filteredLearners.map(l => {
+    const selectedClassAssignments = selectedClass ? (assignmentsByClass.get(selectedClass.code) || []) : [];
+    const selectedAssignmentsByLearner = new Map();
+    selectedClassAssignments.forEach(assignment => {
+        const learner = String(assignment.learner).toLowerCase();
+        if (!selectedAssignmentsByLearner.has(learner)) selectedAssignmentsByLearner.set(learner, new Map());
+        selectedAssignmentsByLearner.get(learner).set(`${assignment.device}\u001f${assignment.lab}`, assignment);
+    });
+
+    const candidateRows = searchedLearners.map(l => {
         const learnerKey = l.email.toLowerCase();
         let ktvCompleted = 0;
         let ktvAssigned = 0;
         let ktvAttempts = 0;
 
         const cells = columns.map(col => {
-            const colKey = `${col.device}\u001f${col.lab}`;
-            const globalAssignKey = `${l.email.toLowerCase()}\u001f${col.device}\u001f${col.lab}`;
-            const classAssignKey = `${String(selectedClass?.code || '')}\u001f${globalAssignKey}`;
-            const assign = state.classMatrixSelectedClass === 'all'
-                ? assignmentByLearnerLab.get(globalAssignKey)
-                : assignmentMap.get(classAssignKey);
             const labSessions = sessionsByCell.get(`${learnerKey}\u001f${col.device}\u001f${col.lab}`) || [];
-            const practiceSessions = labSessions.filter(session => session.mode === 'Thực hành');
-            const isAssigned = Boolean(assign);
-            const isCompleted = isAssigned && Boolean(assign?.completed);
-            const attempts = practiceSessions.length;
-            const attempted = attempts > 0;
-
-            // Xác định số thứ tự lần thực hành đạt chuẩn hoàn thành
-            const sortedLabSessions = [...labSessions].sort((a, b) => {
-                const timeA = parseDate(a.date).getTime() + (a.time ? parseTimeMs(a.time) : 0);
-                const timeB = parseDate(b.date).getTime() + (b.time ? parseTimeMs(b.time) : 0);
-                return timeA - timeB;
-            });
-            const sortedPracticeSessions = sortedLabSessions.filter(s => s.mode === 'Thực hành');
-            const passIndex = sortedPracticeSessions.findIndex(isSuccessfulSession);
-            const firstPassSession = passIndex !== -1 ? sortedPracticeSessions[passIndex] : null;
-            const firstPassAttemptNo = firstPassSession
-                ? (Number(firstPassSession.practiceAttemptNo) || passIndex + 1)
-                : (Number(assign?.firstPassAttemptNo) || null);
-
-            if (isAssigned) {
-                ktvAssigned += 1;
-                const stat = labStats.get(colKey);
-                if (stat) stat.assigned += 1;
-            }
-            if (isCompleted) {
-                ktvCompleted += 1;
-                const stat = labStats.get(colKey);
-                if (stat) stat.completed += 1;
-            }
-            if (attempted) {
-                const stat = labStats.get(colKey);
-                if (stat) {
-                    stat.attempted += 1;
-                    stat.attempts += attempts;
-                }
-            }
+            const attempts = labSessions.length;
+            const passCount = labSessions.filter(session => Number(session.score) === 100).length;
+            const assignment = selectedClass
+                ? assignmentByCell.get(`${selectedClass.code}\u001f${learnerKey}\u001f${col.device}\u001f${col.lab}`)
+                : null;
+            const isAssigned = Boolean(assignment);
+            const assignmentCompleted = Boolean(assignment?.completed);
+            if (isAssigned) ktvAssigned += 1;
+            if (assignmentCompleted) ktvCompleted += 1;
             ktvAttempts += attempts;
-            totalClassAttempts += attempts;
 
             return {
                 device: col.device,
                 lab: col.lab,
                 assigned: isAssigned,
-                completed: isCompleted,
+                completed: assignmentCompleted,
                 attempts,
-                firstPassAttemptNo,
+                passCount,
                 lastSession: labSessions[labSessions.length - 1] || null
             };
         });
 
         const rate = ktvAssigned > 0 ? Math.round((ktvCompleted / ktvAssigned) * 100) : null;
+        const allAssignments = [...(selectedAssignmentsByLearner.get(learnerKey)?.values() || [])];
+        const allAssignedCount = allAssignments.length;
+        const allCompletedCount = allAssignments.filter(assignment => assignment.completed).length;
 
         return {
             ...l,
             cells,
             completed: ktvCompleted,
             assigned: ktvAssigned,
+            allCompleted: allCompletedCount,
+            allAssigned: allAssignedCount,
+            fullyCompleted: allAssignedCount > 0 && allCompletedCount === allAssignedCount,
             attempts: ktvAttempts,
-            rate
+            rate,
+            progressKey: `${ktvCompleted}/${ktvAssigned}`
         };
     });
 
+    const progressOptions = [...new Map(candidateRows.map(row => [row.progressKey, {
+        value: row.progressKey,
+        completed: row.completed,
+        assigned: row.assigned
+    }])).values()].sort((left, right) =>
+        right.completed - left.completed || right.assigned - left.assigned
+    );
+    const validProgressValues = new Set(progressOptions.map(option => option.value));
+    if (state.classMatrixProgressFilter instanceof Set) {
+        state.classMatrixProgressFilter = new Set(
+            [...state.classMatrixProgressFilter].filter(value => validProgressValues.has(value))
+        );
+    }
+    let rows = state.classMatrixProgressFilter === null
+        ? candidateRows
+        : candidateRows.filter(row => state.classMatrixProgressFilter.has(row.progressKey));
+
+    const sortKey = state.classMatrixPersonnelSort;
+    const sortDir = state.classMatrixPersonnelSortDirection === 'asc' ? 1 : -1;
+    const sortByRate = sortKey === 'completion_rate_asc';
+    rows = [...rows].sort((left, right) => {
+        let cmp;
+        if (sortByRate) {
+            cmp = (left.rate ?? -1) - (right.rate ?? -1);
+        } else if (sortKey === 'code_asc') {
+            cmp = formatClassEmployeeId(left.code).localeCompare(formatClassEmployeeId(right.code), 'vi', { numeric: true });
+        } else {
+            cmp = left.name.localeCompare(right.name, 'vi');
+        }
+        if (cmp === 0) cmp = left.name.localeCompare(right.name, 'vi');
+        return cmp * sortDir;
+    });
+
+    const labStats = new Map(columns.map(col => [
+        `${col.device}\u001f${col.lab}`,
+        { people: rows.length, completed: 0, passes: 0, attempts: 0 }
+    ]));
+    rows.forEach(row => row.cells.forEach(cell => {
+        const stat = labStats.get(`${cell.device}\u001f${cell.lab}`);
+        if (!stat) return;
+        if (cell.completed) stat.completed += 1;
+        stat.passes += cell.passCount;
+        stat.attempts += cell.attempts;
+    }));
+
+    const totalClassAttempts = rows.reduce((sum, row) => sum + row.attempts, 0);
     const totalAssignedAll = rows.reduce((s, r) => s + r.assigned, 0);
     const totalCompletedAll = rows.reduce((s, r) => s + r.completed, 0);
-    const overallRate = totalAssignedAll > 0 ? Math.round((totalCompletedAll / totalAssignedAll) * 100) : 0;
+    const fullyCompletedPeople = candidateRows.filter(row => row.fullyCompleted).length;
+    let overallRate = candidateRows.length ? Math.round((fullyCompletedPeople / candidateRows.length) * 100) : 0;
+
+    const availableClassIds = new Set(classes.map(item => item.id));
+    if (state.classOverviewSelectedClasses instanceof Set) {
+        state.classOverviewSelectedClasses = new Set(
+            [...state.classOverviewSelectedClasses].filter(classId => availableClassIds.has(classId))
+        );
+    }
+    let summaryRows = classes
+        .filter(item => state.classOverviewSelectedClasses === null || state.classOverviewSelectedClasses.has(item.id))
+        .map(item => {
+            const members = [...new Set(item.members || [])];
+            const classAssignments = assignmentsByClass.get(item.code) || [];
+            const progressByMember = new Map(members.map(email => [String(email).toLowerCase(), new Map()]));
+            classAssignments.forEach(assignment => {
+                const learner = String(assignment.learner).toLowerCase();
+                if (!progressByMember.has(learner)) return;
+                progressByMember.get(learner).set(`${assignment.device}\u001f${assignment.lab}`, assignment);
+            });
+            const fullyCompletedCount = [...progressByMember.values()].filter(progress => {
+                const assignments = [...progress.values()];
+                return assignments.length > 0 && assignments.every(assignment => assignment.completed);
+            }).length;
+            const assignedDevices = new Set(classAssignments.map(assignment => assignment.device));
+            const attempts = members.reduce((total, email) => total + overviewColumns.reduce((columnTotal, column) =>
+                columnTotal + (sessionsByCell.get(`${String(email).toLowerCase()}\u001f${column.device}\u001f${column.lab}`)?.length || 0)
+            , 0), 0);
+            return {
+                ...item,
+                memberCount: members.length,
+                deviceCount: assignedDevices.size,
+                fullyCompletedCount,
+                attempts,
+                rate: members.length ? Math.round((fullyCompletedCount / members.length) * 100) : null
+            };
+        });
+    const overviewSortKey = state.classOverviewSort;
+    const overviewSortDirection = state.classOverviewSortDirection === 'asc' ? 1 : -1;
+    summaryRows = [...summaryRows].sort((left, right) => {
+        if (overviewSortKey === 'name') return left.name.localeCompare(right.name, 'vi') * overviewSortDirection;
+        const leftValue = Number(left[overviewSortKey]) || 0;
+        const rightValue = Number(right[overviewSortKey]) || 0;
+        return (leftValue - rightValue) * overviewSortDirection || left.name.localeCompare(right.name, 'vi');
+    });
+
+    const scopedClasses = selectedClass ? [selectedClass] : classes;
+    const scopedMembers = [...new Set(scopedClasses.flatMap(item => item.members || []).map(email => String(email).toLowerCase()))];
+    const scopedClassCodes = new Set(scopedClasses.map(item => item.code));
+    const scopedAssignments = [...assignmentsByClass.entries()]
+        .filter(([classCode]) => scopedClassCodes.has(classCode))
+        .flatMap(([, classAssignments]) => classAssignments);
+    const deviceStats = allGroups.map(group => {
+        const deviceAssignments = scopedAssignments.filter(assignment => assignment.device === group.device);
+        const progressByMember = new Map(scopedMembers.map(email => [email, []]));
+        deviceAssignments.forEach(assignment => {
+            const learnerAssignments = progressByMember.get(String(assignment.learner).toLowerCase());
+            if (learnerAssignments) learnerAssignments.push(assignment);
+        });
+        const completedPeople = [...progressByMember.values()].filter(assignments =>
+            assignments.length > 0 && assignments.every(assignment => assignment.completed)
+        ).length;
+        return {
+            device: group.device,
+            assignedLabs: new Set(deviceAssignments.map(assignment => assignment.lab)).size,
+            completedPeople,
+            totalPeople: progressByMember.size
+        };
+    });
+
+    if (!selectedClass) {
+        const totalPeople = summaryRows.reduce((sum, row) => sum + row.memberCount, 0);
+        const completedPeople = summaryRows.reduce((sum, row) => sum + row.fullyCompletedCount, 0);
+        overallRate = totalPeople ? Math.round((completedPeople / totalPeople) * 100) : 0;
+    }
 
     return {
         classes,
         selectedClass,
         allGroups,
         selectedGroups,
+        selectedDeviceNames,
         columns,
+        ktvOptions: mappedLearners,
         rows,
         filteredCount: rows.length,
         totalKtv: mappedLearners.length,
@@ -4435,93 +4597,556 @@ function getClassMatrixData() {
         totalAssignedAll,
         totalCompletedAll,
         overallRate,
-        labStats
+        fullyCompletedPeople,
+        labStats,
+        progressOptions,
+        deviceStats,
+        summaryRows,
+        isOverview: state.classMatrixSelectedClass === 'all'
     };
 }
 
+function selectClassMatrixClass(classId) {
+    state.classMatrixKtvSearch = '';
+    state.classMatrixSelectedKtvs = null;
+    state.classMatrixProgressFilter = null;
+    state.classMatrixSelectedClass = classId;
+    state.classMatrixSelectedDevices = null;
+    renderClassMatrixReport();
+    if (classId !== 'all') focusClassMatrixDetail();
+}
+
+function focusClassMatrixDetail() {
+    window.requestAnimationFrame(() => {
+        const card = document.getElementById('classDetailCard');
+        const title = document.getElementById('classMatrixTableTitle');
+        if (!card || card.hidden) return;
+        title?.focus({ preventScroll: true });
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    });
+}
+
+function focusClassMatrixTable() {
+    window.requestAnimationFrame(() => {
+        const tableScroll = document.getElementById('classMatrixScroll');
+        if (!tableScroll || tableScroll.hidden) return;
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        tableScroll.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+        tableScroll.focus({ preventScroll: true });
+    });
+}
+
+function formatClassEmployeeId(value) {
+    const code = String(value || '').trim();
+    if (/^\d+$/.test(code)) return code.padStart(8, '0').slice(-8);
+    return code.slice(0, 8);
+}
+
+function renderClassOverview(data) {
+    const head = document.getElementById('classOverviewHead');
+    const body = document.getElementById('classOverviewBody');
+    const foot = document.getElementById('classOverviewFoot');
+    const scroll = document.getElementById('classOverviewScroll');
+    const empty = document.getElementById('classOverviewEmpty');
+    if (!head || !body || !foot) return;
+
+    const classFilterSearch = state.classOverviewSearch.trim().toLocaleLowerCase('vi');
+    const selectedClassIds = state.classOverviewSelectedClasses;
+    const classFilterOptions = [...data.classes]
+        .sort((left, right) => left.name.localeCompare(right.name, 'vi'))
+        .map(item => {
+            const searchText = `${item.name} ${item.code || ''}`.toLocaleLowerCase('vi');
+            return `<label class="popover-option" ${classFilterSearch && !searchText.includes(classFilterSearch) ? 'hidden' : ''}>
+                <input type="checkbox" value="${escapeHTML(item.id)}" ${selectedClassIds === null || selectedClassIds.has(item.id) ? 'checked' : ''}>
+                <span><strong>${escapeHTML(item.name)}</strong>${item.code ? `<small>${escapeHTML(item.code)}</small>` : ''}</span>
+            </label>`;
+        }).join('');
+
+    const sortHeader = (label, key) => {
+        const active = state.classOverviewSort === key;
+        const mark = active ? (state.classOverviewSortDirection === 'asc' ? '↑' : '↓') : '↕';
+        return `<button type="button" class="class-overview-sort ${active ? 'is-sorted' : ''}" data-class-overview-sort="${key}">
+            ${label}<span aria-hidden="true">${mark}</span>
+        </button>`;
+    };
+    head.innerHTML = `<tr>
+        <th scope="col" aria-sort="${state.classOverviewSort === 'name' ? (state.classOverviewSortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}">
+            <div class="class-overview-head-wrap">
+                ${sortHeader('Lớp học', 'name')}
+                <div class="ktv-header-filter ${state.classOverviewSelectedClasses !== null ? 'has-value' : ''}" id="classOverviewFilterWrapper">
+                    <button type="button" class="popover-trigger-btn" id="classOverviewFilterTrigger" aria-label="Lọc theo tên hoặc mã lớp" aria-expanded="false"></button>
+                    <div class="popover-dropdown header-filter-menu class-column-filter" role="dialog" aria-label="Lọc lớp học">
+                        <div class="header-filter-command-row">
+                            <button type="button" id="classOverviewFilterAll">Chọn tất cả</button>
+                            <button type="button" id="classOverviewFilterNone">Bỏ chọn</button>
+                        </div>
+                        <input type="search" class="popover-search" id="classOverviewFilterInput" value="${escapeHTML(state.classOverviewSearch)}" placeholder="Tìm tên hoặc mã lớp..." autocomplete="off" aria-label="Tìm lớp học">
+                        <div class="popover-options class-checklist-options" id="classOverviewFilterOptions">${classFilterOptions || '<span class="popover-empty">Chưa có lớp học.</span>'}</div>
+                        <div class="popover-footer header-filter-footer">
+                            <button type="button" class="popover-btn-clear" id="classOverviewFilterClear">Xóa lọc</button>
+                            <button type="button" class="popover-btn-apply header-filter-apply" id="classOverviewFilterApply">Áp dụng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </th>
+        <th scope="col">${sortHeader('Số KTV', 'memberCount')}</th>
+        <th scope="col">${sortHeader('Thiết bị đã giao', 'deviceCount')}</th>
+        <th scope="col">${sortHeader('Lượt thực hành', 'attempts')}</th>
+        <th scope="col">${sortHeader('KTV hoàn thành', 'fullyCompletedCount')}</th>
+        <th scope="col">${sortHeader('Tỷ lệ hoàn thành', 'rate')}</th>
+        <th scope="col"><span class="sr-only">Thao tác</span></th>
+    </tr>`;
+    bindClassOverviewControls();
+
+    body.innerHTML = data.summaryRows.map(row => {
+        const isSelected = row.id === state.classMatrixSelectedClass;
+        return `<tr class="class-overview-row ${isSelected ? 'is-selected' : ''}" data-class-id="${escapeHTML(row.id)}">
+            <th class="class-overview-name-cell" scope="row">
+                <button type="button" class="class-overview-link class-overview-open" data-class-id="${escapeHTML(row.id)}" ${isSelected ? 'aria-current="true"' : ''}>
+                    <strong>${escapeHTML(row.name)}</strong>
+                    <span>${escapeHTML(row.code || 'Chưa có mã lớp')}</span>
+                </button>
+            </th>
+            <td class="class-overview-number">${formatNumber.format(row.memberCount)}</td>
+            <td class="class-overview-number">${formatNumber.format(row.deviceCount)}</td>
+            <td class="class-overview-number">${formatNumber.format(row.attempts)}</td>
+            <td class="class-overview-achieved">
+                <button type="button" class="class-overview-completion class-overview-open" data-class-id="${escapeHTML(row.id)}" aria-label="Xem ${row.fullyCompletedCount} trên ${row.memberCount} KTV hoàn thành lớp ${escapeHTML(row.name)}">
+                    <strong>${row.fullyCompletedCount}/${row.memberCount}</strong><span>KTV</span>
+                </button>
+            </td>
+            <td class="class-overview-progress-cell">
+                <div class="class-overview-progress" title="${escapeHTML(`${row.fullyCompletedCount}/${row.memberCount} KTV hoàn thành tất cả bài được giao`)}">
+                    <div class="class-overview-progress-track" aria-hidden="true"><span style="width:${row.rate || 0}%"></span></div>
+                    <strong>${row.rate === null ? '—' : `${row.rate}%`}</strong>
+                </div>
+            </td>
+            <td class="class-overview-action-cell">
+                <button type="button" class="class-overview-action class-overview-open" data-class-id="${escapeHTML(row.id)}" ${isSelected ? 'aria-current="true"' : ''}>
+                    ${isSelected ? 'Đang xem' : 'Xem chi tiết'}<span aria-hidden="true">→</span>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    const classPeople = data.summaryRows.reduce((sum, row) => sum + row.memberCount, 0);
+    const assignedDeviceCount = data.summaryRows.reduce((sum, row) => sum + row.deviceCount, 0);
+    const totalAttempts = data.summaryRows.reduce((sum, row) => sum + row.attempts, 0);
+    const completedPeople = data.summaryRows.reduce((sum, row) => sum + row.fullyCompletedCount, 0);
+    const overallRate = classPeople ? Math.round((completedPeople / classPeople) * 100) : null;
+    foot.innerHTML = `<tr>
+        <th scope="row">Tổng</th>
+        <td>${formatNumber.format(classPeople)}</td>
+        <td>${formatNumber.format(assignedDeviceCount)}</td>
+        <td>${formatNumber.format(totalAttempts)}</td>
+        <td><strong>${completedPeople}/${classPeople}</strong></td>
+        <td><strong>${overallRate === null ? '—' : `${overallRate}%`}</strong></td>
+        <td></td>
+    </tr>`;
+
+    const hasRows = data.summaryRows.length > 0;
+    if (scroll) scroll.hidden = !hasRows;
+    if (empty) {
+        empty.hidden = hasRows;
+        empty.textContent = state.classOverviewSelectedClasses !== null
+            ? 'Không có lớp nào thuộc bộ lọc đã chọn.'
+            : 'Chưa có lớp học để tổng hợp.';
+    }
+    body.querySelectorAll('.class-overview-open').forEach(element => {
+        element.addEventListener('click', () => {
+            selectClassMatrixClass(element.dataset.classId);
+        });
+    });
+}
+
+function closeClassHeaderPopovers(except = null) {
+    document.querySelectorAll('#classMatrix .ktv-header-filter.open').forEach(wrapper => {
+        if (wrapper === except) return;
+        const dropdown = wrapper._floatingDropdown || wrapper.querySelector('.popover-dropdown');
+        wrapper.classList.remove('open');
+        wrapper.querySelector('[aria-expanded]')?.setAttribute('aria-expanded', 'false');
+        dropdown?.classList.remove('open', 'class-header-filter-floating');
+        dropdown?.removeAttribute('style');
+        if (dropdown && wrapper.isConnected && dropdown.parentElement !== wrapper) wrapper.appendChild(dropdown);
+    });
+}
+
+function positionClassHeaderPopover(wrapper, trigger) {
+    const dropdown = wrapper?._floatingDropdown || wrapper?.querySelector('.popover-dropdown');
+    if (!dropdown || !trigger) return;
+    wrapper._floatingDropdown = dropdown;
+    const triggerRect = trigger.getBoundingClientRect();
+    if (triggerRect.bottom < 0 || triggerRect.top > window.innerHeight) {
+        closeClassHeaderPopovers();
+        return;
+    }
+    dropdown.classList.add('class-header-filter-floating', 'open');
+    dropdown.style.visibility = 'hidden';
+    if (dropdown.parentElement !== document.body) document.body.appendChild(dropdown);
+    const dropdownRect = dropdown.getBoundingClientRect();
+    const width = dropdownRect.width || 230;
+    const height = dropdownRect.height || 180;
+    const left = Math.max(8, Math.min(triggerRect.left, window.innerWidth - width - 8));
+    const below = triggerRect.bottom + 6;
+    const top = below + height <= window.innerHeight - 8
+        ? below
+        : Math.max(8, triggerRect.top - height - 6);
+    dropdown.style.left = `${left}px`;
+    dropdown.style.top = `${top}px`;
+    dropdown.style.visibility = 'visible';
+}
+
+function toggleClassHeaderPopover(wrapper, trigger) {
+    const shouldOpen = !wrapper.classList.contains('open');
+    closeClassHeaderPopovers(shouldOpen ? wrapper : null);
+    wrapper.classList.toggle('open', shouldOpen);
+    trigger.setAttribute('aria-expanded', String(shouldOpen));
+    if (shouldOpen) {
+        positionClassHeaderPopover(wrapper, trigger);
+        const dropdown = wrapper._floatingDropdown;
+        window.requestAnimationFrame(() => dropdown?.querySelector('input, [role="menuitem"]')?.focus({ preventScroll: true }));
+    }
+}
+
+function ensureClassPopoverDismissal() {
+    if (window._classPopoverDismissalBound) return;
+    window._classPopoverDismissalBound = true;
+    document.addEventListener('click', event => {
+        document.querySelectorAll('#classMatrix .ktv-header-filter.open').forEach(wrapper => {
+            if (!wrapper.contains(event.target)) closeClassHeaderPopovers();
+        });
+    });
+    const refreshOpenPopover = event => {
+        if (event?.target instanceof Element && event.target.closest('.class-header-filter-floating')) return;
+        document.querySelectorAll('#classMatrix .ktv-header-filter.open').forEach(wrapper => {
+            const trigger = wrapper.querySelector('[aria-expanded]');
+            if (trigger) positionClassHeaderPopover(wrapper, trigger);
+        });
+    };
+    window.addEventListener('resize', refreshOpenPopover);
+    document.addEventListener('scroll', refreshOpenPopover, true);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeClassHeaderPopovers();
+    });
+}
+
+function bindClassChecklistFilter({
+    wrapperId,
+    triggerId,
+    inputId,
+    optionsId,
+    applyId,
+    clearId,
+    selectAllId,
+    selectNoneId,
+    selectionStateKey,
+    searchStateKey
+}) {
+    const wrapper = document.getElementById(wrapperId);
+    const trigger = document.getElementById(triggerId);
+    const input = document.getElementById(inputId);
+    const options = document.getElementById(optionsId);
+    const apply = document.getElementById(applyId);
+    const clear = document.getElementById(clearId);
+    const selectAll = document.getElementById(selectAllId);
+    const selectNone = document.getElementById(selectNoneId);
+    if (!wrapper || !trigger || !input || !options) return;
+    ensureClassPopoverDismissal();
+    trigger.addEventListener('click', event => {
+        event.stopPropagation();
+        if (!wrapper.classList.contains('open')) syncChecklistDraft();
+        toggleClassHeaderPopover(wrapper, trigger);
+    });
+    wrapper.querySelector('.popover-dropdown')?.addEventListener('click', event => event.stopPropagation());
+    const filterVisibleOptions = () => {
+        const keyword = input.value.trim().toLocaleLowerCase('vi');
+        options.querySelectorAll('.popover-option').forEach(option => {
+            option.hidden = Boolean(keyword && !option.textContent.toLocaleLowerCase('vi').includes(keyword));
+        });
+    };
+    input.addEventListener('input', () => {
+        filterVisibleOptions();
+    });
+    const syncChecklistDraft = () => {
+        const selectedValues = state[selectionStateKey];
+        input.value = state[searchStateKey] || '';
+        options.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = selectedValues === null || selectedValues.has(checkbox.value);
+        });
+        filterVisibleOptions();
+    };
+    const setVisibleOptions = checked => {
+        options.querySelectorAll('.popover-option:not([hidden]) input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = checked;
+        });
+    };
+    selectAll?.addEventListener('click', () => setVisibleOptions(true));
+    selectNone?.addEventListener('click', () => setVisibleOptions(false));
+    const applyFilter = () => {
+        const checkboxes = [...options.querySelectorAll('input[type="checkbox"]')];
+        const checkedValues = checkboxes.filter(checkbox => checkbox.checked).map(checkbox => checkbox.value);
+        state[selectionStateKey] = checkedValues.length === checkboxes.length
+            ? null
+            : new Set(checkedValues);
+        state[searchStateKey] = input.value;
+        closeClassHeaderPopovers();
+        renderClassMatrixReport();
+    };
+    apply?.addEventListener('click', applyFilter);
+    input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            applyFilter();
+        }
+    });
+    clear?.addEventListener('click', event => {
+        event.preventDefault();
+        input.value = '';
+        options.querySelectorAll('.popover-option').forEach(option => { option.hidden = false; });
+        options.querySelectorAll('input[type="checkbox"]').forEach(checkbox => { checkbox.checked = true; });
+        input.focus({ preventScroll: true });
+    });
+}
+
+function bindClassOverviewControls() {
+    document.querySelectorAll('[data-class-overview-sort]').forEach(button => {
+        const active = state.classOverviewSort === button.dataset.classOverviewSort;
+        button.closest('th')?.setAttribute('aria-sort', active
+            ? (state.classOverviewSortDirection === 'asc' ? 'ascending' : 'descending')
+            : 'none');
+        button.addEventListener('click', () => {
+            const key = button.dataset.classOverviewSort;
+            if (state.classOverviewSort === key) {
+                state.classOverviewSortDirection = state.classOverviewSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.classOverviewSort = key;
+                state.classOverviewSortDirection = key === 'name' ? 'asc' : 'desc';
+            }
+            renderClassMatrixReport();
+        });
+    });
+    bindClassChecklistFilter({
+        wrapperId: 'classOverviewFilterWrapper',
+        triggerId: 'classOverviewFilterTrigger',
+        inputId: 'classOverviewFilterInput',
+        optionsId: 'classOverviewFilterOptions',
+        applyId: 'classOverviewFilterApply',
+        clearId: 'classOverviewFilterClear',
+        selectAllId: 'classOverviewFilterAll',
+        selectNoneId: 'classOverviewFilterNone',
+        selectionStateKey: 'classOverviewSelectedClasses',
+        searchStateKey: 'classOverviewSearch'
+    });
+}
+
+function bindClassKtvFilterMenu() {
+    bindClassChecklistFilter({
+        wrapperId: 'classKtvFilterWrapper',
+        triggerId: 'classKtvFilterTrigger',
+        inputId: 'classKtvFilterInput',
+        optionsId: 'classKtvFilterOptions',
+        applyId: 'classKtvFilterApply',
+        clearId: 'classKtvFilterClear',
+        selectAllId: 'classKtvFilterAll',
+        selectNoneId: 'classKtvFilterNone',
+        selectionStateKey: 'classMatrixSelectedKtvs',
+        searchStateKey: 'classMatrixKtvSearch'
+    });
+}
+
 function renderClassMatrixReport() {
-    const classSelect = document.getElementById('classMatrixClassSelect');
-    const deviceSelect = document.getElementById('classMatrixDeviceSelect');
+    closeClassHeaderPopovers();
     const head = document.getElementById('classMatrixHead');
     const body = document.getElementById('classMatrixBody');
     const foot = document.getElementById('classMatrixFoot');
     const emptyEl = document.getElementById('classMatrixEmpty');
     const scrollEl = document.getElementById('classMatrixScroll');
+    const overviewCard = document.getElementById('classOverviewCard');
+    const detailCard = document.getElementById('classDetailCard');
+    const deviceProgressList = document.getElementById('classDeviceProgressList');
     if (!head || !body || !foot) return;
 
     const data = getClassMatrixData();
+    if (overviewCard) overviewCard.hidden = false;
+    if (detailCard) detailCard.hidden = data.isOverview;
 
-    // Populate class select
-    if (classSelect) {
-        const optionsHtml = [
-            `<option value="all">Tất cả lớp (${data.allLearnersCount} KTV)</option>`,
-            ...data.classes.map(c => `<option value="${escapeHTML(c.id)}">${escapeHTML(c.name)} · ${c.members.length} KTV</option>`)
-        ].join('');
-        if (classSelect.innerHTML !== optionsHtml) {
-            classSelect.innerHTML = optionsHtml;
-        }
-        classSelect.value = state.classMatrixSelectedClass || 'all';
+    const deviceStatSearch = document.getElementById('classDeviceStatSearch');
+    if (deviceStatSearch && deviceStatSearch.value !== state.classMatrixDeviceStatSearch) {
+        deviceStatSearch.value = state.classMatrixDeviceStatSearch;
+    }
+    const deviceSortLabels = {
+        completed_desc: 'Hoàn thành nhiều nhất',
+        rate_desc: 'Tỷ lệ cao nhất',
+        name_asc: 'Tên thiết bị A–Z'
+    };
+    const deviceSortLabel = document.getElementById('classDeviceStatSortLabel');
+    if (deviceSortLabel) deviceSortLabel.textContent = deviceSortLabels[state.classMatrixDeviceStatSort] || deviceSortLabels.completed_desc;
+    document.querySelectorAll('[data-device-stat-sort]').forEach(option => {
+        option.classList.toggle('is-selected', option.dataset.deviceStatSort === state.classMatrixDeviceStatSort);
+    });
+    const deviceReset = document.getElementById('classDeviceReset');
+    if (deviceReset) deviceReset.hidden = data.selectedDeviceNames.length === data.allGroups.length;
+
+    if (deviceProgressList) {
+        const deviceSearch = state.classMatrixDeviceStatSearch.trim().toLocaleLowerCase('vi');
+        const visibleDeviceStats = data.deviceStats
+            .filter(item => item.assignedLabs > 0 && (!deviceSearch || item.device.toLocaleLowerCase('vi').includes(deviceSearch)))
+            .sort((left, right) => {
+                if (state.classMatrixDeviceStatSort === 'name_asc') return left.device.localeCompare(right.device, 'vi');
+                if (state.classMatrixDeviceStatSort === 'rate_desc') {
+                    const leftRate = left.totalPeople ? left.completedPeople / left.totalPeople : -1;
+                    const rightRate = right.totalPeople ? right.completedPeople / right.totalPeople : -1;
+                    return rightRate - leftRate || left.device.localeCompare(right.device, 'vi');
+                }
+                return right.completedPeople - left.completedPeople || left.device.localeCompare(right.device, 'vi');
+            });
+        deviceProgressList.innerHTML = visibleDeviceStats.map(item => `
+            <button type="button" class="class-device-progress-item ${data.selectedDeviceNames.length === 1 && data.selectedDeviceNames[0] === item.device ? 'is-selected' : ''}"
+                data-class-device-stat="${escapeHTML(item.device)}" ${data.isOverview ? 'disabled' : ''}
+                aria-label="${escapeHTML(`${item.device}: ${item.completedPeople} trên ${item.totalPeople} KTV hoàn thành. ${data.isOverview ? 'Chọn lớp trước khi xem chi tiết.' : 'Lọc bảng nhân sự theo thiết bị này.'}`)}"
+                title="${escapeHTML(`${item.completedPeople}/${item.totalPeople} KTV hoàn thành toàn bộ ${item.assignedLabs} bài được giao trên ${item.device}`)}">
+                <span>${escapeHTML(item.device)}</span>
+                <strong>${item.completedPeople}/${item.totalPeople}</strong>
+                <small>${item.assignedLabs} bài được giao</small>
+            </button>
+        `).join('') || '<span class="class-device-progress-empty">Không có thiết bị phù hợp trong phạm vi lớp.</span>';
+        deviceProgressList.querySelectorAll('[data-class-device-stat]').forEach(button => {
+            button.addEventListener('click', () => {
+                const device = button.dataset.classDeviceStat;
+                state.classMatrixSelectedDevices = [device];
+                renderClassMatrixReport();
+                focusClassMatrixTable();
+            });
+        });
     }
 
-    // Populate device select
-    if (deviceSelect) {
-        const deviceOptionsHtml = '<option value="">Tất cả thiết bị</option>' + data.allGroups
-            .map(g => `<option value="${escapeHTML(g.device)}">${escapeHTML(g.device)}</option>`)
-            .join('');
-        if (deviceSelect.innerHTML !== deviceOptionsHtml) {
-            deviceSelect.innerHTML = deviceOptionsHtml;
-        }
-        deviceSelect._selectedValues = [...state.classMatrixSelectedDevices];
-        deviceSelect.value = state.classMatrixSelectedDevices[0] || '';
-    }
-
-    // Update KPI summary cards
+    // Update the two interactive completion insights.
     const setEl = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.textContent = val;
     };
-    setEl('classMatrixTotalSessions', formatNumber.format(data.totalSessions));
-    setEl('classMatrixTotalKtvs', formatNumber.format(data.rows.length));
-    setEl('classMatrixTotalLabs', formatNumber.format(data.columns.length));
-    setEl('classMatrixCompletionRate', `${data.overallRate}%`);
+    const personnelTotal = data.isOverview
+        ? data.summaryRows.reduce((sum, row) => sum + row.memberCount, 0)
+        : data.totalKtv;
+    const personnelCompleted = data.isOverview
+        ? data.summaryRows.reduce((sum, row) => sum + row.fullyCompletedCount, 0)
+        : data.fullyCompletedPeople;
+    const personnelRate = personnelTotal ? Math.round((personnelCompleted / personnelTotal) * 100) : 0;
+    setEl('classPersonnelCompleted', `${personnelCompleted}/${personnelTotal}`);
+    setEl('classPersonnelRate', `${personnelRate}%`);
+    setEl('classPersonnelScope', data.selectedClass?.name || 'Tất cả lớp');
+    const personnelSummary = document.getElementById('classPersonnelSummaryOpen');
+    if (personnelSummary) personnelSummary.setAttribute(
+        'aria-label',
+        `${personnelCompleted} trên ${personnelTotal} KTV hoàn thành tất cả bài được giao. ${data.isOverview ? 'Chuyển đến bảng chọn lớp.' : 'Xem chi tiết nhân sự.'}`
+    );
+    const personnelProgress = document.getElementById('classPersonnelProgress');
+    if (personnelProgress) personnelProgress.style.width = `${personnelRate}%`;
+    renderClassOverview(data);
+    if (data.isOverview) return;
 
     // Title
     const titleEl = document.getElementById('classMatrixTableTitle');
     if (titleEl) {
         const className = data.selectedClass?.name || 'Tất cả lớp học';
-        titleEl.textContent = `Ma trận thực hành KTV — ${className}`;
+        titleEl.textContent = `Chi tiết lớp — ${className}`;
     }
 
-    if (!data.rows.length) {
+    if (!data.totalKtv) {
         head.innerHTML = '';
         body.innerHTML = '';
         foot.innerHTML = '';
         if (scrollEl) scrollEl.hidden = true;
         if (emptyEl) {
             emptyEl.hidden = false;
-            emptyEl.textContent = state.classMatrixSearch
-                ? `Không tìm thấy KTV nào phù hợp với từ khóa "${state.classMatrixSearch}".`
-                : 'Chưa có KTV trong lớp này.';
+            emptyEl.textContent = 'Chưa có KTV trong lớp này.';
         }
         return;
     }
 
     if (scrollEl) scrollEl.hidden = false;
-    if (emptyEl) emptyEl.hidden = true;
+    if (emptyEl) {
+        emptyEl.hidden = data.rows.length > 0;
+        emptyEl.textContent = state.classMatrixSelectedKtvs !== null
+            ? 'Không có KTV nào thuộc bộ lọc đã chọn.'
+            : state.classMatrixProgressFilter !== null
+            ? 'Không có nhân sự phù hợp với mức tiến độ đã chọn.'
+            : 'Không có dữ liệu phù hợp.';
+    }
+
+    const ktvFilterSearch = state.classMatrixKtvSearch.trim().toLocaleLowerCase('vi');
+    const selectedKtvIds = state.classMatrixSelectedKtvs;
+    const ktvFilterOptions = [...data.ktvOptions]
+        .sort((left, right) => left.name.localeCompare(right.name, 'vi'))
+        .map(learner => {
+            const searchText = `${learner.name} ${learner.email} ${learner.code || ''}`.toLocaleLowerCase('vi');
+            return `<label class="popover-option" ${ktvFilterSearch && !searchText.includes(ktvFilterSearch) ? 'hidden' : ''}>
+                <input type="checkbox" value="${escapeHTML(learner.email)}" ${selectedKtvIds === null || selectedKtvIds.has(learner.email) ? 'checked' : ''}>
+                <span><strong>${escapeHTML(learner.name)}</strong><small>${escapeHTML(formatClassEmployeeId(learner.code) || learner.email)}</small></span>
+            </label>`;
+        }).join('');
 
     // Render thead
     head.innerHTML = `
         <tr class="report-device-header-row">
             <th class="ktv-stt-head" scope="col" rowspan="2">STT</th>
-            <th class="ktv-info-head" scope="col" rowspan="2">Kỹ thuật viên</th>
+            <th class="ktv-code-head" scope="col" rowspan="2">Mã NV</th>
+            <th class="ktv-info-head" scope="col" rowspan="2">
+                <div class="class-overview-head-wrap">
+                    <span class="ktv-header-label">Kỹ thuật viên</span>
+                    <div class="ktv-header-filter ${state.classMatrixSelectedKtvs !== null ? 'has-value' : ''}" id="classKtvFilterWrapper">
+                        <button type="button" class="popover-trigger-btn" id="classKtvFilterTrigger"
+                            aria-label="Lọc kỹ thuật viên theo tên, email hoặc mã nhân viên" aria-expanded="false"></button>
+                        <div class="popover-dropdown header-filter-menu class-column-filter" role="dialog" aria-label="Lọc kỹ thuật viên">
+                            <div class="header-filter-command-row">
+                                <button type="button" id="classKtvFilterAll">Chọn tất cả</button>
+                                <button type="button" id="classKtvFilterNone">Bỏ chọn</button>
+                            </div>
+                            <input type="search" class="popover-search" id="classKtvFilterInput"
+                                value="${escapeHTML(state.classMatrixKtvSearch)}" placeholder="Tìm tên, email hoặc mã NV..." autocomplete="off" aria-label="Tìm kỹ thuật viên">
+                            <div class="popover-options class-checklist-options" id="classKtvFilterOptions">${ktvFilterOptions || '<span class="popover-empty">Chưa có KTV.</span>'}</div>
+                            <div class="popover-footer header-filter-footer">
+                                <button type="button" class="popover-btn-clear" id="classKtvFilterClear">Xóa lọc</button>
+                                <button type="button" class="popover-btn-apply header-filter-apply" id="classKtvFilterApply">Áp dụng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </th>
             ${data.selectedGroups.map((group, index) => `
                 <th class="report-device-group report-device-tone-${index % 5}" scope="colgroup" colspan="${(group.labs || []).length}">
                     ${escapeHTML(group.device)}
                     <span>${(group.labs || []).length} bài lab</span>
                 </th>
             `).join('')}
-            <th class="ktv-total-head" scope="col" rowspan="2">Đã đạt</th>
-            <th class="ktv-rate-head" scope="col" rowspan="2">Tỷ lệ</th>
+            <th class="ktv-total-head" scope="col" rowspan="2">
+                <div class="ktv-total-header-wrap">
+                    <span class="ktv-header-label">Đã đạt</span>
+                    <div class="popover-filter-wrapper ktv-header-filter ${state.classMatrixProgressFilter !== null ? 'has-value' : ''}" id="classProgressFilterWrapper">
+                        <button type="button" class="popover-trigger-btn" id="classProgressFilterTrigger"
+                            aria-label="Lọc theo tiến độ nhân sự" aria-haspopup="dialog" aria-expanded="false"></button>
+                        <div class="popover-dropdown header-filter-menu" id="classProgressFilterDropdown">
+                            <div class="header-filter-command-row">
+                                <button type="button" id="classProgressFilterAll">Chọn tất cả</button>
+                                <button type="button" id="classProgressFilterNone">Bỏ chọn</button>
+                            </div>
+                            <div class="popover-options ktv-filter-options" id="classProgressFilterOptions"></div>
+                            <div class="popover-footer header-filter-footer">
+                                <button type="button" class="popover-btn-clear" id="classProgressFilterClear">Xóa lọc</button>
+                                <button type="button" class="header-filter-apply" id="classProgressFilterApply">Áp dụng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </th>
+            <th class="ktv-rate-head" scope="col" rowspan="2">
+                <button type="button" class="ktv-header-sort" id="classMatrixRateSort"
+                    data-matrix-sort="completion_rate_asc" aria-sort="none">
+                    Tỷ lệ <span class="sort-mark"></span>
+                </button>
+            </th>
         </tr>
         <tr class="report-lab-header-row">
             ${data.columns.map(col => `
@@ -4532,12 +5157,16 @@ function renderClassMatrixReport() {
         </tr>
     `;
 
+    renderClassMatrixSortMarks();
+    renderClassProgressFilterMenu(data);
+
     // Render tbody
     body.innerHTML = data.rows.map((row, index) => {
         const rateClass = row.rate === null ? 'report-cell-zero' : (row.rate >= 80 ? 'report-cell-high' : (row.rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
         return `
             <tr>
                 <td class="ktv-stt-cell">${index + 1}</td>
+                <td class="ktv-code-cell" title="${escapeHTML(row.code || 'Chưa có mã nhân viên')}">${escapeHTML(formatClassEmployeeId(row.code) || '—')}</td>
                 <th class="ktv-info-cell" scope="row" title="${escapeHTML(`${row.name} (${row.email})`)}">
                     <div class="ktv-info-wrap">
                         <div class="ktv-info-top">
@@ -4545,28 +5174,15 @@ function renderClassMatrixReport() {
                             ${row.region ? `<span class="ktv-info-badge">${escapeHTML(row.region)}</span>` : ''}
                         </div>
                         <div class="ktv-info-meta">
-                            ${row.code ? `<span class="ktv-info-code">${escapeHTML(row.code)}</span> • ` : ''}
                             <span>${escapeHTML(row.email)}</span>
                         </div>
                     </div>
                 </th>
                 ${row.cells.map(cell => {
-                    if (!cell.assigned) {
-                        return `<td class="report-metric-cell report-cell-zero" title="${escapeHTML(`${row.name} • ${cell.device} • ${cell.lab}: Chưa phân công`)}"><strong>—</strong><span>Chưa giao</span></td>`;
-                    }
-                    if (cell.completed) {
-                        const passNote = cell.firstPassAttemptNo === 1 
-                            ? 'Đạt ngay lần thực hành 1' 
-                            : (cell.firstPassAttemptNo > 1 ? `Đạt ở lần thực hành thứ ${cell.firstPassAttemptNo}` : 'Đã đạt chuẩn');
-                        const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: Đã đạt (${passNote}) • Tổng ${cell.attempts} lượt thực hành`;
-                        return `<td class="report-metric-cell report-cell-high" title="${escapeHTML(tooltip)}"><strong>1/1</strong><span>100% HT</span></td>`;
-                    }
-                    if (cell.attempts > 0) {
-                        const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: Chưa đạt • Đã làm ${cell.attempts} lượt thực hành`;
-                        return `<td class="report-metric-cell report-cell-low" title="${escapeHTML(tooltip)}"><strong>0/1</strong><span>0% HT</span></td>`;
-                    }
-                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: Chưa làm`;
-                    return `<td class="report-metric-cell report-cell-zero" title="${escapeHTML(tooltip)}"><strong>0/1</strong><span>Chưa làm</span></td>`;
+                    const passRate = cell.attempts ? Math.round((cell.passCount / cell.attempts) * 100) : null;
+                    const cellClass = passRate === null ? 'report-cell-zero' : (passRate >= 80 ? 'report-cell-high' : (passRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
+                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: ${cell.passCount}/${cell.attempts} phiên đạt 100 điểm`;
+                    return `<td class="report-metric-cell ${cellClass}" title="${escapeHTML(tooltip)}"><strong>${cell.passCount}/${cell.attempts}</strong></td>`;
                 }).join('')}
                 <td class="ktv-total-cell ${rateClass}">
                     <strong>${row.completed}/${row.assigned}</strong>
@@ -4581,20 +5197,18 @@ function renderClassMatrixReport() {
     // Render tfoot
     foot.innerHTML = `
         <tr>
-            <th class="ktv-footer-label" scope="row" colspan="2">Tổng lớp (${data.rows.length} KTV)</th>
+            <td class="ktv-footer-stt" aria-hidden="true"></td>
+            <td class="ktv-footer-code" aria-hidden="true"></td>
+            <th class="ktv-footer-label" scope="row">Tổng</th>
             ${data.columns.map(col => {
                 const colKey = `${col.device}\u001f${col.lab}`;
-                const stat = data.labStats.get(colKey) || { assigned: 0, completed: 0, attempts: 0 };
-                const rate = stat.assigned > 0 ? Math.round((stat.completed / stat.assigned) * 100) : null;
+                const stat = data.labStats.get(colKey) || { people: 0, completed: 0, attempts: 0 };
+                const rate = stat.people > 0 ? Math.round((stat.completed / stat.people) * 100) : null;
                 const cellClass = rate === null ? 'report-cell-zero' : (rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-                const tooltip = `${stat.completed}/${stat.assigned} KTV hoàn thành • ${stat.attempts} lượt thực hành`;
-                if (!stat.assigned) {
-                    return `<td class="report-metric-cell report-cell-zero ${col.isFirst ? 'group-start' : ''}" title="Chưa giao trong lớp này"><strong>—</strong><span>Chưa giao</span></td>`;
-                }
+                const tooltip = `${stat.completed}/${stat.people} KTV đã đạt • ${stat.attempts} lượt thực hành`;
                 return `
                     <td class="report-metric-cell ${cellClass} ${col.isFirst ? 'group-start' : ''}" title="${escapeHTML(tooltip)}">
-                        <strong>${stat.completed}/${stat.assigned}</strong>
-                        <span>${rate}% HT</span>
+                        <strong>${stat.completed}/${stat.people}</strong>
                     </td>
                 `;
             }).join('')}
@@ -4616,25 +5230,138 @@ function renderClassMatrixReport() {
             scrollEl.scrollLeft += event.deltaY;
         }, { passive: false });
     }
+
+    bindClassMatrixSortButtons();
+    bindClassKtvFilterMenu();
+    bindClassProgressFilterMenu();
+}
+
+function renderClassMatrixSortMarks() {
+    document.querySelectorAll('#classMatrix .ktv-header-sort').forEach(button => {
+        const mark = button.querySelector('.sort-mark');
+        const header = button.closest('th');
+        const isActive = state.classMatrixPersonnelSort === button.dataset.matrixSort;
+        mark.textContent = isActive ? (state.classMatrixPersonnelSortDirection === 'asc' ? '↑' : '↓') : '↕';
+        button.classList.toggle('is-sorted', isActive);
+        if (header) header.setAttribute('aria-sort', isActive ? (state.classMatrixPersonnelSortDirection === 'asc' ? 'ascending' : 'descending') : 'none');
+    });
+}
+
+function renderClassProgressFilterMenu(data) {
+    const optionsEl = document.getElementById('classProgressFilterOptions');
+    if (!optionsEl) return;
+    const options = (data.progressOptions || [])
+        .map(o => ({ value: o.value, label: `${o.completed}/${o.assigned} bài hoàn thành` }));
+    const selectedValues = state.classMatrixProgressFilter;
+    optionsEl.innerHTML = options.map(option => `
+        <label class="popover-option">
+            <input type="checkbox" value="${escapeHTML(option.value)}" ${selectedValues === null || selectedValues.has(option.value) ? 'checked' : ''}>
+            ${escapeHTML(option.label)}
+        </label>
+    `).join('') || '<span class="popover-empty">Chưa có mức tiến độ để lọc.</span>';
+}
+
+function bindClassMatrixSortButtons() {
+    document.querySelectorAll('#classMatrix .ktv-header-sort').forEach(button => {
+        if (button.dataset.matrixSortBound === 'true') return;
+        button.dataset.matrixSortBound = 'true';
+        button.addEventListener('click', () => bindClassMatrixSortButtonClick(button));
+    });
+}
+
+function bindClassMatrixSortButtonClick(button) {
+    const target = button.dataset.matrixSort;
+    if (state.classMatrixPersonnelSort === target) {
+        state.classMatrixPersonnelSortDirection = state.classMatrixPersonnelSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        state.classMatrixPersonnelSort = target;
+        state.classMatrixPersonnelSortDirection = target === 'name_asc' ? 'asc' : 'desc';
+    }
+    renderClassMatrixReport();
+}
+
+function bindClassProgressFilterMenu() {
+    if (!document.getElementById('classProgressFilterWrapper')) return;
+    const wrapper = document.querySelector('#classProgressFilterWrapper');
+    const trigger = document.getElementById('classProgressFilterTrigger');
+    const optionsEl = document.getElementById('classProgressFilterOptions');
+    const clearBtn = document.getElementById('classProgressFilterClear');
+    const applyBtn = document.getElementById('classProgressFilterApply');
+    const selectAllBtn = document.getElementById('classProgressFilterAll');
+    const selectNoneBtn = document.getElementById('classProgressFilterNone');
+    if (!wrapper || !trigger) return;
+    ensureClassPopoverDismissal();
+    if (wrapper.dataset.ktvFilterBound === 'true') return;
+    wrapper.dataset.ktvFilterBound = 'true';
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleClassHeaderPopover(wrapper, trigger);
+    });
+    wrapper.querySelector('.popover-dropdown')?.addEventListener('click', event => event.stopPropagation());
+    const setAllOptions = checked => {
+        optionsEl?.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = checked;
+        });
+    };
+    selectAllBtn?.addEventListener('click', () => setAllOptions(true));
+    selectNoneBtn?.addEventListener('click', () => setAllOptions(false));
+    clearBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        setAllOptions(true);
+    });
+    applyBtn?.addEventListener('click', () => {
+        const checkboxes = [...(optionsEl?.querySelectorAll('input[type="checkbox"]') || [])];
+        const checkedValues = checkboxes.filter(checkbox => checkbox.checked).map(checkbox => checkbox.value);
+        state.classMatrixProgressFilter = checkedValues.length === checkboxes.length
+            ? null
+            : new Set(checkedValues);
+        closeClassHeaderPopovers();
+        renderClassMatrixReport();
+    });
+}
+
+function bindClassDeviceStatSortMenu() {
+    const wrapper = document.getElementById('classDeviceStatSortWrapper');
+    const trigger = document.getElementById('classDeviceStatSortTrigger');
+    if (!wrapper || !trigger) return;
+    ensureClassPopoverDismissal();
+    trigger.addEventListener('click', event => {
+        event.stopPropagation();
+        toggleClassHeaderPopover(wrapper, trigger);
+    });
+    wrapper.querySelector('.popover-dropdown')?.addEventListener('click', event => event.stopPropagation());
+    wrapper.querySelectorAll('[data-device-stat-sort]').forEach(option => {
+        option.addEventListener('click', () => {
+            state.classMatrixDeviceStatSort = option.dataset.deviceStatSort;
+            closeClassHeaderPopovers();
+            renderClassMatrixReport();
+        });
+    });
 }
 
 function initClassMatrix() {
-    document.getElementById('classMatrixClassSelect')?.addEventListener('change', (e) => {
-        state.classMatrixSelectedClass = e.target.value;
+    document.getElementById('classOverviewBack')?.addEventListener('click', () => {
+        selectClassMatrixClass('all');
+    });
+    document.getElementById('classPersonnelSummaryOpen')?.addEventListener('click', () => {
+        if (state.classMatrixSelectedClass === 'all') {
+            const overview = document.getElementById('classOverviewCard');
+            overview?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            overview?.querySelector('.class-overview-open')?.focus({ preventScroll: true });
+            return;
+        }
+        focusClassMatrixTable();
+    });
+    document.getElementById('classDeviceStatSearch')?.addEventListener('input', (e) => {
+        state.classMatrixDeviceStatSearch = e.target.value;
         renderClassMatrixReport();
     });
-    document.getElementById('classMatrixDeviceSelect')?.addEventListener('change', (e) => {
-        state.classMatrixSelectedDevices = [...(e.target._selectedValues || [])];
+    document.getElementById('classDeviceReset')?.addEventListener('click', () => {
+        state.classMatrixSelectedDevices = null;
         renderClassMatrixReport();
     });
-    let searchDebounce;
-    document.getElementById('classMatrixSearchInput')?.addEventListener('input', (e) => {
-        clearTimeout(searchDebounce);
-        searchDebounce = setTimeout(() => {
-            state.classMatrixSearch = e.target.value;
-            renderClassMatrixReport();
-        }, 200);
-    });
+    bindClassDeviceStatSortMenu();
     // Matrix view toggle buttons (tab switch between Region matrix & KTV Class matrix)
     document.querySelectorAll('[data-matrix-tab-target]').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -5142,7 +5869,7 @@ function buildActivityReportDescriptor() {
         ],
         headers: [
             'STT', 'Ngày', 'Giờ', 'Mã phiên', 'Mã NV', 'Họ và tên', 'Email', 'Vị trí',
-            'Khu vực/CNx', 'Chi nhánh', 'Đơn vị', 'Lớp', 'Thiết bị', 'Bài lab', 'Kỹ năng',
+            'Khu vực / Chi nhánh', 'Chi nhánh', 'Đơn vị', 'Lớp', 'Thiết bị', 'Bài lab', 'Kỹ năng',
             'Chế độ', 'Kết quả', 'Hoàn thành lần đầu', 'Thời lượng (giây)',
             'Thời lượng', 'Hành động cuối'
         ],
@@ -5215,12 +5942,12 @@ function buildAuthoritativeRegionReportDescriptor(matrix) {
         type: 'region',
         title: 'FTC - BÁO CÁO TIẾN ĐỘ THỰC HÀNH THEO CHI NHÁNH',
         period: dashboardReport?.meta?.period?.label || getRangeLabel(),
-        scope: 'Ma trận Khu vực/CNx theo thiết bị và bài lab',
+        scope: 'Kết quả theo khu vực, thiết bị và bài lab',
         filename: buildReportFilename('FTC_Tien_do_theo_chi_nhanh'),
         countLabel: `${formatNumber.format(rows.length)} khu vực · ${formatNumber.format(columns.length)} bài lab`,
         available: rows.length > 0 && columns.length > 0,
         metadata: [['Quy ước ô dữ liệu', 'Hoàn thành/phạm vi (tỷ lệ) · lượt thực hành']],
-        headers: ['STT', 'Khu vực/CNx', ...columns.map(column => `${column.device} - ${column.lab}`), 'Tổng khu vực'],
+        headers: ['STT', 'Khu vực / Chi nhánh', ...columns.map(column => `${column.device} - ${column.lab}`), 'Tổng khu vực'],
         columnTypes: ['integer', 'text', ...columns.map(() => 'text'), 'text'],
         rows
     };
@@ -5256,7 +5983,7 @@ function buildRegionReportDescriptor() {
         type: 'region',
         title: 'FTC - BÁO CÁO TIẾN ĐỘ THỰC HÀNH THEO CHI NHÁNH',
         period: getRangeLabel(),
-        scope: 'Ma trận Khu vực/CNx theo thiết bị và bài lab',
+        scope: 'Kết quả theo khu vực, thiết bị và bài lab',
         filename: buildReportFilename('FTC_Tien_do_theo_chi_nhanh'),
         countLabel: `${formatNumber.format(rows.length)} khu vực · ${formatNumber.format(columns.length)} bài lab`,
         available: rows.length > 0 && columns.length > 0,
@@ -5264,7 +5991,7 @@ function buildRegionReportDescriptor() {
             ['Quy ước ô dữ liệu', 'Hoàn thành/phạm vi (tỷ lệ) · lượt thực hành'],
             ['Nguồn phạm vi', 'Danh mục KTV đang hoạt động và danh mục bài lab']
         ],
-        headers: ['STT', 'Khu vực/CNx', ...columns.map(column => `${column.device} - ${column.lab}`), 'Tổng khu vực'],
+        headers: ['STT', 'Khu vực / Chi nhánh', ...columns.map(column => `${column.device} - ${column.lab}`), 'Tổng khu vực'],
         columnTypes: ['integer', 'text', ...columns.map(() => 'text'), 'text'],
         rows
     };
@@ -5276,8 +6003,40 @@ function buildClassMatrixReportDescriptor() {
     const deviceLabel = data.selectedGroups.length === data.allGroups.length
         ? 'Tất cả thiết bị'
         : (data.selectedGroups.map(group => group.device).join(', ') || 'Không chọn thiết bị');
-    const searchLabel = state.classMatrixSearch.trim() ? ` · Tìm kiếm: “${state.classMatrixSearch.trim()}”` : '';
-    const scope = `${classLabel} · ${deviceLabel}${searchLabel}`;
+    const filterLabel = data.isOverview && state.classOverviewSelectedClasses !== null
+        ? ` · Đã lọc ${data.summaryRows.length}/${data.classes.length} lớp`
+        : (!data.isOverview && state.classMatrixSelectedKtvs !== null
+            ? ` · Đã lọc ${state.classMatrixSelectedKtvs.size}/${data.totalKtv} KTV`
+            : '');
+    const scope = `${classLabel} · ${deviceLabel}${filterLabel}`;
+    if (data.isOverview) {
+        return {
+            type: 'class_matrix',
+            title: 'FTC - BÁO CÁO TỔNG HỢP TẤT CẢ LỚP',
+            period: 'Dữ liệu lũy kế',
+            scope,
+            filename: buildReportFilename('FTC_Tong_hop_tat_ca_lop'),
+            countLabel: `${formatNumber.format(data.summaryRows.length)} lớp`,
+            available: data.summaryRows.length > 0,
+            metadata: [
+                ['Thiết bị', deviceLabel],
+                ['KTV hoàn thành', 'KTV hoàn thành tất cả bài lab được giao'],
+                ['Tỷ lệ hoàn thành', 'KTV hoàn thành tất cả bài được giao / Tổng KTV của lớp']
+            ],
+            headers: ['STT', 'Mã lớp', 'Tên lớp', 'Số KTV', 'Thiết bị đã giao', 'Lượt thực hành', 'KTV hoàn thành', 'Tỷ lệ hoàn thành'],
+            columnTypes: ['integer', 'text', 'text', 'integer', 'integer', 'integer', 'text', 'percent'],
+            rows: data.summaryRows.map((row, index) => [
+                index + 1,
+                row.code || '',
+                row.name || '',
+                row.memberCount,
+                row.deviceCount,
+                row.attempts,
+                `${row.fullyCompletedCount}/${row.memberCount}`,
+                row.rate === null ? '' : row.rate / 100
+            ])
+        };
+    }
     return {
         type: 'class_matrix',
         title: 'FTC - BÁO CÁO TIẾN ĐỘ KTV THEO LỚP',
@@ -5291,10 +6050,10 @@ function buildClassMatrixReportDescriptor() {
             ['Thiết bị', deviceLabel],
             ['Tiến độ tổng', `${data.totalCompletedAll}/${data.totalAssignedAll} (${data.overallRate}%)`],
             ['Tổng lượt thực hành', data.totalSessions],
-            ['Quy ước trạng thái', 'Đã đạt · Chưa đạt · Chưa làm · Chưa phân công']
+            ['Quy ước ô dữ liệu', 'Số phiên đạt 100 điểm / Tổng số phiên thực hiện bài lab']
         ],
         headers: [
-            'STT', 'Mã NV', 'Họ và tên', 'Email', 'Khu vực/CNx', 'Lớp học',
+            'STT', 'Mã NV', 'Họ và tên', 'Email', 'Khu vực / Chi nhánh', 'Lớp học',
             ...data.columns.map(column => `${column.device} - ${column.lab}`),
             'Bài đã đạt', 'Bài trong phạm vi', 'Tỷ lệ hoàn thành (%)', 'Lượt thực hành'
         ],
@@ -5310,12 +6069,7 @@ function buildClassMatrixReportDescriptor() {
             row.email || '',
             row.region || '',
             row.className || row.classCode || classLabel,
-            ...row.cells.map(cell => {
-                if (!cell.assigned) return 'Chưa phân công';
-                if (cell.completed) return cell.attempts ? `Đã đạt · ${cell.attempts} lượt` : 'Đã đạt';
-                if (cell.attempts > 0) return `Chưa đạt · ${cell.attempts} lượt`;
-                return 'Chưa làm';
-            }),
+            ...row.cells.map(cell => `${cell.passCount}/${cell.attempts}`),
             row.completed,
             row.assigned,
             row.rate === null || row.rate === undefined ? '' : row.rate / 100,
@@ -5721,8 +6475,8 @@ function openDeviceSubModal(deviceName, rows) {
     const pendingCount = allLabsList.filter(item => item.statusCategory === 'pending').length;
     const notStartedCount = allLabsList.filter(item => item.statusCategory === 'not_started').length;
 
-    if (title) title.textContent = `Chi tiết thiết bị: ${deviceName}`;
-    if (subtitle) subtitle.textContent = `Tổng số ${totalLabsCount} bài lab thuộc quy trình của thiết bị ${deviceName}`;
+    if (title) title.textContent = `Thiết bị — ${deviceName}`;
+    if (subtitle) subtitle.textContent = `${totalLabsCount} bài lab trong quy trình của thiết bị ${deviceName}`;
 
     const totalLabsEl = document.getElementById('subModalTotalLabs');
     const completedCountEl = document.getElementById('subModalCompletedCount');
@@ -5805,8 +6559,8 @@ function renderSubModalLabList(filter) {
                     <div class="sub-modal-item-grid2x2">
                         <div class="sub-modal-cell">Gần nhất: <strong>Chưa làm</strong></div>
                         <div class="sub-modal-cell">Kết quả: <strong>Chưa có phiên làm bài</strong></div>
-                        <div class="sub-modal-cell">Lượt Thực hành: <strong>0 lần</strong></div>
-                        <div class="sub-modal-cell">Lượt Hướng dẫn: <strong>0 lần</strong></div>
+                        <div class="sub-modal-cell">Thực hành: <strong>0 lượt</strong></div>
+                        <div class="sub-modal-cell">Hướng dẫn: <strong>0 lượt</strong></div>
                     </div>
                 </div>
             `;
@@ -5824,8 +6578,8 @@ function renderSubModalLabList(filter) {
                     <div class="sub-modal-item-grid2x2">
                         <div class="sub-modal-cell">Gần nhất: <strong>${escapeHTML(item.lastDateTimeStr)}</strong> (${item.lastDuration})</div>
                         <div class="sub-modal-cell">Kết quả: <strong>${passDetail}</strong></div>
-                        <div class="sub-modal-cell">Lượt Thực hành: <strong>${item.practiceCount} lần</strong></div>
-                        <div class="sub-modal-cell">Lượt Hướng dẫn: <strong>${item.guideCount} lần</strong></div>
+                        <div class="sub-modal-cell">Thực hành: <strong>${item.practiceCount} lượt</strong></div>
+                        <div class="sub-modal-cell">Hướng dẫn: <strong>${item.guideCount} lượt</strong></div>
                     </div>
                 </div>
             `;
@@ -5839,8 +6593,8 @@ function renderSubModalLabList(filter) {
                 <div class="sub-modal-item-grid2x2">
                     <div class="sub-modal-cell">Gần nhất: <strong>${escapeHTML(item.lastDateTimeStr)}</strong> (${item.lastDuration})</div>
                     <div class="sub-modal-cell">Kết quả: <strong>${item.hasUngradedCompletion ? 'Đã nộp, chưa có kết quả chấm' : `Chưa đạt sau ${item.practiceCount} lượt thực hành`}</strong></div>
-                    <div class="sub-modal-cell">Lượt Thực hành: <strong>${item.practiceCount} lần</strong></div>
-                    <div class="sub-modal-cell">Lượt Hướng dẫn: <strong>${item.guideCount} lần</strong></div>
+                    <div class="sub-modal-cell">Thực hành: <strong>${item.practiceCount} lượt</strong></div>
+                    <div class="sub-modal-cell">Hướng dẫn: <strong>${item.guideCount} lượt</strong></div>
                 </div>
             </div>
         `;
@@ -5981,39 +6735,39 @@ function filterSessionsByDate(startStr, endStr) {
 
 const DASHBOARD_VIEWS = {
     overview: {
-        eyebrow: 'Tổng quan vận hành',
-        title: 'Dashboard giám sát thực hành KTV',
-        subtitle: 'Theo dõi hoạt động, tiến độ và chất lượng thực hành'
+        eyebrow: 'Tổng quan',
+        title: 'Tổng quan thực hành KTV',
+        subtitle: 'Hoạt động và kết quả thực hành trong tháng'
     },
     instructors: {
-        eyebrow: 'Không gian giảng viên',
-        title: 'Không gian theo dõi dành cho giảng viên',
-        subtitle: 'Theo dõi bài nộp và trạng thái thực hành của KTV'
+        eyebrow: 'Đào tạo',
+        title: 'Theo dõi lớp học',
+        subtitle: 'Tiến độ lớp và các bài nộp gần đây'
     },
     analytics: {
         eyebrow: 'Báo cáo vận hành',
-        title: 'Báo cáo chi nhánh',
-        subtitle: 'Ma trận thiết bị và bài lab theo từng Khu vực/CNx'
+        title: 'Báo cáo theo khu vực',
+        subtitle: 'Kết quả thực hành theo khu vực, chi nhánh và bài lab'
     },
     class_matrix: {
         eyebrow: 'Báo cáo đào tạo',
         title: 'Báo cáo KTV theo lớp',
-        subtitle: 'Ma trận tiến độ thực hành bài lab theo từng Kỹ thuật viên'
+        subtitle: 'Tiến độ thực hành của từng KTV trong lớp'
     },
     technicians: {
-        eyebrow: 'Hiệu suất kỹ thuật viên',
-        title: 'Thống kê kỹ thuật viên',
-        subtitle: 'Tra cứu lịch sử, thiết bị và kết quả thực hành theo KTV'
+        eyebrow: 'Tra cứu',
+        title: 'Tra cứu KTV',
+        subtitle: 'Lịch sử, thiết bị và kết quả thực hành của từng KTV'
     },
     roster: {
         eyebrow: 'Quản trị nhân sự',
         title: 'Quản lý KTV',
-        subtitle: 'Import, theo dõi và quản lý danh sách kỹ thuật viên'
+        subtitle: 'Quản lý hồ sơ và cập nhật danh sách từ Excel'
     },
     classes: {
         eyebrow: 'Quản trị đào tạo',
-        title: 'Quản lý lớp học',
-        subtitle: 'Đăng ký lớp, chọn KTV và phân giao thiết bị thực hành'
+        title: 'Quản lý lớp',
+        subtitle: 'Tạo lớp, chọn KTV và giao thiết bị thực hành'
     },
 };
 
@@ -6497,7 +7251,7 @@ async function doRosterPreview(file) {
     try {
         const resp = await fetch(`${API_BASE_URL}/roster/import`, { method: 'POST', body: formData });
         const json = await resp.json().catch(() => ({}));
-        if (!resp.ok) throw new Error(json.error?.message || `Preview thất bại (HTTP ${resp.status})`);
+        if (!resp.ok) throw new Error(json.error?.message || `Kiểm tra file thất bại (HTTP ${resp.status})`);
         if (state.rosterImportFile !== file) return;
         const data = json.data || {};
         state.rosterPreviewData = data;
@@ -6509,17 +7263,17 @@ async function doRosterPreview(file) {
                 && Number(data.totalRows || data.total_rows || 0) > 0
                 && Number(data.error_count || data.errorCount || 0) === 0;
             importButton.disabled = !canImport;
-            importButton.textContent = canImport ? 'Import danh sách KTV' : 'File chưa hợp lệ';
+            importButton.textContent = canImport ? 'Nhập danh sách KTV' : 'File chưa hợp lệ';
         }
     } catch (err) {
         if (state.rosterImportFile !== file) return;
         state.rosterPreviewData = null;
-        console.error('Preview error:', err);
+        console.error('Roster preview error:', err);
         renderRosterPreviewFailure(err.message || String(err));
         const importButton = document.getElementById('rosterConfirmImportBtn');
         if (importButton) {
             importButton.disabled = true;
-            importButton.textContent = 'Không thể import';
+            importButton.textContent = 'Không thể nhập';
         }
     }
 }
@@ -6550,7 +7304,7 @@ function renderRosterPreview(data) {
         const activeRows = Number(data.activeRows || data.active_rows || 0);
         const terminationRows = Number(data.terminationRows || data.termination_rows || 0);
         const modeLabel = isDelta
-            ? `Theo sheet: ${activeRows} Tân binh, ${terminationRows} Nghỉ việc`
+            ? `Theo sheet: ${activeRows} KTV, ${terminationRows} Nghỉ việc`
             : 'Đồng bộ toàn bộ danh sách';
         statsEl.innerHTML = `
             <span class="roster-preview-stat">${escapeHTML(modeLabel)}</span>
@@ -6596,15 +7350,15 @@ async function confirmRosterImport() {
     if (state.rosterImportBusy || !state.rosterImportFile) return;
     const data = state.rosterPreviewData;
     if (!data) {
-        showToast('Vui lòng đợi hệ thống kiểm tra file xong trước khi import.', 'info');
+        showToast('Vui lòng đợi hệ thống kiểm tra file xong trước khi nhập.', 'info');
         return;
     }
     if ((data.error_count || data.errorCount || 0) > 0) {
-        showToast('File còn lỗi dữ liệu. Vui lòng sửa các dòng được đánh dấu trước khi import.', 'error');
+        showToast('File còn lỗi dữ liệu. Vui lòng sửa các dòng được đánh dấu trước khi nhập.', 'error');
         return;
     }
     if (data.canImport === false || data.can_import === false || Number(data.totalRows || data.total_rows || 0) <= 0) {
-        showToast('File không có dòng KTV hợp lệ để import.', 'error');
+        showToast('File không có dòng KTV hợp lệ để nhập.', 'error');
         return;
     }
     const terminationCount = Number(data.terminated || 0);
@@ -6621,7 +7375,7 @@ async function confirmRosterImport() {
     state.rosterImportBusy = true;
     let importSucceeded = false;
     const btn = document.getElementById('rosterConfirmImportBtn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Đang import...'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang nhập...'; }
 
     const formData = new FormData();
     formData.append('file', state.rosterImportFile);
@@ -6632,7 +7386,7 @@ async function confirmRosterImport() {
         const json = await resp.json();
         if (!resp.ok) {
             const errData = json.error || {};
-            showRosterResult(errData.message || 'Import thất bại.', false, errData.details);
+            showRosterResult(errData.message || 'Nhập dữ liệu thất bại.', false, errData.details);
         } else {
             const result = json.data || {};
             importSucceeded = true;
@@ -6646,12 +7400,12 @@ async function confirmRosterImport() {
             await Promise.allSettled([loadRosterList(), loadRosterHistory(), refreshDashboardData()]);
         }
     } catch (err) {
-        showRosterResult('Lỗi khi import: ' + err.message, false);
+        showRosterResult('Lỗi khi nhập dữ liệu: ' + err.message, false);
     } finally {
         state.rosterImportBusy = false;
         if (btn) {
             btn.disabled = importSucceeded;
-            btn.textContent = importSucceeded ? 'Đã import' : 'Import danh sách KTV';
+            btn.textContent = importSucceeded ? 'Đã nhập' : 'Nhập danh sách KTV';
         }
         if (importSucceeded) {
             state.rosterImportFile = null;
@@ -6669,7 +7423,7 @@ function showRosterResult(message, success, details) {
     el.setAttribute('role', success ? 'status' : 'alert');
     el.setAttribute('aria-live', success ? 'polite' : 'assertive');
 
-    const title = success ? 'Import thành công' : 'Import không thành công';
+    const title = success ? 'Nhập dữ liệu thành công' : 'Nhập dữ liệu không thành công';
     const icon = success ? '✓' : '!';
     let html = `
         <div class="roster-import-result-icon" aria-hidden="true">${icon}</div>
@@ -6683,7 +7437,7 @@ function showRosterResult(message, success, details) {
         html += '</ul>';
     }
     if (success) {
-        html += '<p class="roster-import-result-hint">Kiểm tra lại tại Danh sách KTV hoặc Lịch sử import.</p>';
+        html += '<p class="roster-import-result-hint">Kiểm tra lại tại Danh sách KTV hoặc Lịch sử nhập.</p>';
     }
     html += '</div>';
     el.innerHTML = html;
@@ -6707,7 +7461,7 @@ function cancelRosterImport() {
     const importButton = document.getElementById('rosterConfirmImportBtn');
     if (importButton) {
         importButton.disabled = true;
-        importButton.textContent = 'Import danh sách KTV';
+        importButton.textContent = 'Nhập danh sách KTV';
     }
 }
 
@@ -6720,7 +7474,7 @@ async function loadRosterHistory() {
     tbody?.setAttribute('aria-busy', 'true');
     if (emptyEl) {
         emptyEl.hidden = false;
-        emptyEl.innerHTML = '<span class="table-state-spinner" aria-hidden="true"></span><span>Đang tải lịch sử import…</span>';
+        emptyEl.innerHTML = '<span class="table-state-spinner" aria-hidden="true"></span><span>Đang tải lịch sử nhập…</span>';
     }
     try {
         const resp = await fetch(`${API_BASE_URL}/roster/history`);
@@ -6737,7 +7491,7 @@ async function loadRosterHistory() {
         if (tbody) tbody.innerHTML = '';
         if (emptyEl) {
             emptyEl.hidden = false;
-            emptyEl.innerHTML = '<strong>Không tải được lịch sử import</strong><button type="button" class="button secondary" data-roster-history-retry>Thử lại</button>';
+            emptyEl.innerHTML = '<strong>Không tải được lịch sử nhập</strong><button type="button" class="button secondary" data-roster-history-retry>Thử lại</button>';
             emptyEl.querySelector('[data-roster-history-retry]')?.addEventListener('click', loadRosterHistory, { once: true });
         }
         return false;
@@ -6754,7 +7508,7 @@ function renderRosterHistory() {
         tbody.innerHTML = '';
         if (emptyEl) {
             emptyEl.hidden = false;
-            emptyEl.textContent = 'Chưa có lịch sử import nào.';
+            emptyEl.textContent = 'Chưa có lịch sử nhập nào.';
         }
         return;
     }

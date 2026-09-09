@@ -6,19 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#f3f6fb">
     <meta name="color-scheme" content="light">
-    <title>Dashboard giám sát thực hành KTV | FTC</title>
-    <link rel="stylesheet" href="css/styles.css?v=20260907-class-edit-v7">
-    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260907-class-edit-v7">
+    <title>Tổng quan thực hành KTV | FTC</title>
+    <link rel="stylesheet" href="css/styles.css?v=20260909-dashboard-copy-v21">
+    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260909-dashboard-copy-v21">
 </head>
 
 <body>
     <a class="skip-link" href="#dashboardContent">Bỏ qua điều hướng</a>
     <div class="dashboard-loading" id="dashboardLoading" role="status" aria-live="polite">
         <div class="dashboard-loading-spinner" aria-hidden="true"></div>
-        <div class="dashboard-loading-text">Đang đồng bộ dữ liệu dashboard...</div>
+        <div class="dashboard-loading-text">Đang đồng bộ dữ liệu...</div>
     </div>
     <div class="page" id="appPage" aria-busy="true">
-        <aside class="sidebar" aria-label="Điều hướng dashboard">
+        <aside class="sidebar" aria-label="Điều hướng chính">
             <div class="sidebar-brand">
                 <div class="sidebar-logo">FTC</div>
                 <div class="sidebar-brand-copy">
@@ -34,7 +34,7 @@
             </div>
 
             <nav class="sidebar-nav">
-                <span class="sidebar-nav-label">Dashboard</span>
+                <span class="sidebar-nav-label">Tổng hợp</span>
                 <a class="sidebar-link active" href="?view=overview" data-dashboard-view="overview"
                     aria-label="Tổng quan">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -60,7 +60,7 @@
                     <span>Báo cáo KTV theo lớp</span>
                 </a>
                 <a class="sidebar-link" href="?view=technicians" data-dashboard-view="technicians"
-                    aria-label="Kỹ thuật viên">
+                    aria-label="Tra cứu KTV">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path
                             d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm13 10v-2a4 4 0 0 0-3-3.87M16 2.13a4 4 0 0 1 0 7.75" />
@@ -69,7 +69,7 @@
                 </a>
 
                 <span class="sidebar-nav-label">Quản trị</span>
-                <a class="sidebar-link" href="?view=classes" data-dashboard-view="classes" aria-label="Quản lý lớp học">
+                <a class="sidebar-link" href="?view=classes" data-dashboard-view="classes" aria-label="Quản lý lớp">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M12 2 2 7l10 5 10-5-10-5zm-8 9 8 4 8-4M4 16l8 4 8-4"/>
                     </svg>
@@ -95,9 +95,9 @@
                 <div class="brand">
                     <div class="brand-mark">FTC</div>
                     <div>
-                        <div class="page-eyebrow" id="pageEyebrow">Tổng quan vận hành</div>
-                        <h1 id="pageTitle" tabindex="-1">Dashboard giám sát thực hành KTV</h1>
-                        <div class="subtitle" id="pageSubtitle">Theo dõi hoạt động, tiến độ và chất lượng thực hành
+                        <div class="page-eyebrow" id="pageEyebrow">Tổng quan</div>
+                        <h1 id="pageTitle" tabindex="-1">Tổng quan thực hành KTV</h1>
+                        <div class="subtitle" id="pageSubtitle">Hoạt động và kết quả thực hành trong tháng
                         </div>
                     </div>
                 </div>
@@ -111,7 +111,7 @@
                         </span>
                     </div>
                     <button class="button secondary dashboard-refresh-button" type="button" id="refreshDashboardBtn"
-                        aria-label="Làm mới dữ liệu dashboard" title="Làm mới dữ liệu">
+                        aria-label="Làm mới dữ liệu" title="Làm mới dữ liệu">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
                             stroke-width="2.2" aria-hidden="true">
                             <path d="M20 6v5h-5M4 18v-5h5M18.5 9A7 7 0 0 0 6.2 6.2L4 8m16 8-2.2 1.8A7 7 0 0 1 5.5 15" />
@@ -141,8 +141,8 @@
                     <section class="section dashboard-page-view" id="overview" data-page-view="overview">
                         <div class="section-title">
                             <div>
-                                <h2>Tổng quan hoạt động thực hành</h2>
-                                <span>Chỉ số tổng hợp theo dõi tình hình luyện tập và tiến độ bài lab của KTV toàn hệ thống.</span>
+                                <h2>Tổng quan thực hành KTV</h2>
+                                <span>Theo dõi hoạt động và kết quả thực hành trong tháng trên toàn hệ thống.</span>
                             </div>
                             <div class="date-range-picker overview-month-picker" id="dateRangePicker">
                                 <div class="overview-month-field">
@@ -214,66 +214,36 @@
 
                         <section class="kpi-section-group activity-kpis" aria-labelledby="activityKpiGroupTitle">
                             <div class="kpi-section-heading">
-                                <h3 id="activityKpiGroupTitle">Hoạt động trong kỳ</h3>
+                                <h3 id="activityKpiGroupTitle">Hoạt động trong tháng</h3>
                                 <span>Các chỉ số phát sinh trong tháng báo cáo đang chọn.</span>
                             </div>
                             <div class="kpi-grid">
-                            <div class="kpi-card" title="Tổng số phiên KTV tự thực hành bài lab độc lập trong kỳ báo cáo đã chọn">
-                                <div class="kpi-label">Lượt thực hành trong kỳ</div>
-                                <div class="kpi-value blue" id="kpiSessions">0</div>
-                                <div class="kpi-comparison" id="kpiSessionsComparison"></div>
-                                <div class="kpi-note" id="kpiSessionsContext">Đang tính dữ liệu so sánh</div>
-                            </div>
+                            <button type="button" class="kpi-card kpi-card-action" id="overviewSessionsDrilldown"
+                                aria-controls="overviewMonthlyCard" aria-expanded="false"
+                                title="Xem biểu đồ lượt thực hành theo từng tháng">
+                                <span class="kpi-label">Lượt thực hành trong tháng</span>
+                                <span class="kpi-value blue" id="kpiSessions">0</span>
+                                <span class="kpi-comparison" id="kpiSessionsComparison"></span>
+                                <span class="kpi-note" id="kpiSessionsContext">Đang tính dữ liệu so sánh</span>
+                                <span class="kpi-action-hint">Xem theo tháng <span aria-hidden="true">→</span></span>
+                            </button>
                             <div class="kpi-card" title="Tổng số phiên KTV mở chế độ hướng dẫn từng bước để làm quen thao tác cấu hình">
-                                <div class="kpi-label">Lượt xem hướng dẫn trong kỳ</div>
+                                <div class="kpi-label">Lượt hướng dẫn trong tháng</div>
                                 <div class="kpi-value violet" id="kpiGuideSessions">0</div>
                                 <div class="kpi-comparison" id="kpiGuideSessionsComparison"></div>
                                 <div class="kpi-note" id="kpiGuideSessionsContext">Đang tính dữ liệu so sánh</div>
                             </div>
                             <div class="kpi-card" title="Số lượng KTV có phát sinh ít nhất 1 phiên học tập hoặc thực hành trong kỳ">
-                                <div class="kpi-label">KTV tham gia trong kỳ</div>
+                                <div class="kpi-label">KTV tham gia trong tháng</div>
                                 <div class="kpi-value green" id="kpiLearners">0</div>
                                 <div class="kpi-comparison" id="kpiLearnersComparison"></div>
                                 <div class="kpi-note" id="kpiLearnersContext">Đang tính dữ liệu so sánh</div>
                             </div>
-                            <div class="kpi-card" title="Thời lượng trung bình của một phiên thực hành đã nộp (tính trên các phiên có dữ liệu thời gian)">
-                                <div class="kpi-label">Thời gian làm trung bình</div>
-                                <div class="kpi-value blue" id="kpiAvgDuration">—</div>
-                                <div class="kpi-comparison" id="kpiAvgDurationComparison"></div>
-                                <div class="kpi-note" id="kpiAvgDurationContext">Đang tính dữ liệu so sánh</div>
-                            </div>
-                            </div>
-                        </section>
-
-                        <section class="kpi-section-group outcome-kpis" aria-labelledby="outcomeKpiGroupTitle">
-                            <div class="kpi-section-heading">
-                                <h3 id="outcomeKpiGroupTitle">Kết quả và tiến độ</h3>
-                                <span>Kết quả trong kỳ và tiến độ lũy kế tính đến cuối kỳ.</span>
-                            </div>
-                            <div class="kpi-grid">
-                            <div class="kpi-card" title="Tổng số cặp KTV - Bài lab đã được chấm đạt tính đến cuối kỳ báo cáo">
-                                <div class="kpi-label">Lab đạt chuẩn lũy kế</div>
-                                <div class="kpi-value violet" id="kpiCompleted">0</div>
-                                <div class="kpi-comparison" id="kpiCompletedComparison"></div>
-                                <div class="kpi-note" id="kpiCompletedContext">Đang tính dữ liệu so sánh</div>
-                            </div>
-                            <div class="kpi-card" title="Tỷ lệ cặp KTV - Bài lab đã được chấm đạt trên toàn bộ phạm vi chương trình chuẩn">
-                                <div class="kpi-label">Tiến độ hoàn thành thực hành</div>
-                                <div class="kpi-value cyan" id="kpiCompletionRate">0%</div>
-                                <div class="kpi-comparison" id="kpiCompletionRateComparison"></div>
-                                <div class="kpi-note" id="kpiCompletionRateContext">Đang tính dữ liệu so sánh</div>
-                            </div>
                             <div class="kpi-card" title="Tỷ lệ phiên thực hành đạt yêu cầu trên tổng số phiên thực hành đã có kết quả chấm điểm">
-                                <div class="kpi-label">Tỷ lệ lượt thực hành đạt</div>
+                                <div class="kpi-label">Tỷ lệ thực hành đạt</div>
                                 <div class="kpi-value cyan" id="kpiPassRate">—</div>
                                 <div class="kpi-comparison" id="kpiPassRateComparison"></div>
                                 <div class="kpi-note" id="kpiPassRateContext">Chưa có kết quả chấm</div>
-                            </div>
-                            <div class="kpi-card" title="Tỷ lệ bài lab KTV hoàn thành ngay từ lần thực hành độc lập đầu tiên">
-                                <div class="kpi-label">Đạt lần đầu (First-pass Rate)</div>
-                                <div class="kpi-value green" id="kpiFirstTryRate">0%</div>
-                                <div class="kpi-comparison" id="kpiFirstTryRateComparison"></div>
-                                <div class="kpi-note" id="kpiFirstTryRateContext">Đang tính dữ liệu so sánh</div>
                             </div>
                             </div>
                         </section>
@@ -281,35 +251,53 @@
                         <div class="dashboard-data-notice" id="dashboardDataNotice" role="status" aria-live="polite"
                             hidden></div>
 
+                        <div class="overview-analysis-grid">
                         <div class="region-usage-card" aria-labelledby="regionUsageTitle">
                             <div class="region-usage-header">
                                 <div>
-                                    <span class="detail-report-eyebrow">Xu hướng sử dụng theo khu vực</span>
-                                    <h3 id="regionUsageTitle">Tần suất sử dụng theo tháng</h3>
-                                    <p>Tần suất sử dụng = Số phiên thực hành hợp lệ trong tháng / Tổng số KTV đang công tác tại khu vực (1 phiên hợp lệ = phiên đã hoàn thành tối thiểu 1 thiết bị).</p>
+                                    <span class="detail-report-eyebrow">Kết quả theo khu vực</span>
+                                    <h3 id="regionUsageTitle">Tỷ lệ KTV thực hành đạt</h3>
+                                    <p>Số KTV có ít nhất 1 lượt thực hành đạt / tổng số KTV của khu vực.</p>
                                 </div>
                                 <label class="region-usage-year-field" for="regionUsageYear">
                                     <span>Năm báo cáo</span>
-                                    <select id="regionUsageYear" aria-label="Chọn năm cho biểu đồ tần suất khu vực"></select>
+                                    <select id="regionUsageYear" aria-label="Chọn năm cho biểu đồ tỷ lệ theo khu vực"></select>
                                     <small id="regionUsagePeriodNote" class="region-usage-period-note" aria-live="polite"></small>
                                 </label>
                             </div>
                             <div class="region-usage-insights" id="regionUsageInsights" aria-live="polite"></div>
-                            <div class="region-usage-chart-wrap" tabindex="0" aria-label="Biểu đồ đường tần suất sử dụng theo khu vực, có thể cuộn ngang">
+                            <div class="region-usage-chart-wrap" tabindex="0" aria-label="Biểu đồ đường tỷ lệ KTV thực hành đạt theo khu vực, có thể cuộn ngang">
                                 <div class="region-usage-chart" id="regionUsageChart"></div>
                                 <div class="region-usage-tooltip" id="regionUsageTooltip" role="tooltip" hidden></div>
                             </div>
                             <div class="region-usage-legend" id="regionUsageLegend" aria-label="Chú thích khu vực"></div>
-                            <p class="region-usage-note">Đường biểu đồ thể hiện lượt sử dụng trung bình trên toàn bộ KTV đang công tác; tooltip hiển thị thêm tỷ lệ KTV tham gia.</p>
+                            <p class="region-usage-note">Chọn tên khu vực để mở xu hướng lượt thực hành theo tháng tương ứng.</p>
                         </div>
 
-                        <div class="detail-section-card ktv-monthly-card overview-monthly-card">
+                        <aside class="region-race-card" aria-labelledby="regionRaceTitle">
+                            <div class="region-race-header">
+                                <span class="detail-report-eyebrow">Mức độ thực hành</span>
+                                <h3 id="regionRaceTitle">Biểu đồ thi đua giữa các khu vực</h3>
+                                <p>Lượt thực hành trong năm / số KTV của khu vực.</p>
+                            </div>
+                            <button type="button" class="region-race-all is-selected" id="overviewRegionReset"
+                                aria-pressed="true">Tất cả khu vực</button>
+                            <div class="region-race-chart" id="regionRaceChart" aria-live="polite"></div>
+                            <p class="region-race-note">Bấm một khu vực để xem chi tiết theo tháng.</p>
+                        </aside>
+                        </div>
+
+                        <div class="detail-section-card ktv-monthly-card overview-monthly-card" id="overviewMonthlyCard" hidden>
                             <div class="detail-section-header ktv-monthly-header">
                                 <div>
-                                    <h4>Xu hướng hoạt động theo tháng</h4>
-                                    <span>Lượt thực hành trong từng tháng và tiến độ hoàn thành lũy kế đến ngày chốt; tháng hiện tại chốt đến hôm nay</span>
+                                    <span class="detail-report-eyebrow">Xu hướng hoạt động</span>
+                                    <h4>Lượt thực hành theo tháng — <span id="overviewMonthlyScope">Tất cả khu vực</span></h4>
+                                    <span>Lượt thực hành phát sinh theo từng tháng trong năm.</span>
                                 </div>
-                                <div class="ktv-monthly-summary" id="overviewMonthlySummary"></div>
+                                <div class="overview-monthly-actions">
+                                    <div class="ktv-monthly-summary" id="overviewMonthlySummary"></div>
+                                    <button type="button" class="overview-monthly-close" id="overviewMonthlyClose">Thu gọn</button>
+                                </div>
                             </div>
                             <div class="ktv-monthly-trend" id="overviewMonthlyTrend"></div>
                         </div>
@@ -321,8 +309,8 @@
                         <div class="instructor-class-manager">
                             <div class="instructor-class-manager-copy">
                                 <span class="instructor-section-eyebrow">Quản lý đào tạo</span>
-                                <h2>Quản lý lớp học</h2>
-                                <p>Thông tin lớp học và danh sách KTV được đồng bộ từ hệ thống dữ liệu nhân viên.</p>
+                                <h2>Theo dõi lớp học</h2>
+                                <p>Xem tiến độ lớp và các bài nộp gần đây của KTV.</p>
                             </div>
                             <div class="instructor-class-create" hidden>
                                 <label class="sr-only" for="instructorClassName">Tên lớp mới</label>
@@ -351,9 +339,9 @@
                             <div class="instructor-progress-header">
                                 <div>
                                     <div class="instructor-progress-title-row">
-                                        <h2>Ma trận tiến độ lab theo lớp</h2>
+                                        <h2>Tiến độ thực hành theo lớp</h2>
                                     </div>
-                                    <p>Đối chiếu từng bài lab của từng thiết bị với từng KTV; màu ô thể hiện trạng thái thực hiện.</p>
+                                    <p>Xem kết quả từng KTV theo thiết bị và bài lab.</p>
                                     <div class="detail-report-legend instructor-progress-legend"
                                         aria-label="Chú thích màu trạng thái bài lab">
                                         <span><i class="legend-high"></i> Đã đạt</span>
@@ -395,12 +383,12 @@
                                     </span>
                                 </label>
                                 <label class="instructor-filter-field" for="instructorCompletionFilter">
-                                    <span>Trạng thái hoàn thành</span>
+                                    <span>Tiến độ</span>
                                     <select id="instructorCompletionFilter">
                                         <option value="all">Tất cả trạng thái</option>
-                                        <option value="completed">Đã đạt 100%</option>
-                                        <option value="in_progress">Chưa hoàn thành (1–99%)</option>
-                                        <option value="not_started">Chưa làm (0%)</option>
+                                        <option value="completed">Hoàn thành (100%)</option>
+                                        <option value="in_progress">Đang thực hiện (1–99%)</option>
+                                        <option value="not_started">Chưa thực hành (0%)</option>
                                         <option value="unassigned">Chưa phân công</option>
                                     </select>
                                 </label>
@@ -411,7 +399,7 @@
                             </div>
                             <div class="instructor-progress-summary" id="instructorProgressSummary"></div>
                             <div class="instructor-progress-scroll" id="instructorProgressScroll" tabindex="0"
-                                aria-label="Ma trận tiến độ lab theo lớp, có thể cuộn ngang và dọc">
+                                aria-label="Bảng tiến độ bài lab theo lớp, có thể cuộn ngang và dọc">
                                 <table class="instructor-progress-table">
                                     <caption class="sr-only">Tiến độ lớp học theo kỹ thuật viên</caption>
                                     <thead id="instructorProgressHead"></thead>
@@ -429,10 +417,10 @@
                             <div class="panel-header">
                                 <div>
                                     <h3 style="display: flex; align-items: center; gap: 10px;">
-                                        Danh sách bài nộp lab
+                                        Bài nộp gần đây
                                     </h3>
                                     <span
-                                        style="font-size: 12.5px; color: var(--muted); margin-top: 4px; display: block;">Nhật ký các phiên làm bài nộp về từ KTV toàn hệ thống.</span>
+                                        class="panel-subtitle">Các phiên KTV đã gửi lên hệ thống.</span>
                                 </div>
                                 <div class="panel-tools">
                                     <span class="status-pill status-running" id="realtimeSubmissionBadge">0 bài
@@ -497,7 +485,7 @@
                                             </th>
                                             <th style="width: 16%;">
                                                 <div class="popover-filter-wrapper" id="realtimeLabPopoverWrapper">
-                                                    <button class="popover-trigger-btn" type="button">Bài Lab</button>
+                                                    <button class="popover-trigger-btn" type="button">Bài lab</button>
                                                     <div class="popover-dropdown" id="realtimeLabDropdown">
                                                         <div class="popover-options" id="realtimeLabOptions"></div>
                                                         <div class="popover-footer">
@@ -537,7 +525,7 @@
                         </div>
                     </section>
 
-                    <!-- Báo cáo ma trận thiết bị và bài lab theo Khu vực/CNx -->
+                    <!-- Báo cáo thiết bị và bài lab theo khu vực / chi nhánh -->
                     <section class="section detail-report-page dashboard-page-view" id="analytics"
                         data-page-view="analytics">
                         <div class="detail-report-shell">
@@ -548,7 +536,7 @@
                                         stroke-width="2">
                                         <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4" />
                                     </svg>
-                                    <span>Báo cáo theo Khu vực/CNx</span>
+                                    <span>Theo khu vực</span>
                                 </button>
                                 <button type="button" class="matrix-toggle-btn" data-matrix-tab-target="class_matrix"
                                     aria-pressed="false">
@@ -557,18 +545,18 @@
                                         <path
                                             d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm14 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                                     </svg>
-                                    <span>Báo cáo KTV theo Lớp học</span>
+                                    <span>Theo lớp học</span>
                                 </button>
                             </div>
 
                             <div class="detail-report-header">
                                 <div>
                                     <span class="detail-report-eyebrow">Báo cáo quản lý đào tạo</span>
-                                    <h2>Tiến độ thực hành theo Khu vực / Chi nhánh</h2>
-                                    <p>Lượt thực hành được tính trong kỳ; tiến độ hoàn thành và số KTV được giao được chốt lũy kế tại ngày cuối kỳ.</p>
+                                    <h2>Kết quả thực hành theo khu vực</h2>
+                                    <p>Lượt thực hành tính trong kỳ; kết quả hoàn thành được chốt đến ngày cuối kỳ.</p>
                                 </div>
                                 <div class="detail-report-period">
-                                    <span>Kỳ báo cáo</span>
+                                    <span>Thời gian báo cáo</span>
                                     <strong id="detailReportPeriod">Tháng hiện tại</strong>
                                     <small>Dữ liệu cập nhật theo bộ lọc thời gian</small>
                                 </div>
@@ -578,19 +566,19 @@
 
                             <div class="detail-report-summary" aria-label="Tóm tắt báo cáo chi tiết">
                                 <div class="detail-report-stat report-stat-blue">
-                                    <span>Tổng lượt thực hành</span>
+                                    <span>Lượt thực hành</span>
                                     <strong id="detailReportSessions">0</strong>
                                 </div>
                                 <div class="detail-report-stat report-stat-purple">
-                                    <span>Đơn vị / Vùng</span>
+                                    <span>Khu vực</span>
                                     <strong id="detailReportRegions">0</strong>
                                 </div>
                                 <div class="detail-report-stat report-stat-cyan">
-                                    <span>Tổng số bài lab</span>
+                                    <span>Bài lab</span>
                                     <strong id="detailReportLabs">0</strong>
                                 </div>
                                 <div class="detail-report-stat report-stat-green">
-                                    <span>Độ phủ hoàn thành</span>
+                                    <span>Tỷ lệ hoàn thành</span>
                                     <strong id="detailReportCompletion">0%</strong>
                                 </div>
                             </div>
@@ -598,8 +586,8 @@
                             <div class="detail-report-table-card">
                                 <div class="detail-report-table-header">
                                     <div>
-                                        <h3>Ma trận hoàn thành theo Khu vực / Chi nhánh</h3>
-                                        <span>Mỗi ô hiển thị KTV đã hoàn thành lũy kế / KTV còn được giao tại cuối kỳ. “—” là chưa phân công bài lab này.</span>
+                                        <h3>Tiến độ theo khu vực / chi nhánh</h3>
+                                        <span>Mỗi ô hiển thị số KTV hoàn thành / số KTV được giao. “—” là chưa giao bài lab.</span>
                                     </div>
                                     <div class="detail-report-legend" aria-label="Chú thích màu tỷ lệ hoàn thành">
                                         <span><i class="legend-high"></i> Từ 80% trở lên</span>
@@ -608,9 +596,9 @@
                                     </div>
                                 </div>
                                 <div class="detail-report-scroll" id="detailReportScroll" tabindex="0"
-                                    aria-label="Bảng báo cáo chi tiết, có thể cuộn ngang">
+                                    aria-label="Bảng tiến độ theo khu vực và chi nhánh, có thể cuộn ngang">
                                     <table class="detail-report-table">
-                                        <caption class="sr-only">Ma trận hoàn thành bài lab theo khu vực và chi nhánh</caption>
+                                        <caption class="sr-only">Tiến độ bài lab theo khu vực và chi nhánh</caption>
                                         <thead id="detailReportHead"></thead>
                                         <tbody id="detailReportBody"></tbody>
                                         <tfoot id="detailReportFoot"></tfoot>
@@ -633,7 +621,7 @@
                                         stroke-width="2">
                                         <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4" />
                                     </svg>
-                                    <span>Báo cáo theo Khu vực/CNx</span>
+                                    <span>Theo khu vực</span>
                                 </button>
                                 <button type="button" class="matrix-toggle-btn active"
                                     data-matrix-tab-target="class_matrix" aria-pressed="true">
@@ -642,72 +630,99 @@
                                         <path
                                             d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm14 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                                     </svg>
-                                    <span>Báo cáo KTV theo Lớp học</span>
+                                    <span>Theo lớp học</span>
                                 </button>
                             </div>
 
                             <div class="detail-report-header">
                                 <div>
                                     <span class="detail-report-eyebrow">Báo cáo đào tạo</span>
-                                    <h2>Chi tiết tiến độ thực hành KTV theo Lớp</h2>
-                                    <p>Bảng theo dõi chi tiết kết quả từng bài lab của từng Kỹ thuật viên trong lớp học.</p>
-                                </div>
-                                <div class="class-matrix-toolbar">
-                                    <label class="instructor-select-field">
-                                        <span>Lớp học</span>
-                                        <select id="classMatrixClassSelect" aria-label="Chọn lớp học"></select>
-                                    </label>
-                                    <label class="instructor-select-field">
-                                        <span>Thiết bị</span>
-                                        <select id="classMatrixDeviceSelect" aria-label="Lọc thiết bị">
-                                            <option value="">Tất cả thiết bị</option>
-                                        </select>
-                                    </label>
-                                    <label class="instructor-select-field class-matrix-search-field">
-                                        <span>Tìm kiếm KTV</span>
-                                        <input type="search" id="classMatrixSearchInput"
-                                            placeholder="Tìm tên, email, mã NV..." autocomplete="off">
-                                    </label>
+                                    <h2>Tiến độ thực hành theo lớp</h2>
+                                    <p>Theo dõi kết quả từng KTV và từng bài lab trong lớp.</p>
                                 </div>
                             </div>
 
-                            <div class="detail-report-summary" aria-label="Tóm tắt ma trận KTV theo lớp">
-                                <div class="detail-report-stat report-stat-blue">
-                                    <span>Tổng lượt thực hành</span>
-                                    <strong id="classMatrixTotalSessions">0</strong>
-                                </div>
-                                <div class="detail-report-stat report-stat-purple">
-                                    <span>Tổng KTV trong lớp</span>
-                                    <strong id="classMatrixTotalKtvs">0</strong>
-                                </div>
-                                <div class="detail-report-stat report-stat-cyan">
-                                    <span>Tổng số bài lab</span>
-                                    <strong id="classMatrixTotalLabs">0</strong>
-                                </div>
-                                <div class="detail-report-stat report-stat-green">
-                                    <span>Độ phủ hoàn thành</span>
-                                    <strong id="classMatrixCompletionRate">0%</strong>
-                                </div>
-                            </div>
-
-                            <div class="detail-report-table-card">
+                            <div class="detail-report-table-card" id="classOverviewCard">
                                 <div class="detail-report-table-header">
                                     <div>
-                                        <h3 id="classMatrixTableTitle">Ma trận thực hành theo Kỹ thuật viên</h3>
-                                        <span>Mỗi ô thể hiện mức độ hoàn thành bài lab của KTV; “—” là chưa phân công.</span>
-                                    </div>
-                                    <div class="detail-report-legend" aria-label="Chú thích màu trạng thái">
-                                        <span><i class="legend-high"></i> Tiến độ cao (Từ 80%)</span>
-                                        <span><i class="legend-medium"></i> Tiến độ trung bình (50–79%)</span>
-                                        <span><i class="legend-low"></i> Tiến độ thấp (Dưới 50%)</span>
-                                        <span><i class="legend-notstarted"></i> Chưa làm</span>
-                                        <span><i class="legend-unassigned"></i> Chưa phân công</span>
+                                        <h3>Danh sách lớp học</h3>
+                                        <span>So sánh quy mô và tiến độ; chọn một lớp để xem chi tiết phía dưới.</span>
                                     </div>
                                 </div>
+                                <div class="detail-report-scroll class-matrix-scroll" id="classOverviewScroll"
+                                    tabindex="0" aria-label="Bảng tổng quan tất cả lớp học">
+                                    <table class="detail-report-table class-overview-table">
+                                        <caption class="sr-only">Tổng hợp kết quả thực hành theo tất cả lớp học</caption>
+                                        <thead id="classOverviewHead"></thead>
+                                        <tbody id="classOverviewBody"></tbody>
+                                        <tfoot id="classOverviewFoot"></tfoot>
+                                    </table>
+                                </div>
+                                <div class="class-matrix-empty" id="classOverviewEmpty" hidden></div>
+                            </div>
+
+                            <div class="detail-report-table-card" id="classDetailCard" hidden>
+                                <div class="detail-report-table-header">
+                                    <div>
+                                        <h3 id="classMatrixTableTitle" tabindex="-1">Chi tiết lớp</h3>
+                                        <span>Mỗi ô là số phiên đạt 100 điểm trên tổng số phiên thực hiện bài lab của KTV.</span>
+                                    </div>
+                                    <button type="button" class="class-overview-back class-overview-close" id="classOverviewBack"
+                                        aria-label="Đóng chi tiết" title="Đóng chi tiết">&times;</button>
+                                </div>
+
+                                <section class="class-insights" aria-label="Chỉ số hoàn thành theo lớp">
+                                    <article class="class-insight-card class-personnel-insight">
+                                        <div class="class-insight-heading">
+                                            <div>
+                                                <span class="detail-report-eyebrow">Theo KTV</span>
+                                                <h3>KTV hoàn thành toàn bộ bài</h3>
+                                            </div>
+                                            <span class="class-insight-scope" id="classPersonnelScope">Tất cả lớp</span>
+                                        </div>
+                                        <button type="button" class="class-personnel-summary" id="classPersonnelSummaryOpen">
+                                            <span class="class-personnel-ratio"><strong id="classPersonnelCompleted">0/0</strong> KTV</span>
+                                            <span class="class-personnel-rate" id="classPersonnelRate">0%</span>
+                                            <span class="class-personnel-progress" aria-hidden="true"><i id="classPersonnelProgress"></i></span>
+                                        </button>
+                                    </article>
+
+                                    <article class="class-insight-card class-device-insight">
+                                        <div class="class-insight-heading">
+                                            <div>
+                                                <span class="detail-report-eyebrow">Theo thiết bị</span>
+                                                <h3>KTV hoàn thành theo thiết bị</h3>
+                                            </div>
+                                            <div class="class-device-stat-controls">
+                                                <label>
+                                                    <span class="sr-only">Tìm thiết bị trong thống kê</span>
+                                                    <input type="search" id="classDeviceStatSearch" placeholder="Tìm thiết bị..." autocomplete="off">
+                                                </label>
+                                            <div class="class-device-sort-field">
+                                                <span class="sr-only">Sắp xếp thống kê thiết bị</span>
+                                                <div class="ktv-header-filter class-device-sort-menu" id="classDeviceStatSortWrapper">
+                                                    <button type="button" class="class-control-menu-trigger" id="classDeviceStatSortTrigger"
+                                                        aria-haspopup="menu" aria-expanded="false">
+                                                        <span id="classDeviceStatSortLabel">Hoàn thành nhiều nhất</span><i aria-hidden="true"></i>
+                                                    </button>
+                                                    <div class="popover-dropdown class-control-menu" role="menu">
+                                                        <button type="button" data-device-stat-sort="completed_desc" role="menuitem">Hoàn thành nhiều nhất</button>
+                                                        <button type="button" data-device-stat-sort="rate_desc" role="menuitem">Tỷ lệ cao nhất</button>
+                                                        <button type="button" data-device-stat-sort="name_asc" role="menuitem">Tên thiết bị A–Z</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="class-device-reset" id="classDeviceReset" hidden>Tất cả thiết bị</button>
+                                            </div>
+                                        </div>
+                                        <div class="class-device-progress-list" id="classDeviceProgressList"></div>
+                                    </article>
+                                </section>
+
                                 <div class="detail-report-scroll class-matrix-scroll" id="classMatrixScroll"
-                                    tabindex="0" aria-label="Bảng ma trận KTV theo lớp, có thể cuộn ngang">
+                                    tabindex="0" aria-label="Bảng tiến độ KTV theo lớp, có thể cuộn ngang">
                                     <table class="detail-report-table class-matrix-table">
-                                        <caption class="sr-only">Ma trận tiến độ thực hành kỹ thuật viên theo lớp học</caption>
+                                        <caption class="sr-only">Tiến độ thực hành KTV theo lớp học</caption>
                                         <thead id="classMatrixHead"></thead>
                                         <tbody id="classMatrixBody"></tbody>
                                         <tfoot id="classMatrixFoot"></tfoot>
@@ -726,8 +741,8 @@
                     <div class="panel">
                         <div class="panel-header">
                             <div>
-                                <h3>Chi tiết thực hành theo KTV</h3>
-                                <span style="font-size: 12.5px; color: var(--muted); margin-top: 4px; display: block;">Theo dõi lịch sử, thời gian và số lần thực hành của từng KTV.</span>
+                                <h3>Lịch sử thực hành theo KTV</h3>
+                                <span class="panel-subtitle">Tra cứu thiết bị, bài lab và hoạt động gần nhất của từng KTV.</span>
                             </div>
                             <div class="panel-tools">
                                 <span class="status-pill status-running" id="sessionCountBadge">0 phiên</span>
@@ -779,7 +794,7 @@
                                         <th style="width: 12%;">
                                             <div class="popover-filter-wrapper" id="learnerRegionPopoverWrapper">
                                                 <button class="popover-trigger-btn" type="button"
-                                                    aria-label="Lọc theo khu vực">Khu vực/CNx</button>
+                                                    aria-label="Lọc theo khu vực">Khu vực / CN</button>
                                                 <div class="popover-dropdown" id="learnerRegionDropdown">
                                                     <div class="popover-options" id="learnerRegionOptions"></div>
                                                     <div class="popover-footer">
@@ -790,7 +805,7 @@
                                             </div>
                                         </th>
                                         <th style="width: 8%;"><button class="sort-button" type="button"
-                                                data-table="sessions" data-key="total">Số phiên <span
+                                                data-table="sessions" data-key="total">Số lượt <span
                                                     class="sort-mark"></span></button></th>
                                         <th style="width: 14%;">
                                             <div class="popover-filter-wrapper" id="learnerDevicePopoverWrapper">
@@ -836,7 +851,7 @@
                         <button type="button" class="roster-tab-btn active" role="tab" aria-selected="true"
                             data-class-tab="list" aria-controls="classListPanel">Danh sách lớp</button>
                         <button type="button" class="roster-tab-btn" role="tab" aria-selected="false"
-                            data-class-tab="create" aria-controls="classCreatePanel">Đăng ký lớp mới</button>
+                            data-class-tab="create" aria-controls="classCreatePanel">Thêm lớp</button>
                     </div>
 
                     <div class="roster-panel" id="classListPanel" role="tabpanel">
@@ -851,19 +866,19 @@
 
                     <div class="roster-panel" id="classCreatePanel" role="tabpanel" hidden>
                         <form id="classCreateForm" class="class-create-form" autocomplete="off">
-                            <h3 id="classFormTitle">Đăng ký lớp mới</h3>
+                            <h3 id="classFormTitle">Tạo lớp mới</h3>
                             <div class="class-form-grid">
                                 <label class="roster-form-row">Tên lớp
                                     <input type="text" id="className" maxlength="200" required placeholder="Đặt tên cho lớp mới (Ví dụ: BDG01, HNI01, ...)">
                                 </label>
-                                <label class="roster-form-row">Hiệu lực từ
+                                <label class="roster-form-row">Ngày bắt đầu
                                     <input type="date" id="classValidFrom" required>
                                 </label>
                             </div>
 
                             <div class="class-member-import">
-                                <p><strong>Thành viên & Thiết bị đào tạo</strong></p>
-                                <p class="upload-hint">Chọn file Excel (.xlsx gồm 3 cột: Mã NV, Tên KTV, Email) để thêm nhanh KTV hoặc mở popup để tìm kiếm KTV và chọn thiết bị.</p>
+                                <p><strong>KTV và thiết bị</strong></p>
+                                <p class="upload-hint">Chọn file Excel gồm Mã NV, Tên KTV và Email, hoặc chọn trực tiếp KTV và thiết bị.</p>
                                 <div class="roster-template-actions">
                                     <button type="button" class="button" id="classMemberFileBtn">
                                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -875,7 +890,7 @@
                                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m14-3h-6m3-3v6"/>
                                         </svg>
-                                        Chọn KTV & Thiết bị
+                                        Chọn KTV và thiết bị
                                     </button>
                                     <a class="button secondary" href="/api/index.php/classes/members/template">Tải file mẫu</a>
                                 </div>
@@ -885,8 +900,8 @@
 
                             <div class="class-summary-card" id="classSummaryCard">
                                 <div class="class-summary-header">
-                                    <h4>Tóm tắt phân công lớp</h4>
-                                    <button type="button" class="button-link" id="classSummaryEditBtn">Chỉnh sửa danh sách</button>
+                                    <h4>Tóm tắt lớp</h4>
+                                    <button type="button" class="button-link" id="classSummaryEditBtn">Chỉnh sửa</button>
                                 </div>
                                 <div class="class-summary-chips">
                                     <div class="class-summary-chip" id="classSummaryMemberChip">
@@ -924,10 +939,10 @@
                             KTV</button>
                         <button type="button" class="roster-tab-btn" id="rosterImportTab" role="tab"
                             aria-selected="false" aria-controls="rosterImportPanel" tabindex="-1"
-                            data-roster-tab="import">Import Excel</button>
+                            data-roster-tab="import">Nhập từ Excel</button>
                         <button type="button" class="roster-tab-btn" id="rosterHistoryTab" role="tab"
                             aria-selected="false" aria-controls="rosterHistoryPanel" tabindex="-1"
-                            data-roster-tab="history">Lịch sử import</button>
+                            data-roster-tab="history">Lịch sử nhập</button>
                     </div>
 
                     <!-- Sub-tab: Danh sách KTV -->
@@ -981,12 +996,12 @@
                                         stroke-linejoin="round" />
                                 </svg>
                                 <p>Kéo thả file Excel (.xlsx) vào đây</p>
-                                <p class="upload-hint">Sử dụng đúng mẫu KTV mới nhất để hệ thống đọc chính xác.</p>
+                                <p class="upload-hint">Sử dụng file mẫu mới nhất để hệ thống đọc chính xác.</p>
                                 <div class="roster-template-actions">
-                                    <button type="button" class="button" id="rosterFileBtn">Chọn file Import</button>
+                                    <button type="button" class="button" id="rosterFileBtn">Chọn file Excel</button>
                                     <a class="button secondary roster-template-download"
                                         href="/templates/Mau_Import_KTV.xlsx" download="Mau_Import_KTV.xlsx">
-                                        Tải mẫu Import KTV
+                                        Tải file mẫu
                                     </a>
                                 </div>
                                 <input type="file" id="rosterFileInput" accept=".xlsx" hidden>
@@ -994,7 +1009,7 @@
                             </div>
                             <div class="roster-import-actions" id="rosterImportActions" hidden>
                                 <button type="button" class="button" id="rosterConfirmImportBtn" disabled>
-                                    Import danh sách KTV
+                                    Nhập danh sách KTV
                                 </button>
                                 <button type="button" class="button secondary" id="rosterCancelImportBtn">Hủy</button>
                             </div>
@@ -1002,25 +1017,25 @@
                         <div class="roster-import-result" id="rosterImportResult" role="status" aria-live="polite"
                             aria-atomic="true" tabindex="-1" hidden></div>
                         <div class="roster-preview" id="rosterPreview" hidden>
-                            <h3 class="roster-preview-title">Kết quả preview</h3>
+                            <h3 class="roster-preview-title">Kết quả kiểm tra</h3>
                             <div class="roster-preview-stats" id="rosterPreviewStats"></div>
                             <div class="roster-preview-errors" id="rosterPreviewErrors" hidden></div>
                             <div class="roster-preview-changes" id="rosterPreviewChanges"></div>
                         </div>
                     </div>
 
-                    <!-- Sub-tab: Lịch sử import -->
+                    <!-- Sub-tab: Lịch sử nhập -->
                     <div class="roster-panel" id="rosterHistoryPanel" role="tabpanel"
                         aria-labelledby="rosterHistoryTab" tabindex="0" hidden>
                         <div class="roster-table-wrapper" tabindex="0"
-                            aria-label="Lịch sử import KTV, có thể cuộn ngang">
+                            aria-label="Lịch sử nhập KTV, có thể cuộn ngang">
                             <table class="roster-table">
-                                <caption class="sr-only">Lịch sử import danh sách kỹ thuật viên</caption>
+                                <caption class="sr-only">Lịch sử nhập danh sách KTV</caption>
                                 <thead>
                                     <tr>
-                                        <th scope="col">Batch ID</th>
+                                        <th scope="col">Mã đợt</th>
                                         <th scope="col">File</th>
-                                        <th scope="col">Người import</th>
+                                        <th scope="col">Người thực hiện</th>
                                         <th scope="col">Tổng dòng</th>
                                         <th scope="col">Thêm mới</th>
                                         <th scope="col">Cập nhật</th>
@@ -1033,7 +1048,7 @@
                                 <tbody id="rosterHistoryBody"></tbody>
                             </table>
                         </div>
-                        <div id="rosterHistoryEmpty" class="roster-empty" hidden>Chưa có lịch sử import nào.</div>
+                        <div id="rosterHistoryEmpty" class="roster-empty" hidden>Chưa có lịch sử nhập nào.</div>
                     </div>
 
                     <!-- Edit KTV Modal -->
@@ -1119,7 +1134,7 @@
 
         <div class="detail-metric-grid">
             <div class="detail-metric">
-                <div class="detail-metric-label">Số phiên</div>
+                <div class="detail-metric-label">Tổng lượt</div>
                 <div class="detail-metric-value-group">
                     <span class="detail-metric-value" id="detailTotalSessions">0</span>
                     <div class="detail-metric-vertical-sub" id="detailTotalSessionsSub">
@@ -1129,22 +1144,22 @@
                 </div>
             </div>
             <div class="detail-metric">
-                <div class="detail-metric-label">Bài lab đã làm</div>
+                <div class="detail-metric-label">Bài lab đã thực hành</div>
                 <div class="detail-metric-value" id="detailUniqueLabs">0/0</div>
             </div>
             <div class="detail-metric">
-                <div class="detail-metric-label">Thiết bị đã làm</div>
+                <div class="detail-metric-label">Thiết bị đã thực hành</div>
                 <div class="detail-metric-value" id="detailUniqueDevices">0/0</div>
             </div>
             <div class="detail-metric">
-                <div class="detail-metric-label">Lần gần nhất</div>
+                <div class="detail-metric-label">Hoạt động gần nhất</div>
                 <div class="detail-metric-value small" id="detailLastTime">N/A</div>
             </div>
         </div>
 
         <div class="detail-two-col-grid">
             <div class="detail-section-card">
-                <h4>Thiết bị đã làm</h4>
+                <h4>Thiết bị đã thực hành</h4>
                 <div class="device-donut-wrapper">
                     <div class="donut-chart-container" id="learnerDeviceDonut"></div>
                     <div class="donut-legend" id="learnerDeviceLegend"></div>
@@ -1153,7 +1168,7 @@
 
             <div class="detail-section-card">
                 <div class="detail-section-header">
-                    <h4>Tần suất làm bài theo khung giờ</h4>
+                    <h4>Hoạt động theo khung giờ</h4>
                     <div class="date-range-picker" id="hourlyDatePicker">
                         <button type="button" class="date-range-trigger" id="hourlyDateTrigger"
                             aria-label="Bộ lọc thời gian" aria-haspopup="dialog" aria-expanded="false"
@@ -1204,7 +1219,7 @@
         </div>
 
         <div class="detail-section">
-            <h4>Nhật ký phiên làm bài</h4>
+            <h4>Lịch sử hoạt động</h4>
             <div class="learner-history">
                 <table>
                     <caption class="sr-only">Nhật ký phiên hoạt động của kỹ thuật viên</caption>
@@ -1303,7 +1318,7 @@
             aria-describedby="subModalDeviceSubtitle" tabindex="-1">
             <div class="sub-modal-header">
                 <div>
-                    <h3 id="subModalDeviceTitle">Chi tiết thiết bị</h3>
+                    <h3 id="subModalDeviceTitle">Thiết bị</h3>
                     <div class="sub-modal-subtitle" id="subModalDeviceSubtitle"></div>
                 </div>
                 <button type="button" class="detail-close" id="subModalClose" aria-label="Đóng chi tiết">×</button>
@@ -1311,7 +1326,7 @@
             <div class="sub-modal-body">
                 <div class="sub-modal-metrics">
                     <div class="mini-kpi blue-bg" id="kpiTotalLabsBox">
-                        <span class="mini-kpi-label">Tổng bài lab</span>
+                        <span class="mini-kpi-label">Bài lab</span>
                         <strong class="mini-kpi-val blue" id="subModalTotalLabs">0</strong>
                     </div>
                     <div class="mini-kpi green-bg" id="kpiCompletedBox">
@@ -1319,11 +1334,11 @@
                         <strong class="mini-kpi-val green" id="subModalCompletedCount">0</strong>
                     </div>
                     <div class="mini-kpi amber-bg" id="kpiUncompletedBox">
-                        <span class="mini-kpi-label">Đã làm, chưa đạt</span>
+                        <span class="mini-kpi-label">Chưa đạt</span>
                         <strong class="mini-kpi-val amber" id="subModalUncompletedCount">0</strong>
                     </div>
                     <div class="mini-kpi gray-bg" id="kpiUnattemptedBox">
-                        <span class="mini-kpi-label">Chưa thực hiện</span>
+                        <span class="mini-kpi-label">Chưa làm</span>
                         <strong class="mini-kpi-val gray" id="subModalUnattemptedCount">0</strong>
                     </div>
                 </div>
@@ -1333,7 +1348,7 @@
                             id="cntAll">0</span>)</button>
                     <button type="button" class="sub-filter-btn" data-sub-filter="done" aria-pressed="false">Đã đạt (<span
                             id="cntDone">0</span>)</button>
-                    <button type="button" class="sub-filter-btn" data-sub-filter="pending" aria-pressed="false">Đã làm, chưa đạt (<span
+                    <button type="button" class="sub-filter-btn" data-sub-filter="pending" aria-pressed="false">Chưa đạt (<span
                             id="cntPending">0</span>)</button>
                     <button type="button" class="sub-filter-btn" data-sub-filter="not_started" aria-pressed="false">Chưa làm (<span
                             id="cntNotStarted">0</span>)</button>
@@ -1349,8 +1364,8 @@
         <div class="sub-modal-card class-config-modal-card" role="dialog" aria-modal="true" aria-labelledby="classConfigModalTitle" tabindex="-1">
             <div class="sub-modal-header">
                 <div>
-                    <h3 id="classConfigModalTitle">Cấu hình thành viên & Thiết bị lớp học</h3>
-                    <div class="sub-modal-subtitle">Thêm KTV vào lớp học và chọn các thiết bị thực hành được phân công</div>
+                    <h3 id="classConfigModalTitle">Thiết lập KTV và thiết bị</h3>
+                    <div class="sub-modal-subtitle">Chọn KTV tham gia lớp và thiết bị thực hành được giao</div>
                 </div>
                 <button type="button" class="detail-close" id="classConfigModalClose" aria-label="Đóng popup">×</button>
             </div>
@@ -1359,7 +1374,7 @@
                     <!-- Cột 1: Thành viên lớp học -->
                     <div class="class-config-column">
                         <div class="class-config-column-header">
-                            <h4>Thành viên lớp học (<span id="classModalMemberCount">0</span>)</h4>
+                            <h4>KTV trong lớp (<span id="classModalMemberCount">0</span>)</h4>
                             <button type="button" class="button-text-danger" id="classModalClearMembersBtn">Xóa tất cả</button>
                         </div>
 
@@ -1435,21 +1450,21 @@
                         <span class="report-export-option-icon report-export-option-cyan" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><path d="M4 20h16M6 20V8l6-4 6 4v12M9 11h2m2 0h2m-6 4h2m2 0h2" /></svg>
                         </span>
-                        <span><strong>Tiến độ theo chi nhánh</strong><small>Ma trận Khu vực/CNx theo thiết bị và bài lab.</small></span>
+                        <span><strong>Kết quả theo khu vực</strong><small>Tiến độ theo khu vực, thiết bị và bài lab.</small></span>
                     </label>
                     <label class="report-export-option" data-report-option="class_matrix">
                         <input type="radio" name="reportExportType" value="class_matrix">
                         <span class="report-export-option-icon report-export-option-purple" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8m8-3v6m3-3h-6" /></svg>
                         </span>
-                        <span><strong>Tiến độ KTV theo lớp</strong><small>Chi tiết trạng thái từng bài lab của từng KTV.</small></span>
+                        <span><strong>Kết quả KTV theo lớp</strong><small>Kết quả từng bài lab của từng KTV.</small></span>
                     </label>
                     <label class="report-export-option" data-report-option="roster">
                         <input type="radio" name="reportExportType" value="roster">
                         <span class="report-export-option-icon report-export-option-green" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2m4-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8m10-4v6m3-3h-6" /></svg>
                         </span>
-                        <span><strong>Danh sách hồ sơ KTV</strong><small>Đúng các cột nghiệp vụ và bộ lọc quản lý KTV.</small></span>
+                        <span><strong>Danh sách KTV</strong><small>Thông tin hồ sơ theo bộ lọc đang áp dụng.</small></span>
                     </label>
                 </fieldset>
 
@@ -1483,7 +1498,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=20260907-class-edit-v7"></script>
+    <script src="js/app.js?v=20260909-dashboard-copy-v21"></script>
 </body>
 
 </html>

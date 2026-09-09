@@ -218,12 +218,15 @@ SELECT (SELECT COUNT(*) FROM cohort_pairs) AS assigned_count,
        COUNT(*) FILTER (
             WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.is_passed IS NOT NULL
        ) AS graded_count,
+       COUNT(*) FILTER (
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.is_passed IS TRUE
+       ) AS passed_count,
        ROUND(100.0 * (SELECT COUNT(*) FROM pair_outcomes WHERE first_pass_attempt_no IS NOT NULL)
            / NULLIF((SELECT COUNT(*) FROM cohort_pairs), 0), 2) AS completion_rate,
        ROUND(100.0 * COUNT(*) FILTER (
             WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.is_passed IS TRUE
        ) / NULLIF(COUNT(*) FILTER (
-            WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.is_passed IS NOT NULL
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
        ), 0), 2) AS pass_rate,
        ROUND(100.0 * (SELECT COUNT(*) FROM pair_outcomes WHERE first_pass_attempt_no = 1)
            / NULLIF((SELECT COUNT(*) FROM pair_outcomes WHERE first_pass_attempt_no IS NOT NULL), 0), 2) AS first_try_rate,
@@ -318,9 +321,10 @@ SELECT TO_CHAR(months.month, 'YYYY-MM') AS month,
        COALESCE(pair.assigned_count, 0) AS assigned_count,
        COALESCE(pair.completed_count, 0) AS completed_count,
        COALESCE(attempt.graded_count, 0) AS graded_count,
+       COALESCE(attempt.passed_count, 0) AS passed_count,
        ROUND(100.0 * COALESCE(pair.completed_count, 0)
            / NULLIF(pair.assigned_count, 0), 2) AS completion_rate,
-       ROUND(100.0 * COALESCE(attempt.passed_count, 0) / NULLIF(attempt.graded_count, 0), 2) AS pass_rate,
+       ROUND(100.0 * COALESCE(attempt.passed_count, 0) / NULLIF(attempt.practice_attempts, 0), 2) AS pass_rate,
        ROUND(100.0 * COALESCE(pair.first_try_count, 0) / NULLIF(pair.completed_count, 0), 2) AS first_try_rate,
        attempt.avg_duration_sec,
        COALESCE(attempt.duration_known_count, 0) AS duration_known_count,
@@ -559,6 +563,7 @@ function dashboard_report_payload(PDO $pdo, array $query): array
                 'assigned_count' => 'KTV-lab assignments effective at the period end.',
                 'attempt_metrics' => 'Practice and guide attempts occurring inside the selected period.',
                 'completion_metrics' => 'Cumulative passed KTV-lab assignments through the period end.',
+                'pass_rate' => 'Passed practice attempts divided by all practice attempts in the selected period.',
             ],
             'data_quality' => $matrix['data_quality'] ?? [],
             'period' => [

@@ -10,6 +10,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
     def setUpClass(cls):
         cls.html = (ROOT / "dashboard-authen" / "index.html").read_text(encoding="utf-8")
         cls.css = (ROOT / "dashboard-authen" / "css" / "styles.css").read_text(encoding="utf-8")
+        cls.professional_css = (ROOT / "dashboard-authen" / "css" / "dashboard-professional.css").read_text(encoding="utf-8")
         cls.javascript = (ROOT / "dashboard-authen" / "js" / "app.js").read_text(encoding="utf-8")
 
     def test_all_dashboard_tables_receive_non_wrapping_scroll_behavior(self):
@@ -31,8 +32,6 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         for select_id in (
             "instructorClassSelect",
             "instructorDeviceSelect",
-            "classMatrixClassSelect",
-            "classMatrixDeviceSelect",
         ):
             self.assertIn(f"'{select_id}'", self.javascript)
         self.assertIn("function enhanceSearchableFilterSelect", self.javascript)
@@ -44,7 +43,6 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
     def test_device_filters_are_searchable_checkbox_multiselects(self):
         self.assertIn("const multiSelectFilterIds = new Set", self.javascript)
         self.assertIn("'instructorDeviceSelect'", self.javascript)
-        self.assertIn("'classMatrixDeviceSelect'", self.javascript)
         self.assertIn('aria-multiselectable="true"', self.javascript)
         self.assertIn('type="checkbox"', self.javascript)
         self.assertIn("searchable-select-apply", self.javascript)
@@ -59,7 +57,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn("dropdown._committingFilterDraft = true", self.javascript)
         self.assertIn("discardDraft: false", self.javascript)
 
-    def test_region_usage_line_chart_uses_valid_sessions_per_total_headcount(self):
+    def test_region_charts_use_passed_people_and_sessions_per_headcount(self):
         for element_id in (
             "regionUsageChart",
             "regionUsageYear",
@@ -67,29 +65,36 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
             "regionUsageLegend",
             "regionUsageTooltip",
             "regionUsagePeriodNote",
+            "regionRaceChart",
+            "overviewRegionReset",
+            "overviewMonthlyCard",
+            "overviewSessionsDrilldown",
         ):
             self.assertIn(f'id="{element_id}"', self.html)
         self.assertIn("function getRegionUsageSeries", self.javascript)
-        self.assertIn("function isCompletedDeviceUsageSession", self.javascript)
+        self.assertIn("function isPracticeSession", self.javascript)
         self.assertIn("sessions.forEach(session =>", self.javascript)
-        self.assertIn("session.rawStatus === 'completed'", self.javascript)
-        self.assertIn("validSessionsByRegionMonth", self.javascript)
-        self.assertIn("participatingLearnersByRegionMonth", self.javascript)
-        self.assertIn("validSessions / headcount", self.javascript)
-        self.assertIn("participatingLearners / headcount", self.javascript)
+        self.assertIn("passedLearnersByRegionMonth", self.javascript)
+        self.assertIn("passedLearners / headcount", self.javascript)
+        self.assertIn("practiceSessions / headcount", self.javascript)
+        self.assertIn("function renderRegionRaceChart", self.javascript)
+        self.assertIn("function selectOverviewRegion", self.javascript)
         self.assertIn(".filter(item => item.headcount > 0)", self.javascript)
-        self.assertIn("Tần suất (lượt/KTV)", self.javascript)
+        self.assertIn("KTV thực hành đạt (%)", self.javascript)
         self.assertIn("is-selected-month", self.javascript)
         self.assertIn("renderRegionUsageChart();", self.javascript)
         self.assertIn(".region-usage-line", self.css)
         self.assertIn(".region-usage-tooltip", self.css)
+        self.assertIn(".region-race-row", self.professional_css)
 
         overview_start = self.html.index('id="overview"')
         kpi_grid = self.html.index('class="kpi-grid"', overview_start)
         region_chart = self.html.index('id="regionUsageChart"', overview_start)
+        race_chart = self.html.index('id="regionRaceChart"', overview_start)
         monthly_trend = self.html.index('id="overviewMonthlyTrend"', overview_start)
         analytics_start = self.html.index('id="analytics"', overview_start)
         self.assertLess(kpi_grid, region_chart)
+        self.assertLess(region_chart, race_chart)
         self.assertLess(region_chart, monthly_trend)
         self.assertLess(monthly_trend, analytics_start)
         self.assertEqual(self.html.count('id="regionUsageChart"'), 1)
@@ -111,7 +116,11 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
 
     def test_kpis_are_grouped_and_never_use_local_fallback_formulas(self):
         self.assertIn('id="activityKpiGroupTitle"', self.html)
-        self.assertIn('id="outcomeKpiGroupTitle"', self.html)
+        self.assertNotIn('id="outcomeKpiGroupTitle"', self.html)
+        for retained_kpi in ("kpiSessions", "kpiGuideSessions", "kpiLearners", "kpiPassRate"):
+            self.assertIn(f'id="{retained_kpi}"', self.html)
+        for removed_kpi in ("kpiAvgDuration", "kpiCompleted", "kpiCompletionRate", "kpiFirstTryRate"):
+            self.assertNotIn(f'id="{removed_kpi}"', self.html)
         self.assertIn("dashboardReportStatus: 'loading'", self.javascript)
         self.assertIn("Không có dữ liệu báo cáo tổng hợp cho kỳ đã chọn", self.javascript)
         self.assertNotIn("function computeMetrics", self.javascript)
@@ -120,8 +129,122 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn("state.regionUsageYear = bounds.year", self.javascript)
         self.assertIn("Khác kỳ báo cáo đang chọn", self.javascript)
 
+    def test_class_report_uses_compact_master_detail_overview(self):
+        overview = self.html.index('id="classOverviewCard"')
+        detail = self.html.index('id="classDetailCard"')
+        self.assertLess(overview, detail)
+        for heading in (
+            "Số KTV",
+            "Thiết bị đã giao",
+            "Lượt thực hành",
+            "KTV hoàn thành",
+            "Tỷ lệ hoàn thành",
+        ):
+            self.assertIn(heading, self.javascript)
+        self.assertIn("class-overview-progress-track", self.javascript)
+        self.assertIn("fullyCompletedCount", self.javascript)
+        self.assertIn('classProgressFilterWrapper', self.javascript)
+        self.assertIn('id="classProgressFilterApply"', self.javascript)
+        self.assertIn('id="classProgressFilterAll"', self.javascript)
+        self.assertIn('id="classProgressFilterNone"', self.javascript)
+        self.assertIn('input type="checkbox" value=', self.javascript)
+        self.assertNotIn('name="class-progress-filter"', self.javascript)
+        self.assertIn('header-filter-footer', self.javascript)
+        self.assertIn('header-filter-apply', self.javascript)
+        self.assertIn('ktv-header-sort', self.javascript)
+        self.assertIn('id="classPersonnelSummaryOpen"', self.html)
+        self.assertIn('id="classDeviceProgressList"', self.html)
+        self.assertIn('id="classDeviceStatSearch"', self.html)
+        self.assertIn('id="classDeviceStatSortTrigger"', self.html)
+        self.assertIn('id="classDeviceStatSortWrapper"', self.html)
+        self.assertIn('data-device-stat-sort="completed_desc"', self.html)
+        self.assertNotIn('id="classDeviceStatSort"', self.html)
+        self.assertNotIn('id="classMatrixClassSelect"', self.html)
+        self.assertNotIn('id="classMatrixDeviceSelect"', self.html)
+        self.assertNotIn('id="classMatrixSearchInput"', self.html)
+        self.assertIn('classOverviewFilterWrapper', self.javascript)
+        self.assertIn('data-class-overview-sort', self.javascript)
+        self.assertIn('classKtvFilterWrapper', self.javascript)
+        self.assertIn('classOverviewSelectedClasses', self.javascript)
+        self.assertIn('classMatrixSelectedKtvs', self.javascript)
+        self.assertIn('function bindClassChecklistFilter', self.javascript)
+        self.assertNotIn('function bindClassTextFilter', self.javascript)
+        self.assertIn("document.body.appendChild(dropdown)", self.javascript)
+        self.assertIn("class-header-filter-floating", self.javascript)
+        self.assertIn("focus({ preventScroll: true })", self.javascript)
+        self.assertIn(".popover-dropdown.class-header-filter-floating.header-filter-menu", self.css)
+        self.assertIn(".class-header-filter-floating.header-filter-menu > .popover-options", self.css)
+        self.assertIn("overflow-y: auto", self.css)
+        self.assertIn("overflow: hidden", self.css)
+        self.assertNotIn('id="classMatrixNameSort"', self.javascript)
+        self.assertNotIn('id="classMatrixProgressFilter"', self.html)
+        self.assertNotIn('id="classMatrixPersonnelSort"', self.html)
+        for removed_kpi in (
+            'classMatrixTotalSessions',
+            'classMatrixTotalKtvs',
+            'classMatrixTotalLabs',
+            'classMatrixCompletionRate',
+        ):
+            self.assertNotIn(removed_kpi, self.html)
+        self.assertIn("function formatClassEmployeeId", self.javascript)
+        self.assertIn("--ktv-stt-width: 34px", self.css)
+        self.assertIn("--ktv-code-width: 78px", self.css)
+        self.assertIn("ktv-footer-stt", self.javascript)
+        self.assertIn("ktv-footer-code", self.javascript)
+        self.assertNotIn("classMatrixCompletionSort", self.javascript)
+        self.assertIn("if (!table.matches('.class-matrix-table'))", self.javascript)
+        self.assertIn("function focusClassMatrixDetail", self.javascript)
+        self.assertIn("function focusClassMatrixTable", self.javascript)
+        self.assertIn("scrollIntoView", self.javascript)
+        self.assertIn(".class-overview-progress-track", self.css)
+        self.assertIn(".class-overview-action", self.css)
+
     def test_asset_version_prevents_stale_control_styles(self):
-        self.assertEqual(self.html.count("20260907-class-edit-v7"), 3)
+        self.assertEqual(self.html.count("20260909-dashboard-copy-v21"), 3)
+
+    def test_dashboard_copy_is_short_consistent_and_user_friendly(self):
+        for label in (
+            "Hoạt động trong tháng",
+            "Lượt hướng dẫn trong tháng",
+            "Tỷ lệ thực hành đạt",
+            "Tỷ lệ KTV thực hành đạt",
+            "Biểu đồ thi đua giữa các khu vực",
+            "Danh sách lớp học",
+            "Lịch sử thực hành theo KTV",
+            "Nhập từ Excel",
+            "Lịch sử nhập",
+            "Tổng hợp",
+        ):
+            self.assertIn(label, self.html)
+        for old_label in (
+            "Hoạt động trong kỳ",
+            "Lượt xem hướng dẫn trong tháng",
+            "Tỷ lệ KTV có thực hành đạt",
+            "Biểu đồ đua giữa các khu vực",
+            "Khu vực/CNx",
+            "Lịch sử import",
+            "Dashboard giám sát thực hành KTV",
+        ):
+            self.assertNotIn(old_label, self.html)
+        self.assertIn("Nhập danh sách KTV", self.javascript)
+        self.assertNotIn("Import danh sách KTV", self.javascript)
+
+    def test_all_views_share_a_compact_information_hierarchy(self):
+        self.assertIn("Compact information hierarchy shared by every dashboard view", self.professional_css)
+        self.assertIn(".panel-subtitle {", self.professional_css)
+        self.assertIn("#analytics .detail-report-header", self.professional_css)
+        self.assertIn("#classMatrix .detail-report-header", self.professional_css)
+        self.assertIn(".instructor-class-manager {", self.professional_css)
+        self.assertIn(".roster-panel {", self.professional_css)
+
+    def test_matrix_reports_do_not_render_a_duplicate_page_surface(self):
+        for selector in (
+            "#analytics.detail-report-page > .detail-report-shell",
+            "#classMatrix.detail-report-page > .detail-report-shell",
+        ):
+            self.assertIn(selector, self.professional_css)
+        self.assertIn("background: transparent", self.professional_css)
+        self.assertIn("box-shadow: none", self.professional_css)
 
 
 if __name__ == "__main__":
