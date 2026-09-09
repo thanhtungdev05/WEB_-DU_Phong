@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "lint:js": "eslint dashboard-authen/js portal.html --no-error-on-unmatched-pattern",
+    "format:check": "prettier --check \"**/*.{js,css,html,json,md}\""
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0"
+  }
+}

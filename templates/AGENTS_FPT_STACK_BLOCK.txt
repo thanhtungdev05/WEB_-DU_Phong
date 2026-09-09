@@ -1,0 +1,40 @@
+<!-- BEGIN FPT ACTUAL STACK -->
+## Actual project stack
+
+This repository is a mixed-stack web system:
+
+- PHP 8.2+ is the primary REST/API backend.
+- Django 5.2 is used for the admin application only.
+- Python 3.12 `ThreadingHTTPServer` dispatches static content and reverse-proxies PHP/Django.
+- PostgreSQL/Neon is the shared database.
+- Application schema changes use the custom forward-only SQL migration system under `api/migrations`.
+- Django application models that mirror shared tables are `managed=False`.
+- Frontend is static HTML/CSS/vanilla JavaScript; do not assume React/Vue/TypeScript/bundlers.
+- Portal authentication uses FPT IAM through a Keycloak-compatible OAuth2 authorization-code flow.
+- Portal PHP sessions/RBAC and Django admin authentication are separate security domains.
+- XLSX import/export uses PhpSpreadsheet and project-specific logic.
+- Runtime/deployment uses Docker, PHP CLI, Gunicorn, and the Python dispatcher.
+
+## Architecture rules
+
+- Trace browser -> dispatcher -> PHP API or Django Admin -> PostgreSQL before modifying cross-layer behavior.
+- Do not move primary REST behavior into Django unless explicitly required.
+- Do not create Django migrations for shared application tables marked `managed=False`.
+- Use the custom SQL migration mechanism for shared schema changes.
+- Treat IAM/OAuth state, session handling, roles, permissions, and direct endpoint access as security-sensitive.
+- Keep frontend/backend response contracts synchronized.
+- Preserve the buildless frontend unless a concrete requirement justifies introducing a bundler.
+- Never read, print, commit, or log real `.env` secrets.
+- Never run migration tests against shared/production Neon data; use disposable PostgreSQL.
+- Crawler/emulator/device automation work is out of scope.
+
+## Quality gates
+
+Before declaring a substantial code task complete, run the most relevant checks from:
+
+```powershell
+.\scripts\check.ps1
+```
+
+Use focused checks first. Do not weaken tests or permission checks merely to get a pass.
+<!-- END FPT ACTUAL STACK -->
