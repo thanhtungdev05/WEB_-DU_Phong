@@ -1,0 +1,977 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#115;&#110;&#116;&#112;</div>
+<div id="_NowSupIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#115;&#110;&#116;&#112;</div>
+<div id="_NowThdIdInfo"></div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft" role="complementary">
+<div id="class2Menu" class="class2Menu" role="navigation">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span tabindex="0" role="text">Page Information</span>
+</div>
+
+<p class="pIntroContent" tabindex="0" role="text">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#83;&#78;&#84;&#80;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function(){
+function custom_control(template)
+{
+var TimeValue = $('#CurrentLocalTime', template).val();
+var custobj = $('#CCurrentLocalTime', template);
+var prmissionValue = $('#NtpConfigPermission', template).val();
+var sntpPrmission = prmissionValue & 12;
+var serverPrmission = prmissionValue & 3;
+var sntpobj = $('#LocalTimeZoneandName', template);
+var serverobj1 = $('#NtpServer1', template);
+var serverobj2 = $('#NtpServer2', template);
+var serverobj3 = $('#NtpServer3', template);
+var serverobj4 = $('#NtpServer4', template);
+var serverobj5 = $('#NtpServer5', template);
+if(sntpPrmission != 0)
+{
+sntpobj.attr("disabled","disabled");
+}
+else
+{
+sntpobj.disableIt(false);
+}
+if(serverPrmission != 0)
+{
+serverobj1.attr("disabled","disabled");
+serverobj2.attr("disabled","disabled");
+serverobj3.attr("disabled","disabled");
+serverobj4.attr("disabled","disabled");
+serverobj5.attr("disabled","disabled");
+}
+else
+{
+serverobj1.disableIt(false);
+serverobj2.disableIt(false);
+serverobj3.disableIt(false);
+serverobj4.disableIt(false);
+serverobj5.disableIt(false);
+}
+custobj.text(TimeValue);
+if ( TimeValue != "")
+{
+var SecTimeLocation = TimeValue.lastIndexOf(":");
+currTimeNotSec = TimeValue.substring(0, SecTimeLocation);
+$("#_DevCurrTime").text(currTimeNotSec);
+$.publish("/some/SNTPModify", [template]);
+}
+var custobj = $('#Dscp', template);
+if ("-1" == custobj.val())
+{
+custobj.val("");
+}
+time_zone();
+var objltz = $('#LocalTimeZoneandName',template);
+var value = objltz.val();
+control_daylight(value);
+if (!isDaylightSavingsUsed(value))
+{
+var objtmp = $('#DaylightSavingsUsed0', template);
+objtmp.prop('checked', true);
+}
+var data = {};
+data.template = template;
+$.callModifier("LocalSntp/disableParams", data);
+}
+function initial_template(templateID)
+{
+var template = $("#"+templateID);
+template.bind("hiddenValueChangeByCustom", function(event,template){
+var obj = $('#ZoneIndex');
+obj.val($('#LocalTimeZoneandName').val());
+$('#AutoSetTzname').val("1");
+});
+var checkJSONTempObj = {
+"rules": {
+"NtpServer1": {
+"rangelength": [0,64]
+},
+"NtpServer2": {
+"rangelength": [0,64]
+},
+"NtpServer3": {
+"rangelength": [0,64]
+},
+"NtpServer4": {
+"rangelength": [0,64]
+},
+"NtpServer5": {
+"rangelength": [0,64]
+},
+"PollTimeInterval": {
+"required":true,
+"integer": true,
+"range":[3600,86400]
+},
+"Dscp": {
+"required":false,
+"integer": true,
+"range":[0,63]
+},
+"TyRInterval": {
+"required":true,
+"integer": true,
+"range":[16,1024]
+}
+},
+"messages": {
+}
+}
+template.setPromptCheckJSON(checkJSONTempObj, template);
+template.bind("fillDataByApplyResult", function(event,xml, template){
+if ( ActionByApplyResult(xml, template) == 0 )
+{
+var OBJID = ["OBJ_SNTP_ID"];
+template.fillDataByOBJID(xml ,OBJID, template, 0);
+custom_control(template);
+}
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var OBJID = ["OBJ_SNTP_ID"];
+ActionByCancelResult(xml, template, OBJID);
+custom_control(template);
+});
+template.bind("PostDataChangeByCustom", function(event, NameValueJson){
+var ElemsMainID = NameValueJson.ElemsMainID;
+var ElemsValue = NameValueJson.ElemsValue;
+var prefixNameValue = {
+"Dscp" : ""
+};
+if ( prefixNameValue[ElemsMainID] == ElemsValue)
+{
+NameValueJson.ElemsValue = "-1";
+}
+});
+var obj = $('#LocalTimeZoneandName',template);
+obj.change(function(event){
+var TypeOBJ = $(this);
+var value = TypeOBJ.val();
+control_daylight(value);
+});
+}
+var timeZoneArrayOriginal =
+[
+[ "TZ_ENEWETAK_KWAJALEIN", 0, false, "+12:00", "Kwajalein", "Kwajalein" ],
+[ "TZ_MIDWAY_ISLAND", 1, false, "-11:00", "Midway Island, Samoa", "Midway Island, Samoa" ],
+[ "TZ_HAWAII", 2, false, "-10:00", "Hawaii", "Hawaii" ],
+[ "TZ_ALASKA", 3, true, "-09:00", "Anchorage, Alaska", "Alaska,Anchorage" ],
+[ "TZ_PACIFIC", 4, true, "-08:00", "Pacific Time (US, Canada), Tijuana", "Pacific Time (US, Canada), Tijuana" ],
+[ "TZ_ARIZONA", 5, false, "-07:00", "Arizona, Mountain Time (US)", "Arizona, Mountain Time (US)" ],
+[ "TZ_CENTRAL_AMERICA", 6, true, "-06:00", "Central America, Central Canada", "Central America, Central Canada" ],
+[ "TZ_EST", 7, true, "-05:00", "Eastern Time (US, Canada), Indiana", "Eastern Time (US, Canada), Indiana" ],
+[ "TZ_ATLANTIC", 8, true, "-04:00", "Atlantic Time (Canada)", "Atlantic Time (Canada)" ],
+[ "TZ_NEWFOUNDLAND", 9, true, "-03:30", "Newfoundland", "Newfoundland" ],
+[ "TZ_BRASILIA", 10, true, "-03:00", "Brasilia", "Brasilia" ],
+[ "TZ_MID_ATLANTIC", 11, true, "-02:00", "Mid-Atlantic", "Mid-Atlantic" ],
+[ "TZ_AZORES", 12, true, "-01:00", "Azores", "Azores" ],
+[ "TZ_CASABLANCA", 13, true, "+00:00", "Casablanca", "Casablanca" ],
+[ "TZ_AMSTERDAM", 14, true, "+01:00", "Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna", "Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna" ],
+[ "TZ_BAGHDAD", 15, false, "+03:00", "Baghdad", "Baghdad" ],
+[ "TZ_TEHRAN", 16, true, "+03:30", "Tehran", "Tehran" ],
+[ "TZ_ABU_DHABI", 17, false, "+04:00", "Abu Dhabi, Muscat, Tbilisi", "Abu Dhabi, Muscat, Tbilisi" ],
+[ "TZ_KABUL", 18, false, "+04:30", "Kabul", "Kabul" ],
+[ "TZ_EKATERINBURG", 19, false, "+05:00", "Ekaterinburg, Chelyabinsk, Izhevsk", "Ekaterinburg" ],
+[ "TZ_CALCUTTA", 20, false, "+05:30", "Calcutta, Mumbai, New Delhi, Madras, Sri Jayawardenepura", "Calcutta, Mumbai, New Delhi, Madras, Sri Jayawardenepura" ],
+[ "TZ_KATHMANDU", 21, false, "+05:45", "Kathmandu", "Kathmandu" ],
+[ "TZ_ALMATY", 22, false, "+06:00", "Almaty", "Almaty" ],
+[ "TZ_RANGOON", 23, false, "+06:30", "Rangoon", "Rangoon" ],
+[ "TZ_BANGKOK", 24, false, "+07:00", "Bangkok, Hanoi", "Bangkok, Hanoi" ],
+[ "TZ_BEIJING", 25, false, "+08:00", "Beijing, Chongqing, Hong Kong, Urumqi", "Beijing, Chongqing, Hong Kong, Urumqi" ],
+[ "TZ_TOKYO", 26, false, "+09:00", "Osaka, Sapporo, Tokyo", "Osaka, Sapporo, Tokyo" ],
+[ "TZ_ADELAIDE", 27, true, "+09:30", "Adelaide", "Adelaide" ],
+[ "TZ_BRISBANE", 28, false, "+10:00", "Brisbane", "Brisbane" ],
+[ "TZ_MAGADAN", 29, false, "+11:00", "Magadan, Petropavlovsk-Kamchatskiy", "Magadan, Solamon" ],
+[ "TZ_AUCKLAND", 30, true, "+12:00", "Auckland, Wellington", "Auckland, Wellington" ],
+[ "TZ_NUKUALOFA", 31, false, "+13:00", "Nukualofa", "Nukualofa" ],
+[ "TZ_MOUNTAIN", 32, true, "-07:00", "Mountain Standard Time (US, Canada)", "Mountain Standard Time(US, Canada)" ],
+[ "TZ_CHIHUAHAR", 33, true, "-07:00", "Chihuahau, La Paz, Mazatlan", "Chihuahau, La Paz,Mazatlan" ],
+[ "TZ_CENTRAL_TIME", 34, true, "-06:00", "Central Time (US, Canada)", "Central Time (US, Canada)" ],
+[ "TZ_GUADALAJARA", 35, true, "-06:00", "Guadalajara, Mexico City, Monterrey", "Guadalajara, Mexico City, Monterrey" ],
+[ "TZ_BOGOTA", 36, false, "-05:00", "Bogota", "Bogota" ],
+[ "TZ_CARACAS", 37, false, "-04:30", "Caracas", "Caracas" ],
+[ "TZ_SANTIAGO", 38, true, "-04:00", "Santiago", "Santiago" ],
+[ "TZ_BUENOS", 39, false, "-03:00", "Buenos Aires", "Buenos Aires" ],
+[ "TZ_GREENLAND", 40, true, "-03:00", "Greenland", "Greenland" ],
+[ "TZ_CAPE", 41, false, "-01:00", "Cape Verde Islands", "Cape Verde Islands" ],
+[ "TZ_GREENWICH", 42, true, "+00:00", "Greenwich Mean Time: Dublin", "Greenwich Mean Time: Dublin" ],
+[ "TZ_BELGRADE", 43, true, "+01:00", "Belgrade, Bratislava, Budapest, Ljubljana", "Belgrade, Bratislava, Budapest, Ljubljana" ],
+[ "TZ_SARAJEVO", 44, true, "+01:00", "Sarajevo, Skopje, Warsaw, Zagreb", "Sarajevo, Skopje, Warsaw, Zagreb" ],
+[ "TZ_W_CENTRAL_AFRICA", 45, false, "+01:00", "W. Central Africa", "W.Central Africa" ],
+[ "TZ_BRUSSEL", 46, true, "+01:00", "Brussel, Copenhagen, Madrid, Paris", "Brussel, Copenhagen, Madrid, Paris" ],
+[ "TZ_HARARE", 47, false, "+02:00", "Harare", "Harare" ],
+[ "TZ_HELSINKI", 48, true, "+02:00", "Helsinki, kiev, Riga, Sofia, Tallinn, Vilnius, Athens, Bucharest", "Helsinki, kiev, Riga, Sofia, Tallinn, Vilnius, Athens, Bucharest" ],
+[ "TZ_MINSK", 49, false, "+03:00", "Minsk", "Minsk" ],
+[ "TZ_KUWAIT", 50, false, "+03:00", "Kuwait, Riyadh, Nairobi", "Kuwait, Riyadh, Nairobi" ],
+[ "TZ_MOSCOW", 51, false, "+03:00", "Moscow, St.Petersburg, Nizhniy Novgorod", "Moscow, Volgograd" ],
+[ "TZ_BAKU", 52, true, "+04:00", "Baku", "Baku" ],
+[ "TZ_ISLAMABAD", 53, false, "+05:00", "Islamabad, Karachi", "Islamabad, Karachi" ],
+[ "TZ_ASTANA", 54, false, "+06:00", "Astana", "Astana" ],
+[ "TZ_KRASNOYARSK", 55, false, "+07:00", "Krasnoyarsk, Norilsk, Abakan", "Krasnoyarsk" ],
+[ "TZ_YAKUTSK", 56, false, "+09:00", "Chita, Yakutsk, Tynda", "Yakutsk" ],
+[ "TZ_DARWIN", 57, false, "+09:30", "Darwin", "Darwin" ],
+[ "TZ_CANBERRA", 58, true, "+10:00", "Canberra, Melbourne, Sydney,Hobart", "Canberra, Melbourne, Sydney,Hobart" ],
+[ "TZ_VLADIVOSTOK", 59, false, "+10:00", "Vladivostok, Khabarovsk, Uzhno-Sahalinsk", "Vladivostok" ],
+[ "TZ_FIJI", 60, true, "+12:00", "Fiji, Kamchatka", "Fiji, Kamchatka" ],
+[ "TZ_MONROVIA", 61, false, "+00:00", "Monrovia", "Monrovia"],
+[ "TZ_JERUSALEM", 62, true, "+02:00", "Jerusalem", "Jerusalem"],
+[ "TZ_ISTANBUL", 63, false, "+03:00", "Istanbul", "Istanbul"],
+[ "TZ_ABU_YEREVAN", 64, false, "+04:00", "Yerevan", "Yerevan"],
+[ "TZ_NOVOSIBIRSK", 65, false, "+06:00", "Novosibirsk, Omsk, Barnaul", "Novosibirsk"],
+[ "TZ_JAKARTA", 66, false, "+07:00", "Jakarta", "Jakarta"],
+[ "TZ_IRKUTSK", 67, false, "+08:00", "Irkutsk, Ulan-Ude", "Irkutsk"],
+[ "TZ_SEOUL", 68, false, "+09:00", "Seoul", "Seoul"],
+[ "TZ_PORT_MORESBY", 69, false, "+10:00", "Port Moresby", "Port Moresby"],
+[ "TZ_GUAM", 70, false, "+10:00", "Guam", "Guam"],
+[ "TZ_NEW_CALEDONIA", 71, false, "+11:00", "New Caledonia", "New Caledonia"],
+[ "TZ_QUITO", 72, false, "-05:00", "Quito", "Quito"],
+[ "TZ_LIMA", 73, false, "-05:00", "Lima", "Lima"],
+[ "TZ_LA_PAZ", 74, false, "-04:00", "La Paz", "La Paz"],
+[ "TZ_ST_PETERSBURG", 75, false, "+03:00", "St.Petersburg", "St.Petersburg"],
+[ "TZ_GEORGETOWN", 76, false, "-04:00", "Georgetown", "Georgetown"],
+[ "TZ_EDINBURGH", 77, true, "+00:00", "Edinburgh,London", "Edinburgh,London"],
+[ "TZ_PRETORIA", 78, false, "+02:00", "Pretoria", "Pretoria"],
+[ "TZ_TASHKENT", 79, false, "+05:00", "Tashkent", "Tashkent"],
+[ "TZ_DHAKA", 80, false, "+06:00", "Dhaka", "Dhaka"],
+[ "TZ_MARSHALL_IS", 81, false, "+12:00", "Marshall Is.", "Marshall Is."],
+[ "TZ_CAIRO", 82, true, "+02:00", "Cairo", "Cairo"],
+[ "TZ_MONTEVIDEO", 83, false, "-03:00", "Montevideo", "Montevideo" ],
+[ "TZ_KALININGRAD", 84, false, "+02:00", "Kaliningrad", "Kaliningrad" ],
+[ "TZ_SINGAPORE,", 85, false, "+08:00", "Singapore, Kuala Lumpur", "Singapore, Kuala Lumpur" ]
+];
+
+var TimeZoneFilterStr = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85";
+var TimeZoneFilter = TimeZoneFilterStr.split(',');
+var timeZoneArray = new Array;
+function isDaylightSavingsUsed(timeZoneIndex)
+{
+for ( var i=0; i<timeZoneArray.length; i++ )
+{
+var moduleIndex = timeZoneArray[i][1];
+if ( moduleIndex == timeZoneIndex )
+{
+return timeZoneArray[i][2];
+}
+}
+return false;
+}
+function timeZoneArrayOrderFunc(ab, ac)
+{
+var abtime = ab[3];
+var actime = ac[3];
+abtime = abtime.replace(":", ".");
+actime = actime.replace(":", ".");
+abtime = parseFloat(abtime);
+actime = parseFloat(actime);
+if ( abtime - actime < 0 )
+{
+return -1;
+}
+else if ( abtime - actime > 0 )
+{
+return 1;
+}
+else
+{
+if ( ab[2] - ac[2] < 0 )
+{
+return -1;
+}
+else if ( ab[2] - ac[2] > 0 )
+{
+return 1;
+}
+else
+{
+return 0;
+}
+}
+}
+function control_daylight(value)
+{
+var objdiv = $('#Prefix_DaylightSavingsUsed');
+var objtmp0 = $('#DaylightSavingsUsed0');
+var objtmp1 = $('#DaylightSavingsUsed1');
+if (!isDaylightSavingsUsed(value))
+{
+objdiv.hide();
+objtmp0.addClass('PostIgnore');
+objtmp1.addClass('PostIgnore');
+}
+else
+{
+objdiv.show();
+objtmp0.removeClass("PostIgnore");
+objtmp1.removeClass("PostIgnore");
+}
+}
+function CreateTimeZoneOption()
+{
+var obj = $('#LocalTimeZoneandName');
+timeZoneArray.sort( timeZoneArrayOrderFunc );
+for ( var i=0; i<timeZoneArray.length; i++ )
+{
+var timeZoneTxt = "";
+if ( "+00:00" == timeZoneArray[i][3] )
+{
+timeZoneTxt = "(GMT) ";
+}
+else
+{
+timeZoneTxt = "(GMT" + timeZoneArray[i][3] + ") ";
+}
+timeZoneTxt += timeZoneArray[i][4];
+var strtemp = "<option value= '" + timeZoneArray[i][1]
++ "' title='"+ timeZoneTxt + "'>" + timeZoneTxt + '</option>';
+obj.append(strtemp);
+}
+}
+function time_zone()
+{
+var obj = $('#LocalTimeZoneandName');
+var value = $('#ZoneIndex').val();
+obj.val(value);
+}
+$(document).ready(function(){
+var HeadID = "LocalSntp";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+initial_template("template_"+HeadID);
+var data = {};
+data.timeZoneArray = timeZoneArrayOriginal;
+$.callModifier("LocalSntp/chgTimeZone",data);
+timeZoneArray = $.grep(data.timeZoneArray, function(val,key){
+for( var i=0; i<TimeZoneFilter.length; i++ )
+{
+if (TimeZoneFilter[i] == val[1])
+{
+return true;
+}
+}
+return false;
+});
+CreateTimeZoneOption();
+Head.succfunction = function(xml){
+Head.hasError(xml,"externErrorHint");
+var OBJ = $(xml).find("OBJ_SNTP_ID");
+var tempobj = $("#template_LocalSntp");
+var OBJID = ["OBJ_SNTP_ID"];
+Head.fillDataByOBJID(xml, OBJID, tempobj, 0);
+custom_control(tempobj);
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div id="LocalSntp" class="instCfgArea HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=sntp_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="LocalSntp">SNTP</h1>
+<div id="LocalSntp_container">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div id="template_LocalSntp">
+<form class="form_content">
+<div id="changeArea_LocalSntp" class="ChangeArea formTblWrap">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<input type="hidden" id="_InstID" value="">
+<input type="hidden" class="PostIgnore" id="CurrentLocalTime" value="">
+<input type="hidden" class="PostIgnore" id="NtpConfigPermission" value="">
+<input type="hidden" id="ZoneIndex" value="">
+<input type="hidden" id="AutoSetTzname" value="1">
+<div class="row" id="div_SntpEnable" style="display: none;">
+<label class="cfgLabel w200">SNTP</label>
+<div class="right" id="Enable">
+<input type="radio" id="Enable1" name="Enable" class="PostIgnore" value="1"/><label for="Enable1">On</label>&nbsp;&nbsp;
+<input type="radio" id="Enable0" name="Enable" class="PostIgnore" value="0"/><label for="Enable0" >Off</label>
+</div>
+</div>
+<div class="row" id="div_SntpWan" style="display: none;">
+<label class="cfgLabel w200" for="SntpBindWanName">WAN Connection</label>
+<div class="right">
+<select name="SntpBindWanName" id="SntpBindWanName" class="selectLong PostIgnore">
+<option value="" title='Any'>Any</option>
+<option value='&#68;&#69;&#86;&#46;&#73;&#80;&#46;&#73;&#70;&#51;' title='&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;&#95;&#116;&#114;&#48;&#54;&#57;' WANServlist='3' >&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;&#95;&#116;&#114;&#48;&#54;&#57;</option>
+</select>
+</div>
+</div>
+<div class="row">
+<label class="cfgLabel w200" id="TipSntp">Current Date And Time</label>
+<div class="right w200">
+<label id="CCurrentLocalTime" class="cfgLabel w250"></label>
+</div>
+</div>
+<div class="row">
+<label for="LocalTimeZoneandName" class="cfgLabel w200">Time Zone</label>
+<div class="right">
+<select class="selectLong" name="LocalTimeZoneandName" id="LocalTimeZoneandName">
+</select>
+</div>
+</div>
+<div class="row">
+<label for="NtpServer1" class="cfgLabel w200">Primary NTP Server</label>
+<div class="right">
+<input class="inputLong" type="text" id="NtpServer1" name="NtpServer1" value=""/>
+<span class="dTip" style="display: none;">Length: 0 ~ 64</span>
+</div>
+</div>
+<div class="row">
+<label for="NtpServer2" class="cfgLabel w200">Secondary NTP Server</label>
+<div class="right">
+<input class="inputLong" type="text" id="NtpServer2" name="NtpServer2" value=""/>
+<span class="dTip" style="display: none;">Length: 0 ~ 64</span>
+</div>
+</div>
+<div class="row" id="div_NtpServer3" style="display:none">
+<label for="NtpServer3" class="cfgLabel w200">NTP Server 3</label>
+<div class="right">
+<input class="inputLong" type="text" id="NtpServer3" name="NtpServer3" value=""/>
+<span class="dTip" style="display: none;">Length: 0 ~ 64</span>
+</div>
+</div>
+<div class="row" id="div_NtpServer4" style="display:none">
+<label for="NtpServer4" class="cfgLabel w200">NTP Server 4</label>
+<div class="right">
+<input class="inputLong" type="text" id="NtpServer4" name="NtpServer4" value=""/>
+<span class="dTip" style="display: none;">Length: 0 ~ 64</span>
+</div>
+</div>
+<div class="row" id="div_NtpServer5" style="display:none">
+<label for="NtpServer5" class="cfgLabel w200">NTP Server 5</label>
+<div class="right">
+<input class="inputLong" type="text" id="NtpServer5" name="NtpServer5" value=""/>
+<span class="dTip" style="display: none;">Length: 0 ~ 64</span>
+</div>
+</div>
+<div class="row">
+<label for="PollTimeInterval" class="cfgLabel w200">Poll Interval</label>
+<div class="right">
+<input class="inputLong" type="text" id="PollTimeInterval" name="PollTimeInterval" value=""/>s
+<span class="dTip" style="display: none;">Range: 3600 ~ 86400</span>
+</div>
+</div>
+<div class="row" id="Prefix_DaylightSavingsUsed">
+<label for="DaylightSavingsUsed" class="left w200">Daylight Saving Time</label>
+<div id="DaylightSavingsUsed" class="right">
+<input type="radio" id="DaylightSavingsUsed0" name="DaylightSavingsUsed" value="1"/>
+<label for="DaylightSavingsUsed0">On</label>
+&nbsp;&nbsp;
+<input type="radio" id="DaylightSavingsUsed1" name="DaylightSavingsUsed" value="0"/>
+<label for="DaylightSavingsUsed1">Off</label>
+</div>
+</div>
+<div class="row">
+<label for="Dscp" class="cfgLabel w200">DSCP</label>
+<div class="right">
+<input class="inputLong" type="text" id="Dscp" name="Dscp" value=""/>
+<span class="dTip" style="display: none;">Range: 0 ~ 63</span>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel" name="Btn_cancel" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply" name="Btn_apply" value="Apply" />
+</div>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x74\x31\x30\x59\x4b\x51\x45\x79\x34\x6a\x6c\x68\x51\x50\x6b\x77\x6b\x54\x77\x43\x46\x73\x72\x43";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>

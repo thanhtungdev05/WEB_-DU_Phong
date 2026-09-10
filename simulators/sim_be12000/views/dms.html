@@ -1,0 +1,1054 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#100;&#109;&#115;</div>
+<div id="_NowSupIdInfo">&#108;&#111;&#99;&#97;&#108;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#100;&#109;&#115;</div>
+<div id="_NowThdIdInfo"></div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft" role="complementary">
+<div id="class2Menu" class="class2Menu" role="navigation">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span tabindex="0" role="text">Page Information</span>
+</div>
+
+<p class="pIntroContent" tabindex="0" role="text">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#68;&#77;&#83;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function () {
+var rootPath = "";
+var g_open = 0;
+var g_path = "";
+var g_file = "";
+var g_browseIndex = "";
+var paths = new Array();
+var files = new Array();
+var xmlhttp;
+function loadXMLDoc(url, index)
+{
+g_browseIndex = index;
+$.get(url, function(result){
+if (typeof(result) == "undefined")
+{
+alert("Browse media source failed!");
+return;
+}
+if(result.indexOf("<IF_ERRORSTR>SessionTimeout</IF_ERRORSTR>") != -1)
+{
+top.location.href = top.location.href;
+return 0;
+}
+if ( "/" == result.charAt(1) )
+{
+result=result.substring(1,result.length);
+}
+if(result.charAt(0) == '|')
+{
+alert("Browse media source failed!");
+return;
+}
+openNewDiv("DMSPathSelectDiv", result);
+});
+}
+function prepareOpenNewDiv(str)
+{
+var msg = "";
+g_open = "1";
+g_path = str.substring(0, str.indexOf("|"));
+if(g_path.length > 0)
+{
+if(g_path.charAt(g_path.length - 1) != '/')
+{
+g_path = g_path + "/";
+}
+}
+g_file = str.substring(str.indexOf("|") + 1, str.length);
+if(g_file.length > 0)
+{
+if(g_file.charAt(g_file.length - 1) != '/')
+{
+g_file = g_file + "/";
+}
+}
+}
+function prepareCloseNewDiv()
+{
+g_file = "";
+g_open = "0";
+files.length = 0;
+paths.length = 0;
+$("#DMSPathSelectDiv").remove();
+IsDisableButton(false);
+}
+var tempStr = "";
+function getPathOrFile()
+{
+var pathStr = "";
+pathStr = tempStr.substring(0, tempStr.indexOf("/"));
+tempStr = tempStr.substring(tempStr.indexOf("/") + 1, tempStr.length);
+return pathStr;
+}
+function setPath()
+{
+g_path = "";
+for(var i = 0; i < paths.length; i++)
+{
+if('/' != g_path.charAt(g_path.length - 1) && '/' != paths[i].charAt(0))
+{
+g_path = g_path + "/";
+}
+g_path = g_path + paths[i];
+}
+$("#Path"+g_browseIndex).val(g_path);
+}
+function changeDir(hierarchy)
+{
+if(hierarchy == paths.length - 1)
+{
+return;
+}
+var url = "/?_type=menuData&_tag=dms_querydir_lua.lua&querydir=";
+g_path = rootPath;
+for(var i = 1; i <= hierarchy; i++)
+{
+if('/' != g_path.charAt(g_path.length - 1))
+{
+g_path = g_path + "/";
+}
+g_path = g_path + encodeURIComponent(paths[i]);
+}
+if('/' != g_path.charAt(g_path.length - 1))
+{
+g_path = g_path + "/";
+}
+url = url + g_path;
+prepareCloseNewDiv();
+loadXMLDoc(url, g_browseIndex);
+}
+window.changeDir = changeDir;
+function cdDir(hierarchy)
+{
+var url = "/?_type=menuData&_tag=dms_querydir_lua.lua&querydir=";
+g_path = rootPath;
+for(var i = 1; i < paths.length; i++)
+{
+if('/' != g_path.charAt(g_path.length - 1))
+{
+g_path = g_path + "/";
+}
+g_path = g_path + encodeURIComponent(paths[i]);
+}
+if('/' != g_path.charAt(g_path.length - 1))
+{
+g_path = g_path + "/";
+}
+g_path = g_path + encodeURIComponent(files[hierarchy]) + "/";
+url = url + g_path;
+prepareCloseNewDiv();
+loadXMLDoc(url, g_browseIndex);
+}
+window.cdDir = cdDir;
+function getHref(id, strmethod, str, css)
+{
+return ("<a" + ' '+ "href=\"javascript:void(0)\" class=\"hreftext " + css + "\" onmouseup=\""+ strmethod + "\" id=\""
++ id + "\">" + str+ "</a>&nbsp;&nbsp;");
+}
+function popNewDiv(divID)
+{
+var newDiv = document.createElement("div");
+newDiv.id = divID;
+newDiv.className = "DMSPathDiv";
+$(".formTbl").append(newDiv);
+}
+function showFile(divID)
+{
+var newDiv = document.getElementById(divID);
+tempStr = g_file;
+if(g_file.length > 0)
+{
+var file = "file";
+while(tempStr.length != 0)
+{
+var fileStr = getPathOrFile();
+var fileStrTrans = $('<span></span>').text( fileStr ).html();
+if(fileStr.length == 0)
+{
+return;
+}
+files.push(fileStr);
+hierarchy = files.length - 1;
+strmethod = "cdDir(" + hierarchy + ")";
+var newFile = document.createElement(file + hierarchy);
+newFile.innerHTML = getHref(file + hierarchy, strmethod, fileStrTrans,"");
+newFile.innerHTML = "<p>" + newFile.innerHTML + "</p>";
+newDiv.appendChild(newFile);
+}
+}
+}
+function showPath(divID)
+{
+var path = "path";
+var newDiv = document.getElementById(divID);
+var num = 0;
+var pathStr = rootPath;
+var rootPathLen = 0;
+if("/" == rootPath)
+{
+rootPathLen = 1;
+}
+else
+{
+rootPathLen = rootPath.length + 1;
+}
+tempStr = g_path;
+paths.length = 0;
+var newPath = document.createElement(path);
+newPath.innerHTML = "<label>"+"Media Source Path: "+"</label>";
+newDiv.appendChild(newPath);
+paths.push(pathStr);
+var hierarchy = 0;
+var strmethod = "changeDir(" + hierarchy + ")";
+newPath.innerHTML += getHref(path, strmethod, pathStr,"");
+newDiv.appendChild(newPath);
+tempStr = tempStr.substring(rootPathLen, tempStr.length);
+while(tempStr.length != 0)
+{
+pathStr = getPathOrFile();
+var pathStrTrans = $('<span></span>').text( pathStr ).html();
+if(pathStr.length == 0)
+{
+break;
+}
+paths.push(pathStr);
+hierarchy = paths.length - 1;
+strmethod = "changeDir(" + hierarchy + ")";
+newPath = document.createElement(path + hierarchy);
+newPath.innerHTML = "/";
+newPath.innerHTML += getHref(path + hierarchy, strmethod, pathStrTrans,"");
+newDiv.appendChild(newPath);
+}
+}
+function showButton(divID)
+{
+var newDiv = document.getElementById(divID);
+var newSelect = document.createElement("button");
+newSelect.className = "Button BrowseBtn";
+newSelect.innerHTML = "Confirm";
+newSelect.onclick = function()
+{
+setPath();
+prepareCloseNewDiv();
+return false;
+}
+newDiv.appendChild(newSelect);
+var newNbsp = document.createElement("e");
+newNbsp.innerHTML = "&nbsp;&nbsp;";
+newDiv.appendChild(newNbsp);
+var newQuit = document.createElement("button");
+newQuit.className = "Button BrowseBtn";
+newQuit.innerHTML = "Quit";
+newQuit.onclick = function()
+{
+prepareCloseNewDiv();
+return false;
+}
+var newDiv = document.getElementById(divID);
+newDiv.appendChild(newQuit);
+var newBr = document.createElement("d");
+newBr.innerHTML = "<br/>";
+document.getElementById(divID).appendChild(newBr);
+}
+function IsDisableButton(Tag)
+{
+$("input[class^=Button]",$(".formTbl")).each(function(){
+var obj = $(this);
+if(true==Tag)
+{
+obj.addClass("disableBtn");
+}
+else
+{
+obj.disableButton(false);
+}
+});
+}
+function openNewDiv(divID, str)
+{
+prepareOpenNewDiv(str);
+if ($("#"+divID).length)
+{
+$("#"+divID).remove();
+}
+IsDisableButton(true);
+popNewDiv(divID);
+if(g_path != rootPath)
+{
+showPath(divID);
+}
+var newBr = document.createElement("d");
+newBr.innerHTML = "<br/>";
+document.getElementById(divID).appendChild(newBr);
+var newHR=document.createElement("hr");
+newHR.className = "hr0";
+document.getElementById(divID).appendChild(newHR);
+showFile(divID);
+showButton(divID);
+}
+jQuery.validator.addMethod(
+"PathMatch",
+function(value, element, params) {
+if(value.match("[|:*?\"<>]") != null || value.indexOf("\\") != -1)
+{
+return false;
+}
+return true;
+},
+"please do not contain special characters, such as |:*?\"<>\\\\. "
+);
+function initial_template_DMS(templateID)
+{
+template = $("#"+templateID);
+var PathCheckRules = {
+"utf8": true,
+"PathMatch":true,
+"utf8LengthRange":[0,255]
+};
+var instForm = template.find("form");
+var checkJSONTempObj = {
+"rules": {
+"DmsName": {
+"ASCII": true,
+"required": true,
+"rangelength":[1,128]
+},
+"RescanTimeValue": {
+"integer": true,
+"required": true,
+"range":[1,1440]
+},
+"Path0": PathCheckRules,
+"Path1": PathCheckRules,
+"Path2": PathCheckRules,
+"Path3": PathCheckRules
+},
+"messages": {
+}
+};
+var data = {};
+data.checkJSONTemp = checkJSONTempObj;
+data.temp = template;
+$.callModifier("/DmsConf/checkData",data);
+instForm.validate(checkJSONTempObj);
+template.bind("fillDataByApplyResult", function(event,xml, template){
+ActionByApplyResult(xml, template);
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var templateID = template.attr("id");
+var isError = template.hasError(xml);
+if (isError == 0)
+{
+var OBJID = ["OBJ_DMS_ID"];
+ChanegeDataByCustom(xml);
+template.fillDataByOBJID(xml ,OBJID, template,0);
+$("#RescanTime").change();
+}
+});
+template.bind("PostDataChangeByCustom", function(event, NameValueJson){
+var ElemsID = NameValueJson.ElemsMainID;
+if (ElemsID == "ContentList")
+{
+var contentList = "";
+var subpath = "";
+for(var i = 0; i < 4; i++)
+{
+subpath = $("#Path"+i).val();
+if("" != subpath)
+{
+contentList = contentList + subpath + "|";
+}
+}
+NameValueJson.ElemsValue = contentList;
+}
+if(ElemsID == "RescanTime")
+{
+if("1" == NameValueJson.ElemsValue)
+{
+NameValueJson.ElemsValue = $("#RescanTimeValue").val();
+}
+}
+});
+$("#RescanTime").change(function(){
+var RescanTimeValue = $("#RescanTime").val();
+if("1"==RescanTimeValue)
+{
+$("#TR_RescanTimeValue").slideDown();
+$("#TR_RescanTimeValue").removeClass("PostIgnore");
+}
+else
+{
+$("#TR_RescanTimeValue").hide();
+$("#TR_RescanTimeValue").addClass("PostIgnore");
+}
+var TimeValue = $("#RescanTimeValue").val();
+if("" != TimeValue)
+{
+instForm.validate().element($("#RescanTimeValue"));
+}
+});
+$("[id^='Browse']").click(function(){
+if ($(this).hasClass("disableBtn"))
+{
+return;
+}
+var DMSURL = "";
+var index = "";
+var ElemsID=$(this).attr("id");
+index = ElemsID.substring(ElemsID.length-1,ElemsID.length);
+DMSURL = "/?_type=menuData&_tag=dms_querydir_lua.lua&querydir=" + rootPath;
+if('/' != DMSURL.charAt(DMSURL.length - 1))
+{
+DMSURL = DMSURL + "/";
+}
+loadXMLDoc(DMSURL, index);
+});
+}
+function ChanegeDataByCustom(xml)
+{
+var ToOperParaArr = {
+"PathRoot" : {ValueOrigin: ""},
+"RescanTime" : {
+ValueOrigin: "",
+setAction: function(ParaNameSel, ParaValSel, SelfVal){
+if( ("-1" != SelfVal) && ("0" != SelfVal) )
+{
+$("#RescanTimeValue").val(SelfVal);
+ParaValSel.text("1");
+}
+}
+},
+"ContentList" : {ValueOrigin: ""}
+};
+xmlParaInInstOperate(xml, "OBJ_DMS_ID", 0, ToOperParaArr);
+rootPath = ToOperParaArr.PathRoot.ValueOrigin;
+if ( "" == rootPath )
+{
+rootPath = "/";
+}
+g_path = rootPath;
+var contentList = ToOperParaArr.ContentList.ValueOrigin;
+$("input[id^='Path']",$(".form_content")).each(function(){
+var obj = $(this);
+obj.val("");
+});
+if('|' == contentList.charAt(0))
+{
+contentList = contentList.substring(1, contentList.length);
+}
+for(var i = 0; (i < 4) && (contentList != ""); i++)
+{
+if(-1 == contentList.indexOf("|"))
+{
+$("#Path"+i).val(contentList);
+break;
+}
+else
+{
+var pathStr = contentList.substring(0, contentList.indexOf("|"));
+$("#Path"+i).val(pathStr);
+contentList = contentList.substring(contentList.indexOf("|") + 1,
+contentList.length);
+}
+}
+};
+$(document).ready(function(){
+var HeadID = "DMS";
+var Head = $("#"+HeadID);
+var templateID = "template_"+ HeadID;
+var ServerAddr = $("address span", Head).text();
+initial_template_DMS(templateID);
+Head.succfunction = function(xml){
+Head.hasError(xml,"externErrorHint");
+ChanegeDataByCustom(xml);
+var OBJID = ["OBJ_DMS_ID"];
+Head.fillDataByOBJID(xml, OBJID, $("#DMS_container"), 0);
+$("#RescanTime").change();
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+})
+})();
+</script>
+
+<div id="DMS" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=dms_dms_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div id="template_DMS">
+<h1 class="collapBarWithDataTrans" id="DMSBar">DMS/DLNA</h1>
+<div id="DMS_container">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div class="formTblWrap">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<form class="form_content">
+<input type="hidden" id="_InstID" value="">
+<input type="hidden" id="ContentList" value="">
+<div class="row">
+<label for="Enable" class="cfgLabel w180">DMS</label>
+<div class="right" id="Enable">
+<input type="radio" id="Enable1" name="Enable" value="1"/><label for="Enable1">On</label>&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="radio" id="Enable0" name="Enable" value="0"/><label for="Enable0">Off</label>
+</div>
+</div>
+<div class="row">
+<label for="DmsName" class="cfgLabel w180">DMS Name</label>
+<div class="right">
+<input type="text" id="DmsName" name="DmsName" value="" class="inputNorm">
+<span id="RangeDmsName" style="display: none;">Length: 1~128</span>
+</div>
+</div>
+<div class="row">
+<label for="RescanTime" class="cfgLabel w180">Library Rescan Method</label>
+<div class="right">
+<select id="RescanTime" name="RescanTime" class="selectNorm">
+<option value="-1" title="Disabled">Disabled</option>
+<option value="0" title="Auto">Auto</option>
+<option value="1" title="Customized">Customized</option>
+</select>
+</div>
+</div>
+<div class="row" id="TR_RescanTimeValue">
+<label for="RescanTimeValue" class="cfgLabel w180">Rescan Cycle</label>
+<div class="right">
+<input type="text" class="PostIgnore inputNorm" id="RescanTimeValue" name="RescanTimeValue" value="">min
+<span style="display: none;">Range: 1~1440</span>
+</div>
+</div>
+<div class="row">
+<label for="Path0" class="cfgLabel w180">Media Source1</label>
+<div class="right">
+<input type="text" class="PostIgnore inputNorm" id="Path0" name="Path0" value="">&nbsp;&nbsp;
+<input type="button" class="Button BrowseBtn PostIgnore" id="Browse0" name="Browse0" value="Browse"/>
+</div>
+</div>
+<div class="row">
+<label for="Path1" class="cfgLabel w180">Media Source2</label>
+<div class="right PostIgnore">
+<input type="text" class="PostIgnore inputNorm" id="Path1" name="Path1" value="">&nbsp;&nbsp;
+<input type="button" class="Button BrowseBtn PostIgnore" id="Browse1" name="Browse1" value="Browse"/>
+</div>
+</div>
+<div class="row">
+<label for="Path2" class="cfgLabel w180">Media Source3</label>
+<div class="right PostIgnore">
+<input type="text" class="PostIgnore inputNorm" id="Path2" name="Path2" value="">&nbsp;&nbsp;
+<input type="button" class="Button BrowseBtn PostIgnore" id="Browse2" name="Browse2" value="Browse"/>
+</div>
+</div>
+<div class="row">
+<label for="Path3" class="cfgLabel w180">Media Source4</label>
+<div class="right PostIgnore">
+<input type="text" class="PostIgnore inputNorm" id="Path3" name="Path3" value="">&nbsp;&nbsp;
+<input type="button" class="Button BrowseBtn PostIgnore" id="Browse3" name="Browse3" value="Browse"/>
+</div>
+</div>
+</form>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel" name="Btn_cancel" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply" name="Btn_apply" value="Apply" />
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x30\x57\x68\x4d\x78\x50\x52\x32\x51\x55\x76\x34\x65\x46\x36\x52\x51\x46\x4d\x38\x7a\x34\x33\x34";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>

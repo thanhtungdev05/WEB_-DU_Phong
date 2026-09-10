@@ -1,0 +1,1289 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#87;&#97;&#110;&#51;&#103;&#67;&#111;&#110;&#102;&#105;&#103;</div>
+<div id="_NowSupIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;&#67;&#111;&#110;&#102;&#105;&#103;</div>
+<div id="_NowThdIdInfo">&#87;&#97;&#110;&#51;&#103;&#67;&#111;&#110;&#102;&#105;&#103;</div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft" role="complementary">
+<div id="class2Menu" class="class2Menu" role="navigation">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span tabindex="0" role="text">Page Information</span>
+</div>
+
+<p class="pIntroContent" tabindex="0" role="text">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#51;&#71;&#47;&#52;&#71;&#32;&#99;&#111;&#110;&#110;&#101;&#99;&#116;&#105;&#111;&#110;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+function HeadID_OBJ()
+{
+var g_HeadID = null;
+this.setHeadID = function(head_id)
+{
+g_HeadID = head_id;
+}
+this.getHeadID = function()
+{
+if(g_HeadID == null)
+{
+consoleLog("g_HeadID_OBJ error");
+}
+else
+{
+return g_HeadID;
+}
+}
+}
+var g_HeadID_OBJ = new HeadID_OBJ();
+var callback_check = null;
+var g_getSIMStatus_handle = function (xml) {
+var HeadID = g_HeadID_OBJ.getHeadID();
+var Head = $("#"+HeadID);
+if (Head.hasError(xml) == 0)
+{
+var OBJID = "OBJ_WWANPINCFG_ID";
+var tDongleStatus = $("DongleStatus", $(xml)).text();
+var tPinStatus = getParaValueInXML(xml, OBJID, 0, "PinStatus");
+if (callback_check == null)
+{
+consoleLog("callback_check error");
+}
+else
+{
+callback_check(tDongleStatus, tPinStatus);
+}
+var template = $("[id^='template_']",Head);
+var OBJID = ["OBJ_WWANPINCFG_ID"];
+Head.fillDataByOBJID(xml ,OBJID, template, 0);
+}
+showWaitTip(false);
+}
+var g_fail_handle = function() {
+showWaitTip(false);
+}
+var g_cycle_fail_handle = function() {
+;
+}
+var ajax_handle = function() {
+var HeadID = g_HeadID_OBJ.getHeadID();
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+Head.dataTransfer(ServerAddr, "GET", g_getSIMStatus_handle,
+g_fail_handle, false);
+}
+var ajax_handle_cycle_time = function() {
+var HeadID = g_HeadID_OBJ.getHeadID();
+var Head = $("#"+HeadID);
+var ServerAddr = "/?_type=menuData&_tag=wwan_pin_lua.lua";
+Head.dataTransfer(ServerAddr, "GET", g_cycle_time_handle,
+g_cycle_fail_handle, false);
+}
+var g_cycle_time_handle = function (xml) {
+var HeadID = g_HeadID_OBJ.getHeadID();
+var Head = $("#"+HeadID);
+if (Head.hasError(xml, "_NoExist") == 0)
+{
+var externErrorHint = $(".externErrorHint",Head);
+if ( externErrorHint != undefined )
+{
+if ( externErrorHint.is(":visible") )
+{
+externErrorHint.showIt(false);
+}
+}
+var OBJID = "OBJ_WWANPINCFG_ID";
+var tDongleStatus = $("DongleStatus", $(xml)).text();
+var tPinStatus = getParaValueInXML(xml, OBJID, 0, "PinStatus");
+if (callback_check == null)
+{
+consoleLog("callback_check error");
+}
+else
+{
+callback_check(tDongleStatus, tPinStatus);
+}
+}
+}
+var Btn_refresh_handle = function() {
+showWaitTip(true, "Status is reading, please wait...", false);
+var waitTime = $(".Btn_refresh_pin").attr("refreshTime");
+if (waitTime)
+{
+window.setTimeout(function() {
+ajax_handle();
+}, waitTime);
+}
+else
+{
+ajax_handle();
+}
+}
+var AutocycleTime;
+function CycleIntervalHandle()
+{
+var AutoRefreshTimeOBJ = $("#AutoRefreshTime");
+var autoRefreshTime = $("#AutoRefreshTime").val();
+if ( !autoRefreshTime)
+{
+consoleLog("AutocycleTime should be closed now");
+clearTimeout(AutocycleTime);
+return;
+}
+ajax_handle_cycle_time();
+AutocycleTime = setTimeout("CycleIntervalHandle()", autoRefreshTime);
+}
+function initCycleInterval()
+{
+if (AutocycleTime)
+{
+consoleLog("AutocycleTime exists already!!");
+clearTimeout(AutocycleTime);
+}
+var AutoRefreshTimeOBJ = $("#AutoRefreshTime");
+var autoRefreshTime = $("#AutoRefreshTime").val();
+var CurrHeadID = AutoRefreshTimeOBJ.parents(".HeadDIV").attr("id");
+g_HeadID_OBJ.setHeadID(CurrHeadID);
+AutocycleTime = setTimeout("CycleIntervalHandle()", autoRefreshTime);
+}
+$(document).ready(function() {
+var PinRefreshBtn = $(".Btn_refresh_pin");
+PinRefreshBtn.unbind("click");
+PinRefreshBtn.bind("click", Btn_refresh_handle);
+var HeadDivID = $(".HeadDIV").attr("id");
+switch (HeadDivID)
+{
+case "PinDevFail":
+$("[id^='PinDevFailBar']").text("3G/4G Device Status");
+$(".sceneTipLink a").text("What to do when 3G/4G device is not ready?  ");
+$(".formTbl span").text("3G/4G device is not ready. ");
+break;
+case "DevIdentying":
+$("[id^='DevIdentyingBar']").text("3G/4G Device Status");
+$(".formTbl span").text("3G/4G device is initializing, please wait...");
+break;
+case "DevIdentyNok":
+$("[id^='DevIdentyNokBar']").text("3G/4G Device Status");
+$(".formTbl span").text("3G/4G device initialization failed.");
+break;
+case "DevIdentyOkOnly" :
+$("[id^='DevIdentyOkOnlyBar']").text("3G/4G Device Status");
+$(".formTbl span").text("3G/4G device initialization succeeded.");
+break;
+case "PinReadyStatus":
+$("[id^='PinReadyStatusBar']").text("3G/4G Device Status");
+$("span", $(".formTbl div").eq(1)).text("3G/4G device is ready. ");
+break;
+case "PinSimBusy":
+$("[id^='PinSimBusyBar']").text("3G/4G Device Status");
+break;
+case "PinSimFail":
+$("[id^='PinSimFailBar']").text("3G/4G Device Status");
+break;
+case "PinExcept":
+$("[id^='PinExceptBar']").text("3G/4G Device Status");
+break;
+default:
+}
+initCycleInterval();
+});
+function PINRemainTimeBlink(PINRemainTimeID,templeteOBJ)
+{
+var span_refresh = $("[id^='"+PINRemainTimeID+"']", templeteOBJ);
+span_refresh.fadeIn(1000, function() {
+$(this).removeClass("pinspan");
+});
+span_refresh.fadeOut(1000, function() {
+$(this).addClass("pinspan");
+});
+span_refresh.fadeIn(1000, function() {
+$(this).removeClass("pinspan");
+});
+}
+function PINWarnChangeByRemainTime(warnContainer, remain_num, buttonOBJ, ConfItems)
+{
+var OpByRemaintime = {
+"0": {"WarnShow": true, "WarnHint": "The number of the PIN you can enter is down to 0, you have been unable to continue to operate!", "Disabled": true},
+"1": {"WarnShow": true, "WarnHint": "Note: It is your last chance to input the right PIN!", "Disabled": false},
+"2": {"WarnShow": true, "WarnHint": "The number of the PIN you can enter has been reduced. ", "Disabled": false},
+"default": {"WarnShow": false, "WarnHint": "", "Disabled": false}
+};
+if ( !OpByRemaintime[remain_num] )
+{
+remain_num = "default";
+}
+var Operation = OpByRemaintime[remain_num];
+warnContainer.showIt(false);
+warnContainer.html(Operation["WarnHint"]);
+warnContainer.showIt(Operation["WarnShow"]);
+if ( Operation["Disabled"] )
+{
+ConfItems.attr("disabled",true);
+buttonOBJ.addClass("disableBtn");
+}
+else
+{
+ConfItems.disableIt(false);
+buttonOBJ.disableButton(false);
+}
+}
+</script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+var HeadID = "PinDevFail";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+Head.fillDataByCustom = function(suffix,ContainerOBJ) {
+callback_check = function(tDongleStatus) {
+if (tDongleStatus == "Dev_FAILURE")
+{
+consoleLog("not to do anything");
+}
+else
+{
+top.location.href = top.location.href;
+}
+}
+}
+Head.succfunction = function(xml){
+Head.hasError(xml,"externErrorHint");
+var template = $("[id^='template_']",Head);
+var OBJID = ["OBJ_WWANPINCFG_ID"];
+Head.fillDataByOBJID(xml ,OBJID, template, 0);
+Head.fillDataByCustom(0, template);
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+</script>
+
+<div id="PinDevFail" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wwan_pin_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="PinDevFailBar">3G Device Status</h1>
+<div id="PinDevFail_container" >
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div class="sceneTip">
+<div class="sceneTipLink"><a>What to do when 3G device is not ready?  </a></div>
+<div class="sceneTip_container">
+<p>1. Check whether the dongle is plugged in. </p>
+<p>2. If the device is already plugged in, please check whether the USB is contacted well. </p>
+<p>3. If the device is still unrecognized, maybe it has been damaged. Please replace the device. </p>
+<p class="sceneTip_close"><a>Close</a></p>
+</div>
+</div>
+<div id="template_PinDevFail" class="formTblWrap">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<input type="hidden" id="AutoRefreshTime" value="7000">
+<form class="formTbl">
+<div class="colorTblRow">
+<span class="w400" tabindex="0" >
+3G device is not ready. 
+</span>
+</div>
+</form>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_refresh_pin" refreshTime="5000" id="Btn_refresh_PinDevFail" name="Btn_refresh_PinDevFail" value="Refresh" />
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+(function(){
+jQuery.validator.addMethod(
+"DialNumCheck",
+function(value, element, params)
+{
+if ( this.optional(element) )
+{
+return "dependency-mismatch";
+}
+return /^[\d#\*]*$/.test(value);
+},
+"Dial numbers are wrong"
+);
+function Customize_IdleTime_get(paramsOBJ)
+{
+var ContainerOBJ = paramsOBJ["ContainerOBJ"];
+ContainerOBJ.collapsibleInstTitleChange("WANCName");
+var IdleTime_value = $("[id^='IdleTime']", ContainerOBJ).val();
+IdleTime_value = parseInt(IdleTime_value, 10);
+var tmp_min = parseInt( (IdleTime_value/60), 10);
+var tmp_sec = parseInt( (IdleTime_value%60), 10);
+$("[id^='C_IdleTime0']", ContainerOBJ).val(tmp_min);
+$("[id^='C_IdleTime1']", ContainerOBJ).val(tmp_sec);
+$("[id^='C_IdleTime0']",ContainerOBJ).change();
+$("[id^='ConnTrigger']", ContainerOBJ).change();
+}
+function Customize_IdleTime_set(paramsOBJ)
+{
+var ContainerOBJ = paramsOBJ["ContainerOBJ"];
+var tmp_min = $("[id^='C_IdleTime0']", ContainerOBJ).val();
+tmp_min = parseInt(tmp_min, 10);
+var tmp_sec = $("[id^='C_IdleTime1']", ContainerOBJ).val();
+tmp_sec = parseInt(tmp_sec, 10);
+var total_sec = parseInt( (tmp_min*60), 10) + parseInt(tmp_sec, 10);
+var IdleTimeHidden = $("[id^='IdleTime']", ContainerOBJ);
+if( !($("[id^='Prefix_IdleTime']", ContainerOBJ).is(":hidden")) )
+{
+IdleTimeHidden.val(total_sec);
+IdleTimeHidden.removeClass("PostIgnore");
+}
+else
+{
+IdleTimeHidden.addClass("PostIgnore");
+}
+}
+function initial_template_WAN3GDev(templateID)
+{
+var template = $("#"+templateID);
+$("[id^='C_IdleTime0']",template).change(function(event){
+var IdleMin = $(this);
+var template = IdleMin.parents("[id^='template_']");
+var IdleSec = $("[id^='C_IdleTime1']", template);
+var IdleMinVal = parseInt(IdleMin.val());
+if ( IdleMinVal == 1092 )
+{
+IdleSec.rules("remove", "range");
+IdleSec.rules("add", {"range" : [0,15]});
+if ($(".errorLabelWraper").length != 0)
+{
+$(".errorLabelWraper").remove();
+}
+IdleSec.next().text("Range: 0 ~ 15");
+}
+else
+{
+IdleSec.rules("remove", "range");
+IdleSec.rules("add", {"range" : [0,59]});
+if ($(".errorLabelWraper").length != 0)
+{
+$(".errorLabelWraper").remove();
+}
+IdleSec.next().text("Range: 0 ~ 59");
+}
+});
+template.bind("applyPromptCheckJSON", function(event, template){
+var checkJSONTempObj = {
+"groups": {
+C_IdleTime: "C_IdleTime0 C_IdleTime1"
+},
+"rules": {
+"WANCName": {
+"required": true,
+"utf8": true,
+"utf8LengthRange":[1,768]
+},
+"TtyAPN": {
+"ASCII": true,
+"rangelength":[0,31]
+},
+"TtyDialNum": {
+"required": true,
+"DialNumCheck": true,
+"rangelength":[1,31]
+},
+"MTU": {
+"required": true,
+"integer": true,
+"range":[128,1540]
+},
+"UserName": {
+"ASCII": true,
+"rangelength":[0,64]
+},
+"Password": {
+"PasswordASCII": true,
+"rangelength":[0,64]
+},
+"C_IdleTime0" : {
+"required": true,
+"integer": true,
+"range":[0,1092]
+},
+"C_IdleTime1" : {
+"required": true,
+"integer": true,
+"range":[0,59]
+}
+},
+"messages": {
+}
+};
+template.setPromptCheckJSON(checkJSONTempObj, template);
+});
+template.bind("hiddenValueChangeByCustom", function(event, template){
+var CustomizeParams = {
+"ContainerOBJ":template
+};
+Customize_IdleTime_set(CustomizeParams);
+});
+$("[id^='ConnTrigger']", template).change(function(event){
+var obj_option = $(this);
+var template = obj_option.parents("[id^='template_']");
+var ConnTrigger_option = obj_option.val();
+var div_IdleTime = $("[id^='Prefix_IdleTime']",template);
+if ( ConnTrigger_option == "OnDemand" )
+{
+div_IdleTime.show();
+}
+else
+{
+div_IdleTime.hide();
+}
+});
+template.bind("fillDataByApplyResult", function(event, xml, template){
+var Head = $(this).parents(".HeadDIV");
+$("#DongleTypeSwitch",Head).trigger("DongleTypeSwitch",[xml]);
+ActionByApplyResult(xml, template, "WANCName");
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var Head = $(this).parents(".HeadDIV");
+$("#DongleTypeSwitch",Head).trigger("DongleTypeSwitch",[xml]);
+var DongleType = $("DongleType", $(xml)).text();
+var OBJID = DongleType == 1 ? ["OBJ_DONGLE3G_ID"] : ["OBJ_DONGLELTE_ID"];
+ActionByCancelResult(xml, template, OBJID);
+template.trigger("fillDataByCustom",[0, template]);
+});
+template.bind("fillDataByCustom", function(event, suffix, ContainerOBJ){
+var CustomizeParams = {
+"ContainerOBJ":ContainerOBJ
+};
+Customize_IdleTime_get(CustomizeParams);
+});
+}
+function DongleTypeChange(index){
+if( index == 2 )
+{
+$(".3G").hide();
+$(".3G").find("input, select").addClass("PostIgnore")
+}
+else if( index == 1 )
+{
+$(".3G").show();
+$(".3G").find("input, select").removeClass("PostIgnore")
+}
+else {
+console.log("No card insert!");
+}
+}
+$(document).ready(function(){
+var HeadID = "WAN3GDev";
+var Head = $("#"+HeadID);
+var templateID = "template_"+HeadID;
+var ServerAddr = $("address span", Head).text();
+initial_template_WAN3GDev(templateID);
+$("#DongleTypeSwitch",Head).bind("DongleTypeSwitch", function(event, xml){
+var Head = $(this).parents(".HeadDIV");
+var DongleType = $("DongleType", $(xml)).text();
+var DongleStatus = $("DongleStatus", $(xml)).text();
+DongleTypeChange(DongleType);
+$("#InsertCardBefore",Head).showIt(false);
+$("#RouterOnly",Head).showIt(false);
+$("#ModemOnly",Head).showIt(false);
+if ( DongleStatus == "Dev_FAILURE" )
+{
+$("#InsertCardBefore",Head).show().attr("tabindex", 0);
+}
+else
+{
+$("#ModemOnly",Head).show().attr("tabindex", 0);
+}
+});
+Head.succfunction = function(xml){
+var template = $("[id^='template_']",Head);
+Head.hasError(xml,"externErrorHint");
+$("#DongleTypeSwitch",Head).trigger("DongleTypeSwitch",[xml]);
+var DongleType = $("DongleType", $(xml)).text();
+var OBJ, RuleNum;
+if(DongleType == 1)
+{
+OBJ = $(xml).find("OBJ_DONGLE3G_ID");
+RuleNum = $("Instance", OBJ).length;
+var OBJID = ["OBJ_DONGLE3G_ID"];
+}
+else if(DongleType == 2)
+{
+OBJ = $(xml).find("OBJ_DONGLELTE_ID");
+RuleNum = $("Instance", OBJ).length;
+var OBJID = ["OBJ_DONGLELTE_ID"];
+}
+Head.createPageDataByClone(RuleNum,OBJID,xml);
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr,"GET", Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div id="WAN3GDev" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wan_3gLTE_config_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="WAN3GDevBar">3G/4G Connection</h1>
+<div id="WAN3GDev_container">
+<input id="DataHasBeenGot" type="hidden" value="0">
+<div class="noDataHint" id="InsertCardBefore" style="display:none;">
+<span>Please insert 3G/4G device first.</span>
+</div>
+<div class="noDataHint" id="RouterOnly" style="display:none;">
+<span>Please refer to the user manual of 3G/4G device to manage it.</span>
+</div>
+<input type="hidden" class="PostIgnore" id="DongleTypeSwitch">
+<input type="hidden" id="_InstNum" value="0">
+<div id="ModemOnly">
+<div id="template_WAN3GDev" style="display:none;">
+<form class="form_content">
+<div id="topLine_WAN3GDev" class="formTblCtrlBar">
+<a id="instName_WAN3GDev" class="instName collapsibleInst" hidefocus="true" href="javascript:void(0);">New Item</a>
+<span id="instDelete_WAN3GDev" class="instDelete Btn_delete"><img src="img/del.png" alt="delete" /></span>
+</div>
+<div id="changeArea_WAN3GDev" class="ChangeArea formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<input type="hidden" id="_InstID" value="-1">
+<input type="hidden" id="IdleTime" value="">
+<input type="hidden" id="Enable" value="1">
+<div class="row 3G_LTE">
+<label for="WANCName" class="cfgLabel w200">Connection Name</label>
+<div class="right">
+<input type="text" class="inputNorm" id="WANCName" name="WANCName" value=""/>
+<span class="utf8Compatible" style="display: none;">Length: 1 ~ 768</span>
+</div>
+</div>
+<input type="hidden" id="StrServList" value="INTERNET">
+<div class="row 3G_LTE">
+<label for="ServList" class="cfgLabel w200">Service List</label>
+<div class="right">
+<select id="ServList" name="ServList" class="selectNorm">
+<option value="1" title='INTERNET'>INTERNET</option>
+</select>
+</div>
+</div>
+<div class="row 3G">
+<label class="cfgLabel w200">PDP Type</label>
+<div class="right" id="TtyPDPType">
+<input type="radio" id="TtyPDPType0" name="TtyPDPType" value="PDP_IP" checked="checked">
+<label for="TtyPDPType0">IP</label>
+&nbsp;&nbsp;
+<input type="radio" id="TtyPDPType1" name="TtyPDPType" value="PDP_PPP">
+<label for="TtyPDPType1">PPP</label>
+</div>
+</div>
+<div class="row 3G">
+<label for="TtyAPN" class="cfgLabel w200">APN</label>
+<div class="right">
+<input type="text" class="inputNorm" id="TtyAPN" name="TtyAPN" value=""/>
+<span style="display: none;">Length: 0 ~ 31</span>
+</div>
+</div>
+<div class="row 3G">
+<label for="TtyDialNum" class="cfgLabel w200">Dial Number</label>
+<div class="right">
+<input type="text" class="inputNorm" id="TtyDialNum" name="TtyDialNum" value=""/>
+<span style="display: none;">Length: 1 ~ 31</span>
+</div>
+</div>
+<div class="row 3G">
+<label for="MTU" class="cfgLabel w200">MTU</label>
+<div class="right">
+<input type="text" class="inputNorm" id="MTU" name="MTU" value="1500"/>
+<span style="display: none;">Range: 128 ~ 1540</span>
+</div>
+</div>
+<div class="row 3G" id="Prefix_UserName">
+<label for="UserName" class="cfgLabel w200">Username</label>
+<div class="right">
+<input type="text" class="inputNorm" id="UserName" name="UserName" value=""/>
+<span style="display: none;">Length: 0 ~ 64</span>
+</div>
+</div>
+<div class="row 3G" id="Prefix_Password">
+<label for="Password" class="cfgLabel w200">Password</label>
+<div class="right">
+<input type="password" class="w150 SpecialPassword" id="Password" name="Password" value="						"/>
+<span style="display: none;">Length: 0 ~ 64</span>
+</div>
+</div>
+<div class="row 3G">
+<label for="AuthType" class="cfgLabel w200">Authentication Type</label>
+<div class="right">
+<select id="AuthType" name="AuthType" class="selectNorm">
+<option value="PAP,CHAP,MS-CHAP" title='Auto'>Auto</option>
+<option value="PAP" title='PAP'>PAP</option>
+<option value="CHAP" title='CHAP'>CHAP</option>
+</select>
+</div>
+</div>
+<div class="row 3G">
+<label for="ConnTrigger" class="cfgLabel w200">Connection Mode</label>
+<div class="right">
+<select id="ConnTrigger" name="ConnTrigger" class="selectNorm">
+<option value="AlwaysOn" title='Always On' selected>Always On</option>
+<option value="OnDemand" title='On Demand'>On Demand</option>
+</select>
+</div>
+</div>
+<div class="row" id="Prefix_IdleTime" style="display: none;">
+<label for="C_IdleTime0" class="cfgLabel w200">Auto-disconnected Without Traffic</label>
+<div class="right">
+<input type="text" class="w80 PostIgnore" id="C_IdleTime0" name="C_IdleTime0" value="20"/>min
+<span style="display:none;">Range: 0 ~ 1092</span>
+<input type="text" class="w40 PostIgnore" id="C_IdleTime1" name="C_IdleTime1" value="0"/>s
+<span style="display:none;">Range: 0 ~ 59</span>
+</div>
+</div>
+<input type="text" id="IsNAT" name="IsNAT" value="1" style="display:none">
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_WAN3GDev" name="Btn_cancel_WAN3GDev" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_WAN3GDev" name="Btn_apply_WAN3GDev" value="Apply" />
+</div>
+</div>
+</div>
+</form>
+</div>
+<div class="addInstBar AddContentContainer">
+<a id="addInstBar_WAN3GDev" class="instNew addInst" hidefocus="true" href="javascript:void(0);">Create New Item</a>
+</div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+function initial_template_DongleSet(templateID)
+{
+var template = $("#"+templateID);
+$("input:radio[name='Enable']",template).change(function(){
+if ($("#Enable1",template).is(':checked'))
+{
+$("#DelayUpTime_div", template).show();
+$("#DelayDownTime_div", template).show();
+$("#DelayUpTime", template).removeClass("PostIgnore");
+$("#DelayDownTime", template).removeClass("PostIgnore");
+}
+else
+{
+$("#DelayUpTime_div", template).hide();
+$("#DelayDownTime_div", template).hide();
+$("#DelayUpTime", template).addClass("PostIgnore");
+$("#DelayDownTime", template).addClass("PostIgnore");
+}
+});
+var instForm = template.find("form");
+instForm.validate({
+"rules": {
+"DelayUpTime": {
+"required":true,
+"integer": true,
+"range": [0,2147483647]
+},
+"DelayDownTime": {
+"required":true,
+"integer": true,
+"range": [0,2147483647]
+}
+},
+"messages": {
+}
+});
+template.bind("fillDataByApplyResult", function(event,xml, template){
+ActionByApplyResult(xml, template);
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var OBJID = ["OBJ_DongleSet_ID"];
+ActionByCancelResult(xml, template, OBJID);
+template.trigger("fillDataByCustom",[0, template, xml]);
+});
+template.bind("fillDataByCustom", function(event, suffix, ContainerOBJ, xml){
+$("input:radio[name='Enable']",ContainerOBJ).trigger("change");
+});
+}
+$(document).ready(function(){
+var HeadID = "DongleSet";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+$("#DongleSetBar").text("3G/4G Working Mode");
+$("[for='Enable']").text("3G/4G Mode");
+initial_template_DongleSet("template_"+HeadID);
+Head.succfunction = function(xml){
+var cmapiErrorContainer = $(".errorHint",Head);
+if (cmapiErrorContainer.hasError(xml) == 0)
+{
+var OBJ = $(xml).find("OBJ_DongleSet_ID");
+var RuleNum = $("Instance", OBJ).length;
+var tempobj = $("#template_DongleSet");
+var OBJID = ["OBJ_DongleSet_ID"];
+Head.fillDataByOBJID(xml, OBJID, tempobj, 0);
+tempobj.trigger("fillDataByCustom",[0, tempobj, xml]);
+}
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+</script>
+
+<div id="DongleSet" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wwan_backup_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="DongleSetBar">3G Working Mode</h1>
+<div id="template_DongleSet">
+<div id="DongleSet_container">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div class="formTblWrap">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<form class="form_content">
+<input type="hidden" id="_InstID" value="">
+<div class="row">
+<label for="Enable" class="left w200">3G Mode</label>
+<div id="Enable" class="right">
+<input type="radio" id="Enable1" name="Enable" value="1"/>
+<label for="Enable0">Backup</label>
+&nbsp;&nbsp;
+<input type="radio" id="Enable0" name="Enable" value="0"/>
+<label for="Enable1">Close</label>
+</div>
+</div>
+<div class="row" id="DelayUpTime_div">
+<label for="DelayUpTime" class="cfgLabel w200">Backup Interval</label>
+<div class="right">
+<input type="text" id="DelayUpTime" name="DelayUpTime" value=""/>
+<label>s</label>
+<span style="display: none;">Length: 0 ~ 2147483647</span>
+</div>
+</div>
+<div class="row" id="DelayDownTime_div">
+<label for="DelayDownTime" class="cfgLabel w200">Recovery Primary Uplink Interval</label>
+<div class="right">
+<input type="text" id="DelayDownTime" name="DelayDownTime" value=""/>
+<label>s</label>
+<span style="display: none;">Length: 0 ~ 2147483647</span>
+</div>
+</div>
+</form>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_DongleSet" name="Btn_cancel_DongleSet" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_DongleSet" name="Btn_apply_DongleSet" value="Apply" />
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x30\x65\x64\x76\x57\x6a\x63\x39\x64\x6c\x70\x73\x67\x6f\x78\x62\x57\x41\x6d\x67\x7a\x38\x6b\x58";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>

@@ -1096,7 +1096,7 @@ class H(BaseHTTPRequestHandler):
             # Cho toi 25 s xem co goi DAY nao khong. Co thi tra ngay — day
             # chinh la cach thiet bi that bao cho cac trang khac biet du lieu
             # vua doi (do that o reference/khung_ghi/*__day0.bin).
-            the = ph.lay_goi_day(25, so_hieu)
+            the = ph.lay_goi_day(2, so_hieu)
             if the is None:
                 the = [(T_PHIEN, 0x88, [ma_phien]), (T_LOAI, 0x09, 2),
                        (T_SO_HIEU, 0x08, so_hieu)]

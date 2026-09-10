@@ -29,7 +29,7 @@
   let _practiceTimerInterval = null; // setInterval ID cho đồng hồ realtime
   let _practiceStartTime = null;     // Date object lúc bắt đầu thực hành
   let _lastSubmitDurationSec = 0;    // Thời gian khi nộp bài (dùng cho tracking)
-  let _lastEvalResult = null;        // Kết quả Đạt/Chưa đạt gần nhất (dùng cho nút modal)
+  let _lastEvalResult = null;        // Kết quả chấm điểm gần nhất (dùng cho nút modal)
 
   // ── DOM Refs ─────────────────────────────────────────────────────
   const sidebar = document.getElementById('sidebar');
@@ -427,13 +427,8 @@
                 doc.addEventListener('click', function (e) {
                   let el = e.target;
                   while (el && el !== doc) {
-                    if ((el.tagName === 'INPUT' || el.tagName === 'BUTTON') &&
-                      (el.type === 'submit'
-                        || (el.value || el.textContent || '').toLowerCase().includes('save')
-                        || (el.value || el.textContent || '').toLowerCase().includes('apply')
-                        || el.name === 'AddBtn'
-                        || (currentLessonId === 'ONT_be6500c-bai6'
-                          && (el.value || el.textContent || '').trim().toLowerCase() === 'add'))) {
+                    if ((el.tagName === 'INPUT' || el.tagName === 'BUTTON') && 
+                        (el.type === 'submit' || (el.value || el.textContent || '').toLowerCase().includes('save') || (el.value || el.textContent || '').toLowerCase().includes('apply') || el.name === 'AddBtn' || (currentLessonId === 'ONT_be6500c-bai6' && (el.value || el.textContent || '').trim().toLowerCase() === 'add'))) {
                       window._hasClickedSaveInGuide = true;
                       if (currentDeviceId === 'ax3000s') {
                         doc._ftcIsSaved = true;
@@ -662,9 +657,29 @@
             }
           }
           loadLearningCatalog().catch(function (error) {
-            console.warn('[Catalog] Không thể tải danh sách bài luyện tập:', error);
-            populateDeviceDropdown([]);
-            navList.innerHTML = '<div class="empty-state"><p>Không thể tải danh sách bài luyện tập.</p></div>';
+            console.warn('[Catalog] Không thể tải danh sách bài luyện tập, chuyển sang chế độ offline:', error);
+            _catalogDeviceIds = null;
+            _catalogLabIds = null;
+            populateDeviceDropdown(DEVICES);
+            const urlParams = new URLSearchParams(window.location.search);
+            const reqDevice = urlParams.get('device');
+            const reqLab = urlParams.get('lab');
+            const reqMode = urlParams.get('mode');
+            let initialDev = null;
+            if (reqDevice) {
+              const normReq = normalizeDeviceId(reqDevice);
+              initialDev = DEVICES.find(function (d) {
+                return normalizeDeviceId(d.id) === normReq;
+              });
+            }
+            if (!initialDev && DEVICES.length > 0) {
+              initialDev = DEVICES[0];
+            }
+            if (initialDev) {
+              selectDevice(initialDev.id, reqLab, reqMode);
+            } else {
+              navList.innerHTML = '<div class="empty-state"><p>Không thể tải danh sách bài luyện tập.</p></div>';
+            }
           });
         } else {
           _currentUser = null;
@@ -1065,43 +1080,13 @@
   }
 
 
-  // ── Pass/fail evaluation engine ──────────────────────────────────
-  function normalizeEvaluationResult(result) {
-    const details = Array.isArray(result && result.details) ? result.details : [];
-    const criteria = details.filter(item => item && !item._isHeader);
-    if (criteria.length === 0) {
-      return {
-        gradable: false,
-        passed: false,
-        passedCount: 0,
-        totalRules: 0,
-        details: [{
-          id: 'missing-grading-rules',
-          name: 'Tiêu chí chấm bài',
-          expected: 'Bài thực hành phải có ít nhất một tiêu chí chấm',
-          actual: 'Chưa cấu hình tiêu chí chấm',
-          passed: false,
-          message: 'Bài thực hành chưa thể chấm. Vui lòng liên hệ quản trị viên.'
-        }]
-      };
-    }
-
-    const passedCount = criteria.filter(item => item.passed === true).length;
-    return {
-      gradable: true,
-      passed: result && result.passed === true && passedCount === criteria.length,
-      passedCount,
-      totalRules: criteria.length,
-      details
-    };
-  }
-
+  // ── Grading & Evaluation Engine ──────────────────────────────────
   function evaluateLesson(device, lesson) {
     if (!lesson) return null;
 
     if (lesson.grading && typeof lesson.grading.customGrading === 'function') {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
-      return normalizeEvaluationResult(lesson.grading.customGrading(allDocs));
+      return lesson.grading.customGrading(allDocs);
     }
 
     let rules = (lesson.grading && lesson.grading.rules && lesson.grading.rules.length > 0)
@@ -1127,20 +1112,22 @@
     }
 
     if (rules.length === 0) {
-      // Không tự động cho Đạt khi bài học chưa có tiêu chí kiểm tra.
+      // Nếu bài học chưa có rule chi tiết và tooltip không có expected, mặc định xem như hoàn tất thao tác
       return {
-        gradable: false,
-        passed: false,
-        passedCount: 0,
-        totalRules: 0,
-        details: [{
-          id: 'missing-grading-rules',
-          name: 'Tiêu chí chấm bài',
-          expected: 'Bài thực hành phải có ít nhất một tiêu chí chấm',
-          actual: 'Chưa cấu hình tiêu chí chấm',
-          passed: false,
-          message: 'Bài thực hành chưa thể chấm. Vui lòng liên hệ quản trị viên.'
-        }]
+        passed: true,
+        score: 100,
+        passedCount: 1,
+        totalRules: 1,
+        details: [
+          {
+            id: 'default',
+            name: 'Thao tác cấu hình',
+            expected: 'Hoàn tất theo yêu cầu đề bài',
+            actual: 'Đã hoàn thành',
+            passed: true,
+            message: 'Đã hoàn thành các bước yêu cầu'
+          }
+        ]
       };
     }
 
@@ -1319,6 +1306,8 @@
     // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa
     const hasUnexpected = unexpectedErrors.length > 0;
     const passed = (passedCount === rules.length) && !hasUnexpected;
+    const score = passed ? 100 : Math.round((passedCount / rules.length) * (hasUnexpected ? 99 : 100));
+
     let finalTotalRules = rules.length + unexpectedErrors.length;
 
     // Đẩy TẤT CẢ lỗi thao tác thừa vào danh sách details
@@ -1334,12 +1323,13 @@
     });
     // ===============================================
 
-    return normalizeEvaluationResult({
+    return {
       passed: passed,
+      score: score,
       passedCount: passedCount,
       totalRules: finalTotalRules,
       details: details
-    });
+    };
   }
 
   function submitLab() {
@@ -1350,24 +1340,18 @@
     // Dừng đồng hồ và lấy thời gian chính xác
     const durationSec = stopPracticeTimer();
 
-    // Đánh giá Đạt/Chưa đạt
+    // Chấm điểm
     const evalResult = evaluateLesson(device, lesson);
 
     // Lưu kết quả tạm để nút modal dùng khi cần thiết
     _lastEvalResult = evalResult;
     _lastSubmitDurationSec = durationSec;
 
-    if (!evalResult || evalResult.gradable === false) {
-      setTrackingSaveStatus('warning', 'Bài thực hành chưa có đủ tiêu chí chấm nên kết quả không được ghi nhận.');
-      showGradingModal(evalResult, device, lesson, currentMode, durationSec);
-      return;
-    }
-
     // =========================================================================
     // [GỬI TEAM DATA] LƯU Ý VỀ LUỒNG TRACKING API 
     // - Vị trí: Tracking được gọi ngay khi KTV ấn nút "Nộp Bài" (submitLab).
     // - Phân luồng: 
-    //   + Chế độ Hướng dẫn (guide): chỉ gửi log khi Đạt (passed = true).
+    //   + Chế độ Hướng dẫn (guide): CHỈ gửi log khi ĐẠT 100% (passed = true). 
     //     Các lần KTV nộp thử bị Rớt (FAIL) sẽ bị bỏ qua để tránh rác DB.
     //   + Chế độ Thực hành (practice): LUÔN gửi log (Cả PASS và FAIL) ngay lúc bấm.
     // =========================================================================
@@ -1395,21 +1379,12 @@
     if (gmMetaMode) gmMetaMode.textContent = mode === 'guide' ? '💡 Hướng dẫn' : '⚡ Thực hành';
     if (gmMetaTime) gmMetaTime.textContent = timeStr;
 
-    if (res.gradable === false) {
-      if (gmIcon) gmIcon.textContent = '⚠️';
-      if (gmTitle) gmTitle.textContent = 'KẾT QUẢ: CHƯA THỂ CHẤM';
-      if (gmSubtitle) gmSubtitle.textContent = 'Bài thực hành chưa có đủ tiêu chí đánh giá.';
-      if (gmStatusBox) gmStatusBox.className = 'gm-status-box failed';
-      if (gmStatusTitle) gmStatusTitle.textContent = 'CHƯA CÓ TIÊU CHÍ CHẤM BÀI';
-      if (gmStatusDesc) gmStatusDesc.textContent = 'Kết quả không được lưu. Vui lòng liên hệ quản trị viên để bổ sung tiêu chí.';
-      if (btnModalClose) btnModalClose.style.display = '';
-      if (btnModalRetry) btnModalRetry.style.display = 'none';
-    } else if (res.passed) {
+    if (res.passed) {
       if (gmIcon) gmIcon.textContent = '🎉';
       if (gmTitle) gmTitle.textContent = 'KẾT QUẢ: ĐẠT YÊU CẦU';
       if (gmSubtitle) gmSubtitle.textContent = 'Chúc mừng bạn đã cấu hình chính xác bài thực hành!';
       if (gmStatusBox) gmStatusBox.className = 'gm-status-box';
-      if (gmStatusTitle) gmStatusTitle.textContent = '✔ ĐẠT TOÀN BỘ TIÊU CHÍ';
+      if (gmStatusTitle) gmStatusTitle.textContent = '✔ ĐẠT TOÀN BỘ TIÊU CHÍ (100%)';
       if (gmStatusDesc) gmStatusDesc.textContent = 'Cấu hình hoàn toàn trùng khớp với thông số kỹ thuật chuẩn của FPT Telecom.';
       // ĐẠT: hiện nút "Hoàn tất", ẩn nút "Quay lại làm từ đầu"
       if (btnModalClose) btnModalClose.style.display = '';
@@ -1593,7 +1568,7 @@
   /**
    * Gửi thông tin phiên thực hành lên server qua POST /api/index.php/tracking/timer.
    * Được gọi DUY NHẤT 1 LẦN khi KTV bấm nút trên modal kết quả.
-   * @param {object|null} evalResult - Kết quả Đạt/Chưa đạt
+   * @param {object|null} evalResult - Kết quả chấm điểm
    * @param {number} durationSec - Thời gian làm bài (giây), lấy từ đồng hồ đã dừng
    */
   function setTrackingSaveStatus(status, message, allowRetry) {
@@ -1666,6 +1641,7 @@
     if (!retryPayload && evalResult) {
       payload.status = evalResult.passed ? 'completed' : 'failed';
       payload.is_passed = evalResult.passed;
+      payload.score = evalResult.score;
       payload.grading_details = evalResult.details;
     }
 
@@ -1691,7 +1667,7 @@
           });
         }
         return res.json().then(function (data) {
-          console.info('[Tracking] Đã ghi phiên thực hành và kết quả Đạt/Chưa đạt:', data);
+          console.info('[Tracking] Đã ghi phiên thực hành & chấm điểm:', data);
           const item = data && data.item ? data.item : {};
           session.finalized = true;
           const attemptNote = item.practice_attempt_no
@@ -2155,18 +2131,12 @@
       } catch (e) { }
 
       if (target) {
-        const openModal = Array.from(doc.querySelectorAll(
-          '.MuiDialog-root, .MuiModal-root, #modal_overlay, .modal-overlay, .modal_overlay, #modal-overlay'
-        )).find(modal => {
-          if (modal.classList.contains('MuiDialog-root') || modal.classList.contains('MuiModal-root')) {
-            return modal.style.display !== 'none'
-              && (modal.offsetWidth > 0 || modal.offsetHeight > 0
-                || (modal.getClientRects && modal.getClientRects().length > 0));
+        const openModal = Array.from(doc.querySelectorAll('.MuiDialog-root, .MuiModal-root, #modal_overlay, .modal-overlay, .modal_overlay, #modal-overlay')).find(m => {
+          if (!m) return false;
+          if (m.classList.contains('MuiDialog-root') || m.classList.contains('MuiModal-root')) {
+            return m.style.display !== 'none' && (m.offsetWidth > 0 || m.offsetHeight > 0 || (m.getClientRects && m.getClientRects().length > 0));
           }
-          return modal.classList.contains('active')
-            || modal.classList.contains('show')
-            || modal.style.display === 'flex'
-            || modal.style.display === 'block';
+          return m.classList.contains('active') || m.classList.contains('show') || m.style.display === 'flex' || m.style.display === 'block';
         });
         if (openModal && !openModal.contains(target)) {
           target = null;

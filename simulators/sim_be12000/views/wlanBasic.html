@@ -1,0 +1,3004 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#119;&#108;&#97;&#110;&#66;&#97;&#115;&#105;&#99;</div>
+<div id="_NowSupIdInfo">&#108;&#111;&#99;&#97;&#108;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#119;&#108;&#97;&#110;&#67;&#111;&#110;&#102;&#105;&#103;</div>
+<div id="_NowThdIdInfo">&#119;&#108;&#97;&#110;&#66;&#97;&#115;&#105;&#99;</div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft" role="complementary">
+<div id="class2Menu" class="class2Menu" role="navigation">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span tabindex="0" role="text">Page Information</span>
+</div>
+
+<p class="pIntroContent" tabindex="0" role="text">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#87;&#76;&#65;&#78;&#32;&#98;&#97;&#115;&#105;&#99;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function() {
+function InitTimeOption(num,id)
+{
+for(var i=0;i<num;i++)
+{
+if (i < 10)
+{
+$("#"+id).append("<option value='"+i+"'>"+'0'+i+"</option>");
+}
+else
+{
+$("#"+id).append("<option value='"+i+"'>"+i+"</option>");
+}
+}
+}
+function setWeekToDayEle(template)
+{
+var EveryDay = $("#EveryDay", template);
+var Week = $("#TimeWeek", template);
+var De_WeekVal = Week.val();
+var WeekVal = parseInt(De_WeekVal,10).toString(2);
+while (WeekVal.length < 7)
+{
+WeekVal = "0" + WeekVal;
+}
+WeekVal = WeekVal.split("").reverse().join("");
+if( WeekVal == "1111111" )
+{
+EveryDay.prop("checked", true);
+}
+else
+{
+EveryDay.prop("checked", false);
+var temp = $("[id^='Time_Day']", template);
+for( var i=0; i < WeekVal.length; i++ )
+{
+if(WeekVal.charAt(i) == '1')
+{
+$(temp[i]).prop("checked",true);
+}
+else
+{
+$(temp[i]).prop("checked",false);
+}
+}
+}
+EveryDay.change();
+}
+function setDayEleToWeek(template)
+{
+var EveryDay = $("#EveryDay", template);
+var Week = $("#TimeWeek", template);
+var B_WeekVal = "";
+if( EveryDay.is(":checked") )
+{
+B_WeekVal = "1111111";
+}
+else
+{
+var temp = $("[id^='Time_Day']", template);
+for( var i=0; i< temp.length;i++ )
+{
+if($(temp[i]).is(":checked"))
+{
+B_WeekVal = "1" + B_WeekVal;
+}
+else
+{
+B_WeekVal = "0" + B_WeekVal;
+}
+}
+}
+Week.val(parseInt(B_WeekVal, 2));
+}
+function fillData_WlanBasicAdOnOff(template,xml)
+{
+var OBJID = ["OBJ_WLANTIMECFG_ID","OBJ_WLANTIME_ID"];
+template.fillDataByOBJID(xml, OBJID, template, 0);
+$("[id^='div_WLANRadioStatus_']", template).each(function(){
+$(this).remove();
+})
+var ruleTemplate = $("#div_WLANRadioStatus",template);
+var OBJ = $(xml).find("OBJ_WLANSETTING_ID");
+var RuleNum = $("Instance", OBJ).length;
+for (var i=0; i<RuleNum; i++)
+{
+var clone = ruleTemplate.cloneWithSuffix(i, "_");
+ruleTemplate.before(clone);
+var DataOBJID = ["OBJ_WLANSETTING_ID"];
+clone.fillDataByOBJID(xml, DataOBJID, clone, i, "_");
+var radioNewName = "WLAN (" + $("[id^='Band']",clone).val()+")";
+$("label[for^='RadioStatus_"+i+"']").text(radioNewName);
+clone.showIt(true);
+}
+$("[id^='TimerEnable'][type='radio']:checked",template).click();
+}
+function initial_template_WlanBasicAdOnOff(templateID)
+{
+var template = $("#"+templateID);
+InitTimeOption(24,"TimeStartHour");
+InitTimeOption(60,"TimeStartMin");
+InitTimeOption(24,"TimeEndHour");
+InitTimeOption(60,"TimeEndMin");
+template.bind("fillDataByApplyResult", function(event,xml, template){
+ActionByApplyResult(xml, template);
+setWeekToDayEle(template);
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+if (template.hasError(xml) == 0)
+{
+fillData_WlanBasicAdOnOff(template,xml);
+setWeekToDayEle(template);
+}
+});
+$("[id^='TimerEnable'][type='radio']",template).each(function(){
+var TimerEnableRadio = $(this);
+TimerEnableRadio.click(function(){
+var WLANRadioStatus = $("#TRCtl_WLANRadioStatus");
+var OnTime = $("#TR_OnTime");
+if ( $(this).val() == "1" )
+{
+OnTime.showIt(true);
+WLANRadioStatus.showIt(false);
+}
+else
+{
+OnTime.showIt(false);
+WLANRadioStatus.showIt(true);
+}
+});
+var data = {};
+data.template = template;
+data.timeEnable = TimerEnableRadio;
+$.callModifier("wlanOnOff/clickCtrl",data);
+});
+$("[id^='EveryDay']",template).bind("change", function () {
+var EveryDayOBJ = $(this);
+var subTemplate = EveryDayOBJ.parents("[id^='template_']");
+$("[id^='Time_Day']", subTemplate).each(function () {
+if(EveryDayOBJ.is(":checked"))
+{
+$(this).prop("checked", false);
+$(this).attr("disabled",true);
+}
+else
+{
+$(this).prop("disabled",false);
+}
+});
+});
+template.bind("hiddenValueChangeByCustom", function(event,template){
+setDayEleToWeek(template);
+});
+}
+$(document).ready(function(){
+var HeadID = "WlanBasicAdOnOff";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+initial_template_WlanBasicAdOnOff("template_"+HeadID);
+Head.succfunction = function(xml){
+if (Head.hasError(xml) == 0)
+{
+var template = $("#template_WlanBasicAdOnOff");
+$.publish("/some/softVersionModify", [template]);
+fillData_WlanBasicAdOnOff(template,xml);
+setWeekToDayEle(template);
+$.publish("/some/disWlanOption", [template]);
+}
+};
+wlanDisableControl(HeadID);
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div id="WlanBasicAdOnOff" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wlan_wlanbasiconoff_lua.lua</span>
+</address>
+<h1 class="collapBarWithDataTrans" id="WlanBasicAdOnOffBar">WLAN On/Off Configuration</h1>
+<div id="WlanBasicAdOnOff_container">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div class="sceneTip">
+<div class="sceneTipLink"><a>What should be noticed when configuring WLAN On/Off? </a></div>
+<div class="sceneTip_container">
+<p>In scheduled mode, when the device synchronizes network time failed, the wireless will be switched on. </p>
+<p class="sceneTip_close"><a>Close</a></p>
+</div>
+</div>
+<div id="template_WlanBasicAdOnOff" class="formTblWrap" style="display:block;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<form class="form_content formTbl">
+<input type="hidden" id="RadioStatus" value="">
+<input type="hidden" id="TimeWeek" value="">
+<div class="row" id="div_TimerEnable">
+<label for="TimerEnable" class="left w150">Mode</label>
+<div id="TimerEnable" class="right">
+<input type="radio" id="TimerEnable1" name="TimerEnable" value="0"/>
+<label for="TimerEnable1">Manual</label>
+&nbsp;&nbsp;
+<input type="radio" id="TimerEnable0" name="TimerEnable" value="1"/>
+<label for="TimerEnable0">Scheduled Power On</label>
+</div>
+</div>
+<div id="TRCtl_WLANRadioStatus" style="display:none;">
+<div class="row" id="div_WLANRadioStatus" style="display:none;">
+<input type="hidden" id="_InstID" value="">
+<input type="hidden" id="Band" value="">
+<input type="hidden" id="LockStatusBase" value="" class="PostIgnore">
+<label for="RadioStatus" class="left w150">WLAN On/Off</label>
+<div id="RadioStatus" class="right">
+<input type="radio" id="RadioStatus0" name="RadioStatus" value="1"/>
+<label for="RadioStatus0">On</label>
+&nbsp;&nbsp;
+<input type="radio" id="RadioStatus1" name="RadioStatus" value="0"/>
+<label for="RadioStatus1">Off</label>
+</div>
+</div>
+</div>
+<div id="TR_OnTime" style="display:none;">
+<div class="row">
+<label class="left w150">On Time</label>
+<div class="right">
+<select name="TimeStartHour" id="TimeStartHour" class="w80">
+</select>h&nbsp;
+<select name="TimeStartMin" id="TimeStartMin" class="w80">
+</select>min
+</div>
+</div>
+<div class="row">
+<label class="left w150">Off Time</label>
+<div class="right">
+<select name="TimeEndHour" id="TimeEndHour" class="w80">
+</select>h&nbsp;
+<select name="TimeEndMin" id="TimeEndMin" class="w80">
+</select>min
+</div>
+</div>
+<div class="row">
+<label class="left w150"><strong>Time Policy</strong></label>
+</div>
+<div class="row">
+<label class="left w150">Days</label>
+<div class="right">
+<input name="EveryDay" id="EveryDay" class="PostIgnore" type="checkbox" value=""/><label for="EveryDay">Everyday</label>
+</div>
+</div>
+<div class="row">
+<label for="Time_Day_Su" class="left w150">&nbsp;</label>
+<div class="right">
+<input name="Time_Day_Su" id="Time_Day_Su" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Su"><font style="color:rgb(200,0,0)">Sun.</font>&nbsp;&nbsp;</label>
+<input name="Time_Day_M" id="Time_Day_M" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_M">Mon.&nbsp;&nbsp;</label>
+<input name="Time_Day_T" id="Time_Day_T" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_T">Tues.&nbsp;&nbsp;</label>
+<input name="Time_Day_We" id="Time_Day_We" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_We">Wed.&nbsp;&nbsp;</label>
+<input name="Time_Day_Th" id="Time_Day_Th" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Th">Thur.&nbsp;&nbsp;</label>
+<input name="Time_Day_Fri" id="Time_Day_Fri" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Fri">Fri.&nbsp;&nbsp;</label>
+<input name="Time_Day_Sa" id="Time_Day_Sa" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Sa"><font style="color:rgb(200,0,0)">Sat.</font></label>
+</div>
+</div>
+<div class="row">
+<label for="SwitchOnOff" class="cfgLabel w150">Action</label>
+<div class="right">
+<select class="selectNorm" id="SwitchOnOff" name="SwitchOnOff">
+<option value="1" title='Wi-Fi Radio On'>Wi-Fi Radio On</option>
+<option value="0" title='Wi-Fi Radio Off'>Wi-Fi Radio Off</option>
+</select>
+</div>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_WlanBasicAdConf" name="Btn_cancel_WlanBasicAdConf" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_WlanBasicAdConf" name="Btn_apply_WlanBasicAdConf" value="Apply" />
+</div>
+</form>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+
+(function(){
+$(document).ready(function(){
+$("[id^='TimerEnable0']").next().text("Schedule");
+var temp = $("#TRCtl_WLANRadioStatus");
+var offObj = $("input[name^='RadioStatus'][value='0']",temp);
+offObj.prop("disabled",true);
+});
+})();
+
+</script>
+<script type="text/javascript">
+
+var curv = "2008";
+var Right = "1";
+(function () {
+
+var ssidTxPowerJson = {};
+ssidTxPowerJson = JSON.parse('""');
+function checkInst(inst,template){
+if(inst == "")
+{
+return true;
+}
+if($("[id^='_InstID:']",template).val() == inst)
+{
+return true;
+}
+return false;
+}
+function g_CtrlWlanBasicAdConf(template){
+var ctrlStr = "";
+if(ssidConf.WlanBasicAdConf != undefined)
+{
+ctrlStr = ssidConf.WlanBasicAdConf;
+}
+if(ctrlStr == "")
+{
+return;
+}
+var ruleList = ctrlStr.split("+");
+for(i in ruleList) {
+var rule = ruleList[i].split(":");
+if(checkInst(rule[1],template) == false){
+continue;
+}
+if(rule[0] == "all"){
+disable_all_templte(template);
+if(rule[2] == "hideBtn"){
+$("div.buttongroup",template).find(":button").showIt(false);
+}
+}
+else{
+singleElementCtrl4Multi(rule,template);
+}
+}
+}
+function g_WlanTxPowerOptionCtrl(template){
+var TxPowerObj = $("#TxPower",template);
+if((ssidTxPowerJson == "") || (typeof ssidTxPowerJson != "object")){
+return;
+}
+TxPowerObj.empty();
+var value2Power = {
+"Standard" : "Standard",
+"Low" : "Low",
+"Medium" : "Medium",
+"High" : "High",
+"Maximum" : "Maximum",
+"10%" : "10%",
+"20%" : "20%",
+"25%" : "25%",
+"30%" : "30%",
+"40%" : "40%",
+"50%" : "50%",
+"60%" : "60%",
+"70%" : "70%",
+"75%" : "75%",
+"80%" : "80%",
+"90%" : "90%",
+"100%" : "100%"
+};
+for(var i = 0; i < ssidTxPowerJson.length; i++){
+var TxPowerStr = value2Power[ssidTxPowerJson[i]];
+var optionStr = "<option value ='"+ssidTxPowerJson[i]+"' title='"+TxPowerStr+"'>"+TxPowerStr+"</option>";
+TxPowerObj.append(optionStr);
+}
+}
+function g_getChannelListFromXMLCache(countryCodeIN, bandIN, bandWidthIN)
+{
+var xml = g_CfgGlobalXMLLocalCache;
+var OBJ = $(xml).find("OBJ_CHANNEL_ID");
+var instances = $("Instance", OBJ);
+var ChannelList = "";
+instances.each(function(i){
+var inst = $(this);
+var CountryCode = "";
+var Band = "";
+var BandWidth = "";
+inst.find("ParaName").each(function(){
+var ParaName = $(this).text();
+var ParaValue = $(this).next().text();
+if ( ParaName == "CountryCode" )
+{
+CountryCode = ParaValue;
+}
+else if ( ParaName == "Band" )
+{
+Band = ParaValue;
+}
+else if ( ParaName == "BandWidth" )
+{
+BandWidth = ParaValue;
+}
+else if ( ParaName == "ChannelList" )
+{
+ChannelList = ParaValue;
+}
+else
+{
+}
+});
+if ( countryCodeIN == CountryCode
+&& Band == bandIN
+&& BandWidth == bandWidthIN )
+{
+return false;
+}
+});
+return ChannelList;
+}
+function g_getCountryCodeFromXMLCache(cardID)
+{
+var xml = g_CfgGlobalXMLLocalCache;
+var OBJ = $(xml).find("OBJ_WLANSETTING_ID");
+var instances = $("Instance", OBJ);
+for ( var i=0; i<instances.length; i++ )
+{
+var ToOperParaArr = {
+"_InstID" : {
+ValueOrigin: ""
+},
+"CountryCode" : {
+ValueOrigin: ""
+}
+}
+xmlParaInInstOperate(xml, "OBJ_WLANSETTING_ID", i, ToOperParaArr);
+if ( cardID == ToOperParaArr["_InstID"].ValueOrigin )
+{
+return ToOperParaArr["CountryCode"].ValueOrigin;
+}
+}
+return null;
+}
+function g_updateSideBandWithStatus(template)
+{
+var sideband = $("[id^='UI_SideBand:']", template).val();
+g_fulfilSideBandOption(template);
+optObj = $("[id^='UI_SideBand:'] option[value='"+sideband+"']", template);
+if ( 0 != optObj.length )
+{
+$("[id^='UI_SideBand:']", template).fillDataByType(sideband);
+}
+}
+function g_countryCode6G(Head)
+{
+var templatObj = $("#template_WlanBasicAdConf_2", Head);
+if (templatObj.length > 0)
+{
+var countryObj = $("[id^='CountryCode']", templatObj);
+$("option.25G", countryObj).remove();
+}
+}
+
+var g_CfgGlobalXMLLocalCache;
+function g_ChanegeDataByCustom(xml)
+{
+}
+function g_fulfilWorkModeOption(template)
+{
+var cardMode = $("[id^='CardMode:']", template).val();
+var cardMode2Standard = {
+"b,g,bg" : ["b", "g", "b,g"],
+"b,g,n,bg,gn,bgn" : ["b", "g", "n", "b,g", "g,n", "b,g,n"],
+"a,n,an" : ["a", "n", "a,n"],
+"a,b,g,n,an,bg,gn,bgn" : ["a", "b", "g", "n", "a,n", "b,g", "g,n", "b,g,n"],
+"n,gn,gnax" : ["n", "g,n", "g,n,ax"],
+"b,g,n,bg,gn,bgn,bgnax" : ["b", "g", "n", "b,g", "g,n", "b,g,n", "b,g,n,ax"],
+"anac,anacax" : ["a,n,ac", "a,n,ac,ax"],
+"a,n,an,anac,ac,anacax" : ["a", "n", "ac", "a,n", "a,n,ac", "a,n,ac,ax"],
+"ax" : ["ax"],
+"b,g,n,bg,gn,bgn,bgnax,bgnaxbe" : ["b", "g", "n", "b,g", "g,n", "b,g,n", "b,g,n,ax", "b,g,n,ax,be"],
+"a,n,an,anac,ac,anacax,anacaxbe" : ["a", "n", "ac", "a,n", "a,n,ac", "a,n,ac,ax", "a,n,ac,ax,be"],
+"ax,axbe" : ["ax", "ax,be"],
+"a,n,an,anac,anacax" : ["a", "n", "a,n", "a,n,ac", "a,n,ac,ax"],
+"a,n,an,anac,ac" : ["a", "n", "ac", "a,n", "a,n,ac"]
+}
+var standard2Name = {
+"a" : "IEEE 802.11a Only",
+"b" : "IEEE 802.11b Only",
+"g" : "IEEE 802.11g Only",
+"n" : "IEEE 802.11n Only",
+"a,n" : "Mixed (802.11a/n)",
+"b,g" : "Mixed (802.11b/g)",
+"g,n" : "Mixed (802.11g/n)",
+"b,g,n" : "Mixed (802.11b/g/n)",
+"a,n,ac" : "Mixed (802.11a/n/ac)",
+"ac" : "IEEE 802.11ac Only",
+"g,n,ax" : "Mixed (802.11g/n/ax)",
+"b,g,n,ax":"Mixed (802.11b/g/n/ax)",
+"a,n,ac,ax":"Mixed (802.11a/n/ac/ax)",
+"ax" : "IEEE 802.11ax Only",
+"ax,be" :"Mixed (802.11ax/be)",
+"b,g,n,ax,be" :"Mixed (802.11b/g/n/ax/be)",
+"a,n,ac,ax,be" :"Mixed (802.11a/n/ac/ax/be)",
+"g,n,ax,be" :"Mixed (802.11g/n/ax/be",
+}
+var standardObj = $("[id^='UI_Standard:']", template);
+var standardID = standardObj.attr('id');
+var selectStr = '<select name="'+standardID+'" id="'+standardID
++'" class="selectLong PostIgnore">';
+var standardSet = cardMode2Standard[cardMode];
+for ( var index in standardSet )
+{
+var standard = standardSet[index];
+var standardName = standard2Name[standard];
+selectStr += "<option value ="+standard+" title='"+standardName+"'>"
++standardName+"</option>";
+}
+selectStr += "</select>"
+standardObj.replaceWith(selectStr);
+$("[id^='UI_Standard:']", template).change(function(){
+var template = $(this).parents("[id^=template_]");
+
+g_fulfilBandWidthOption(template);
+g_PageUpdate_WlanBasicAdConf(template);
+if(!$("[id^='QosType:']", template).hasClass("PostIgnore"))
+{
+var Standard = $("[id^='UI_Standard:']", template).val();
+var qosType = $("[id^='QosType:']", template).val();
+if ( "n" == Standard && "Disabled" == qosType )
+{
+alert("When you set mode to \"IEEE 802.11n Only\", please enable \"QoS TYPE\", otherwise some stations may not be able to associate with AP. ");
+}
+}
+
+});
+}
+function g_displayWorkModeCurVal(template)
+{
+var Standard = $("[id^='Standard:']", template).val();
+$("[id^='UI_Standard:']", template).val(Standard);
+}
+function g_fulfilSideBandOption(template)
+{
+var band = $("[id^='Band:']", template).val();
+var bandWidth = $("[id^='UI_BandWidth:']", template).val();
+var countryCode = $("[id^='CountryCode:']", template).val();
+var channel = $("[id^='UI_Channel:']", template).val();
+var channelList = g_getChannelListFromXMLCache(countryCode, band, bandWidth);
+var channelArr = channelList.split(",");
+var lowerOpStr = "<option value='BelowControlChannel' title='Lower'>Lower</option>";
+var upperOpStr = "<option value='AboveControlChannel' title='Upper'>Upper</option>";
+var optStr2ChannelTable = {};
+var OpStr = {
+"lower": lowerOpStr,
+"upper": upperOpStr,
+"lower&up": lowerOpStr+upperOpStr
+};
+var channelmax =Math.max.apply(null,channelArr)
+if (channelmax == 11 && band == "2.4GHz")
+{
+optStr2ChannelTable = {
+"upper": [1,2,3,4],
+"lower": [8,9,10,11],
+"lower&up": [5,6,7]
+};
+}
+else if (channelmax == 13 && band == "2.4GHz")
+{
+optStr2ChannelTable = {
+"upper": [1,2,3,4],
+"lower": [10,11,12,13],
+"lower&up": [5,6,7,8,9]
+};
+}
+var sideBandObj = $("[id^='UI_SideBand:']", template);
+var sideBandID = sideBandObj.attr("id");
+var selectStr = '<select name="'+sideBandID+'" id="'+sideBandID
++'" class="selectLong PostIgnore">';
+for ( var segmentName in optStr2ChannelTable )
+{
+var segmentValues = optStr2ChannelTable[segmentName];
+for ( var channelTmp in segmentValues )
+{
+if ( segmentValues[channelTmp] == channel )
+{
+selectStr += OpStr[segmentName];
+}
+}
+}
+selectStr += '</select>';
+sideBandObj.replaceWith(selectStr);
+}
+function g_displaySideBandCurVal(template)
+{
+var sideband = $("[id^='SideBand:']", template).val();
+$("[id^='UI_SideBand:']", template).val(sideband);
+}
+function g_CtrlDispCtrl_WlanBasicAdConf(template)
+{
+var Standard = $("[id^='UI_Standard:']", template).val();
+var BandWidth = $("[id^='UI_BandWidth:']", template).val();
+var Channel = $("[id^='UI_Channel:']", template).val();
+var Band = $("[id^='Band:']", template).val();
+if("41" == curv)
+{
+$("[id^='div_CountryCode:']", template).hide();
+$("[id^='div_TxPower:']", template).hide();
+}
+if("96" == curv)
+{
+$("[id^='div_CountryCode:']", template).hide();
+$("[id^='CountryCode:']", template).addClass("PostIgnore");
+}
+if(Band != "5GHz" && ("77" == curv || "79" == curv))
+{
+$(".div_DownLinkMUMIMO",template).remove();
+$(".div_UPLinkMUMIMO",template).remove();
+}
+if("36" == curv)
+{
+var countryCode = $("[id^='CountryCode:1']", template).val();
+if(countryCode == "THI" || countryCode == "USI")
+{
+$("[id^='div_BandBEnabled:1']", template).show();
+$("[id^='BandBEnabled:1']", template).val("0");
+}
+else if(countryCode == "TH_2" || countryCode == "US_2I" )
+{
+$("[id^='div_BandBEnabled:1']", template).show();
+$("[id^='BandBEnabled:1']", template).val("1");
+}
+else
+{
+$("[id^='div_BandBEnabled:1']", template).hide();
+}
+}
+if(curv == "1" && Band != "5GHz")
+{
+$("[id^='div_MUMIMOEnable:']",template).hide()
+}
+if ( (Standard == "n")
+|| (Standard == "g,n")
+|| (Standard == "a,n")
+|| (Standard == "a,n,ac")
+|| (Standard == "b,g,n")
+|| (Standard == "ac")
+|| (Standard == "g,n,ax")
+|| (Standard == "b,g,n,ax")
+|| (Standard == "a,n,ac,ax")
+|| (Standard == "ax")
+|| (Standard == "ax,be")
+|| (Standard == "b,g,n,ax,be")
+|| (Standard == "a,n,ac,ax,be"))
+{
+var divBandWidth = $("[id^='div_BandWidth:']", template);
+var inputBandWidth = $("[id^='BandWidth:']", template);
+if ( divBandWidth.length == 0 )
+{
+inputBandWidth.addClass("PostIgnore");
+}
+else
+{
+divBandWidth.show();
+inputBandWidth.removeClass("PostIgnore");
+}
+$("[id^='div_SGIEnabled:']", template).show();
+$("[id^='SGIEnabled']", template).removeClass("PostIgnore");
+if ( ( BandWidth == "40MHz" || BandWidth == "Auto" )
+&& Channel != "Auto"
+&& Band != "5GHz"
+&& Band != "6GHz"
+&& $("[id^='div_SideBand:']", template).length > 0 )
+{
+$("[id^='div_SideBand:']", template).show();
+$("[id^='SideBand:']", template).removeClass("PostIgnore");
+}
+else
+{
+$("[id^='div_SideBand:']", template).hide();
+$("[id^='SideBand:']", template).addClass("PostIgnore");
+}
+}
+else
+{
+$("[id^='div_BandWidth:']", template).hide();
+$("[id^='BandWidth:']", template).addClass("PostIgnore");
+$("[id^='div_SGIEnabled:']", template).hide();
+$("[id^='SGIEnabled']", template).addClass("PostIgnore");
+$("[id^='div_SideBand:']", template).hide();
+$("[id^='SideBand:']", template).addClass("PostIgnore");
+}
+if(curv == "1" && Band == "2.4GHz" )
+{
+$("[id^='div_PreambleType:']",template).show();
+}
+if((curv == "1" && Right == "1") || curv == "14")
+{
+$("[id^='div_QosType:']",template).show();
+$("[id^='QosType:']",template).removeClass("PostIgnore");
+}
+g_CtrlWlanBasicAdConf(template);
+}
+function g_fulfilChannelOption( tempObj )
+{
+var countryCodeOBJ = $("[id^='CountryCode:']", tempObj);
+var countryCode;
+if ( countryCodeOBJ.length )
+{
+countryCode = countryCodeOBJ.val();
+}
+else
+{
+var cardID = $("[id^='_InstID:']", tempObj).val();
+countryCode = g_getCountryCodeFromXMLCache(cardID);
+}
+var channelObj = $("[id^='UI_Channel:']", tempObj);
+var channelID = channelObj.attr("id");
+var selectStr = '<select name="'+channelID+'" id="'+channelID
++'" class="selectLong PostIgnore">';
+selectStr += "<option value='Auto' title='Auto'>Auto</option>";
+var band = $("[id^='Band:']", tempObj).val();
+var bandWidthObj = $("[id^='UI_BandWidth:']", tempObj);
+var bandWidth;
+var Standard = $("[id^='UI_Standard:']", tempObj).val();
+if ( Standard.indexOf("n") == -1 && Standard != "ac" && "6GHz" != band)
+{
+bandWidth = "20MHz";
+}
+else
+{
+if ( bandWidthObj.length > 0 )
+{
+bandWidth = bandWidthObj.val();
+}
+else
+{
+bandWidthObj = $("[id^='BandWidth:']", tempObj);
+bandWidth = bandWidthObj.val();
+}
+}
+var channelList = g_getChannelListFromXMLCache(countryCode, band, bandWidth);
+var channelArr = channelList.split(",");
+for (var i=0; i<channelArr.length; i++)
+{
+var channelHTML = channelArr[i];
+if((curv=="190") && ("6GHz"==band) && (channelArr[i]=="5" || channelArr[i]=="21" || channelArr[i]=="37" || channelArr[i]=="53" || channelArr[i]=="69" || channelArr[i]=="85" ))
+{
+selectStr += "<option value='" + channelArr[i]
++ "' title='" + channelHTML + "'>"
++ channelHTML +"(PSC)"+ "</option>";
+}
+else{
+selectStr += "<option value='" + channelArr[i]
++ "' title='" + channelHTML + "'>"
++ channelHTML + "</option>";
+}
+}
+selectStr += '</select>';
+channelObj.replaceWith(selectStr);
+$("[id^='UI_Channel:']", tempObj).change(function(){
+var template = $(this).parents("[id^=template_]");
+
+g_PageUpdate_WlanBasicAdConf(template);
+
+});
+}
+function g_displayChannelCurVal( tempObj )
+{
+var AutoChannelEnabled = $("[id^='AutoChannelEnabled:']", tempObj).val();
+var channelVal = 0;
+if ( AutoChannelEnabled == "1" )
+{
+channelVal = $("[id^='UI_Channel:']", tempObj).find('option:first').val();
+}
+else
+{
+channelVal = $("[id^='Channel:']", tempObj).val();
+}
+$("[id^='UI_Channel:']", tempObj).val(channelVal);
+}
+function g_fulfilBandWidthOption(template)
+{
+var band = $("[id^='Band:']", template).val();
+var BandWidth = $("[id^='UI_BandWidth:']", template);
+var Standard = $("[id^='UI_Standard:']", template).val();
+var bandWidthID = BandWidth.attr('id');
+var selectBegin = '<select name="'+bandWidthID+'" id="'+bandWidthID +'" class="selectLong PostIgnore">';
+var optionAutoStr = "<option value ='Auto' title='Auto'>Auto</option>";
+var option20Str = "<option value ='20MHz' title='20MHz'>20MHz</option>";
+var option40Str = "<option value ='40MHz' title='40MHz'>40MHz</option>";
+var option80Str = "<option value ='80MHz' title='80MHz'>80MHz</option>";
+var option160Str = "<option value ='160MHz' title='160MHz'>160MHz</option>";
+var option240Str = "<option value ='240MHz' title='240MHz'>240MHz</option>";
+var option320Str = "<option value ='320MHz' title='320MHz'>320MHz</option>";
+var selectEnd = "</select>";
+var selectStr = selectBegin;
+if ( "5GHz" == band || "6GHz" == band )
+{
+selectStr += optionAutoStr + option20Str + option40Str;
+if ( "a,n,ac" == Standard || "ac" == Standard || "a,n,ac,ax" == Standard || "ax" == Standard || "ax,be" == Standard || "a,n,ac,ax,be" == Standard)
+{
+selectStr += option80Str;
+selectStr += option160Str;
+if ( "6GHz" == band && "ax,be" == Standard)
+{
+selectStr += option320Str;
+}
+}
+}
+else
+{
+if ( curv == "97" )
+{
+selectStr += optionAutoStr + option20Str;
+}
+else
+{
+selectStr += optionAutoStr + option20Str + option40Str;
+}
+}
+selectStr += selectEnd;
+BandWidth.replaceWith(selectStr);
+$("[id^='UI_BandWidth:']", template).change(function(){
+var template = $(this).parents("[id^=template_]");
+g_PageUpdate_WlanBasicAdConf(template);
+});
+}
+function g_displayBandWidthCurVal(template)
+{
+var BandWidth = $("[id^='BandWidth:']", template).val();
+$("[id^='UI_BandWidth:']", template).val(BandWidth);
+}
+function g_setBandWidthDefaultOption(template)
+{
+var bandWidthObj = $("[id^='UI_BandWidth:']", template);
+var standard = $("[id^='UI_Standard:']", template).val();
+var band = $("[id^='Band:']", template).val();
+if ( "2.4GHz" == band )
+{
+bandWidthObj.val("Auto");
+}
+else
+{
+if ( "a,n,ac" == standard || "ac" == standard || "a,n,ac,ax" == standard || "ax" == standard || "a,n,ac,ax,be" == Standard)
+{
+bandWidthObj.val("80MHz");
+}
+else if (band == "6GHz" && "ax,be" == standard)
+{
+bandWidthObj.val("320MHz");
+}
+else
+{
+bandWidthObj.val("40MHz");
+}
+}
+}
+function g_updateChannelWithStatus(template)
+{
+var channel = $("[id^='UI_Channel:']", template).val();
+g_fulfilChannelOption(template);
+var optObj = $("[id^='UI_Channel:'] option[value='"+channel+"']", template);
+var countryCodeVal = $("[id^='CountryCode:1']", template).val();
+if ( 0 == optObj.length )
+{
+if("36" == curv && (countryCodeVal=="TH_2" || countryCodeVal=="US_2I"))
+{
+channel = "36";
+}
+else
+{
+channel = $("[id^='UI_Channel:']", template).find('option:first').val();
+}
+}
+$("[id^='UI_Channel:']", template).fillDataByType(channel);
+}
+function g_PageUpdate_WlanBasicAdConf(template)
+{
+g_updateChannelWithStatus(template);
+g_updateSideBandWithStatus(template);
+g_CtrlDispCtrl_WlanBasicAdConf(template);
+}
+function initial_template_WlanBasicAdConf(templateID)
+{
+var template = $("#"+templateID);
+g_WlanTxPowerOptionCtrl(template);
+g_WlanCountryCodeOptionAdd(template);
+$("#CountryCode", template).change(function(){
+var template = $(this).parents("[id^=template_]");
+g_PageUpdate_WlanBasicAdConf(template);
+});
+$("#QosType", template).change(function(){
+var template = $(this).parents("[id^=template_]");
+var qosType = $(this).val();
+var standard = $("[id^='UI_Standard:']",template).val();
+if ( "n" == standard && "Disabled" == qosType )
+{
+alert("When you set mode to \"IEEE 802.11n Only\", please enable \"QoS TYPE\", otherwise some stations may not be able to associate with AP. ");
+}
+});
+if("36" == curv)
+{
+$("#BandBEnabled", template).change(function(){
+var Option = [
+"<option value ='CNI' title='China'>China</option>",
+"<option value ='AUI' title='Australia'>Australia</option>",
+"<option value ='BRI' title='Brazil'>Brazil</option>",
+"<option value ='CAI' title='Canada'>Canada</option>",
+"<option value ='EGI' title='Egypt'>Egypt</option>",
+"<option value ='FRI' title='France'>France</option>",
+"<option value ='DEI' title='Germany'>Germany</option>",
+"<option value ='GRI' title='Greece'>Greece</option>",
+"<option value ='HKI' title='China Hongkong'>China Hongkong</option>",
+"<option value ='ITI' title='Italy'>Italy</option>",
+"<option value ='KRI' title='Korea'>Korea</option>",
+"<option value ='ESI' title='Spain'>Spain</option>",
+"<option value ='GBI' title='United Kingdom'>United Kingdom</option>",
+"<option value ='USI' title='United States of America'>United States of America</option>",
+"<option value ='THI' title='Thailand'>Thailand</option>",
+"<option value ='US_2I' title='United States of America'>United States of America</option>",
+"<option value ='TH_2' title='Thailand'>Thailand</option>",
+];
+var template = $(this).parents("[id^=template_]");
+var countryCodeOBJ = $("[id^='CountryCode:1']", template);
+var DFSOBJ = $("[id^='BandBEnabled:1']", template);
+var DFSValue = DFSOBJ.val();
+var countryCodeVal = countryCodeOBJ.val();
+if(DFSValue == "0")
+{
+if(countryCodeVal=="TH_2" || countryCodeVal=="US_2I")
+{
+countryCodeOBJ.empty();
+for (var i = 0; i<15; i++){
+countryCodeOBJ.append(Option[i]);
+}
+if(countryCodeVal=="TH_2")
+{
+countryCodeOBJ.val("THI");
+}
+else
+{
+countryCodeOBJ.val("USI");
+}
+}
+}
+else
+{
+if(countryCodeVal=="THI" || countryCodeVal=="USI")
+{
+countryCodeOBJ.empty();
+for (var i = 0; i<17; i++)
+{
+if (i != 13 && i != 14)
+{
+countryCodeOBJ.append(Option[i]);
+}
+}
+if(countryCodeVal=="THI")
+{
+countryCodeOBJ.val("TH_2");
+}
+else
+{
+countryCodeOBJ.val("US_2I");
+}
+}
+}
+g_PageUpdate_WlanBasicAdConf(template);
+});
+}
+template.bind("applyPromptCheckJSON", function(event, template){
+var checkJSONTempObj = {
+"rules": {
+"BeaconInterval": {
+"required": true,
+"integer": true,
+"range": [100, 1000]
+}
+},
+"messages": {
+}
+};
+template.setPromptCheckJSON(checkJSONTempObj, template);
+});
+template.bind("fillDataByCustom", function(event, suffix, template){
+template.collapsibleInstTitleChange("Band");
+if("36" == curv)
+{
+var Option = [
+"<option value ='CNI' title='China'>China</option>",
+"<option value ='AUI' title='Australia'>Australia</option>",
+"<option value ='BRI' title='Brazil'>Brazil</option>",
+"<option value ='CAI' title='Canada'>Canada</option>",
+"<option value ='EGI' title='Egypt'>Egypt</option>",
+"<option value ='FRI' title='France'>France</option>",
+"<option value ='DEI' title='Germany'>Germany</option>",
+"<option value ='GRI' title='Greece'>Greece</option>",
+"<option value ='HKI' title='China Hongkong'>China Hongkong</option>",
+"<option value ='ITI' title='Italy'>Italy</option>",
+"<option value ='KRI' title='Korea'>Korea</option>",
+"<option value ='ESI' title='Spain'>Spain</option>",
+"<option value ='GBI' title='United Kingdom'>United Kingdom</option>",
+"<option value ='USI' title='United States of America'>United States of America</option>",
+"<option value ='THI' title='Thailand'>Thailand</option>",
+"<option value ='US_2I' title='United States of America'>United States of America</option>",
+"<option value ='TH_2' title='Thailand'>Thailand</option>",
+];
+var countryCodeOBJ = $("[id^='CountryCode:1']", template);
+var countryCode = countryCodeOBJ.val();
+countryCodeOBJ.empty();
+if(template.attr("id") == "template_WlanBasicAdConf_1")
+{
+if(countryCode=="USI" || countryCode=="THI")
+{
+for (var i = 0; i<15; i++)
+{
+countryCodeOBJ.append(Option[i]);
+}
+}
+else
+{
+for (var i = 0; i<17; i++)
+{
+if (i != 13 && i != 14)
+{
+countryCodeOBJ.append(Option[i]);
+}
+}
+}
+countryCodeOBJ.val(countryCode);
+}
+}
+g_fulfilWorkModeOption(template);
+g_displayWorkModeCurVal(template);
+g_fulfilBandWidthOption(template);
+g_displayBandWidthCurVal(template);
+g_fulfilChannelOption(template);
+g_displayChannelCurVal(template);
+g_fulfilSideBandOption(template);
+g_displaySideBandCurVal(template);
+g_CtrlDispCtrl_WlanBasicAdConf(template);
+});
+template.bind("fillDataByApplyResult", function(event,xml, template){
+var isError = ActionByApplyResult(xml, template);
+
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+g_ChanegeDataByCustom(xml);
+var OBJID = ["OBJ_WLANSETTING_ID","OBJ_WIFI_BLOCK_ID"];
+ActionByCancelResult(xml, template, OBJID);
+var wifi1Blockxml = getParaValueInXML(xml, "OBJ_WIFI_BLOCK_ID", 0, "Wifi1Block");
+var wifi2Blockxml = getParaValueInXML(xml, "OBJ_WIFI_BLOCK_ID", 0, "Wifi2Block");
+var wifi3Blockxml = getParaValueInXML(xml, "OBJ_WIFI_BLOCK_ID", 0, "Wifi3Block");
+setParaValueInXML(g_CfgGlobalXMLLocalCache, "OBJ_WIFI_BLOCK_ID", 0, "Wifi1Block", wifi1Blockxml);
+setParaValueInXML(g_CfgGlobalXMLLocalCache, "OBJ_WIFI_BLOCK_ID", 0, "Wifi2Block", wifi2Blockxml);
+setParaValueInXML(g_CfgGlobalXMLLocalCache, "OBJ_WIFI_BLOCK_ID", 0, "Wifi3Block", wifi3Blockxml);
+template.trigger("fillDataByCustom",[0, template, xml]);
+});
+template.bind("hiddenValueChangeByCustom", function(event, template){
+var channel = $("[id^='UI_Channel:']", template).val();
+var autoVal;
+var skipDFS = "0";
+if ( channel == "Auto" )
+{
+autoVal = "1";
+$("[id^='Channel:']", template).val("NULL");
+}
+else
+{
+autoVal = "0";
+$("[id^='Channel:']", template).val(channel);
+var sideband = $("[id^='UI_SideBand:']", template).val();
+$("[id^='SideBand:']", template).val(sideband);
+}
+$("[id^='AutoChannelEnabled:']", template).val(autoVal);
+var Standard = $("[id^='UI_Standard:']", template).val();
+var standardtemp = Standard;
+if (standardtemp == "n")
+{
+var wlanband = $("[id^='Band:']", template).val();
+if (wlanband == "5GHz")
+{
+standardtemp = "5n";
+}
+else
+{
+standardtemp = "2.4n";
+}
+}
+var ParaChangeByStandard = {
+"b": {
+"BasicDataRates":"1,2",
+"OpDataRates":"1,2,5.5,11",
+"11nMode":"0",
+"GreenField":"0"
+},
+"g": {
+"BasicDataRates":"1,2,5.5,11,6,9,12,18,24",
+"OpDataRates":"1,2,5.5,11,6,9,12,18,24,36,48,54",
+"11nMode":"0",
+"GreenField":"0"
+},
+"b,g": {
+"BasicDataRates":"1,2,5.5,11",
+"OpDataRates":"1,2,5.5,11,6,9,12,18,24,36,48,54",
+"11nMode":"0",
+"GreenField":"0"
+},
+"2.4n": {
+"BasicDataRates":"1,2,5.5,11",
+"OpDataRates":"1,2,5.5,11,6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"1"
+},
+"5n": {
+"BasicDataRates":"6,9,12,18,24,36,48,54",
+"OpDataRates":"6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"1"
+},
+"g,n": {
+"BasicDataRates":"1,2,5.5,11,6,9,12,18,24",
+"OpDataRates":"1,2,5.5,11,6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"0"
+},
+"b,g,n": {
+"BasicDataRates":"1,2,5.5,11",
+"OpDataRates":"1,2,5.5,11,6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"0"
+},
+"g,n,ax": {
+"BasicDataRates":"1,2,5.5,11",
+"OpDataRates":"1,2,5.5,11,6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"0"
+},
+"b,g,n,ax": {
+"BasicDataRates":"1,2,5.5,11",
+"OpDataRates":"1,2,5.5,11,6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"0"
+},
+"a": {
+"BasicDataRates":"6,9,12,18,24,36,48,54",
+"OpDataRates":"6,9,12,18,24,36,48,54",
+"11nMode":"0",
+"GreenField":"0"
+},
+"a,n": {
+"BasicDataRates":"6,9,12,18,24,36,48,54",
+"OpDataRates":"6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"0"
+},
+"a,n,ac": {
+"BasicDataRates":"6,9,12,18,24,36,48,54",
+"OpDataRates":"6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"0"
+},
+"a,n,ac,ax": {
+"BasicDataRates":"6,9,12,18,24,36,48,54",
+"OpDataRates":"6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"0"
+},
+"ac": {
+"BasicDataRates":"6,9,12,18,24,36,48,54",
+"OpDataRates":"6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"0"
+},
+"ax": {
+"BasicDataRates":"6,9,12,18,24,36,48,54",
+"OpDataRates":"6,9,12,18,24,36,48,54",
+"11nMode":"1",
+"GreenField":"0"
+},
+};
+var ParaChange = ParaChangeByStandard[standardtemp];
+if ( ParaChange )
+{
+for (var paratmp in ParaChange )
+{
+$("[id^='"+paratmp+":']",template).val(ParaChange[paratmp]);
+}
+}
+$("[id^='Standard:']", template).val(Standard);
+var bandWidthObj = $("[id^='UI_BandWidth:']", template);
+if ( bandWidthObj.length > 0 )
+{
+var bandWidth = bandWidthObj.val();
+$("[id^='BandWidth:']", template).val(bandWidth);
+}
+if($("[id^='div_DownLinkMUMIMO:']", template).length > 0)
+{
+var MUMIMOval = $("[name='DownLinkMUMIMO'][type='radio']:checked", template).val();
+$("[id^='MUMIMOEnable:']", template).val(MUMIMOval);
+}
+});
+}
+$(document).ready(function(){
+var HeadID = "WlanBasicAdConf";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+initial_template_WlanBasicAdConf("template_"+HeadID);
+Head.succfunction = function(xml){
+if (Head.hasError(xml) == 0)
+{
+g_ChanegeDataByCustom(xml);
+g_CfgGlobalXMLLocalCache = xml;
+var CARDOBJ = $(xml).find("OBJ_WLANSETTING_ID");
+var RuleNum = $("Instance", CARDOBJ).length;
+var OBJID = ["OBJ_WLANSETTING_ID","OBJ_WIFI_BLOCK_ID"];
+Head.fillDataByCustom = undefined;
+Head.createPageDataByClone(RuleNum, OBJID, xml,
+Head.fillDataByCustom);
+if("183" == curv || "202" == curv || "2005" == curv || "2006" == curv)
+{
+var templateStr="#template_WlanBasicAdConf_1";
+var templatObj=$(templateStr,Head);
+$("[id^='5GconfHint']",templatObj).css("display","");
+}
+g_countryCode6G(Head);
+firstTemp = $("#template_WlanBasicAdConf_0");
+$(".collapsibleInst", firstTemp).click();
+
+$.callModifier("WlanBasicAdConf/disableAll");
+}
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+var Btn_WlanBasicAdConf_Refresh= $("#WlanBasicAdConf_Refresh_button", Head);
+Btn_WlanBasicAdConf_Refresh.unbind("click");
+Btn_WlanBasicAdConf_Refresh.click(function(){
+var HeadID = Head.attr("id");
+if ( $("[id^='template_"+HeadID+"_']",Head).length > 0 )
+{
+Head.find("[id^='template_"+HeadID+"_']").each(function(){
+$(this).remove();
+});
+var ServerAddr = $("address span", Head).text();
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction,
+Head.failfunction,
+false,
+false);
+}
+});
+});
+})();
+</script>
+
+<div id="WlanBasicAdConf" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wlan_wlanbasicadconf_lua.lua</span>
+</address>
+<h1 class="collapBarWithDataTrans" id="WlanBasicAdConfBar">WLAN Global Configuration</h1>
+<div id="WlanBasicAdConf_container">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<input type="hidden" id="_InstNum" value="0">
+<div id="template_WlanBasicAdConf" style="display:none;">
+<form class="form_content">
+<div id="topLine_WlanBasicAdConf" class="formTblCtrlBar">
+<span id="instName_WlanBasicAdConf" class="instName collapsibleInst" style="text-decoration: underline;"></span>
+</div>
+<div id="changeArea_WlanBasicAdConf" class="ChangeArea formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div id="5GconfHint" class="staticInfoHint" style="display:none">
+<p>While configured 100,104,108,112,116,120,124,128 channel in 160Mhz there is possibility to be dropped by Weather Radar conflicting</p>
+</div>
+<div class="formTbl">
+<input type="hidden" id="_InstID" value="">
+<input type="hidden" id="_InstID_WIFIBLOCK" value="">
+<input type="hidden" id="Wifi1Block" value="">
+<input type="hidden" id="Wifi2Block" value="">
+<input type="hidden" id="Wifi3Block" value="">
+<input type="hidden" id="BasicDataRates" value="">
+<input type="hidden" id="OpDataRates" value="">
+<input type="hidden" id="11nMode" value="">
+<input type="hidden" id="GreenField" value="">
+<input type="hidden" id="MUMIMOEnable" value="">
+<input type="hidden" id="AutoChannelEnabled" value="">
+<input type="hidden" id="Band" value="">
+<input type="hidden" id="Channel" value="">
+<input type="hidden" id="SideBand" value="">
+<input type="hidden" id="Standard" value="">
+<input type="hidden" id="BandWidth" value="">
+<input type="hidden" id="CardMode" value="" class="PostIgnore">
+<div class="row">
+<label for="UI_Channel" class="left w180">Channel</label>
+<div class="right">
+<select name="UI_Channel" id="UI_Channel" class="selectLong PostIgnore">
+</select>
+</div>
+</div>
+
+
+<div class="row">
+<label for="UI_Standard" class="left w180">Mode</label>
+<div class="right">
+<select name="UI_Standard" id="UI_Standard" class="selectLong PostIgnore">
+</select>
+</div>
+</div>
+
+<div class="row" id="div_CountryCode">
+<label for="CountryCode" class="left w180">Country/Region</label>
+<div class="right">
+<select name="CountryCode" id="CountryCode" class="selectLong">
+<option value='CNI' title='China' class='25G'>China</option><option value='AR_6' title='Argentina' class='6G'>Argentina</option><option value='THI' title='Thailand' class='25G'>Thailand</option><option value='BRI' title='Brazil' class='6G'>Brazil</option><option value='EGI' title='Egypt' class='25G'>Egypt</option><option value='FRI' title='France' class='6G'>France</option><option value='DEI' title='Germany' class='6G'>Germany</option><option value='GRI' title='Greece' class='25G'>Greece</option><option value='HKI' title='China Hongkong' class='25G'>China Hongkong</option><option value='ITI' title='Italy' class='25G'>Italy</option><option value='KR_2' title='Korea' class='6G'>Korea</option><option value='ESI' title='Spain' class='6G'>Spain</option><option value='GB_2' title='United Kingdom' class='6G'>United Kingdom</option><option value='USI' title='United States of America' class='6G'>United States of America</option>
+</select>
+</div>
+</div>
+
+<div class="row" id="div_BandWidth">
+<label for="UI_BandWidth" class="left w180">Band Width</label>
+<div class="right">
+<select name="UI_BandWidth" id="UI_BandWidth" class="selectLong PostIgnore">
+</select>
+</div>
+</div>
+
+<div class="row" id="div_SideBand" style="display:none;">
+<label for="UI_SideBand" class="left w180">External Channel</label>
+<div class="right">
+<select name="UI_SideBand" id="UI_SideBand" class="selectLong PostIgnore">
+</select>
+</div>
+</div>
+
+<div class="row" id="div_SGIEnabled">
+<label for="SGIEnabled" class="left w180">SGI</label>
+<div id="SGIEnabled" class="right">
+<input type="radio" id="SGIEnabled0" name="SGIEnabled" value="1"/>
+<label for="SGIEnabled0">On</label>
+&nbsp;&nbsp;
+<input type="radio" id="SGIEnabled1" name="SGIEnabled" value="0"/>
+<label for="SGIEnabled1">Off</label>
+</div>
+</div>
+<div class="row" id="div_BeaconInterval">
+<label for="BeaconInterval" class="left w180">Beacon Interval</label>
+<div class="right">
+<input type="text" id="BeaconInterval" name="BeaconInterval" class="inputLong"/>ms
+<span style="display:none;">Range: 100 ~ 1000</span>
+</div>
+</div>
+
+<div class="row" id="div_TxPower">
+<label for="TxPower" class="left w180">Transmitting Power</label>
+<div class="right">
+<select name="TxPower" id="TxPower" class="selectLong">
+<option value ="100%" title='100%'>100%</option>
+<option value ="80%" title='80%'>80%</option>
+<option value ="60%" title='60%'>60%</option>
+<option value ="40%" title='40%'>40%</option>
+<option value ="20%" title='20%'>20%</option>
+</select>
+</div>
+</div>
+
+<div class="row" id="div_QosType" style="display:none">
+<label for="QosType" class="left w180">QoS Type</label>
+<div class="right">
+<select name="QosType" id="QosType" class="selectLong PostIgnore">
+<option value ="Disabled" title='Disabled'>Disabled</option>
+<option value ="WMM" title='WMM'>WMM</option>
+<option value ="SSID" title='SSID'>SSID</option>
+</select>
+</div>
+</div>
+
+
+<div class="row" id="div_PreambleType" style="display:none">
+<label for="PreambleType" class="left w180">Preamble Type</label>
+<div class="right">
+<select name="PreambleType" id="PreambleType" class="selectLong">
+<option value ="0" title='With DFS'>Short</option>
+<option value ="1" title='Without DFS'>Long</option>
+<option value ="2" title='Without DFS'>Auto</option>
+</select>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel PostIgnore" id="Btn_cancel_WlanBasicAdConf" name="Btn_cancel_WlanBasicAdConf" value="Cancel" />
+<input type="button" class="Button Btn_apply PostIgnore" id="Btn_apply_WlanBasicAdConf" name="Btn_apply_WlanBasicAdConf" value="Apply" />
+</div>
+</div>
+</div>
+</form>
+</div>
+<div id="WlanBasicAdConf_Refresh" style="display:none;">
+<input type="hidden" id="WlanBasicAdConf_Refresh_button">
+</div>
+</div>
+</div>
+<script type="text/javascript">
+var cver = "2008";
+var DisableSSID = ssidConf.disableSSID;
+(function () {
+
+var ssidEncryJson = {};
+ssidEncryJson = JSON.parse('["No Security:","WPA2-PSK-AES:","WPA/WPA2-PSK-AES:","WPA3-SAE:","WPA2-PSK-AES/WPA3-SAE-AES:"]');
+var EncryptionParameter = {
+"No Security": {
+"BeaconType": "None"
+},
+"WEP-OpenSystem": {
+"BeaconType":"Basic",
+"WEPAuthMode":"None"
+},
+"WEP-ShareKey": {
+"BeaconType": "Basic",
+"WEPAuthMode":"SharedAuthentication"
+},
+"WPA-PSK-TKIP": {
+"BeaconType":"WPA",
+"WPAAuthMode":"PSKAuthentication",
+"WPAEncryptType":"TKIPEncryption"
+},
+"WPA-PSK-AES": {
+"BeaconType":"WPA",
+"WPAAuthMode":"PSKAuthentication",
+"WPAEncryptType":"AESEncryption"
+},
+"WPA-PSK-TKIP/AES": {
+"BeaconType":"WPA",
+"WPAAuthMode":"PSKAuthentication",
+"WPAEncryptType":"TKIPandAESEncryption"
+},
+"WPA2-PSK-AES": {
+"BeaconType":"11i",
+"11iAuthMode":"PSKAuthentication",
+"11iEncryptType":"AESEncryption"
+},
+"WPA2-PSK-TKIP": {
+"BeaconType":"11i",
+"11iAuthMode":"PSKAuthentication",
+"11iEncryptType":"TKIPEncryption"
+},
+"WPA2-PSK-TKIP/AES": {
+"BeaconType":"11i",
+"11iAuthMode":"PSKAuthentication",
+"11iEncryptType":"TKIPandAESEncryption"
+},
+"WPA/WPA2-PSK-TKIP": {
+"BeaconType":"WPAand11i",
+"WPAAuthMode":"PSKAuthentication",
+"11iAuthMode":"PSKAuthentication",
+"WPAEncryptType":"TKIPEncryption",
+"11iEncryptType":"TKIPEncryption"
+},
+"WPA/WPA2-PSK-AES": {
+"BeaconType":"WPAand11i",
+"WPAAuthMode":"PSKAuthentication",
+"11iAuthMode":"PSKAuthentication",
+"WPAEncryptType":"AESEncryption",
+"11iEncryptType":"AESEncryption"
+},
+"WPA/WPA2-PSK-TKIP/AES": {
+"BeaconType":"WPAand11i",
+"WPAAuthMode":"PSKAuthentication",
+"11iAuthMode":"PSKAuthentication",
+"WPAEncryptType":"TKIPandAESEncryption",
+"11iEncryptType":"TKIPandAESEncryption"
+},
+"WPA2-EAP-AES": {
+"BeaconType": "11i",
+"11iAuthMode": "EAPAuthentication",
+"11iEncryptType": "AESEncryption"
+},
+"WPA/WPA2-EAP-TKIP/AES": {
+"BeaconType": "WPAand11i",
+"WPAAuthMode": "EAPAuthentication",
+"11iAuthMode": "EAPAuthentication",
+"WPAEncryptType": "TKIPandAESEncryption",
+"11iEncryptType": "TKIPandAESEncryption"
+},
+"WPA/WPA2-EAP-AES": {
+"BeaconType": "WPAand11i",
+"WPAAuthMode": "EAPAuthentication",
+"11iAuthMode": "EAPAuthentication",
+"WPAEncryptType": "AESEncryption",
+"11iEncryptType": "AESEncryption"
+},
+"WPA3-OWE": {
+"BeaconType":"WPA3",
+"WPA3AuthMode":"OWEAuthentication",
+"WPA3EncryptType":"AESEncryption"
+},
+"WPA3-SAE": {
+"BeaconType":"WPA3",
+"WPA3AuthMode":"SAEAuthentication",
+"WPA3EncryptType":"AESEncryption"
+},
+"WPA/WPA2/WPA3-PSK/SAE": {
+"BeaconType":"WPAand11iandWPA3",
+"WPAAuthMode":"PSKAuthentication",
+"11iAuthMode":"PSKAuthentication",
+"WPA3AuthMode":"SAEAuthentication",
+"WPAEncryptType":"TKIPandAESEncryption",
+"11iEncryptType":"TKIPandAESEncryption",
+"WPA3EncryptType":"AESEncryption"
+},
+"WPA2/WPA3-SAE": {
+"BeaconType":"11iandWPA3",
+"11iAuthMode":"PSKAuthentication",
+"WPA3AuthMode":"SAEAuthentication",
+"11iEncryptType":"TKIPandAESEncryption",
+"WPA3EncryptType":"AESEncryption"
+},
+"WPA2-PSK-AES/WPA3-SAE-AES": {
+"BeaconType":"11iandWPA3",
+"11iAuthMode":"PSKAuthentication",
+"WPA3AuthMode":"SAEAuthentication",
+"11iEncryptType":"AESEncryption",
+"WPA3EncryptType":"AESEncryption"
+},
+"WPA-EAP-TKIP": {
+"BeaconType":"WPA",
+"WPAAuthMode": "EAPAuthentication",
+"WPAEncryptType":"TKIPEncryption"
+},
+};
+function findBandOfSSID(template, xml)
+{
+var CardInstID = $("[id^='WLANViewName:']", template).val();
+var OBJ = "OBJ_WLANSETTING_ID";
+var WLANSettingXML = $(xml).find(OBJ);
+var cardInsts = WLANSettingXML.find("Instance");
+var cardNum = cardInsts.length;
+var band = "";
+for ( var i=0; i<cardNum; i++ )
+{
+var ToOperParaArray = {
+"_InstID" : {
+ValueOrigin: ""
+},
+"Band" : {
+ValueOrigin: ""
+}
+};
+xmlParaInInstOperate(xml, OBJ, i, ToOperParaArray);
+var instid = ToOperParaArray["_InstID"].ValueOrigin;
+if ( instid == CardInstID )
+{
+band = ToOperParaArray["Band"].ValueOrigin;
+break;
+}
+}
+if ( band != "" )
+{
+band = " ("+band+")";
+}
+return band;
+}
+function g_ApplyPopUp(template)
+{
+$("span",$("[id^='div_KeyPassphrase'],template")).text("Length: "+commConf['passLength']+" ~ 63");
+$("[id^='Btn_apply_']", template).unbind('click').bind('click', function(event){
+var templateObj = $(this).parents("[id^='template']");
+var EncryptionTypeVal = $("[id^='EncryptionType']", templateObj).val();
+var IsStrongPass = getPwdLevelCustom($("[id^='KeyPassphrase']:not(.PostIgnore)",templateObj).val(),"",commConf["passLength"]);
+if (( false == IsStrongPass) && (EncryptionTypeVal !="No Security")){
+var msg = "Failed! Strong password is required, which must contain at least 1 uppercase letter, 1 lowercase letter and 1 number, and the length should not be less than 8.";
+var confirmLayerOBJ = IniConfirm(msg);
+$("#confirmCancel",confirmLayerOBJ).css( "display","none" );
+$("#confirmOK",confirmLayerOBJ).val("Back");
+$("#confirmOK",confirmLayerOBJ).unbind("click").focus();
+$("#confirmOK",confirmLayerOBJ).bind("click", templateObj, function(event){
+showWaitTip(false);
+});
+}
+else{
+var Head = templateObj.parents(".HeadDIV");
+var ServerAddr = $("address span", Head).text();
+dataPost("Apply", "fillDataByApplyResult", ServerAddr, templateObj, undefined, true);
+}
+});
+}
+function disableSSID(SSIDAlias)
+{
+var WLANSSIDHeadID = "WLANSSIDConf";
+var WLANSSIDHead = $("#"+WLANSSIDHeadID);
+WLANSSIDHead.find("[id^='template_"+WLANSSIDHeadID+"_']").each(function(){
+var obj = $(this);
+if($("[id^='Alias:']",obj).val() == SSIDAlias)
+{
+obj.find("*").not(".collapsibleInst, img").attr("disabled",true);
+$("[id^='Btn_apply_WLANSSIDConf:']",obj).addClass("disableBtn");
+$("[id^='Btn_cancel_WLANSSIDConf:']",obj).addClass("disableBtn");
+return false;
+}
+});
+}
+function g_SmartWifi_SSID(xml)
+{
+}
+function g_GREHide_SSID(HeadObj,xml)
+{
+
+}
+function getBSCtrl(xml)
+{
+var BSDisableSSID = "";
+var BSEnable = getParaValueInXML(xml, "OBJ_MAP_MASTER_ID", 0, "EnBandSteer");
+if(BSEnable == "1")
+{
+BSDisableSSID = "DEV.WIFI.AP5,DEV.WIFI.AP9";
+}
+return BSDisableSSID;
+}
+function getMLOCtrl(xml)
+{
+var MLODisableSSID = "";
+var MLOEnable = getParaValueInXML(xml, "OBJ_WLANMLO_ID", 0, "MloEnable");
+var MLOSSID = getParaValueInXML(xml, "OBJ_WLANMLO_ID", 0, "MLOSSID");
+if(MLOEnable == "1")
+{
+if(MLOSSID == "1"){
+MLODisableSSID = "DEV.WIFI.AP5,DEV.WIFI.AP9"
+}else if(MLOSSID == "2"){
+MLODisableSSID = "DEV.WIFI.AP6,DEV.WIFI.AP10"
+}else if (MLOSSID == "3"){
+MLODisableSSID = "DEV.WIFI.AP7,DEV.WIFI.AP11"
+}else if (MLOSSID == "4"){
+MLODisableSSID = "DEV.WIFI.AP8,DEV.WIFI.AP12"
+}
+}
+return MLODisableSSID;
+}
+function g_CtrlSSIDConf(HeadObj,xml)
+{
+var ctrlStr = "";
+var ctrlStr2 = "";
+var ctrFlag = "";
+if(ssidConf.disableSSID != undefined)
+{
+ctrlStr = ssidConf.disableSSID;
+}
+else
+{
+ctrlStr = getBSCtrl(xml);
+ctrlStr2 = getMLOCtrl(xml);
+}
+if(ctrlStr == "" && ctrlStr2 == "")
+{
+return;
+}
+if(ctrlStr.indexOf(":") != -1)
+{
+var ruleList = ctrlStr.split(":");
+ctrlStr = ruleList[0];
+ctrFlag = ruleList[1];
+}
+var DisableSSIDArr = ctrlStr.split(",");
+var MLOArr = ctrlStr2.split(",");
+DisableSSIDArr = DisableSSIDArr.concat(MLOArr);
+$("[id^='template_WLANSSIDConf_']", HeadObj).each(function(){
+if(ctrlStr == "all" || DisableSSIDArr.indexOf($("[id^='_InstID:']", this).val())>-1)
+{
+$(this).find("*").not(".collapsibleInst,img").attr("disabled",true);
+$("[class^='Button']", this).addClass("disableBtn");
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", this).unbind();
+if(ctrFlag == "hideBtn")
+{
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", this).showIt(false);
+}
+}
+});
+}
+function g_GuestWIFIConf(HeadObj){
+var GuestWIFI = "";
+if (GuestWIFI ==""){
+return;
+}
+var GuestWIFIArr = GuestWIFI.split(",");
+if(GuestWIFIArr.indexOf($("[id^='_InstID:']", HeadObj).val())>-1){
+$("[id^='div_guestAccessTime']", HeadObj).show();
+}
+}
+function g_WlanEncryptionTypeOptionCtrl(template)
+{
+var EncryptionTypeOBJ = $("#EncryptionType", template);
+if ((ssidEncryJson=="") || (typeof ssidEncryJson!='object')) {
+return;
+}
+var value2Name = {
+"No Security" : "No Security",
+"WPA2-PSK-AES" : "WPA2-PSK-AES",
+"WPA/WPA2-PSK-TKIP/AES" : "WPA/WPA2-PSK-TKIP/AES",
+"WPA-PSK-TKIP" : "WPA-PSK-TKIP",
+"WPA-PSK-AES" : "WPA-PSK-AES",
+"WPA-PSK-TKIP/AES" : "WPA-PSK-TKIP/AES",
+"WPA2-PSK-TKIP" : "WPA2-PSK-TKIP",
+"WPA2-PSK-TKIP/AES" : "WPA2-PSK-TKIP/AES",
+"WPA/WPA2-PSK-TKIP" : "WPA/WPA2-PSK-TKIP",
+"WEP-OpenSystem" : "WEP-OpenSystem",
+"WEP-ShareKey" : "WEP-SharedKey",
+"WPA-EAP-TKIP" : "WPA-EAP-TKIP",
+"WPA2-EAP-AES" : "WPA2-EAP-AES",
+"WPA/WPA2-EAP-TKIP/AES" : "WPA/WPA2-EAP-TKIP/AES",
+"WPA/WPA2-EAP-AES" : "WPA/WPA2-EAP-AES",
+"WPA2-PSK-AES/WPA3-SAE-AES" : "WPA2-PSK/WPA3-SAE-AES",
+"WPA2/WPA3-SAE" : "WPA2-PSK(TKIP/AES)/WPA3(SAE)",
+"WPA3-SAE" : "WPA3(SAE)",
+"WPA3-OWE" : "WPA3-OWE",
+"WPA/WPA2/WPA3-PSK/SAE" : "WPA/WPA2-PSK(TKIP/AES)/WPA3(SAE)"
+}
+if(ssidEncryJson[0]=="ADD")
+{
+ssidEncryJson.shift();
+addEncryptionTypeOption(ssidEncryJson,EncryptionTypeOBJ,value2Name);
+}
+else
+{
+EncryptionTypeOBJ.empty();
+addEncryptionTypeOption(ssidEncryJson,EncryptionTypeOBJ,value2Name);
+}
+}
+function addEncryptionTypeOption(ssidEncryJson,EncryptionTypeOBJ,value2Name)
+{
+for(var i=0; i<ssidEncryJson.length; i++){
+EncryStr = ssidEncryJson[i];
+var EncryList = EncryStr.split(":");
+if(EncryList[1] == undefined) {
+EncryList[1] = "";
+}
+if(checkRight(EncryList[1]) == false){
+continue;
+}
+var langStr = value2Name[EncryList[0]];
+if(langStr != undefined){
+var optionStr = "<option value ='"+EncryList[0]+"' title='"+langStr+"'>"+langStr+"</option>";
+EncryptionTypeOBJ.append(optionStr);
+}
+}
+}
+function containsObj(object1,object2){
+for (var index in object2 ) {
+if (object2[index] != object1[index]) {
+return false;
+}
+}
+return true;
+}
+function g_getEncryptionType(tempObj){
+var BeaconType = $("[id^='BeaconType']", tempObj).val();
+if(BeaconType == ""){
+BeaconType = $("[id^='BeaconType']", tempObj).text();
+}
+var WEPAuthMode = $("[id^='WEPAuthMode']", tempObj).val();
+var WPAAuthMode = $("[id^='WPAAuthMode']", tempObj).val();
+var WPA3AuthMode = $("[id^='WPA3AuthMode']", tempObj).val();
+var WPA3EncryptType = $("[id^='WPA3EncryptType']", tempObj).val();
+var _11iAuthMode = $("[id^='11iAuthMode']", tempObj).val();
+var WPAEncryptType = $("[id^='WPAEncryptType']", tempObj).val();
+var _11iEncryptType = $("[id^='11iEncryptType']", tempObj).val();
+var EncryptionObject = new Object();
+EncryptionObject.BeaconType = BeaconType;
+EncryptionObject.WEPAuthMode = WEPAuthMode;
+EncryptionObject.WPAAuthMode = WPAAuthMode;
+EncryptionObject.WPA3AuthMode = WPA3AuthMode;
+EncryptionObject.WPA3EncryptType = WPA3EncryptType;
+EncryptionObject["11iAuthMode"] = _11iAuthMode;
+EncryptionObject.WPAEncryptType = WPAEncryptType;
+EncryptionObject["11iEncryptType"] = _11iEncryptType;
+for (var key in EncryptionParameter) {
+var containFlag = containsObj(EncryptionObject,EncryptionParameter[key]);
+if (containFlag) {
+break;
+}
+}
+return key;
+}
+function g_fillEncryptType(tempObj){
+var EncryptionTypeVal = g_getEncryptionType(tempObj);
+$("[id^='EncryptionType']", tempObj).val(EncryptionTypeVal);
+}
+function g_showPass(srcObj, tObjId){
+var TypeOBJ = (srcObj);
+var ParentObj = TypeOBJ.closest(".formTbl");
+var KeyPassphrasePassObj = $("[id^="+tObjId+"][type='password']",ParentObj);
+var KeyPassphraseTextObj = $("[id^="+tObjId+"][type='text']",ParentObj);
+if(TypeOBJ.attr("src") == "img/sleeping.png")
+{
+TypeOBJ.attr("src", "img/awaking.png").attr("alt","Hide Password");
+$("[id^="+tObjId+"][type='password']",ParentObj).hide();
+$("[id^="+tObjId+"][type='password']",ParentObj).attr("class","PostIgnore");
+$("[id^="+tObjId+"][type='text']",ParentObj).attr("class","w280");
+$("[id^="+tObjId+"][type='text']",ParentObj).show();
+KeyPassphraseTextObj.val(KeyPassphrasePassObj.val());
+}
+else
+{
+TypeOBJ.attr("src", "img/sleeping.png").attr("alt","Show Password");
+$("[id^="+tObjId+"][type='password']",ParentObj).attr("style","width: 280px;font-family: text-security-disc;");
+$("[id^="+tObjId+"][type='password']",ParentObj).attr("class","valid");
+$("[id^="+tObjId+"][type='text']",ParentObj).hide();
+$("[id^="+tObjId+"][type='text']",ParentObj).attr("class","PostIgnore");
+KeyPassphrasePassObj.val(KeyPassphraseTextObj.val());
+}
+}
+function g_EncryptionTypeAuxCtrlsDisp(tempObj)
+{
+var EncryptionType = $("[id^='EncryptionType']", tempObj).val();
+$(".div_MasterAuthServerIP", tempObj).hide();
+$(".div_MasterAuthServerPort", tempObj).hide();
+$(".div_MasterAuthServerSecret", tempObj).hide();
+if ( EncryptionType == "No Security"
+|| EncryptionType == "WPA3-OWE")
+{
+$("[id^='div_KeyPassphrase']", tempObj).hide();
+$("[id^='div_WPAGroupRekey']", tempObj).hide();
+$("[id^='div_ShowKeyPassphrase']", tempObj).hide();
+$("[id^='_PSKCONIG']", tempObj).val("N");
+$("[id^='div_WEPKey0']", tempObj).hide();
+$("[id^='div_WEPKeyIndex']", tempObj).hide();
+$("[id^='div_ShowWEPKey']", tempObj).hide();
+$("[id^='_WEPCONIG']", tempObj).val("N");
+}
+else if ( EncryptionType == "WPA-PSK-TKIP"
+|| EncryptionType == "WPA2-PSK-AES"
+|| EncryptionType == "WPA/WPA2-PSK-TKIP/AES"
+|| EncryptionType == "WPA-PSK-AES"
+|| EncryptionType == "WPA-PSK-TKIP/AES"
+|| EncryptionType == "WPA2-PSK-TKIP"
+|| EncryptionType == "WPA2-PSK-TKIP/AES"
+|| EncryptionType == "WPA/WPA2-PSK-TKIP"
+|| EncryptionType == "WPA/WPA2-PSK-AES"
+|| EncryptionType == "WPA3-SAE"
+|| EncryptionType == "WPA/WPA2/WPA3-PSK/SAE"
+|| EncryptionType == "WPA2/WPA3-SAE"
+|| EncryptionType == "WPA2-PSK-AES/WPA3-SAE-AES")
+{
+$("[id^='div_KeyPassphrase']", tempObj).show();
+$("[id^='div_WPAGroupRekey']", tempObj).show();
+$("[id^='div_ShowKeyPassphrase']", tempObj).show();
+$("[id^='_PSKCONIG']", tempObj).val("Y")
+$("[id^='div_WEPKey0']", tempObj).hide();
+$("[id^='div_WEPKeyIndex']", tempObj).hide();
+$("[id^='div_ShowWEPKey']", tempObj).hide();
+$("[id^='_WEPCONIG']", tempObj).val("N");
+}
+else if ( EncryptionType == "WEP-OpenSystem"
+|| EncryptionType == "WEP-ShareKey" )
+{
+$("[id^='div_KeyPassphrase']", tempObj).hide();
+$("[id^='div_WPAGroupRekey']", tempObj).hide();
+$("[id^='div_ShowKeyPassphrase']", tempObj).hide();
+$("[id^='_PSKCONIG']", tempObj).val("N");
+$("[id^='div_WEPKey0']", tempObj).show();
+$("[id^='div_WEPKeyIndex']", tempObj).show();
+$("[id^='div_ShowWEPKey']", tempObj).show();
+$("[id^='_WEPCONIG']", tempObj).val("Y");
+}
+else if( EncryptionType == "WPA2-EAP-AES"
+|| EncryptionType == "WPA/WPA2-EAP-TKIP/AES"
+|| EncryptionType == "WPA-EAP-TKIP"
+|| EncryptionType == "WPA/WPA2-EAP-AES")
+{
+$("[id^='div_KeyPassphrase']", tempObj).hide();
+$(".div_MasterAuthServerIP", tempObj).show();
+$(".div_MasterAuthServerPort", tempObj).show();
+$(".div_MasterAuthServerSecret", tempObj).show();
+$("[id^='_PSKCONIG']", tempObj).val("N")
+$("[id^='div_WEPKey0']", tempObj).hide();
+$("[id^='div_WEPKeyIndex']", tempObj).hide();
+$("[id^='div_ShowWEPKey']", tempObj).hide();
+$("[id^='_WEPCONIG']", tempObj).val("N");
+}
+else
+{
+}
+}
+function g_InitialEncryptionEvent(template)
+{
+$("#ShowWEPKey",template).change(function(event){
+var TypeOBJ = $(this);
+var ParentObj = TypeOBJ.closest(".formTbl");
+var WEPKey00PassObj = $("[id^='WEPKey00'][type='password']",ParentObj);
+var WEPKey00TextObj = $("[id^='WEPKey00'][type='text']",ParentObj);
+var WEPKey01PassObj = $("[id^='WEPKey01'][type='password']",ParentObj);
+var WEPKey01TextObj = $("[id^='WEPKey01'][type='text']",ParentObj);
+var WEPKey02PassObj = $("[id^='WEPKey02'][type='password']",ParentObj);
+var WEPKey02TextObj = $("[id^='WEPKey02'][type='text']",ParentObj);
+var WEPKey03PassObj = $("[id^='WEPKey03'][type='password']",ParentObj);
+var WEPKey03TextObj = $("[id^='WEPKey03'][type='text']",ParentObj);
+if(TypeOBJ.is(':checked'))
+{
+$("[id^='WEPKey0'][type='password']",ParentObj).attr("style","display:none");
+$("[id^='WEPKey0'][type='password']",ParentObj).attr("class","PostIgnore");
+$("[id^='WEPKey0'][type='text']",ParentObj).attr("style","");
+$("[id^='WEPKey0'][type='text']",ParentObj).attr("class","w280");
+WEPKey00TextObj.val(WEPKey00PassObj.val());
+WEPKey01TextObj.val(WEPKey01PassObj.val());
+WEPKey02TextObj.val(WEPKey02PassObj.val());
+WEPKey03TextObj.val(WEPKey03PassObj.val());
+}
+else
+{
+$("[id^='WEPKey0'][type='password']",ParentObj).attr("style","width: 280px");
+$("[id^='WEPKey0'][type='password']",ParentObj).attr("class","inputNorm valid");
+$("[id^='WEPKey0'][type='text']",ParentObj).attr("style","display:none");
+$("[id^='WEPKey0'][type='text']",ParentObj).attr("class","PostIgnore");
+WEPKey00PassObj.val(WEPKey00TextObj.val());
+WEPKey01PassObj.val(WEPKey01TextObj.val());
+WEPKey02PassObj.val(WEPKey02TextObj.val());
+WEPKey03PassObj.val(WEPKey03TextObj.val());
+}
+});
+$("#ShowKeyPassphrase", template).bind("click",function(){
+g_showPass($(this), "KeyPassphrase");
+});
+$("#ShowMasterAuthServerSecret", template).bind("click",function(){
+g_showPass($(this), "MasterAuthServerSecret");
+});
+}
+
+jQuery.validator.addMethod(
+"chkKeyPassphrase",
+function(value, element)
+{
+if (value.match("[^0-9a-zA-Z]") != null || value.length < 10)
+{
+return false;
+}
+return true;
+},
+$.validator.format("Input is invalid! Please enter: numbers, uppercase letters, lowercase letters. And the length of it should not be less than 10.")
+);
+function g_ChanegeDataByCustom(xml)
+{
+var OBJ = $(xml).find("OBJ_WLANWEPKEY_ID");
+var instances = $("Instance ", OBJ);
+instances.each(function(i){
+var inst = $(this);
+var step = 0;
+inst.find("ParaName").each(function(){
+var ParaName = $(this).text();
+var ParaValue = $(this).next().text();
+if ( ParaName == "_InstID" )
+{
+var suffix = ParaValue.match(/\d*$/);
+var suffix = parseInt(suffix, 10);
+suffix--;
+step = suffix;
+$(this).text("_InstID_WEP"+suffix);
+}
+if ( ParaName == "WEPKey" )
+{
+$(this).text("WEPKey0"+step);
+}
+});
+});
+var OBJ = $(xml).find("OBJ_WLANPSK_ID");
+var instances = $("Instance ", OBJ);
+instances.each(function(){
+var inst = $(this);
+inst.find("ParaName").each(function(){
+var ParaName = $(this).text();
+if ( ParaName == "_InstID" )
+{
+$(this).text("_InstID_PSK");
+}
+});
+});
+}
+function g_fillDataByCustom(suffix, tempObj)
+{
+g_fillEncryptType(tempObj);
+g_EncryptionTypeAuxCtrlsDisp(tempObj);
+}
+function g_transValueVisableToHidden(template)
+{
+var EncryptionType = $("[id^='EncryptionType']", template).val();
+if ( EncryptionParameter[EncryptionType] )
+{
+var EncryptionDataByType = EncryptionParameter[EncryptionType];
+for ( var Tmp in EncryptionDataByType )
+{
+$("[id^='"+Tmp+"']").val(EncryptionDataByType[Tmp]);
+}
+}
+}
+function WLANKeyRemoveAttrValue(template)
+{
+var keyOBJ = $("[id^='KeyPassphrase']", template);
+var keyVal = keyOBJ.val();
+keyOBJ.removeAttr("value");
+keyOBJ.val(keyVal);
+$("input[id^='WEPKey']",template).each(function(){
+var WEPKeyVal = $(this).val();
+$(this).removeAttr("value");
+$(this).val(WEPKeyVal);
+});
+}
+function initial_template_SSID(templateID)
+{
+var template = $("#"+templateID);
+g_WlanEncryptionTypeOptionCtrl(template);
+template.bind("hiddenValueChangeByCustom", function(event, template){
+g_transValueVisableToHidden(template);
+});
+template.bind("fillDataByApplyResult", function(event,xml, template){
+if (template.hasError(xml) == 0)
+{
+succHintShow(template);
+var KeyPassphrase = getParaValueInXML(xml, "OBJ_WLANPSK_ID", 0, "KeyPassphrase");
+}
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var isError = template.hasError(xml);
+if (isError == 0)
+{
+var WLANSSIDHeadID = "WLANSSIDConf";
+var WLANSSIDHead = $("#"+WLANSSIDHeadID);
+g_ChanegeDataByCustom(xml);
+var ParaArrayByOBJID = {
+"WLANCONFIG": {
+"OBJID":["OBJ_WLANAP_ID"],
+"InstID":"_InstID"
+},
+"WLANWEPKEY0": {
+"OBJID":["OBJ_WLANWEPKEY_ID"],
+"InstID":"_InstID_WEP0"
+},
+"WLANWEPKEY1": {
+"OBJID":["OBJ_WLANWEPKEY_ID"],
+"InstID":"_InstID_WEP1"
+},
+"WLANWEPKEY2": {
+"OBJID":["OBJ_WLANWEPKEY_ID"],
+"InstID":"_InstID_WEP2"
+},
+"WLANWEPKEY3": {
+"OBJID":["OBJ_WLANWEPKEY_ID"],
+"InstID":"_InstID_WEP3"
+},
+"WLANPSK": {
+"OBJID":["OBJ_WLANPSK_ID"],
+"InstID":"_InstID_PSK"
+}
+};
+for ( var OBJTmp in ParaArrayByOBJID )
+{
+var ParaArray = ParaArrayByOBJID[OBJTmp];
+var OBJID = ParaArray["OBJID"];
+var Inst = $("[id^='"+ParaArray["InstID"]+"']", template).val();
+var suffix = getInstIndexByPath(xml, OBJID[0], Inst);
+WLANSSIDHead.fillDataByOBJID(xml, OBJID, template, suffix);
+}
+g_fillDataByCustom(0, template);
+WLANKeyRemoveAttrValue(template);
+}
+});
+template.bind("applyPromptCheckJSON", function(event, template){
+var ipSegmentCheck = {
+"required": true,
+"integer": true,
+"range": [0, 255]
+};
+var checkJSONTempObj = {
+"groups": {
+"MasterAuthServerIp": "sub_MasterAuthServerIp0 sub_MasterAuthServerIp1 sub_MasterAuthServerIp2 sub_MasterAuthServerIp3"
+},
+"rules": {
+"ESSID": {
+"required": true,
+"ASCII": true,
+"rangelength": [1, 32]
+},
+"WEPKey00": {
+"required": true,
+"WEPAsciiOrHexLen": true
+},
+"WEPKey01": {
+"required": true,
+"WEPAsciiOrHexLen": true
+},
+"WEPKey02": {
+"required": true,
+"WEPAsciiOrHexLen": true
+},
+"WEPKey03": {
+"required": true,
+"WEPAsciiOrHexLen": true
+},
+"KeyPassphrase": {
+"required": true,
+"ASCII": true,
+"rangelength": [8, 63]
+},
+"WPAGroupRekey": {
+"required": true,
+"integer": true,
+"range": [100, 1000]
+},
+"MaxUserNum": {
+"required": true,
+"integer": true,
+"range": [1, 32]
+},
+"sub_MasterAuthServerIp0": ipSegmentCheck,
+"sub_MasterAuthServerIp1": ipSegmentCheck,
+"sub_MasterAuthServerIp2": ipSegmentCheck,
+"sub_MasterAuthServerIp3": ipSegmentCheck,
+"MasterAuthServerPort": {
+"required": true
+},"MasterAuthServerSecret": {
+"required": true
+}
+},
+"messages": {
+}
+};
+if(cver == 36){
+checkJSONTempObj.rules.MasterAuthServerPort = {
+"required": true,
+"integer": true,
+"range": [0, 65534]
+};
+checkJSONTempObj.rules.MasterAuthServerSecret = {
+"required": true,
+"ASCII": true,
+"rangelength": [8, 64]
+};
+checkJSONTempObj.rules.MaxUserNum.range = [1,64];
+$("[id^='MaxUserNum']").next().text("Range: 1 ~ 64");
+}
+if(cver == 2020 || cver == 2042){
+checkJSONTempObj.rules.MaxUserNum.range = [1,64];
+$("[id^='MaxUserNum']").next().text("Range: 1 ~ 64");
+}
+if(cver == 77){
+checkJSONTempObj.rules.ESSID = {
+"required": true,
+"utf8": true,
+"utf8LengthRange": [1, 96]
+};
+}
+$.publish("/some/ctcWlanssidClientModify", [checkJSONTempObj]);
+var data={};
+data.checkJson = checkJSONTempObj;
+data.template=template;
+$.callModifier("wlanSSID/ChangeMaxUserNum", data);
+template.setPromptCheckJSON(checkJSONTempObj, template);
+});
+g_InitialEncryptionEvent(template);
+}
+$(document).ready(function(){
+var WLANSSIDHeadID = "WLANSSIDConf";
+var WLANSSIDHead = $("#"+WLANSSIDHeadID);
+var ServerAddr = $("address span", WLANSSIDHead).text();
+initial_template_SSID("template_"+WLANSSIDHeadID);
+WLANSSIDHead.fillDataByCustom = function(suffix, tempObj){
+g_fillDataByCustom(suffix, tempObj);
+};
+WLANSSIDHead.succfunction = function(xml){
+WLANSSIDHead.hasError(xml,"externErrorHint");
+g_ChanegeDataByCustom(xml);
+var SSIDOBJ = $(xml).find("OBJ_WLANAP_ID");
+var RuleNum = $("Instance", SSIDOBJ).length;
+var OBJID = ["OBJ_GUESTWIFI_ID","OBJ_WLANAP_ID"];
+WLANSSIDHead.createPageDataByClone(RuleNum, OBJID, xml,
+WLANSSIDHead.fillDataByCustom);
+for (var i=0; i<RuleNum; i++)
+{
+new CheckPwdStrengthClass("KeyPassphrase", "ESSID", "template_WLANSSIDConf_"+i, "");
+if(cver == 36){
+new CheckPwdStrengthClass("MasterAuthServerSecret", "ESSID", "template_WLANSSIDConf_"+i, "");
+}
+var tempObj = $("#template_WLANSSIDConf_"+i);
+var suffix = i + 1;
+var Alias = $("[id^='Alias']", tempObj).val();
+var band = findBandOfSSID(tempObj, xml);
+$("[id^='TitleName']", tempObj).val(Alias+band);
+if(band.indexOf("6G") != -1)
+{
+var EncryptionTypeArr = ["WPA3-OWE","WPA3-SAE"];
+var typeObj = $("[id^='EncryptionType']", tempObj);
+var allTypeNum = $("option", typeObj).length;
+for(var j = allTypeNum - 1; j >= 0; j-- )
+{
+var eachType = $("option:eq("+j+")", typeObj);
+if(EncryptionTypeArr.indexOf(eachType.val())==-1)
+{
+eachType.remove();
+}
+}
+}
+tempObj.collapsibleInstTitleChange("TitleName")
+if(cver == "96" && band.indexOf("5G") != -1)
+{
+$("[id^='EncryptionType'] option[value='WEP-ShareKey']",tempObj).remove();
+$("[id^='EncryptionType'] option[value='WEP-OpenSystem']",tempObj).remove();
+}
+var SSIDVn = $("[id^='_InstID:']", tempObj).val();
+OBJID = ["OBJ_WLANWEPKEY_ID"];
+var WEP = ["WEP1","WEP2","WEP3","WEP4"];
+for ( var WEPTmp in WEP )
+{
+suffix = getInstIndexByPath(xml, OBJID[0],
+SSIDVn+"."+WEP[WEPTmp]);
+WLANSSIDHead.fillDataByOBJID(xml, OBJID, tempObj, suffix);
+}
+OBJID = ["OBJ_WLANPSK_ID"];
+suffix = getInstIndexByPath(xml, OBJID[0], SSIDVn+".PSK1");
+WLANSSIDHead.fillDataByOBJID(xml, OBJID, tempObj, suffix);
+WLANSSIDHead.fillDataByCustom(0, tempObj);
+WLANKeyRemoveAttrValue(tempObj);
+$("[id^='EncryptionType']", tempObj).change(function(){
+var template = $(this).parents("[id^='template']");
+g_EncryptionTypeAuxCtrlsDisp(template);
+var enctype = $(this).val()
+tipsforNoSecurity = "";
+if ( "WEP-OpenSystem"==enctype || "WEP-ShareKey"==enctype )
+{
+tipsforNoSecurity = "WEP encryption security is low, please choose carefully."
+$.publish("/some/iodataWlanssidModifyalert", [tipsforNoSecurity]);
+alert(tipsforNoSecurity);
+}
+if( "No Security"==enctype )
+{
+tipsforNoSecurity = "\"No Security\" encryption security is low, please choose carefully."
+$.publish("/some/iodataWlanssidModifyalert", [tipsforNoSecurity]);
+alert(tipsforNoSecurity);
+}
+if( "WPA3-OWE"==enctype)
+{
+alert("\"WPA3-OWE\" encryption security is low, please choose carefully.");
+}
+});
+$("[id^='clearPass']", tempObj).click(function(){
+var template = $(this).parents("[id^='template']");
+$("[id^='KeyPassphrase:']", template).val("");
+});
+$("[id^='clearPass00']", tempObj).click(function(){
+var template = $(this).parents("[id^='template']");
+$("[id^='WEPKey00:']", template).val("");
+});
+$("[id^='clearPass01']", tempObj).click(function(){
+var template = $(this).parents("[id^='template']");
+$("[id^='WEPKey01:']", template).val("");
+});
+$("[id^='clearPass02']", tempObj).click(function(){
+var template = $(this).parents("[id^='template']");
+$("[id^='WEPKey02:']", template).val("");
+});
+$("[id^='clearPass03']", tempObj).click(function(){
+var template = $(this).parents("[id^='template']");
+$("[id^='WEPKey03:']", template).val("");
+});
+if ( 0 == i )
+{
+$(".collapsibleInst", tempObj).click();
+}
+$.publish("/some/wlanLableModify", [tempObj]);
+if( DisableSSID != undefined && DisableSSID.indexOf(SSIDVn) != -1)
+{
+tempObj.find("*").not(".collapsibleInst, img").attr("disabled",true);
+$("[class^='Button']", tempObj).addClass("disableBtn");
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", tempObj).unbind();
+}
+}
+g_GREHide_SSID(WLANSSIDHead, xml);
+g_CtrlSSIDConf(WLANSSIDHead,xml)
+g_SmartWifi_SSID(xml)
+if(cver == "96")
+{
+$("#template_WLANSSIDConf_2").hide();
+$("#template_WLANSSIDConf_3").hide();
+$("#template_WLANSSIDConf_6").hide();
+$("#template_WLANSSIDConf_7").hide();
+}
+$.publish("/some/softVersionModify", [WLANSSIDHead]);
+$.callModifier("wlanSSID/undisplaySSIDConf");
+};
+if ( $(".collapBarWithDataTrans",WLANSSIDHead).length <= 0 )
+{
+WLANSSIDHead.dataTransfer(ServerAddr,
+"GET",
+WLANSSIDHead.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(WLANSSIDHead);
+}
+var Btn_WLANSSIDConf_Refresh= $("#WLANSSIDConf_Refresh_button", WLANSSIDHead);
+Btn_WLANSSIDConf_Refresh.unbind("click");
+Btn_WLANSSIDConf_Refresh.click(function(){
+var WLANSSIDHeadID = WLANSSIDHead.attr("id");
+if ( $("[id^='template_"+WLANSSIDHeadID+"_']",WLANSSIDHead).length > 0 )
+{
+WLANSSIDHead.find("[id^='template_"+WLANSSIDHeadID+"_']").each(function(){
+$(this).remove();
+});
+var ServerAddr = $("address span", WLANSSIDHead).text();
+WLANSSIDHead.dataTransfer(ServerAddr,
+"GET",
+WLANSSIDHead.succfunction,
+WLANSSIDHead.failfunction,
+false,
+false);
+}
+});
+});
+})();
+</script>
+
+<div id="WLANSSIDConf" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wlan_wlansssidconf_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="WLANSSIDConfBar">WLAN SSID Configuration</h1>
+<div id="WLANSSIDConf_container">
+
+<input type="hidden" id="DataHasBeenGot" value="0">
+<input type="hidden" id="_InstNum" value="0">
+<div id="template_WLANSSIDConf" style="display:none;">
+<form class="form_content">
+<div id="topLine_WLANSSIDConf" class="formTblCtrlBar">
+<span id="instName_WLANSSIDConf" class="instName collapsibleInst" style="text-decoration: underline;"></span>
+<span class="instSwitch">
+<div id="Enable">
+<input type="radio" id="Enable1" name="Enable" value="1"/>
+<label for="Enable1">On</label>
+&nbsp;&nbsp;
+<input type="radio" id="Enable0" name="Enable" value="0"/>
+<label for="Enable0">Off</label>
+</div>
+</span>
+</div>
+<div id="changeArea_WLANSSIDConf" class="ChangeArea formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<input type="hidden" id="Alias" value="" class="PostIgnore">
+<input type="hidden" id="TitleName" class="PostIgnore" value="">
+<input type="hidden" id="WLANViewName" class="PostIgnore" value="">
+<input type="hidden" id="LockStatus" class="PostIgnore" value="">
+<input type="hidden" id="_InstID" value="">
+<input type="hidden" id="_WEPCONIG" value="N">
+<input type="hidden" id="_PSKCONIG" value="N">
+<input type="hidden" id="BeaconType" value="">
+<input type="hidden" id="WEPAuthMode" value="">
+<input type="hidden" id="WPAAuthMode" value="">
+<input type="hidden" id="11iAuthMode" value="">
+<input type="hidden" id="WPAEncryptType" value="">
+<input type="hidden" id="11iEncryptType" value="">
+<input type="hidden" id="WPA3AuthMode" value="">
+<input type="hidden" id="WPA3EncryptType" value="">
+<input type="hidden" id="_InstID_WEP0" value="">
+<input type="hidden" id="_InstID_WEP1" value="">
+<input type="hidden" id="_InstID_WEP2" value="">
+<input type="hidden" id="_InstID_WEP3" value="">
+<input type="hidden" id="_InstID_PSK" value="">
+<input type="hidden" id="_InstID_GUEST" value="">
+<input type="hidden" id="_GUEST" value="N">
+<input type="hidden" id="MasterAuthServerIp" _LuQUID_splitIPID="sub_MasterAuthServerIp" value="">
+<div class="row">
+<label for="ESSID" class="left w220">SSID Name</label>
+
+<div class="right">
+<input type="text" id="ESSID" name="ESSID" class="w280" />
+<span style="display:none;">Length: 1 ~ 32</span>
+</div>
+
+</div>
+<div class="row">
+<label for="ESSIDHideEnable" class="left w220">SSID Hide</label>
+<div id="ESSIDHideEnable" class="right">
+<input type="radio" id="ESSIDHideEnable0" name="ESSIDHideEnable" value="1"/>
+<label for="ESSIDHideEnable0">On</label>
+&nbsp;&nbsp;
+<input type="radio" id="ESSIDHideEnable1" name="ESSIDHideEnable" value="0"/>
+<label for="ESSIDHideEnable1">Off</label>
+</div>
+</div>
+<div class="row">
+<label for="EncryptionType" class="left w220">Encryption Type</label>
+<div class="right">
+<select id="EncryptionType" name="EncryptionType" class="w280">
+<option value="No Security" title='No Security'>No Security</option>
+<option value="WPA2-PSK-AES" title='WPA2-PSK-AES'>WPA2-PSK-AES</option>
+<option value="WPA/WPA2-PSK-TKIP/AES" title='WPA/WPA2-PSK-TKIP/AES'>WPA/WPA2-PSK-TKIP/AES</option>
+
+
+<option value="WPA3-SAE" title='WPA3(SAE)'>WPA3(SAE)</option>
+<option value="WPA2/WPA3-SAE" title='WPA2-PSK(TKIP/AES)/WPA3(SAE)'>WPA2-PSK(TKIP/AES)/WPA3(SAE)</option>
+
+</select>
+</div>
+</div>
+<div class="row" id="div_KeyPassphrase" style="display:none">
+<label for="KeyPassphrase" class="left w220">WPA Passphrase</label>
+<div class="right">
+
+<input class="inputNorm valid" type="password" id="KeyPassphrase" name="KeyPassphrase" value="" style="width: 280px;font-family: text-security-disc" />
+<input type="text" id="KeyPassphrase" name="KeyPassphrase" class="PostIgnore" style="display:none"/>
+<img id="ShowKeyPassphrase" src="img/sleeping.png" alt="Show Password" aria-live="off" style="width:16px; height:16px;"/>
+
+<span style="display:none;">Length: 8 ~ 63</span>
+</div>
+</div>
+<div class="row" id="div_WEPKeyIndex" style="display:none">
+<label for="WEPKeyIndex" class="left w220">WEP Key Index</label>
+<div class="right">
+<select id="WEPKeyIndex" name="WEPKeyIndex" class="w280">
+<option value="1" title='1'>1</option>
+<option value="2" title='2'>2</option>
+<option value="3" title='3'>3</option>
+<option value="4" title='4'>4</option>
+</select>
+</div>
+</div>
+<div class="row" id="div_ShowWEPKey" style="display:none">
+<label for="ShowWEPKey" class="left w220">Show Password</label>
+<div class="right">
+<input type="checkbox" value="" id="ShowWEPKey" name="ShowWEPKey"/>
+</div>
+</div>
+<div class="row" id="div_WEPKey00" style="display:none">
+<label for="WEPKey00" class="left w220">WEP Key1</label>
+<div class="right">
+<input class="inputNorm valid" type="password" id="WEPKey00" name="WEPKey00" value="" style="width: 280px;font-family: text-security-disc" />
+<input type="text" id="WEPKey00" name="WEPKey00" class="PostIgnore" style="display:none"/>
+
+</div>
+</div>
+<div class="row" id="div_WEPKey01" style="display:none">
+<label for="WEPKey01" class="left w220">WEP Key2</label>
+<div class="right">
+<input class="inputNorm valid" type="password" id="WEPKey01" name="WEPKey01" value="" style="width: 280px;font-family: text-security-disc" />
+<input type="text" id="WEPKey01" name="WEPKey01" class="PostIgnore" style="display:none"/>
+
+</div>
+</div>
+<div class="row" id="div_WEPKey02" style="display:none">
+<label for="WEPKey02" class="left w220">WEP Key3</label>
+<div class="right">
+<input class="inputNorm valid" type="password" id="WEPKey02" name="WEPKey02" value="" style="width: 280px;font-family: text-security-disc" />
+<input type="text" id="WEPKey02" name="WEPKey02" class="PostIgnore" style="display:none"/>
+
+</div>
+</div>
+<div class="row" id="div_WEPKey03" style="display:none">
+<label for="WEPKey03" class="left w220">WEP Key4</label>
+<div class="right">
+<input class="inputNorm valid" type="password" id="WEPKey03" name="WEPKey03" value="" style="width: 280px;font-family: text-security-disc" />
+<input type="text" id="WEPKey03" name="WEPKey03" class="PostIgnore" style="display:none"/>
+
+</div>
+</div>
+
+<div class="row">
+<label for="VapIsolationEnable" class="left w220">SSID Isolation</label>
+<div id="VapIsolationEnable" class="right">
+<input type="radio" id="VapIsolationEnable1" name="VapIsolationEnable" value="1"/>
+<label for="VapIsolationEnable1">On</label>
+&nbsp;&nbsp;
+<input type="radio" id="VapIsolationEnable0" name="VapIsolationEnable" value="0"/>
+<label for="VapIsolationEnable0">Off</label>
+</div>
+</div>
+<div class="row">
+<label for="MaxUserNum" class="left w220">Maximum Clients</label>
+<div class="right">
+<input type="text" id="MaxUserNum" name="MaxUserNum" class="w280"/>
+<span style="display:none;">Range: 1 ~ 32</span>
+</div>
+</div>
+
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_WLANSSIDConf" name="Btn_cancel_WLANSSIDConf" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_WLANSSIDConf" name="Btn_apply_WLANSSIDConf" value="Apply" />
+</div>
+</div>
+</div>
+</form>
+</div>
+<div id="WLANSSIDConf_Refresh" style="display:none;">
+<input type="hidden" id="WLANSSIDConf_Refresh_button">
+</div>
+</div>
+</div>
+<script type="text/javascript">
+
+</script>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x72\x56\x58\x71\x45\x62\x65\x79\x36\x72\x4f\x35\x31\x38\x6c\x38\x6d\x54\x36\x6d\x42\x38\x34\x53";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>

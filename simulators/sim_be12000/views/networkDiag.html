@@ -1,0 +1,1712 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#110;&#101;&#116;&#119;&#111;&#114;&#107;&#68;&#105;&#97;&#103;</div>
+<div id="_NowSupIdInfo">&#109;&#103;&#114;&#65;&#110;&#100;&#68;&#105;&#97;&#103;</div>
+<div id="_NowMidIdInfo">&#100;&#105;&#97;&#103;&#110;&#111;&#115;&#105;&#115;</div>
+<div id="_NowThdIdInfo">&#110;&#101;&#116;&#119;&#111;&#114;&#107;&#68;&#105;&#97;&#103;</div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft" role="complementary">
+<div id="class2Menu" class="class2Menu" role="navigation">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span tabindex="0" role="text">Page Information</span>
+</div>
+
+<p class="pIntroContent" tabindex="0" role="text">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#110;&#101;&#116;&#119;&#111;&#114;&#107;&#32;&#100;&#105;&#97;&#103;&#110;&#111;&#115;&#105;&#115;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<div id="SummarizeDiag" class="HeadDIV">
+<h1 class="collapsibleBar" id="SummarizeDiagBar">Network Diagnosis</h1>
+<div id="SummarizeDiag_container" style="display:none;">
+<div class="sceneTip">
+<div id="sceneTip1" class="sceneTipLink"><a>What should be noticed when diagnosing? </a></div>
+<div class="sceneTip_container">
+<p>1. Please don't refresh this page while diagnosing, otherwise the diagnosis result may be displayed unproperly. </p>
+<p>2. If a new diagnosis is triggered when the current diagnosis is still running, the device will only respond to the new diagnosis, and the current diagnostic result will not be saved. </p>
+<p class="sceneTip_close"><a>Close</a></p>
+</div>
+</div>
+
+<div id="PingDiagnosis" class="HeadDIV" style="padding-top:0">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=networkdiag_ping_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div id="PingDiagnosis_container">
+<div id="template_PingDiagnosis">
+<form class="form_content">
+<div id="topLine_PingDiagnosis" class="formTblCtrlBar">
+<span id="instName_PingDiagnosis" class="instName collapsibleInst" title="PING Diagnosis">PING Diagnosis</span>
+</div>
+<div id="changeArea_PingDiagnosis" class="ChangeArea formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="formTbl">
+<input type="hidden" id="_InstID" value="">
+<div class="row">
+<label for="Host:PingDiagnosis" class="cfgLabel w150">IP Address/Host Name</label>
+<div class="right">
+<input type="text" class="inputNorm" id="Host:PingDiagnosis" name="Host:PingDiagnosis" value=""/>
+</div>
+</div>
+<div class="row">
+<label for="Interface:PingDiagnosis" class="cfgLabel w150">Egress</label>
+<div class="right">
+<select id="Interface:PingDiagnosis" name="Interface:PingDiagnosis" class="selectNorm" >
+<option value="" title='Auto'>Auto</option>
+<option value='&#68;&#69;&#86;&#46;&#73;&#80;&#46;&#73;&#70;&#49;' title='&#76;&#65;&#78;' WANServlist='0' >&#76;&#65;&#78;</option><option value='&#68;&#69;&#86;&#46;&#73;&#80;&#46;&#73;&#70;&#51;' title='&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;&#95;&#116;&#114;&#48;&#54;&#57;' WANServlist='3' >&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;&#95;&#116;&#114;&#48;&#54;&#57;</option>
+</select>
+</div>
+</div>
+<div class="row">
+<label for="NumofRepeat:PingDiagnosis" class="cfgLabel w150">Repeat Number</label>
+<div class="right">
+<input type="text" class="inputNorm" id="NumofRepeat:PingDiagnosis" name="NumofRepeat:PingDiagnosis" value="4"/>
+</div>
+</div>
+<div class="row">
+<label for="DataBlockSize:PingDiagnosis" class="cfgLabel w150">Data Block Size</label>
+<div class="right">
+<input type="text" class="inputNorm" id="DataBlockSize:PingDiagnosis" name="DataBlockSize:PingDiagnosis" value="56"/>
+</div>
+</div>
+<div class="row">
+<label for="Timeout:PingDiagnosis" class="cfgLabel w150">Timeout</label>
+<div class="right">
+<input type="text" class="inputNorm" id="Timeout:PingDiagnosis" name="Timeout:PingDiagnosis" value="2000"/>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel_PingDiagnosis" id="Btn_cancel_PingDiagnosis:0" name="Btn_cancel_PingDiagnosis:0" value="Stop" />
+<input type="button" class="Button Btn_PingDiagnosis" id="Btn_PingDiagnosis:0" name="Btn_PingDiagnosis:0" value="Network Diagnosis" />
+</div>
+<div id = "Hint_running" class="noDataHint" style="display:none;">
+<span >PING diagnosis is running</span>
+</div>
+<div id = "Hint_end" class="noDataHint" style="display:none;">
+<span >PING diagnosis finish</span>
+</div>
+<div id = "Hint_stoped" class="noDataHint" style="display:none;">
+<span >PING diagnosis aborted</span>
+</div>
+<div class="row">
+<label class="cfgLabel w150">Diagnosis Result</label>
+</div>
+<div class="textareaRow">
+<textarea id="PingAck" value="" readonly="readonly"></textarea>
+</div>
+<div class="segmentRow"></div>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+var g_PingReGetResult_timer = null;
+function PingReGetResult()
+{
+var HeadID = "PingDiagnosis";
+var Head = $("#"+HeadID);
+var template = $("#template_PingDiagnosis");
+var ServerAddr = $("address span", Head).text();
+Head.succfunction = function(xml){
+ReGetPingDiagnosis(xml,"getResult");
+};
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction, Head.failfunction, false);
+}
+function ReGetPingDiagnosis(xml,refresh)
+{
+var template = $("#template_PingDiagnosis");
+var OBJID = ["OBJ_DEVPING_ID"];
+var PingResult = "";
+var DiagState = "";
+var ErrorString = $("IF_ERRORSTR", $(xml)).text();
+if (template.hasError(xml) == 0)
+{
+var ToOperParaArr = {
+"PingAck" : {ValueOrigin: ""},
+"DiagnosticsState" : {ValueOrigin: ""}
+};
+xmlParaInInstOperate(xml, "OBJ_DEVPING_ID", 0, ToOperParaArr);
+PingResult = ToOperParaArr.PingAck.ValueOrigin;
+DiagState = ToOperParaArr.DiagnosticsState.ValueOrigin;
+}
+showWaitTip(false);
+if(ErrorString == "SUCC" && PingResult == "NULL" && DiagState == "Requested")
+{
+g_PingReGetResult_timer = setTimeout("PingReGetResult()", 3000);
+if (template.hasError(xml) == 0)
+{
+template.fillDataByOBJID(xml ,OBJID, template,0);
+template.find("textarea").val("");
+$(".Btn_PingDiagnosis").attr("disabled","true");
+$(".Btn_PingDiagnosis").addClass("disableBtn");
+$(".Btn_cancel_PingDiagnosis").removeAttr("disabled");
+$(".Btn_cancel_PingDiagnosis").removeClass("disableBtn");
+show_hint("Hint_running");
+return;
+}
+}
+else
+{
+if (template.hasError(xml) == 0)
+{
+succHintShow(template);
+if(PingResult!="NULL" && refresh=="getResult")
+{
+template.fillDataByOBJID(xml ,OBJID, template,0);
+show_hint("Hint_end");
+$(".Btn_cancel_PingDiagnosis").attr("disabled","true");
+$(".Btn_cancel_PingDiagnosis").addClass("disableBtn");
+$(".Btn_PingDiagnosis").removeAttr("disabled");
+$(".Btn_PingDiagnosis").removeClass("disableBtn");
+}
+return;
+}
+}
+}
+function show_hint(hint)
+{
+if(hint == "Hint_running")
+{
+$("#Hint_running").fadeIn();
+$("#Hint_end").hide();
+$("#Hint_stoped").hide();
+}
+else if(hint == "Hint_end")
+{
+$("#Hint_end").fadeIn();
+$("#Hint_running").hide();
+$("#Hint_stoped").hide();
+$("#Hint_end").fadeOut(4000);
+}
+else if(hint == "Hint_stoped")
+{
+$("#Hint_stoped").fadeIn();
+$("#Hint_running").hide();
+$("#Hint_end").hide();
+$("#Hint_stoped").fadeOut(4000);
+}
+else
+{
+$("#Hint_stoped").hide();
+$("#Hint_running").hide();
+$("#Hint_end").hide();
+}
+}
+function initial_template_PingDiagnosis(templateID)
+{
+var template = $("#"+templateID);
+var instForm = template.find("form");
+instForm.validate({
+"rules": {
+"Host:PingDiagnosis": {
+"required": true
+},
+"NumofRepeat:PingDiagnosis": {
+"required": true,
+"integer": true,
+"range":[1,4294967295]
+},
+"Timeout:PingDiagnosis": {
+"required": true,
+"integer": true,
+"range":[1,4294967295]
+},
+"DataBlockSize:PingDiagnosis": {
+"required": true,
+"integer": true,
+"range":[1,65468]
+}
+},
+"messages": {
+}
+});
+template.bind("fillDataByPingDiagnosisResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+PingReGetResult();
+$(".Btn_PingDiagnosis").attr("disabled","true");
+$(".Btn_PingDiagnosis").addClass("disableBtn");
+$(".Btn_cancel_PingDiagnosis").removeAttr("disabled");
+$(".Btn_cancel_PingDiagnosis").removeClass("disableBtn");
+}
+else
+{
+showWaitTip(false);
+}
+});
+template.bind("fillDataByPingDiagnosisStopResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+PingReGetResult();
+clearTimeout(g_PingReGetResult_timer);
+$(".Btn_cancel_PingDiagnosis").attr("disabled","true");
+$(".Btn_cancel_PingDiagnosis").addClass("disableBtn");
+$(".Btn_PingDiagnosis").removeAttr("disabled");
+$(".Btn_PingDiagnosis").removeClass("disableBtn");
+showWaitTip(false);
+}
+});
+}
+$(document).ready(function(){
+var PingHeadID = "PingDiagnosis";
+var PingHead = $("#"+PingHeadID);
+var PingtemplateID = "template_"+ PingHeadID;
+var PingServerAddr = $("address span", PingHead).text();
+initial_template_PingDiagnosis(PingtemplateID);
+show_hint("hide");
+$(".Btn_cancel_PingDiagnosis").attr("disabled","true");
+$(".Btn_cancel_PingDiagnosis").addClass("disableBtn");
+$(".Btn_PingDiagnosis").bind("click", {templateOBJ:PingtemplateID}, function(event){
+if ( false == $(".form_content", $("#"+PingtemplateID)).valid() )
+{
+return;
+}
+var Pingtemplate = $(this).parents("[id^='template']");
+PingHead.find("textarea").val("");
+showWaitTip(false);
+show_hint("Hint_running");
+dataPost("PingDiagnosis", "fillDataByPingDiagnosisResult", PingServerAddr, Pingtemplate, undefined, false);
+});
+$(".Btn_cancel_PingDiagnosis").bind("click", {templateOBJ:PingtemplateID}, function(event){
+if ( false == $(".form_content", $("#"+PingtemplateID)).valid() )
+{
+return;
+}
+var Pingtemplate = $(this).parents("[id^='template']");
+show_hint("Hint_stoped")
+clearTimeout(g_PingReGetResult_timer);
+dataPost("PingDiagnosis_Stop", "fillDataByPingDiagnosisStopResult", PingServerAddr, Pingtemplate, undefined, false);
+});
+PingHead.succfunction = function(xml){
+PingHead.hasError(xml,"externErrorHint");
+ReGetPingDiagnosis(xml,"pageRefresh");
+var ContainerOBJ = $("[id^='template_']",PingHead);
+$.publish("/some/networkdiag_ping", [ContainerOBJ]);
+};
+PingHead.dataTransfer(PingServerAddr, "GET", PingHead.succfunction, PingHead.failfunction, false);
+});
+</script>
+
+<div id="TraceRouteDiagnosis" class="HeadDIV" style="padding-top:0">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=networkdiag_traceroute_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div id="TraceRouteDiagnosis_container">
+<div id="template_TraceRouteDiagnosis">
+<div id="topLine_TraceRouteDiagnosis" class="formTblCtrlBar">
+<span id="instName_TraceRouteDiagnosis" class="instName collapsibleInst" title="TRACEROUTE Diagnosis">TRACEROUTE Diagnosis</span>
+</div>
+<div id="changeArea_TraceRouteDiagnosis" class="ChangeArea formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<form class="form_content formTbl">
+<input type="hidden" id="_InstID" value="">
+<input type="hidden" id="Control" value="">
+<div class="row">
+<label for="Host:TraceRouteDiagnosis" class="cfgLabel w150">IP Address/Host Name</label>
+<div class="right">
+<input type="text" class="inputNorm" id="Host:TraceRouteDiagnosis" name="Host:TraceRouteDiagnosis" value=""/>
+</div>
+</div>
+<div class="row">
+<label for="Interface:TraceRouteDiagnosis" class="cfgLabel w150">WAN Connection</label>
+<div class="right">
+<select id="Interface:TraceRouteDiagnosis" name="Interface:TraceRouteDiagnosis" class="selectNorm" >
+<option value="" title='Auto'>Auto</option>
+<option value='&#68;&#69;&#86;&#46;&#73;&#80;&#46;&#73;&#70;&#51;' title='&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;&#95;&#116;&#114;&#48;&#54;&#57;' WANServlist='3' >&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;&#95;&#116;&#114;&#48;&#54;&#57;</option>
+</select>
+</div>
+</div>
+<div class="row">
+<label for="MaxHopCount" class="cfgLabel w150">Maximum Hops</label>
+<div class="right">
+<input type="text" class="inputNorm" id="MaxHopCount" name="MaxHopCount" value=""/>
+<span style="display: none;">Range: 1~64</span>
+</div>
+</div>
+<div class="row">
+<label for="Timeout:TraceRouteDiagnosis" class="cfgLabel w150">Wait Time</label>
+<div class="right">
+<input type="text" class="inputNorm" id="Timeout:TraceRouteDiagnosis" name="Timeout:TraceRouteDiagnosis" value=""/>ms
+<span style="display: none;">Range: 2000~10000</span>
+</div>
+</div>
+<div class="row">
+<label for="Protocol" class="cfgLabel w150">Protocol</label>
+<div class="right">
+<select id="Protocol" name="Protocol" class="selectNorm" >
+<option value="UDP" title='UDP'>UDP</option>
+<option value="ICMP" title='ICMP'>ICMP</option>
+</select>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_TraceRouteDiagnosis" id="Btn_TraceRouteDiagnosis" name="Btn_TraceRouteDiagnosis" value="Network Diagnosis" />
+</div>
+<div class="row">
+<label class="cfgLabel w150">Diagnosis Result</label>
+</div>
+<div class="textareaRow">
+<textarea id="Result" value="" readonly="readonly"></textarea>
+</div>
+<div class="segmentRow"></div>
+</form>
+</div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+var g_traceroute_timer = null;
+var TraceRoute_Time = 500;
+function TraceRouteReGetResult()
+{
+var HeadID = "TraceRouteDiagnosis";
+var Head = $("#"+HeadID);
+var template = $("#template_TraceRouteDiagnosis");
+var ServerAddr = $("address span", Head).text();
+var confirmLayerOBJ = $("#confirmLayer");
+template.bind("fillDataByTRStopResult", function(event,xml, template){
+if (template.hasError(xml) == 0)
+{
+showWaitTip(false);
+}
+});
+$("#confirmStop",confirmLayerOBJ).bind("click", function(event){
+var msg = "Are you sure to stop the diagnosis? ";
+IniConfirm(msg);
+$("#confirmCancel",confirmLayerOBJ).unbind("click");
+$("#confirmCancel",confirmLayerOBJ).bind("click", function(event){
+showWaitTip(true,"Diagnosis is in progress, please wait a while. ",true);
+});
+$("#confirmOK",confirmLayerOBJ).unbind("click");
+$("#confirmOK",confirmLayerOBJ).bind("click", {TEMPLATE: template, SERVERADDR:ServerAddr}, function(event){
+clearTimeout(g_traceroute_timer);
+showWaitTip(false);
+var template = event.data.TEMPLATE;
+var serverAddr = event.data.SERVERADDR;
+dataPost("TRStop", "fillDataByTRStopResult", serverAddr,
+template, undefined, false);
+});
+});
+Head.succfunction = function(xml){
+ReGetTraceRouteDiagnosis(xml);
+};
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction,
+Head.failfunction, false, true);
+}
+function ReGetTraceRouteDiagnosis(xml)
+{
+var template = $("#template_TraceRouteDiagnosis");
+var TRResult = "";
+var TRFlag = "";
+var ErrorString = $("IF_ERRORSTR", $(xml)).text();
+if (template.hasError(xml) == 0)
+{
+var ToOperParaArray = {
+"Result" : {
+ValueOrigin: ""
+},
+"Flag" : {
+ValueOrigin: ""
+}
+};
+xmlParaInInstOperate(xml, "OBJ_TRACERT_ID", 0, ToOperParaArray);
+TRResult = ToOperParaArray.Result.ValueOrigin;
+TRFlag = ToOperParaArray.Flag.ValueOrigin;
+}
+if(ErrorString == "SUCC" && TraceRoute_Time > 0 && TRFlag == "1")
+{
+TraceRoute_Time--;
+g_traceroute_timer = setTimeout("TraceRouteReGetResult()", 3000);
+}
+else
+{
+TraceRoute_Time = 500;
+showWaitTip(false);
+if (template.hasError(xml) == 0)
+{
+succHintShow(template);
+var OBJID = ["OBJ_TRACERT_ID"];
+if(TRResult!="NULL")
+{
+$("#Result").val(TRResult);
+}
+else
+{
+$("#Result").val("FAIL");
+}
+return;
+}
+}
+}
+function initial_template_TRDiagnosis(templateID)
+{
+var template = $("#"+templateID);
+template.bind("fillDataByTRDiagnosisResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+TraceRouteReGetResult();
+}
+else
+{
+showWaitTip(false);
+}
+});
+template.bind("PostDataChangeByCustom", function(event, NameValueJson){
+var ElemsID = NameValueJson.ElemsMainID;
+if(ElemsID == "Control" )
+{
+NameValueJson.ElemsValue = "0";
+}
+});
+var instForm = template.find("form");
+instForm.validate({
+"rules": {
+"Host:TraceRouteDiagnosis": {
+"required": true
+},
+"MaxHopCount": {
+"integer": true,
+"range":[1,64]
+},
+"Timeout:TraceRouteDiagnosis": {
+"integer": true,
+"range":[2000,10000]
+}
+},
+"messages": {
+}
+});
+}
+$(document).ready(function(){
+var TRHeadID = "TraceRouteDiagnosis";
+var TRHead = $("#"+TRHeadID);
+var TRtemplateID = "template_"+ TRHeadID;
+var TRServerAddr = $("address span", TRHead).text();
+initial_template_TRDiagnosis(TRtemplateID);
+$(".Btn_TraceRouteDiagnosis").bind("click", {templateOBJ:TRtemplateID}, function(event){
+if ( false == $(".form_content", $("#"+TRtemplateID)).valid() )
+{
+return;
+}
+showWaitTip(false);
+showWaitTip(true,"Diagnosis is in progress, please wait a while. ",true);
+var TRtemplate = $(this).parents("[id^='template']");
+TRHead.find("textarea").val("");
+dataPost("TraceRouteDiagnosis", "fillDataByTRDiagnosisResult",
+TRServerAddr, TRtemplate, undefined, false);
+});
+TRHead.succfunction = function(xml){
+TRHead.hasError(xml,"externErrorHint");
+var template = $("#"+TRtemplateID);
+var OBJID = "OBJ_TRACERT_ID";
+var tMaxHopCount = getParaValueInXML(xml, OBJID, 0, "MaxHopCount");
+var tTimeout = getParaValueInXML(xml, OBJID, 0, "Timeout");
+$("#MaxHopCount", template).val(tMaxHopCount);
+$("#Timeout\\:TraceRouteDiagnosis", template).val(tTimeout);
+$.publish("/some/CTCWANOptionsChange", [TRHead]);
+$.publish("/some/networkdiag_traceroute", [template]);
+};
+TRHead.dataTransfer(TRServerAddr,
+"GET",
+TRHead.succfunction,
+TRHead.failfunction,
+true,
+true);
+});
+</script>
+
+<div id="SvcSimulation" class="HeadDIV" style="padding-top:0">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=networkdiag_svcsimulation_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div id="SvcSimulation_container">
+<div id="template_SvcSimulation">
+<div id="topLine_SvcSimulation" class="formTblCtrlBar">
+<span id="instName_SvcSimulation" class="instName collapsibleInst" title="Simulation">Simulation</span>
+</div>
+<div id="changeArea_SvcSimulation" class="ChangeArea formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<form class="form_content formTbl">
+<input type="hidden" id="_InstID" value="">
+<input type="hidden" id="OptCode" value="60">
+<input type="hidden" id="OptLen" value="">
+<input type="hidden" id="PortState" value="">
+<input type="hidden" id="SimulationType" value="">
+<input type="hidden" id="SimuMAC" value="">
+<input type="hidden" id="PingDestIP" value="">
+<input type="hidden" id="BNeedPing" value="1">
+<input type="hidden" id="BNeedRelease" value="1">
+<div class="row">
+<label for="S_SimulationType" class="left w180">Simulation Type</label>
+<div class="right">
+<select id="S_SimulationType" name="S_SimulationType" class="selectNorm PostIgnore" >
+<option value="1" title='PPPoE' selected="selected">PPPoE</option>
+<option value="2" title="IPoE">IPoE</option>
+</select>
+</div>
+</div>
+<div class="row">
+<label for="PortViewName" class="left w180">Port</label>
+<div class="right">
+<select id="PortViewName" name="PortViewName" class="selectNorm" >
+<option value='&#68;&#69;&#86;&#46;&#66;&#82;&#73;&#68;&#71;&#73;&#78;&#71;&#46;&#66;&#82;&#49;&#46;&#66;&#82;&#80;&#79;&#82;&#84;&#50;' title='&#76;&#65;&#78;&#49;' >&#76;&#65;&#78;&#49;</option><option value='&#68;&#69;&#86;&#46;&#66;&#82;&#73;&#68;&#71;&#73;&#78;&#71;&#46;&#66;&#82;&#49;&#46;&#66;&#82;&#80;&#79;&#82;&#84;&#51;' title='&#76;&#65;&#78;&#50;' >&#76;&#65;&#78;&#50;</option><option value='&#68;&#69;&#86;&#46;&#66;&#82;&#73;&#68;&#71;&#73;&#78;&#71;&#46;&#66;&#82;&#49;&#46;&#66;&#82;&#80;&#79;&#82;&#84;&#52;' title='&#76;&#65;&#78;&#51;' >&#76;&#65;&#78;&#51;</option><option value='&#68;&#69;&#86;&#46;&#66;&#82;&#73;&#68;&#71;&#73;&#78;&#71;&#46;&#66;&#82;&#49;&#46;&#66;&#82;&#80;&#79;&#82;&#84;&#53;' title='&#76;&#65;&#78;&#52;' >&#76;&#65;&#78;&#52;</option>
+</select>
+</div>
+</div>
+<div class="row">
+<label class="left w180">VLAN</label>
+<div class="right" id="UseVlan">
+<input type="radio" id="UseVlan1" name="UseVlan" value="1"/><label for="UseVlan1">On</label>&nbsp;&nbsp;
+<input type="radio" id="UseVlan0" name="UseVlan" value="0" checked="checked"/><label for="UseVlan0">Off</label>
+</div>
+</div>
+<div class="row vlanRelv">
+<label for="VlanId" class="left w180">VLAN ID</label>
+<div class="right">
+<input type="text" class="inputNorm" id="VlanId" name="VlanId" value=""/>
+<span style="display:none;">Range: 1 ~ 4094</span>
+</div>
+</div>
+<div class="row vlanRelv">
+<label for="VlanPri" class="left w180">802.1p</label>
+<div class="right">
+<select id="VlanPri" name="VlanPri" class="selectNorm" >
+<option value="0" selected="selected">0</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+<option value="6">6</option>
+<option value="7">7</option>
+</select>
+</div>
+</div>
+<div class="row forPPPoE">
+<label for="PppoeUserName" class="left w180">Username</label>
+<div class="right">
+<input type="text" class="inputNorm" id="PppoeUserName" name="PppoeUserName" value="" encode="1" />
+</div>
+</div>
+<div class="row forPPPoE">
+<label for="PppoePassWord" class="left w180">Password</label>
+<div class="right">
+<input type="password" class="inputNorm SpecialPassword" id="PppoePassWord" name="PppoePassWord" value="" autocomplete="off" encode="1"/>
+</div>
+</div>
+<div class="row forPPPoE">
+<label for="AuthType" class="left w180">Authentication Type</label>
+<div class="right">
+<select id="AuthType" name="AuthType" class="selectNorm" >
+<option value="0" title="Auto" selected="selected">Auto</option>
+<option value="1" title="PAP">PAP</option>
+<option value="2" title="CHAP">CHAP</option>
+</select>
+</div>
+</div>
+<div class="row forPPPoE">
+<label for="IPMode" class="left w180">IP Mode</label>
+<div class="right">
+<select id="IPMode" name="IPMode" class="selectNorm">
+<option value="IPv4" title="IPv4" selected="selected">IPv4</option>
+<option value="IPv6" title="IPv6">IPv6</option>
+<option value="Both" title="IPv4/v6">IPv4/v6</option>
+</select>
+</div>
+</div>
+<div class="row forPPPoE">
+<label for="RetryTimes" class="left w180">Retry Times</label>
+<div class="right">
+<input type="text" class="inputNorm" id="RetryTimes" name="RetryTimes" value=""/>
+<span style="display:none;">Range: 1 ~ 3</span>
+</div>
+</div>
+<div class="row forDHCP">
+<label for="sub_SimuMAC0" class="left w180">Simulation MAC Address</label>
+<div class="right">
+<input name="sub_SimuMAC0" type="text" class="mac" maxlength="2" id="sub_SimuMAC0" value="" />:
+<input name="sub_SimuMAC1" type="text" class="mac" maxlength="2" id="sub_SimuMAC1" value="" />:
+<input name="sub_SimuMAC2" type="text" class="mac" maxlength="2" id="sub_SimuMAC2" value="" />:
+<input name="sub_SimuMAC3" type="text" class="mac" maxlength="2" id="sub_SimuMAC3" value="" />:
+<input name="sub_SimuMAC4" type="text" class="mac" maxlength="2" id="sub_SimuMAC4" value="" />:
+<input name="sub_SimuMAC5" type="text" class="mac" maxlength="2" id="sub_SimuMAC5" value="" />
+</div>
+</div>
+<div class="row forDHCP">
+<label for="SimuTimeOut" class="left w180">IPoE Timeout</label>
+<div class="right">
+<input type="text" class="inputNorm" id="SimuTimeOut" name="SimuTimeOut" value=""/>s
+<span style="display:none;">Range: 1 ~ 60</span>
+</div>
+</div>
+<div class="row forDHCP">
+<label class="left w180">Option60 Mode</label>
+<div class="right" id="Opt60Mode">
+<input type="radio" id="Opt60Mode0" name="Opt60Mode" value="0" checked="checked"/><label for="Opt60Mode0">Account Mode</label>&nbsp;&nbsp;
+<input type="radio" id="Opt60Mode1" name="Opt60Mode" value="1"/><label for="Opt60Mode1" >MAC Mode</label>
+</div>
+</div>
+<div class="row forDHCP OptAccout">
+<label for="UserNameOpt60" class="left w180">Username</label>
+<div class="right">
+<input type="text" class="inputNorm" id="UserNameOpt60" name="UserNameOpt60" value="" encode="1" />
+</div>
+</div>
+<div class="row forDHCP OptAccout">
+<label for="PassWordOpt60" class="left w180">Password</label>
+<div class="right">
+<input type="password" class="inputNorm SpecialPassword" id="PassWordOpt60" name="PassWordOpt60" value="" autocomplete="off" encode="1"/>
+</div>
+</div>
+<div class="row forDHCP OptMac">
+<label for="OptContent" class="left w180">Vendor Class ID</label>
+<div class="right">
+<input type="text" class="inputNorm" id="OptContent" name="OptContent" value=""/>
+</div>
+</div>
+<div class="row forDHCP">
+<label for="sub_PingDestIP0" class="left w180">PING Destination IP Address</label>
+<div class="right">
+<input name="sub_PingDestIP0" type="text" maxlength="3" id="sub_PingDestIP0" value="" class="ip" />.
+<input name="sub_PingDestIP1" type="text" maxlength="3" id="sub_PingDestIP1" value="" class="ip" />.
+<input name="sub_PingDestIP2" type="text" maxlength="3" id="sub_PingDestIP2" value="" class="ip" />.
+<input name="sub_PingDestIP3" type="text" maxlength="3" id="sub_PingDestIP3" value="" class="ip" />
+</div>
+</div>
+<div class="row forDHCP">
+<label for="PingTimes" class="left w180">PING Times</label>
+<div class="right">
+<input type="text" class="inputNorm" id="PingTimes" name="PingTimes" value=""/>
+<span style="display:none;">Range: 1 ~ 20</span>
+</div>
+</div>
+<div class="row forDHCP">
+<label for="PingTimeOut" class="left w180">PING Timeout</label>
+<div class="right">
+<input type="text" class="inputNorm" id="PingTimeOut" name="PingTimeOut" value=""/>ms
+<span style="display:none;">Range: 1 ~ 3000</span>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_SvcSimulation PostIgnore" id="Btn_SvcSimulation" name="Btn_SvcSimulation" value="Network Diagnosis" />
+</div>
+<div class="row">
+<label class="left w180">Simulation Result</label>
+</div>
+<div class="textareaRow">
+<textarea id="SvcSimuResult" value="" readonly="readonly"></textarea>
+</div>
+<div class="segmentRow"></div>
+</form>
+</div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+var g_svcSimulation_timer = null;
+function SimulationReGetResult()
+{
+var HeadID = "SvcSimulation";
+var Head = $("#"+HeadID);
+var template = $("#template_SvcSimulation");
+var ServerAddr = $("address span", Head).text();
+var confirmLayerOBJ = $("#confirmLayer");
+$("#confirmStop",confirmLayerOBJ).unbind("click");
+$("#confirmStop",confirmLayerOBJ).bind("click", function(event){
+var msg = "Are you sure to stop the diagnosis? ";
+IniConfirm(msg);
+$("#confirmCancel",confirmLayerOBJ).unbind("click");
+$("#confirmCancel",confirmLayerOBJ).bind("click", function(event){
+showWaitTip(true,"Diagnosis is in progress, please wait a while. ",true);
+});
+$("#confirmOK",confirmLayerOBJ).unbind("click");
+$("#confirmOK",confirmLayerOBJ).bind("click", {TEMPLATE: template, SERVERADDR:ServerAddr}, function(event){
+clearTimeout(g_svcSimulation_timer);
+showWaitTip(false);
+var template = event.data.TEMPLATE;
+var serverAddr = event.data.SERVERADDR;
+var simuType = $("#SimulationType", template).val();
+var simuAction = "";
+if (simuType == "1")
+{
+simuAction = "PPPoE_DEL";
+}
+else if (simuType == "2")
+{
+simuAction = "DHCP_DEL";
+}
+dataPost(simuAction, "fillDataBySimuStopResult", serverAddr,
+template, undefined, false);
+});
+});
+dataPost("", "fillDataByRePostResult", ServerAddr, template, undefined, false);
+}
+function GetSimuResult(xml,simuType,OBJID)
+{
+var resultStr = "";
+var template = $("#template_SvcSimulation");
+var ControlParaArr = {
+"Issucceed" : {ValueOrigin: ""},
+"Opt60Mode" : {ValueOrigin: ""},
+"PortViewName": {ValueOrigin: ""}
+};
+xmlParaInInstOperate(xml, OBJID, 0, ControlParaArr);
+var issucceed = ControlParaArr.Issucceed.ValueOrigin;
+var Opt60Mode = ControlParaArr.Opt60Mode.ValueOrigin;
+var portView = ControlParaArr.PortViewName.ValueOrigin;
+var portStr = "#PortViewName [value='" + portView + "']";
+var portName = $(portStr,template).text();
+resultStr += "Port: " + portName + "\r\n";
+var ToBeChagParaArr = {
+"PortState" : {
+setAction: function(ParaNameSel, ParaValSel, SelfVal){
+var portText = {
+"0": "None",
+"1": "Running",
+"2": "Complete",
+"3": "Complete"
+};
+if (portText[SelfVal] != undefined)
+{
+ParaValSel.text(portText[SelfVal]);
+}
+}
+},
+"AuthType" : {
+setAction: function(ParaNameSel, ParaValSel, SelfVal){
+var authTypeText = {
+"0": "Auto",
+"1": "PAP",
+"2": "CHAP"
+};
+if (authTypeText[SelfVal] != undefined)
+{
+ParaValSel.text(authTypeText[SelfVal]);
+}
+}
+},
+"IPMode" : {
+setAction: function(ParaNameSel, ParaValSel, SelfVal){
+var IPModeText = {
+"IPv4": "IPv4",
+"IPv6": "IPv6",
+"Both": "IPv4/v6"
+};
+if (IPModeText[SelfVal] != undefined)
+{
+ParaValSel.text(IPModeText[SelfVal]);
+}
+}
+},
+"Opt60Mode" : {
+setAction: function(ParaNameSel, ParaValSel, SelfVal){
+var opt60ModeText = {
+"0": "Account mode",
+"1": "MAC mode"
+};
+if (opt60ModeText[SelfVal] != undefined)
+{
+ParaValSel.text(opt60ModeText[SelfVal]);
+}
+}
+}
+};
+xmlParaInInstOperate(xml, OBJID, 0, ToBeChagParaArr);
+var PPPoEOrder = [
+"PortState",
+"SimuTypePPPoE",
+"RetryTimes",
+"AuthType",
+"UserName",
+"PassWord",
+"SuccResult",
+"SimuGateWay",
+"SimuIp",
+"FailResult",
+"FailReason",
+"IPMode",
+"AuthCode",
+"IPv6IPAddress",
+"IPv6DNSAddress",
+"DefaultIPv6Gateway",
+"SessionID"
+];
+var PPPoEParaArr = {
+"PortState" : {ValueOrigin: "", RelatedText: "Port State: "},
+"SimuTypePPPoE" : {ValueOrigin: "PPPoE", RelatedText: "Simulation Type: "},
+"RetryTimes" : {ValueOrigin: "", RelatedText: "Retry Times: "},
+"AuthType" : {ValueOrigin: "", RelatedText: "Authentication Type: "},
+"UserName" : {ValueOrigin: "", RelatedText: "Username: "},
+"PassWord" : {ValueOrigin: "", RelatedText: "Password: "},
+"SuccResult" : {ValueOrigin: "Succeeded", RelatedText: "Result: ", Condtion:(issucceed == "1")},
+"SimuGateWay" : {ValueOrigin: "", RelatedText: "Simulation Gateway: ", Condtion:(issucceed == "1")},
+"SimuIp" : {ValueOrigin: "", RelatedText: "IP Address: ", Condtion:(issucceed == "1")},
+"FailResult" : {ValueOrigin: "Failed", RelatedText: "Result: ", Condtion:(issucceed != "1")},
+"FailReason" : {ValueOrigin: "Failed", RelatedText: "Failed Reason: ", Condtion:(issucceed != "1")},
+"IPMode" : {ValueOrigin: "", RelatedText: "IPMode: "},
+"AuthCode" : {ValueOrigin: "", RelatedText: "AuthCode: "},
+"IPv6IPAddress" : {ValueOrigin: "", RelatedText: "IPv6IPAddress: "},
+"IPv6DNSAddress" : {ValueOrigin: "", RelatedText: "IPv6DNSAddress: "},
+"DefaultIPv6Gateway" : {ValueOrigin: "", RelatedText: "DefaultIPv6Gateway: "},
+"SessionID" : {ValueOrigin: "", RelatedText: "SessionID: "}
+};
+var ipmodeType = $("#IPMode", template).val();
+if(ipmodeType == "IPv4")
+{
+PPPoEOrder = [
+"PortState",
+"SimuTypePPPoE",
+"RetryTimes",
+"AuthType",
+"UserName",
+"PassWord",
+"SuccResult",
+"SimuGateWay",
+"SimuIp",
+"FailResult",
+"FailReason",
+"IPMode",
+"SessionID"
+];
+PPPoEParaArr = {
+"PortState" : {ValueOrigin: "", RelatedText: "Port State: "},
+"SimuTypePPPoE" : {ValueOrigin: "PPPoE", RelatedText: "Simulation Type: "},
+"RetryTimes" : {ValueOrigin: "", RelatedText: "Retry Times: "},
+"AuthType" : {ValueOrigin: "", RelatedText: "Authentication Type: "},
+"UserName" : {ValueOrigin: "", RelatedText: "Username: "},
+"PassWord" : {ValueOrigin: "", RelatedText: "Password: "},
+"SuccResult" : {ValueOrigin: "Succeeded", RelatedText: "Result: ", Condtion:(issucceed == "1")},
+"SimuGateWay" : {ValueOrigin: "", RelatedText: "Simulation Gateway: ", Condtion:(issucceed == "1")},
+"SimuIp" : {ValueOrigin: "", RelatedText: "IP Address: ", Condtion:(issucceed == "1")},
+"FailResult" : {ValueOrigin: "Failed", RelatedText: "Result: ", Condtion:(issucceed != "1")},
+"FailReason" : {ValueOrigin: "Failed", RelatedText: "Failed Reason: ", Condtion:(issucceed != "1")},
+"IPMode" : {ValueOrigin: "", RelatedText: "IPMode: "},
+"SessionID" : {ValueOrigin: "", RelatedText: "SessionID: "}
+};
+}
+xmlParaInInstOperate(xml, OBJID, 0, PPPoEParaArr);
+var IPoEOrder = [
+"PortState",
+"SimuTypeIPoE",
+"SimuMAC",
+"Opt60Mode",
+"UserName",
+"PassWord",
+"OptContent",
+"SuccResult",
+"SimuGateWay",
+"SimuIp",
+"FailResult",
+"FailReason"
+,
+"PingDestIP",
+"PingTimes",
+"PingTimeOut",
+"PingSuccessCount",
+"PingFailCount",
+"PingResTimeMax",
+"PingResTimeMin",
+"PingResTimeAver"
+];
+var IPoEParaArr = {
+"PortState" : {ValueOrigin: "", RelatedText: "Port State: "},
+"SimuTypeIPoE" : {ValueOrigin: "IPoE", RelatedText: "Simulation Type: "},
+"SimuMAC" : {ValueOrigin: "", RelatedText: "Simulation MAC: "},
+"Opt60Mode" : {ValueOrigin: "", RelatedText: "Option60 Mode: "},
+"UserName" : {ValueOrigin: "", RelatedText: "Username: ", Condtion:(Opt60Mode == "0")},
+"PassWord" : {ValueOrigin: "", RelatedText: "Password: ", Condtion:(Opt60Mode == "0")},
+"OptContent" : {ValueOrigin: "", RelatedText: "Vendor Class ID: ", Condtion:(Opt60Mode != "0")},
+"SuccResult" : {ValueOrigin: "Succeeded", RelatedText: "Result: ", Condtion:(issucceed == "1")},
+"SimuGateWay" : {ValueOrigin: "", RelatedText: "Simulation Gateway: ", Condtion:(issucceed == "1")},
+"SimuIp" : {ValueOrigin: "", RelatedText: "IP Address: ", Condtion:(issucceed == "1")},
+"FailResult" : {ValueOrigin: "Failed", RelatedText: "Result: ", Condtion:(issucceed != "1")},
+"FailReason" : {ValueOrigin: "Failed", RelatedText: "Failed Reason: ", Condtion:(issucceed != "1")},
+"PingDestIP" : {ValueOrigin: "", RelatedText: "PING Destination IP Address: "},
+"PingTimes" : {ValueOrigin: "", RelatedText: "PING Times: "},
+"PingTimeOut" : {ValueOrigin: "", RelatedText: "PING Timeout: "},
+"PingSuccessCount" : {ValueOrigin: "", RelatedText: "PING Success Count: "},
+"PingFailCount" : {ValueOrigin: "", RelatedText: "PING Fail Count: "},
+"PingResTimeMax" : {ValueOrigin: "", RelatedText: "Maximum Response Time: "},
+"PingResTimeMin" : {ValueOrigin: "", RelatedText: "Minimum Response Time: "},
+"PingResTimeAver" : {ValueOrigin: "", RelatedText: "Average Response Time: "}
+};
+xmlParaInInstOperate(xml, OBJID, 0, IPoEParaArr);
+var tmpOrderArr;
+var tmpDataArr;
+if ( simuType == 1 )
+{
+tmpOrderArr = PPPoEOrder;
+tmpDataArr = PPPoEParaArr;
+}
+else
+{
+tmpOrderArr = IPoEOrder;
+tmpDataArr = IPoEParaArr;
+}
+for (var i=0; i<tmpOrderArr.length; i++)
+{
+var tmpID = tmpOrderArr[i];
+if ( tmpDataArr[tmpID].Condtion != undefined && tmpDataArr[tmpID].Condtion == false )
+{
+continue;
+}
+var tmpStr = tmpDataArr[tmpID].RelatedText + tmpDataArr[tmpID].ValueOrigin;
+resultStr += tmpStr + "\r\n";
+}
+return resultStr;
+}
+function ReGetSvcSimulation(xml)
+{
+var template = $("#template_SvcSimulation");
+var TRResult = "";
+var TRFlag = "";
+var simuType = $("#SimulationType", template).val();
+var OBJID = "";
+if (simuType == "1")
+{
+OBJID = "OBJ_SIMULATION_PPPOE_GET_ID";
+}
+else if (simuType == "2")
+{
+OBJID = "OBJ_SIMULATION_DHCP_GET_ID";
+}
+var portState = "";
+if (template.hasError(xml) == 0)
+{
+portState = getParaValueInXML(xml, OBJID, 0, "PortState");
+if((portState == 0 || portState == 1))
+{
+g_svcSimulation_timer = setTimeout("SimulationReGetResult()", 3000);
+}
+else
+{
+showWaitTip(false);
+var PortViewName = getParaValueInXML(xml, OBJID, 0, "PortViewName");
+if (PortViewName == "")
+{
+return;
+}
+var simuResult = GetSimuResult(xml,simuType,OBJID);
+template.find("textarea").val(simuResult);
+}
+}
+}
+function initial_template_SvcSimulation(templateID)
+{
+var template = $("#"+templateID);
+template.bind("fillDataByRePostResult", function(event,xml, template){
+if (template.hasError(xml) == 0)
+{
+ReGetSvcSimulation(xml);
+}
+});
+template.bind("fillDataBySimuStopResult", function(event,xml, template){
+if (template.hasError(xml) == 0)
+{
+showWaitTip(false);
+}
+});
+template.bind("fillDataBySimulationResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+SimulationReGetResult();
+}
+else
+{
+showWaitTip(false);
+}
+});
+var vlanRelvObjs = $(".vlanRelv", template);
+$("input:radio[name='UseVlan']", template).change(function(){
+var radioVal = $(this).val();
+if (radioVal == 1)
+{
+vlanRelvObjs.showIt(true);
+$("#VlanId", template).removeClass("PostIgnore");
+$("#VlanPri", template).removeClass("PostIgnore");
+}
+else
+{
+vlanRelvObjs.showIt(false);
+$("#VlanId", template).addClass("PostIgnore");
+$("#VlanPri", template).addClass("PostIgnore");
+}
+});
+var pppoeRelvRows = $(".forPPPoE", template);
+var dhcpRelvRows = $(".forDHCP", template);
+$("#S_SimulationType", template).change(function(){
+var typeVal = $(this).val();
+$("#SimulationType", template).val(typeVal);
+if (typeVal == "1")
+{
+pppoeRelvRows.showIt(true);
+dhcpRelvRows.showIt(false);
+}
+else if(typeVal == "2")
+{
+pppoeRelvRows.showIt(false);
+dhcpRelvRows.showIt(true);
+$("input:radio[name='Opt60Mode']", template).change();
+}
+else
+{
+}
+});
+var OptAccoutRows = $(".OptAccout", template);
+var OptMacRows = $(".OptMac", template);
+$("input:radio[name='Opt60Mode']", template).change(function(){
+if ($("#Opt60Mode0",template).is(':checked'))
+{
+OptAccoutRows.showIt(true);
+OptMacRows.showIt(false);
+$("#UserNameOpt60", template).removeClass("PostIgnore");
+$("#PassWordOpt60", template).removeClass("PostIgnore");
+$("#OptLen", template).addClass("PostIgnore");
+$("#OptContent", template).addClass("PostIgnore");
+}
+else
+{
+OptMacRows.showIt(true);
+OptAccoutRows.showIt(false);
+$("#UserNameOpt60", template).addClass("PostIgnore");
+$("#PassWordOpt60", template).addClass("PostIgnore");
+$("#OptLen", template).removeClass("PostIgnore");
+$("#OptContent", template).removeClass("PostIgnore");
+}
+});
+template.bind("hiddenValueChangeByCustom", function(event,template){
+var IpJSON = {
+"PingDestIP":"sub_PingDestIP"
+};
+for (var IPTmp in IpJSON)
+{
+var ipHiddenObj = $("[id^='"+IPTmp+"']",template);
+ipHiddenObj.FillIPorMacDataCombination(IpJSON[IPTmp], ".", 4);
+}
+var MacJSON = {
+"SimuMAC":"sub_SimuMAC"
+};
+for (var MACTmp in MacJSON)
+{
+var macHiddenObj = $("[id^='"+MACTmp+"']",template);
+macHiddenObj.FillIPorMacDataCombination(MacJSON[MACTmp], ":", 6);
+}
+$("#OptLen", template).val($("#OptContent", template).val().length);
+});
+var macSegmentCheck = {
+"required": true,
+"HEX": true,
+"fixedlength": 2
+};
+var ipCheckRules = {
+"required": true,
+"integer": true,
+"range":[0,255]
+};
+var instForm = template.find("form");
+instForm.validate({
+"groups": {
+PingDestIP: "sub_PingDestIP0 sub_PingDestIP1 sub_PingDestIP2 sub_PingDestIP3",
+SimuMAC: "sub_SimuMAC0 sub_SimuMAC1 sub_SimuMAC2 sub_SimuMAC3 sub_SimuMAC4 sub_SimuMAC5"
+},
+"rules": {
+"VlanId": {
+"required": true,
+"integer": true,
+"range":[1,4094]
+},
+"PppoeUserName": {
+"required": true,
+"ASCII": true,
+"rangelength":[1,64]
+},
+"PppoePassWord": {
+"PasswordASCII": true,
+"rangelength":[0,64]
+},
+"RetryTimes": {
+"required": true,
+"integer": true,
+"range":[1,3]
+},
+"UserNameOpt60": {
+"required": true,
+"ASCII": true,
+"rangelength":[1,64]
+},
+"PassWordOpt60": {
+"required": true,
+"PasswordASCII": true,
+"rangelength":[1,64]
+},
+"SimuTimeOut": {
+"required": true,
+"integer": true,
+"range":[1,60]
+},
+"sub_PingDestIP0": ipCheckRules,
+"sub_PingDestIP1": ipCheckRules,
+"sub_PingDestIP2": ipCheckRules,
+"sub_PingDestIP3": ipCheckRules,
+"PingTimes": {
+"required": true,
+"integer": true,
+"range":[1,20]
+},
+"PingTimeOut": {
+"required": true,
+"integer": true,
+"range":[1,3000]
+},
+"sub_SimuMAC0": macSegmentCheck,
+"sub_SimuMAC1": macSegmentCheck,
+"sub_SimuMAC2": macSegmentCheck,
+"sub_SimuMAC3": macSegmentCheck,
+"sub_SimuMAC4": macSegmentCheck,
+"sub_SimuMAC5": macSegmentCheck
+},
+"messages": {
+}
+});
+}
+$(document).ready(function(){
+var TRHeadID = "SvcSimulation";
+var TRHead = $("#"+TRHeadID);
+var TRtemplateID = "template_"+ TRHeadID;
+var TRServerAddr = $("address span", TRHead).text();
+var template = $("#"+TRtemplateID);
+$.publish("/some/SVCSimulationHide", [1]);
+initial_template_SvcSimulation(TRtemplateID);
+$(".Btn_SvcSimulation").bind("click", {templateOBJ:TRtemplateID}, function(event){
+if ( false == $(".form_content", $("#"+TRtemplateID)).valid() )
+{
+return;
+}
+showWaitTip(false);
+showWaitTip(true,"Diagnosis is in progress, please wait a while. ",true);
+var TRtemplate = $(this).parents("[id^='template']");
+TRHead.find("textarea").val("");
+var simuType = $("#SimulationType", TRtemplate).val();
+var simuAction = "";
+if (simuType == "1")
+{
+simuAction = "PPPoE_APPLY";
+}
+else if (simuType == "2")
+{
+simuAction = "DHCP_APPLY";
+}
+dataPost(simuAction, "fillDataBySimulationResult",
+TRServerAddr, TRtemplate, undefined, false);
+});
+TRHead.succfunction = function(xml){
+TRHead.hasError(xml,"externErrorHint");
+$("input:radio[name='UseVlan']", template).change();
+$("#S_SimulationType", template).change();
+};
+TRHead.dataTransfer(TRServerAddr,
+"GET",
+TRHead.succfunction,
+undefined,
+true,
+true);
+});
+</script>
+
+</div>
+</div>
+<script type="text/javascript">
+$(document).ready(function(){
+var Head = $("#SummarizeDiag");
+$("#SummarizeDiagBar", Head).click();
+});
+</script>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x45\x35\x74\x45\x73\x33\x59\x34\x45\x6e\x36\x79\x61\x36\x33\x66\x38\x78\x4f\x72\x59\x53\x5a\x32";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>

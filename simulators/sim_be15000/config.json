@@ -1,0 +1,12 @@
+{
+    "id": "AP_BE15000",
+    "name": "AP-BE15000",
+    "groups": {
+        "Học Tập": [
+            {
+                "title": "Giao diện quản trị",
+                "url": "modules/BE15000/www/login.html"
+            }
+        ]
+    }
+}

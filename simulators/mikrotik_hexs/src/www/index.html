@@ -72,8 +72,8 @@ h1 {
     <tr><td class="label"><label for="name">Login:</label>
         <td><input id="name" autocomplete="username" type="text" data-defaultuser="admin">
     <tr><td class="label"><label for="password">Password:</label>
-        <td><input id="password" type="password" autofocus>
-        <td><input type="submit" value="Login">
+        <td><input id="password" type="password" autofocus onkeydown="if(event.key === 'Enter') document.getElementById('login').dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}))">
+        <td><input type="button" value="Login" onclick="document.getElementById('login').dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}))">
         <td>
     <tr><td colspan="3">
     <div id="error"></div>

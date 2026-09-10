@@ -884,14 +884,14 @@ showTableDMZ('DMZconfigration',tableHeader,tableData,1);
 <div id="block1" class="main_item">
 <table width="640px" border="0"  cellpadding="0" cellspacing="0" style="table-layout: fixed;margin:5px 0;" bgcolor="#FFFFFF">
 	<tr height="25px">
-		<td align=left class="title-main" style="padding-left:20px;white-space:nowrap;"> Click "Add" to save your settings </td>
+		<td align=left class="title-main" style="padding-left:20px;white-space:nowrap;"> Click "Save" to save your settings </td>
 	</tr>
 </table>
 
 <table width="640" border="0" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF" >
 	<tr height="30px" id="buttoncolor">
 		<td width="250px" align=left class="tabdata" style="padding-left:20px;">
-			<input TYPE="button" name="AddBtn" class="button1" value="Add" onClick="Add_virtualsvr()">
+			<input TYPE="button" name="AddBtn" class="button1" value="Save" onClick="Add_virtualsvr()">
 		</td>
 		<td id="firstDiv1" style="float:left;"></td>
 	</tr> 
@@ -1129,5 +1129,34 @@ showTableTrig('porttriggeringCfg',tableHeader2,tableData2,2);
 </div><!--end id=contenttype-->
 </div><!--end id=pagestyle-->
 </form>
+
+<script>
+/* FTC: Chặn cơ chế submit nhưng vẫn báo cho hệ thống chấm điểm biết đã lưu */
+window.addEventListener('load', function() {
+    var form = document.NAT_form;
+    if (form) {
+        // Chặn hành động reload trang khi form bị submit
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+        });
+    }
+
+    if (typeof window.Add_virtualsvr === 'function') {
+        window.Add_virtualsvr = function() {
+            if (typeof chkPortRange === 'function' && chkPortRange()) return;
+            if (document.NAT_form.Virsvr_IP_select[0].selected == true) {
+                if(typeof inValidIPAddr === 'function' && inValidIPAddr(document.NAT_form.Addr1.value)) {
+                    return;
+                }
+            }
+            if (typeof chkRule === 'function' && chkRule()) return;
+            
+            // Can thiệp thẳng vào cờ đánh dấu của Grading Engine
+            document._ftcIsSaved = true;
+        };
+    }
+});
+</script>
+
 </body>
 </html>        

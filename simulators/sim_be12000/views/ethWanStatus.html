@@ -1,0 +1,1445 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#101;&#116;&#104;&#87;&#97;&#110;&#83;&#116;&#97;&#116;&#117;&#115;</div>
+<div id="_NowSupIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;&#83;&#116;&#97;&#116;&#117;&#115;</div>
+<div id="_NowThdIdInfo">&#101;&#116;&#104;&#87;&#97;&#110;&#83;&#116;&#97;&#116;&#117;&#115;</div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft" role="complementary">
+<div id="class2Menu" class="class2Menu" role="navigation">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span tabindex="0" role="text">Page Information</span>
+</div>
+
+<p class="pIntroContent" tabindex="0" role="text">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#115;&#104;&#111;&#119;&#115;&#32;&#116;&#104;&#101;&#32;&#115;&#116;&#97;&#116;&#117;&#115;&#32;&#111;&#102;&#32;&#87;&#65;&#78;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+var globalTmp = "";
+var isShowReleaseBtns = true;
+var isShowRenewBtns = true;
+var pppGw = "";
+var staStr = "";
+var pppACName = false;
+
+
+
+
+(function(){
+var g_routOrBridge = {
+route : get_route_html,
+bridge : get_bridge_html
+};
+var g_route={
+PPP : ppp_html_string,
+IP : ip_html_string
+};
+var g_ip = {
+"Static" : local_static_html_string,
+"IPoA" : local_static_html_string,
+"CIP" : local_static_html_string,
+"DHCP" : local_dhcp_html_string
+};
+var g_dhcp = [local_xdls_html_string,
+local_ipmode_html_string,
+local_ipvf_dhcp_html_string,
+local_ipvs_dhcp_html_string,
+local_wanmac_html_string,
+local_vlanid_html_string
+];
+var g_static = [local_xdls_html_string,
+local_ipmode_html_string,
+local_ipvf_static_html_string,
+local_ipvs_static_html_string,
+local_wanmac_html_string,
+local_vlanid_html_string
+];
+var g_ppp = [local_xdls_html_string,
+local_ipmode_html_string,
+local_ipvf_ppp_html_string,
+local_ipvs_ppp_html_string,
+local_PPPoEACName_html_string,
+local_wanmac_html_string,
+local_vlanid_html_string,
+];
+var g_dhcpIpvs = [local_lla_html_string,
+local_gua_html_string,
+local_xdns_html_string,
+local_gatways_html_string,
+local_pd_html_string,
+local_dhcp_connstatuss_html_string,
+local_uptimes_html_string
+];
+var g_dhcpIpvf = [local_nat_html_string,
+local_ipaddr_html_string,
+local_dnss_html_string,
+local_gatway_html_string,
+local_RemainLeaseTime_html_string,
+local_connstatus_html_string,
+local_uptime_html_string,
+local_iperror_html_string
+];
+var g_staticIpvs = [local_lla_html_string,
+local_gua_html_string,
+local_xdns_html_string,
+local_gatways_html_string,
+local_pd_html_string,
+local_dhcp_connstatuss_html_string,
+local_uptimes_html_string
+];
+var g_staticIpvf = [local_nat_html_string,
+local_ipaddr_html_string,
+local_dnss_html_string,
+local_gatway_html_string,
+local_connstatus_html_string,
+local_iperror_html_string
+];
+var g_pppIpvf = [local_nat_html_string,
+local_ipaddr_html_string,
+local_dnss_html_string,
+local_connstatus_html_string,
+local_uptime_html_string,
+local_ppperror_html_string,
+];
+if(pppGw.indexOf("v4") != -1){
+g_pppIpvf = [local_nat_html_string,
+local_ipaddr_html_string,
+local_dnss_html_string,
+local_gatway_html_string,
+local_connstatus_html_string,
+local_uptime_html_string,
+local_ppperror_html_string
+];
+}
+var g_pppIpvs = [local_lla_html_string,
+local_gua_html_string,
+local_xdns_html_string,
+local_pd_html_string,
+local_connstatuss_html_string,
+local_uptimes_html_string
+];
+if(pppGw.indexOf("v6") != -1){
+g_pppIpvs = [local_lla_html_string,
+local_gua_html_string,
+local_xdns_html_string,
+local_remotella_html_string,
+local_pd_html_string,
+local_connstatuss_html_string,
+local_uptimes_html_string
+];
+}
+function get_next_html_obj(obj, id, index, namef, namee, conarray)
+{
+var strtemp = "";
+if(conarray)
+{
+if(conarray.ipdhcp)
+{
+strtemp = local_dhcp_release_renew(conarray, index);
+}
+if (conarray.pppmode){
+var data = {};
+data.index = index;
+$.callModifier("/wanmanual/manualDial", data);
+if(strtemp == ""){
+strtemp = globalTmp;
+}
+}
+}
+var spantemp = "<span></span>";
+var strhtml = '<tr class=\"colorTblRow\"  id = \"Prefix_sub_' + id + ":" + index +
+'\"> <th class=\"w250 emFont\" title=\"' + namef + '\">' + namef +
+'</th><td class=\"w250\" id=\"' + id + ":" + index +
+'\" title=\"'+ namee +'\">' + namee + spantemp +strtemp + '</td></tr>';
+var objret = obj.after(strhtml);
+$.callModifier("/wanmanual/IPv6ConnectBtns");
+return objret.next();
+}
+function local_dhcp_release_renew(conarray, index)
+{
+var temp = "";
+if (conarray.ipdhcp)
+{
+var ret = ["", ""];
+temp = '<span class=\"Btn_Renew emColor ctrlFont ' + ret[0] +'\" id=\"renew:' + index + '\" tabindex=\"0\" role=\"button\">Renew</span>' +
+'<span id=\"wLine \"> | </span>' +
+'<span class=\"Btn_Release emColor ctrlFont ' + ret[1] + '\" id=\"release:' + index + '\" tabindex=\"0\" role=\"button\">Release</span>'
+}
+$.publish("/some/controlReleaseBtnsShow", [index]);
+var data = {};
+data.template = $("#EthStateDev");
+data.index = index;
+$.callModifier("WanStatus/hideReleaseBtns", data);
+if(!isShowReleaseBtns){
+temp = "";
+isShowReleaseBtns = true;
+}
+if(!isShowRenewBtns){
+temp = "";
+}
+return temp;
+}
+function local_ppp_up_down(conarray, index)
+{
+var temp = "";
+if (conarray.pppmode)
+{
+var ret = ["", ""];
+temp = '<span class=\"Btn_Connect emColor ctrlFont ' + ret[0] + '\" id=\"connect:' + index + '\" tabindex=\"0\" role=\"button\">reconnect</span>'
+}
+return temp;
+}
+function local_bind_release_renew (Head, temp, ServerAddr)
+{
+temp.unbind("fillDataByRenewReleaseDiagnosisResult");
+temp.bind("fillDataByRenewReleaseDiagnosisResult", function(event, xml, template){
+if (template.hasError(xml) == 0)
+{
+}
+$("tr", temp).each(function(){
+if (!$(this).hasClass("titleRow") && !$(this).hasClass("errorHint"))
+{
+$(this).remove();
+}
+});
+var OBJID = ["ID_WAN_COMFIG"];
+template.fillDataByOBJID(xml ,OBJID, template, 0);
+var CustomizeParams = {
+"ContainerOBJ":template
+};
+customize_internet(CustomizeParams);
+local_bind_release_renew(Head, template, ServerAddr);
+colorTblRow(".colorTbl", "even", Head);
+});
+$(".Btn_Renew, .Btn_Release", temp).bind("click", function(event){
+var buttonOBJ = $(this);
+var action = "DHCPRENEW";
+if ( buttonOBJ.hasClass("disableFont"))
+{
+return;
+}
+if (buttonOBJ.hasClass("Btn_Release"))
+{
+action = "DHCPRELEASE";
+}
+var template = $(this).parents("[id^='template']");
+Head.find("textarea").val("");
+dataPost(action, "fillDataByRenewReleaseDiagnosisResult", ServerAddr, template);
+});
+}
+function local_bind_connect_disconnect(Head, temp, ServerAddr)
+{
+temp.unbind("fillDataByConnectOrDisconnect");
+temp.bind("fillDataByConnectOrDisconnect", function(event, xml, template){
+if (template.hasError(xml) == 0)
+{
+}
+$("tr", temp).each(function(){
+if (!$(this).hasClass("titleRow") && !$(this).hasClass("errorHint"))
+{
+$(this).remove();
+}
+});
+var OBJID = ["ID_WAN_COMFIG"];
+template.fillDataByOBJID(xml ,OBJID, template, 0);
+var CustomizeParams = {
+"ContainerOBJ":template
+};
+customize_internet(CustomizeParams);
+local_bind_connect_disconnect(Head, template, ServerAddr);
+colorTblRow(".colorTbl", "even", Head);
+});
+$(".Btn_Connect, .Btn_Disconnect", temp).bind("click", function(event){
+var buttonOBJ = $(this);
+var template = $(this).parents("[id^='template']");
+Head.find("textarea").val("");
+var action = "PPPCONNECT";
+if ( buttonOBJ.hasClass("disableFont"))
+{
+return;
+}
+if (buttonOBJ.hasClass("Btn_Disconnect"))
+{
+action = "PPPDISCONNECT";
+}
+if(buttonOBJ.attr("id").indexOf("ctc_connect") != -1)
+{
+action = "PPPCTCCONNECT";
+}
+if(buttonOBJ.attr("id").indexOf("ctc_disconnect") != -1)
+{
+action = "PPPCTCDISCONNECT";
+}
+if(buttonOBJ.attr("id").indexOf("viet_connect") != -1)
+{
+action = "PPPVIETCONNECT";
+}
+else if(buttonOBJ.attr("id").indexOf("viet_disconnect") != -1)
+{
+action = "PPPVIETDISCONNECT";
+}
+dataPost(action, "fillDataByConnectOrDisconnect", ServerAddr, template);
+});
+}
+function local_pvc_html_string(prevobj, conarray, index, temp)
+{
+var objret = prevobj;
+if ("1" == conarray.xdslMode)
+{
+var obj = $("[id^='DestAddress']", temp);
+objret = get_next_html_obj(prevobj, "CDestAddress", index, "VPI/VCI", obj.val());
+}
+return objret;
+}
+function local_xdls_html_string(prevobj, conarray, index, temp)
+{
+var objret = prevobj;
+if ("1" == conarray.uplink )
+{
+var values = {
+"1" : "ATM",
+"2" : "PTM"
+};
+objret = get_next_html_obj(prevobj, "cXdslMode", index, "DSL Transfer Mode", values[conarray.xdslMode]);
+objret = local_pvc_html_string(objret, conarray, index, temp)
+}
+return objret;
+}
+function local_connstatus_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='ConnStatus']", temp).val();
+conarray.state = value;
+var stat = "Disconnected";
+var values = {
+Connected: "Connected",
+Demand: "Disconnected In Idle Traffic",
+Unconfigured: "Disconnected",
+Connecting: "Connecting",
+Authenticating: "Authenticating",
+PendingDisconnect: "PendingDisconnect",
+Disconnecting:"Disconnecting"
+};
+if (values[value])
+{
+stat = values[value];
+}
+return get_next_html_obj(prevobj, "cConnStatus", index, "IPv4 Connection Status", stat, conarray);
+}
+function local_dnss_html_string(prevobj, conarray, index, temp)
+{
+var value1 = $("[id^='DNS1']", temp).val();
+var value2 = $("[id^='DNS2']", temp).val();
+var value3 = $("[id^='DNS3']", temp).val();
+return get_next_html_obj(prevobj, "cDNS", index, "DNS", value1 + "/" + value2 + "/" + value3);
+}
+function local_ipaddr_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='IPAddress']", temp).val();
+var maskValue = $("[id^='SubnetMask']", temp).val();
+return get_next_html_obj(prevobj, "cIPAddress", index, "IP Address", value + "/" + maskValue);
+}
+function local_nat_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='IsNAT']", temp).val();
+var values = {
+"1" : "On",
+"0" : "Off"
+};
+return get_next_html_obj(prevobj, "cIsNAT", index, "NAT", values[value]);
+}
+function local_uptime_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='UpTime']", temp).val();
+value = sec2HrMinSec(value);
+return get_next_html_obj(prevobj, "cUpTime", index, "IPv4 Online Duration", value);
+}
+function local_gatway_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='GateWay']", temp).val();
+return get_next_html_obj(prevobj, "cGateWay", index, "IPv4 Gateway", value);
+}
+function local_RemainLeaseTime_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='RemainLeaseTime']", temp).val();
+value = sec2HrMinSec(value);
+return get_next_html_obj(prevobj, "cRemainLeaseTime", index, "Remaining Lease", value);
+}
+function local_lla_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='LLA']", temp).val();
+return get_next_html_obj(prevobj, "cLLA", index, "LLA", value);
+}
+function local_gua_html_string(prevobj, conarray, index, temp)
+{
+var objret = prevobj;
+var value = $("[id^='GuaNum']", temp).val();
+var values = [$("[id^='Gua1']", temp).val(),
+$("[id^='Gua2']", temp).val(),
+$("[id^='Gua3']", temp).val()];
+var valStr = "";
+for (var i = 0; i < value; i++)
+{
+valStr += (i > 0) ? ("/" + values[i]) : values[i];
+}
+if (valStr == "")
+{
+valStr = "::";
+}
+objret = get_next_html_obj(objret, "cGuaNum", index, "GUA", valStr);
+return objret;
+}
+function local_xdns_html_string(prevobj, conarray, index, temp)
+{
+var value1 = $("[id^='Dns1v6']", temp).val();
+var value2 = $("[id^='Dns2v6']", temp).val();
+var value3 = $("[id^='Dns3v6']", temp).val();
+return get_next_html_obj(prevobj, "cDnsv6", index, "DNS", value1 + "/" + value2 + "/" + value3);
+}
+function local_connstatuss_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='ConnStatus6']", temp).val();
+var strret = "Disconnected";
+var values = {
+Connected: "Connected",
+Demand: "Disconnected In Idle Traffic",
+Unconfigured : "Disconnected",
+Connecting: "Connecting",
+Authenticating: "Authenticating",
+PendingDisconnect: "PendingDisconnect"
+};
+if (values[value])
+{
+strret = values[value];
+}
+return get_next_html_obj(prevobj, "cConnStatus6", index, "IPv6 Connection Status", strret);
+}
+function local_dhcp_connstatuss_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='LLAStatus']", temp).val();
+var strret = "Disconnected";
+var values = {
+Connected: "Connected"
+};
+if (values[value])
+{
+strret = values[value];
+}
+return get_next_html_obj(prevobj, "cLLAStatus", index, "IPv6 Connection Status", strret);
+}
+function local_uptimes_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='UpTimeV6']", temp).val();
+value = sec2HrMinSec(value);
+return get_next_html_obj(prevobj, "cUpTimeV6", index, "IPv6 Online Duration", value);
+}
+function local_gatways_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='Gateway6']", temp).val();
+return get_next_html_obj(prevobj, "cGateway6", index, "IPv6 Gateway", value);
+}
+function local_PPPoEACName_html_string(prevobj, conarray, index, temp)
+{
+var objret = prevobj;
+if (pppACName){
+var value = $("[id^='PPPoEACName']", temp).val();
+objret = get_next_html_obj(prevobj, "cPPPoEACName", index, "BRAS Name", value);
+}
+return objret;
+}
+function local_remotella_html_string(prevobj, conarray, index, temp)
+{
+var value = $("[id^='RemoteLLA']", temp).val();
+return get_next_html_obj(prevobj, "cRemoteLLA", index, "IPv6 Gateway", value);
+}
+function local_wanmac_html_string(prevobj, conarray, index, temp)
+{
+var objret = prevobj;
+var Addressingtype = $("[id^='Addressingtype']", temp).val();
+var transt = $("[id^='TransType']", temp).val();
+if ("PPPoE" == transt || "Static" == Addressingtype || "DHCP" == Addressingtype)
+{
+var value = $('#WorkIFMac\\:' + index, temp).val();
+objret = get_next_html_obj(prevobj, "cWorkIFMac", index, "WAN MAC", value);
+}
+return objret;
+}
+function local_vlanid_html_string(prevobj, conarray, index, temp)
+{
+var objret = prevobj;
+if(staStr.indexOf("VLANID") != -1){
+var value = $('#VLANID\\:' + index, temp).val();
+objret = get_next_html_obj(prevobj, "cVLANID", index, "VLAN ID", value);
+}
+return objret;
+}
+function local_ppperror_html_string(prevobj, conarray, index, temp)
+{
+var objret = prevobj;
+var errarray = {
+"ERROR_NONE" : "None",
+"ERROR_ISP_TIME_OUT" : "ISP Timeout",
+"ERROR_USER_DISCONNECT" : "User Disconnect",
+"ERROR_ISP_DISCONNECT" : "ISP Disconnect",
+"ERROR_IDLE_DISCONNECT" : "Idle Disconnect",
+"ERROR_FORCED_DISCONNECT" : "Forced Disconnect",
+"ERROR_AUTHENTICATION_FAILURE" : "Authentication Failure",
+"ERROR_UNKNOWN" : "Other",
+"ERROR_IP_CONFIGURATION" : "IP Addresses Illegal",
+"ERROR_NOT_ENABLED_FOR_INTERNET" : "WAN Connection Disabled",
+"ERROR_NO_CARRIER" : "No Carrier"
+};
+var value = "Other";
+var errvalue = $("[id^='ConnError']", temp).val();
+if (errarray[errvalue])
+{
+value = errarray[errvalue];
+}
+objret = get_next_html_obj(prevobj, "cConnError", index, "Disconnect Reason", value);
+return objret;
+}
+function local_pppclose_html_string(prevobj, conarray, index, temp)
+{
+var value1 = $("[id^='TxBytes']", temp).val();
+var value2 = $("[id^='RxBytes']", temp).val();
+var value3 = $("[id^='TxPackets']", temp).val();
+var value4 = $("[id^='RxPackets']", temp).val();
+var value5 = $("[id^='ErrorsSent']", temp).val();
+var value6 = $("[id^='ErrorsReceived']", temp).val();
+var value7 = $("[id^='MulticastPacketsSent']", temp).val();
+var value8 = $("[id^='MulticastPacketsReceived']", temp).val();
+obj = get_next_html_obj(prevobj, "cTxBytes", index, "Bytes Sent", value1 );
+obj = get_next_html_obj(obj, "cRxBytes", index, "Bytes Received", value2 );
+obj = get_next_html_obj(obj, "cTxPackets", index, "Packets Sent", value3 );
+obj = get_next_html_obj(obj, "cRxPackets", index, "Packets Received", value4 );
+obj = get_next_html_obj(obj, "cErrorsSent", index, "Errors Sent", value5 );
+obj = get_next_html_obj(obj, "cErrorsReceived", index, "Errors Received", value6 );
+obj = get_next_html_obj(obj, "cMulticastPacketsSent", index, "Multicast Packets Sent", value7 );
+return get_next_html_obj(obj, "cMulticastPacketsReceived", index, "Multicast Packets Received", value8 );
+}
+function local_ipvs_ppp_html_string(prevobj, conarray, index, temp)
+{
+if ("IPv4" == conarray.ipmode )
+{
+return prevobj;
+}
+var objret = prevobj;
+for (var i = 0; i < g_pppIpvs.length; i++)
+{
+objret = g_pppIpvs[i](objret, conarray, index, temp);
+}
+return objret;
+}
+function local_ipvf_ppp_html_string(prevobj, conarray, index, temp)
+{
+if ("IPv6" == conarray.ipmode )
+{
+return prevobj;
+}
+conarray.pppmode = true;
+var objret = prevobj;
+for (var i = 0; i < g_pppIpvf.length; i++)
+{
+objret = g_pppIpvf[i](objret, conarray, index, temp, conarray);
+}
+return objret;
+}
+function local_iperror_html_string(prevobj, conarray, index, temp)
+{
+var objret = prevobj;
+var errarray = {
+"ERROR_NONE" : "None",
+"ERROR_USER_DISCONNECT" : "User Disconnect",
+"ERROR_NOT_ENABLED_FOR_INTERNET" : "WAN Connection Disabled",
+"ERROR_NO_CARRIER" : "No Carrier",
+"ERROR_SEND_DHCPMSG_FAIL" : "DHCP Message Sending Failure",
+"ERROR_NO_RESPONSE_TO_DISCOVER" : "No Response to Discover Message",
+"ERROR_SERVERDENY" : "Server Deny",
+"ERROR_ERROR_ACCESS_FAIL" : "Access Failure",
+"ERROR_NO_RESPONSE_TO_REQUEST" : "No Response to Request Message"
+};
+var value = "Other";
+var errvalue = $("[id^='ConnError']", temp).val();
+if (errarray[errvalue])
+{
+value = errarray[errvalue];
+}
+objret = get_next_html_obj(prevobj, "cConnError", index, "Disconnect Reason", value);
+return objret;
+}
+function local_ipvf_static_html_string(prevobj, conarray, index, temp)
+{
+if ("IPv6" == conarray.ipmode )
+{
+return prevobj;
+}
+var objret = prevobj;
+for (var i = 0; i < g_staticIpvf.length; i++)
+{
+objret = g_staticIpvf[i](objret, conarray, index, temp);
+}
+return objret;
+}
+function local_ipvs_static_html_string(prevobj, conarray, index, temp)
+{
+if ("IPv4" == conarray.ipmode )
+{
+return prevobj;
+}
+var objret = prevobj;
+for (var i = 0; i < g_staticIpvs.length; i++)
+{
+objret = g_staticIpvs[i](objret, conarray, index, temp);
+}
+return objret;
+}
+function local_ipvf_dhcp_html_string(prevobj, conarray, index, temp)
+{
+if ("IPv6" == conarray.ipmode )
+{
+return prevobj;
+}
+var objret = prevobj;
+for (var i = 0; i < g_dhcpIpvf.length; i++)
+{
+objret = g_dhcpIpvf[i](objret, conarray, index, temp);
+}
+return objret;
+}
+function local_ipvs_dhcp_html_string(prevobj, conarray, index, temp)
+{
+if ("IPv4" == conarray.ipmode )
+{
+return prevobj;
+}
+var objret = prevobj;
+for (var i = 0; i < g_dhcpIpvs.length; i++)
+{
+objret = g_dhcpIpvs[i](objret, conarray, index, temp);
+}
+return objret;
+}
+function local_ipmode_html_string(prevobj, conarray, index, temp)
+{
+return get_next_html_obj(prevobj, "cIpMode", index, "IP Version", conarray.ipmode);
+}
+function local_pd_html_string(prevobj, conarray, index, temp)
+{
+if(staStr.indexOf("v6pd") != -1){
+var value1 = $("[id^='Pd']", temp).val();
+var value2 = $("[id^='PdLen']", temp).val();
+return get_next_html_obj(prevobj, "cPrefix_Pd", index, "PD", value1 + "/" + value2);
+}
+return prevobj;
+}
+function local_static_html_string(prevobj, conarray, index, temp)
+{
+var Addressingtype = $("[id^='Addressingtype']", temp).val();
+var atmlik = $("[id^='ATMLinkType']", temp).val();
+var mode = "IP";
+var objret = prevobj;
+var values = {
+"IPoA" : "IPoA",
+"CIP" : "CLIP",
+"Static" : "Static"
+};
+var value = values[Addressingtype];
+if (value)
+{
+Addressingtype = value;
+}
+if ("IPv4" == conarray.ipmode)
+{
+mode = Addressingtype;
+}
+objret = get_next_html_obj(prevobj, "cRouteMode", index, "Type", mode);
+for (var i = 0; i < g_static.length; i++)
+{
+objret = g_static[i](objret, conarray, index, temp);
+}
+return objret;
+}
+function local_dhcp_html_string(prevobj, conarray, index, temp)
+{
+var Addressingtype = $("[id^='Addressingtype']", temp).val();
+var mode = "IP";
+var objret = prevobj;
+if ("IPv4" == conarray.ipmode)
+{
+mode = Addressingtype;
+}
+objret = get_next_html_obj(prevobj, "cRouteMode", index, "Type", mode);
+for (var i = 0; i < g_dhcp.length; i++)
+{
+objret = g_dhcp[i](objret, conarray, index, temp);
+}
+return objret;
+}
+function ppp_html_string(prevobj, conarray, index, temp)
+{
+var objtmp = prevobj;
+var strtmp = $("[id^='TransType']", temp).val();
+objtmp = get_next_html_obj(prevobj, "cRouteMode", index, "Type", strtmp);
+for (var i = 0; i < g_ppp.length; i++)
+{
+objtmp = g_ppp[i](objtmp, conarray, index, temp);
+}
+}
+function ip_html_string(prevobj, conarray, index, temp)
+{
+var objtmp = prevobj;
+var Addressingtype = $("[id^='Addressingtype']", temp).val();
+conarray.ipdhcp = false;
+if ("DHCP" == Addressingtype)
+{
+conarray.ipdhcp = true;
+}
+if (g_ip[Addressingtype])
+{
+objtmp = g_ip[Addressingtype](prevobj, conarray, index, temp);
+}
+}
+function get_bridge_html(prevobj, conarray, index, temp)
+{
+var objtmp = prevobj;
+objtmp = get_next_html_obj(prevobj, "cBridgeMode", index, "Type", "Bridge Connection");
+objtmp = local_xdls_html_string(objtmp, conarray, index, temp);
+if(staStr.indexOf("VLANID") != -1){
+objtmp = local_vlanid_html_string(objtmp, conarray, index, temp);
+}
+}
+function get_route_html(prevobj, conarray, index, temp)
+{
+if (g_route[conarray.linkMode])
+{
+g_route[conarray.linkMode](prevobj, conarray, index, temp);
+}
+}
+function get_major_params(temp, index)
+{
+var objUplink = $("[id^='IF_UPLINK']", temp);
+var objIpMode = $("[id^='IpMode']", temp);
+var objLinkmode = $("[id^='linkMode']", temp);
+var objMode = $("[id^='mode']", temp);
+var objStatus = $("[id^='Status']", temp);
+var xmode = "-1";
+var ipmode = objIpMode.val();
+if ("Both" == ipmode)
+{
+ipmode = "IPv4/v6";
+}
+if ("1" == objUplink.val())
+{
+var objdsl = $("[id^='xdslMode']", temp);
+xmode = objdsl.val();
+}
+var objStrServList = $("[id^='StrServList']", temp);
+return {uplink : objUplink.val(),
+xdslMode : xmode,
+ipmode : ipmode,
+mode : objMode.val(),
+linkMode : objLinkmode.val(),
+ipdhcp : false,
+state : "none",
+status : objStatus.val(),
+StrServList : objStrServList.val()
+};
+}
+function customize_internet(paramsOBJ)
+{
+var ContainerOBJ = paramsOBJ["ContainerOBJ"];
+var reg = /[_:]/;
+var id = ContainerOBJ.attr("id").split(reg);
+var index = id[id.length - 1];
+var myarray = get_major_params(ContainerOBJ, index);
+var obj ;
+if("1" == myarray.uplink)
+{
+obj = $("[id^='DslStateDev_title']", ContainerOBJ);
+}
+else if ("2" == myarray.uplink)
+{
+obj = $("[id^='EthStateDev_title']", ContainerOBJ);
+}
+g_routOrBridge[myarray.mode](obj, myarray, index, ContainerOBJ);
+var data = {};
+data.template = ContainerOBJ;
+$.callModifier("EthStateDev/paramsCtr",data);
+getFocusToClick('span[tabindex="0"]', ContainerOBJ);
+}
+function DPOG_Didisplay(conarray,temp)
+{
+if(conarray.StrServList == "VOIP" )
+{
+$("[id^='Prefix_sub_cIPAddress']", temp).hide();
+$("[id^='Prefix_sub_cDNS']", temp).hide();
+$("[id^='Prefix_sub_cGateWay']", temp).hide();
+}
+}
+$(document).ready(function(){
+var HeadID = "EthStateDev";
+var Head = $("#"+HeadID);
+var template = $("#template_"+ HeadID);
+var ServerAddr = $("address span", Head).text();
+RefreshClickHandle(Head);
+Head.fillDataByCustom = function(suffix,ContainerOBJ){
+var CustomizeParams = {
+"ContainerOBJ":ContainerOBJ
+};
+customize_internet(CustomizeParams);
+local_bind_release_renew(Head, ContainerOBJ, ServerAddr);
+local_bind_connect_disconnect(Head, ContainerOBJ, ServerAddr);
+var data = {};
+data.template = ContainerOBJ;
+$.callModifier("EthStateDev/templateCtr", data);
+};
+Head.succfunction = function(xml){
+if (Head.hasError(xml,"externErrorHint") == 0) {
+var FWIPOBJ = $(xml).find("ID_WAN_COMFIG");
+var RuleNum = $("Instance", FWIPOBJ).length;
+if (0 == RuleNum)
+{
+$(".noDataHint",Head).show().attr("tabindex", 0);
+}
+else
+{
+$(".noDataHint",Head).showIt(false);
+var OBJID = ["ID_WAN_COMFIG"];
+Head.createPageDataByClone(RuleNum,OBJID,xml,
+Head.fillDataByCustom);
+colorTblRow(".colorTbl", "even", Head);
+}
+$.publish("/some/specialWANHide", [$("#EthStateDev")]);
+}
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+$(document).ready(function(){
+var dslHeadID = "DslStateDev";
+var dslHead = $("#"+dslHeadID);
+var dslServerAddr = $("address span", dslHead).text();
+RefreshClickHandle(dslHead);
+dslHead.fillDataByCustom = function(suffix,ContainerOBJ){
+var CustomizeParams = {
+"ContainerOBJ":ContainerOBJ
+};
+customize_internet(CustomizeParams);
+local_bind_release_renew(dslHead, ContainerOBJ, dslServerAddr);
+local_bind_connect_disconnect(dslHead, ContainerOBJ, dslServerAddr);
+};
+dslHead.succfunction = function(xml){
+if (dslHead.hasError(xml,"externErrorHint") == 0) {
+var OBJ = $(xml).find("ID_WAN_COMFIG");
+var RuleNum = $("Instance", OBJ).length;
+if (0 == RuleNum)
+{
+$(".noDataHint",dslHead).show().attr("tabindex", 0);
+}
+else
+{
+$(".noDataHint",dslHead).showIt(false);
+var OBJID = ["ID_WAN_COMFIG"];
+dslHead.createPageDataByClone(RuleNum,OBJID,xml,
+dslHead.fillDataByCustom);
+colorTblRow(".colorTbl", "even", dslHead);
+}
+}
+};
+if ( $(".collapBarWithDataTrans",dslHead).length <= 0 )
+{
+dslHead.dataTransfer(dslServerAddr, "GET", dslHead.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(dslHead);
+}
+});
+})();
+</script>
+
+<div id="EthStateDev" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wan_internetstatus_lua.lua&TypeUplink=2&pageType=1</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1" title="" ></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="EthStateDevBar">WAN Connection Status</h1>
+<div id="EthStateDev_container">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div class="noDataHint" style="display:none;">
+<span>There are no data now. </span>
+</div>
+<div id="template_EthStateDev" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1" title="" ></span>
+</div>
+<form class="colorTbl form_content">
+<input type="hidden" id="_InstID" value="-1">
+<input type="hidden" id="IF_UPLINK" value="2">
+<input type="hidden" id="xDslMode" value="-1">
+<input type="hidden" id="Status" value="-1">
+<input type="hidden" id="linkMode" value="-1">
+<input type="hidden" id="TransType" value="NULL">
+<input type="hidden" id="IpMode" value="NULL">
+<input type="hidden" id="mode" value="NULL">
+<input type="hidden" id="IsNAT" value="NULL">
+<input type="hidden" id="IPAddress" value="NULL">
+<input type="hidden" id="SubnetMask" value="NULL">
+<input type="hidden" id="ConnStatus" value="NULL">
+<input type="hidden" id="UpTime" value="NULL">
+<input type="hidden" id="LLA" value="NULL">
+<input type="hidden" id="GuaNum" value="NULL">
+<input type="hidden" id="Gua1" value="NULL">
+<input type="hidden" id="Gua2" value="NULL">
+<input type="hidden" id="Gua3" value="NULL">
+<input type="hidden" id="Dns1v6" value="NULL">
+<input type="hidden" id="Dns2v6" value="NULL">
+<input type="hidden" id="Dns3v6" value="NULL">
+<input type="hidden" id="UpTimeV6" value="NULL">
+<input type="hidden" id="WorkIFMac" value="NULL">
+<input type="hidden" id="ConnStatus6" value="NULL">
+<input type="hidden" id="GateWay" value="NULL">
+<input type="hidden" id="ConnError" value="NULL">
+<input type="hidden" id="Gateway6" value="NULL">
+<input type="hidden" id="PPPoEACName" value="NULL">
+<input type="hidden" id="RemoteLLA" value="NULL">
+<input type="hidden" id="RemainLeaseTime" value="NULL">
+<input type="hidden" id="Addressingtype" value="NULL">
+<input type="hidden" id="DNS1" value="NULL">
+<input type="hidden" id="DNS2" value="NULL">
+<input type="hidden" id="DNS3" value="NULL">
+<input type="hidden" id="DestAddress" value="NULL">
+<input type="hidden" id="IsAuto" value="NULL">
+<input type="hidden" id="GuaSrc" value="NULL">
+<input type="hidden" id="Gateway6Src" value="NULL">
+<input type="hidden" id="DnsSrc" value="NULL">
+<input type="hidden" id="IsPD" value="NULL">
+<input type="hidden" id="ConnTrigger" value="NULL">
+<input type="hidden" id="LLAStatus" value="NULL">
+<input type="hidden" id="StrServList" value="NULL">
+<input type="hidden" id="VLANID" value="">
+<input type="hidden" id="Pd" value="">
+<input type="hidden" id="PdLen" value="">
+<input type="hidden" id="RxPackets" value="">
+<input type="hidden" id="TxPackets" value="">
+<input type="hidden" id="RxBytes" value="">
+<input type="hidden" id="TxBytes" value="">
+<input type="hidden" id="TxErrors" value="">
+<input type="hidden" id="RxErrors" value="">
+<input type="hidden" id="EthStateUp" value="">
+<input type="hidden" id="EthStateDown" value="">
+<input type="hidden" id="TxUnicast" value="">
+<input type="hidden" id="RxUnicast" value="">
+<input type="hidden" id="TxDropped" value="">
+<input type="hidden" id="RxDropped" value="">
+<input type="hidden" id="TxMulticast" value="">
+<input type="hidden" id="RxMulticast" value="">
+<input type="hidden" id="TxBroadcast" value="">
+<input type="hidden" id="RxBroadcast" value="">
+<input type="hidden" id="IsSLAAC" value="">
+<input type="hidden" id="IsGUA" value="">
+<input type="hidden" id="IsPdAddr" value="">
+<input type="hidden" id="DHCPServer" value="">
+<input type="hidden" id="PortRange" value="">
+<input type="hidden" id="LocalIPv6Addr" value="">
+<input type="hidden" id="LocalIPv4Addr" value="">
+<input type="hidden" id="LowIFID" value="">
+<input type="hidden" id="MAPEStatus" value="">
+<input type="hidden" id="ErrorsSent" value="">
+<input type="hidden" id="ErrorsReceived" value="">
+<input type="hidden" id="MulticastPacketsSent" value="">
+<input type="hidden" id="MulticastPacketsReceived" value="">
+<table class="verticalTable">
+<tr id="EthStateDev_title" class="colorTblRow emFont titleRow">
+<th class="w250 emFont" title="Connection Name">Connection Name</th>
+<td class="w400 emFont" id="WANCName" title=""></td>
+</tr>
+</table>
+</form>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_refresh" id="EthStateDev_Btn_refresh" name="EthStateDev_Btn_refresh" value="Refresh" />
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x49\x43\x38\x4c\x41\x73\x6d\x52\x4f\x71\x57\x33\x71\x6e\x37\x61\x32\x39\x56\x78\x45\x4c\x39\x43";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>

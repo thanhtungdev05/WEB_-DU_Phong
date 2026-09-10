@@ -2386,4 +2386,31 @@ var tableData = [
 	doDisplay();
 </script>
 
+<script>
+/* FTC: Tự động cập nhật Start IP khi nhập xong IP Subnet Mask */
+(function() {
+  function ftcUpdateStartIp() {
+    var ipEl = document.getElementById('uiViewIPAddr');
+    var startIpEl = document.getElementById('StartIp');
+    if (!ipEl || !startIpEl) return;
+    var ip = ipEl.value.trim();
+    var parts = ip.split('.');
+    if (parts.length === 4 && parts.every(function(p) { return p !== '' && !isNaN(p); })) {
+      var startIp = parts[0] + '.' + parts[1] + '.' + parts[2] + '.2';
+      startIpEl.value = startIp;
+      startIpEl.dispatchEvent(new Event('input', { bubbles: true }));
+      startIpEl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  window.addEventListener('load', function() {
+    var maskEl = document.getElementById('uiViewNetMask');
+    if (maskEl) {
+      maskEl.addEventListener('change', ftcUpdateStartIp);
+      maskEl.addEventListener('blur', ftcUpdateStartIp);
+    }
+  });
+})();
+</script>
+
 </html>

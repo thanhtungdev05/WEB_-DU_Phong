@@ -1,0 +1,37 @@
+{
+    "id": "ONT_BE12000",
+    "name": "ONT BE12000",
+    "groups": {
+        "Học Tập": [
+            {
+                "title": "Bài 1-Cấu hình PPPoE",
+                "url": "modules/BE12000/www/learning.html?lab=1"
+            },
+            {
+                "title": "Bài 2-Cấu hình WIFI",
+                "url": "modules/BE12000/www/learning.html?lab=2"
+            },
+            {
+                "title": "Bài 3-Cấu hình WIFI IOT",
+                "url": "modules/BE12000/www/learning.html?lab=4"
+            },
+            {
+                "title": "Bài 4-Cấu hình DNS",
+                "url": "modules/BE12000/www/learning.html?lab=12"
+            },
+            {
+                "title": "Bài 5-Cấu hình địa chỉ IP LAN",
+                "url": "modules/BE12000/www/learning.html?lab=6"
+            },
+            {
+                "title": "Bài 6-Cấu hình Port Forwarding",
+                "url": "modules/BE12000/www/learning.html?lab=13"
+            },
+            {
+                "title": "Bài 7-Cấu hình Mesh wifi",
+                "url": "modules/BE12000/www/learning.html?lab=25",
+                "hidden": true
+            }
+        ]
+    }
+}

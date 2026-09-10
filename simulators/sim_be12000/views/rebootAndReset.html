@@ -1,0 +1,890 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#114;&#101;&#98;&#111;&#111;&#116;&#65;&#110;&#100;&#82;&#101;&#115;&#101;&#116;</div>
+<div id="_NowSupIdInfo">&#109;&#103;&#114;&#65;&#110;&#100;&#68;&#105;&#97;&#103;</div>
+<div id="_NowMidIdInfo">&#100;&#101;&#118;&#77;&#103;&#114;</div>
+<div id="_NowThdIdInfo">&#114;&#101;&#98;&#111;&#111;&#116;&#65;&#110;&#100;&#82;&#101;&#115;&#101;&#116;</div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft" role="complementary">
+<div id="class2Menu" class="class2Menu" role="navigation">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span tabindex="0" role="text">Page Information</span>
+</div>
+
+<p class="pIntroContent" tabindex="0" role="text">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#100;&#101;&#118;&#105;&#99;&#101;&#32;&#109;&#97;&#110;&#97;&#103;&#101;&#109;&#101;&#110;&#116;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+function IfServerLive()
+{
+var HeadID = "RestartManag";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+Head.succfunction = function(xml){
+Head.hasError(xml);
+showWaitTip(false);
+return;
+};
+Head.failfunction = function(XMLHttpRequest,textStatus){
+setTimeout("IfServerLive()", 30000);
+};
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction, Head.failfunction, false);
+}
+$(document).ready(function(){
+var HeadID = "RestartManag";
+var Head = $("#"+HeadID);
+var template = $("#template_"+ HeadID);
+template.bind("fillDataByRestartResult", function(event,xml, template){
+if (template.hasError(xml) == 0)
+{
+setTimeout("IfServerLive()", 30000);
+}
+else
+{
+showWaitTip(false);
+}
+});
+$(".Btn_restart").bind("click", {templateOBJ:template}, function(event){
+var template = event.data.templateOBJ;
+var msg = "Are you sure to reboot the device? ";
+$("#Msg").val(msg);
+$.publish("/some/ctcchangeMsg", [template]);
+msg = $("#Msg").val();
+var confirmLayerOBJ = IniConfirm(msg);
+$("#confirmOK",confirmLayerOBJ).bind("click", {FuncOBJ: template}, function(event){
+showWaitTip(false);
+var template = event.data.FuncOBJ;
+var Head = template.parents(".HeadDIV");
+var ServerAddr = $("address span", Head).text();
+showWaitTip(true,"The device is rebooting, please wait a while. ");
+dataPost("Restart", "fillDataByRestartResult", ServerAddr, template, undefined, false);
+});
+});
+showWaitTip(false);
+initial_collapBarWithDataTrans(Head);
+});
+</script>
+
+<div id="RestartManag" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=devmgr_restartmgr_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="RestartManagBar">Reboot Management</h1>
+<div id="RestartManag_container" class="formTblWrap">
+<input type="hidden" id="DataHasBeenGot" value="1">
+<input type="hidden" id="Msg">
+<div id="template_RestartManag" class="formTbl">
+<div class="OperationWarn" tabindex="0">
+<p class="row">Reboot: After completing this operation, the device will automatically restart. This process will take about 5 minutes.</p>
+<p class="row">Note: The reboot operation will interrupt all current business. </p>
+</div>
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="unfloatBtnGroup">
+<input type="button" class="Button Btn_restart" id="Btn_restart" name="Btn_restart" value="Reboot" />
+</div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+(function(){
+function parseTime(RelTime)
+{
+var ret;
+RelTime = parseInt(RelTime, 10);
+ret = RelTime.toString(10);
+if (ret.length == 1)
+{
+ret = "0" + ret;
+}
+return ret;
+}
+function SetTime(template)
+{
+var HourSrc = $("[id^='HourSrc']", template).val();
+var MinuteSrc = $("[id^='MinuteSrc']", template).val();
+var TimeMin = parseInt(HourSrc)*60 + parseInt(MinuteSrc);
+$("[id^='TimeMin']",template).val(TimeMin);
+$("[id^='HourSrc']", template).val(parseTime(HourSrc));
+$("[id^='MinuteSrc']", template).val(parseTime(MinuteSrc));
+}
+function GetTime(template)
+{
+var TimeMin = $("[id^='TimeMin']", template).val();
+var HourSrc = $("[id^='HourSrc']", template);
+var MinuteSrc = $("[id^='MinuteSrc']", template);
+if (TimeMin ==0 || TimeMin =="")
+{
+HourSrc.val("00");
+MinuteSrc.val("00");
+}
+else
+{
+var hour = parseInt(TimeMin/60);
+HourSrc.val(parseTime(hour));
+var minute = TimeMin- HourSrc.val()*60;
+MinuteSrc.val(parseTime(minute));
+}
+}
+function setWeekToDayEle(template)
+{
+var EveryDay = $("[id^='EveryDay']", template);
+var TimeWeek = $("[id^='TimeWeek']", template);
+var De_WeekVal = TimeWeek.val();
+var WeekVal = parseInt(De_WeekVal,10).toString(2);
+while (WeekVal.length < 7)
+{
+WeekVal = "0" + WeekVal;
+}
+if( WeekVal == "1111111" )
+{
+EveryDay.prop("checked", true);
+}
+else
+{
+EveryDay.prop("checked", false);
+var temp = $("[id^='Time_Day']", template);
+for( var i=0; i < WeekVal.length; i++ )
+{
+if(WeekVal.charAt(i) == '1')
+{
+$(temp[6-i]).prop("checked",true);
+}
+else
+{
+$(temp[6-i]).prop("checked",false);
+}
+}
+}
+EveryDay.change();
+}
+function setDayEleToWeek(template)
+{
+var EveryDay = $("[id^='EveryDay']", template);
+var TimeWeek = $("[id^='TimeWeek']", template);
+var B_WeekVal = "";
+if( EveryDay.is(":checked") )
+{
+B_WeekVal = "1111111";
+}
+else
+{
+var temp = $("[id^='Time_Day']", template);
+for( var i=0; i< temp.length;i++ )
+{
+if($(temp[i]).is(":checked"))
+{
+B_WeekVal = "1" + B_WeekVal;
+}
+else
+{
+B_WeekVal = "0" + B_WeekVal;
+}
+}
+}
+TimeWeek.val(parseInt(B_WeekVal, 2));
+}
+function initial_template_SchedReb(templateID)
+{
+var template = $("#"+templateID);
+var instForm = template.find("form");
+instForm.validate({
+"rules": {
+"HourSrc": {
+"required": true,
+"integer": true,
+"range":[0,23]
+},
+"MinuteSrc": {
+"required": true,
+"integer": true,
+"range":[0,59]
+}
+},
+"messages": {
+}
+});
+$("[id^='EveryDay']",template).bind("change", function () {
+var EveryDayOBJ = $(this);
+var subTemplate = EveryDayOBJ.parents("[id^='template_']");
+$("[id^='Time_Day']", subTemplate).each(function () {
+if(EveryDayOBJ.is(":checked"))
+{
+$(this).prop("checked", false);
+$(this).attr("disabled",true);
+}
+else
+{
+$(this).prop("disabled",false);
+}
+});
+});
+template.bind("fillDataByApplyResult", function(event,xml, template){
+ActionByApplyResult(xml, template);
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var OBJID = ["OBJ_SRCFG_ID","OBJ_SRINFO_ID"];
+ActionByCancelResult(xml, template, OBJID);
+template.trigger("fillDataByCustom",[0, template, xml]);
+});
+template.bind("fillDataByCustom", function(event, suffix, ContainerOBJ, xml){
+setWeekToDayEle(ContainerOBJ);
+GetTime(ContainerOBJ);
+});
+template.bind("hiddenValueChangeByCustom", function(event,template){
+setDayEleToWeek(template);
+SetTime(template);
+});
+}
+$(document).ready(function(){
+var HeadID = "SchedReb";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+initial_template_SchedReb("template_"+HeadID);
+Head.succfunction = function(xml){
+if (Head.hasError(xml,"externErrorHint") == 0)
+{
+var tempobj = $("#template_SchedReb");
+var OBJID = ["OBJ_SRCFG_ID","OBJ_SRINFO_ID"];
+Head.fillDataByOBJID(xml, OBJID, tempobj, 0);
+tempobj.trigger("fillDataByCustom",[0, tempobj, xml]);
+}
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div id="SchedReb" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=devmgr_ScheReboot_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="SchedRebBar">Schedule Reboot</h1>
+<div id="SchedReb_container">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div id="template_SchedReb">
+<form class="form_content">
+<div id="changeArea_SchedReb" class="ChangeArea formTblWrap">
+<div id="errorHint" class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<input type="hidden" id="_InstID" value="">
+<div class="OperationWarn" tabindex="0" id="RebootHint">
+<p class="row">Please set time to reboot. The device will reboot automatically at the time. </p>
+<br>
+</div>
+<div class="row">
+<label for="Enable" class="cfgLabel w130" id="label_Enable">Enable</label>
+<div class="right">
+<input type="checkbox" id="Enable" name="Enable" value="">
+</div>
+</div>
+<input type="hidden" id="TimeWeek" value="">
+<div class="row">
+<label class="left w130">Days</label>
+<div class="right">
+<input name="EveryDay" id="EveryDay" class="PostIgnore" type="checkbox" value=""/><label for="EveryDay">Everyday</label>
+</div>
+</div>
+<div class="row">
+<label for="Time_Day_Su" class="left w130">&nbsp;</label>
+<div class="right">
+<input name="Time_Day_Su" id="Time_Day_Su" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Su"><font style="color:rgb(200,0,0)">Sun.</font>&nbsp;&nbsp;</label>
+<input name="Time_Day_M" id="Time_Day_M" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_M">Mon.&nbsp;&nbsp;</label>
+<input name="Time_Day_T" id="Time_Day_T" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_T">Tues.&nbsp;&nbsp;</label>
+<input name="Time_Day_We" id="Time_Day_We" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_We">Wed.&nbsp;&nbsp;</label>
+<input name="Time_Day_Th" id="Time_Day_Th" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Th">Thur.&nbsp;&nbsp;</label>
+<input name="Time_Day_Fri" id="Time_Day_Fri" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Fri">Fri.&nbsp;&nbsp;</label>
+<input name="Time_Day_Sa" id="Time_Day_Sa" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Sa"><font style="color:rgb(200,0,0)">Sat.</font></label>
+</div>
+</div>
+<input type="hidden" id="TimeMin" value="">
+<div class="row">
+<label class="left w130">Reboot Time</label>
+<div class="right">
+<input type="text" id="HourSrc" name="HourSrc" value="" class="inputNorm" style="width:50px;"/>h&nbsp;
+<span style="display:none;">Range: 0 ~ 23</span>
+<input type="text" id="MinuteSrc" name="MinuteSrc" value="" class="inputNorm" style="width:50px;"/>min
+<span style="display:none;">Range: 0 ~ 59</span>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_instCfgArea" name="Btn_cancel_instCfgArea" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_instCfgArea" name="Btn_apply_instCfgArea" value="Apply" />
+</div>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+function IfServerLive()
+{
+var HeadID = "RestartManag";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+Head.succfunction = function(xml){
+Head.hasError(xml);
+showWaitTip(false);
+return;
+};
+Head.failfunction = function(XMLHttpRequest,textStatus){
+setTimeout("IfServerLive()", 30000);
+};
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction, Head.failfunction, false);
+}
+$(document).ready(function(){
+var HeadID = "ResetManag";
+var Head = $("#"+HeadID);
+var template = $("#template_"+ HeadID);
+$(".Btn_reset").bind("click", {templateOBJ:template}, function(event){
+var template = event.data.templateOBJ;
+var msg = "Are you sure to restore factory defaults? ";
+$("#Msg").val(msg);
+$.publish("/some/changeMsg", [Msg]);
+msg = $("#Msg").val();
+var confirmLayerOBJ = IniConfirm(msg);
+$("#confirmOK",confirmLayerOBJ).bind("click", {FuncOBJ: template}, function(event){
+showWaitTip(false);
+var template = event.data.FuncOBJ;
+var Head = template.parents(".HeadDIV");
+var ServerAddr = $("address span", Head).text();
+showWaitTip(true,"The device is to restore the factory defaults. Please wait a while. ");
+dataPost("Reset", "fillDataByResetResult", ServerAddr, template, undefined, false);
+});
+});
+template.bind("fillDataByResetResult", function(event,xml, template){
+if (template.hasError(xml) == 0)
+{
+setTimeout("IfServerLive()", 30000);
+}
+else
+{
+showWaitTip(false);
+}
+});
+showWaitTip(false);
+initial_collapBarWithDataTrans(Head);
+});
+</script>
+
+<div id="ResetManag" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=db_resetmgr_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="ResetManagBar">Factory Reset Management</h1>
+<div id="ResetManag_container" class="formTblWrap">
+<input type="hidden" id="DataHasBeenGot" value="1">
+<input type="hidden" id="Msg">
+<div id="template_ResetManag" class="formTbl">
+<div class="OperationWarn" tabindex="0">
+<p class="row">Factory Reset: All of the parameter settings will be restored to factory defaults. The device will reboot automatically after this operation finished. </p>
+<p class="row">Note: After this operation finished, all of your settings will be lost and restored to factory defaults. </p>
+</div>
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="unfloatBtnGroup">
+<input type="button" class="Button longBtn Btn_reset" id="Btn_reset" name="Btn_reset" value="Factory Reset" />
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x45\x4b\x6f\x72\x58\x51\x75\x68\x4b\x41\x71\x35\x51\x35\x49\x37\x4d\x72\x45\x51\x38\x65\x73\x32";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>

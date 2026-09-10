@@ -12,7 +12,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   "- SSID Name: <span class=\"val\">FPT Telecom</span>",
   "- WPA Key: <span class=\"val\">fpt12345</span>"
 ],
-  practiceUrl: '/sim_ONT_be6500c/wifi__general.html',
+  practiceUrl: '/ont_be6500c/wifi__general.html',
   clearFields: ['input[name="networks.1.name"]', 'input[name="networks.1.passphrase"]'],
   grading: {
     description: 'Kiểm tra bài 2',

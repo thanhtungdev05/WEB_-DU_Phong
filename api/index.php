@@ -275,9 +275,6 @@ function initialize_session(string $root): void
         if (!is_writable((string)$sessionPath)) {
             $sessionPath = sys_get_temp_dir();
         }
-        if (!is_writable((string)$sessionPath)) {
-            fail(500, 'session-config-error', 'The session store is not writable.');
-        }
         session_save_path((string)$sessionPath);
     } else {
         fail(500, 'session-config-error', 'Unsupported session driver.');

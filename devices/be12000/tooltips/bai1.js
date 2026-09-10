@@ -8,42 +8,34 @@ if (!window.TOOLTIPS_BE12000) window.TOOLTIPS_BE12000 = {};
 window.TOOLTIPS_BE12000['LAB_BE12000_01'] = [
   {
     selector: '#internet:not(.SelectMenuItem)',
-    text: 'Bước 1: Chọn menu Internet',
+    text: 'Chọn Internet',
     position: 'bottom'
   },
   {
     selector: '#internetConfig:not(.selectClass2Menu)',
-    text: 'Bước 2: Chọn WAN ở cột trái',
+    text: 'Chọn WAN',
     position: 'right'
   },
   {
-    selector: '#ethWanConfig:not(.AEleMenu3Selected)',
-    text: 'Bước 3: Chọn WAN ở menu ngang',
+    selector: '#addInstBar_Internet',
+    text: 'Chọn Create New Item',
     position: 'bottom'
   },
   {
-    selector: '#ServList, select[id^="ServList"]',
-    text: 'Bước 4: Chọn kết nối INTERNET_TR069',
-    position: 'right'
+    selector: '#UserName:not(:disabled), input[id^="UserName"]:not(:disabled)',
+    text: 'Bước 1: Nhập Username: hnfdl-123456-789',
+    position: 'right',
+    expected: 'hnfdl-123456-789'
   },
   {
-    selector: '#TransType, select[id^="TransType"]',
-    text: 'Bước 5: Chọn PPPoE (PPP Transfer Type)',
-    position: 'right'
+    selector: '#Password:not(:disabled), input[id^="Password"]:not(:disabled)',
+    text: 'Bước 2: Nhập Password: d123456',
+    position: 'right',
+    expected: 'd123456'
   },
   {
-    selector: '#UserName, input[id^="UserName"]',
-    text: 'Bước 6: Nhập Username: hnfdl-123456-789',
-    position: 'right'
-  },
-  {
-    selector: '#Password, input[id^="Password"]',
-    text: 'Bước 7: Nhập Password: d123456',
-    position: 'right'
-  },
-  {
-    selector: '#Btn_apply_internet, .Btn_apply, #Btn_Apply, input[value="Apply"], .button1',
-    text: 'Bước 8: Bấm Apply để lưu',
+    selector: '#Btn_apply_internet:not(.disableBtn), .Btn_apply:not(.disableBtn)',
+    text: 'Chọn Apply để lưu cấu hình',
     position: 'top'
   }
 ];

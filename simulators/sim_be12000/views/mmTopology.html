@@ -1,0 +1,2120 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#109;&#109;&#84;&#111;&#112;&#111;&#108;&#111;&#103;&#121;</div>
+<div id="_NowSupIdInfo">&#109;&#109;&#84;&#111;&#112;&#111;&#108;&#111;&#103;&#121;</div>
+<div id="_NowMidIdInfo"></div>
+<div id="_NowThdIdInfo"></div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<script type="text/javascript">
+var g_isThinklua = true;
+</script>
+<script type="text/javascript">
+var g_UpdateTopoTimer = null;
+var g_topoServerAddr = "/?_type=menuData&_tag=topo_lua.lua";
+if (!g_isThinklua)
+{
+g_topoServerAddr = "getpage.lua?pid=1005&nextpage=topo_lua.lua";
+}
+function hiddenALLSlave()
+{
+$("[id*='-device-lan-dev']").removeClass("lan-dev-online").addClass("lan-dev");
+$("[id*='-device-2G-dev']").removeClass("wlan-dev-online").addClass("wlan-dev");
+$("[id*='-device-5G-dev']").removeClass("wlan-dev-online").addClass("wlan-dev");
+$("[id*='-device-6G-dev']").removeClass("wlan-dev-online").addClass("wlan-dev");
+$("#master, #slave1-left, #slave1-middle, #slave1-right, #slave2-left, #slave2-middle, #slave2-right").height(180);
+$(".router_big, .router_small").height(120);
+$("[id*='-device-lan-dev']").attr("title","");
+$("[id*='-device-2G-dev']").attr("title","");
+$("[id*='-device-5G-dev']").attr("title","");
+$("[id*='-device-6G-dev']").attr("title","");
+$("[id^='slave1']").css("visibility", "hidden");
+$("[id^='slave2']").css("visibility", "hidden");
+}
+function AccTypetoFrequency(accesstype){
+if (accesstype == "0"){
+return "LAN";
+}
+else if (accesstype == "1"){
+return "2.4G";
+}
+else if (accesstype == "2"){
+return "5G";
+}
+}
+function BeaconTypeToSecurity(BeaconType){
+if (BeaconType == "0"){
+return "OPEN";
+}
+else if (BeaconType == "1"){
+return "WEP";
+}
+else if (BeaconType == "2"){
+return "WPA";
+}
+else if (BeaconType == "3"){
+return "WPA2";
+}
+else if (BeaconType == "10"){
+return "WPA3";
+}
+else{
+return "";
+}
+}
+function setMasterTitle(jqSelector, jsonData)
+{
+var titleStr = "Device: " + jsonData.DeviceName + "\n" +
+"SoftwareVer: " + jsonData.SoftwareVer +"\n" +
+"MAC: " + jsonData.MacAddr + "\n" +
+"IP: " + jsonData.IpAddr;
+$(jqSelector).attr("title", titleStr);
+}
+function setSlaveTitle(jqSelector, jsonData)
+{
+var linkspeedStr = "\n" + "Link Speed: " + jsonData.LinkSpeed + "Mbps";
+var titleStr = "Device: " + jsonData.DeviceName + "\n" +
+"SoftwareVer: " + jsonData.SoftwareVer +"\n" +
+"MAC: " + jsonData.MacAddr + "\n" +
+"IP: " + jsonData.IpAddr + "\n" +
+"Link Type: " + jsonData.AccessType +
+linkspeedStr;
+if(jsonData.AccessType != "ETH")
+{
+titleStr = titleStr + "\n" +
+"Uplink: " + speed_change_auto("wlan",jsonData.BhStaDataUpBpsRate) + "\n" +
+"Downlink: " + speed_change_auto("wlan",jsonData.BhStaDataDownBpsRate) + "\n" +
+"RSSI: " + jsonData.BhStaRssi + "dBm";
+}
+$(jqSelector).attr("title", titleStr);
+}
+function setWlanAdevTitle(jqSelector, jsonData)
+{
+var titleStr = "Device: " + jsonData.HostName + "\n" +
+"MAC: " + jsonData.MacAddr + "\n" +
+"IP: " + jsonData.IpAddr + "\n" +
+"Online Duration: " + jsonData.AssocTime + "s" + "\n" +
+"Real-time upstream: " + bps_speed_change_auto(jsonData.RxRateBps) + "\n" +
+"Real-time downstream: " + bps_speed_change_auto(jsonData.TxRateBps) + "\n" +
+"RSSI: " + jsonData.Rssi + "dBm" + "\n" +
+"BTM: " + jsonData.Btm + "\n" +
+"RRM: " + jsonData.Rrm + "\n" +
+"802.11 Mode: " + jsonData.WirelessMode;
+$(jqSelector).attr("title", titleStr);
+}
+function setEthAdevTitle(jqSelector, jsonData)
+{
+var titleStr = "Device: " + jsonData.HostName + "\n" +
+"MAC: " + jsonData.MacAddr + "\n" +
+"IP: " + jsonData.IpAddr;
+$(jqSelector).attr("title", titleStr);
+}
+function dealcascade(data)
+{
+if (data == null || data.master == null)
+{
+hiddenALLSlave();
+return;
+}
+var master = data.master;
+setMasterTitle("#master .router_big", master);
+$("#master_InstID").val(master.instID);
+var slave = data.slave;
+var count = slave.length;
+if (count > 3) {
+count = 3;
+}
+if(count == 1)
+{
+$("[id*='left']").css("visibility", "hidden");
+$("[id*='right']").css("visibility", "hidden");
+$("#slave1_middle_InstID").val(slave[0].instID);
+$("[id*='slave1-line-top']").css("visibility", "visible");
+$("[id*='slave1-line-middle']").css("visibility", "visible");
+$("[id*='slave1-middle']").css("visibility", "visible");
+setSlaveTitle("#slave1-middle .router_small", slave[0]);
+if(slave[0].slave3)
+{
+$("[id*='slave2-line-middle']").css("visibility", "visible");
+$("[id*='slave2-middle']").css("visibility", "visible");
+setSlaveTitle("#slave2-middle .router_small", slave[0].slave3);
+$("#slave2_middle_InstID").val(slave[0].slave3.instID);
+}
+else
+{
+$("[id*='slave2-middle']").css("visibility", "hidden");
+$("[id*='slave2-line-middle']").css("visibility", "hidden");
+}
+}
+else if(count == 2)
+{
+$("[id*='middle']").css("visibility", "hidden");
+$("[id*='slave1-line-top']").css("visibility", "visible");
+$("[id*='slave1-line-left-1']").css("visibility", "visible");
+$("[id*='slave1-line-left-2']").css("visibility", "visible");
+$("[id*='left']").css("visibility", "visible");
+$("[id*='slave1-line-right-1']").css("visibility", "visible");
+$("[id*='slave1-line-right-2']").css("visibility", "visible");
+$("[id*='right']").css("visibility", "visible");
+setSlaveTitle("#slave1-left .router_small", slave[0]);
+setSlaveTitle("#slave1-right .router_small", slave[1]);
+$("#slave1_left_InstID").val(slave[0].instID);
+$("#slave1_right_InstID").val(slave[1].instID);
+if(slave[0].slave3)
+{
+$("[id*='slave2-line-left']").css("visibility", "visible");
+$("[id*='slave2-left']").css("visibility", "visible");
+setSlaveTitle("#slave2-left .router_small", slave[0].slave3);
+$("#slave2_left_InstID").val(slave[0].slave3.instID);
+}
+else
+{
+$("[id*='slave2-left']").css("visibility", "hidden");
+$("[id*='slave2-line-left']").css("visibility", "hidden");
+}
+if(slave[1].slave3)
+{
+$("[id*='slave2-line-right']").css("visibility", "visible");
+$("[id*='slave2-right']").css("visibility", "visible");
+setSlaveTitle("#slave2-right .router_small", slave[1].slave3);
+$("#slave2_right_InstID").val(slave[1].slave3.instID);
+}
+else
+{
+$("[id*='slave2-right']").css("visibility", "hidden");
+$("[id*='slave2-line-right']").css("visibility", "hidden");
+}
+}
+else if(count == 3)
+{
+$("[id*='slave1-line-top']").css("visibility", "visible");
+$("[id*='slave1-line-middle']").css("visibility", "visible");
+$("[id*='middle']").css("visibility", "visible");
+$("[id*='slave1-line-left-1']").css("visibility", "visible");
+$("[id*='slave1-line-left-2']").css("visibility", "visible");
+$("[id*='left']").css("visibility", "visible");
+$("[id*='slave1-line-right-1']").css("visibility", "visible");
+$("[id*='slave1-line-right-2']").css("visibility", "visible");
+$("[id*='right']").css("visibility", "visible");
+setSlaveTitle("#slave1-left .router_small", slave[0]);
+setSlaveTitle("#slave1-middle .router_small", slave[1]);
+setSlaveTitle("#slave1-right .router_small", slave[2]);
+$("#slave1_left_InstID").val(slave[0].instID);
+$("#slave1_middle_InstID").val(slave[1].instID);
+$("#slave1_right_InstID").val(slave[2].instID);
+if(slave[0].slave3)
+{
+$("[id*='slave2-line-left']").css("visibility", "visible");
+$("[id*='slave2-left']").css("visibility", "visible");
+setSlaveTitle("#slave2-left .router_small", slave[0].slave3);
+$("#slave2_left_InstID").val(slave[0].slave3.instID);
+}
+else
+{
+$("[id*='slave2-left']").css("visibility", "hidden");
+$("[id*='slave2-line-left']").css("visibility", "hidden");
+}
+if(slave[1].slave3)
+{
+$("[id*='slave2-line-middle']").css("visibility", "visible");
+$("[id*='slave2-middle']").css("visibility", "visible");
+setSlaveTitle("#slave2-middle .router_small", slave[1].slave3);
+$("#slave2_middle_InstID").val(slave[1].slave3.instID);
+}
+else
+{
+$("[id*='slave2-middle']").css("visibility", "hidden");
+$("[id*='slave2-line-middle']").css("visibility", "hidden");
+}
+if(slave[2].slave3)
+{
+$("[id*='slave2-line-right']").css("visibility", "visible");
+$("[id*='slave2-right']").css("visibility", "visible");
+setSlaveTitle("#slave2-right .router_small", slave[2].slave3);
+$("#slave2_right_InstID").val(slave[2].slave3.instID);
+}
+else
+{
+$("[id*='slave2-right']").css("visibility", "hidden");
+$("[id*='slave2-line-right']").css("visibility", "hidden");
+}
+}
+else
+{
+$("[id^='slave1']").css("visibility", "hidden");
+$("[id^='slave2']").css("visibility", "hidden");
+}
+dealAD(data);
+var agentEvtTimeoutHandler = null;
+$(".router_small")
+.off("click").on("click", function(){
+var clickObj = $(this);
+clearTimeout(agentEvtTimeoutHandler);
+agentEvtTimeoutHandler = setTimeout(function(){
+visitAgentWeb(clickObj);
+}, 250);
+});
+}
+function dealAD(data)
+{
+var allAD = data.ad;
+var num = allAD.MGET_INST_NUM;
+$("[id*='InstID']").each(function(key,value){
+var obj_ID = $(this).parent().attr("id");
+var tempInst = $(this).val();
+var lanCount = 0;
+var w2GCount = 0;
+var w5GCount = 0;
+var w6GCount = 0;
+for(var i=1;i<=num;i++)
+{
+if(tempInst == allAD[i].parent)
+{
+if(allAD[i].AccessType =="0")
+{
+lanCount++;
+if (lanCount > 3) {
+continue;
+}
+setEthAdevTitle("#"+obj_ID+"-device-lan-dev"+lanCount, allAD[i]);
+$("#"+obj_ID+"-device-lan-dev"+lanCount).removeClass("lan-dev").addClass("lan-dev-online");
+}
+else if(allAD[i].AccessType =="1")
+{
+w2GCount++;
+if (w2GCount > 3) {
+continue;
+}
+setWlanAdevTitle("#"+obj_ID+"-device-2G-dev"+w2GCount, allAD[i]);
+$("#"+obj_ID+"-device-2G-dev"+w2GCount).removeClass("wlan-dev").addClass("wlan-dev-online");
+}
+else if(allAD[i].AccessType =="2")
+{
+w5GCount++;
+if (w5GCount > 3) {
+continue;
+}
+setWlanAdevTitle("#"+obj_ID+"-device-5G-dev"+w5GCount, allAD[i]);
+$("#"+obj_ID+"-device-5G-dev"+w5GCount).removeClass("wlan-dev").addClass("wlan-dev-online");
+}
+else if(allAD[i].AccessType =="3")
+{
+w6GCount++;
+if (w6GCount > 3) {
+continue;
+}
+setWlanAdevTitle("#"+obj_ID+"-device-6G-dev"+w6GCount, allAD[i]);
+$("#"+obj_ID+"-device-6G-dev"+w6GCount).removeClass("wlan-dev").addClass("wlan-dev-online");
+}
+}
+}
+$("#"+obj_ID+"-device-lan-count").val(lanCount);
+$("#"+obj_ID+"-device-2G-count").val(w2GCount);
+$("#"+obj_ID+"-device-5G-count").val(w5GCount);
+$("#"+obj_ID+"-device-6G-count").val(w6GCount);
+if (lanCount > 0) {
+$("#"+obj_ID+"-device-lan-dev4").removeClass("more-lan-dev").addClass("more-lan-dev-online");
+} else {
+$("#"+obj_ID+"-device-lan-dev4").removeClass("more-lan-dev-online").addClass("more-lan-dev");
+}
+if (w2GCount > 0) {
+$("#"+obj_ID+"-device-2G-dev4").removeClass("more-wlan-dev").addClass("more-wlan-dev-online");
+} else {
+$("#"+obj_ID+"-device-2G-dev4").removeClass("more-wlan-dev-online").addClass("more-wlan-dev");
+}
+if (w5GCount > 0) {
+$("#"+obj_ID+"-device-5G-dev4").removeClass("more-wlan-dev").addClass("more-wlan-dev-online");
+} else {
+$("#"+obj_ID+"-device-5G-dev4").removeClass("more-wlan-dev-online").addClass("more-wlan-dev");
+}
+if (w6GCount > 0) {
+$("#"+obj_ID+"-device-6G-dev4").removeClass("more-wlan-dev").addClass("more-wlan-dev-online");
+} else {
+$("#"+obj_ID+"-device-6G-dev4").removeClass("more-wlan-dev-online").addClass("more-wlan-dev");
+}
+});
+}
+function visitAgentWeb(evtTarget)
+{
+var titleStr = evtTarget.attr("title");
+var patt1 = /\d+\.\d+\.\d+\.\d+/;
+var IPString = titleStr.indexOf("IP:");
+var LinkTypeString = titleStr.indexOf("Link Type:");
+var titleIP = titleStr.substring(IPString + 3, LinkTypeString - 1);
+var pathStr = titleIP.match(patt1);
+var abs = window.top.location.href;
+var patt2 = /\w+:/;
+var protocolStr = abs.match(patt2);
+var urlStr = protocolStr + "//" + pathStr;
+window.open(urlStr);
+}
+function UpdateTopo()
+{
+hiddenALLSlave();
+$.ajax({
+url: g_topoServerAddr,
+type: "GET",
+dataType: "json",
+timeout: 30000,
+async: true,
+cache:false,
+error: function(){
+hiddenALLSlave();
+showWaitTip(false);
+},
+success: function(data){
+var visibletype = $("#Non1905AccessDevDiv_copy").css("visibility");
+if(visibletype == "visible")
+{
+showWaitTip(true);
+}
+else
+{
+showWaitTip(false);
+}
+dealcascade(data);
+}
+});
+}
+function dealmoredata(Head, data, accesstype)
+{
+var HeadID = Head.attr("id");
+var ruleTemplate = $("#data_AccessDev",Head);
+var TemplateOBJ = $("#template_"+HeadID,Head);
+$("[id^='data_AccessDev_']", TemplateOBJ).remove();
+if (data == null || data.master == null)
+{
+return;
+}
+var RuleNum = data.ad.MGET_INST_NUM;
+$("#_InstNum", Head).val(RuleNum);
+if (RuleNum == 0)
+{
+return;
+}
+for (var i=0; i<RuleNum; i++)
+{
+var j = i+1;
+var hostname = data.ad[j].HostName;
+var mac = data.ad[j].MacAddr;
+var ip = data.ad[j].IpAddr;
+var onlineduration = data.ad[j].AssocTime + "s";
+var realtimeupstream = bps_speed_change_auto(data.ad[j].RxRateBps);
+var realtimedownstream = bps_speed_change_auto(data.ad[j].TxRateBps);
+var rssi = data.ad[j].Rssi + "dBm";
+var btm = data.ad[j].Btm;
+var rrm = data.ad[j].Rrm;
+var wlm = data.ad[j].WirelessMode;
+var clone = ruleTemplate.cloneWithSuffix(i, "_");
+ruleTemplate.before(clone);
+$("[id^='HostName_"+i+"']", clone).text(hostname).attr("title", hostname);
+$("[id^='MAC_"+i+"']", clone).text(mac).attr("title", mac);
+$("[id^='IP_"+i+"']", clone).text(ip).attr("title", ip);
+$("[id^='OnlineDuration_"+i+"']", clone).text(onlineduration).attr("title", onlineduration);
+$("[id^='RealTimeUpstream_"+i+"']", clone).text(realtimeupstream).attr("title", realtimeupstream);
+$("[id^='RealTimeDownstream_"+i+"']", clone).text(realtimedownstream).attr("title", realtimedownstream);
+$("[id^='Rssi_"+i+"']", clone).text(rssi).attr("title", rssi);
+$("[id^='Btm_"+i+"']", clone).text(btm).attr("title", btm);
+$("[id^='Rrm_"+i+"']", clone).text(rrm).attr("title", rrm);
+$("[id^='WirelessMode_"+i+"']", clone).text(wlm).attr("title", wlm);
+clone.showIt(true);
+}
+var wlanOnlyParas = $("span.wlan_only", Head);
+if (0 == accesstype) {
+wlanOnlyParas.showIt(false);
+} else {
+wlanOnlyParas.showIt(true);
+}
+reposition_box("Non1905AccessDevDiv_copy");
+var TiplayerResize = window.onresize;
+window.onresize = function()
+{
+TiplayerResize();
+if ($("#Non1905AccessDevDiv_copy").css("display") != "none")
+{
+reposition_box("Non1905AccessDevDiv_copy");
+}
+}
+}
+function getAccessDev(accesstype, parentID, Head)
+{
+if (accesstype == 'LAN')
+{
+accesstype = 0;
+}
+else if(accesstype == '2G')
+{
+accesstype = 1;
+}
+else if(accesstype == '5G')
+{
+accesstype = 2;
+}
+else if(accesstype == '6G')
+{
+accesstype = 3;
+}
+var accessDevAddr = g_topoServerAddr + "&AccessType=" + accesstype + "&ParentID=" + parentID + "&Action=More";
+$.ajax({
+url:accessDevAddr,
+type: "GET",
+dataType: "json",
+timeout: 30000,
+async: true,
+cache:false,
+error: function(){
+hiddenALLSlave();
+},
+success: function(data){
+dealmoredata(Head, data, accesstype);
+}
+});
+}
+function TopoShowAccessDev(accesstype, moreid)
+{
+var accessDevCount = $("#"+moreid+"-count").val();
+if(accessDevCount < 1)
+{
+return;
+}
+$("#blackMask").css("display", "block");
+var source = $("#Non1905AccessDevDiv");
+var clone = source.clone(true);
+clone.attr("id", clone.attr("id")+"_copy");
+clone.showIt(true);
+clone.appendTo('body');
+var moreobj = $("#"+moreid);
+var templateobj = moreobj.parents(".topo-border-radius");
+var mac = $(".DeviceMac",templateobj).val();
+var AccessDevHead = $("#AccessDevDisplay", clone);
+getAccessDev(accesstype, mac, AccessDevHead);
+reposition_box("Non1905AccessDevDiv_copy");
+$("#Non1905AccessDevDiv_copy").css("display", "block");
+$("#"+"instDelete_AccessDev", AccessDevHead).bind("click", function(event){
+showWaitTip(false);
+$("#Non1905AccessDevDiv_copy").remove();
+});
+}
+function setAliasEvt(evtTarget) {
+g_UpdateTopoTimer.stop();
+var title = evtTarget.attr("title");
+var macMatch = title.match(/MAC:\s*[a-fA-F0-9]{2}(:[a-fA-F0-9]{1,2}){5}/);
+var devMatch = title.match(/Device:.*/);
+var oldAlias = devMatch != null ? devMatch[0].replace(/Device:\s*/,"") : "";
+var temp = $(this);
+var contxt = $("<p>Alias: <input type='text' id='alias' value='' class='w200'></p>");
+contxt.find("#alias").val(oldAlias);
+var confirmLayer = IniConfirm("");
+$("#confirmMsg", confirmLayer).html(contxt);
+$("#confirmCancel", confirmLayer).off("click").on("click", function(){
+showWaitTip(false);
+g_UpdateTopoTimer.start();
+});
+$("#confirmOK", confirmLayer).off("click").on("click", function(){
+var InstIdentityVal = macMatch != null ? macMatch[0].replace(/MAC:\s*/,"") : "";
+var AliasVal = $("#alias",confirmLayer).val();
+var PostData = "InstIdentity="+InstIdentityVal+"&"
++ "Alias=" + AliasVal;
+dataPost("SET_ALIAS", "callbackSetAlias", g_topoServerAddr+"&Action=SET_ALIAS", temp, PostData,false,undefined,"json");
+});
+temp.bind("callbackSetAlias", function(event,xml, temp){
+UpdateTopo();
+g_UpdateTopoTimer.start();
+showWaitTip(false);
+});
+}
+function modifyAccDev(btn) {
+var template = $(btn).closest("div.colorTblRow");
+$(btn).hide();
+$("button.editing", template).show();
+var hostNameObj = $("[id^=HostName]", template);
+var oldName = hostNameObj.text();
+hostNameObj.html("<input type='text' value='" + HTMLEnCode(oldName) + "' class='w80'>" +
+"<input type='hidden' value='" + HTMLEnCode(oldName) + "'>");
+}
+function doModify(btn) {
+var template = $(btn).closest("div.colorTblRow");
+var hostNameObj = $("[id^=HostName]", template);
+var inputVal = $("input[type=text]", hostNameObj).val();
+var data = {};
+var InstIdentityVal = $("[id^=MAC]", template).text();
+var AliasVal = inputVal;
+var PostData = "InstIdentity="+InstIdentityVal+"&"
++ "Alias=" + AliasVal;
+dataPost("SET_ALIAS", "callbackdoModify", g_topoServerAddr+"&Action=SET_ALIAS", template, PostData, false,undefined,"json");
+template.bind("callbackdoModify", function(event,xml, template){
+UpdateTopo();
+hostNameObj.text(inputVal).attr("title", inputVal);
+$("button.notEditing", template).show();
+$("button.editing", template).hide();
+});
+}
+function cancelModify(btn) {
+var template = $(btn).closest("div.colorTblRow");
+$("button.notEditing", template).show();
+$("button.editing", template).hide();
+var hostNameObj = $("[id^=HostName]", template);
+var inputVal = $("input[type=hidden]", hostNameObj).val();
+hostNameObj.text(inputVal);
+}
+$(document).ready(function(){
+var topoImgs = ['./img/master.png', './img/router_big.png', './img/more_online.png', './img/wlan.png',
+'./img/lan-icon.png', './img/lap-top.png', './img/iphone_offline.png', './img/iphone.png',
+'./img/laptop_offline.png', './img/more.png', './img/slave.png', './img/router_small.png'];
+function preload(imgSrcArr)
+{
+var imgTmp = [];
+for (var i = 0; i < imgSrcArr.length; i++)
+{
+imgTmp[i] = new Image();
+imgTmp[i].src = imgSrcArr[i];
+}
+}
+preload(topoImgs);
+var timeIntervalTOPO = 15;
+var TopoOBJ = $("#master-area");
+g_UpdateTopoTimer = new ContextBindingTimer(function () {
+UpdateTopo();
+}, {interval: timeIntervalTOPO*1000, contextDom: TopoOBJ.get(0)});
+UpdateTopo();
+g_UpdateTopoTimer.start();
+});
+</script>
+
+
+<style type="text/css">
+.topo-left{
+float:left;
+}
+.topo-border{
+border:solid 1px #bcbcbc;
+}
+.topo-border-radius{
+border-radius:3px;
+}
+#master-area{
+width:950px;
+margin:0px 1px;
+}
+#master{
+width:360px;
+height:140px;
+margin:15px 293px;
+}
+#master-router{
+width:25%;
+height:100%;
+background-color: #EBEBEB;
+}
+#master-logo{
+width:50px;
+height:50px;
+margin:-1px;
+background:url(./img/master.png) no-repeat center;
+}
+.router_big{
+width:77px;
+height:56px;
+margin:-20px 13px;
+background:url(./img/router_big.png) no-repeat center;
+}
+#master-device-all{
+width:28%;
+height:100%;
+background-color: #EBEBEB;
+}
+#master-device-lan{
+width:278px;
+height:41px;
+line-height:41px;
+}
+#master-device-lan .master-device-lan-icon{
+padding:7px 23px 0 0;
+}
+.lan-icon{
+width:32px;
+height:32px;
+background:url(./img/lan-icon.png) no-repeat center;
+}
+#master-device-lan .master-device-lan-dev{
+margin:7px 3px 0 2px;
+}
+.lan-dev-online{
+width:34px;
+height:34px;
+background:url(./img/lap-top.png) no-repeat center;
+}
+.lan-dev{
+width:34px;
+height:34px;
+background:url(./img/laptop_offline.png) no-repeat center;
+}
+.more-lan-dev{
+width:34px;
+height:34px;
+background:url(./img/more.png) no-repeat center;
+}
+.more-lan-dev-online{
+width:34px;
+height:34px;
+background:url(./img/more_online.png) no-repeat center;
+cursor:pointer;
+}
+#master-device-2G{
+width:278px;
+height:38px;
+line-height:38px;
+}
+#master-device-2G .master-device-2G-icon{
+padding:5px 23px 0 0;
+}
+.wlan-icon{
+width:32px;
+height:32px;
+background:url(./img/wlan.png) no-repeat center;
+}
+#master-device-2G .master-device-2G-dev,#master-device-5G .master-device-5G-dev,#master-device-6G .master-device-6G-dev{
+margin:4px 4px 0 3px
+}
+.wlan-dev{
+width:34px;
+height:34px;
+background:url(./img/iphone_offline.png) no-repeat center;
+}
+.wlan-dev-online{
+width:34px;
+height:34px;
+background:url(./img/iphone.png) no-repeat center;
+}
+.more-wlan-dev{
+width:34px;
+height:34px;
+background:url(./img/more.png) no-repeat center;
+}
+.more-wlan-dev-online{
+width:34px;
+height:34px;
+background:url(./img/more_online.png) no-repeat center;
+cursor:pointer;
+}
+#master-device-5G{
+width:278px;
+height:45px;
+line-height:45px;
+}
+#master-device-5G .master-device-5G-icon{
+padding:4px 23px 0 2px;
+}
+#master-device-6G{
+width:278px;
+height:45px;
+line-height:45px;
+}
+#master-device-6G .master-device-6G-icon{
+padding:4px 23px 0 2px;
+}
+#slave1{
+visibility: hidden;
+}
+#slave2{
+visibility: hidden;
+}
+#slave1-line-left-1{
+width: 2px;
+height: 24px;
+background: #03bbff;
+margin-left:143px;
+}
+#slave1-line-left-2{
+width:335px;
+height:23px;
+border-top:2px solid #03bbff;
+}
+#slave1-line-top{
+width: 2px;
+height: 19px;
+background: #03bbff;
+margin: -15px 0 0 480px;
+visibility: hidden;
+}
+#slave1-line-middle{
+width:2px;
+height: 23px;
+background: #03bbff;
+position: absolute;
+left: 480px;
+}
+#slave1-line-right-1{
+width:315px;
+height:23px;
+border-top:2px solid #03bbff;
+}
+#slave1-line-right-2{
+width: 2px;
+height: 24px;
+background: #03bbff;
+}
+#slave1-left{
+width:300px;
+height:140px;
+border:solid 1px #bcbcbc;
+margin:-2px 0 0 3px;
+}
+#slave1-left-router{
+width:18%;
+height:100%;
+background-color: #EBEBEB;
+}
+#slave1-left-logo{
+width:50px;
+height:50px;
+background:url(./img/slave.png) no-repeat center;
+margin:-1px 0 0 -1px;
+}
+.router_small{
+width:40px;
+height:50px;
+margin:-12px 0 0 12px;
+background:url(./img/router_small.png) no-repeat center;
+}
+#slave1-left-device-all,#slave1-middle-device-all,#slave2-middle-device-all,#slave2-left-device-all,#slave1-right-device-all,#slave2-right-device-all{
+width:28%;
+height:100%;
+background-color: #EBEBEB;
+}
+#slave1-left-device-lan{
+width:254px;
+height:41px;
+line-height:41px;
+}
+#slave1-left-device-lan .slave1-left-device-lan-icon{
+padding:12px 12px 0 0;
+}
+#slave1-left-device-lan .slave1-left-device-lan-dev{
+margin:10px 5px 0 2px;
+}
+#slave1-left-device-2G{
+width:254px;
+height:38px;
+line-height:38px;
+}
+#slave1-left-device-2G .slave1-left-device-2G-icon{
+padding:5px 12px 0 0;
+}
+#slave1-left-device-2G .slave1-left-device-2G-dev{
+margin:4px 4px 0 3px;
+}
+#slave1-left-device-5G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave1-left-device-5G .slave1-left-device-5G-icon{
+padding:8px 12px 0 3px;
+}
+#slave1-left-device-5G .slave1-left-device-5G-dev{
+margin:5px 4px 0 3px
+}
+#slave1-left-device-6G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave1-left-device-6G .slave1-left-device-6G-icon{
+padding:8px 12px 0 3px;
+}
+#slave1-left-device-6G .slave1-left-device-6G-dev{
+margin:5px 4px 0 3px
+}
+#slave1-middle{
+width:300px;
+height:140px;
+margin:-2px 0 0 18px;
+}
+#slave1-middle-router{
+width:20%;
+height:100%;
+background-color: #EBEBEB;
+}
+#slave1-middle-logo{
+width:50px;
+height:50px;
+background:url(./img/slave.png) no-repeat center;
+margin:-1px 0 0 -1px;
+}
+#slave1-middle-device-lan{
+width:254px;
+height:41px;
+line-height:41px;
+}
+#slave1-middle-device-lan .slave1-middle-device-lan-icon{
+padding:12px 12px 0 0;
+}
+#slave1-middle-device-lan .slave1-middle-device-lan-dev{
+margin:10px 5px 0 2px
+}
+#slave1-middle-device-2G{
+width:254px;
+height:38px;
+line-height:38px;
+}
+#slave1-middle-device-2G .slave1-middle-device-2G-icon{
+padding:5px 12px 0 0;
+}
+#slave1-middle-device-2G .slave1-middle-device-2G-dev{
+margin:5px 4px 0 3px;
+}
+#slave1-middle-device-5G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave1-middle-device-5G .slave1-middle-device-5G-icon{
+padding:8px 12px 0 3px;
+}
+#slave1-middle-device-5G .slave1-middle-device-5G-dev{
+margin:4px 4px 0 3px;
+}
+#slave1-middle-device-6G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave1-middle-device-6G .slave1-middle-device-6G-icon{
+padding:8px 12px 0 3px;
+}
+#slave1-middle-device-6G .slave1-middle-device-6G-dev{
+margin:4px 4px 0 3px;
+}
+#slave1-right{
+width:300px;
+height:140px;
+margin:-2px 0 0 20px;
+}
+#slave1-right-router{
+width:20%;
+height:100%;
+background-color: #EBEBEB;
+}
+#slave1-right-logo{
+width:50px;
+height:50px;
+margin:-1px 0 0 -1px;
+background:url(./img/slave.png) no-repeat center;
+}
+#slave1-right-device-lan{
+width:254px;
+height:41px;
+line-height:41px;
+}
+#slave1-right-device-lan .slave1-right-device-lan-icon{
+padding:12px 12px 0 0;
+}
+#slave1-right-device-lan .slave1-right-device-lan-dev{
+margin:10px 5px 0 2px;
+}
+#slave1-right-device-2G{
+width:254px;
+height:38px;
+line-height:38px;
+}
+#slave1-right-device-2G .slave1-right-device-2G-icon{
+padding:5px 12px 0 0;
+}
+#slave1-right-device-2G .slave1-right-device-2G-dev{
+margin:4px 4px 0 3px;
+}
+#slave1-right-device-5G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave1-right-device-5G .slave1-right-device-5G-icon{
+padding:8px 12px 0 3px;
+}
+#slave1-right-device-5G .slave1-right-device-5G-dev{
+margin:4px 4px 0 3px;
+}
+#slave1-right-device-6G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave1-right-device-6G .slave1-right-device-6G-icon{
+padding:8px 12px 0 3px;
+}
+#slave1-right-device-6G .slave1-right-device-6G-dev{
+margin:4px 4px 0 3px;
+}
+#slave2-line-left{
+width: 2px;
+height: 40px;
+background: #03bbff;margin:0 0 0 141px;
+}
+#slave2-line-middle{
+width: 2px;
+height: 39px;
+background: #03bbff;
+margin:0 0 0 335px;
+}
+#slave2-line-right{
+width: 2px;
+height: 39px;
+background: #03bbff;
+margin:0 0 0 316px;
+}
+#slave2-left{
+width:300px;
+height:140px;
+margin:-2px 0 0 3px;
+}
+#slave2-left-router{
+width:18%;
+height:100%;
+background-color: #EBEBEB;
+}
+#slave2-left-logo{
+width:50px;
+height:50px;
+margin:-1px 0 0 -1px;
+background:url(./img/slave.png) no-repeat center;
+}
+#slave2-left-device-lan{
+width:254px;
+height:41px;
+line-height:41px;
+}
+#slave2-left-device-lan .slave2-left-device-lan-icon{
+padding:12px 12px 0 0;
+}
+#slave2-left-device-lan .slave2-left-device-lan-dev{
+margin:10px 5px 0 2px;
+}
+#slave2-left-device-2G{
+width:254px;
+height:38px;
+line-height:38px;
+}
+#slave2-left-device-2G .slave2-left-device-2G-icon{
+padding:5px 12px 0 0;
+}
+#slave2-left-device-2G .slave2-left-device-2G-dev{
+margin:4px 4px 0 3px;
+}
+#slave2-left-device-5G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave2-left-device-5G .slave2-left-device-5G-icon{
+padding:8px 12px 0 3px;
+}
+#slave2-left-device-5G .slave2-left-device-5G-dev{
+margin:5px 4px 0 3px;
+}
+#slave2-left-device-6G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave2-left-device-6G .slave2-left-device-6G-icon{
+padding:8px 12px 0 3px;
+}
+#slave2-left-device-6G .slave2-left-device-6G-dev{
+margin:5px 4px 0 3px;
+}
+#slave2-middle{
+width:300px;
+height:140px;
+margin:-2px 0 0 20px;
+}
+#slave2-middle-router{
+width:20%;
+height:100%;
+background-color:#EBEBEB;
+}
+#slave2-middle-logo{
+width:50px;
+height:50px;
+margin:-1px 0 0 -1px;
+background:url(./img/slave.png) no-repeat center;
+}
+#slave2-middle-device-lan{
+width:254px;
+height:41px;
+line-height:41px;
+}
+#slave2-middle-device-lan .slave2-middle-device-lan-icon{
+padding:12px 12px 0 0;
+}
+#slave2-middle-device-lan .slave2-middle-device-lan-dev{
+margin:10px 5px 0 2px
+}
+#slave2-middle-device-2G{
+width:254px;
+height:38px;
+line-height:38px;
+}
+#slave2-middle-device-2G .slave2-middle-device-2G-dev{
+margin:4px 4px 0 3px;
+}
+#slave2-middle-device-2G .slave2-middle-device-2G-icon{
+padding:5px 12px 0 0;
+}
+#slave2-middle-device-5G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave2-middle-device-5G .slave2-middle-device-5G-icon{
+padding:8px 12px 0 3px;
+}
+#slave2-middle-device-5G .slave2-middle-device-5G-dev{
+margin:4px 4px 0 3px;
+}
+#slave2-middle-device-6G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave2-middle-device-6G .slave2-middle-device-6G-icon{
+padding:8px 12px 0 3px;
+}
+#slave2-middle-device-6G .slave2-middle-device-6G-dev{
+margin:4px 4px 0 3px;
+}
+#slave2-right{
+width:300px;
+height:140px;
+margin:-2px 0 0 20px;
+}
+#slave2-right-router{
+width:20%;
+height:100%;
+background-color: #EBEBEB;
+}
+#slave2-right-logo{
+width:50px;
+height:50px;
+background:url(./img/slave.png) no-repeat center;
+margin:-1px 0 0 -1px
+}
+#slave2-right-device-lan{
+width:254px;
+height:41px;
+line-height:41px;
+}
+#slave2-right-device-lan .slave2-right-device-lan-icon{
+padding:12px 12px 0 0;
+}
+#slave2-right-device-lan .slave2-right-device-lan-dev{
+margin:10px 5px 0 2px;
+}
+#slave2-right-device-2G{
+width:254px;
+height:38px;
+line-height:38px;
+}
+#slave2-right-device-2G .slave2-right-device-2G-icon{
+padding:5px 12px 0 0;
+}
+#slave2-right-device-2G .slave2-right-device-2G-dev{
+margin:4px 4px 0 3px;
+}
+#slave2-right-device-5G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave2-right-device-5G .slave2-right-device-5G-icon{
+padding:8px 12px 0 3px;
+}
+#slave2-right-device-5G .slave2-right-device-5G-dev{
+margin:4px 4px 0 3px;
+}
+#slave2-right-device-6G{
+width:254px;
+height:45px;
+line-height:45px;
+}
+#slave2-right-device-6G .slave2-right-device-6G-icon{
+padding:8px 12px 0 3px;
+}
+#slave2-right-device-6G .slave2-right-device-6G-dev{
+margin:4px 4px 0 3px;
+}
+.white_content_AccessDev
+{
+display: none;
+max-width: 1200px;
+height: auto !important;
+background: #FFFFFF;
+z-index: 101;
+overflow: auto;
+position: fixed;
+left: 25%;
+top: 80px;
+}
+.divAccessDevDisplay {
+padding: 20px 10px;
+text-align: left;
+}
+h1 {
+border-bottom: 1px dotted #313131;
+font-size: 16px;
+font-weight: normal;
+padding-bottom: 8px;
+margin-bottom: 10px;
+}
+.closePopLayer {
+position: absolute;
+right: 10px;
+top: 7px;
+cursor: pointer;
+}
+#aliasTips {
+position: absolute;
+left: 660px;
+right: 20px;
+color: #acacac;
+}
+#AccessDev_container .colorTblRow{
+padding: 0 3px;
+}
+
+</style>
+
+<div id="master-area">
+<div id="master" class="topo-border topo-border-radius">
+<input type="hidden" id="master_InstID" class="DeviceMac" value="">
+<div id="master-router" class="topo-left">
+<div id="master-logo"></div>
+<div class="router_big"></div>
+</div>
+<div id="master-device-all" class="topo-left">
+<div id="master-device-lan">
+<ul>
+<input type="hidden" id="master-device-lan-count" value="">
+<li class="topo-left" style="width:40px;margin:3px 0 0 20px;"><span>LAN</span></li>
+<li class="topo-left master-device-lan-icon"> <div id="master-device-lan-icon" class="lan-icon"></div></li>
+<li class="topo-left master-device-lan-dev"> <div id="master-device-lan-dev1" class="lan-dev"></div></li>
+<li class="topo-left master-device-lan-dev"> <div id="master-device-lan-dev2" class="lan-dev"></div></li>
+<li class="topo-left master-device-lan-dev"> <div id="master-device-lan-dev3" class="lan-dev"></div></li>
+<li class="topo-left master-device-lan-dev"> <div id="master-device-lan-dev4" class="more-lan-dev" onclick="TopoShowAccessDev('LAN', 'master-device-lan')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:218px;margin:0 22px;"></hr>
+<div id="master-device-2G">
+<ul>
+<input type="hidden" id="master-device-2G-count" value="">
+<li class="topo-left" style="width:38px;margin:2px 0 0 20px;"><span>2.4G</span></li>
+<li class="topo-left master-device-2G-icon"> <div id="master-device-2G-icon" class="wlan-icon"></div></li>
+<li class="topo-left master-device-2G-dev"> <div id="master-device-2G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left master-device-2G-dev"> <div id="master-device-2G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left master-device-2G-dev"> <div id="master-device-2G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left master-device-2G-dev"> <div id="master-device-2G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('2G', 'master-device-2G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 22px;"></hr>
+<div id="master-device-5G">
+<ul>
+<input type="hidden" id="master-device-5G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 16px;"><span>5G</span></li>
+<li class="topo-left master-device-5G-icon"> <div id="master-device-5G-icon" class="wlan-icon"></div></li>
+<li class="topo-left master-device-5G-dev"> <div id="master-device-5G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left master-device-5G-dev"> <div id="master-device-5G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left master-device-5G-dev"> <div id="master-device-5G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left master-device-5G-dev"> <div id="master-device-5G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('5G', 'master-device-5G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 22px;"></hr>
+<div id="master-device-6G">
+<ul>
+<input type="hidden" id="master-device-6G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 16px;"><span>6G</span></li>
+<li class="topo-left master-device-6G-icon"> <div id="master-device-6G-icon" class="wlan-icon"></div></li>
+<li class="topo-left master-device-6G-dev"> <div id="master-device-6G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left master-device-6G-dev"> <div id="master-device-6G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left master-device-6G-dev"> <div id="master-device-6G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left master-device-6G-dev"> <div id="master-device-6G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('6G', 'master-device-6G')"></div></li>
+</ul>
+</div>
+</div>
+</div>
+<div style="clear:both;"></div>
+</div>
+<div id="slave1-line-top"></div>
+<div id="slave1">
+<div id="slave1-line">
+<div id="slave1-line-left-1" class="topo-left"></div>
+<div id="slave1-line-left-2" class="topo-left"></div>
+<div id="slave1-line-middle"></div>
+<div id="slave1-line-right-1" class="topo-left"></div>
+<div id="slave1-line-right-2" class="topo-left"></div>
+</div>
+<div style="clear:both;"></div>
+<div style="clear:both;"></div>
+<div id="slave1-left" class="topo-left topo-border topo-border-radius">
+<input type="hidden" id="slave1_left_InstID" class="DeviceMac" value="">
+<div id="slave1-left-router" class="topo-left">
+<div id="slave1-left-logo"></div>
+<div class="router_small clickable"></div>
+</div>
+<div id="slave1-left-device-all" class="topo-left">
+<div id="slave1-left-device-lan">
+<ul>
+<input type="hidden" id="slave1-left-device-lan-count" value="">
+<li class="topo-left" style="width:40px;margin:5px 2px 0 3px;"><span>LAN</span></li>
+<li class="topo-left slave1-left-device-lan-icon"> <div id="slave1-left-device-lan-icon" class="lan-icon"></div></li>
+<li class="topo-left slave1-left-device-lan-dev"> <div id="slave1-left-device-lan-dev1" class="lan-dev"></div></li>
+<li class="topo-left slave1-left-device-lan-dev"> <div id="slave1-left-device-lan-dev2" class="lan-dev"></div></li>
+<li class="topo-left slave1-left-device-lan-dev"> <div id="slave1-left-device-lan-dev3" class="lan-dev"></div></li>
+<li class="topo-left slave1-left-device-lan-dev"> <div id="slave1-left-device-lan-dev4" class="more-lan-dev" onclick="TopoShowAccessDev('LAN', 'slave1-left-device-lan')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:218px;margin:0 12px;"></hr>
+<div id="slave1-left-device-2G">
+<ul>
+<input type="hidden" id="slave1-left-device-2G-count" value="">
+<li class="topo-left" style="width:38px;margin:2px 0 0 5px;"><span>2.4G</span></li>
+<li class="topo-left slave1-left-device-2G-icon"> <div id="slave1-left-device-2G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave1-left-device-2G-dev"> <div id="slave1-left-device-2G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave1-left-device-2G-dev"> <div id="slave1-left-device-2G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave1-left-device-2G-dev"> <div id="slave1-left-device-2G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave1-left-device-2G-dev"> <div id="slave1-left-device-2G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('2G', 'slave1-left-device-2G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave1-left-device-5G">
+<ul>
+<input type="hidden" id="slave1-left-device-5G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 0;"><span>5G</span></li>
+<li class="topo-left slave1-left-device-5G-icon"> <div id="slave1-left-device-5G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave1-left-device-5G-dev"> <div id="slave1-left-device-5G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave1-left-device-5G-dev"> <div id="slave1-left-device-5G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave1-left-device-5G-dev"> <div id="slave1-left-device-5G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave1-left-device-5G-dev"> <div id="slave1-left-device-5G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('5G', 'slave1-left-device-5G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave1-left-device-6G">
+<ul>
+<input type="hidden" id="slave1-left-device-6G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 0;"><span>6G</span></li>
+<li class="topo-left slave1-left-device-6G-icon"> <div id="slave1-left-device-6G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave1-left-device-6G-dev"> <div id="slave1-left-device-6G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave1-left-device-6G-dev"> <div id="slave1-left-device-6G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave1-left-device-6G-dev"> <div id="slave1-left-device-6G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave1-left-device-6G-dev"> <div id="slave1-left-device-6G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('6G', 'slave1-left-device-6G')"></div></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="slave1-middle" class="topo-left topo-border topo-border-radius">
+<input type="hidden" id="slave1_middle_InstID" class="DeviceMac" value="">
+<div id="slave1-middle-router" class="topo-left">
+<div id="slave1-middle-logo" style=""></div>
+<div class="router_small clickable"></div>
+</div>
+<div id="slave1-middle-device-all" class="topo-left">
+<div id="slave1-middle-device-lan">
+<ul>
+<input type="hidden" id="slave1-middle-device-lan-count" value="">
+<li class="topo-left" style="width:40px;margin:5px 2px 0 3px;"><span>LAN</span></li>
+<li class="topo-left slave1-middle-device-lan-icon"> <div id="slave1-middle-device-lan-icon" class="lan-icon"></div></li>
+<li class="topo-left slave1-middle-device-lan-dev"> <div id="slave1-middle-device-lan-dev1" class="lan-dev"></div></li>
+<li class="topo-left slave1-middle-device-lan-dev"> <div id="slave1-middle-device-lan-dev2" class="lan-dev"></div></li>
+<li class="topo-left slave1-middle-device-lan-dev"> <div id="slave1-middle-device-lan-dev3" class="lan-dev"></div></li>
+<li class="topo-left slave1-middle-device-lan-dev"> <div id="slave1-middle-device-lan-dev4" class="more-lan-dev" onclick="TopoShowAccessDev('LAN', 'slave1-middle-device-lan')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:218px;margin:0 12px;"></hr>
+<div id="slave1-middle-device-2G">
+<ul>
+<input type="hidden" id="slave1-middle-device-2G-count" value="">
+<li class="topo-left" style="float:left;width:38px;margin:2px 0 0 5px;"><span>2.4G</span></li>
+<li class="topo-left slave1-middle-device-2G-icon"> <div id="slave1-middle-device-2G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave1-middle-device-2G-dev"> <div id="slave1-middle-device-2G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave1-middle-device-2G-dev"> <div id="slave1-middle-device-2G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave1-middle-device-2G-dev"> <div id="slave1-middle-device-2G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave1-middle-device-2G-dev"> <div id="slave1-middle-device-2G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('2G', 'slave1-middle-device-2G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave1-middle-device-5G">
+<ul>
+<input type="hidden" id="slave1-middle-device-5G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 0;"><span>5G</span></li>
+<li class="topo-left slave1-middle-device-5G-icon"> <div id="slave1-middle-device-5G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave1-middle-device-5G-dev"> <div id="slave1-middle-device-5G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave1-middle-device-5G-dev"> <div id="slave1-middle-device-5G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave1-middle-device-5G-dev"> <div id="slave1-middle-device-5G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave1-middle-device-5G-dev"> <div id="slave1-middle-device-5G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('5G', 'slave1-middle-device-5G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave1-middle-device-6G">
+<ul>
+<input type="hidden" id="slave1-middle-device-6G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 0;"><span>6G</span></li>
+<li class="topo-left slave1-middle-device-6G-icon"> <div id="slave1-middle-device-6G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave1-middle-device-6G-dev"> <div id="slave1-middle-device-6G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave1-middle-device-6G-dev"> <div id="slave1-middle-device-6G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave1-middle-device-6G-dev"> <div id="slave1-middle-device-6G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave1-middle-device-6G-dev"> <div id="slave1-middle-device-6G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('6G', 'slave1-middle-device-6G')"></div></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="slave1-right" class="topo-left topo-border topo-border-radius">
+<input type="hidden" id="slave1_right_InstID" class="DeviceMac" value="">
+<div id="slave1-right-router" class="topo-left">
+<div id="slave1-right-logo"></div>
+<div class="router_small clickable"></div>
+</div>
+<div id="slave1-right-device-all" class="topo-left">
+<div id="slave1-right-device-lan">
+<ul>
+<input type="hidden" id="slave1-right-device-lan-count" value="">
+<li class="topo-left" style="width:40px;margin:5px 2px 0 3px;"><span>LAN</span></li>
+<li class="topo-left slave1-right-device-lan-icon"> <div id="slave1-right-device-lan-icon" class="lan-icon"></div></li>
+<li class="topo-left slave1-right-device-lan-dev"> <div id="slave1-right-device-lan-dev1" class="lan-dev"></div></li>
+<li class="topo-left slave1-right-device-lan-dev"> <div id="slave1-right-device-lan-dev2" class="lan-dev"></div></li>
+<li class="topo-left slave1-right-device-lan-dev"> <div id="slave1-right-device-lan-dev3" class="lan-dev"></div></li>
+<li class="topo-left slave1-right-device-lan-dev"> <div id="slave1-right-device-lan-dev4" class="more-lan-dev" onclick="TopoShowAccessDev('LAN', 'slave1-right-device-lan')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:218px;margin:0 12px;"></hr>
+<div id="slave1-right-device-2G">
+<ul>
+<input type="hidden" id="slave1-right-device-2G-count" value="">
+<li class="topo-left" style="width:38px;margin:2px 0 0 5px;"><span>2.4G</span></li>
+<li class="topo-left slave1-right-device-2G-icon"> <div id="slave1-right-device-2G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave1-right-device-2G-dev"> <div id="slave1-right-device-2G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave1-right-device-2G-dev"> <div id="slave1-right-device-2G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave1-right-device-2G-dev"> <div id="slave1-right-device-2G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave1-right-device-2G-dev"> <div id="slave1-right-device-2G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('2G', 'slave1-right-device-2G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave1-right-device-5G">
+<ul>
+<input type="hidden" id="slave1-right-device-5G-count" value="">
+<li class="topo-left" style="float:left;width:40px;margin:-1px 0 0 0;"><span>5G</span></li>
+<li class="topo-left slave1-right-device-5G-icon"> <div id="slave1-right-device-5G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave1-right-device-5G-dev"> <div id="slave1-right-device-5G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave1-right-device-5G-dev"> <div id="slave1-right-device-5G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave1-right-device-5G-dev"> <div id="slave1-right-device-5G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave1-right-device-5G-dev"> <div id="slave1-right-device-5G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('5G', 'slave1-right-device-5G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave1-right-device-6G">
+<ul>
+<input type="hidden" id="slave1-right-device-6G-count" value="">
+<li class="topo-left" style="float:left;width:40px;margin:-1px 0 0 0;"><span>6G</span></li>
+<li class="topo-left slave1-right-device-6G-icon"> <div id="slave1-right-device-6G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave1-right-device-6G-dev"> <div id="slave1-right-device-6G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave1-right-device-6G-dev"> <div id="slave1-right-device-6G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave1-right-device-6G-dev"> <div id="slave1-right-device-6G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave1-right-device-6G-dev"> <div id="slave1-right-device-6G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('6G', 'slave1-right-device-6G')"></div></li>
+</ul>
+</div>
+</div>
+</div>
+<div style="clear:both;"></div>
+</div>
+<div id="slave2">
+<div id="slave2-line">
+<div id="slave2-line-left" class="topo-left"></div>
+<div id="slave2-line-middle" class="topo-left"></div>
+<div id="slave2-line-right" class="topo-left"></div>
+</div>
+<div style="clear:both;"></div>
+<div id="slave2-left" class="topo-left topo-border-radius topo-border">
+<input type="hidden" id="slave2_left_InstID" class="DeviceMac" value="">
+<div id="slave2-left-router" class="topo-left">
+<div id="slave2-left-logo"></div>
+<div class="router_small clickable"></div>
+</div>
+<div id="slave2-left-device-all" class="topo-left">
+<div id="slave2-left-device-lan">
+<ul>
+<input type="hidden" id="slave2-left-device-lan-count" value="">
+<li class="topo-left" style="width:40px;margin:5px 2px 0 3px;"><span>LAN</span></li>
+<li class="topo-left slave2-left-device-lan-icon"> <div id="slave2-left-device-lan-icon" class="lan-icon"></div></li>
+<li class="topo-left slave2-left-device-lan-dev"> <div id="slave2-left-device-lan-dev1" class="lan-dev"></div></li>
+<li class="topo-left slave2-left-device-lan-dev"> <div id="slave2-left-device-lan-dev2" class="lan-dev"></div></li>
+<li class="topo-left slave2-left-device-lan-dev"> <div id="slave2-left-device-lan-dev3" class="lan-dev"></div></li>
+<li class="topo-left slave2-left-device-lan-dev"> <div id="slave2-left-device-lan-dev4" class="more-lan-dev" onclick="TopoShowAccessDev('LAN', 'slave2-left-device-lan')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:218px;margin:0 12px;"></hr>
+<div id="slave2-left-device-2G">
+<ul>
+<input type="hidden" id="slave2-left-device-2G-count" value="">
+<li class="topo-left" style="width:38px;margin:2px 0 0 5px;"><span>2.4G</span></li>
+<li class="topo-left slave2-left-device-2G-icon"> <div id="slave2-left-device-2G-icon" class="wlan-icon" ></div></li>
+<li class="topo-left slave2-left-device-2G-dev"> <div id="slave2-left-device-2G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave2-left-device-2G-dev"> <div id="slave2-left-device-2G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave2-left-device-2G-dev"> <div id="slave2-left-device-2G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave2-left-device-2G-dev"> <div id="slave2-left-device-2G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('2G', 'slave2-left-device-2G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave2-left-device-5G">
+<ul>
+<input type="hidden" id="slave2-left-device-5G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 0;"><span>5G</span></li>
+<li class="topo-left slave2-left-device-5G-icon"> <div id="slave2-left-device-5G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave2-left-device-5G-dev"> <div id="slave2-left-device-5G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave2-left-device-5G-dev"> <div id="slave2-left-device-5G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave2-left-device-5G-dev"> <div id="slave2-left-device-5G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave2-left-device-5G-dev"> <div id="slave2-left-device-5G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('5G', 'slave2-left-device-5G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave2-left-device-6G">
+<ul>
+<input type="hidden" id="slave2-left-device-6G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 0;"><span>6G</span></li>
+<li class="topo-left slave2-left-device-6G-icon"> <div id="slave2-left-device-6G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave2-left-device-6G-dev"> <div id="slave2-left-device-6G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave2-left-device-6G-dev"> <div id="slave2-left-device-6G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave2-left-device-6G-dev"> <div id="slave2-left-device-6G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave2-left-device-6G-dev"> <div id="slave2-left-device-6G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('6G', 'slave2-left-device-6G')"></div></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="slave2-middle" class="topo-left topo-border topo-border-radius">
+<input type="hidden" id="slave2_middle_InstID" class="DeviceMac" value="">
+<div id="slave2-middle-router" class="topo-left">
+<div id="slave2-middle-logo"></div>
+<div class="router_small clickable"></div>
+</div>
+<div id="slave2-middle-device-all" class="topo-left">
+<div id="slave2-middle-device-lan">
+<ul>
+<input type="hidden" id="slave2-middle-device-lan-count" value="">
+<li class="topo-left" style="width:40px;margin:5px 2px 0 3px;"><span>LAN</span></li>
+<li class="topo-left slave2-middle-device-lan-icon"> <div id="slave2-middle-device-lan-icon" class="lan-icon"></div></li>
+<li class="topo-left slave2-middle-device-lan-dev"> <div id="slave2-middle-device-lan-dev1" class="lan-dev"></div></li>
+<li class="topo-left slave2-middle-device-lan-dev"> <div id="slave2-middle-device-lan-dev2" class="lan-dev"></div></li>
+<li class="topo-left slave2-middle-device-lan-dev"> <div id="slave2-middle-device-lan-dev3" class="lan-dev" ></div></li>
+<li class="topo-left slave2-middle-device-lan-dev"> <div id="slave2-middle-device-lan-dev4" class="more-lan-dev" onclick="TopoShowAccessDev('LAN', 'slave2-middle-device-lan')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:218px;margin:0 12px;"></hr>
+<div id="slave2-middle-device-2G">
+<ul>
+<input type="hidden" id="slave2-middle-device-2G-count" value="">
+<li class="topo-left" style="width:38px;margin:2px 0 0 5px;"><span>2.4G</span></li>
+<li class="topo-left slave2-middle-device-2G-icon"> <div id="slave2-middle-device-2G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave2-middle-device-2G-dev"> <div id="slave2-middle-device-2G-dev1" class="wlan-dev" ></div></li>
+<li class="topo-left slave2-middle-device-2G-dev"> <div id="slave2-middle-device-2G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave2-middle-device-2G-dev"> <div id="slave2-middle-device-2G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave2-middle-device-2G-dev"> <div id="slave2-middle-device-2G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('2G', 'slave2-middle-device-2G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave2-middle-device-5G">
+<ul>
+<input type="hidden" id="slave2-middle-device-5G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 0;"><span>5G</span></li>
+<li class="topo-left slave2-middle-device-5G-icon"> <div id="slave2-middle-device-5G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave2-middle-device-5G-dev"> <div id="slave2-middle-device-5G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave2-middle-device-5G-dev"> <div id="slave2-middle-device-5G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave2-middle-device-5G-dev"> <div id="slave2-middle-device-5G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave2-middle-device-5G-dev"> <div id="slave2-middle-device-5G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('5G', 'slave2-middle-device-5G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave2-middle-device-6G">
+<ul>
+<input type="hidden" id="slave2-middle-device-6G-count" value="">
+<li class="topo-left" style="width:40px;margin:-1px 0 0 0;"><span>6G</span></li>
+<li class="topo-left slave2-middle-device-6G-icon"> <div id="slave2-middle-device-6G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave2-middle-device-6G-dev"> <div id="slave2-middle-device-6G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave2-middle-device-6G-dev"> <div id="slave2-middle-device-6G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave2-middle-device-6G-dev"> <div id="slave2-middle-device-6G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave2-middle-device-6G-dev"> <div id="slave2-middle-device-6G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('6G', 'slave2-middle-device-6G')"></div></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="slave2-right" class="topo-left topo-border topo-border-radius">
+<input type="hidden" id="slave2_right_InstID" class="DeviceMac" value="">
+<div id="slave2-right-router" class="topo-left">
+<div id="slave2-right-logo"></div>
+<div class="router_small clickable"></div>
+</div>
+<div id="slave2-right-device-all" class="topo-left">
+<div id="slave2-right-device-lan">
+<ul>
+<input type="hidden" id="slave2-right-device-lan-count" value="">
+<li class="topo-left" style="width:40px;margin:5px 2px 0 3px;"><span>LAN</span></li>
+<li class="topo-left slave2-right-device-lan-icon"> <div id="slave2-right-device-lan-icon" class="lan-icon"></div></li>
+<li class="topo-left slave2-right-device-lan-dev"> <div id="slave2-right-device-lan-dev1" class="lan-dev"></div></li>
+<li class="topo-left slave2-right-device-lan-dev"> <div id="slave2-right-device-lan-dev2" class="lan-dev" ></div></li>
+<li class="topo-left slave2-right-device-lan-dev"> <div id="slave2-right-device-lan-dev3" class="lan-dev" ></div></li>
+<li class="topo-left slave2-right-device-lan-dev"> <div id="slave2-right-device-lan-dev4" class="more-lan-dev" onclick="TopoShowAccessDev('LAN', 'slave2-right-device-lan')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:218px;margin:0 12px;"></hr>
+<div id="slave2-right-device-2G">
+<ul>
+<input type="hidden" id="slave2-right-device-2G-count" value="">
+<li class="topo-left" style="width:38px;margin:2px 0 0 5px;"><span>2.4G</span></li>
+<li class="topo-left slave2-right-device-2G-icon"> <div id="slave2-right-device-2G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave2-right-device-2G-dev"> <div id="slave2-right-device-2G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave2-right-device-2G-dev"> <div id="slave2-right-device-2G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave2-right-device-2G-dev"> <div id="slave2-right-device-2G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave2-right-device-2G-dev"> <div id="slave2-right-device-2G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('2G', 'slave2-right-device-2G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave2-right-device-5G">
+<ul>
+<input type="hidden" id="slave2-right-device-5G-count" value="">
+<li class="topo-left" style="float:left;width:40px;margin:-1px 0 0 0;"><span>5G</span></li>
+<li class="topo-left slave2-right-device-5G-icon"> <div id="slave2-right-device-5G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave2-right-device-5G-dev"> <div id="slave2-right-device-5G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave2-right-device-5G-dev"> <div id="slave2-right-device-5G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave2-right-device-5G-dev"> <div id="slave2-right-device-5G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave2-right-device-5G-dev"> <div id="slave2-right-device-5G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('5G', 'slave2-right-device-5G')"></div></li>
+</ul>
+</div>
+<div style="clear:both;"></div>
+<hr style="width:220px;margin:0 12px;"></hr>
+<div id="slave2-right-device-6G">
+<ul>
+<input type="hidden" id="slave2-right-device-6G-count" value="">
+<li class="topo-left" style="float:left;width:40px;margin:-1px 0 0 0;"><span>6G</span></li>
+<li class="topo-left slave2-right-device-6G-icon"> <div id="slave2-right-device-6G-icon" class="wlan-icon"></div></li>
+<li class="topo-left slave2-right-device-6G-dev"> <div id="slave2-right-device-6G-dev1" class="wlan-dev"></div></li>
+<li class="topo-left slave2-right-device-6G-dev"> <div id="slave2-right-device-6G-dev2" class="wlan-dev"></div></li>
+<li class="topo-left slave2-right-device-6G-dev"> <div id="slave2-right-device-6G-dev3" class="wlan-dev"></div></li>
+<li class="topo-left slave2-right-device-6G-dev"> <div id="slave2-right-device-6G-dev4" class="more-wlan-dev" onclick="TopoShowAccessDev('6G', 'slave2-right-device-6G')"></div></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="Non1905AccessDevDiv" class="white_content_AccessDev">
+<div id="AccessDevDisplay" class="HeadDIV divAccessDevDisplay">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=topo_lua.lua</span>
+</address>
+<h1 class="fakeBar" id="AccessDevBar">Access Devices Information</h1>
+<div id="AccessDev_container">
+<span id="instDelete_AccessDev" class="closePopLayer">
+<img src="img/close.png" alt="close" />
+</span>
+<div class="colorTbl form_content alignCenter" id="template_AccessDevDisplay">
+<div id="Statistics_title" class="colorTblRow emFont titleRow">
+<span class="w100" title="HostName">HostName</span>
+<span class="w100" title="MAC">MAC</span>
+<span class="w100" title="IP">IP</span>
+<span class="w80" title="Online Duration">Online Duration</span>
+<span class="w100 wlan_only" title="Real-time upstream" id="UpstreamTitle">Real-time upstream</span>
+<span class="w100 wlan_only" title="Real-time downstream" id="DownstreamTitle">Real-time downstream</span>
+<span class="w50 wlan_only" title="RSSI">RSSI</span>
+<span class="w40 wlan_only" title="BTM">BTM</span>
+<span class="w40 wlan_only" title="RRM">RRM</span>
+<span class="w80 wlan_only" title="802.11 Mode">802.11 Mode</span>
+</div>
+<input type="hidden" id="_InstNum" value="0">
+<form class="colorRowforAccessDev">
+<div class="colorTblRow" id="data_AccessDev" style="display:none;">
+<input id="_InstID" type="hidden" value="">
+<span class="w100" id="HostName" title=""></span>
+<span class="w100" id="MAC" title=""></span>
+<span class="w100" id="IP" title=""></span>
+<span class="w80" id="OnlineDuration" title=""></span>
+<span class="w100 wlan_only" id="RealTimeUpstream" title=""></span>
+<span class="w100 wlan_only" id="RealTimeDownstream" title=""></span>
+<span class="w50 wlan_only" id="Rssi" title=""></span>
+<span class="w40 wlan_only" id="Btm" title=""></span>
+<span class="w40 wlan_only" id="Rrm" title=""></span>
+<span class="w80 wlan_only" id="WirelessMode" title=""></span>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x59\x49\x48\x33\x6a\x65\x58\x38\x4a\x74\x4d\x57\x56\x38\x67\x39\x45\x66\x39\x67\x4f\x6e\x34\x6d";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>

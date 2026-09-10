@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ax3000hv2/lessons/bai4.js
  * Bài 4: Cấu hình DNS trên AX3000H v2
  */

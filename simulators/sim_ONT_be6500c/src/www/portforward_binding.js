@@ -148,9 +148,9 @@
               name: modal.querySelector('input[name="name"]').value,
               protocol: modal.querySelector('#mui-component-select-protocol').value,
               source: { portRange: modal.querySelector('input[name="source.portRange"]').value },
-              destination: {
+              destination: { 
                 ipAddress: modal.querySelector('.MuiAutocomplete-input').value,
-                portRange: modal.querySelector('input[name="destination.portRange"]').value
+                portRange: modal.querySelector('input[name="destination.portRange"]').value 
               },
               enabled: true
             };
@@ -188,9 +188,9 @@
               name: modal.querySelector('input[name="name"]').value,
               protocol: modal.querySelector('#mui-component-select-protocol').value,
               source: { portRange: modal.querySelector('input[name="source.portRange"]').value },
-              destination: {
+              destination: { 
                 ipAddress: modal.querySelector('.MuiAutocomplete-input').value,
-                portRange: modal.querySelector('input[name="destination.portRange"]').value
+                portRange: modal.querySelector('input[name="destination.portRange"]').value 
               },
               enabled: true
             };

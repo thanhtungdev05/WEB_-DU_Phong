@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ax3000hv2/lessons/bai5.js
  * Bài 5: Cấu hình DHCP trên AX3000H v2
  */
@@ -23,7 +23,6 @@ var lessonObj = {
   clearFields: [
     'input[name="uiViewIPAddr"]',
     'input[name="uiViewNetMask"]',
-    'input[name="StartIp"]',
     'input[name="PoolSize"]',
     'input[name="dhcp_LeaseTime"]'
   ],

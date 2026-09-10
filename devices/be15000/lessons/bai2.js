@@ -1,47 +1,70 @@
-﻿/**
- * devices/be15000/lessons/bai1.js
- * Bài 1 - Quản lý LAN IPv4 trên BE15000
+/**
+ * devices/be15000/lessons/bai2.js
+ * Bài 2 - Cấu hình Wi-Fi MLO (Wi-Fi 7)
  */
 
 window.DEVICE_BE15000_LESSONS = window.DEVICE_BE15000_LESSONS || [];
 
 window.DEVICE_BE15000_LESSONS.push({
-  id: 'be15-bai1',
+  id: 'be15-bai2',
   title: 'Cấu hình wifi',
-  subtitle: 'Cấu hình wifi',
+  subtitle: 'Cấu hình Wi-Fi MLO (Wi-Fi 7)',
   instructions: [
     'Truy cập <b>/sim_be15000</b> và đăng nhập',
-    'Chọn menu <b>LAN IPv4 Management</b>',
-    '- IP Address: <span class="val">192.168.1.1</span>',
-    '- Subnet Mask: <span class="val">255.255.255.0</span>',
-    '- DHCP Enable: <span class="val">Yes</span>',
-    '- Start IP: <span class="val">192.168.1.100</span>',
-    '- End IP: <span class="val">192.168.1.200</span>',
-    'Bấm <b>Apply</b> để lưu',
+    'Chọn menu <b>Local Network > WLAN > MLO</b>',
+    '- MLO Enable: <span class="val">On</span>',
+    '- MLOBackhaul Enable: <span class="val">On</span>',
+    'Bấm <b>Apply</b> để lưu cấu hình',
   ],
-  practiceUrl: '/sim_be15000/page/lanMgrIpv4',
+  practiceUrl: '/sim_be15000/pages/wlanmlo.html',
   grading: {
-    description: 'Kiểm tra LAN IPv4 Management trên BE15000',
+    description: 'Kiểm tra trạng thái cấu hình MLO trên BE15000',
     rules: [
       {
-        id: 'lan_ip',
-        name: 'IP Address',
-        selector: 'input[name*="IPAddress"], #IPAddress',
-        expected: '192.168.1.1',
-        type: 'text_exact',
-        trim: true,
+        id: 'mlo_enable',
+        name: 'MLO Enable',
+        selector: '#MLOEnable1',
+        expected: true,
+        type: 'radio',
         required: true
       },
       {
-        id: 'lan_mask',
-        name: 'Subnet Mask',
-        selector: 'input[name*="SubnetMask"], #SubnetMask',
-        expected: '255.255.255.0',
-        type: 'text_exact',
-        trim: true,
+        id: 'mlo_backhaul',
+        name: 'MLOBackhaul Enable',
+        selector: '#MESHMLOEnable1',
+        expected: true,
+        type: 'radio',
         required: true
       }
     ]
   },
-  guidePopups: []
+  guidePopups: [
+    {
+      selector: '#wlanConfig:not(.selectClass2Menu)',
+      text: 'Chọn WLAN',
+      position: 'right'
+    },
+    {
+      selector: '#wlanmlo:not(.AEleMenu3Selected)',
+      text: 'Chọn MLO',
+      position: 'bottom'
+    },
+    {
+      selector: 'label[for="MLOEnable1"], #MLOEnable1',
+      text: 'Bước 1: Bật tính năng MLO (Chọn On)',
+      position: 'bottom',
+      expected: '1'
+    },
+    {
+      selector: 'label[for="MESHMLOEnable1"], #MESHMLOEnable1',
+      text: 'Bước 2: Bật MLO Backhaul (Chọn On)',
+      position: 'bottom',
+      expected: '1'
+    },
+    {
+      selector: '#Btn_apply',
+      text: 'Chọn Apply để lưu cấu hình',
+      position: 'top'
+    }
+  ]
 });

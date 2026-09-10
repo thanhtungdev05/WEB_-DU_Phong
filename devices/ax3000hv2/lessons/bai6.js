@@ -123,8 +123,8 @@ var lessonObj = {
         forcePosition: true
     },
     {
-        selector: 'input[value="Add" i], input[name="AddBtn" i]',
-        text: 'Bước 9: Chọn Add',
+        selector: 'input[value="Save" i], input[name="AddBtn" i]',
+        text: 'Bước 9: Chọn Save',
         position: 'top'
     }
   ]

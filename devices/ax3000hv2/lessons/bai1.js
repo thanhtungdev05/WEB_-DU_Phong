@@ -46,7 +46,7 @@ var lessonObj = {
   guidePopups: []
 };
 
-var idx = window.DEVICE_AX3000HV2_LESSONS.findIndex(function(l) { return l.id === lessonObj.id; });
+var idx = window.DEVICE_AX3000HV2_LESSONS.findIndex(function (l) { return l.id === lessonObj.id; });
 if (idx !== -1) {
   window.DEVICE_AX3000HV2_LESSONS[idx] = lessonObj;
 } else {

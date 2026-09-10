@@ -14,6 +14,8 @@
    CSS goc da chup, nen chi can gan hanh vi. */
 (function () {
   var BREAK = 1020;
+  // dang o www/pages/<x>.html hay o www/login.html? (giong nav.js)
+  var trongThuMucPages = /\/pages\//.test(location.pathname);
 
   function el(id) { return document.getElementById(id); }
   function q(sel) { return document.querySelector(sel); }
@@ -89,7 +91,8 @@
           li.classList.toggle('active', !mo);
         }
       } else if (li.__leaf) {
-        location.href = '/page/' + li.__leaf;   // dieu huong (thay openLink)
+        // dieu huong (thay openLink) - duong dan tuong doi, xem ghi chu dau file
+        location.href = trongThuMucPages ? (li.__leaf + '.html') : ('pages/' + li.__leaf + '.html');
         dongDrawer();
       }
     });

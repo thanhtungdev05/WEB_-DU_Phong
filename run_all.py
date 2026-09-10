@@ -188,7 +188,7 @@ def is_portal_path(path):
     """True neu path thuoc Portal (dung chung cho cac buoc detect_simulator)."""
     if path in PORTAL_PATHS:
         return True
-    # REST resources exposed by the selected ONT BE6500C simulator.
+    # Ngoai le cho API cua simulator ONT BE6500C (khong phai cua Portal/PHP)
     if path.startswith('/api/v1/data/'):
         return False
     for prefix in PORTAL_PREFIXES:
@@ -483,14 +483,12 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
 
     def dispatch(self, method):
         # Chuyen tiep /api/* -> PHP noi bo (browser chi can 1 cong 8080)
+        # Ngoai tru /api/v1/data/* thuoc ve simulator ONT BE6500C
         path_only = self.path.split('?')[0]
         if is_sensitive_path(path_only):
             self.send_error(404, 'Not Found')
             return
-        # ONT BE6500C uses device-local REST resources under /api/v1/data/*.
-        # Other /api/* requests continue to use the authenticated PHP API.
-        if (path_only == '/api' or path_only.startswith('/api/')) \
-                and not path_only.startswith('/api/v1/data/'):
+        if (path_only == '/api' or path_only.startswith('/api/')) and not path_only.startswith('/api/v1/data/'):
             return self._proxy_api(method)
 
         # Chuyen tiep /admin/* va /admin-static/* -> Django Admin
@@ -526,73 +524,77 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
 
         sim_id = self.detect_simulator()
         if sim_id:
-            # A few legacy handlers read relative paths from process-wide CWD.
-            # Serialize only simulator dispatches so concurrent requests cannot
-            # switch each other's working directory or handler class mid-flight.
-            with SIM_DISPATCH_LOCK:
-                mod = SIM_MODULES[sim_id]
-                original_class = self.__class__
-                original_directory = getattr(self, 'directory', None)
-                original_send_header = self.send_header
-                original_end_headers = self.end_headers
-                old_cwd = os.getcwd()
+            if sim_id:
+                # A few legacy handlers read relative paths from process-wide CWD.
+                # Serialize only simulator dispatches so concurrent requests cannot
+                # switch each other's working directory or handler class mid-flight.
+                # WARNING: sim_mikrotik_hexs uses long-polling and will deadlock if locked!
+                needs_lock = (sim_id != 'sim_mikrotik_hexs')
+                if needs_lock:
+                    SIM_DISPATCH_LOCK.acquire()
                 try:
-                    if hasattr(mod, 'ROOT'):
-                        self.directory = mod.ROOT
-                        os.chdir(mod.ROOT)
-                    elif hasattr(mod, 'BASE'):
-                        os.chdir(mod.BASE)
+                    mod = SIM_MODULES[sim_id]
+                    original_class = self.__class__
+                    original_directory = getattr(self, 'directory', None)
+                    original_send_header = self.send_header
+                    original_end_headers = self.end_headers
+                    old_cwd = os.getcwd()
+                    try:
+                        if hasattr(mod, 'BASE'):
+                            os.chdir(mod.BASE)
 
-                    handler_class = SIM_HANDLERS[sim_id]
-                    self.__class__ = handler_class
-                    if hasattr(mod, 'ROOT'):
-                        self.directory = getattr(mod, 'ROOT')
-                    elif hasattr(mod, 'WWW'):
-                        self.directory = getattr(mod, 'WWW')
-                    else:
-                        sim_dir_candidates = [
-                            os.path.join(BASE_DIR, "simulators", sim_id, "www"),
-                            os.path.join(BASE_DIR, sim_id, "www"),
-                            os.path.join(BASE_DIR, "simulators", sim_id),
-                            os.path.join(BASE_DIR, sim_id),
-                        ]
-                        for cand in sim_dir_candidates:
-                            if os.path.isdir(cand):
-                                self.directory = cand
-                                break
+                        handler_class = SIM_HANDLERS[sim_id]
+                        self.__class__ = handler_class
+                        if hasattr(mod, 'ROOT'):
+                            self.directory = getattr(mod, 'ROOT')
+                        elif hasattr(mod, 'WWW'):
+                            self.directory = getattr(mod, 'WWW')
+                        else:
+                            sim_dir_candidates = [
+                                os.path.join(BASE_DIR, "simulators", sim_id, "www"),
+                                os.path.join(BASE_DIR, sim_id, "www"),
+                                os.path.join(BASE_DIR, "simulators", sim_id),
+                                os.path.join(BASE_DIR, sim_id),
+                            ]
+                            for cand in sim_dir_candidates:
+                                if os.path.isdir(cand):
+                                    self.directory = cand
+                                    break
 
-                    def custom_send_header(keyword, value):
-                        if keyword.lower() == 'location' and value.startswith('/'):
-                            value = '/' + sim_id + value
-                        original_send_header(keyword, value)
-                    self.send_header = custom_send_header
+                        def custom_send_header(keyword, value):
+                            if keyword.lower() == 'location' and value.startswith('/'):
+                                value = '/' + sim_id + value
+                            original_send_header(keyword, value)
+                        self.send_header = custom_send_header
 
-                    def custom_end_headers():
-                        original_send_header('Set-Cookie', f'current_sim={sim_id}; Path=/; SameSite=Lax')
-                        original_send_header('Cache-Control', 'no-cache, must-revalidate')
-                        original_end_headers()
-                    self.end_headers = custom_end_headers
+                        def custom_end_headers():
+                            original_send_header('Set-Cookie', f'current_sim={sim_id}; Path=/; SameSite=Lax')
+                            original_send_header('Cache-Control', 'no-cache, must-revalidate')
+                            original_end_headers()
+                        self.end_headers = custom_end_headers
 
-                    print(f"[DISPATCH] {method} {self.path} -> {sim_id}")
-                    handler_method = getattr(self, 'do_' + method, None)
-                    if handler_method is None:
-                        self.send_error(501, 'Unsupported method')
+                        handler_method = getattr(self, 'do_' + method, None)
+                        if handler_method is None:
+                            self.send_error(501, 'Unsupported method')
+                            return
+                        return handler_method()
+                    except Exception as e:
+                        import traceback
+                        print(f"Error in {sim_id} {method}: {e}")
+                        traceback.print_exc()
+                        self.__class__ = original_class
+                        self.send_error(500, 'Internal Server Error')
                         return
-                    return handler_method()
-                except Exception as e:
-                    import traceback
-                    print(f"Error in {sim_id} {method}: {e}")
-                    traceback.print_exc()
-                    self.__class__ = original_class
-                    self.send_error(500, 'Internal Server Error')
-                    return
+                    finally:
+                        self.__class__ = original_class
+                        if original_directory is not None:
+                            self.directory = original_directory
+                        self.send_header = original_send_header
+                        self.end_headers = original_end_headers
+                        os.chdir(old_cwd)
                 finally:
-                    self.send_header = original_send_header
-                    self.end_headers = original_end_headers
-                    self.__class__ = original_class
-                    if original_directory is not None:
-                        self.directory = original_directory
-                    os.chdir(old_cwd)
+                    if needs_lock:
+                        SIM_DISPATCH_LOCK.release()
         
         # Nếu không trúng simulator nào -> phục vụ file tĩnh của Portal
         if method in ('GET', 'HEAD') and is_public_root_path(path_only):

@@ -14,10 +14,5 @@ window.TOOLTIPS_BE12000._common_login = [
     selector: 'input#Frm_Password, input[name="Frm_Password"]',
     text: 'Nhập mật khẩu: admin',
     position: 'right'
-  },
-  {
-    selector: 'input#LoginId, input[type="submit"]',
-    text: 'Bấm Login để đăng nhập',
-    position: 'bottom'
   }
 ];

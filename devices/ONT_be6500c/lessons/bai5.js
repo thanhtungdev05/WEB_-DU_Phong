@@ -17,7 +17,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
     "- Lease time - Day(s): <span class=\"val\">0</span>",
     "- Lease time - Hour(s): <span class=\"val\">12</span>"
   ],
-  practiceUrl: '/sim_ONT_be6500c/advanced__lan.html',
+  practiceUrl: '/ont_be6500c/advanced__lan.html',
   clearFields: [
     'input[name="ipv4Settings.ipAddress"]',
     '.MuiAutocomplete-input',

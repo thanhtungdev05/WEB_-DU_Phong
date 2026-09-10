@@ -1,0 +1,1822 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#104;&#111;&#109;&#101;&#80;&#97;&#103;&#101;</div>
+<div id="_NowSupIdInfo">&#104;&#111;&#109;&#101;&#80;&#97;&#103;&#101;</div>
+<div id="_NowMidIdInfo"></div>
+<div id="_NowThdIdInfo"></div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+<script type="text/javascript">
+var cver = 2008;
+var uRight = 1;
+var wanUrl = "";
+function getUrl(objId, userRight)
+{
+var selectedUrl = "";
+var urlLink = {
+"FWUrl" : {
+"1" : "firewall",
+"2" : "firewall",
+"3" : "",
+"4" : ""
+},
+"forMacro": {
+"1" : "",
+"2" : "",
+"3" : "",
+"4" : ""
+}
+};
+$.publish("/some/addLinkToFireWall", [urlLink]);
+var data = {};
+data.template = urlLink;
+$.callModifier("home/FWUrl/jump", data);
+if ( urlLink[objId] )
+{
+selectedUrl = urlLink[objId][userRight];
+}
+return selectedUrl;
+}
+function getWANUrl(userRight)
+{
+$.publish("/some/addLinkToWan", [0]);
+if (userRight == 1)
+{
+wanUrl = "ethWanConfig";
+}
+var data = {};
+data.wanUrl = wanUrl
+$.callModifier("home/changeWanLink",data);
+return data.wanUrl;
+}
+function dealAjaxError()
+{
+var errContainer = $("#ajaxErrArea");
+errContainer.showIt(true);
+$("span", errContainer).text("The server is not available now. Please refresh page to reload. ");
+showWaitTip(false);
+}
+function dealWlanSwitch(xml)
+{
+var wlanVal = parseInt(0);
+$(xml).find("OBJ_WLANRADIO_ID").find("ParaName").each(function(){
+var paraName = $(this).text();
+if (paraName == "RadioSwitch")
+{
+var radioSwitch = $(this).next().text();
+wlanVal = parseInt(radioSwitch, 10);
+return false;
+}
+});
+if (wlanVal == 1)
+{
+$("#WLANDevsHeader").removeClass("wlanOff");
+$("#WLANDevsHeader").addClass("wlanOn");
+$("#WLANRadio").attr("class", "radioOn");
+$("#WLANRadio").attr("aria-label", "WLAN On");
+}
+else
+{
+$("#WLANDevsHeader").removeClass("wlanOn");
+$("#WLANDevsHeader").addClass("wlanOff");
+$("#WLANRadio").attr("class", "radioOff");
+$("#WLANRadio").attr("aria-label", "WLAN Off");
+}
+}
+function dealFwSwitch(xml)
+{
+var fwOBJ = $(xml).find("OBJ_FWLEVEL_ID").find("ParaName");
+fwOBJ.each(function(){
+var ParaName = $(this).text();
+if (ParaName == "Level")
+{
+var ParaValue = $(this).next().text();
+$("#fwSwitchVal").val(ParaValue);
+if (ParaValue == 0)
+{
+$("#firewall").attr("class", "fwOff");
+$("#firewallLine").attr("class", "fwOffLine");
+}
+else
+{
+$("#firewall").attr("class", "fwOn");
+$("#firewallLine").attr("class", "fwOnLine");
+}
+return false;
+}
+});
+}
+function InitailHomeHandle()
+{
+var uRight = 1;
+$("#FWUrl, #WANUrl").each(function(){
+var linkOBJ = $(this);
+var linkId = linkOBJ.attr("id");
+var linkUrl = "";
+if (linkId == "WANUrl")
+{
+linkUrl = getWANUrl(uRight);
+}
+else
+{
+linkUrl = getUrl(linkId, uRight);
+}
+setARIAAttr($(this), "tabindex", "0");
+if (linkUrl != "" && menuTreeObj.findMenu(linkUrl))
+{
+linkOBJ.addClass("link2More");
+setARIAAttr($(this), "role", "link");
+linkOBJ.bind("click", function(event){
+openLink(linkUrl);
+});
+getFocusToClick('.link2More[tabindex="0"]', $("#homeWrapper"));
+}
+else
+{
+linkOBJ.removeClass("emColor");
+}
+});
+setARIAAttr($("#home_adev_name"), "tabindex", "0");
+}
+$(document).ready(function(){
+var data = {};
+data.right = "1";
+$.callModifier("home/initCustom", data);
+InitailHomeHandle();
+var fwHead = $("#fwArea");
+var fwServerAddr = "/?_type=menuData&_tag=firewall_homepage_lua.lua";
+fwHead.succfunction = function(xml){
+var cmapiErrorContainer = $("#fwErr");
+if (cmapiErrorContainer.hasError(xml) == 0);
+{
+dealFwSwitch(xml);
+}
+};
+fwHead.failfunction = function(){
+dealAjaxError();
+};
+fwHead.dataTransfer( fwServerAddr,
+"GET",
+fwHead.succfunction,
+fwHead.failfunction);
+});
+
+$(document).ready(function () {
+function getWLANSetUrl(userRight)
+{
+var selectedUrl = "";
+var urlLink = {
+"1" : "wlanBasic",
+"2" : "wlanBasic",
+"3" : "wlanBasic",
+"4" : ""
+};
+$.publish("/some/addLinkToWlanSetting", [urlLink]);
+if ( urlLink[userRight] )
+{
+selectedUrl = urlLink[userRight];
+}
+if (typeof(getWLANSetUrlByCustom) !="undefined" && $.isFunction(getWLANSetUrlByCustom))
+{
+selectedUrl = getWLANSetUrlByCustom();
+}
+return selectedUrl;
+}
+function getWLANStatusUrl(userRight)
+{
+var selectedUrl = "";
+var urlLink = {
+"1" : "localNetStatus",
+"2" : "localNetStatus",
+"3" : "localNetStatus",
+"4" : "localNetStatus"
+};
+if ( urlLink[userRight] )
+{
+selectedUrl = urlLink[userRight];
+}
+if (typeof(getWLANStatusUrlByCustom) !="undefined" && $.isFunction(getWLANStatusUrlByCustom))
+{
+selectedUrl = getWLANStatusUrlByCustom();
+}
+return selectedUrl;
+}
+var wlanMenuObj = $("#home_category_wlan");
+function UpdateWLANDevs()
+{
+var wlanServerAddr = "/?_type=menuData&_tag=wlan_homepage_lua.lua&InstNum=5";
+wlanMenuObj.succfunction = function(xml){
+var wlanCmapiErrorContainer = $("#wlanErr");
+if (wlanCmapiErrorContainer.hasError(xml) == 0);
+{
+var categoryArea = $("#home_category_area");
+categoryArea.trigger("set_current_category", ["home_category_wlan"]);
+var devListCategory = $("#home_devlist_category");
+var options = {
+"categoryName": "WLAN Device List",
+"setLinkName": "WLAN Setting",
+"getLinkFunc": getWLANSetUrl
+}
+devListCategory.trigger("initialize", [options]);
+var devListHead = $("#home_devlist_head");
+var options = {
+paraLangs: [
+["HostName", "Name"],
+["MACAddress", "MAC Address"],
+["IPAddress", "IPv4 Address"],
+["IPV6Address", "IPv6 Address"]
+]
+};
+$.callModifier("homePage/showItem",options);
+devListHead.trigger("exec_data_binding", [options]);
+var devListArea = $("#home_devitem");
+devListArea.trigger("remove_instances");
+var wlanOBJ = $(xml).find("OBJ_ACCESSDEV_ID");
+var wlanADNum = $("Instance", wlanOBJ).length;
+var renderNum = wlanADNum;
+if (wlanADNum > 4)
+{
+renderNum = 4;
+}
+var OBJID = ["OBJ_ACCESSDEV_ID"];
+devListArea.createPageDataByClone(renderNum, OBJID, xml);
+$.publish("/some/softVersionModify", [0]);
+var devListMore = $("#home_devlist_more");
+var options = {
+"instNum": wlanADNum,
+"getLinkFunc": getWLANStatusUrl
+}
+devListMore.trigger("initialize", [options]);
+dealWlanSwitch(xml);
+}
+$.callModifier("/home/wlanWlanCtrl");
+};
+wlanMenuObj.failfunction = function(){
+showWaitTip(false);
+};
+wlanMenuObj.dataTransfer( wlanServerAddr,
+"GET",
+wlanMenuObj.succfunction,
+wlanMenuObj.failfunction,
+false);
+var UpdateWlanDevTimer = new ContextBindingTimer(function () {
+UpdateWLANDevs();
+}, {timeout: 35*1000, contextDom: wlanMenuObj.get(0)});
+UpdateWlanDevTimer.start();
+wlanMenuObj.data("timer_object", UpdateWlanDevTimer);
+}
+wlanMenuObj.click(function(){
+$("#home_category_area").trigger("clear_all_timer");
+UpdateWLANDevs();
+});
+});
+
+$(document).ready(function () {
+function getLANSetUrl(userRight)
+{
+var selectedUrl = "";
+var urlLink = {
+"1" : "lanMgrIpv4",
+"2" : "lanMgrIpv4",
+"3" : "",
+"4" : ""
+};
+$.publish("/some/addLinkToLanSetting", [urlLink]);
+if ( urlLink[userRight] )
+{
+selectedUrl = urlLink[userRight];
+}
+if (typeof(getLANSetUrlByCustom) !="undefined" && $.isFunction(getLANSetUrlByCustom))
+{
+selectedUrl = getLANSetUrlByCustom();
+}
+return selectedUrl;
+}
+function getLANStatusUrl(userRight)
+{
+var selectedUrl = "";
+var urlLink = {
+"1" : "localNetStatus",
+"2" : "localNetStatus",
+"3" : "localNetStatus",
+"4" : "localNetStatus"
+};
+if ( urlLink[userRight] )
+{
+selectedUrl = urlLink[userRight];
+}
+if (typeof(getLANStatusUrlByCustom) !="undefined" && $.isFunction(getLANStatusUrlByCustom))
+{
+selectedUrl = getLANStatusUrlByCustom();
+}
+return selectedUrl;
+}
+var lanMenuObj = $("#home_category_lan");
+function UpdateLanDev()
+{
+var lanServerAddr = "/?_type=menuData&_tag=accessdev_homepage_lua.lua&InstNum=5";
+lanMenuObj.succfunction = function(xml){
+var cmapiErrorContainer = $("#lanErr");
+if (cmapiErrorContainer.hasError(xml) == 0);
+{
+var categoryArea = $("#home_category_area");
+categoryArea.trigger("set_current_category", ["home_category_lan"]);
+var devListCategory = $("#home_devlist_category");
+var options = {
+"categoryName": "LAN Device List",
+"setLinkName": "LAN Setting",
+"getLinkFunc": getLANSetUrl
+}
+devListCategory.trigger("initialize", [options]);
+var devListHead = $("#home_devlist_head");
+var options = {
+paraLangs:[
+["HostName", "Name"],
+["MACAddress", "MAC Address"],
+["IPAddress", "IPv4 Address"],
+["IPV6Address", "IPv6 Address"]
+]
+};
+$.callModifier("homePage/showItem",options);
+devListHead.trigger("exec_data_binding", [options]);
+var devListArea = $("#home_devitem");
+devListArea.trigger("remove_instances");
+var lanOBJ = $(xml).find("OBJ_ACCESSDEV_ID");
+var lanNum = $("Instance", lanOBJ).length;
+var renderNum = lanNum;
+if (lanNum > 4)
+{
+renderNum = 4;
+}
+var OBJID = ["OBJ_ACCESSDEV_ID"];
+devListArea.createPageDataByClone(renderNum, OBJID, xml);
+var devListMore = $("#home_devlist_more");
+var options = {
+"instNum": lanNum,
+"getLinkFunc": getLANStatusUrl
+}
+devListMore.trigger("initialize", [options]);
+}
+$.callModifier("/home/homeLanCtrl");
+};
+lanMenuObj.failfunction = function(){
+showWaitTip(false);
+};
+lanMenuObj.dataTransfer( lanServerAddr,
+"GET",
+lanMenuObj.succfunction,
+lanMenuObj.failfunction,
+false);
+var UpdateLanDevTimer = new ContextBindingTimer(function () {
+UpdateLanDev();
+}, {timeout: 35*1000, contextDom: lanMenuObj.get(0)});
+UpdateLanDevTimer.start();
+lanMenuObj.data("timer_object", UpdateLanDevTimer);
+}
+lanMenuObj.click(function(){
+$("#home_category_area").trigger("clear_all_timer");
+UpdateLanDev();
+});
+});
+
+$(document).ready(function () {
+var usbMenuObj = $("#home_category_usb");
+function UpdateUsb()
+{
+var usbServerAddr = "/?_type=menuData&_tag=usb_homepage_lua.lua";
+usbMenuObj.chanegeDataByCustom = function(xml){
+var ToOperParaArr = {
+"ClassInfoStr" : {
+ValueOrigin: "",
+setAction: function(ParaNameSel, ParaValSel, SelfVal){
+if(SelfVal == "USB Mass Storage")
+{
+ParaValSel.text("Storage Device");
+}
+else if (SelfVal == "Print")
+{
+ParaValSel.text("Printer");
+}
+else
+{
+ParaValSel.text("Unknown");
+}
+}
+}
+};
+var InstNum = $("Instance", $("OBJ_USBDEV_ID", $(xml))).length;
+for (var i=0; i<InstNum; i++)
+{
+xmlParaInInstOperate(xml, "OBJ_USBDEV_ID", i, ToOperParaArr);
+}
+};
+usbMenuObj.SetFtpEnable = function (xml) {
+var FtpEnable = "";
+var ftpOBJ = $(xml).find("OBJ_FMFTPSERVERCFG_ID").find("ParaName");
+ftpOBJ.each(function(){
+var ParaName = $(this).text();
+if (ParaName == "FtpEnable")
+{
+FtpEnable = $(this).next().text();
+return false;
+}
+});
+$(this).data("FTP_ENABLE", FtpEnable);
+}
+usbMenuObj.SetFTPURL = function (xml) {
+var ipAddr = "";
+var ipOBJ = $(xml).find("OBJ_BRGRP_ID").find("ParaName");
+ipOBJ.each(function(){
+var ParaName = $(this).text();
+if (ParaName == "IPAddr")
+{
+ipAddr = $(this).next().text();
+return false;
+}
+});
+ipAddr = "ftp://"+ipAddr;
+$(this).data("FTP_URL", ipAddr);
+}
+function FillDataByCustom_USB(index, clone) {
+var ftpEnable = usbMenuObj.data("FTP_ENABLE");
+var ftpURL = usbMenuObj.data("FTP_URL");
+var usbType = $("[id^='ClassInfoStr']", clone).text();
+if ( "1" != ftpEnable )
+{
+return;
+}
+var ftpURLSpan = $("[id^='FTP_URL']", clone);
+if (usbType == "Storage Device")
+{
+var usbLink = $("<a></a>");
+usbLink.attr("href", ftpURL);
+usbLink.attr("target", "_blank");
+usbLink.text(ftpURL);
+ftpURLSpan.append(usbLink);
+}
+}
+usbMenuObj.succfunction = function(xml){
+var cmapiErrorContainer = $("#usbErr");
+if (cmapiErrorContainer.hasError(xml) == 0);
+{
+var categoryArea = $("#home_category_area");
+categoryArea.trigger("set_current_category", ["home_category_usb"]);
+var devListCategory = $("#home_devlist_category");
+var options = {
+"categoryName": "USB Device List"
+}
+devListCategory.trigger("initialize", [options]);
+var devListHead = $("#home_devlist_head");
+var options = {
+paraLangs: [
+["DevName", "Name"],
+["ClassInfoStr", "Type"],
+["FTP_URL", "View"]
+]
+};
+devListHead.trigger("exec_data_binding", [options]);
+usbMenuObj.chanegeDataByCustom(xml);
+usbMenuObj.SetFtpEnable(xml);
+usbMenuObj.SetFTPURL(xml);
+var devListArea = $("#home_devitem");
+devListArea.trigger("remove_instances");
+var usbOBJ = $(xml).find("OBJ_USBDEV_ID");
+var usbNum = $("Instance", usbOBJ).length;
+if(usbNum <= 0)
+{
+$("#Btn_apply_UsbEject").attr("disabled","true");
+}
+else
+{
+$("#Btn_apply_UsbEject").removeAttr("disabled");
+}
+var renderNum = usbNum;
+if (usbNum > 4)
+{
+renderNum = 4;
+}
+var OBJID = ["OBJ_USBDEV_ID"];
+devListArea.createPageDataByClone(renderNum, OBJID, xml,
+FillDataByCustom_USB);
+var devListMore = $("#devlist_more");
+devListMore.hide();
+}
+var data = {};
+data.xml = xml;
+$.callModifier("/home/homeUsbCtrl",data);
+};
+usbMenuObj.failfunction = function(){
+showWaitTip(false);
+};
+usbMenuObj.dataTransfer( usbServerAddr,
+"GET",
+usbMenuObj.succfunction,
+usbMenuObj.failfunction,
+false);
+var UpdateUsbTimer = new ContextBindingTimer(function () {
+UpdateUsb();
+}, {timeout: 145*1000, contextDom: usbMenuObj.get(0)});
+UpdateUsbTimer.start();
+usbMenuObj.data("timer_object", UpdateUsbTimer);
+usbMenuObj.bind("ejecthintshow", function(event,xml, template){
+if (template.hasError(xml) == 0)
+{
+$("#Hint_ejectOK").fadeIn();
+$("#Hint_ejectFAIL").hide();
+$("#Hint_ejectOK").fadeOut(4000);
+}
+else
+{
+$("#Hint_ejectFAIL").fadeIn();
+$("#Hint_ejectOK").hide();
+$("#Hint_ejectFAIL").fadeOut(4000);
+}
+UpdateUsb();
+});
+$("#Btn_apply_UsbEject").click(function() {
+var msg = "Confirm to eject device";
+var confirmLayerOBJ = IniConfirm(msg);
+$("#confirmOK",confirmLayerOBJ).bind("click", function(event) {
+showWaitTip(false);
+var PostData = "IF_ACTION=EjectDev&EjectId=/mnt/usb1_1";
+dataPost("EjectDev", "ejecthintshow",
+usbServerAddr, usbMenuObj, PostData);
+});
+});
+}
+usbMenuObj.click(function(){
+$("#home_category_area").trigger("clear_all_timer");
+UpdateUsb();
+});
+});
+
+
+$(document).ready(function () {
+function getVoIPSetUrl(userRight)
+{
+var VoIPUrl ={
+"1" : "voipBasic",
+"2" : "voipBasic",
+"3" : "voipBasic",
+"4" : ""
+};
+return VoIPUrl[userRight];
+}
+function getVoIPStatusUrl(userRight)
+{
+var selectedUrl = "";
+var urlLink = {
+"1" : "voipStatus",
+"2" : "voipStatus",
+"3" : "voipStatus",
+"4" : "voipStatus"
+};
+if ( urlLink[userRight] )
+{
+selectedUrl = urlLink[userRight];
+}
+return selectedUrl;
+}
+var voipMenuObj = $("#home_category_phone");
+function UpdatevoipRegStat()
+{
+var voipServerAddr = "/?_type=menuData&_tag=voip_homepage_lua.lua";
+voipMenuObj.chanegeDataByCustom = function(xml){
+(function (xml) {
+var ToOperParaArr = {
+"IsOnline" : {
+ValueOrigin: "",
+setAction: function(ParaNameSel, ParaValSel, SelfVal){
+if(SelfVal == 1)
+{
+ParaValSel.text("Registered");
+}
+else
+{
+ParaValSel.text("Unregistered");
+}
+}
+}
+};
+var InstNum = $("Instance", $("OBJ_VOIPVPLINE_ID", $(xml))).length;
+for (var i=0; i<InstNum; i++)
+{
+xmlParaInInstOperate(xml, "OBJ_VOIPVPLINE_ID", i, ToOperParaArr);
+}
+})(xml);
+(function (xml) {
+var OBJTag = xml.getElementsByTagName("OBJ_VOIPVPLINE_ID")[0];
+if ( !OBJTag )
+{
+return;
+}
+var ParametersTag = OBJTag.getElementsByTagName("Instance");
+for (var i=0; i<ParametersTag.length; i++)
+{
+var phoneNumParaName =xml.createElement("ParaName");
+var phoneNumParaNameTextNode = xml.createTextNode("phoneName");
+phoneNumParaName.appendChild(phoneNumParaNameTextNode);
+var phoneID = parseInt(i) + 1;
+var phoneNumParaValue =xml.createElement("ParaValue");
+var phoneNumParaValueTextNode = xml.createTextNode("Phone"+ phoneID);
+phoneNumParaValue.appendChild(phoneNumParaValueTextNode);
+ParametersTag[i].appendChild(phoneNumParaName);
+ParametersTag[i].appendChild(phoneNumParaValue);
+}
+})(xml);
+};
+voipMenuObj.succfunction = function(xml){
+var cmapiErrorContainer = $("#voipErr");
+if (cmapiErrorContainer.hasError(xml) == 0);
+{
+var categoryArea = $("#home_category_area");
+categoryArea.trigger("set_current_category", ["home_category_phone"]);
+var devListCategory = $("#home_devlist_category");
+var options = {
+"categoryName": "VoIP Device List",
+"setLinkName": "VoIP Setting",
+"getLinkFunc": getVoIPSetUrl
+}
+devListCategory.trigger("initialize", [options]);
+var devListHead = $("#home_devlist_head");
+var options = {
+paraLangs: [
+["phoneName", "Phone ID"]
+]
+};
+options.paraLangs.push(["AuthUserName", "Phone Number"])
+options.paraLangs.push(["IsOnline", "Status"])
+devListHead.trigger("exec_data_binding", [options]);
+voipMenuObj.chanegeDataByCustom(xml);
+var devListArea = $("#home_devitem");
+devListArea.trigger("remove_instances");
+var voipSipLineOBJ = $(xml).find("OBJ_VOIPVPLINE_ID");
+var siplineNum = $("Instance", voipSipLineOBJ).length;
+var renderNum = siplineNum;
+if (siplineNum > 4)
+{
+renderNum = 4;
+}
+var OBJID = ["OBJ_VOIPSIPLINE_ID","OBJ_VOIPVPLINE_ID"];
+devListArea.createPageDataByClone(renderNum, OBJID, xml);
+$.callModifier("Home/VOIPSuccfunction");
+var devListMore = $("#home_devlist_more");
+var options = {
+"instNum": siplineNum,
+"getLinkFunc": getVoIPStatusUrl
+}
+devListMore.trigger("initialize", [options]);
+}
+$.callModifier("/home/homeVoipCtrl");
+};
+voipMenuObj.failfunction = function(){
+showWaitTip(false);
+};
+voipMenuObj.dataTransfer( voipServerAddr,
+"GET",
+voipMenuObj.succfunction,
+voipMenuObj.failfunction,
+false);
+var UpdatevoipRegStatTimer = new ContextBindingTimer(function () {
+UpdatevoipRegStat();
+}, {timeout: 105*1000, contextDom: voipMenuObj.get(0)});
+UpdatevoipRegStatTimer.start();
+voipMenuObj.data("timer_object", UpdatevoipRegStatTimer);
+}
+voipMenuObj.click(function(){
+$("#home_category_area").trigger("clear_all_timer");
+UpdatevoipRegStat();
+});
+});
+
+$(document).ready(function(){
+if(cver == "41" && uRight != "1"){
+$("#WANInfo").hide();
+$("#fwArea").hide();
+$("#HGWArea").hide();
+}
+$.publish("/some/hideWANUrl", [1]);
+var categoryArea = $("#home_category_area");
+var categoryItems = $(".home_category_item", categoryArea);
+var devListArea = $("#home_devlist_area");
+if ( categoryItems.length > 3 ) {
+var menuHeight = categoryArea.height();
+devListArea.height(menuHeight);
+}
+categoryArea.bind("set_current_category", function(event, menuid)
+{
+var menuObj = $("#"+menuid);
+var menuObjBox = menuObj.parent();
+var menuObjPos = menuObj.offset();
+var left = menuObjPos.left + menuObj.width();
+var top = menuObjPos.top + menuObj.height()/2 - 5;
+var adevPointer = $("#home_adev_pointer");
+adevPointer.show();
+adevPointer.offset({left:left, top:top});
+var tmpObj = $(this).next();
+var devpopout = $("[id^='Btn_apply_UsbEject']", tmpObj);
+if(menuid == "home_category_usb")
+{
+devpopout.show();
+}
+else
+{
+devpopout.hide();
+}
+});
+categoryArea.bind("clear_all_timer", function(event) {
+$(".home_categroy_name").each(function(){
+var timer = $(this).data("timer_object");
+if ( timer )
+{
+timer.stop();
+}
+});
+});
+var devListArea = $("#home_devitem");
+devListArea.bind("remove_instances", function(){
+$(this).find("[id^='template_home_devitem_']").each(function(){
+$(this).remove();
+});
+});
+$('#home_adev_area').find('a, span').each(function(){
+$(this).attr('tabindex', "0")
+});
+getFocusToClick('[tabindex="0"]', $('#home_adev_area'));
+$("#home_devlist_category").bind("initialize", function(event, options){
+var categoryName = options.categoryName;
+var setLinkName = options.setLinkName;
+var getLinkFunc = options.getLinkFunc;
+$("#home_category_name").text(categoryName);
+var settingLinkDiv = $("#home_category_setting");
+var settingLink = $("a", settingLinkDiv);
+settingLink.unbind("click");
+if ( setLinkName )
+{
+var uRight = 1;
+var linkUrl = getLinkFunc(uRight);
+var pageId,areaId;
+pageId = linkUrl;
+if (linkUrl.indexOf("#") != -1){
+var temArr = linkUrl.split("#");
+pageId = temArr[0];
+areaId = temArr[1];
+}
+if ( "" != pageId && menuTreeObj.findMenu(pageId) )
+{
+settingLink.text(setLinkName);
+settingLink.click(function(){
+openLink(pageId, areaId);
+});
+setARIAAttr(settingLink, "tabindex", "0");
+setARIAAttr(settingLink, "role", "link");
+keyBoardClick(settingLink);
+settingLinkDiv.show();
+}
+else
+{
+settingLink.text("");
+settingLinkDiv.hide();
+}
+}
+else
+{
+settingLink.text("");
+settingLinkDiv.hide();
+}
+});
+$("#home_devlist_head").bind("exec_data_binding", function(event, options){
+var templateStr = '<span class="home_devitem_para" id="" title=""></span>';
+$("#home_devlist_head").find("span").remove();
+$("#template_home_devitem").find("span").remove();
+var paraLangs = options.paraLangs;
+for (var i = 0; i < paraLangs.length; i++) {
+var paraLang = paraLangs[i];
+var parameter = paraLang[0];
+var lang = paraLang[1];
+var titleSpan = $(templateStr).text(lang).attr("title", lang).attr("tabindex", 0).attr("role", "columnheader");
+var contentSpan = $(templateStr).attr("id", parameter).attr("tabindex", 0).attr("role", "cell");
+if(parameter == "AuthUserName")
+{
+$(contentSpan).attr("encode", "1")
+}
+$("#home_devlist_head").append(titleSpan);
+$("#template_home_devitem").append(contentSpan);
+}
+});
+var devListMore = $("#home_devlist_more");
+devListMore.bind("initialize", function(event, options){
+var instNum = options.instNum;
+var getLinkFunc = options.getLinkFunc;
+var moreObj = $(this);
+var archorMore = moreObj.find("a");
+archorMore.unbind("click");
+if ( instNum > 4 )
+{
+var uRight = 1;
+var linkUrl = getLinkFunc(uRight);
+var pageId,areaId;
+pageId = linkUrl;
+if (linkUrl.indexOf("#") != -1){
+var temArr = linkUrl.split("#");
+pageId = temArr[0];
+areaId = temArr[1];
+}
+if ( "" != pageId && menuTreeObj.findMenu(pageId) )
+{
+archorMore.show();
+archorMore.bind("click", function(event){
+openLink(pageId,areaId);
+});
+}
+else
+{
+archorMore.hide();
+}
+}
+else
+{
+archorMore.hide();
+}
+});
+categoryItems.eq(0).find(".home_categroy_name").click();
+if (typeof(homePageCustomization) !="undefined" && $.isFunction(homePageCustomization))
+{
+var homeTemObj = $("#homeWrapper");
+homePageCustomization(homeTemObj);
+}
+$("#homeWrapper").off("keydown");
+$("#homeWrapper").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function() {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+});
+</script>
+
+<style type="text/css">
+#homeWrapper {
+position: relative;
+width: 960px;
+min-height: 520px;
+height: auto !important;
+height: 520px;
+text-align: left;
+margin-left: 6px;
+}
+#WANInfo {
+width: 219px;
+height: 156px;
+padding-left: 15px;
+}
+div#WANInfo p {
+height: 24px;
+line-height: 24px;
+}
+#WANUrlWrapper {
+height: 60px;
+line-height: 60px;
+padding-left: 60px;
+margin-bottom: 6px
+}
+#fwArea {
+height: 60px;
+position: absolute;
+left: 231px;
+top: 45px;
+z-index: 1;
+}
+#WANLine {
+width: 63px;
+height: 64px;
+float: left;
+}
+#firewall {
+width: 199px;
+height: 64px;
+line-height: 64px;
+float: left;
+padding-left: 55px;
+}
+#fwSwitch {
+position: absolute;
+top: 8px;
+right: 73px;
+top: 18px;
+height: 24px;
+width: 65px;
+cursor: pointer;
+}
+.fwOn {
+background: url(img/fw.gif) no-repeat left bottom;
+}
+.fwOff {
+background: url(img/fw.gif) no-repeat left top;
+}
+.WAN {
+background: url(img/wan.gif) no-repeat left top;
+}
+.BreakWAN {
+background: url(img/wan.gif) no-repeat right top;
+}
+.WANLine {
+background: url(img/wanLine.gif) no-repeat right top;
+}
+.breakWANLine {
+background: url(img/wanLine.gif) no-repeat left top;
+}
+#HGWArea {
+width: 200px;
+height: 150px;
+position: absolute;
+left: 526px;
+top: 0px;
+}
+#WizardLinkArea {
+width: 235px;
+height: 157px;
+position: absolute;
+left: 726px;
+top: 0px;
+background: url(img/wizardBG.gif) no-repeat center bottom;
+z-index: 1;
+}
+#WizardLinkAreaTip {
+margin-left:25px;
+margin-right:25px;
+margin-top:25px;
+}
+#WizardLinkAreaBtn {
+margin-left:33px;
+margin-top:15px;
+}
+#WLANRadio {
+width: 50px;
+height: 50px;
+position: absolute;
+right: 17px;
+top: 8px;
+}
+#HGW {
+width: 139px;
+height: 107px;
+position: absolute;
+left: 0;
+top: 8px;
+background: url(img/HGW.png) no-repeat;
+z-index: 1;
+}
+#linesArea {
+width: 490px;
+height: 100px;
+position: absolute;
+left: 350px;
+top: 104px;
+background: url(img/lines.gif) no-repeat;;
+}
+#devicesWrapper {
+width: 955px;
+height: 262px;
+margin-top: 40px;
+}
+.devicesBlock {
+float: left;
+width: 235px;
+height: 260px;
+margin-right: 3px;
+background: url(img/devBlockBg.gif) no-repeat center bottom;
+}
+.radioOn {
+background: url(img/radio.gif) no-repeat left top;
+}
+.radioOff {
+background: url(img/radio.gif) no-repeat right top;
+}
+#home_adev_area{
+width: 954px;
+height: auto;
+margin-left: -2px;
+margin-top: 43px;
+}
+#home_adev_name{
+width: 230px;
+height: auto;
+display: inline-block;
+text-align: center;
+padding-top: 14px;
+float: left;
+}
+#home_adev_top{
+width: 100%;
+height: 48px;
+background: url(img/home_adev_head.gif);
+margin-left: 2px;
+}
+#home_adev_middle{
+width: 100%;
+height: auto;
+background: url(img/home_adev_middle.gif);
+margin-left: 2px;
+min-height: 243px;
+}
+#home_adev_bottom{
+width: 100%;
+height: 13px;
+background: url(img/home_adev_bottom.gif);
+margin-left: 2px;
+clear: both;
+}
+#home_category_name{
+margin-left: 10px;
+display: inline-block;
+float: left;
+}
+#home_category_setting{
+float: right;
+margin-right: 10px;
+}
+#home_category_setting a{
+text-decoration: underline;
+cursor: pointer;
+color: #0099cc;
+}
+div#home_category_area{
+width: 230px;
+float: left;
+background: url(img/home_devlist_margin.gif) left;
+}
+.home_category_item{
+width: 230px;
+height: 64px;
+background: url(img/home_category_item.gif);
+cursor: pointer;
+}
+.home_categroy_name{
+color: #0099cc;
+width: auto;
+height: 64px;
+text-align: center;
+line-height: 64px;
+background-position: 32px 17px;
+background-repeat: no-repeat;
+}
+#home_category_wlan{
+background-image: url(img/home_category_wlan.png);
+}
+#home_category_lan{
+background-image: url(img/home_category_lan.png);
+}
+#home_category_usb{
+background-image: url(img/home_category_usb.png);
+}
+#home_category_phone{
+background-image: url(img/home_category_phone.png);
+}
+#home_devlist_area{
+float: right;
+height: auto;
+width: 723px;
+background: url(img/home_devlist_margin.gif) right;
+position: relative;
+}
+#home_devlist_table{
+width: auto;
+height: 243px;
+background: url(img/home_adev_middle.gif) right top no-repeat;
+margin-left: 0px;
+}
+#home_devlist_head{
+}
+.home_devlist_item{
+border-bottom: solid #bebebe 1px;
+width: 98%;
+height: 40px;
+margin-left: 5px;
+display: flex;
+line-height: 40px;
+}
+.home_devitem_para{
+flex:1;
+display: inline-block;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+#home_devlist_category{
+width: 669px;
+height: 18px;
+display: inline-block;
+margin-left: 20px;
+border-bottom: solid #bebebe 1px;
+padding-bottom: 12px;
+padding-top: 17px;
+float: left;
+}
+#home_devlist_foot{
+position: absolute;
+bottom: 0px;
+width: 100%;
+height: 25px;
+right: 45px;
+}
+#home_devlist_more{
+float: right;
+}
+#home_devlist_more a{
+text-decoration: underline;
+cursor: pointer;
+color: #0099cc;
+}
+#home_adev_pointer{
+background: url(img/home_adev_pointer.png);
+width: 10px;
+height: 11px;
+z-index: 99;
+position: absolute;
+}
+#firewallLine {
+display: none;
+}
+@media screen and (max-width: 960px) {
+#homeWrapper {
+width: 100%;
+}
+#WANInfo, #fwArea, #HGWArea {
+margin: 0 auto;
+}
+#WANInfo {
+width: 215px;
+}
+#fwArea {
+width: 167px;
+height: auto;
+}
+#fwArea, #HGWArea {
+position: relative;
+left: 0px;
+top: 0px;
+}
+#WANLine {
+float: none;
+margin: 0 auto;
+transform: rotate(90deg);
+}
+#firewall {
+float: none;
+width: 112px;
+}
+#firewallLine {
+display: block;
+width: 63px;
+height: 64px;
+margin: 0 auto;
+transform: rotate(90deg);
+}
+.fwOnLine {
+background: url(img/fw.gif) no-repeat right bottom;
+}
+.fwOffLine {
+background: url(img/fw.gif) no-repeat right top;
+}
+#home_adev_area {
+width: 99%;
+height: auto;
+}
+#home_adev_top {
+display: flex;
+background: none;
+}
+#home_adev_name {
+width: 30%;
+border-top: solid #bebebe 1px;
+background: url(img/home_category_item.gif);
+background-size: 100% 100%;
+}
+#home_devlist_category {
+width: 70%;
+height: 17px;
+margin: 0;
+border-top: solid #bebebe 1px;
+}
+#home_adev_middle {
+display: flex;
+flex-direction: column;
+background: none;
+}
+#home_category_area {
+display: flex;
+width: 99% !important;
+height: 64px;
+background: none !important;
+}
+.home_category_item {
+width: 25%;
+background-size: 100% 100%;
+}
+.home_categroy_name {
+background-position: left top;
+}
+#home_devlist_area {
+width: 99%;
+background: none !important;
+}
+#home_devlist_table {
+height: auto;
+background-size: 200% auto;
+}
+#home_adev_bottom {
+display: none;
+}
+#home_adev_pointer {
+display: none;
+}
+}
+
+</style>
+<div id="homeWrapper">
+<div id="WANInfo" class="WAN">
+<div id="WANUrlWrapper" class="">
+<span id="WANUrl" class="emColor">WAN Setting</span>
+</div>
+</div>
+<div id="fwArea">
+<div id="WANLine" class="WANLine"></div>
+<div id="firewall" class="fwOff">
+<span id="FWUrl" class="emColor">Firewall</span>
+<a id="fwSwitchLink">
+</a>
+</div>
+<div id="firewallLine" class="fwOff"> </div>
+</div>
+<div id="HGWArea">
+
+<div id="WLANRadio" tabindex="0" class="">&nbsp;</div>
+
+<div id="HGW">&nbsp;</div>
+</div>
+<div id = "Hint_ejectOK" class="succHint" style="display:none;">
+<span >Device has been safely ejected.</span>
+</div>
+<div id = "Hint_ejectFAIL" class="errorHint" style="display:none;">
+<span >Device has been safely ejected.</span>
+</div>
+<div id="home_adev_area">
+<div id="home_adev_top">
+<div id="home_adev_name">Device List</div>
+<div id="home_devlist_category">
+<div id="home_category_name"></div>
+<div id="home_category_setting" style="display: none"><a></a></div>
+</div>
+</div>
+<div id="home_adev_middle">
+<div id="home_category_area">
+
+<div class="home_category_item">
+<div class="home_categroy_name" id="home_category_wlan"><a>WLAN Devices</a></div>
+</div>
+
+<div class="home_category_item">
+<div class="home_categroy_name" id="home_category_lan"><a>LAN Devices</a></div>
+</div>
+
+<div class="home_category_item">
+<div class="home_categroy_name" id="home_category_usb"><a>USB Devices</a></div>
+</div>
+
+
+<div class="home_category_item" id="home_phone">
+<div class="home_categroy_name" id="home_category_phone"><a>VoIP Devices</a></div>
+</div>
+
+<div id="home_adev_pointer" style="display: none"></div>
+</div>
+<div id="home_devlist_area">
+<div id="home_devlist_table" role="table" >
+<div id="home_devlist_head" class="home_devlist_item" role="row">
+<span class="home_devitem_para" tabindex="0" role="columnheader" title="">&nbsp;</span>
+<span class="home_devitem_para" tabindex="0" role="columnheader" title="">&nbsp;</span>
+<span class="home_devitem_para" tabindex="0" role="columnheader" title="">&nbsp;</span>
+<span class="home_devitem_para" tabindex="0" role="columnheader" title="">&nbsp;</span>
+</div>
+<div id="home_devitem">
+<div id="template_home_devitem" class="home_devlist_item" role="row" style="display: none">
+<span class="home_devitem_para" tabindex="0" role="cell" id="" title=""></span>
+<span class="home_devitem_para" tabindex="0" role="cell" id="" title=""></span>
+<span class="home_devitem_para" tabindex="0" role="cell" id="" title=""></span>
+<span class="home_devitem_para" tabindex="0" role="cell" id="" title=""></span>
+</div>
+</div>
+</div>
+<div id="home_devlist_foot">
+<div id="home_devlist_more">
+<a id="devlist_more" style="display:none;">More</a>
+
+</div>
+</div>
+</div>
+</div>
+<div id="home_adev_bottom"></div>
+</div>
+<div id="cmapiErr">
+<div id="wanErr">
+<div class="errorHint" style="display:none;">
+<span class="caption1">Warning! WAN cmapi error</span>
+</div>
+</div>
+<div id="wlanErr">
+<div class="errorHint" style="display:none;">
+<span class="caption1">Warning! WLAN cmapi error</span>
+</div>
+</div>
+<div id="lanErr">
+<div class="errorHint" style="display:none;">
+<span class="caption1">Warning! LAN cmapi error</span>
+</div>
+</div>
+<div id="usbErr">
+<div class="errorHint" style="display:none;">
+<span class="caption1">Warning! USB cmapi error</span>
+</div>
+</div>
+<div id="voipErr">
+<div class="errorHint" style="display:none;">
+<span class="caption1">Warning! VoIP cmapi error</span>
+</div>
+</div>
+<div id="fwErr">
+<div class="errorHint" style="display:none;">
+<span class="caption1">Warning! Firewall cmapi error</span>
+</div>
+</div>
+</div>
+<div id="ajaxErrArea" class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+</div>
+<script type="text/javascript">
+MenuShow("ClassOne", "Home_t.lp", "mmHome");
+</script>
+<script>
+
+</script>
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x4f\x63\x38\x72\x59\x70\x75\x36\x55\x6d\x65\x58\x74\x43\x50\x73\x4d\x34\x71\x72\x6b\x69\x77\x4e";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>

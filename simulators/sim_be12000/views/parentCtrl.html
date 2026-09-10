@@ -1,0 +1,1203 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_CheckBox();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.show();
+collapsibleInst.addClass("instNameExp");
+groupBtnChange(ChangeArea);
+ChangeArea.attr("aria-live","polite");
+}
+else
+{
+ChangeArea.hide();
+collapsibleInst.removeClass("instNameExp");
+ChangeArea.attr("aria-live","off");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+collapsibleInstObj.attr("tabindex", 0);
+keyBoardClick(collapsibleInstObj);
+var filteredImages = $("img").filter(function() {
+return $(this).attr('src') === 'img/sleeping.png' || $(this).attr('src') === 'img/awaking.png';
+});
+filteredImages.attr("tabindex", 0);
+keyBoardClick(filteredImages);
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+var listType = "";
+if(InputOBJ.hasClass('ip')) {
+listType = 'ip'
+}else{
+listType = 'mac'
+}
+var inputLabel = InputOBJ.closest('.row').find('label').first().text();
+var suffix = InputOBJ.attr('id').match(/\d+/) ? InputOBJ.attr('id').match(/\d+/)[0] : "";
+var ariaLabel = inputLabel + " " + listType + suffix;
+InputOBJ.attr("aria-label", ariaLabel);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#112;&#97;&#114;&#101;&#110;&#116;&#67;&#116;&#114;&#108;</div>
+<div id="_NowSupIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#112;&#97;&#114;&#101;&#110;&#116;&#67;&#116;&#114;&#108;</div>
+<div id="_NowThdIdInfo"></div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft" role="complementary">
+<div id="class2Menu" class="class2Menu" role="navigation">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span tabindex="0" role="text">Page Information</span>
+</div>
+
+<p class="pIntroContent" tabindex="0" role="text">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#112;&#97;&#114;&#101;&#110;&#116;&#97;&#108;&#32;&#99;&#111;&#110;&#116;&#114;&#111;&#108;&#115;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function(){
+function Customize_MACFilter(paramsOBJ)
+{
+var ContainerOBJ = paramsOBJ["ContainerOBJ"];
+ContainerOBJ.collapsibleInstTitleChange("Name");
+}
+function setWeekToDayEle(template)
+{
+var EveryDay = $("[id^='EveryDay:']", template);
+var Week = $("[id^='Week:']", template);
+var De_WeekVal = Week.val();
+var WeekVal = parseInt(De_WeekVal,10).toString(2);
+while (WeekVal.length < 7)
+{
+WeekVal = "0" + WeekVal;
+}
+if( WeekVal == "1111111" )
+{
+EveryDay.prop("checked", true);
+}
+else
+{
+EveryDay.prop("checked", false);
+var temp = $("[id^='Time_Day']", template);
+for( var i=0; i < WeekVal.length; i++ )
+{
+if(WeekVal.charAt(i) == '1')
+{
+$(temp[i]).prop("checked",true);
+}
+else
+{
+$(temp[i]).prop("checked",false);
+}
+}
+}
+EveryDay.change();
+}
+function setDayEleToWeek(template)
+{
+var EveryDay = $("[id^='EveryDay:']", template);
+var Week = $("[id^='Week:']", template);
+var B_WeekVal = "";
+if( EveryDay.is(":checked") )
+{
+B_WeekVal = "1111111";
+}
+else
+{
+var temp = $("[id^='Time_Day']", template);
+for( var i=0; i< temp.length;i++ )
+{
+if($(temp[i]).is(":checked"))
+{
+B_WeekVal += "1";
+}
+else
+{
+B_WeekVal += "0";
+}
+}
+}
+Week.val(parseInt(B_WeekVal, 2));
+var data = {};
+data.template = template;
+$.callModifier("ParentCtrl/changeTime",data);
+}
+function AddEvent2APPIDOpBtn(template)
+{
+$(".Addbutton", template).click(function(){
+var template = $(this).parents("[id^='template_']");
+var VisibleAPPIDCtrls = $("[id^='APPIDCtrlTemplate']:visible", template);
+var VisibleAPPIDCnt = VisibleAPPIDCtrls.length;
+var iAppMax = DBVIEW_PARENTCNTL_APPID_ARRAY_MAX;
+if ( VisibleAPPIDCnt >= iAppMax )
+{
+return false;
+}
+var HiddenAPPIDCtrls = $("[id^='APPIDCtrlTemplate_']:hidden", template);
+HiddenAPPIDCtrls.eq(0).show();
+if ( 1 == HiddenAPPIDCtrls.length )
+{
+$(this).attr("src", "img/add_disable.png");
+}
+});
+$(".Delbutton", template).click(function(){
+var template = $(this).parents("[id^='template_']");
+var VisibleAPPIDs = $("[id^='APPID_']:visible", template);
+var VisibleAPPIDCnt = VisibleAPPIDs.length;
+var iAppMax = DBVIEW_PARENTCNTL_APPID_ARRAY_MAX;
+if ( VisibleAPPIDCnt == iAppMax )
+{
+$(".Addbutton", template).attr("src", "img/add.png");
+}
+var APPIDCtrl = $(this).parents("[id^='APPIDCtrlTemplate_']");
+var CatIDObj = $("[id^='CatID_']", APPIDCtrl);
+var APPIDObj = $("[id^='APPID_']", APPIDCtrl);
+CatIDObj.val("0");
+APPIDObj.val("4095");
+$(".errorLabelWraper>.error", APPIDCtrl).hide();
+APPIDCtrl.hide();
+})
+}
+function MakeDynamicAPPIDCtrl(template)
+{
+var iAppMax = DBVIEW_PARENTCNTL_APPID_ARRAY_MAX;
+var APPIDCtrlTemplate = $("#APPIDCtrlTemplate", template);
+for ( var suffix=1; suffix<iAppMax; suffix++ )
+{
+var clone = APPIDCtrlTemplate.cloneWithSuffix(suffix, "_");
+APPIDCtrlTemplate.before(clone);
+}
+}
+function CreatBaseportAndCatidOpStr(template,suffix)
+{
+var CatIDArr = [
+["0 ", "NOIDENTIFY"],
+["1 ", "IM"],
+["2" , "VOIP"],
+["3" , "SOCIAL_NETWORKING"],
+["4" , "NAVIGATION"],
+["5" , "MMS"],
+["6" , "NETWORK"],
+["7" , "P2P"],
+["8 ", "SOFTWARE_UPDATE"],
+["9" , "DATABASE"],
+["10" , "REMOTE_CONNECTION"],
+["11" , "TUNNELLING"],
+["12" , "EMAIL"],
+["13" , "WEB_BROWSING"],
+["14" , "WEB_OTHERS"],
+["15" , "WEB_GENERIC"],
+["16" , "FINANCE"],
+["17" , "SAFE"],
+["18" , "SHOPPING"],
+["19" , "TRAVEL"],
+["20" , "NETWORK_STORAGE"],
+["21" , "FILE_TRANSFER"],
+["22" , "READING"],
+["23" , "VIDEO"],
+["24" , "AUDIO"],
+["25" , "APP_STORE"],
+["26" , "GAME"],
+["27" , "PAYMENT"],
+["28" , "COMIC"],
+]
+var catidobj = $("[id^='CatID_"+suffix+"']", template);
+var catid = catidobj.attr('id');
+var catidStr = '<select name="'+catid+'" id="'+catid+'" class="selectNorm PostIgnore">';
+for(var i=0;i<CatIDArr.length;i++){
+for (var j = 0; j < CatIDArr[i].length; j=j+2) {
+var catidval = CatIDArr[i][j];
+var catidname = CatIDArr[i][j+1];
+catidStr += "<option value = "+catidval+" title='"+catidname+"'>"
++catidname+"</option>";
+}
+}
+catidStr += "</select>";
+catidobj.replaceWith(catidStr);
+}
+function CreatAppidOpStr(template,suffix){
+var catid2appid = {
+"0" : [["4095","ALL"],["256","SESSION_MAX_DEPTH"]],
+"1" : [["4095","ALL"],["259","HANGOUTS"], ["362","QQ"], ["568","WECHAT"], ["662","WEB_QQ"], ["681","VIBER"], ["1498","VIBER_IM"], ["1882,WECHAT_MESSAGES"],
+["1883","WECHAT_VOICEMESSAGES"], ["2070","MOMO"], ["2129","TELEGRAM_MESSENGER"], ["2318","QQLITE"], ["2319","WEIHUI"], ["2386","IMO"],
+["2917","DINGTALK.SEND_VOICE_MESSAGE"], ["2929","DINGTALK"]],
+"2" : [["4095","ALL"],["310","STUN"], ["539","QQ_VOICE"], ["1487","TELEGRAM_VOICECALL"], ["1628","VIBER_VOIP"], ["1683","HANGOUTS_VOIP"], ["1740","WECHAT_VOICE"],
+["1878","WECHAT_VIDEO"], ["1879","WECHAT_WALKIETALKIE"], ["1994","FACEBOOK_MESSENGER_VOIP"], ["2035","WEIXIN_PHONEBOOK"],
+["2130","TELEGRAM_VIDEOCALL"], ["2889","VOOV_MEETING"], ["2890","FACEBOOK_MESSENGER_VOIP_PRE"],
+["2897","DINGTALK.TEAMS"], ["2914","ZOOM"], ["2930","DINGTALK.VOIP"],["2978","DOUYIN.VOIP"] ],
+"3" : [["4095","ALL"],["389","FACEBOOK"], ["642","WEIBOSINA"], ["994","GOOGLEPLUS"], ["1734","TIANYA"], ["1769","SHIJIJIAYUAN"], ["2007","INSTAGRAM"], ["2037,WECHAT_MOMENTS"],
+["2784","BAIHEWANG"], ["2785","YUANLAIWANG"], ["2787","TANTAN"]],
+"4" : [["4095","ALL"],["386","GOOGLEEARTH"], ["655","GOOGLEMAPS"], ["2072","AMAP"]],
+"5" : [["4095","ALL"]],
+"6" : [["4095","ALL"],["364","DNS"]],
+"7" : [["4095","ALL"]],
+"8" : [["4095","ALL"]],
+"9" : [["4095","ALL"]],
+"10" : [["4095","ALL"]],
+"11": [["4095","ALL"],["305","HTTP_PROXY"]],
+"12" : [["4095","ALL"]],
+"13": [["4095","ALL"],["304","HTTP_RANGE"], ["434","YOUTUBE.WEB"], ["688","BLIZZARD_WEB_CLIENT"],["962","GOOGLEWEB_SEARCH"], ["1438","KUAISHOU.WEB"], ["1581","LETV_WEB"],
+["1582","CCTV_WEB"], ["1723","YY_WEB"], ["2025","JINRITOUTIAO"],["2141","IMGO_TV_WEB"],["2147","MIGU_VIDEO_WEB"],["2156","IQIYI_WEB"],
+["2195","IFENG_WEB"], ["2333","NETFLIX.WEB"], ["2377","TENCENT_VIDEO_WEB"],["2382","YOUKU_WEB"],["2793","MEITUANDACHE"],["2801","XIAOHONGSHU"],
+["2805","WEISHI_WEB"], ["2806","LIKEE_WEB"], ["2815","HUYAZHIBO_WEB"],["2836","FUNSHION_WEB"],["2838","TUDOU_WEB"],["2844","XIGUASHIPIN_WEB"],
+["2865","WOJIAOMT4"], ["2886","BYTEDANCE"], ["2891","TIKTOK.WEB"],["2945","BILIBILI_WEB"],["2960","DOUYU"],["2975","DOUYIN.WEB"]],
+"14": [["4095","ALL"],["2160","XIAOYUAN_SEARCH"], ["2178","ZUOYEBANG"], ["2908","VIVO_WEATHER"]],
+"15": [["4095","ALL"],["295","SSL"], ["296","SSL3.0"], ["297","TLS1.0"], ["298","TLS1.1"], ["303","HTTP"],
+["560","HTTPS"], ["663","SSL2.0"], ["1655","TLS1.2"],["1918","GOOGLE_GEN"], ["2078","HTTP2_TLS"], ["2450","GOOGLE_GEN_ANDROID"],
+["2778","SAMSUNG_SERVICE"], ["2906","TENCENT"], ["2907","VIVO"],["2934","UC_SERVICE"], ["2935","ALIBABA_SERVICE"]],
+"16" : [["4095","ALL"]],
+"17" : [["4095","ALL"]],
+"18": [["4095","ALL"],["967","TAOBAO"], ["969","JINGDONG"], ["1770","DANGDANG"], ["1857","YIHAODIAN"], ["1906","FOODPANDA"],
+["2081","WEIPINHUI"], ["2164","MEITUAN"], ["2183","DAZHONGDIANPING"],["2188","JUHUASUAN"], ["2428","XIANYU"], ["2788","VMALL"],
+["2789","MISHOP"], ["2794","MEITUANPEISONG"], ["2795","MEITUANWAIMAI"],["2818","PINDUDUO"], ["2895","SHOPEE"],
+["2896","LAZADA"],["2958","TMALL"]],
+"19": [["4095","ALL"],["1396","GRAB"], ["2127","UBER"], ["2158","UBER_PARTNER"], ["2792","MEITUANDANCHE"]],
+"20": [["4095","ALL"],["1649","GOOGLEDRIVE"], ["1651","DBANK"], ["1745","AMAZON_CLOUD_DRIVE"]],
+"21": [["4095","ALL"],["306","HTTP_DOWNLOAD"], ["862","YOUTUBE.UPLOAD"], ["1682","GTALK_FILETRANSFER"], ["1880","WECHAT_IMAGETRANSFER"],
+["1881","WECHAT_VIDEOTRANSFER"], ["2385","FACEBOOK_UPLOAD_VIDEO"], ["2918","DINGTALK.RECEIVE_FILES"], ["2919","DINGTALK.SEND_FILES"],
+["2990","WECHAT_FILETRANSFERQUIC"]],
+"22": [["4095","ALL"],["2339","DANGDANG_READER"]],
+"23": [["4095","ALL"],["263","YOUKU"], ["264","TUDOU"], ["266","FUNSHION"], ["361","TENCENT_VIDEO"], ["370","YOUTUBE"], ["373","CCTV"], ["374","CCTV_VOD"], ["547","YOUKU_CLIENT"],
+["604","MIGU_VIDEO"], ["819","IFENG_TV"], ["820","IQIYI_VIDEO"], ["824","LETV"],["827","IMGO_TV"], ["1963","HTTP_VIDEO"], ["1999","WEISHI"], ["2243","NETFLIX"],
+["2266","BAIDU_VIDEO_APP"], ["2312","LETV_P2P"], ["2384","FACEBOOK_VIDEO"], ["2407","DOUYUTV"], ["2416","BILIBILI"], ["2417","KUAISHOU.LIVE"],
+["2777","KUAISHOU.ZHUBO"], ["2790","DAZHONGDIANPING.VIDEO"],["2796","MEITUAN.VIDEO"], ["2797","TIANYA_VIDEO"], ["2798","TIANYA_LIVE"], ["2799","XIAOHONGSHU.LIVE"],
+["2800","XIAOHONGSHU.VIDEO"], ["2802","JINRITOUTIAO.VIDEO"], ["2807","LIKEE"], ["2809","YY_VOD"], ["2811","YY_LIVE"], ["2812","MILIVE"],
+["2813","HUYAZHIBO_P2P"], ["2816","HUYAZHIBO"], ["2817","HUYA_DIANBO"], ["2819","PINDUODUO.VIDEO"], ["2828","CCTV_ADS"], ["2830","HUAWEI_VIDEO"],
+["2832","LETV_ADS"], ["2837","HAOKANSHIPIN"], ["2839","HANJUTV"], ["2840","IMGO_TV_ADS"], ["2842","XIGUASHIPIN_VIDEO"], ["2879","DOUYIN.LIVEUPLOAD"],
+["2892","TIKTOK"], ["2922","DINGTALK.LIVE"], ["2923","DINGTALK.VIDEO_LIVE"], ["2924","DINGTALK.VIDEO"], ["2936","WETV"], ["2941","IQIYI_VIDEO_LIVE"],
+["2943","IQIYI_VIDEO_ADS"], ["2946","BILIBILI_LIVE"], ["2948","TENCENT_VIDEO_P2P"], ["2950","TENCENT_VIDEO_LIVE"], ["2952","TENCENT_VIDEO_AD"], ["2954","MIGU_LIVE"],
+["2955","MIGU_VIDEO_AD"], ["2957","KUAISHOU.VIDEO"], ["2961","DOUYU_LIVE"], ["2962","LAIFENG"], ["2963","YOUKU_ADS"], ["2964","YOUKU_LIVE"],
+["2966","YOUKU_P2P"], ["2976","DOUYIN.LIVE"], ["2977","DOUYIN"], ["2987","WECHAT_SHIPINHAO"], ["2995","TAOBAO.VIDEO"], ["2997","TAOBAO.LIVE"]],
+"24": [["4095","ALL"],["1976","HTTP_AUDIO"], ["2124","QQ_MUSIC"], ["2829","IFENG_FM"], ["2841","XIGUASHIPIN_AUDIO"], ["2880","DOUYU_LIVE_AUDIO"], ["2881","KUAISHOU.AUDIO"],
+["2883","DOUYIN.AUDIO"], ["2937","QUANMINKGE"], ["2947","BILIBILI_AUDIO"], ["2973","DOUYIN.LIVEAUDIO"]],
+"25": [["4095","ALL"],["441","APP_STORE"], ["2101","YINGYONGBAO"], ["2779","MIAPPSTORE"], ["2780","SAMSUNG_APPSTORE"], ["2781","ZTEAPPSTORE"], ["2782","YINGYONGHUI"],
+["2831","LETV_APPSTORE"], ["2911","HUAWEI_MARKET"], ["2912","VIVO_APPSTORE"], ["2913","OPPO_APPSTORE"]],
+"26": [["4095","ALL"],["344","DAHUAXIYOU"], ["447","CROSSFIRE_MOBILE"], ["449","QQ_FEICHE"], ["459","MENGHUANXIYOU"], ["678","LEAGUE_OF_LEGENDS"], ["1443","CLASH_OF_ROYALE"],
+["2204","SUBWAY_SURFERS"], ["2213","MINECRAFT"], ["2216","ANIPOP"], ["2359","QQHLDDZ"],["2402","WANGZHERONGYAO"], ["2412","CLASH_OF_CLANS"], ["2845","EMPIRESANDALLIES"],
+["2846","HUOXIANJINGYING"], ["2847","SHEDIAOYINGXIONGZHUANSHOUYOU"], ["2848","QQ_MAJIANG"], ["2849","QQ_XIANGQI"],["2850","PAOPAOTANG"], ["2851","DAHUAXIYOU2"], ["2852","SANGUOSHA"],
+["2853","PVZ2"], ["2854","BRAWLSTARS"], ["2855","WANGUOJUEXING"], ["2856","TIANYAMINGYUEDAO"],["2857","TCSDZZ"], ["2858","MINIWORLD"], ["2859","XJXQY"],
+["2860","CHUANGZAOYUMOFA"], ["2861","QIJIJUEXING"], ["2862","QNYH"], ["2863","TLBB"],["2864","MAOHELAOSHU"], ["2866","XIANGCHANGPAIDUI"], ["2867","XIAOMIGUNFIGHT"],
+["2868","BENGHUAI3RD"], ["2869","BLHX"], ["2870","FATEGRANDORDER"], ["2871","YIMENGJIANGHU"],["2872","MINGRIZHIHOU"], ["2873","ONMYOJI.PLAYING_GAME"], ["2874","ONMYOJI"],
+["2875","PAOPAOJINGSU"], ["2876","NARUTO_GAME"], ["2888","QQXUANWUSHOUYOU"], ["2898","CALLOFDUTY"],["2899","GENSHIN_IMPACT.PLAYING_GAME"], ["2901","GENSHIN_IMPACT.DATA_LOADING"],
+["2903","GENSHIN_IMPACT"], ["2904","MOBILELEGENDS"], ["2905","MOBILELEGENDS_DOWNLOAD"], ["2909","QQ_FEIJI"],["2910","QUANMINTUJI"], ["2933","IDENTITY_V"],
+["2953","FENGYUNDAOXINGDONG"], ["2956","LUSHICHUANSHUO"], ["2959","HUANGYEXINGDONG"], ["2970","GAME_FOR_PEACE"],["2971","GAME_FOR_PEACE.PLAYING_GAME"], ["2972","ROV"],
+["2998","WANGZHERONGYAO_PLAYINGGAME"], ["2999","WANGZHERONGYAO_LOADING_OK"]],
+"27": [["4095","ALL"],["1667","ALIPAY"], ["1686","TENPAY"], ["2137","WECHAT_PAY"], ["2931","ALIPAY_REDPACKET"], ["2979","DOUYIN.WALLET"], ["2983 ","WECHAT_HONGBAO"]],
+"28" : [["4095","ALL"]],
+}
+var catidobj = $("[id^='CatID_"+suffix+"']", template);
+var catval = catidobj.val();
+var appArr = catid2appid[catval];
+var appidobj = $("[id^='APPID_"+suffix+"']", template);
+var appid = appidobj.attr('id');
+var appidselectStr = '<select name="'+appid+'" id="'+appid+'" class="selectNorm PostIgnore">';
+for(var i=0;i<appArr.length;i++){
+for (var j = 0; j < appArr[i].length; j=j+2) {
+var appidval = appArr[i][j];
+var appidname = appArr[i][j+1];
+appidselectStr += "<option value = "+appidval+" title='"+appidname+"'>"
++appidname+"</option>";
+}
+}
+appidselectStr += "</select>";
+appidobj.replaceWith(appidselectStr);
+}
+function FillAndDispAPPIDCtrl(template)
+{
+var APPIDCnt = $("[id^='APPIDCnt:']", template).val();
+APPIDCnt = parseInt(APPIDCnt, 10);
+var iAppMax = DBVIEW_PARENTCNTL_APPID_ARRAY_MAX;
+for ( var suffix=0; suffix<iAppMax; suffix++ )
+{
+var APPIDCtrl = $("[id^='APPIDCtrlTemplate_"+suffix+":']", template);
+$("[id^='CatID_"+suffix+":']", APPIDCtrl).val("0");
+$("[id^='APPID_"+suffix+":']", APPIDCtrl).val("4095");
+$(".errorLabelWraper>.error", APPIDCtrl).hide();
+APPIDCtrl.hide();
+}
+for ( var suffix=0; suffix<APPIDCnt; suffix++ )
+{
+var catidval = $("[id^='CatID"+suffix+":']", template).val();
+var appidval = $("[id^='APPID"+suffix+":']", template).val();
+$("[id^='CatID_"+suffix+":']", template).val(catidval);
+CreatAppidOpStr(template,suffix);
+$("[id^='CatID_"+suffix+":']", template).change(function(){
+var template = $(this).parent();
+var suffix = $(this).attr('id').substr(-3,1);
+CreatAppidOpStr(template,suffix);
+});
+$("[id^='APPID_"+suffix+":']", template).val(appidval);
+$("[id^='APPIDCtrlTemplate_"+suffix+":']", template).show();
+}
+if ( APPIDCnt == iAppMax )
+{
+$(".Addbutton", template).attr("src", "img/add_disable.png");
+}
+else
+{
+$(".Addbutton", template).attr("src", "img/add.png");
+}
+var filterModeObj = $("[id^='FilterMode']", template);
+filterModeObj.change();
+}
+function SetAPPIDHideVal(template)
+{
+var iAppMax = DBVIEW_PARENTCNTL_APPID_ARRAY_MAX;
+for ( var i=0; i<iAppMax; i++ )
+{
+$("[id^='CatID"+i+":']", template).val("NULL");
+$("[id^='APPID"+i+":']", template).val("NULL");
+}
+var APPIDHidenIdx = 0;
+for ( var i=0; i<iAppMax; i++ )
+{
+var CatIDCtrl = $("[id^='CatID_"+i+":']", template);
+var APPIDCtrl = $("[id^='APPID_"+i+":']", template);
+if ( APPIDCtrl.is(":visible") )
+{
+var catidval = CatIDCtrl.val();
+var appidval = APPIDCtrl.val();
+var CatIDHidenCtrl = $("[id^='CatID"+APPIDHidenIdx+":']", template);
+var APPIDHidenCtrl = $("[id^='APPID"+APPIDHidenIdx+":']", template);
+CatIDHidenCtrl.val(catidval);
+APPIDHidenCtrl.val(appidval);
+APPIDHidenIdx++;
+}
+}
+$("[id^='APPIDCnt:']", template).val(APPIDHidenIdx);
+}
+function CtrlURLAreaDispAttr(template)
+{
+var filterModeObj = $("#FilterMode", template);
+filterModeObj.change(function(){
+var filterMode = $(this).val();
+var template = $(this).parents("[id^='template_']");
+if ( "NotAllowed" == filterMode )
+{
+$("[id^='div_URLCfgArea']", template).hide();
+}
+else
+{
+$("[id^='div_URLCfgArea']", template).show();
+}
+});
+}
+function AddEvent2URLOpBtn(template)
+{
+$(".AddIconControl", template).click(function(){
+var template = $(this).parents("[id^='template_']");
+var VisibleURLCtrls = $("[id^='URLCtrlTemplate_']:visible", template);
+var VisibleURLCnt = VisibleURLCtrls.length;
+var iMax = 5;
+if ( VisibleURLCnt >= iMax )
+{
+return false;
+}
+var HiddenURLCtrls = $("[id^='URLCtrlTemplate_']:hidden", template);
+HiddenURLCtrls.eq(0).show();
+if ( 1 == HiddenURLCtrls.length )
+{
+$(this).attr("src", "img/add_disable.png");
+}
+});
+$(".DelIconControl", template).click(function(){
+var template = $(this).parents("[id^='template_']");
+var VisibleURLs = $("[id^='URL_']:visible", template);
+var VisibleURLCnt = VisibleURLs.length;
+var iMax = 5;
+if ( VisibleURLCnt == iMax )
+{
+$(".AddIconControl", template).attr("src", "img/add.png");
+}
+var URLCtrl = $(this).parents("[id^='URLCtrlTemplate_']");
+var URLObj = $("[id^='URL_']", URLCtrl);
+URLObj.val("");
+$(".errorLabelWraper>.error", URLCtrl).hide();
+URLCtrl.hide();
+});
+}
+function MakeDynamicURLCtrl(template)
+{
+var iMax = 5;
+var URLCtrlTemplate = $("#URLCtrlTemplate", template);
+for ( var suffix=1; suffix<iMax; suffix++ )
+{
+var clone = URLCtrlTemplate.cloneWithSuffix(suffix, "_");
+URLCtrlTemplate.before(clone);
+}
+}
+function FillAndDispURLCtrl(template)
+{
+var URLCnt = $("[id^='URLCnt:']", template).val();
+URLCnt = parseInt(URLCnt, 10);
+var iMax = 5;
+for ( var suffix=0; suffix<iMax; suffix++ )
+{
+var URLCtrl = $("[id^='URLCtrlTemplate_"+suffix+":']", template);
+$("[id^='URL_"+suffix+":']", URLCtrl).val("");
+$(".errorLabelWraper>.error", URLCtrl).hide();
+URLCtrl.hide();
+}
+for ( var suffix=0; suffix<URLCnt; suffix++ )
+{
+var urlval = $("[id^='URL"+suffix+":']", template).val();
+$("[id^='URL_"+suffix+":']", template).val(urlval);
+$("[id^='URLCtrlTemplate_"+suffix+":']", template).show();
+}
+if ( URLCnt == iMax )
+{
+$(".AddIconControl", template).attr("src", "img/add_disable.png");
+}
+else
+{
+$(".AddIconControl", template).attr("src", "img/add.png");
+}
+var filterModeObj = $("[id^='FilterMode']", template);
+filterModeObj.change();
+}
+function SetURLHideVal(template)
+{
+var iMax = 5;
+var filterModeObj = $("[id^='FilterMode']", template);
+var filterMode = filterModeObj.val();
+if ( "NotAllowed" == filterMode )
+{
+$("[id^='URLCnt:']", template).addClass("PostIgnore");
+for ( var i=0; i<iMax; i++ )
+{
+$("[id^='URL"+i+":']", template).addClass("PostIgnore");
+}
+return ;
+}
+else
+{
+$("[id^='URLCnt:']", template).removeClass("PostIgnore");
+for ( var i=0; i<iMax; i++ )
+{
+$("[id^='URL"+i+":']", template).removeClass("PostIgnore");
+}
+}
+for ( var i=0; i<iMax; i++ )
+{
+$("[id^='URL"+i+":']", template).val("NULL");
+}
+var URLHidenIdx = 0;
+for ( var i=0; i<iMax; i++ )
+{
+var URLCtrl = $("[id^='URL_"+i+":']", template);
+if ( URLCtrl.is(":visible") )
+{
+var urlval = URLCtrl.val();
+var URLHidenCtrl = $("[id^='URL"+URLHidenIdx+":']", template);
+URLHidenCtrl.val(urlval);
+URLHidenIdx++;
+}
+}
+$("[id^='URLCnt:']", template).val(URLHidenIdx);
+}
+function initial_template_ParentCtrl(templateID)
+{
+var template = $("#"+templateID);
+CtrlURLAreaDispAttr(template);
+AddEvent2URLOpBtn(template);
+MakeDynamicURLCtrl(template);
+var allDayObj = $("[id^='a_allday']", template);
+allDayObj.click(function(event){
+event.preventDefault();
+var TimeCtl = $(this).parents("._LuQUID_TimeCtl");
+var allday = {
+"group_HourStart" : "0",
+"group_MinuteStart" : "0",
+"group_HourEnd" : "23",
+"group_MinuteEnd" : "59"
+}
+for (var i in allday)
+{
+var timeEle = $("."+i,TimeCtl);
+$("option[value='"+ allday[i] + "']",timeEle).prop("selected",
+"selected");
+}
+});
+allDayObj.attr("tabIndex", 0);
+keyBoardClick(allDayObj);
+var MACCheckRules = {
+"required": true,
+"HEX": true,
+"fixedlength": 2
+};
+template.bind("applyPromptCheckJSON", function(event, template){
+var checkJSONTempObj = {
+"groups": {
+ChildIdGroup: "sub_ChildId0 sub_ChildId1 sub_ChildId2 sub_ChildId3 sub_ChildId4 sub_ChildId5"
+},
+"rules": {
+"Name:ParentCtrl": {
+"required": true,
+"utf8": true,
+"utf8LengthRange":[1,32]
+},
+"sub_ChildId0": MACCheckRules,
+"sub_ChildId1": MACCheckRules,
+"sub_ChildId2": MACCheckRules,
+"sub_ChildId3": MACCheckRules,
+"sub_ChildId4": MACCheckRules,
+"sub_ChildId5": MACCheckRules
+},
+"messages": {
+}
+};
+var iMax = 5;
+for ( var suffix=0; suffix<iMax; suffix++ )
+{
+var urlID = "URL_"+suffix;
+checkJSONTempObj.rules[urlID] = {
+"required": true,
+"rangelength":[1,128],
+"url": true
+};
+}
+template.setPromptCheckJSON(checkJSONTempObj, template);
+});
+$("[id^='EveryDay']",template).bind("change", function () {
+var EveryDayOBJ = $(this);
+var subTemplate = EveryDayOBJ.parents("[id^='template_']");
+$("[id^='Time_Day']", subTemplate).each(function () {
+if(EveryDayOBJ.is(":checked"))
+{
+$(this).prop("checked", false);
+$(this).attr("disabled",true);
+}
+else
+{
+$(this).prop("disabled",false);
+}
+});
+});
+template.bind("fillDataByApplyResult", function(event,xml, template){
+ActionByApplyResult(xml, template, "Name");
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var OBJID = ["OBJ_PARENT_CONTROL_ID"];
+ActionByCancelResult(xml, template, OBJID);
+template.trigger("fillDataByCustom",[0, template, xml]);
+});
+template.bind("fillDataByCustom", function(event, suffix, ContainerOBJ, xml){
+var CustomizeParams = {
+"ContainerOBJ":ContainerOBJ
+};
+Customize_MACFilter(CustomizeParams);
+setWeekToDayEle(ContainerOBJ);
+FillAndDispURLCtrl(ContainerOBJ);
+});
+template.bind("hiddenValueChangeByCustom", function(event,template){
+setDayEleToWeek(template);
+SetURLHideVal(template);
+});
+}
+$(document).ready(function(){
+var HeadID = "ParentCtrl";
+var Head = $("#"+HeadID);
+var templateID = "template_"+ HeadID;
+var ServerAddr = $("address span", Head).text();
+initial_template_ParentCtrl(templateID);
+getFocusToClick('[tabIndex="0"]', Head);
+Head.succfunction = function(xml){
+Head.hasError(xml,"externErrorHint");
+var MACFILTEROBJ = $(xml).find("OBJ_PARENT_CONTROL_ID");
+var RuleNum = $("Instance", MACFILTEROBJ).length;
+var OBJID = ["OBJ_PARENT_CONTROL_ID"];
+Head.createPageDataByClone(RuleNum,OBJID,xml);
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div id="ParentCtrl" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=firewall_parentctrl_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="ParentCtrlBar">Parental Controls</h1>
+<div id="ParentCtrl_container">
+<input type="hidden" id="_InstNum" value="0">
+<input id="DataHasBeenGot" type="hidden" value="0">
+<div id="template_ParentCtrl" style="display:none;">
+<form class="form_content">
+<div id="topLine_ParentCtrl" class="formTblCtrlBar">
+<span id="instName_ParentCtrl" class="instName collapsibleInst">New Item</span>
+<span class="instSwitch">
+<div id="Enable:ParentCtrl">
+<input type="radio" id="Enable1:ParentCtrl" name="Enable:ParentCtrl" value="1"/><label for="Enable1:ParentCtrl">On</label>&nbsp;&nbsp;
+<input type="radio" id="Enable0:ParentCtrl" name="Enable:ParentCtrl" value="0" checked="checked"/><label for="Enable0:ParentCtrl" >Off</label>
+</div>
+</span>
+<span id="instDelete_ParentCtrl" class="instDelete Btn_delete"><img src="img/del.png" alt="delete" /></span>
+</div>
+<div id="changeArea_MACFilter" class="ChangeArea formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<input type="hidden" id="_InstID" value="-1">
+<input type="hidden" id="ChildId" _LuQUID_splitMACID="sub_ChildId" value="">
+<input type="hidden" class="PostIgnore" id="IPAddress" _LuQUID_splitIPID="sub_IPAddress" value="">
+<input type="hidden" id="Week" value="">
+<div class="row">
+<label for="Name:ParentCtrl" class="cfgLabel w180">Name</label>
+<div class="right">
+<input type="text" class="inputNorm" id="Name:ParentCtrl" name="Name:ParentCtrl" value=""/>
+<span class="utf8Compatible" style="display: none;">Length: 1 ~ 32</span>
+</div>
+</div>
+<div class="row" id="div_Child">
+<label for="sub_ChildId0" class="cfgLabel w180">User Identity</label>
+<div class="right">
+<input class="mac" name="sub_ChildId0" type="text" maxlength="2" id="sub_ChildId0" value=""/>:
+<input class="mac" name="sub_ChildId1" type="text" maxlength="2" id="sub_ChildId1" value=""/>:
+<input class="mac" name="sub_ChildId2" type="text" maxlength="2" id="sub_ChildId2" value=""/>:
+<input class="mac" name="sub_ChildId3" type="text" maxlength="2" id="sub_ChildId3" value=""/>:
+<input class="mac" name="sub_ChildId4" type="text" maxlength="2" id="sub_ChildId4" value=""/>:
+<input class="mac" name="sub_ChildId5" type="text" maxlength="2" id="sub_ChildId5" value=""/>
+<a class="_LuQUID_SelAccessDevice" _LuQUID_Access_Mode="ALL">Select from the associated devices</a>
+</div>
+</div>
+<div class="bgColorRow" id="TR_TimeCfg">
+<div class="row">
+<label class="left w180"><strong>Time Policy</strong></label>
+</div>
+<div class="row">
+<label class="left w180">Days</label>
+<div class="right">
+<input name="EveryDay" id="EveryDay" class="PostIgnore" type="checkbox" value=""/><label for="EveryDay">Everyday</label>
+</div>
+</div>
+<div class="row">
+<label for="Time_Day_Su" class="left w180">&nbsp;</label>
+<div class="right">
+<input name="Time_Day_Su" id="Time_Day_Su" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Su"><font style="color:rgb(200,0,0)">Sun.</font>&nbsp;&nbsp;</label>
+<input name="Time_Day_M" id="Time_Day_M" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_M">Mon.&nbsp;&nbsp;</label>
+<input name="Time_Day_T" id="Time_Day_T" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_T">Tues.&nbsp;&nbsp;</label>
+<input name="Time_Day_We" id="Time_Day_We" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_We">Wed.&nbsp;&nbsp;</label>
+<input name="Time_Day_Th" id="Time_Day_Th" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Th">Thur.&nbsp;&nbsp;</label>
+<input name="Time_Day_Fri" id="Time_Day_Fri" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Fri">Fri.&nbsp;&nbsp;</label>
+<input name="Time_Day_Sa" id="Time_Day_Sa" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Sa"><font style="color:rgb(200,0,0)">Sat.</font></label>
+</div>
+</div>
+<div class="row">
+<label for="StartHour" class="left w180">Duration</label>
+<div class="right _LuQUID_TimeCtl">
+<select name="StartHour" id="StartHour" class="w45 group_HourStart">
+</select>h&nbsp;
+<select name="StartMin" id="StartMin" class="w45 group_MinuteStart">
+</select>min&nbsp;~&nbsp;
+<select name="EndHour" id="EndHour" class="w45 group_HourEnd">
+</select>h&nbsp;
+<select name="EndMin" id="EndMin" class="w45 group_MinuteEnd">
+</select>min&nbsp;
+<a class="emColor ctrlFont" id="a_allday" name="a_allday">All Day</a>
+</div>
+</div>
+</div>
+<div class="segmentRow"></div>
+<div class="row">
+<label for="FilterMode" class="cfgLabel w180">Action</label>
+<div class="right">
+<select class="selectLong" id="FilterMode" name="FilterMode">
+<option value="NotAllowed" title='Ban Internet Access' selected="selected">Ban Internet Access</option>
+<option value="BlackList" title='URL Black List'>URL Black List</option>
+<option value="WhiteList" title='URL White List'>URL White List</option>
+</select>
+</div>
+</div>
+<div id="div_URLCfgArea" style="display:none">
+<input type="hidden" id="URLCnt" value="">
+
+<input type="hidden" id="URL0" value="">
+
+<input type="hidden" id="URL1" value="">
+
+<input type="hidden" id="URL2" value="">
+
+<input type="hidden" id="URL3" value="">
+
+<input type="hidden" id="URL4" value="">
+
+<div class="row">
+<label for="URL_0" class="cfgLabel w180">URL</label>
+<div class="right">
+<input type="text" class="inputLong PostIgnore" id="URL_0" name="URL_0" value=""/>
+<span style="display: none;">Length: 1 ~ 128</span>
+<img src="img/add.png" class="AddIconControl" alt="add" tabIndex="0" />
+</div>
+</div>
+<div class="row" id="URLCtrlTemplate" style="display:none">
+<label class="cfgLabel w180">&nbsp;</label>
+<div class="right">
+<input type="text" class="inputLong PostIgnore" id="URL" name="URL" value=""/>
+<span style="display:none;">Length: 1 ~ 128</span>
+<img src="img/delete.png" class="DelIconControl" alt="delete" tabIndex="0" />
+</div>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_ParentCtrl" name="Btn_cancel_ParentCtrl" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_ParentCtrl" name="Btn_apply_ParentCtrl" value="Apply" />
+</div>
+</div>
+</div>
+</form>
+</div>
+<div class="addInstBar AddContentContainer">
+<span id="addInstBar_ParentCtrl" class="instNew addInst">Create New Item</span>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+function classMenuARIA() {
+var class1Container = $("#mn_li");
+var class2Container = $("#class2Menu");
+var class2MenuItem = $("#class2MenuItem");
+var class2MenuListObj = $("#class2MenuItem ul li a", class2Container);
+var class3Container = $("#class3Menu");
+var class3MenuItem = $("#class3Menu ul");
+var class3MenuListObj = $("#class3MenuMainContent ul li p", class3Container);
+var selected3Menu = $(".AEleMenu3Selected", $("#class3MenuMainContent"));
+var selected2Menu = $(".selectClass2Menu", class2Container);
+var selected1Menu = $(".SelectMenuItem", class1Container);
+var initialTitle = '\x46\x38\x37\x32\x38\x44';
+setARIAAttr(selected1Menu, "aria-current", "page");
+setARIAAttr(selected2Menu, "aria-current", "page");
+setARIAAttr(selected3Menu, "aria-selected", true);
+setARIAAttr(class3MenuItem, "role", "tablist");
+setARIAAttr(class3MenuListObj, "role", "tab");
+setARIAAttr(class3MenuListObj, "tabindex", "0");
+var current2MenuIrtem;
+if (class3MenuListObj.length > 0) {
+current2MenuIrtem = $(".selectClass2Menu", class2Container);
+$(".tabContent").attr("role", "main");
+$("#page_content").removeAttr("role");
+var newTitle = [selected3Menu.text().trim(), selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected3Menu.focus();
+class3MenuListObj.on('keydown', function(event) {
+var newMenuItem;
+if (event.key === 'Enter' || event.key === ' '
+|| event.code == 'Enter' || event.code == 'Space'
+|| event.keyCode === 13 || event.keyCode === 32) {
+$(this).click();
+return;
+}
+else if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+if (event.code === "ArrowRight") {
+newMenuItem = $(this).parent().next().find('[role="tab"]').first();
+} else if (event.code === "ArrowLeft") {
+newMenuItem = $(this).parent().prev().find('[role="tab"]').last();
+}
+if (newMenuItem.length === 0) {
+return;
+}
+newMenuItem.focus();
+newMenuItem.click();
+}
+});
+} else {
+if (class2Container.length > 0) {
+class2Container.attr("role", "navigation");
+$("#page_content").removeAttr("role")
+$(".tabContent").attr("role", "main");
+var newTitle = [selected2Menu.text().trim(), selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+selected2Menu.focus();
+} else {
+$(".tabContent").removeAttr("role");
+$("#page_content").attr("role", "main");
+var newTitle = [selected1Menu.text().trim()]
+.filter(Boolean).join(' - ') + " - " + initialTitle;
+updatePageTitle(newTitle);
+$(".SelectMenuItem").focus();
+}
+}
+}
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,textarea,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x74\x4d\x52\x34\x47\x4d\x62\x42\x69\x72\x6e\x71\x52\x65\x50\x6a\x31\x4b\x4a\x4e\x57\x58\x43\x66";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+$("#confirmLayer, .tabContent").off("keydown");
+$("#confirmLayer, .tabContent").on('keydown', function (event) {
+if (event.key === 'Tab') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+}
+}
+});
+$("#menu-container").on('keydown', function (event) {
+if (event.key === 'Tab' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+var eles = "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+var focusableElements = $(eles, $(this)).filter(function () {
+return $(this).is(':visible');
+});
+var firstElement = focusableElements.first();
+var lastElement = focusableElements.last();
+if (event.key === 'Tab') {
+if ($(document.activeElement).is(lastElement) && !event.shiftKey) {
+event.preventDefault();
+firstElement.focus();
+} else if ($(document.activeElement).is(firstElement) && event.shiftKey) {
+event.preventDefault();
+lastElement.focus();
+}
+} else {
+var currentElement = $(document.activeElement);
+var currentIndex = focusableElements.index(currentElement);
+if (event.key === 'ArrowUp') {
+if ($(document.activeElement).is(firstElement)) {
+event.preventDefault();
+lastElement.focus();
+} else {
+focusableElements.eq(currentIndex - 1).focus();
+}
+} else if (event.key === 'ArrowDown') {
+if ($(document.activeElement).is(lastElement)) {
+event.preventDefault();
+firstElement.focus();
+} else {
+focusableElements.eq(currentIndex + 1).focus();
+}
+}
+}
+}
+});
+function resizeScreenFunc() {
+var wcagSign = window.innerWidth<=1020;
+var $commLeft = $('#commLeft');
+var $class3Menu = $('#class3Menu');
+var class3MenuListObj = $("#class3MenuMainContent ul li p", $class3Menu);
+if (wcagSign) {
+$commLeft.hide();
+if (class3MenuListObj.length > 0) {
+$class3Menu.hide();
+}
+} else {
+$commLeft.show();
+if (class3MenuListObj.length > 0) {
+$class3Menu.show();
+}
+}
+}
+resizeScreenFunc();
+$(window).on('resize', function () {
+resizeScreenFunc();
+});
+});
+</script>
