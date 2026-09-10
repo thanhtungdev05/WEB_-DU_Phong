@@ -43,6 +43,24 @@ def get_nav_and_tab_for_page(page_name):
 SIM_STATE = {}
 
 def apply_sim_state_to_html(html_str, p_path):
+    if "home_lan" in p_path.lower():
+        # DNS and DHCP share the same firmware form. The captured HTML left
+        # unrelated DHCP fields empty, so saving only DNS failed the firmware's
+        # whole-form validation. Restore the device's normal LAN defaults; the
+        # lesson clearFields mechanism still blanks fields KTV must enter.
+        defaults = {
+            "StartIp": "192.168.1.2",
+            "EndIp": "192.168.1.254",
+            "dhcp_LeaseTime": "86400",
+        }
+        for field_name, default_value in defaults.items():
+            html_str = re.sub(
+                rf'(<input\b[^>]*\bname=["\']{field_name}["\'][^>]*\bvalue=["\'])\s*(["\'])',
+                rf'\g<1>{default_value}\2',
+                html_str,
+                flags=re.IGNORECASE,
+            )
+
     if not SIM_STATE:
         return html_str
     
@@ -123,6 +141,12 @@ class H(BaseHTTPRequestHandler):
                     html = re.sub(r'src=["\']/cgi-bin/status\.asp["\']', f'src="/cgi-bin/status.asp?tab={final_tab}"', html)
                     html = re.sub(r'src=["\']/cgi-bin/navigation-status\.asp["\']', f'src="{final_nav}"', html)
                     html = re.sub(r'src=["\']/cgi-bin/status_deviceinfo\.asp["\']', f'src="{clean_page}"', html)
+
+                html = re.sub(
+                    r'(?i)(\bsrc=["\'])/cgi-bin/',
+                    r'\1/sim_ac1000f/cgi-bin/',
+                    html,
+                )
 
                 data = html.encode("utf-8")
                 return self._send(data, "text/html; charset=utf-8")

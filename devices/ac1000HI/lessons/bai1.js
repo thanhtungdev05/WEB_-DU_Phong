@@ -16,7 +16,7 @@ var lessonObj = {
     '- Username: <span class="val">hnfdl-123456-789</span>',
     '- Password: <span class="val">d123456</span>'
   ],
-  practiceUrl: '/sim_ac1000hi/cgi-bin/index.asp?page=home_wan.asp',
+  practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=home_wan.asp',
   onSimLoad: function(iframeWindow) {
     try {
       var loc = (iframeWindow.location.href || '').toLowerCase();

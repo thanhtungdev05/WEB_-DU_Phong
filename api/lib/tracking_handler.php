@@ -52,7 +52,6 @@ function tracking_timer_response(array $timer): array
         'completed_first_try' => $timer['completed_first_try'] ?? null,
         'practice_attempt_no' => isset($timer['practice_attempt_no']) ? (int)$timer['practice_attempt_no'] : null,
         'is_passed' => isset($timer['is_passed']) ? (bool)$timer['is_passed'] : null,
-        'score' => isset($timer['score']) ? (float)$timer['score'] : null,
         'grading_details' => $timer['grading_details'] ?? null,
         'client_ip' => $timer['client_ip'] ?? null,
         'user_agent' => $timer['user_agent'] ?? null,
@@ -422,7 +421,7 @@ function handle_tracking(array $segments, string $method): void
             }
         }
 
-        // Chấm điểm (Grading fields)
+        // Kết quả Đạt/Chưa đạt. Score chỉ được giữ để tương thích client cũ.
         $isPassed = null;
         if (array_key_exists('is_passed', $input) && $input['is_passed'] !== null) {
             if (!is_bool($input['is_passed'])) {

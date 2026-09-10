@@ -127,18 +127,18 @@
         </div>
       </div>
 
-      <!-- 3. Điểm trung bình -->
+      <!-- 3. Tỷ lệ phiên Đạt -->
       <div class="metric-card">
         <div class="metric-header">
-          <span class="metric-label">Điểm trung bình</span>
+          <span class="metric-label">Tỷ lệ phiên Đạt</span>
           <div class="metric-icon-wrap sky">⭐</div>
         </div>
         <div class="metric-value-row">
-          <span class="metric-value" id="metric-avg-score-val">0.0</span>
-          <span class="metric-sub" id="metric-avg-score-sub">Thang điểm 100</span>
+          <span class="metric-value" id="metric-pass-rate-val">0%</span>
+          <span class="metric-sub" id="metric-pass-rate-sub">0/0 phiên Đạt</span>
         </div>
         <div class="metric-progress-wrap">
-          <div class="metric-progress-bar sky" id="metric-avg-score-bar" style="width: 0%;"></div>
+          <div class="metric-progress-bar sky" id="metric-pass-rate-bar" style="width: 0%;"></div>
         </div>
       </div>
 
@@ -168,11 +168,11 @@
             <svg id="trend-chart-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary);">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
             </svg>
-            <span id="trend-chart-title">Xu hướng điểm số & hoạt động</span>
+            <span id="trend-chart-title">Xu hướng kết quả Đạt</span>
           </div>
           <div class="chart-header-actions">
             <div class="chart-toggle-group" id="chart-toggle-group">
-              <button type="button" class="chart-toggle-btn active" id="btn-chart-score" data-mode="score" title="Xu hướng điểm số 14 ngày gần nhất">
+              <button type="button" class="chart-toggle-btn active" id="btn-chart-result" data-mode="result" title="Tỷ lệ phiên Đạt trong 14 ngày gần nhất">
                 <span>14 ngày gần nhất</span>
               </button>
               <button type="button" class="chart-toggle-btn" id="btn-chart-frequency" data-mode="frequency" title="Tần suất thực hiện theo ngày trong tháng">
@@ -287,7 +287,7 @@
             <option value="passed">✓ Đạt yêu cầu</option>
             <option value="failed">✖ Chưa đạt</option>
             <option value="ungraded">… Chưa có kết quả</option>
-            <option value="not_scored">— Không chấm</option>
+            <option value="not_graded">— Không đánh giá</option>
           </select>
 
           <!-- Device filter -->
@@ -307,7 +307,6 @@
               <th>Bài thực hành</th>
               <th>Chế độ</th>
               <th>Kết quả</th>
-              <th>Điểm số</th>
               <th>Thời lượng</th>
               <th style="text-align: center;">Lần thử</th>
             </tr>

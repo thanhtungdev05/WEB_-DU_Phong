@@ -30,8 +30,14 @@ import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import config_store
+try:
+    from . import config_store
+except (ImportError, ValueError):
+    import importlib.util
+    _my_dir = os.path.dirname(os.path.abspath(__file__))
+    _spec = importlib.util.spec_from_file_location("ont_be6500c_config_store", os.path.join(_my_dir, "config_store.py"))
+    config_store = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(config_store)
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8094
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "www")
@@ -54,6 +60,11 @@ try:
                          for k, v in json.load(_f)["resources"].items()}
 except (FileNotFoundError, KeyError):
     METHOD_HOP_LE = {}
+
+if "portForwarding/policies" not in METHOD_HOP_LE:
+    METHOD_HOP_LE["portForwarding/policies"] = {"GET", "POST", "PATCH", "DELETE"}
+if "staticRouting/policies" not in METHOD_HOP_LE:
+    METHOD_HOP_LE["staticRouting/policies"] = {"GET", "POST", "PATCH", "DELETE"}
 
 
 # Ma goc: 'system/info' CHI DOC. Muon doi hostname phai PATCH 'system'

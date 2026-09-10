@@ -13,8 +13,14 @@ import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import config_store
+try:
+    from . import config_store
+except (ImportError, ValueError):
+    import importlib.util
+    _my_dir = os.path.dirname(os.path.abspath(__file__))
+    _spec = importlib.util.spec_from_file_location("sim_ont_be6500c_config_store", os.path.join(_my_dir, "config_store.py"))
+    config_store = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(config_store)
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8092
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "www")

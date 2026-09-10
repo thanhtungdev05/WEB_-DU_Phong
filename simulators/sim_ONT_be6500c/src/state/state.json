@@ -1223,14 +1223,11 @@
   {
    "dnsServers": [],
    "ipv4Settings": {
-    "gateway": "",
+    "protocol": "pppoe",
     "pppoe": {
-     "password": "fpt",
-     "username": "fpt"
-    },
-    "mask": "",
-    "ipAddress": "",
-    "protocol": "pppoe"
+     "username": "hnfdl-123456-789",
+     "password": "d123456"
+    }
    },
    "devices": [
     "eth0"
@@ -1241,9 +1238,7 @@
    "enabled": true,
    "usage": "Internet",
    "vlan": {
-    "id": 0,
-    "enabled": false,
-    "autoDetectionEnabled": false
+    "enabled": false
    },
    "id": "wan"
   },
@@ -1339,9 +1334,9 @@
   {
    "status": "Up",
    "securityMode": "WPA3-Personal-Transition",
-   "passphrase": "7cf526b6d5",
+   "passphrase": "fpt12345",
    "radio": "2.4G",
-   "name": "FPT Telecom-525F",
+   "name": "FPT Telecom",
    "securityModesSupported": [
     "WPA2-Personal",
     "WPA3-Personal-Transition"
@@ -1354,9 +1349,9 @@
   {
    "status": "Up",
    "securityMode": "WPA3-Personal-Transition",
-   "passphrase": "7cf526b6d5",
+   "passphrase": "fpt12345",
    "radio": "5G",
-   "name": "FPT Telecom-525F",
+   "name": "FPT Telecom",
    "securityModesSupported": [
     "WPA2-Personal",
     "WPA3-Personal-Transition"
@@ -1399,9 +1394,9 @@
   {
    "status": "Up",
    "securityMode": "WPA3-Personal-Transition",
-   "passphrase": "7cf526b6d5",
+   "passphrase": "fpt12345",
    "radio": "2.4G",
-   "name": "FPT Telecom-525F-IoT 2.4G",
+   "name": "FPT IoT",
    "securityModesSupported": [
     "WPA2-Personal",
     "WPA3-Personal-Transition"
@@ -1936,5 +1931,8 @@
  },
  "system/services/cache": [],
  "access/http/connections": [],
- "access/ssh/connections": []
+ "access/ssh/connections": [],
+ "portForwarding": {
+  "policies": []
+ }
 }

@@ -32,6 +32,17 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         for select_id in (
             "instructorClassSelect",
             "instructorDeviceSelect",
+            "rosterEmployeeIdFilter",
+            "rosterNameFilter",
+            "rosterEmailFilter",
+            "rosterJobTitleFilter",
+            "rosterRegionFilter",
+            "rosterBranchFilter",
+            "rosterClassFilter",
+            "rosterStatusFilter",
+            "classCodeFilter",
+            "classNameFilter",
+            "classStatusFilter",
         ):
             self.assertIn(f"'{select_id}'", self.javascript)
         self.assertIn("function enhanceSearchableFilterSelect", self.javascript)
@@ -48,6 +59,29 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn("searchable-select-apply", self.javascript)
         self.assertIn("searchable-select-clear", self.javascript)
         self.assertIn("searchable-select-check-option", self.css)
+
+    def test_management_column_filters_reuse_staged_multiselect_behavior(self):
+        for select_id in (
+            "rosterEmployeeIdFilter",
+            "rosterNameFilter",
+            "rosterEmailFilter",
+            "rosterJobTitleFilter",
+            "rosterRegionFilter",
+            "rosterBranchFilter",
+            "rosterClassFilter",
+            "rosterStatusFilter",
+            "classCodeFilter",
+            "classNameFilter",
+            "classStatusFilter",
+        ):
+            self.assertIn(f"'{select_id}'", self.javascript)
+        self.assertIn("Chọn tất cả", self.javascript)
+        self.assertIn("Bỏ chọn", self.javascript)
+        self.assertIn("Xóa lọc", self.javascript)
+        self.assertIn("Áp dụng", self.javascript)
+        self.assertIn("EMPTY_FILTER_SENTINEL", self.javascript)
+        self.assertIn("admin-header-searchable-popover", self.css)
+        self.assertNotIn('id="rosterSearchInput"', self.html)
 
     def test_apply_popovers_stage_checkbox_changes_before_rendering(self):
         self.assertIn("function snapshotHeaderFilterDraft", self.javascript)
@@ -110,7 +144,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
             self.assertIn('value="Đạt"', options)
             self.assertIn('value="Chưa đạt"', options)
             self.assertIn('value="Chưa có kết quả"', options)
-            self.assertIn('value="Không chấm"', options)
+            self.assertIn('value="Không đánh giá"', options)
             self.assertNotIn('value="Đang làm"', options)
             self.assertNotIn('value="Đã dừng"', options)
 
@@ -200,7 +234,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn(".class-overview-action", self.css)
 
     def test_asset_version_prevents_stale_control_styles(self):
-        self.assertEqual(self.html.count("20260909-dashboard-copy-v21"), 3)
+        self.assertEqual(self.html.count("20260910-admin-column-filters-v23"), 3)
 
     def test_dashboard_copy_is_short_consistent_and_user_friendly(self):
         for label in (

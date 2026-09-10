@@ -13,10 +13,19 @@ window.DEVICE_BE6500C_LESSONS.push({
   "- WPA Key: <span class=\"val\">fpt12345</span>"
 ],
   practiceUrl: '/sim_be6500c/wifi__general.html',
-  clearFields: [],
+  clearFields: ['input[name="networks.1.name"]', 'input[name="networks.1.passphrase"]'],
   grading: {
     description: 'Kiểm tra bài 2',
     rules: [
+  {
+    "id": "use_separate_network",
+    "name": "Use separate network",
+    "selector": "input[name=\"useSeparateNetwork\"]",
+    "expected": "false",
+    "type": "text_exact",
+    "trim": true,
+    "required": true
+  },
   {
     "id": "wifi_ssid",
     "name": "SSID",
@@ -40,27 +49,27 @@ window.DEVICE_BE6500C_LESSONS.push({
   guidePopups: [
   {
     "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\")",
-    "text": "Chọn Wi-Fi",
+    "text": "Bước 1: Chọn menu Wi-Fi",
     "position": "right"
   },
   {
     "selector": "input[name=\"useSeparateNetwork\"]",
-    "text": "Tắt Use separate network",
+    "text": "Bước 2: Tắt nút 'Use separate network' để kích hoạt gộp sóng (Band Steering)",
     "position": "top"
   },
   {
     "selector": "input[name=\"networks.1.name\"]",
-    "text": "Nhập tên WIFI VD: FPT Telecom",
+    "text": "Bước 3: Nhập tên Wi-Fi, ví dụ: FPT Telecom",
     "position": "right"
   },
   {
     "selector": "input[name=\"networks.1.passphrase\"]",
-    "text": "Nhập mật khẩu VD: fpt12345",
+    "text": "Bước 4: Nhập mật khẩu, ví dụ: fpt12345",
     "position": "right"
   },
   {
     "selector": "button:contains(\"Save\")",
-    "text": "Chọn Save",
+    "text": "Bước 5: Nhấp chọn Save để lưu cấu hình",
     "position": "right"
   }
 ]

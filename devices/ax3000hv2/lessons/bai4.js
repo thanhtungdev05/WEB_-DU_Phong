@@ -13,7 +13,7 @@ var lessonObj = {
     '<b>Yêu cầu:</b>',
     'Thực hiện thiết lập thông số DNS thủ công (Manually) trên cổng LAN:',
     '- Primary DNS: <span class="val">8.8.8.8</span>',
-    '- Secondary DNS: <span class="val">8.8.8.8</span>',
+    '- Secondary DNS: <span class="val">8.8.4.4</span>',
   ],
   practiceUrl: '/sim_ax3000hv2/cgi-bin/index.asp?page=home_lan.asp',
   clearFields: [
@@ -36,7 +36,7 @@ var lessonObj = {
         id: 'dns_secondary',
         name: 'Secondary DNS',
         selector: 'input[name="SecondDns"]',
-        expected: '8.8.8.8',
+        expected: '8.8.4.4',
         type: 'text_exact',
         trim: true,
         required: true

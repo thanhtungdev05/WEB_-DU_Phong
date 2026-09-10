@@ -20,7 +20,7 @@ var lessonObj = {
     '3. Nhập <b>8.8.8.8</b> vào Primary DNS và <b>8.8.4.4</b> vào Secondary DNS',
     '4. Bấm <b>Apply/Save</b> để lưu cấu hình'
   ],
-  practiceUrl: '/sim_ac1000hi/cgi-bin/index.asp?page=home_lan.asp',
+  practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=home_lan.asp',
   
   onSimLoad: function(iframeWindow) {
     try {

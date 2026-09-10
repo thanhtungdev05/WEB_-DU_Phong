@@ -13,17 +13,46 @@ const expected = {
   ax3000gz: 'LAB_AX3000GZ_',
   ax3000hv2: 'LAB_AX3000HV2_',
   ax3000s: 'LAB_AX3000S_',
-  ac1000HI: 'LAB_AC1000HI_'
+  ac1000HI: 'LAB_AC1000HI_',
+  be6500c: 'be6500c-bai',
+  ONT_be6500c: 'ONT_be6500c-bai'
 };
-const hidden = ['be12000', 'be15000', 'vigor2927'];
+const hidden = ['be12000', 'be15000', 'vigor2927', 'mikrotik_hexs'];
+const simulatorPrefixes = {
+  ac1000f: '/sim_ac1000f/',
+  ax3000c: '/sim_ax3000c/',
+  ax3000gz: '/sim_ax3000gz/',
+  ax3000hv2: '/sim_ax3000hv2/',
+  ax3000s: '/sim_ax3000s/',
+  ac1000HI: '/sim_ac1000HI/',
+  be6500c: '/sim_be6500c/',
+  ONT_be6500c: '/sim_ONT_be6500c/'
+};
 const expectedTitles = [
-  'Bài 1 - Cấu hình PPPoE',
-  'Bài 2 - Cấu hình Wi-Fi',
-  'Bài 3 - Cấu hình Wi-Fi IoT',
-  'Bài 4 - Cấu hình DNS',
-  'Bài 5 - Cấu hình DHCP',
-  'Bài 6 - Cấu hình Port Forwarding'
+  'Cấu hình PPPoE',
+  'Cấu hình Wi-Fi',
+  'Cấu hình Wi-Fi IoT',
+  'Cấu hình DNS',
+  'Cấu hình DHCP',
+  'Cấu hình Port Forwarding'
 ];
+const be6500cTitles = [
+  'Cấu hình PPPoE',
+  'Cấu hình mạng Wi-Fi (Gộp sóng Band Steering)',
+  'Cấu hình mạng Wi-Fi IOT',
+  'Cấu hình DNS',
+  'Cấu hình mạng LAN',
+  'Cấu hình Port Forwarding'
+];
+
+function normalizeTitle(value) {
+  return String(value)
+    .replace(/^Bài\s+\d+\s*-\s*/iu, '')
+    .replace(/wi[\s-]*fi/giu, 'wifi')
+    .replace(/\s+/gu, ' ')
+    .trim()
+    .toLocaleLowerCase('vi');
+}
 
 for (const deviceId of hidden) {
   assert.equal(
@@ -52,20 +81,43 @@ assert.deepEqual(
   'Portal device list must exactly match the approved device scope'
 );
 
-const migration = fs.readFileSync(
-  path.join(root, 'api/migrations/030_enforce_approved_dashboard_catalog.sql'),
-  'utf8'
-);
+const migrations = [
+  '030_enforce_approved_dashboard_catalog.sql',
+  '036_activate_be6500c_catalog.sql'
+].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
   assert.equal(lessons.length, 6, `${device.id} must expose exactly six labs`);
   assert.equal(new Set(lessons.map((lesson) => lesson.id)).size, 6, `${device.id} lab IDs must be unique`);
 
   lessons.forEach((lesson, index) => {
-    const expectedId = `${expected[device.id]}${String(index + 1).padStart(2, '0')}`;
+    assert.match(
+      lesson.practiceUrl || '',
+      /^\/sim_[A-Za-z0-9_]+\//,
+      `${lesson.id} must use a dispatcher-registered simulator URL`
+    );
+    assert.ok(
+      lesson.practiceUrl.startsWith(simulatorPrefixes[device.id]),
+      `${lesson.id} must preserve the dispatcher prefix including letter case`
+    );
+    assert.ok(
+      Array.isArray(lesson.grading?.rules) && lesson.grading.rules.length > 0
+        || typeof lesson.grading?.customGrading === 'function',
+      `${lesson.id} must define explicit grading criteria`
+    );
+    const expectedId = expected[device.id].startsWith('LAB_')
+      ? `${expected[device.id]}${String(index + 1).padStart(2, '0')}`
+      : `${expected[device.id]}${index + 1}`;
+    const expectedTitle = device.id === 'be6500c' || device.id === 'ONT_be6500c'
+      ? be6500cTitles[index]
+      : expectedTitles[index];
     assert.equal(lesson.id, expectedId, `${device.id} lab ${index + 1} uses an unexpected ID`);
-    assert.equal(lesson.title, expectedTitles[index], `${expectedId} has an inconsistent display title`);
-    assert.ok(migration.includes(`'${expectedId}'`), `${expectedId} is missing from the active catalog migration`);
+    assert.equal(
+      normalizeTitle(lesson.title),
+      normalizeTitle(expectedTitle),
+      `${expectedId} has an inconsistent display title`
+    );
+    assert.ok(migrations.includes(`'${expectedId}'`), `${expectedId} is missing from the active catalog migration`);
 
     const tooltipStore = context[`TOOLTIPS_${device.shortName.toUpperCase()}`] || {};
     const guide = tooltipStore[lesson.id]
@@ -101,11 +153,14 @@ assert.equal(expectedRuleValue(ax3000gzPppoe, 'pppoe_user'), 'sgfdl-123456-789')
 const ax3000gzDns = getLesson('ax3000gz', 'LAB_AX3000GZ_04');
 assert.equal(expectedRuleValue(ax3000gzDns, 'dns_primary'), '8.8.8.8');
 assert.equal(expectedRuleValue(ax3000gzDns, 'dns_secondary'), '8.8.4.4');
+const ax3000hv2Dns = getLesson('ax3000hv2', 'LAB_AX3000HV2_04');
+assert.equal(expectedRuleValue(ax3000hv2Dns, 'dns_primary'), '8.8.8.8');
+assert.equal(expectedRuleValue(ax3000hv2Dns, 'dns_secondary'), '8.8.4.4');
 const ax3000gzPortForward = getLesson('ax3000gz', 'LAB_AX3000GZ_06');
 assert.equal(expectedRuleValue(ax3000gzPortForward, 'pf_wan_ip'), '0.0.0.0/0');
 
 const ax3000cLanPage = fs.readFileSync(
-  path.join(root, 'sim_ax3000c/www/sim-pages/lan.html'),
+  path.join(root, 'simulators/sim_ax3000c/www/sim-pages/lan.html'),
   'utf8'
 );
 assert.match(ax3000cLanPage, /value="192\.168\.1\.1" id="lanIp"/);
@@ -114,9 +169,9 @@ assert.match(ax3000cLanPage, /id="dhcpEnd"/);
 assert.match(ax3000cLanPage, /ipInput\.addEventListener\('input', updateDhcp\)/);
 
 const ax3000cWifiPage = fs.readFileSync(
-  path.join(root, 'sim_ax3000c/www/sim-pages/wifi.html'),
+  path.join(root, 'simulators/sim_ax3000c/www/sim-pages/wifi.html'),
   'utf8'
 );
 assert.match(ax3000cWifiPage, /class="tabs" style="margin-top: 40px;"/);
 
-console.log('Portal/catalog audit passed: 6 devices, 36 unique labs, complete tooltip coverage.');
+console.log('Portal/catalog audit passed: 8 devices, 48 unique labs, complete tooltip coverage.');

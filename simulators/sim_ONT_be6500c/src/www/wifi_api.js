@@ -46,8 +46,8 @@
     var s = ds.find(function (x) { return x.id === id; });
     if (!s) return;
     var f;
-    if ((f = $('networks.' + i + '.name'))) f.value = s.name;
-    if ((f = $('networks.' + i + '.passphrase'))) f.value = s.passphrase;
+    if ((f = $('networks.' + i + '.name'))) f.value = window.__daNapLanDau ? s.name : '';
+    if ((f = $('networks.' + i + '.passphrase'))) f.value = window.__daNapLanDau ? s.passphrase : '';
     if ((f = $('networks.' + i + '.securityMode'))) f.value = s.securityMode;
     var cb;
     if ((cb = $('networks.' + i + '.broadcastEnabled'))) cb.checked = !!s.broadcastEnabled;
@@ -65,8 +65,10 @@
         napMotBo(0, ds, cfg.ids24);
         napMotBo(1, ds, cfg.ids5);
       }
+      window.__daNapLanDau = true;
       if (window.__simSync) window.__simSync();
       console.log('[wifi_api] da nap gia tri that tu config_store, tab=' + tab);
+      themNutThat(); // Hien nut save ngay tu dau do field da bi lam rong
     }).catch(function (e) { console.error('[wifi_api] loi nap GET ssids', e); });
   }
 
@@ -111,7 +113,7 @@
   }
 
   function luu() {
-    hoiXacNhan(luuThat);
+    luuThat();
   }
 
   function luuThat() {
@@ -139,6 +141,9 @@
     }).then(function (r) { return r.json(); }).then(function () {
       goThanhNut();      // luu xong -> khong con thay doi -> thanh nut bien mat
       alert('Da luu vao config_store that. Sang trang khac roi quay lai se thay dung gia tri moi.');
+      if (window.parent && window.parent.onSimulatorSave) {
+        try { window.parent.onSimulatorSave(window); } catch(e){}
+      }
     }).catch(function (e) {
       alert('Loi khi luu: ' + e);
     });

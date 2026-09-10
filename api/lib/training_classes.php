@@ -1388,7 +1388,6 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                s.session_type,
                s.status,
                s.is_passed,
-               s.score,
                s.duration_sec,
                s.started_at,
                s.finished_at,
@@ -1415,10 +1414,10 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
 
     $sessions = [];
     $totalDurationSec = 0;
-    $totalScores = 0;
-    $scoredSessionsCount = 0;
     $practiceCount = 0;
     $guideCount = 0;
+    $gradedPracticeSessionsCount = 0;
+    $passedPracticeSessionsCount = 0;
     $trendDaysMap = [];
 
     // Stats computed from timer_sessions (independent of assignments)
@@ -1432,7 +1431,9 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         $mode = (string)($sess['mode'] ?? 'Thực hành');
         $sessionType = (string)($sess['session_type'] ?? ($mode === 'Hướng dẫn' ? 'guide' : 'practice'));
         $duration = (int)($sess['duration_sec'] ?? 0);
-        $score = $sess['score'] !== null ? (float)$sess['score'] : null;
+        $isPassed = $sess['is_passed'] === null
+            ? null
+            : database_boolean($sess['is_passed']);
         $finishedAt = safe_datetime($sess['finished_at']);
         $startedAt = safe_datetime($sess['started_at']);
         $isPractice = !($mode === 'Hướng dẫn' || $sessionType === 'guide');
@@ -1443,16 +1444,17 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         } else {
             $practiceCount++;
             $totalDurationSec += $duration;
-            if ($score !== null) {
-                $totalScores += $score;
-                $scoredSessionsCount++;
+            if ($isPassed !== null) {
+                $gradedPracticeSessionsCount++;
+                if ($isPassed) {
+                    $passedPracticeSessionsCount++;
+                }
             }
 
             // Track unique labs attempted/passed from sessions
             if ($labId !== '') {
                 $sessionAttemptedLabs[$labId] = true;
-                $isPassed = isset($sess['is_passed']) && (bool)$sess['is_passed'];
-                if ($isPassed) {
+                if ($isPassed === true) {
                     $sessionPassedLabIds[$labId] = true;
                 }
             }
@@ -1461,7 +1463,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             $attemptNo = $sess['practice_attempt_no'] !== null ? (int)$sess['practice_attempt_no'] : null;
             if ($attemptNo === 1) {
                 $sessionFirstTryTotal++;
-                if (isset($sess['is_passed']) && (bool)$sess['is_passed']) {
+                if ($isPassed === true) {
                     $sessionFirstTryPass++;
                 }
             }
@@ -1475,7 +1477,8 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                     'date' => $dateKey,
                     'practice_count' => 0,
                     'guide_count' => 0,
-                    'scores' => [],
+                    'graded_count' => 0,
+                    'passed_count' => 0,
                     'duration_sec' => 0,
                 ];
             }
@@ -1483,8 +1486,11 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                 $trendDaysMap[$dateKey]['guide_count']++;
             } else {
                 $trendDaysMap[$dateKey]['practice_count']++;
-                if ($score !== null) {
-                    $trendDaysMap[$dateKey]['scores'][] = $score;
+                if ($isPassed !== null) {
+                    $trendDaysMap[$dateKey]['graded_count']++;
+                    if ($isPassed) {
+                        $trendDaysMap[$dateKey]['passed_count']++;
+                    }
                 }
                 $trendDaysMap[$dateKey]['duration_sec'] += $duration;
             }
@@ -1499,8 +1505,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'mode' => $mode,
             'session_type' => $sessionType,
             'status' => (string)($sess['status'] ?? 'completed'),
-            'is_passed' => isset($sess['is_passed']) ? (bool)$sess['is_passed'] : null,
-            'score' => $score,
+            'is_passed' => $isPassed,
             'duration_sec' => $duration,
             'started_at' => $startedAt,
             'finished_at' => $finishedAt,
@@ -1525,20 +1530,26 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
     ksort($trendDaysMap);
     $trendList = [];
     foreach ($trendDaysMap as $d => $data) {
-        $avgScore = count($data['scores']) > 0 ? round(array_sum($data['scores']) / count($data['scores']), 1) : null;
+        $dailyPassRate = $data['graded_count'] > 0
+            ? round(100 * $data['passed_count'] / $data['graded_count'], 1)
+            : null;
         $trendList[] = [
             'date' => $d,
             'total_sessions' => $data['practice_count'] + $data['guide_count'],
             'practice_count' => $data['practice_count'],
             'guide_count' => $data['guide_count'],
-            'avg_score' => $avgScore,
+            'graded_count' => $data['graded_count'],
+            'passed_count' => $data['passed_count'],
+            'pass_rate_percent' => $dailyPassRate,
             'duration_sec' => $data['duration_sec'],
         ];
     }
 
     $completionRate = $effectiveTotalLabs > 0 ? round(($effectivePassedLabs / $effectiveTotalLabs) * 100, 1) : 0;
     $firstTryRate = $effectiveFirstTryTotal > 0 ? round(($effectiveFirstTryPass / $effectiveFirstTryTotal) * 100, 1) : 0;
-    $avgScore = $scoredSessionsCount > 0 ? round($totalScores / $scoredSessionsCount, 1) : 0;
+    $practicePassRate = $gradedPracticeSessionsCount > 0
+        ? round(100 * $passedPracticeSessionsCount / $gradedPracticeSessionsCount, 1)
+        : 0;
 
     return [
         'user' => [
@@ -1563,7 +1574,9 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'total_sessions_count'       => count($sessions),
             'practice_sessions_count'    => $practiceCount,
             'guide_sessions_count'       => $guideCount,
-            'average_score'              => $avgScore,
+            'graded_practice_sessions_count' => $gradedPracticeSessionsCount,
+            'passed_practice_sessions_count' => $passedPracticeSessionsCount,
+            'practice_pass_rate_percent' => $practicePassRate,
             'total_practice_duration_sec'=> $totalDurationSec,
         ],
         'device_progress' => $deviceProgressList,

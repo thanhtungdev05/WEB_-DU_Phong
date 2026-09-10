@@ -7,8 +7,8 @@
     <meta name="theme-color" content="#f3f6fb">
     <meta name="color-scheme" content="light">
     <title>Tổng quan thực hành KTV | FTC</title>
-    <link rel="stylesheet" href="css/styles.css?v=20260909-dashboard-copy-v21">
-    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260909-dashboard-copy-v21">
+    <link rel="stylesheet" href="css/styles.css?v=20260910-admin-column-filters-v23">
+    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260910-admin-column-filters-v23">
 </head>
 
 <body>
@@ -239,7 +239,7 @@
                                 <div class="kpi-comparison" id="kpiLearnersComparison"></div>
                                 <div class="kpi-note" id="kpiLearnersContext">Đang tính dữ liệu so sánh</div>
                             </div>
-                            <div class="kpi-card" title="Tỷ lệ phiên thực hành đạt yêu cầu trên tổng số phiên thực hành đã có kết quả chấm điểm">
+                            <div class="kpi-card" title="Tỷ lệ phiên thực hành Đạt trên tổng số phiên thực hành đã có kết quả đánh giá">
                                 <div class="kpi-label">Tỷ lệ thực hành đạt</div>
                                 <div class="kpi-value cyan" id="kpiPassRate">—</div>
                                 <div class="kpi-comparison" id="kpiPassRateComparison"></div>
@@ -507,7 +507,7 @@
                                                             <label class="popover-option"><input type="checkbox"
                                                                     value="Chưa có kết quả" checked> Chưa có kết quả</label>
                                                             <label class="popover-option"><input type="checkbox"
-                                                                    value="Không chấm" checked> Không chấm</label>
+                                                                    value="Không đánh giá" checked> Không đánh giá</label>
                                                         </div>
                                                         <div class="popover-footer">
                                                             <button type="button" class="popover-btn-clear"
@@ -587,7 +587,7 @@
                                 <div class="detail-report-table-header">
                                     <div>
                                         <h3>Tiến độ theo khu vực / chi nhánh</h3>
-                                        <span>Mỗi ô hiển thị số KTV hoàn thành / số KTV được giao. “—” là chưa giao bài lab.</span>
+                                        <span>Mỗi ô hiển thị số KTV hoàn thành / số KTV được giao theo từng bài lab.</span>
                                     </div>
                                     <div class="detail-report-legend" aria-label="Chú thích màu tỷ lệ hoàn thành">
                                         <span><i class="legend-high"></i> Từ 80% trở lên</span>
@@ -665,7 +665,7 @@
                                 <div class="detail-report-table-header">
                                     <div>
                                         <h3 id="classMatrixTableTitle" tabindex="-1">Chi tiết lớp</h3>
-                                        <span>Mỗi ô là số phiên đạt 100 điểm trên tổng số phiên thực hiện bài lab của KTV.</span>
+                                        <span>Mỗi ô là số phiên Đạt trên tổng số phiên thực hiện bài lab của KTV.</span>
                                     </div>
                                     <button type="button" class="class-overview-back class-overview-close" id="classOverviewBack"
                                         aria-label="Đóng chi tiết" title="Đóng chi tiết">&times;</button>
@@ -856,8 +856,29 @@
 
                     <div class="roster-panel" id="classListPanel" role="tabpanel">
                         <div class="roster-table-wrapper" tabindex="0" aria-label="Danh sách lớp học">
-                            <table class="roster-table">
-                                <thead><tr><th>Mã lớp</th><th>Tên lớp</th><th>Hiệu lực từ</th><th>Trạng thái</th><th>KTV</th><th>Thiết bị</th><th><span class="sr-only">Thao tác</span></th></tr></thead>
+                            <table class="roster-table" id="classManagementTable">
+                                <thead><tr>
+                                    <th scope="col"><div class="admin-filter-label"><span>Mã lớp</span><span class="admin-header-filter" id="classCodeFilterWrapper"><select id="classCodeFilter" aria-label="Lọc theo mã lớp"><option value="">Tất cả mã lớp</option></select></span></div></th>
+                                    <th scope="col"><div class="admin-filter-label"><span>Tên lớp</span><span class="admin-header-filter" id="classNameFilterWrapper"><select id="classNameFilter" aria-label="Lọc theo tên lớp"><option value="">Tất cả tên lớp</option></select></span></div></th>
+                                    <th scope="col"><button class="sort-button admin-table-sort" type="button" data-class-sort="startDate">Hiệu lực từ <span class="sort-mark"></span></button></th>
+                                    <th scope="col">
+                                        <div class="admin-filter-label">
+                                            <span>Trạng thái</span>
+                                            <span class="admin-header-filter" id="classStatusFilterWrapper">
+                                                <select id="classStatusFilter" aria-label="Lọc lớp theo trạng thái">
+                                                    <option value="">Tất cả trạng thái</option>
+                                                    <option value="planned">Sắp hiệu lực</option>
+                                                    <option value="active">Đang hiệu lực</option>
+                                                    <option value="completed">Đã kết thúc</option>
+                                                    <option value="archived">Đã lưu trữ</option>
+                                                </select>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th scope="col"><button class="sort-button admin-table-sort" type="button" data-class-sort="members">KTV <span class="sort-mark"></span></button></th>
+                                    <th scope="col"><button class="sort-button admin-table-sort" type="button" data-class-sort="devices">Thiết bị <span class="sort-mark"></span></button></th>
+                                    <th scope="col"><span class="sr-only">Thao tác</span></th>
+                                </tr></thead>
                                 <tbody id="classTableBody"></tbody>
                             </table>
                         </div>
@@ -948,34 +969,29 @@
                     <!-- Sub-tab: Danh sách KTV -->
                     <div class="roster-panel" id="rosterListPanel" role="tabpanel" aria-labelledby="rosterListTab"
                         tabindex="0">
-                        <div class="roster-toolbar">
-                            <label class="roster-search-field" for="rosterSearchInput">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <circle cx="11" cy="11" r="7"></circle>
-                                    <path d="m16 16 5 5"></path>
-                                </svg>
-                                <input type="search" id="rosterSearchInput"
-                                    placeholder="Tìm tên, email, mã NV, khu vực, chi nhánh..." autocomplete="off">
-                            </label>
-                            <select id="rosterStatusFilter" class="roster-select" aria-label="Lọc trạng thái KTV">
-                                <option value="active">Đang công tác</option>
-                                <option value="terminated">Đã nghỉ</option>
-                                <option value="all">Tất cả</option>
-                            </select>
-                        </div>
                         <div class="roster-table-wrapper" tabindex="0" aria-label="Danh sách hồ sơ KTV, có thể cuộn ngang">
-                            <table class="roster-table">
+                            <table class="roster-table" id="rosterManagementTable">
                                 <caption class="sr-only">Danh sách hồ sơ kỹ thuật viên</caption>
                                 <thead>
                                     <tr>
-                                        <th scope="col" style="width:96px">Mã NV</th>
-                                        <th scope="col" style="width:17%">Họ tên</th>
-                                        <th scope="col" style="width:22%">Email</th>
-                                        <th scope="col" style="width:15%">Vị trí</th>
-                                        <th scope="col" style="width:11%">Khu vực</th>
-                                        <th scope="col" style="width:8%">Chi nhánh</th>
-                                        <th scope="col" style="width:8%">Lớp</th>
-                                        <th scope="col" style="width:104px">Trạng thái</th>
+                                        <th scope="col" style="width:96px"><div class="admin-filter-label"><span>Mã NV</span><span class="admin-header-filter" id="rosterEmployeeIdFilterWrapper"><select id="rosterEmployeeIdFilter" aria-label="Lọc KTV theo mã nhân viên"><option value="">Tất cả mã NV</option></select></span></div></th>
+                                        <th scope="col" style="width:17%"><div class="admin-filter-label"><span>Họ tên</span><span class="admin-header-filter" id="rosterNameFilterWrapper"><select id="rosterNameFilter" aria-label="Lọc KTV theo họ tên"><option value="">Tất cả họ tên</option></select></span></div></th>
+                                        <th scope="col" style="width:22%"><div class="admin-filter-label"><span>Email</span><span class="admin-header-filter" id="rosterEmailFilterWrapper"><select id="rosterEmailFilter" aria-label="Lọc KTV theo email"><option value="">Tất cả email</option></select></span></div></th>
+                                        <th scope="col" style="width:15%">
+                                            <div class="admin-filter-label"><span>Vị trí</span><span class="admin-header-filter" id="rosterJobTitleFilterWrapper"><select id="rosterJobTitleFilter" aria-label="Lọc KTV theo vị trí"><option value="">Tất cả vị trí</option></select></span></div>
+                                        </th>
+                                        <th scope="col" style="width:11%">
+                                            <div class="admin-filter-label"><span>Khu vực</span><span class="admin-header-filter" id="rosterRegionFilterWrapper"><select id="rosterRegionFilter" aria-label="Lọc KTV theo khu vực"><option value="">Tất cả khu vực</option></select></span></div>
+                                        </th>
+                                        <th scope="col" style="width:8%">
+                                            <div class="admin-filter-label"><span>Chi nhánh</span><span class="admin-header-filter" id="rosterBranchFilterWrapper"><select id="rosterBranchFilter" aria-label="Lọc KTV theo chi nhánh"><option value="">Tất cả chi nhánh</option></select></span></div>
+                                        </th>
+                                        <th scope="col" style="width:13%">
+                                            <div class="admin-filter-label"><span>Lớp</span><span class="admin-header-filter" id="rosterClassFilterWrapper"><select id="rosterClassFilter" aria-label="Lọc KTV theo lớp"><option value="">Tất cả lớp</option></select></span></div>
+                                        </th>
+                                        <th scope="col" style="width:104px">
+                                            <div class="admin-filter-label"><span>Trạng thái</span><span class="admin-header-filter has-value" id="rosterStatusFilterWrapper"><select id="rosterStatusFilter" aria-label="Lọc KTV theo trạng thái"><option value="">Tất cả trạng thái</option><option value="active">Đang công tác</option><option value="terminated">Đã nghỉ</option></select></span></div>
+                                        </th>
                                         <th scope="col" style="width:68px"><span class="sr-only">Thao tác</span></th>
                                     </tr>
                                 </thead>
@@ -1286,8 +1302,8 @@
                                                     checked> Chưa đạt</label>
                                             <label class="popover-option"><input type="checkbox" value="Chưa có kết quả"
                                                     checked> Chưa có kết quả</label>
-                                            <label class="popover-option"><input type="checkbox" value="Không chấm"
-                                                    checked> Không chấm</label>
+                                            <label class="popover-option"><input type="checkbox" value="Không đánh giá"
+                                                    checked> Không đánh giá</label>
                                         </div>
                                         <div class="popover-footer">
                                             <button type="button" class="popover-btn-clear" id="detailStatusClear">Xóa
@@ -1498,7 +1514,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=20260909-dashboard-copy-v21"></script>
+    <script src="js/app.js?v=20260910-admin-column-filters-v23"></script>
 </body>
 
 </html>

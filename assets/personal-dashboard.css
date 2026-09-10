@@ -886,15 +886,6 @@ body {
 .badge-pill.result-failed { background: #dc2626; color: #fff; }
 .badge-pill.result-ungraded { background: #fff7e6; color: #a15c12; }
 
-.score-text {
-  font-weight: 700;
-  font-size: 13.5px;
-}
-
-.score-text.high { color: #059669; }
-.score-text.mid { color: #d97706; }
-.score-text.low { color: #dc2626; }
-
 /* ══════════════════════════════════════════════════════════════════════════
    PAGINATION
    ══════════════════════════════════════════════════════════════════════════ */

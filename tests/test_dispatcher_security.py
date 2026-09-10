@@ -29,10 +29,10 @@ class DispatcherSecurityTests(unittest.TestCase):
         cls.server.server_close()
         cls.thread.join(timeout=5)
 
-    def request(self, path, method='GET'):
+    def request(self, path, method='GET', headers=None):
         connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=5)
         try:
-            connection.request(method, path)
+            connection.request(method, path, headers=headers or {})
             response = connection.getresponse()
             body = response.read()
             return response.status, dict(response.getheaders()), body
@@ -51,10 +51,60 @@ class DispatcherSecurityTests(unittest.TestCase):
             '/dashboard/css/dashboard-professional.css',
             '/dashboard/js/app.js',
             '/devices/ax3000s/data.js',
+            '/sim_be6500c/login.html',
+            '/sim_ONT_be6500c/login.html',
+            '/sim_ONT_be6500c/wifi__general.html',
+            '/sim_ONT_be6500c/advanced__lan.html',
         ):
             with self.subTest(path=path):
                 status, _, _ = self.request(path)
                 self.assertEqual(status, 200)
+
+    def test_every_active_device_has_a_non_empty_dispatcher_entry_page(self):
+        paths = (
+            '/sim_ac1000f/cgi-bin/index.asp?page=home_wan.asp',
+            '/sim_ax3000c/',
+            '/sim_ax3000gz/cgi-bin/luci/admin/internet/wan',
+            '/sim_ax3000hv2/cgi-bin/index.asp?page=home_wan.asp',
+            '/sim_ax3000s/app.html',
+            '/sim_ac1000HI/cgi-bin/index.asp?page=home_wan.asp',
+            '/sim_be6500c/advanced__wan.html',
+            '/sim_ONT_be6500c/advanced__wan.html',
+        )
+        for path in paths:
+            with self.subTest(path=path):
+                status, _, body = self.request(path)
+                self.assertIn(status, (200, 401), path)
+                self.assertGreater(len(body), 100, path)
+
+    def test_legacy_frames_and_shared_lan_defaults_do_not_depend_on_mobile_referer(self):
+        for simulator in ('sim_ac1000f', 'sim_ax3000hv2'):
+            path = f'/{simulator}/cgi-bin/index.asp?page=home_wan.asp'
+            status, _, body = self.request(path)
+            self.assertEqual(status, 200)
+            self.assertIn(f'src="/{simulator}/cgi-bin/'.encode(), body)
+
+        status, _, body = self.request('/sim_ac1000f/cgi-bin/home_lan.asp')
+        self.assertEqual(status, 200)
+        compact = b' '.join(body.split())
+        self.assertRegex(compact, rb'NAME="StartIp"[^>]*VALUE="192\.168\.1\.2"')
+        self.assertRegex(compact, rb'NAME="EndIp"[^>]*VALUE="192\.168\.1\.254"')
+        self.assertRegex(compact, rb'NAME="dhcp_LeaseTime"[^>]*VALUE="86400"')
+
+    def test_device_rest_path_is_reserved_for_selected_be6500c_simulator(self):
+        self.assertFalse(run_all.is_portal_path('/api/v1/data/system/info'))
+        self.assertTrue(run_all.is_portal_path('/api/index.php/dashboard'))
+
+        direct_status, _, _ = self.request('/api/v1/data/system/info')
+        self.assertEqual(direct_status, 404)
+
+        status, headers, body = self.request(
+            '/api/v1/data/system/info',
+            headers={'Referer': f'http://127.0.0.1:{self.port}/sim_ONT_be6500c/home__overview.html'},
+        )
+        self.assertEqual(status, 200)
+        self.assertIn('application/json', headers.get('Content-Type', headers.get('content-type', '')))
+        self.assertTrue(body)
 
     def test_dashboard_can_return_to_portal_on_same_keep_alive_connection(self):
         connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=5)

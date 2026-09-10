@@ -13,7 +13,7 @@ window.DEVICE_BE6500C_LESSONS.push({
   "- Mật khẩu: <span class=\"val\">fpt12345</span>"
 ],
   practiceUrl: '/sim_be6500c/wifi__general__t2.html',
-  clearFields: [],
+  clearFields: ['input[name="networks.0.name"]', 'input[name="networks.0.passphrase"]'],
   grading: {
     description: 'Kiểm tra bài 3',
     rules: [

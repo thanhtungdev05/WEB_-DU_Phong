@@ -494,8 +494,8 @@
     "ipAddress": "192.168.1.1",
     "mask": "255.255.255.0",
     "pppoe": {
-     "username": "",
-     "password": ""
+     "username": "hnfdl-123456-789",
+     "password": "d123456"
     },
     "protocol": "static"
    },
@@ -585,7 +585,68 @@
   "receivedPower": -30,
   "maxBitRate": 10000000000
  },
- "portForwarding/policies": [],
+ "portForwarding/policies": [
+  {
+   "enabled": true,
+   "name": "camera",
+   "protocol": "TCP + UDP",
+   "source": {
+    "portRange": "8080",
+    "interfaceId": "wan"
+   },
+   "destination": {
+    "portRange": "80",
+    "ipAddress": "192.168.1.20",
+    "interfaceId": "lan"
+   },
+   "id": "cfg664200"
+  },
+  {
+   "enabled": true,
+   "name": "Camera",
+   "protocol": "TCP + UDP",
+   "source": {
+    "portRange": "8080",
+    "interfaceId": "wan"
+   },
+   "destination": {
+    "portRange": "80",
+    "ipAddress": "192.168.1.20",
+    "interfaceId": "lan"
+   },
+   "id": "cfg293433"
+  },
+  {
+   "enabled": true,
+   "name": "camera",
+   "protocol": "TCP + UDP",
+   "source": {
+    "portRange": "8080",
+    "interfaceId": "wan"
+   },
+   "destination": {
+    "portRange": "80",
+    "ipAddress": "192.168.1.20",
+    "interfaceId": "lan"
+   },
+   "id": "cfg379509"
+  },
+  {
+   "enabled": true,
+   "name": "camera",
+   "protocol": "TCP + UDP",
+   "source": {
+    "portRange": "8080",
+    "interfaceId": "wan"
+   },
+   "destination": {
+    "portRange": "80",
+    "ipAddress": "192.168.1.20",
+    "interfaceId": "lan"
+   },
+   "id": "cfg080045"
+  }
+ ],
  "publicLan": {
   "enabled": false,
   "routing": {
@@ -719,9 +780,9 @@
     "WPA2-Personal",
     "WPA3-Personal-Transition"
    ],
-   "passphrase": "12345678",
+   "passphrase": "fpt12345",
    "status": "Up",
-   "name": "FPT Telecom-C151",
+   "name": "FPT Telecom",
    "radio": "2.4G",
    "securityMode": "WPA3-Personal-Transition",
    "enabled": true,
@@ -734,9 +795,9 @@
     "WPA2-Personal",
     "WPA3-Personal-Transition"
    ],
-   "passphrase": "12345678",
+   "passphrase": "fpt12345",
    "status": "Up",
-   "name": "FPT Telecom-C151",
+   "name": "FPT Telecom",
    "radio": "5G",
    "securityMode": "WPA3-Personal-Transition",
    "enabled": true,
@@ -779,9 +840,9 @@
     "WPA2-Personal",
     "WPA3-Personal-Transition"
    ],
-   "passphrase": "12345678",
+   "passphrase": "d123456",
    "status": "Up",
-   "name": "FPT Telecom-C151 IoT 2.4G",
+   "name": "FPT IoT",
    "radio": "2.4G",
    "securityMode": "WPA3-Personal-Transition",
    "enabled": true,
@@ -794,9 +855,9 @@
     "WPA2-Personal",
     "WPA3-Personal-Transition"
    ],
-   "passphrase": "119424b42f",
+   "passphrase": "",
    "status": "Down",
-   "name": "FPT Telecom-C151 IoT 5G",
+   "name": "",
    "radio": "5G",
    "securityMode": "WPA3-Personal-Transition",
    "enabled": false,
@@ -1897,5 +1958,8 @@
    "username": "admin",
    "password": "changeme123"
   }
- ]
+ ],
+ "portForwarding": {
+  "policies": []
+ }
 }

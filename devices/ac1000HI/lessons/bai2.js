@@ -20,7 +20,7 @@ var lessonObj = {
     '2. Vào Wireless 5G > cấu hình > bấm <b>Save & Apply</b>',
     '  (Dữ liệu được lưu tự động khi bấm Save, chuyển trang vẫn còn.)'
   ],
-  practiceUrl: '/sim_ac1000hi/cgi-bin/index.asp?page=home_wireless.asp',
+  practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=home_wireless.asp',
     // Clear old wifi localStorage when starting a new session (on login page only)
     onSimLoad: function(iframeWindow) {
       try {

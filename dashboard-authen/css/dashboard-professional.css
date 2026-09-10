@@ -854,10 +854,16 @@ textarea:focus {
     z-index: 4;
     top: 0;
     padding: 11px 12px;
-    color: #42516a;
-    background: #f3f6fa;
-    border-bottom: 1px solid var(--ui-border-strong);
+    color: #ffffff;
+    background: var(--lector-navy, #263348);
+    border-bottom: 1px solid #344156;
     white-space: nowrap;
+}
+
+.roster-table thead .admin-table-sort,
+.roster-table thead .admin-table-sort:hover,
+.roster-table thead .admin-table-sort:focus-visible {
+    color: #ffffff;
 }
 
 .roster-table td {

@@ -14,19 +14,11 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
     '- Password: <span class="val">d123456</span>',
   ],
   practiceUrl: '/sim_ONT_be6500c/advanced__wan.html',
-  clearFields: [],
+  clearFields: ['input[name="ipv4Settings.pppoe.username"]', 'input[name="ipv4Settings.pppoe.password"]'],
   grading: {
     description: 'Kiểm tra cấu hình PPPoE',
     rules: [
-      {
-        "id": "pppoe_protocol",
-        "name": "Connection Type",
-        "selector": "input[name=\"ipv4Settings.protocol\"]",
-        "expected": "pppoe",
-        "type": "text_exact",
-        "trim": true,
-        "required": true
-      },
+
       {
         "id": "pppoe_user",
         "name": "Username",

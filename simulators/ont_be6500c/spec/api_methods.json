@@ -199,6 +199,20 @@
         "postStaticNatPolicies"
       ]
     },
+    "api/v1/data/portForwarding/policies": {
+      "DELETE": [
+        "deletePortForwardingPolicies"
+      ],
+      "GET": [
+        "getPortForwardingPolicies"
+      ],
+      "PATCH": [
+        "setPortForwardingPolicies"
+      ],
+      "POST": [
+        "postPortForwardingPolicies"
+      ]
+    },
     "api/v1/data/radios": {
       "GET": [
         "getRadios"

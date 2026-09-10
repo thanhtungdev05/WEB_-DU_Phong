@@ -1424,18 +1424,93 @@ function roster_base_where(array &$params, bool $includeFilters = true, ?array $
     }
 
     $filterSource = $filters ?? $_GET;
-    $statusValue = $filterSource['status'] ?? 'active';
-    if (!is_scalar($statusValue) && $statusValue !== null) {
-        fail(400, 'bad-filter', 'Invalid roster status filter.');
-    }
-    $status = strtolower(trim((string)$statusValue));
-    if ($status !== '' && $status !== 'all') {
-        if (!in_array($status, ['active', 'terminated'], true)) {
-            fail(400, 'bad-filter', 'Invalid roster status filter.');
+    $normalizeFilterValues = static function (mixed $rawValue, string $filterName): ?array {
+        if ($rawValue === null || $rawValue === '' || $rawValue === 'all') {
+            return null;
         }
-        $where[] = $status === 'terminated'
-            ? 'ktv.is_terminated = TRUE'
-            : 'ktv.is_terminated = FALSE';
+        $rawValues = is_array($rawValue) ? $rawValue : [$rawValue];
+        if (count($rawValues) > 500) {
+            fail(400, 'bad-filter', "Too many values for roster $filterName filter.");
+        }
+        $values = [];
+        foreach ($rawValues as $value) {
+            if (!is_scalar($value) && $value !== null) {
+                fail(400, 'bad-filter', "Invalid roster $filterName filter.");
+            }
+            $value = trim((string)$value);
+            if ($value === '__FTC_NONE_SELECTED__') {
+                return [];
+            }
+            if (mb_strlen($value, 'UTF-8') > 200) {
+                fail(400, 'bad-filter', "Roster $filterName filter is too long.");
+            }
+            if ($value !== '' && $value !== 'all') {
+                $values[$value] = true;
+            }
+        }
+        return $values ? array_keys($values) : null;
+    };
+
+    $statuses = $normalizeFilterValues($filterSource['status'] ?? 'active', 'status');
+    if ($statuses === []) {
+        $where[] = 'FALSE';
+    } elseif ($statuses !== null) {
+        $statuses = array_map('strtolower', $statuses);
+        foreach ($statuses as $status) {
+            if (!in_array($status, ['active', 'terminated'], true)) {
+                fail(400, 'bad-filter', 'Invalid roster status filter.');
+            }
+        }
+        if (count(array_unique($statuses)) === 1) {
+            $where[] = $statuses[0] === 'terminated'
+                ? 'ktv.is_terminated = TRUE'
+                : 'ktv.is_terminated = FALSE';
+        }
+    }
+
+    $exactFilters = [
+        'employeeId' => [
+            'column' => "COALESCE(NULLIF(BTRIM(ktv.employee_id), ''), 'Chưa cập nhật')",
+            'parameter' => 'filter_employee_id',
+        ],
+        'name' => [
+            'column' => "COALESCE(NULLIF(BTRIM(ktv.display_name), ''), 'Chưa cập nhật')",
+            'parameter' => 'filter_name',
+        ],
+        'email' => [
+            'column' => "COALESCE(NULLIF(BTRIM(ktv.email), ''), 'Chưa cập nhật')",
+            'parameter' => 'filter_email',
+        ],
+        'jobTitle' => [
+            'column' => "COALESCE(NULLIF(BTRIM(ktv.job_title), ''), 'Chưa cập nhật')",
+            'parameter' => 'filter_job_title',
+        ],
+        'region' => [
+            'column' => "COALESCE(NULLIF(BTRIM(ktv.region_name), ''), 'Chưa phân vùng')",
+            'parameter' => 'filter_region',
+        ],
+        'branch' => [
+            'column' => "COALESCE(NULLIF(BTRIM(ktv.branch_name), ''), 'Chưa có chi nhánh')",
+            'parameter' => 'filter_branch',
+        ],
+        'className' => [
+            'column' => "COALESCE(NULLIF(BTRIM(assigned_class.assigned_class_name), ''), 'Chưa xếp lớp')",
+            'parameter' => 'filter_class_name',
+        ],
+    ];
+    foreach ($exactFilters as $queryKey => $definition) {
+        $values = $normalizeFilterValues($filterSource[$queryKey] ?? '', $queryKey);
+        if ($values === []) {
+            $where[] = 'FALSE';
+        } elseif ($values !== null) {
+            $placeholders = [];
+            foreach ($values as $index => $value) {
+                $parameter = $definition['parameter'] . '_' . $index;
+                $placeholders[] = ':' . $parameter;
+                $params[$parameter] = $value;
+            }
+            $where[] = $definition['column'] . ' IN (' . implode(', ', $placeholders) . ')';
+        }
     }
 
     $searchValue = $filterSource['search'] ?? '';
@@ -1453,6 +1528,7 @@ function roster_base_where(array &$params, bool $includeFilters = true, ?array $
             OR ktv.email ILIKE :search_email
             OR ktv.display_name ILIKE :search_name
             OR COALESCE(assigned_class.assigned_class_code, ktv.class_code) ILIKE :search_class
+            OR assigned_class.assigned_class_name ILIKE :search_class_name
             OR ktv.unit_code ILIKE :search_unit
             OR ktv.unit_name ILIKE :search_unitname
             OR ktv.region_name ILIKE :search_region
@@ -1462,6 +1538,7 @@ function roster_base_where(array &$params, bool $includeFilters = true, ?array $
         $params['search_email'] = $searchPattern;
         $params['search_name'] = $searchPattern;
         $params['search_class'] = $searchPattern;
+        $params['search_class_name'] = $searchPattern;
         $params['search_unit'] = $searchPattern;
         $params['search_unitname'] = $searchPattern;
         $params['search_region'] = $searchPattern;
@@ -1520,6 +1597,69 @@ function roster_stats(PDO $pdo): array
             'terminated' => (int)$row['terminated'],
         ], $regionRows),
     ];
+}
+
+function roster_filter_facets(PDO $pdo): array
+{
+    $classJoinSql = roster_assigned_class_join_sql();
+    $stmt = $pdo->query(
+        "WITH roster_values AS (
+            SELECT ktv.employee_id,
+                   ktv.display_name,
+                   ktv.email,
+                   ktv.job_title,
+                   ktv.region_name,
+                   ktv.branch_name,
+                   assigned_class.assigned_class_name
+              FROM v_ktv_directory ktv
+              $classJoinSql
+        )
+        SELECT filter_key, filter_value
+          FROM (
+                SELECT 'employeeIds'::text AS filter_key,
+                       COALESCE(NULLIF(BTRIM(employee_id), ''), 'Chưa cập nhật') AS filter_value
+                  FROM roster_values
+                UNION ALL
+                SELECT 'names', COALESCE(NULLIF(BTRIM(display_name), ''), 'Chưa cập nhật')
+                  FROM roster_values
+                UNION ALL
+                SELECT 'emails', COALESCE(NULLIF(BTRIM(email), ''), 'Chưa cập nhật')
+                  FROM roster_values
+                UNION ALL
+                SELECT 'jobTitles',
+                       COALESCE(NULLIF(BTRIM(job_title), ''), 'Chưa cập nhật') AS filter_value
+                  FROM roster_values
+                UNION ALL
+                SELECT 'regions', COALESCE(NULLIF(BTRIM(region_name), ''), 'Chưa phân vùng')
+                  FROM roster_values
+                UNION ALL
+                SELECT 'branches', COALESCE(NULLIF(BTRIM(branch_name), ''), 'Chưa có chi nhánh')
+                  FROM roster_values
+                UNION ALL
+                SELECT 'classes', COALESCE(NULLIF(BTRIM(assigned_class_name), ''), 'Chưa xếp lớp')
+                  FROM roster_values
+          ) facet_values
+         GROUP BY filter_key, filter_value
+         ORDER BY filter_key, filter_value"
+    );
+
+    $facets = [
+        'employeeIds' => [],
+        'names' => [],
+        'emails' => [],
+        'jobTitles' => [],
+        'regions' => [],
+        'branches' => [],
+        'classes' => [],
+    ];
+    foreach ($stmt->fetchAll() as $row) {
+        $key = (string)($row['filter_key'] ?? '');
+        $value = trim((string)($row['filter_value'] ?? ''));
+        if ($value !== '' && array_key_exists($key, $facets)) {
+            $facets[$key][] = $value;
+        }
+    }
+    return $facets;
 }
 
 function handle_roster_import(array $actor): void
@@ -1668,7 +1808,32 @@ function handle_roster_list(): void
     $countStmt->execute($params);
     $total = (int)$countStmt->fetchColumn();
 
-    $sortSql = 'ktv.is_terminated ASC, ktv.region_name NULLS LAST, ktv.branch_name NULLS LAST, COALESCE(assigned_class.assigned_class_code, ktv.class_code) NULLS LAST, ktv.display_name NULLS LAST, ktv.email';
+    $sortValue = $_GET['sort'] ?? '';
+    $directionValue = $_GET['direction'] ?? 'asc';
+    if ((!is_scalar($sortValue) && $sortValue !== null)
+        || (!is_scalar($directionValue) && $directionValue !== null)) {
+        fail(400, 'bad-sort', 'Invalid roster sort parameters.');
+    }
+    $sortKey = trim((string)$sortValue);
+    $sortDirection = strtolower(trim((string)$directionValue));
+    $sortColumns = [
+        'employeeId' => 'ktv.employee_id',
+        'name' => 'ktv.display_name',
+        'email' => 'ktv.email',
+        'jobTitle' => 'ktv.job_title',
+        'region' => 'ktv.region_name',
+        'branch' => 'ktv.branch_name',
+        'className' => 'COALESCE(assigned_class.assigned_class_name, assigned_class.assigned_class_code, ktv.class_code)',
+    ];
+    if ($sortKey !== '' && !isset($sortColumns[$sortKey])) {
+        fail(400, 'bad-sort', 'Unsupported roster sort column.');
+    }
+    if (!in_array($sortDirection, ['asc', 'desc'], true)) {
+        fail(400, 'bad-sort', 'Unsupported roster sort direction.');
+    }
+    $sortSql = $sortKey !== ''
+        ? $sortColumns[$sortKey] . ' ' . strtoupper($sortDirection) . ' NULLS LAST, ktv.display_name NULLS LAST, ktv.email'
+        : 'ktv.is_terminated ASC, ktv.region_name NULLS LAST, ktv.branch_name NULLS LAST, COALESCE(assigned_class.assigned_class_name, assigned_class.assigned_class_code, ktv.class_code) NULLS LAST, ktv.display_name NULLS LAST, ktv.email';
 
     $sql = "SELECT ktv.*, assigned_class.assigned_class_code, assigned_class.assigned_class_name
               FROM v_ktv_directory ktv
@@ -1691,6 +1856,7 @@ function handle_roster_list(): void
         'page' => $page,
         'limit' => $limit,
         'stats' => roster_stats($pdo),
+        'facets' => roster_filter_facets($pdo),
     ]]);
 }
 
@@ -1967,31 +2133,70 @@ function build_roster_report_input(array $input = []): array
     }
     $filters = $filters ?? [
         'status' => $_GET['status'] ?? 'active',
-        'search' => $_GET['search'] ?? '',
+        'employeeId' => $_GET['employeeId'] ?? '',
+        'name' => $_GET['name'] ?? '',
+        'email' => $_GET['email'] ?? '',
+        'jobTitle' => $_GET['jobTitle'] ?? '',
+        'region' => $_GET['region'] ?? '',
+        'branch' => $_GET['branch'] ?? '',
+        'className' => $_GET['className'] ?? '',
     ];
 
     $pdo = db();
     $params = [];
     $where = roster_base_where($params, true, $filters);
     $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+    $classJoinSql = roster_assigned_class_join_sql();
     $stmt = $pdo->prepare(
-        "SELECT ktv.*
+        "SELECT ktv.*, assigned_class.assigned_class_code, assigned_class.assigned_class_name
            FROM v_ktv_directory ktv
+           $classJoinSql
           $whereSql
           ORDER BY ktv.region_name NULLS LAST, ktv.branch_name NULLS LAST, ktv.display_name NULLS LAST, ktv.email"
     );
     $stmt->execute($params);
     $rows = $stmt->fetchAll();
 
-    $status = strtolower(trim((string)($filters['status'] ?? 'active')));
-    $statusLabel = match ($status) {
-        'terminated' => 'Đã nghỉ',
-        'all' => 'Tất cả trạng thái',
-        default => 'Đang công tác',
+    $rawStatuses = $filters['status'] ?? 'active';
+    $statusValues = is_array($rawStatuses) ? $rawStatuses : [$rawStatuses];
+    $statusValues = array_values(array_unique(array_filter(array_map(
+        static fn (mixed $value): string => strtolower(trim((string)$value)),
+        $statusValues
+    ), static fn (string $value): bool => $value !== '' && $value !== 'all')));
+    $statusLabel = match (true) {
+        $statusValues === ['terminated'] => 'Đã nghỉ',
+        $statusValues === ['active'] => 'Đang công tác',
+        $statusValues === ['__ftc_none_selected__'] => 'Không chọn trạng thái nào',
+        default => 'Tất cả trạng thái',
     };
-    $search = trim((string)($filters['search'] ?? ''));
+    $filterLabels = [
+        'employeeId' => 'Mã NV',
+        'name' => 'Họ tên',
+        'email' => 'Email',
+        'jobTitle' => 'Vị trí',
+        'region' => 'Khu vực',
+        'branch' => 'Chi nhánh',
+        'className' => 'Lớp',
+    ];
+    $scopeParts = [$statusLabel];
+    $metadata = [['Trạng thái', $statusLabel]];
+    foreach ($filterLabels as $key => $label) {
+        $rawValue = $filters[$key] ?? '';
+        $values = is_array($rawValue) ? $rawValue : [$rawValue];
+        $values = array_values(array_filter(array_map(
+            static fn (mixed $value): string => trim((string)$value),
+            $values
+        ), static fn (string $value): bool => $value !== '' && $value !== '__FTC_NONE_SELECTED__'));
+        if (!$values) {
+            continue;
+        }
+        $value = implode(', ', $values);
+        $scopeParts[] = $label . ': ' . $value;
+        $metadata[] = [$label, $value];
+    }
     $dataRows = [];
     foreach ($rows as $index => $row) {
+        $row = roster_item_response($row);
         $dataRows[] = [
             $index + 1,
             $row['employee_id'] ?? '',
@@ -2000,7 +2205,7 @@ function build_roster_report_input(array $input = []): array
             $row['job_title'] ?? '',
             $row['dashboard_region'] ?? $row['region_name'] ?? '',
             $row['branch_name'] ?? '',
-            $row['class_code'] ?? '',
+            $row['class_name'] ?? 'Chưa xếp lớp',
             database_boolean($row['is_terminated'] ?? false) ? 'Đã nghỉ' : 'Đang công tác',
         ];
     }
@@ -2008,12 +2213,9 @@ function build_roster_report_input(array $input = []): array
     return [
         'type' => 'roster',
         'period' => 'Tại thời điểm xuất',
-        'scope' => $search !== '' ? $statusLabel . ' · Tìm kiếm: “' . $search . '”' : $statusLabel,
+        'scope' => implode(' · ', $scopeParts),
         'filename' => $input['filename'] ?? 'FTC_Danh_sach_KTV',
-        'metadata' => [
-            ['Trạng thái', $statusLabel],
-            ['Từ khóa tìm kiếm', $search !== '' ? $search : 'Không áp dụng'],
-        ],
+        'metadata' => $metadata,
         'headers' => [
             'STT', 'Mã NV', 'Họ và tên', 'Email', 'Vị trí',
             'Khu vực/CNx', 'Chi nhánh', 'Lớp', 'Trạng thái',
@@ -2419,7 +2621,6 @@ function handle_dashboard(array $segments, string $method): void
                     COALESCE(timer.started_at, timer.finished_at) AS started_at,
                     timer.duration_sec,
                     timer.mode,
-                    timer.score,
                     active_device.device_id,
                     active_device.device_name,
                     active_lab.lab_id,
@@ -2606,7 +2807,6 @@ function handle_dashboard(array $segments, string $method): void
             'started_at' => safe_datetime($row['started_at']),
             'duration_sec' => $row['duration_sec'] !== null ? (int)$row['duration_sec'] : null,
             'mode' => (string)($row['mode'] ?? 'Thực hành'),
-            'score' => $row['score'] !== null ? (float)$row['score'] : null,
             'device_id' => (string)($row['device_id'] ?? ''),
             'device_name' => $device,
             'lab_name' => isset($labMap[$labKey]) ? $labMap[$labKey]['lab_name'] : (string)($row['lab_name'] ?? ''),

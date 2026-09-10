@@ -188,6 +188,9 @@ def is_portal_path(path):
     """True neu path thuoc Portal (dung chung cho cac buoc detect_simulator)."""
     if path in PORTAL_PATHS:
         return True
+    # REST resources exposed by the selected ONT BE6500C simulator.
+    if path.startswith('/api/v1/data/'):
+        return False
     for prefix in PORTAL_PREFIXES:
         if path.startswith(prefix):
             if prefix == '/assets/':
@@ -484,7 +487,10 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         if is_sensitive_path(path_only):
             self.send_error(404, 'Not Found')
             return
-        if path_only == '/api' or path_only.startswith('/api/'):
+        # ONT BE6500C uses device-local REST resources under /api/v1/data/*.
+        # Other /api/* requests continue to use the authenticated PHP API.
+        if (path_only == '/api' or path_only.startswith('/api/')) \
+                and not path_only.startswith('/api/v1/data/'):
             return self._proxy_api(method)
 
         # Chuyen tiep /admin/* va /admin-static/* -> Django Admin

@@ -129,6 +129,38 @@
 
       var tbody = layTbody(ds.length > 0);
       hienKhoiTrong(ds.length === 0);
+      // Setup Add New modal
+      var modal = document.getElementById('pf-modal');
+      if (modal && !modal.dataset.bound) {
+        modal.dataset.bound = 'true';
+        var addBtn = Array.prototype.slice.call(document.querySelectorAll('button')).find(function(b) { return b.textContent.indexOf('Add New') >= 0; });
+        if (addBtn) {
+          addBtn.addEventListener('click', function() { modal.style.display = 'flex'; });
+        }
+        var btnHuy = modal.querySelector('.dlg-huy');
+        if (btnHuy) {
+          btnHuy.addEventListener('click', function() { modal.style.display = 'none'; });
+        }
+        var btnLuu = modal.querySelector('.dlg-luu');
+        if (btnLuu) {
+          btnLuu.addEventListener('click', function() {
+            var r = {
+              name: modal.querySelector('input[name="name"]').value,
+              protocol: modal.querySelector('#mui-component-select-protocol').value,
+              source: { portRange: modal.querySelector('input[name="source.portRange"]').value },
+              destination: {
+                ipAddress: modal.querySelector('.MuiAutocomplete-input').value,
+                portRange: modal.querySelector('input[name="destination.portRange"]').value
+              },
+              enabled: true
+            };
+            var tb = layTbody(true);
+            hienKhoiTrong(false);
+            tb.appendChild(dungHang(mau, r, tenThietBi));
+            modal.style.display = 'none';
+          });
+        }
+      }
       if (!ds.length) {
         if (tbody && tbody.parentNode) tbody.parentNode.removeChild(tbody);
         console.log('[portforward_binding] kho rong -> khong render tbody (giong that)');
@@ -137,6 +169,38 @@
       tbody.innerHTML = '';
       ds.forEach(function (r) { tbody.appendChild(dungHang(mau, r, tenThietBi)); });
       console.log('[portforward_binding] hien ' + ds.length + ' rule tu kho');
+
+      // Setup Add New modal
+      var modal = document.getElementById('pf-modal');
+      if (modal) {
+        var addBtn = Array.prototype.slice.call(document.querySelectorAll('button')).find(function(b) { return b.textContent.indexOf('Add New') >= 0; });
+        if (addBtn) {
+          addBtn.addEventListener('click', function() { modal.style.display = 'flex'; });
+        }
+        var btnHuy = modal.querySelector('.dlg-huy');
+        if (btnHuy) {
+          btnHuy.addEventListener('click', function() { modal.style.display = 'none'; });
+        }
+        var btnLuu = modal.querySelector('.dlg-luu');
+        if (btnLuu) {
+          btnLuu.addEventListener('click', function() {
+            var r = {
+              name: modal.querySelector('input[name="name"]').value,
+              protocol: modal.querySelector('#mui-component-select-protocol').value,
+              source: { portRange: modal.querySelector('input[name="source.portRange"]').value },
+              destination: {
+                ipAddress: modal.querySelector('.MuiAutocomplete-input').value,
+                portRange: modal.querySelector('input[name="destination.portRange"]').value
+              },
+              enabled: true
+            };
+            var tb = layTbody(true);
+            hienKhoiTrong(false);
+            tb.appendChild(dungHang(mau, r, tenThietBi));
+            modal.style.display = 'none';
+          });
+        }
+      }
     }).catch(function () {});
   }
 

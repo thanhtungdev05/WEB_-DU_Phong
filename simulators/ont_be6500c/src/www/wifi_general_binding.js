@@ -315,7 +315,10 @@
         var el = timO('networks.' + i + '.' + t);
         if (!el) return;
         if (el.type === 'checkbox') el.checked = !!s[t];
-        else el.value = s[t] === undefined || s[t] === null ? '' : String(s[t]);
+        else {
+          el.value = s[t] === undefined || s[t] === null ? '' : String(s[t]);
+          if ((t === 'name' || t === 'passphrase') && !window.__daNapLanDau) el.value = ''; // Yêu cầu: rỗng ô textbox
+        }
         da++;
       });
       noiSecurityMode(i, s, tach);
@@ -341,11 +344,13 @@
       apDungCheDoHopThiTach(tach);
 
       var da = dienDuLieuVaoO(tach);
+      window.__daNapLanDau = true;
       var hong = da.hong;
       console.log('[wifi_general] ' + LOAI + ': nap ' + da.so + ' o, '
         + SSIDS.length + ' SSID, che do '
         + (tach ? 'TACH' : 'GOP')
         + (hong.length ? ' | ' + hong.join(', ') : ''));
+      hienThanhSave(); // Hien thi nut save do form da bi lam rong
     }).catch(function (e) {
       console.error('[wifi_general] nap that bai:', e);
     }).then(function () {
@@ -424,6 +429,9 @@
       .then(function () { return patch('easyMesh', thanEasyMesh()); })
       .then(function () { goThanhSave(); return nap(); })
       .then(function () {
+        if (window.parent && window.parent.onSimulatorSave) {
+          try { window.parent.onSimulatorSave(window); } catch(e){}
+        }
         return new Promise(function (ok) {
           setTimeout(function () { dangGhi = false; ok(); }, 0);
         });
@@ -447,17 +455,8 @@
   }
 
   function hoiTruocKhiLuu() {
-    var hop = window.__moHopThoai && window.__moHopThoai('wifi_save');
-    if (!hop) {
-      // Khong co markup that -> luu thang, con hon chan nguoi dung lai.
-      return ganLuu();
-    }
-    if (hop.oTiepTuc) {
-      hop.oTiepTuc.addEventListener('click', function () {
-        hop.dong();
-        ganLuu();
-      });
-    }
+    // Không hiện thông báo xác nhận nữa, gọi thẳng hàm lưu cấu hình luôn
+    return ganLuu();
   }
 
   function goThanhSave() {

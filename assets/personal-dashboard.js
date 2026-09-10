@@ -36,9 +36,9 @@
   const elMetricFirstTrySub = document.getElementById('metric-first-try-sub');
   const elMetricFirstTryBar = document.getElementById('metric-first-try-bar');
 
-  const elMetricAvgScoreVal = document.getElementById('metric-avg-score-val');
-  const elMetricAvgScoreSub = document.getElementById('metric-avg-score-sub');
-  const elMetricAvgScoreBar = document.getElementById('metric-avg-score-bar');
+  const elMetricPassRateVal = document.getElementById('metric-pass-rate-val');
+  const elMetricPassRateSub = document.getElementById('metric-pass-rate-sub');
+  const elMetricPassRateBar = document.getElementById('metric-pass-rate-bar');
 
   const elMetricTimeVal = document.getElementById('metric-time-val');
   const elMetricTimeSub = document.getElementById('metric-time-sub');
@@ -70,11 +70,11 @@
   const elTrendChartContainer = document.getElementById('trend-chart-container');
   const elTrendChartTitle = document.getElementById('trend-chart-title');
   const elTrendChartIcon = document.getElementById('trend-chart-icon');
-  const elBtnChartScore = document.getElementById('btn-chart-score');
+  const elBtnChartResult = document.getElementById('btn-chart-result');
   const elBtnChartFrequency = document.getElementById('btn-chart-frequency');
   const elChartMonthSelect = document.getElementById('chart-month-select');
 
-  let _chartMode = 'score'; // 'score' | 'frequency'
+  let _chartMode = 'result'; // 'result' | 'frequency'
   let _selectedMonth = ''; // 'YYYY-MM'
 
   function init() {
@@ -107,14 +107,14 @@
       });
     }
 
-    if (elBtnChartScore) {
-      elBtnChartScore.addEventListener('click', () => {
-        if (_chartMode === 'score') return;
-        _chartMode = 'score';
-        elBtnChartScore.classList.add('active');
+    if (elBtnChartResult) {
+      elBtnChartResult.addEventListener('click', () => {
+        if (_chartMode === 'result') return;
+        _chartMode = 'result';
+        elBtnChartResult.classList.add('active');
         elBtnChartFrequency?.classList.remove('active');
         if (elChartMonthSelect) elChartMonthSelect.style.display = 'none';
-        if (elTrendChartTitle) elTrendChartTitle.textContent = 'Xu hướng điểm số & hoạt động';
+        if (elTrendChartTitle) elTrendChartTitle.textContent = 'Xu hướng kết quả Đạt';
         if (elTrendChartIcon) {
           elTrendChartIcon.innerHTML = '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>';
         }
@@ -127,7 +127,7 @@
         if (_chartMode === 'frequency') return;
         _chartMode = 'frequency';
         elBtnChartFrequency.classList.add('active');
-        elBtnChartScore?.classList.remove('active');
+        elBtnChartResult?.classList.remove('active');
         if (elChartMonthSelect) elChartMonthSelect.style.display = 'inline-block';
         if (elTrendChartTitle) elTrendChartTitle.textContent = 'Tần suất thực hiện theo ngày';
         if (elTrendChartIcon) {
@@ -246,10 +246,12 @@
     if (elMetricFirstTrySub) elMetricFirstTrySub.textContent = `Tỷ lệ đạt lần 1`;
     if (elMetricFirstTryBar) elMetricFirstTryBar.style.width = `${Math.min(100, firstTryPct)}%`;
 
-    const avgScore = stats.average_score || 0;
-    if (elMetricAvgScoreVal) elMetricAvgScoreVal.textContent = avgScore > 0 ? avgScore.toFixed(1) : '—';
-    if (elMetricAvgScoreSub) elMetricAvgScoreSub.textContent = `Thang điểm 100`;
-    if (elMetricAvgScoreBar) elMetricAvgScoreBar.style.width = `${Math.min(100, avgScore)}%`;
+    const passRate = stats.practice_pass_rate_percent || 0;
+    const passedSessions = stats.passed_practice_sessions_count || 0;
+    const gradedSessions = stats.graded_practice_sessions_count || 0;
+    if (elMetricPassRateVal) elMetricPassRateVal.textContent = `${passRate}%`;
+    if (elMetricPassRateSub) elMetricPassRateSub.textContent = `${passedSessions}/${gradedSessions} phiên Đạt`;
+    if (elMetricPassRateBar) elMetricPassRateBar.style.width = `${Math.min(100, passRate)}%`;
 
     const durationSec = stats.total_practice_duration_sec || 0;
     const durFormatted = formatDurationHuman(durationSec);
@@ -351,7 +353,6 @@
       practice: 0,
       guide: 0,
       passed: 0,
-      scores: [],
       duration_sec: 0
     }));
 
@@ -372,7 +373,6 @@
             if (sess.is_passed === true || sess.status === 'Đạt' || sess.status === 'Hoàn thành') {
               item.passed++;
             }
-            if (sess.score != null) item.scores.push(Number(sess.score));
           } else {
             item.guide++;
           }
@@ -506,45 +506,51 @@
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
-    const maxSessions = Math.max(...recentTrend.map(d => d.total_sessions), 5);
-    const maxScore = 100;
-
     // X scale
     const stepX = recentTrend.length > 1 ? chartW / (recentTrend.length - 1) : chartW / 2;
 
-    // Points calculation for Score line
-    const scorePoints = recentTrend.map((d, i) => {
+    // Tỷ lệ phiên Đạt theo ngày; chỉ tính các phiên thực hành đã có kết quả.
+    const resultPoints = recentTrend.map((d, i) => {
       const x = padding.left + (recentTrend.length > 1 ? i * stepX : chartW / 2);
-      const scoreVal = d.avg_score != null ? d.avg_score : 0;
-      const y = padding.top + chartH - (scoreVal / maxScore) * chartH;
-      return { x, y, date: d.date, score: d.avg_score, sessions: d.total_sessions, practice: d.practice_count, guide: d.guide_count };
+      const passRate = d.pass_rate_percent == null ? 0 : Number(d.pass_rate_percent);
+      const y = padding.top + chartH - (passRate / 100) * chartH;
+      return {
+        x,
+        y,
+        date: d.date,
+        passRate,
+        passed: Number(d.passed_count) || 0,
+        graded: Number(d.graded_count) || 0,
+        practice: Number(d.practice_count) || 0,
+        guide: Number(d.guide_count) || 0
+      };
     });
 
     let pathD = '';
     let areaD = '';
 
-    if (scorePoints.length === 1) {
-      const p = scorePoints[0];
+    if (resultPoints.length === 1) {
+      const p = resultPoints[0];
       pathD = `M ${padding.left} ${p.y} L ${padding.left + chartW} ${p.y}`;
       areaD = `M ${padding.left} ${p.y} L ${padding.left + chartW} ${p.y} L ${padding.left + chartW} ${padding.top + chartH} L ${padding.left} ${padding.top + chartH} Z`;
     } else {
-      pathD = `M ${scorePoints[0].x} ${scorePoints[0].y}`;
-      for (let i = 1; i < scorePoints.length; i++) {
-        const prev = scorePoints[i - 1];
-        const curr = scorePoints[i];
+      pathD = `M ${resultPoints[0].x} ${resultPoints[0].y}`;
+      for (let i = 1; i < resultPoints.length; i++) {
+        const prev = resultPoints[i - 1];
+        const curr = resultPoints[i];
         const cpX1 = prev.x + (curr.x - prev.x) / 2;
         const cpY1 = prev.y;
         const cpX2 = prev.x + (curr.x - prev.x) / 2;
         const cpY2 = curr.y;
         pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${curr.x} ${curr.y}`;
       }
-      areaD = `${pathD} L ${scorePoints[scorePoints.length - 1].x} ${padding.top + chartH} L ${scorePoints[0].x} ${padding.top + chartH} Z`;
+      areaD = `${pathD} L ${resultPoints[resultPoints.length - 1].x} ${padding.top + chartH} L ${resultPoints[0].x} ${padding.top + chartH} Z`;
     }
 
     // Grid lines (0, 25, 50, 75, 100)
     let gridSvg = '';
     [0, 25, 50, 75, 100].forEach(val => {
-      const y = padding.top + chartH - (val / maxScore) * chartH;
+      const y = padding.top + chartH - (val / 100) * chartH;
       gridSvg += `
         <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#e2e8f0" stroke-dasharray="3,3" stroke-width="1" />
         <text x="${padding.left - 8}" y="${y + 4}" font-size="11" font-weight="600" fill="#94a3b8" text-anchor="end">${val}</text>
@@ -553,7 +559,7 @@
 
     // X Labels
     let xLabelsSvg = '';
-    scorePoints.forEach((p, idx) => {
+    resultPoints.forEach((p, idx) => {
       // Show every 2nd or 3rd label if many items
       const showLabel = recentTrend.length <= 7 || idx % Math.ceil(recentTrend.length / 7) === 0 || idx === recentTrend.length - 1;
       if (showLabel) {
@@ -567,9 +573,8 @@
 
     // Circles / Tooltip triggers
     let pointsSvg = '';
-    scorePoints.forEach(p => {
-      const scoreDisplay = p.score != null ? `${p.score} đ` : 'Chưa chấm';
-      const tooltipText = `${p.date}: Điểm TB ${scoreDisplay} (${p.practice} thực hành, ${p.guide} hướng dẫn)`;
+    resultPoints.forEach(p => {
+      const tooltipText = `${p.date}: ${p.passed}/${p.graded} phiên Đạt (${p.passRate}%; ${p.practice} thực hành, ${p.guide} hướng dẫn)`;
       pointsSvg += `
         <circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#4f46e5" stroke="#ffffff" stroke-width="2.5" class="chart-dot">
           <title>${escapeHTML(tooltipText)}</title>
@@ -580,13 +585,13 @@
     elTrendChartContainer.innerHTML = `
       <svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
         <defs>
-          <linearGradient id="scoreAreaGradient" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id="resultAreaGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.25"/>
             <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.0"/>
           </linearGradient>
         </defs>
         ${gridSvg}
-        <path d="${areaD}" fill="url(#scoreAreaGradient)" />
+        <path d="${areaD}" fill="url(#resultAreaGradient)" />
         <path d="${pathD}" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" />
         ${pointsSvg}
         ${xLabelsSvg}
@@ -715,7 +720,7 @@
         if (result === 'passed' && s.is_passed !== true) return false;
         if (result === 'failed' && s.status !== 'failed') return false;
         if (result === 'ungraded' && !((s.mode !== 'Hướng dẫn' && s.session_type !== 'guide') && s.status === 'completed' && s.is_passed == null)) return false;
-        if (result === 'not_scored' && !(s.mode === 'Hướng dẫn' || s.session_type === 'guide')) return false;
+        if (result === 'not_graded' && !(s.mode === 'Hướng dẫn' || s.session_type === 'guide')) return false;
       }
 
       if (deviceId !== 'all') {
@@ -775,20 +780,12 @@
 
       // Result Badge
       let resultBadge = isGuide
-        ? '<span class="badge-pill result-ungraded">Không chấm</span>'
+        ? '<span class="badge-pill result-ungraded">Không đánh giá</span>'
         : '<span class="badge-pill result-ungraded">Chưa có kết quả</span>';
       if (s.is_passed === true) {
         resultBadge = '<span class="badge-pill result-passed">Đạt</span>';
       } else if (s.is_passed === false) {
         resultBadge = '<span class="badge-pill result-failed">Chưa đạt</span>';
-      }
-
-      // Score
-      let scoreHtml = '<span style="color: var(--text-muted);">-</span>';
-      if (s.score != null) {
-        const sc = Number(s.score);
-        const scClass = sc >= 80 ? 'high' : (sc >= 50 ? 'mid' : 'low');
-        scoreHtml = `<span class="score-text ${scClass}">${sc.toFixed(1)}</span>`;
       }
 
       // Duration
@@ -803,7 +800,6 @@
         <td>${escapeHTML(s.lab_name || s.lab_id || '—')}</td>
         <td>${modeBadge}</td>
         <td>${resultBadge}</td>
-        <td>${scoreHtml}</td>
         <td style="font-family: monospace; font-size: 12.5px;">${durStr}</td>
         <td style="color: var(--text-muted); text-align: center;">${attemptStr}</td>
       `;

@@ -28,7 +28,6 @@ Ví dụ:
   "session_type": "practice",
   "status": "completed",
   "is_passed": true,
-  "score": 100,
   "device_id": "DEV_AX3000S",
   "started_at": "2026-08-24T14:14:00+07:00",
   "finished_at": "2026-08-24T14:15:00+07:00",
@@ -44,7 +43,8 @@ Quy tắc quan trọng:
 - `mode` chỉ nhận `Thực hành` hoặc `Hướng dẫn`; `session_type` tương ứng là `practice` hoặc `guide`.
 - `status` chỉ nhận `completed`, `failed`, `abandoned`.
 - `is_passed` và `completed_first_try`, nếu có, phải là JSON boolean thật (`true`/`false`), không phải chuỗi.
-- `score` nằm trong 0–100. `started_at` không được sau `finished_at`.
+- `is_passed` là kết quả chính thức: `true` khi đúng toàn bộ tiêu chí, ngược lại là `false`.
+- Trường `score` chỉ còn được chấp nhận để tương thích client cũ, không được dùng để hiển thị hoặc tính tiến độ. `started_at` không được sau `finished_at`.
 - Nên gửi timestamp ISO 8601 kèm múi giờ, ví dụ `+07:00`.
 
 `technician_id`, `email` và `name` có thể gửi để đối chiếu, nhưng với phiên đăng nhập server sẽ dùng thông tin chuẩn của tài khoản.

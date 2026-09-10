@@ -1,36 +1,36 @@
 /**
- * devices/be6500c/lessons/bai5.js
+ * devices/ONT_be6500c/lessons/bai5.js
  */
 window.DEVICE_BE6500C_LESSONS = window.DEVICE_BE6500C_LESSONS || [];
 window.DEVICE_BE6500C_LESSONS.push({
   id: 'be6500c-bai5',
-  title: 'Cấu hình DHCP',
-  subtitle: 'Cấu hình DHCP',
+  title: 'Cấu hình mạng LAN',
+  subtitle: 'Cấu hình mạng LAN',
   instructions: [
   "<b>Yêu cầu:</b>",
-  "Cấu hình cấp phát DHCP cho mạng LAN:",
-  "- Start IP Address: <span class=\"val\">192.168.1.10</span>",
-  "- End IP Address: <span class=\"val\">192.168.1.100</span>"
+  "Thực hiện cấu hình IPv4 LAN theo các thông số dưới đây:",
+  "- IP Address (Gateway): <span class=\"val\">192.168.1.1</span>",
+  "- Subnet Mask: <span class=\"val\">255.255.255.0</span>"
 ],
   practiceUrl: '/sim_be6500c/advanced__lan.html',
-  clearFields: [],
+  clearFields: ['input[name="ipv4Settings.ipAddress"]', 'input[name="ipv4Settings.mask"]'],
   grading: {
     description: 'Kiểm tra bài 5',
     rules: [
   {
-    "id": "dhcp_start",
-    "name": "Start IP",
-    "selector": "input[name=\"ipv4Settings.dhcp.startAddress\"]",
-    "expected": "192.168.1.10",
+    "id": "lan_ip",
+    "name": "IP Address",
+    "selector": "input[name=\"ipv4Settings.ipAddress\"]",
+    "expected": "192.168.1.1",
     "type": "text_exact",
     "trim": true,
     "required": true
   },
   {
-    "id": "dhcp_end",
-    "name": "End IP",
-    "selector": "input[name=\"ipv4Settings.dhcp.endAddress\"]",
-    "expected": "192.168.1.100",
+    "id": "lan_mask",
+    "name": "Subnet Mask",
+    "selector": "input[name=\"ipv4Settings.mask\"]",
+    "expected": "255.255.255.0",
     "type": "text_exact",
     "trim": true,
     "required": true
@@ -49,13 +49,13 @@ window.DEVICE_BE6500C_LESSONS.push({
     "position": "right"
   },
   {
-    "selector": "input[name=\"ipv4Settings.dhcp.startAddress\"]",
-    "text": "Nhập Start IP",
+    "selector": "input[name=\"ipv4Settings.ipAddress\"]",
+    "text": "Nhập IP Address VD: 192.168.1.1",
     "position": "right"
   },
   {
-    "selector": "input[name=\"ipv4Settings.dhcp.endAddress\"]",
-    "text": "Nhập End IP",
+    "selector": "input[name=\"ipv4Settings.mask\"]",
+    "text": "Nhập Subnet Mask VD: 255.255.255.0",
     "position": "right"
   },
   {

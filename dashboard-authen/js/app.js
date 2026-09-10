@@ -48,7 +48,7 @@ const state = {
     realtimeSelectedKtvs: new Set(),
     realtimeSelectedModes: new Set(['Thực hành', 'Hướng dẫn']),
     realtimeSelectedDevices: new Set(),
-    realtimeSelectedStatuses: new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không chấm']),
+    realtimeSelectedStatuses: new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không đánh giá']),
     realtimeSearchKtv: '',
     realtimeSearchDevice: '',
     realtimeSearchLab: '',
@@ -103,7 +103,7 @@ const state = {
     detailSelectedModes: new Set(['Thực hành', 'Hướng dẫn']),
     detailSelectedDevices: new Set(),
     detailDevicesTouched: false,
-    detailSelectedStatuses: new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không chấm']),
+    detailSelectedStatuses: new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không đánh giá']),
     detailSearchDevice: '',
     detailSelectedLabs: new Set(),
     detailLabsTouched: false,
@@ -129,8 +129,25 @@ const state = {
     rosterStats: null,
     rosterPage: 1,
     rosterTotal: 0,
-    rosterSearch: '',
-    rosterStatusFilter: 'active',
+    rosterStatusFilter: ['active'],
+    rosterColumnFilters: {
+        employeeId: null,
+        name: null,
+        email: null,
+        jobTitle: null,
+        region: null,
+        branch: null,
+        className: null
+    },
+    rosterFilterFacets: {
+        employeeIds: [],
+        names: [],
+        emails: [],
+        jobTitles: [],
+        regions: [],
+        branches: [],
+        classes: []
+    },
     rosterHistoryItems: [],
     rosterPreviewData: null,
     rosterImportFile: null,
@@ -160,6 +177,11 @@ const state = {
     classMemberImportPreview: null,
     classMemberImportBusy: false,
     classFinalPreviewReady: false,
+    classSortKey: 'startDate',
+    classSortDirection: 'desc',
+    classCodeFilter: null,
+    classNameFilter: null,
+    classStatusFilter: null,
 };
 
 const els = {
@@ -336,7 +358,7 @@ function getStatusClass(status) {
     if (status === 'Đạt' || status === 'Hoàn thành') return 'status-done';
     if (status === 'Chưa đạt') return 'status-risk';
     if (status === 'Chưa có kết quả') return 'status-running';
-    if (status === 'Không chấm') return 'status-ungraded';
+    if (status === 'Không đánh giá') return 'status-ungraded';
     return 'status-notstarted';
 }
 
@@ -634,7 +656,7 @@ function renderDashboardDataNotice(currentMetrics) {
         messages.push(`${formatNumber.format(unassignedAssignments)} lượt KTV–lab chưa có khu vực nên đang được gom vào “Chưa xác định”.`);
     }
     if (currentMetrics && currentMetrics.ungradedCompleted > 0) {
-        messages.push(`${formatNumber.format(currentMetrics.ungradedCompleted)} lượt thực hành đã hoàn thành thao tác nhưng chưa có kết quả chấm; các lượt này chưa được tính là đạt chuẩn.`);
+        messages.push(`${formatNumber.format(currentMetrics.ungradedCompleted)} lượt thực hành đã hoàn thành thao tác nhưng chưa có kết quả đánh giá; các lượt này chưa được tính là đạt chuẩn.`);
     }
 
     notice.hidden = messages.length === 0;
@@ -1002,12 +1024,18 @@ function renderLearnerDetail(rows) {
         });
     }
 
-    const uniqueLabs = new Set(allLearnerRows.map(item => item.lab));
-    const uniqueDevices = new Set(allLearnerRows.map(item => item.device));
+    const normalizeAssignmentPart = value => String(value || '').trim().toLocaleLowerCase('vi');
+    const assignmentKey = (device, lab) => `${normalizeAssignmentPart(device)}\u001f${normalizeAssignmentPart(lab)}`;
+    const learnerAssignments = trainingAssignments.filter(item => item.learner === state.selectedLearner);
+    const assignedLabKeys = new Set(learnerAssignments.map(item => assignmentKey(item.device, item.lab)));
+    const assignedDevices = new Set(learnerAssignments.map(item => normalizeAssignmentPart(item.device)).filter(Boolean));
+    const assignedPracticeRows = allLearnerRows.filter(item =>
+        item.mode === 'Thực hành' && assignedLabKeys.has(assignmentKey(item.device, item.lab))
+    );
+    const practicedAssignedLabs = new Set(assignedPracticeRows.map(item => assignmentKey(item.device, item.lab)));
+    const practicedAssignedDevices = new Set(assignedPracticeRows.map(item => normalizeAssignmentPart(item.device)).filter(Boolean));
     const latest = getLatestSession(allLearnerRows);
 
-    const totalCatalogDevices = deviceCatalog.length;
-    const totalCatalogLabs = deviceCatalog.reduce((sum, d) => sum + (d.labs ? d.labs.length : 0), 0);
     const guideSessionsCount = allLearnerRows.filter(item => item.mode === 'Hướng dẫn').length;
     const practiceSessionsCount = allLearnerRows.filter(item => item.mode === 'Thực hành').length;
 
@@ -1020,8 +1048,16 @@ function renderLearnerDetail(rows) {
             <div>${guideSessionsCount} Hướng dẫn</div>
         `;
     }
-    if (els.detailUniqueLabs) els.detailUniqueLabs.textContent = `${uniqueLabs.size} / ${totalCatalogLabs}`;
-    if (els.detailUniqueDevices) els.detailUniqueDevices.textContent = `${uniqueDevices.size} / ${totalCatalogDevices}`;
+    if (els.detailUniqueLabs) {
+        els.detailUniqueLabs.textContent = state.assignmentsLoaded
+            ? `${practicedAssignedLabs.size} / ${assignedLabKeys.size}`
+            : '— / —';
+    }
+    if (els.detailUniqueDevices) {
+        els.detailUniqueDevices.textContent = state.assignmentsLoaded
+            ? `${practicedAssignedDevices.size} / ${assignedDevices.size}`
+            : '— / —';
+    }
     if (els.detailLastTime) els.detailLastTime.textContent = latest ? formatDateTime(latest.date, latest.time) : 'N/A';
     renderDeviceDonutChart(allLearnerRows);
     renderHourlyBarChart(allLearnerRows);
@@ -1415,6 +1451,9 @@ async function fetchAndBuildRegionCatalog() {
         });
         catalog.sort((a, b) => a.code.localeCompare(b.code, 'vi'));
         BASE_REGION_CATALOG = catalog;
+        catalog.filter(region => region.children?.length).forEach(region => {
+            state.detailReportExpandedRegions.add(region.code);
+        });
         REGION_CATALOG = BASE_REGION_CATALOG.map(region => ({
             ...region,
             children: region.children ? [...region.children] : undefined
@@ -1500,6 +1539,11 @@ function buildAuthoritativeRegionRows(reportRows = [], columns = []) {
         return values.some(value => candidates.includes(normalized(value)));
     };
     const result = [];
+    const emptyRow = region => ({
+        region,
+        cells: Object.fromEntries(columns.map(column => [column.labId, aggregateAuthoritativeMetrics([])])),
+        total: aggregateAuthoritativeMetrics([])
+    });
 
     REGION_CATALOG.forEach(region => {
         const children = region.children || [];
@@ -1508,9 +1552,10 @@ function buildAuthoritativeRegionRows(reportRows = [], columns = []) {
                 const group = normalized(row.region?.dashboard_group);
                 return group === normalized(region.code) || matchesRegion(row, children);
             });
-            if (!matched.length) return;
             matched.forEach(row => remaining.delete(row));
-            const aggregate = aggregateAuthoritativeRows(matched, columns);
+            const aggregate = matched.length
+                ? aggregateAuthoritativeRows(matched, columns)
+                : emptyRow({ code: region.code, name: region.code });
             result.push({
                 region: { code: region.code, name: region.code },
                 ...aggregate,
@@ -1520,10 +1565,11 @@ function buildAuthoritativeRegionRows(reportRows = [], columns = []) {
             if (state.detailReportExpandedRegions.has(region.code)) {
                 children.forEach(child => {
                     const childRows = matched.filter(row => matchesRegion(row, [child]));
-                    if (!childRows.length) return;
                     result.push({
-                        region: { ...(childRows[0].region || {}), name: child },
-                        ...aggregateAuthoritativeRows(childRows, columns),
+                        ...(childRows.length
+                            ? aggregateAuthoritativeRows(childRows, columns)
+                            : emptyRow({ code: child, name: child })),
+                        region: { ...(childRows[0]?.region || {}), code: childRows[0]?.region?.code || child, name: child },
                         isChild: true
                     });
                 });
@@ -1532,12 +1578,11 @@ function buildAuthoritativeRegionRows(reportRows = [], columns = []) {
         }
 
         const matched = reportRows.filter(row => matchesRegion(row, [region.code]));
-        if (!matched.length) return;
         matched.forEach(row => remaining.delete(row));
-        result.push({
+        result.push(matched.length ? {
             region: matched[0].region || { code: region.code, name: region.code },
             ...aggregateAuthoritativeRows(matched, columns)
-        });
+        } : emptyRow({ code: region.code, name: region.code }));
     });
 
     [...remaining]
@@ -1574,7 +1619,7 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
             ? null
             : Number(cell.completion_rate);
         if (!assigned || rate === null) {
-            return `<td class="report-metric-cell report-cell-zero ${extraClass}" title="Bài lab chưa được giao trong kỳ"><strong>—</strong><span>Chưa giao</span></td>`;
+            return `<td class="report-metric-cell report-cell-zero ${extraClass}" title="Không có dữ liệu phân công trong kỳ"><strong>—</strong><span aria-hidden="true">&nbsp;</span></td>`;
         }
         const cssClass = rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low');
         const attempted = Number(cell.attempted_count) || 0;
@@ -1589,6 +1634,7 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
         </tr>
         <tr class="report-lab-header-row">${columns.map(column => `<th class="report-lab-head report-device-tone-${column.groupIndex % 5} ${column.isFirst ? 'group-start' : ''} ${column.isLast ? 'group-end' : ''}" scope="col" title="${escapeHTML(`${column.device} • ${column.lab}`)}">${escapeHTML(column.lab)}</th>`).join('')}</tr>`;
     const visibleRows = buildAuthoritativeRegionRows(reportMatrix.rows || [], columns);
+    const visibleRegionCount = visibleRows.filter(row => !row.isParent).length;
     els.detailReportBody.innerHTML = visibleRows.map(row => {
         const region = row.region || {};
         const regionName = region.name || region.region_name || region.code || region.region_code || '';
@@ -1604,7 +1650,7 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
     const summaryValues = {
         detailReportPeriod: dashboardReport?.meta?.period?.label || getRangeLabel(),
         detailReportSessions: formatNumber.format(Number(grand.total?.attempt_count || grand.attempt_count) || 0),
-        detailReportRegions: formatNumber.format((reportMatrix.rows || []).length),
+        detailReportRegions: formatNumber.format(visibleRegionCount),
         detailReportLabs: formatNumber.format(columns.length),
         detailReportCompletion: grand.total?.completion_rate === null || grand.completion_rate === null
             ? '—'
@@ -1630,7 +1676,7 @@ function resetLearnerDetailFilters() {
     state.detailDevicesTouched = false;
     state.detailSelectedLabs = new Set();
     state.detailLabsTouched = false;
-    state.detailSelectedStatuses = new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không chấm']);
+    state.detailSelectedStatuses = new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không đánh giá']);
     state.detailSearchDevice = '';
     state.detailSearchLab = '';
     state.learnerDetailPage = 1;
@@ -2184,7 +2230,7 @@ function statusToVietnamese(status) {
 }
 
 function getSessionDisplayStatus(rawStatus, mode, isPassed) {
-    if (mode === 'Hướng dẫn' || mode === 'guide') return 'Không chấm';
+    if (mode === 'Hướng dẫn' || mode === 'guide') return 'Không đánh giá';
     if (isPassed === true) return 'Đạt';
     if (rawStatus === 'failed' || isPassed === false) return 'Chưa đạt';
     if (rawStatus === 'completed' || rawStatus === 'Hoàn thành') return 'Chưa có kết quả';
@@ -2334,7 +2380,6 @@ function mapApiSessions(apiSessions = []) {
             duration: item.duration_sec === null || item.duration_sec === undefined
                 ? null
                 : Number(item.duration_sec),
-            score: item.score === null || item.score === undefined ? null : Number(item.score),
             isPassed,
             firstTry: item.completed_first_try === null || item.completed_first_try === undefined
                 ? null
@@ -2494,10 +2539,10 @@ function buildDashboardSignature(data) {
 
 async function fetchDashboardData(versionHint = '') {
     const allParams = new URLSearchParams();
-    // Expanded assignment rows are required only by class-level views. Once
-    // loaded, refresh them together with the rest of the dashboard data.
+    // Assignment rows are required by class reports and KTV detail metrics.
+    // Once loaded, refresh them together with the rest of the dashboard data.
     const assignmentsRequested = state.assignmentsLoaded
-        || ['instructors', 'class_matrix', 'analytics'].includes(activeDashboardView);
+        || ['instructors', 'class_matrix', 'analytics', 'technicians'].includes(activeDashboardView);
     allParams.set('include_assignments', assignmentsRequested ? '1' : '0');
     const reportRequest = fetch(`${API_BASE_URL}/dashboard/report?${dashboardReportQuery()}`).then(async response => {
         if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
@@ -3194,7 +3239,7 @@ function initPopovers() {
     });
     document.getElementById('realtimeStatusClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
-        state.realtimeSelectedStatuses = new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không chấm']);
+        state.realtimeSelectedStatuses = new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không đánh giá']);
         document.querySelectorAll('#realtimeStatusOptions input[type="checkbox"]').forEach(chk => chk.checked = true);
         renderAll();
     });
@@ -3368,7 +3413,7 @@ function initPopovers() {
     });
     document.getElementById('detailStatusClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
-        state.detailSelectedStatuses = new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không chấm']);
+        state.detailSelectedStatuses = new Set(['Đạt', 'Chưa đạt', 'Chưa có kết quả', 'Không đánh giá']);
         document.querySelectorAll('#detailStatusOptions input[type="checkbox"]').forEach(chk => chk.checked = true);
         renderAll();
     });
@@ -3642,11 +3687,33 @@ function saveInstructorClasses() {
 
 const searchableFilterSelectIds = [
     'instructorClassSelect',
-    'instructorDeviceSelect'
+    'instructorDeviceSelect',
+    'rosterEmployeeIdFilter',
+    'rosterNameFilter',
+    'rosterEmailFilter',
+    'rosterJobTitleFilter',
+    'rosterRegionFilter',
+    'rosterBranchFilter',
+    'rosterClassFilter',
+    'rosterStatusFilter',
+    'classCodeFilter',
+    'classNameFilter',
+    'classStatusFilter'
 ];
 
 const multiSelectFilterIds = new Set([
-    'instructorDeviceSelect'
+    'instructorDeviceSelect',
+    'rosterEmployeeIdFilter',
+    'rosterNameFilter',
+    'rosterEmailFilter',
+    'rosterJobTitleFilter',
+    'rosterRegionFilter',
+    'rosterBranchFilter',
+    'rosterClassFilter',
+    'rosterStatusFilter',
+    'classCodeFilter',
+    'classNameFilter',
+    'classStatusFilter'
 ]);
 
 function enhanceDashboardTables(root = document) {
@@ -3684,6 +3751,8 @@ function enhanceSearchableFilterSelect(select) {
 
     const wrapper = document.createElement('div');
     wrapper.className = `searchable-select${isMultiple ? ' searchable-select-multiple' : ''}`;
+    const isHeaderFilter = Boolean(select.closest('.admin-header-filter'));
+    if (isHeaderFilter) wrapper.classList.add('admin-header-searchable-select');
     wrapper.innerHTML = `
         <button type="button" class="searchable-select-trigger" aria-haspopup="listbox" aria-expanded="false">
             <span class="searchable-select-value"></span>
@@ -3720,7 +3789,26 @@ function enhanceSearchableFilterSelect(select) {
     const emptyNode = wrapper.querySelector('.searchable-select-empty');
     const label = select.getAttribute('aria-label') || 'Chọn giá trị';
     let draftValues = new Set();
+    wrapper._searchablePopover = popover;
     trigger.setAttribute('aria-label', label);
+
+    if (isHeaderFilter) {
+        popover.classList.add('admin-header-searchable-popover');
+        document.body.appendChild(popover);
+    }
+
+    const positionPopover = () => {
+        if (!isHeaderFilter || popover.hidden) return;
+        const rect = trigger.getBoundingClientRect();
+        const width = Math.min(330, window.innerWidth - 24);
+        popover.style.width = `${width}px`;
+        const measuredHeight = popover.getBoundingClientRect().height || 420;
+        const left = Math.max(12, Math.min(window.innerWidth - width - 12, rect.left));
+        const openAbove = window.innerHeight - rect.bottom < measuredHeight + 12 && rect.top > measuredHeight + 12;
+        const top = openAbove ? rect.top - measuredHeight - 7 : rect.bottom + 7;
+        popover.style.left = `${left}px`;
+        popover.style.top = `${Math.max(12, Math.min(window.innerHeight - measuredHeight - 12, top))}px`;
+    };
 
     const close = ({ restoreFocus = false } = {}) => {
         wrapper.classList.remove('open');
@@ -3786,7 +3874,7 @@ function enhanceSearchableFilterSelect(select) {
             } else if (appliedValues.length === 1) {
                 valueNode.textContent = availableOptions.find(option => option.value === appliedValues[0])?.textContent || label;
             } else {
-                valueNode.textContent = `${appliedValues.length} thiết bị`;
+                valueNode.textContent = `${appliedValues.length} giá trị`;
             }
             renderMultipleOptions();
             search.dispatchEvent(new Event('input'));
@@ -3851,7 +3939,7 @@ function enhanceSearchableFilterSelect(select) {
             if (openSelect !== wrapper) {
                 openSelect.classList.remove('open');
                 openSelect.querySelector('.searchable-select-trigger')?.setAttribute('aria-expanded', 'false');
-                const openPopover = openSelect.querySelector('.searchable-select-popover');
+                const openPopover = openSelect._searchablePopover || openSelect.querySelector('.searchable-select-popover');
                 if (openPopover) openPopover.hidden = true;
             }
         });
@@ -3863,6 +3951,7 @@ function enhanceSearchableFilterSelect(select) {
         wrapper.classList.add('open');
         trigger.setAttribute('aria-expanded', 'true');
         popover.hidden = false;
+        positionPopover();
         search.value = '';
         search.dispatchEvent(new Event('input'));
         window.requestAnimationFrame(() => search.focus());
@@ -3889,6 +3978,10 @@ function enhanceSearchableFilterSelect(select) {
     select.addEventListener('change', sync);
     select.addEventListener('searchable-sync', sync);
     new MutationObserver(sync).observe(select, { childList: true, subtree: true, attributes: true });
+    if (isHeaderFilter) {
+        window.addEventListener('resize', positionPopover);
+        window.addEventListener('scroll', positionPopover, true);
+    }
     sync();
 }
 
@@ -3907,7 +4000,7 @@ function initUnifiedDashboardControls() {
         document.querySelectorAll('.searchable-select.open').forEach(wrapper => {
             wrapper.classList.remove('open');
             wrapper.querySelector('.searchable-select-trigger')?.setAttribute('aria-expanded', 'false');
-            const popover = wrapper.querySelector('.searchable-select-popover');
+            const popover = wrapper._searchablePopover || wrapper.querySelector('.searchable-select-popover');
             if (popover) popover.hidden = true;
         });
     });
@@ -4417,7 +4510,7 @@ function getClassMatrixData() {
         const cells = columns.map(col => {
             const labSessions = sessionsByCell.get(`${learnerKey}\u001f${col.device}\u001f${col.lab}`) || [];
             const attempts = labSessions.length;
-            const passCount = labSessions.filter(session => Number(session.score) === 100).length;
+            const passCount = labSessions.filter(session => session.isPassed === true).length;
             const assignment = selectedClass
                 ? assignmentByCell.get(`${selectedClass.code}\u001f${learnerKey}\u001f${col.device}\u001f${col.lab}`)
                 : null;
@@ -5181,7 +5274,7 @@ function renderClassMatrixReport() {
                 ${row.cells.map(cell => {
                     const passRate = cell.attempts ? Math.round((cell.passCount / cell.attempts) * 100) : null;
                     const cellClass = passRate === null ? 'report-cell-zero' : (passRate >= 80 ? 'report-cell-high' : (passRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: ${cell.passCount}/${cell.attempts} phiên đạt 100 điểm`;
+                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: ${cell.passCount}/${cell.attempts} phiên Đạt`;
                     return `<td class="report-metric-cell ${cellClass}" title="${escapeHTML(tooltip)}"><strong>${cell.passCount}/${cell.attempts}</strong></td>`;
                 }).join('')}
                 <td class="ktv-total-cell ${rateClass}">
@@ -5783,8 +5876,8 @@ function buildReportExportPayload(type, descriptor) {
         return {
             ...base,
             filters: {
-                status: state.rosterStatusFilter || 'active',
-                search: state.rosterSearch.trim()
+                status: state.rosterStatusFilter,
+                ...state.rosterColumnFilters
             }
         };
     }
@@ -6050,7 +6143,7 @@ function buildClassMatrixReportDescriptor() {
             ['Thiết bị', deviceLabel],
             ['Tiến độ tổng', `${data.totalCompletedAll}/${data.totalAssignedAll} (${data.overallRate}%)`],
             ['Tổng lượt thực hành', data.totalSessions],
-            ['Quy ước ô dữ liệu', 'Số phiên đạt 100 điểm / Tổng số phiên thực hiện bài lab']
+            ['Quy ước ô dữ liệu', 'Số phiên Đạt / Tổng số phiên thực hiện bài lab']
         ],
         headers: [
             'STT', 'Mã NV', 'Họ và tên', 'Email', 'Khu vực / Chi nhánh', 'Lớp học',
@@ -6080,9 +6173,25 @@ function buildClassMatrixReportDescriptor() {
 
 function getRosterExportScope() {
     const statusLabels = { active: 'Đang công tác', terminated: 'Đã nghỉ', all: 'Tất cả trạng thái' };
-    const status = statusLabels[state.rosterStatusFilter] || 'Đang công tác';
-    const keyword = state.rosterSearch.trim();
-    return keyword ? `${status} · Tìm kiếm: “${keyword}”` : status;
+    const selectedStatuses = state.rosterStatusFilter;
+    const status = !Array.isArray(selectedStatuses)
+        ? statusLabels.all
+        : (selectedStatuses.length
+            ? selectedStatuses.map(value => statusLabels[value] || value).join(', ')
+            : 'Không chọn trạng thái nào');
+    const filterLabels = {
+        employeeId: 'Mã NV',
+        name: 'Họ tên',
+        email: 'Email',
+        jobTitle: 'Vị trí',
+        region: 'Khu vực',
+        branch: 'Chi nhánh',
+        className: 'Lớp'
+    };
+    const activeFilters = Object.entries(state.rosterColumnFilters)
+        .filter(([, value]) => Array.isArray(value))
+        .map(([key, value]) => `${filterLabels[key]}: ${value.length ? value.join(', ') : 'Không chọn giá trị nào'}`);
+    return [status, ...activeFilters].join(' · ');
 }
 
 function getRosterReportPreview() {
@@ -6115,7 +6224,7 @@ async function ensureTrainingAssignmentsLoaded({ force = false } = {}) {
     trainingAssignments = normalizeTrainingAssignments(data.assignments || []);
     state.assignmentsLoaded = true;
     initializeInstructorClasses();
-    if (['instructors', 'class_matrix', 'analytics'].includes(activeDashboardView)) renderAll();
+    if (['instructors', 'class_matrix', 'analytics', 'technicians'].includes(activeDashboardView)) renderAll();
     return trainingAssignments;
 }
 
@@ -6827,14 +6936,14 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
         setDataSourceLabel(state.dashboardDataLoaded ? 'Dữ liệu vận hành đã đồng bộ' : 'Đang đồng bộ dữ liệu vận hành');
         if (!state.dashboardDataLoaded) {
             loadDashboardFromApi().then(() => {
-                if (['instructors', 'class_matrix', 'analytics'].includes(activeDashboardView) && !state.assignmentsLoaded) {
+                if (['instructors', 'class_matrix', 'analytics', 'technicians'].includes(activeDashboardView) && !state.assignmentsLoaded) {
                     ensureTrainingAssignmentsLoaded().catch(error => {
                         console.warn('Không đồng bộ được tiến độ lớp.', error);
                         showToast('Chưa thể đồng bộ dữ liệu tiến độ lớp.', 'error');
                     });
                 }
             });
-        } else if (['instructors', 'class_matrix', 'analytics'].includes(activeDashboardView) && !state.assignmentsLoaded) {
+        } else if (['instructors', 'class_matrix', 'analytics', 'technicians'].includes(activeDashboardView) && !state.assignmentsLoaded) {
             ensureTrainingAssignmentsLoaded().catch(error => {
                 console.warn('Không đồng bộ được tiến độ lớp.', error);
                 showToast('Chưa thể đồng bộ dữ liệu tiến độ lớp.', 'error');
@@ -6958,6 +7067,18 @@ function initDashboardExperience() {
    Roster (Quản lý KTV) — Admin
    ============================================================ */
 
+function updateManagementSortIndicators(selector, activeKey, direction, dataKey) {
+    document.querySelectorAll(selector).forEach(button => {
+        const isSorted = button.dataset[dataKey] === activeKey;
+        const mark = button.querySelector('.sort-mark');
+        button.classList.toggle('is-sorted', isSorted);
+        button.closest('th')?.setAttribute('aria-sort', isSorted
+            ? (direction === 'asc' ? 'ascending' : 'descending')
+            : 'none');
+        if (mark) mark.textContent = isSorted ? (direction === 'asc' ? '↑' : '↓') : '';
+    });
+}
+
 function activateRosterTab(tabName, { focus = false } = {}) {
     state.rosterTab = tabName;
     const tabs = [...document.querySelectorAll('[data-roster-tab]')];
@@ -6980,6 +7101,91 @@ function activateRosterTab(tabName, { focus = false } = {}) {
     if (tabName === 'history' && !state.rosterHistoryLoaded) loadRosterHistory();
 }
 
+const rosterColumnFilterConfig = [
+    { id: 'rosterEmployeeIdFilter', key: 'employeeId', facet: 'employeeIds', allLabel: 'Tất cả mã NV' },
+    { id: 'rosterNameFilter', key: 'name', facet: 'names', allLabel: 'Tất cả họ tên' },
+    { id: 'rosterEmailFilter', key: 'email', facet: 'emails', allLabel: 'Tất cả email' },
+    { id: 'rosterJobTitleFilter', key: 'jobTitle', facet: 'jobTitles', allLabel: 'Tất cả vị trí' },
+    { id: 'rosterRegionFilter', key: 'region', facet: 'regions', allLabel: 'Tất cả khu vực' },
+    { id: 'rosterBranchFilter', key: 'branch', facet: 'branches', allLabel: 'Tất cả chi nhánh' },
+    { id: 'rosterClassFilter', key: 'className', facet: 'classes', allLabel: 'Tất cả lớp' }
+];
+
+function getAdminFilterSelection(select) {
+    if (!select) return null;
+    const availableValues = [...select.options].filter(option => option.value && !option.disabled).map(option => option.value);
+    const selectedValues = Array.isArray(select._selectedValues)
+        ? select._selectedValues.filter(value => availableValues.includes(value))
+        : (select.value && select.value !== 'all' ? [select.value] : availableValues);
+    return selectedValues.length === availableValues.length ? null : selectedValues;
+}
+
+function updateAdminHeaderFilterState(select) {
+    const wrapper = select?.closest('.admin-header-filter');
+    if (!wrapper || !select) return;
+    const selectedValues = getAdminFilterSelection(select);
+    const isActive = Array.isArray(selectedValues);
+    wrapper.classList.toggle('has-value', isActive);
+    wrapper.title = isActive
+        ? `${select.getAttribute('aria-label')}: ${selectedValues.length ? selectedValues.join(', ') : 'Không chọn giá trị nào'}`
+        : (select.getAttribute('aria-label') || 'Lọc dữ liệu');
+}
+
+function populateAdminFilterSelect(id, values, allLabel, selectedValue = null) {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const normalizedValues = [...new Set((values || []).map(value => String(value || '').trim()).filter(Boolean))]
+        .sort((left, right) => left.localeCompare(right, 'vi', { numeric: true, sensitivity: 'base' }));
+    select.replaceChildren(new Option(allLabel, ''));
+    normalizedValues.forEach(value => select.add(new Option(value, value)));
+    const requestedValues = Array.isArray(selectedValue)
+        ? selectedValue
+        : (selectedValue && selectedValue !== 'all' ? [selectedValue] : normalizedValues);
+    select._selectedValues = requestedValues.filter(value => normalizedValues.includes(value));
+    select.value = select._selectedValues[0] || '';
+    select.dispatchEvent(new Event('searchable-sync'));
+    updateAdminHeaderFilterState(select);
+}
+
+function syncStaticAdminFilterSelect(id, selectedValue = null) {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const availableValues = [...select.options].filter(option => option.value && !option.disabled).map(option => option.value);
+    const requestedValues = Array.isArray(selectedValue) ? selectedValue : availableValues;
+    select._selectedValues = requestedValues.filter(value => availableValues.includes(value));
+    select.value = select._selectedValues[0] || '';
+    select.dispatchEvent(new Event('searchable-sync'));
+    updateAdminHeaderFilterState(select);
+}
+
+function renderRosterFilterFacets() {
+    rosterColumnFilterConfig.forEach(config => {
+        populateAdminFilterSelect(
+            config.id,
+            state.rosterFilterFacets[config.facet],
+            config.allLabel,
+            state.rosterColumnFilters[config.key]
+        );
+    });
+    syncStaticAdminFilterSelect('rosterStatusFilter', state.rosterStatusFilter);
+}
+
+const EMPTY_FILTER_SENTINEL = '__FTC_NONE_SELECTED__';
+
+function appendFilterSelection(params, key, selection) {
+    if (!Array.isArray(selection)) return;
+    const values = selection.length ? selection : [EMPTY_FILTER_SENTINEL];
+    values.forEach(value => params.append(`${key}[]`, value));
+}
+
+function appendRosterFilters(params) {
+    appendFilterSelection(params, 'status', state.rosterStatusFilter);
+    Object.entries(state.rosterColumnFilters).forEach(([key, value]) => {
+        appendFilterSelection(params, key, value);
+    });
+    return params;
+}
+
 function initRoster() {
     if (state.rosterInitialized) return;
     state.rosterInitialized = true;
@@ -7000,23 +7206,20 @@ function initRoster() {
         });
     });
 
-    const searchInput = document.getElementById('rosterSearchInput');
-    if (searchInput) {
-        let debounce;
-        searchInput.addEventListener('input', () => {
-            clearTimeout(debounce);
-            debounce = setTimeout(() => {
-                state.rosterSearch = searchInput.value;
-                state.rosterPage = 1;
-                loadRosterList();
-            }, 300);
-        });
-    }
-
     document.getElementById('rosterStatusFilter')?.addEventListener('change', e => {
-        state.rosterStatusFilter = e.target.value;
+        state.rosterStatusFilter = getAdminFilterSelection(e.target);
+        updateAdminHeaderFilterState(e.target);
         state.rosterPage = 1;
         loadRosterList();
+    });
+
+    rosterColumnFilterConfig.forEach(config => {
+        document.getElementById(config.id)?.addEventListener('change', event => {
+            state.rosterColumnFilters[config.key] = getAdminFilterSelection(event.target);
+            updateAdminHeaderFilterState(event.target);
+            state.rosterPage = 1;
+            loadRosterList();
+        });
     });
 
     const uploadZone = document.getElementById('rosterUploadZone');
@@ -7071,10 +7274,7 @@ function initRoster() {
 }
 
 function rosterFilterQuerystring() {
-    const params = new URLSearchParams();
-    params.set('status', state.rosterStatusFilter);
-    if (state.rosterSearch) params.set('search', state.rosterSearch);
-    return params.toString();
+    return appendRosterFilters(new URLSearchParams()).toString();
 }
 
 async function loadRosterList() {
@@ -7087,10 +7287,8 @@ async function loadRosterList() {
     }
     if (activeDashboardView === 'roster') setDashboardSyncState('syncing', 'Đang tải hồ sơ KTV');
     try {
-        const params = new URLSearchParams();
-        params.set('status', state.rosterStatusFilter);
+        const params = appendRosterFilters(new URLSearchParams());
         params.set('page', String(state.rosterPage));
-        if (state.rosterSearch) params.set('search', state.rosterSearch);
         const resp = await fetch(`${API_BASE_URL}/roster/list?${params}`);
         if (!resp.ok) {
             let detail = '';
@@ -7109,6 +7307,7 @@ async function loadRosterList() {
         state.rosterItems = data.items || [];
         state.rosterStats = data.stats || null;
         state.rosterTotal = data.total || 0;
+        state.rosterFilterFacets = data.facets || state.rosterFilterFacets;
         state.rosterLoaded = true;
         renderRosterList();
         if (activeDashboardView === 'roster') {
@@ -7165,6 +7364,7 @@ function updateRosterEditBranch() {
 }
 
 function renderRosterList() {
+    renderRosterFilterFacets();
     renderRosterTableBody();
     renderRosterPagination();
 }
@@ -7173,7 +7373,7 @@ function renderRosterTableBody() {
     const tbody = document.getElementById('rosterTableBody');
     if (!tbody) return;
     if (!state.rosterItems.length) {
-        tbody.innerHTML = '<tr><td colspan="9"><div class="table-state"><strong>Không tìm thấy hồ sơ KTV</strong><span>Hãy thử thay đổi từ khóa hoặc bộ lọc trạng thái.</span></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9"><div class="table-state"><strong>Không tìm thấy hồ sơ KTV</strong><span>Hãy thử thay đổi các bộ lọc ở tiêu đề cột.</span></div></td></tr>';
         return;
     }
     tbody.innerHTML = state.rosterItems.map(item => {
@@ -7194,7 +7394,7 @@ function renderRosterTableBody() {
             <td>${escapeHTML(item.job_title || item.jobTitle || '')}</td>
             <td>${region}</td>
             <td>${branch}</td>
-            <td>${escapeHTML(item.class_code || item.classCode || '')}</td>
+            <td>${escapeHTML(item.class_name || item.className || 'Chưa xếp lớp')}</td>
             <td>${badge}</td>
             <td>${editButton}</td>
         </tr>`;
@@ -7641,6 +7841,31 @@ function classStatusLabel(status) {
     return ({ planned: 'Sắp hiệu lực', active: 'Đang hiệu lực', completed: 'Đã kết thúc', archived: 'Đã lưu trữ' })[status] || status;
 }
 
+function sortedTrainingClasses(items) {
+    const valueFor = (item, key) => ({
+        startDate: item.start_date || '',
+        members: Number(item.member_count || 0),
+        devices: Number(item.device_count || 0)
+    })[key];
+    const direction = state.classSortDirection === 'asc' ? 1 : -1;
+    const matchesFilter = (selection, value) => !Array.isArray(selection) || selection.includes(String(value || ''));
+    const filteredItems = items.filter(item => (
+        matchesFilter(state.classCodeFilter, item.class_code)
+        && matchesFilter(state.classNameFilter, item.class_name)
+        && matchesFilter(state.classStatusFilter, item.status)
+    ));
+    return [...filteredItems].sort((left, right) => {
+        const leftValue = valueFor(left, state.classSortKey);
+        const rightValue = valueFor(right, state.classSortKey);
+        const compared = typeof leftValue === 'number' && typeof rightValue === 'number'
+            ? leftValue - rightValue
+            : String(leftValue).localeCompare(String(rightValue), 'vi', { numeric: true, sensitivity: 'base' });
+        return compared === 0
+            ? String(left.class_code || '').localeCompare(String(right.class_code || ''), 'vi', { numeric: true })
+            : compared * direction;
+    });
+}
+
 async function loadTrainingClasses() {
     const body = document.getElementById('classTableBody');
     if (body) body.innerHTML = '<tr><td colspan="7">Đang tải danh sách lớp...</td></tr>';
@@ -7663,7 +7888,22 @@ function renderTrainingClasses() {
     const body = document.getElementById('classTableBody');
     const empty = document.getElementById('classListEmpty');
     if (!body) return;
-    const items = state.classItems || [];
+    const allItems = state.classItems || [];
+    populateAdminFilterSelect(
+        'classCodeFilter',
+        allItems.map(item => item.class_code),
+        'Tất cả mã lớp',
+        state.classCodeFilter
+    );
+    populateAdminFilterSelect(
+        'classNameFilter',
+        allItems.map(item => item.class_name),
+        'Tất cả tên lớp',
+        state.classNameFilter
+    );
+    const items = sortedTrainingClasses(allItems);
+    updateManagementSortIndicators('[data-class-sort]', state.classSortKey, state.classSortDirection, 'classSort');
+    syncStaticAdminFilterSelect('classStatusFilter', state.classStatusFilter);
     body.innerHTML = items.map(item => `
         <tr>
             <td><strong>${escapeHTML(item.class_code || '')}</strong></td>
@@ -7675,7 +7915,14 @@ function renderTrainingClasses() {
             <td><button type="button" class="button secondary class-edit-btn" data-edit-class-id="${escapeHTML(item.class_id || '')}" aria-label="Chỉnh sửa lớp ${escapeHTML(item.class_code || '')}">Sửa</button></td>
         </tr>
     `).join('');
-    if (empty) empty.hidden = items.length > 0;
+    if (empty) {
+        empty.textContent = !Array.isArray(state.classStatusFilter)
+            && !Array.isArray(state.classCodeFilter)
+            && !Array.isArray(state.classNameFilter)
+            ? 'Chưa có lớp học nào.'
+            : 'Không có lớp học phù hợp với bộ lọc đã chọn.';
+        empty.hidden = items.length > 0;
+    }
 }
 
 function resetTrainingClassForm() {
@@ -8108,6 +8355,34 @@ function initTrainingClasses() {
         if (button.dataset.classTab === 'create' && state.classTab !== 'create') resetTrainingClassForm();
         activateClassTab(button.dataset.classTab);
     }));
+
+    document.querySelectorAll('[data-class-sort]').forEach(button => {
+        button.addEventListener('click', () => {
+            const key = button.dataset.classSort;
+            state.classSortDirection = state.classSortKey === key && state.classSortDirection === 'asc'
+                ? 'desc'
+                : 'asc';
+            state.classSortKey = key;
+            renderTrainingClasses();
+        });
+    });
+    updateManagementSortIndicators('[data-class-sort]', state.classSortKey, state.classSortDirection, 'classSort');
+
+    document.getElementById('classStatusFilter')?.addEventListener('change', event => {
+        state.classStatusFilter = getAdminFilterSelection(event.target);
+        updateAdminHeaderFilterState(event.target);
+        renderTrainingClasses();
+    });
+    [
+        ['classCodeFilter', 'classCodeFilter'],
+        ['classNameFilter', 'classNameFilter']
+    ].forEach(([id, stateKey]) => {
+        document.getElementById(id)?.addEventListener('change', event => {
+            state[stateKey] = getAdminFilterSelection(event.target);
+            updateAdminHeaderFilterState(event.target);
+            renderTrainingClasses();
+        });
+    });
 
     document.getElementById('classTableBody')?.addEventListener('click', event => {
         const button = event.target.closest('[data-edit-class-id]');

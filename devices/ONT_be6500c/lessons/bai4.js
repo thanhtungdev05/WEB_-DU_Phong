@@ -1,5 +1,5 @@
 /**
- * devices/ONT_be6500c/lessons/bai4.js
+ * devices/be6500c/lessons/bai4.js
  */
 window.DEVICE_ONT_BE6500C_LESSONS = window.DEVICE_ONT_BE6500C_LESSONS || [];
 window.DEVICE_ONT_BE6500C_LESSONS.push({
@@ -13,7 +13,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   "- Secondary DNS: <span class=\"val\">8.8.4.4</span>"
 ],
   practiceUrl: '/sim_ONT_be6500c/advanced__wan.html',
-  clearFields: [],
+  clearFields: ['input[name="ipv4Settings.dns.dnsServers.primary"]', 'input[name="ipv4Settings.dns.dnsServers.secondary"]'],
   grading: {
     description: 'Kiểm tra bài 4',
     rules: [
@@ -38,30 +38,30 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
 ]
   },
   guidePopups: [
-  {
-    "selector": ".MuiTypography-subtitle2:contains(\"Advanced\")",
-    "text": "Chọn Advanced",
-    "position": "right"
-  },
-  {
-    "selector": ".MuiTypography-subtitle2:contains(\"WAN\")",
-    "text": "Chọn WAN",
-    "position": "right"
-  },
-  {
-    "selector": "input[name=\"ipv4Settings.dns.dnsServers.primary\"]",
-    "text": "Nhập Primary DNS",
-    "position": "right"
-  },
-  {
-    "selector": "input[name=\"ipv4Settings.dns.dnsServers.secondary\"]",
-    "text": "Nhập Secondary DNS",
-    "position": "right"
-  },
-  {
-    "selector": "button:contains(\"Save\")",
-    "text": "Chọn Save",
-    "position": "right"
-  }
-]
+    {
+      "selector": ".MuiTypography-subtitle2:contains(\"Advanced\"), svg[data-testid=\"TuneTwoToneIcon\"], svg[data-testid=\"TuneOutlinedIcon\"]",
+      "text": "Bước 1: Chọn Advanced",
+      "position": "right"
+    },
+    {
+      "selector": ".MuiTypography-subtitle2:contains(\"WAN\")",
+      "text": "Bước 2: Chọn WAN",
+      "position": "right"
+    },
+    {
+      "selector": "input[name=\"ipv4Settings.dns.dnsServers.primary\"]",
+      "text": "Bước 3: Nhập Primary DNS là 8.8.8.8",
+      "position": "right"
+    },
+    {
+      "selector": "input[name=\"ipv4Settings.dns.dnsServers.secondary\"]",
+      "text": "Bước 4: Nhập Secondary DNS là 8.8.4.4",
+      "position": "right"
+    },
+    {
+      "selector": "body:has(input[name=\"ipv4Settings.dns.dnsServers.primary\"]) button.alternative-layout--submit, button:contains(\"Save\")",
+      "text": "Bước 5: Chọn Save để lưu cấu hình (Nút Save chiếu vào Nút nộp bài hoặc nút Xem lỗi sai)",
+      "position": "right"
+    }
+  ]
 });

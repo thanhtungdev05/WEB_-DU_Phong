@@ -9286,11 +9286,119 @@ select:not(.searchable-select-source):focus-visible {
 .roster-table thead th {
     text-align: left;
     padding: 10px 12px;
-    font-weight: 600;
-    color: var(--muted, #6b7280);
-    background: #f8f9fb;
-    border-bottom: 1px solid var(--border, #e2e5ea);
+    font-weight: 700;
+    color: #ffffff;
+    background: var(--lector-navy, #263348);
+    border-bottom: 1px solid #344156;
     white-space: nowrap;
+}
+
+.roster-table thead .admin-table-sort {
+    width: auto;
+    justify-content: flex-start;
+    gap: 7px;
+    color: inherit;
+}
+
+.roster-table thead .admin-table-sort .sort-mark {
+    min-width: 10px;
+    color: #9eb9ff;
+}
+
+.roster-table thead .admin-table-sort:not(.is-sorted) .sort-mark::after {
+    content: '↕';
+    color: #8ca0bd;
+}
+
+.roster-table thead .admin-table-sort:focus-visible {
+    outline: 2px solid #8eb0ff;
+    outline-offset: 3px;
+}
+
+.roster-table thead .admin-filter-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: inherit;
+}
+
+.roster-table thead .admin-header-filter {
+    position: relative;
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: #9fb3d4;
+}
+
+.roster-table thead .admin-header-filter::after {
+    width: 13px;
+    height: 13px;
+    background: currentColor;
+    clip-path: polygon(6% 8%, 94% 8%, 62% 47%, 62% 82%, 38% 96%, 38% 47%);
+    content: '';
+    pointer-events: none;
+}
+
+.roster-table thead .admin-header-filter:hover,
+.roster-table thead .admin-header-filter:focus-within,
+.roster-table thead .admin-header-filter.has-value {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+.roster-table thead .admin-header-filter:focus-within {
+    outline: 2px solid #8eb0ff;
+    outline-offset: 2px;
+}
+
+.roster-table thead .admin-header-filter select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    margin: 0;
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+    box-shadow: none;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.roster-table thead .admin-header-filter .admin-header-searchable-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    min-width: 0;
+}
+
+.roster-table thead .admin-header-filter .searchable-select-trigger {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+}
+
+.roster-table thead .admin-header-filter .searchable-select-value,
+.roster-table thead .admin-header-filter .searchable-select-chevron {
+    display: none;
+}
+
+.admin-header-searchable-popover {
+    position: fixed;
+    z-index: 10020;
+    max-height: min(590px, calc(100vh - 24px));
+    color: #27364f;
+    text-align: left;
 }
 
 .roster-table tbody td {

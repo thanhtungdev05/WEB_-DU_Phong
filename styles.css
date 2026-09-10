@@ -916,35 +916,6 @@ html, body {
   color: #94a3b8;
 }
 
-.gm-score-badge {
-  display: flex;
-  align-items: baseline;
-  padding: 8px 16px;
-  border-radius: 12px;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #10b981;
-}
-
-.gm-score-badge.failed {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #ef4444;
-}
-
-.gm-score-num {
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.gm-score-denom {
-  font-size: 14px;
-  font-weight: 600;
-  opacity: 0.8;
-  margin-left: 2px;
-}
-
 .gm-body {
   padding: 20px 24px;
   display: flex;

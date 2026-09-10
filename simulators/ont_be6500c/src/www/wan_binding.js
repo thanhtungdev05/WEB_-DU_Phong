@@ -294,7 +294,7 @@
       if (nhom) {
         nhom.closest('.MuiFormControl-root').style.display = (c[1] !== 'static') ? '' : 'none';
       }
-      var man = docRadio('dns' + c[0]) === 'manual';
+      var man = docRadio('dns' + c[0]) === 'manual' || c[1] === 'static';
       ['primary', 'secondary'].forEach(function (k) {
         var el = o('ipv' + c[0] + 'Settings.dns.dnsServers.' + k);
         if (el) el.closest('.MuiFormControl-root').style.display = man ? '' : 'none';
@@ -687,8 +687,21 @@
           var k = khoaCuaInput(t);
           if (k) TT_RADIO[k] = t.value;
         }
+
+        // Tự cập nhật Gateway = 3 octet đầu của IP + .254
+        if (t && t.tagName === 'INPUT' && (t.name === 'ipv4Settings.ipAddress' || t.name === 'ipv4Settings.mask')) {
+          var ipVal = giaTri('ipv4Settings.ipAddress');
+          var parts = (ipVal || '').split('.');
+          if (parts.length === 4 && parts[0] && parts[1] && parts[2]) {
+            datGiaTri('ipv4Settings.gateway', parts[0] + '.' + parts[1] + '.' + parts[2] + '.254');
+          }
+        }
+
         hienThanhSave();
-        setTimeout(function () { rangBuocLienDong('su-kien'); }, 0);
+        setTimeout(function () {
+          if (typeof apDungAnHien === 'function') apDungAnHien();
+          if (typeof rangBuocLienDong === 'function') rangBuocLienDong('su-kien');
+        }, 0);
       });
     });
   }

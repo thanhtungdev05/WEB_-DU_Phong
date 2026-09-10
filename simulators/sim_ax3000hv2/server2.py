@@ -207,6 +207,15 @@ class H(BaseHTTPRequestHandler):
                     html = re.sub(r'src=["\']/cgi-bin/navigation-status\.asp["\']', f'src="{final_nav}"', html)
                     html = re.sub(r'src=["\']/cgi-bin/status_deviceinfo\.asp["\']', f'src="{clean_page}"', html)
 
+                # Do not rely on Referer/cookie propagation for nested frames.
+                # Mobile privacy modes can omit the Referer during the initial
+                # frame cascade, causing /cgi-bin/* to miss simulator dispatch.
+                html = re.sub(
+                    r'(?i)(\bsrc=["\'])/cgi-bin/',
+                    r'\1/sim_ax3000hv2/cgi-bin/',
+                    html,
+                )
+
                 html = apply_sim_state_to_html(html, show_success)
                 return self._send(html.encode("utf-8"), "text/html; charset=utf-8")
 
