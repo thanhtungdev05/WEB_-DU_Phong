@@ -1,5 +1,5 @@
-﻿/**
- * devices/ac1000f/tooltips/bai6.js — Tooltip Hướng dẫn cho Bài 6: Cấu hình Remote Web
+/**
+ * devices/ac1000f/tooltips/bai6.js — Tooltip Hướng dẫn cho Bài 6: Cấu hình Port Forwarding (Virtual Server)
  */
 
 if (!window.TOOLTIPS_AC1000F) window.TOOLTIPS_AC1000F = {};

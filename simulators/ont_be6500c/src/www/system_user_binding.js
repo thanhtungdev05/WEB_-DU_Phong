@@ -129,7 +129,6 @@
     var mk = oMatKhau(), xn = oXacNhan();
     if (mk) mk.value = '';
     if (xn) xn.value = '';
-    anThanhSave();
   }
 
   function theoDoiThayDoi() {
@@ -137,9 +136,7 @@
       if (!el || el.__simDaNoi) return;
       el.__simDaNoi = true;
       el.addEventListener('input', function () {
-        var mk = oMatKhau(), xn = oXacNhan();
-        var coChu = (mk && mk.value) || (xn && xn.value);
-        if (coChu) hienThanhSave(); else anThanhSave();
+        hienThanhSave();
       });
     });
   }
@@ -173,7 +170,10 @@
   }
 
   function batDau() {
-    napNguoiDung().then(theoDoiThayDoi);
+    napNguoiDung().then(function () {
+      theoDoiThayDoi();
+      hienThanhSave();
+    });
   }
 
   if (document.readyState === 'loading') {

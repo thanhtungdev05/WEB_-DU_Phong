@@ -3786,6 +3786,17 @@
                function succHintShow(template) {
                   var PostFeedbackOBJ = $(".succHint", template);
                   PostFeedbackOBJ.fadeIn(1000);
+                  try {
+                     document._ftcHasSuccHint = true;
+                     document._ftcIsSaved = true;
+                     if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = true;
+                        window.top._hasClickedSaveInGuide = true;
+                        if (typeof window.top.onSimulatorSave === 'function') {
+                           window.top.onSimulatorSave(window);
+                        }
+                     }
+                  } catch (e) { }
                   window.setTimeout(
                      function () {
                         PostFeedbackOBJ.fadeOut(1000);
@@ -8542,7 +8553,7 @@
          }
       }
    </script>
-   <script src="Step_by_step/bai1.js?v=1798"></script>
+   <script src="Step_by_step/bai1.js?v=20260914102000"></script>
    <script src="Step_by_step/bai2.js?v=1798"></script>
    <script src="Step_by_step/bai3.js?v=1798"></script>
    <script src="Step_by_step/bai4.js?v=1798"></script>

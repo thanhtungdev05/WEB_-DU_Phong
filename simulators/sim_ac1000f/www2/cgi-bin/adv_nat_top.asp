@@ -286,9 +286,22 @@ function Add_virtualsvr()
 	tableData1[i][4] = v_lsport;
 	tableData1[i][5] = v_leport;
 
-	showTableVirtualServer('firstDiv1', tableHeader1, tableData1, 2);
-	alert("Lưu cấu hình giả lập thành công! Vui lòng nhấn nút 'Save & Apply' bên dưới trang để Nộp bài.");
+	showTableVir('Virserconfigration', tableHeader1, tableData1, 2);
+	try {
+		localStorage.setItem('ftc_sim_portfwd', JSON.stringify({
+			start_port1: v_sport,
+			end_port1: v_eport,
+			Addr1: v_ip,
+			local_sport: v_lsport,
+			local_eport: v_leport
+		}));
+	} catch (e) { }
+	alert("Thêm cấu hình Virtual Server thành công!");
 }
+
+window.showTableVirtualServer = function(id, header, data, keyIndex) {
+	showTableVir('Virserconfigration', header, data, keyIndex);
+};
 //virtual server add end
 
 function showTableDMZ(id,header,data,keyIndex){

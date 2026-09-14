@@ -508,7 +508,7 @@
     thanhSave = w;
     w.querySelector('.submit').addEventListener('click', hoiTruocKhiLuu);
     w.querySelector('.cancel').addEventListener('click', function () {
-      goThanhSave(); nap();
+      nap();
     });
   }
 
@@ -539,7 +539,10 @@
   function batDau() {
     if (!laTrangNay()) return;
     LOAI = loaiCuaTrang();
-    nap().then(theoDoi);
+    nap().then(function () {
+      theoDoi();
+      hienThanhSave();
+    });
   }
 
   if (document.readyState === 'loading') {

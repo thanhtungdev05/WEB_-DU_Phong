@@ -15,21 +15,17 @@
       'Cấu hình đúng cho cả 2 băng tần <b>2.4G</b> và <b>5G</b> theo thông số:',
       '- SSID Name: <span class="val">FPT Telecom-7EA8</span>',
       '- WPA Key: <span class="val">00032934</span>',
-      '<br><b>Cách làm:</b>',
-      '1. Vào Wireless 2.4G → cấu hình → bấm <b>Save & Apply</b>',
-      '2. Vào Wireless 5G → cấu hình → bấm <b>Save & Apply</b>',
-      '→ Dữ liệu được lưu tự động khi bấm Save, chuyển trang vẫn còn.'
     ],
     practiceUrl: '/sim_ac1000f/cgi-bin/index.asp?page=home_wireless.asp',
     // Xóa localStorage wifi cũ khi bắt đầu phiên mới (trên trang login, không xóa khi đang ở trang wireless)
-    onSimLoad: function(iframeWindow) {
+    onSimLoad: function (iframeWindow) {
       try {
         var loc = (iframeWindow.location.href || '').toLowerCase();
         if (loc.indexOf('home_wireless') === -1) {
           localStorage.removeItem('ftc_sim_wifi24');
           localStorage.removeItem('ftc_sim_wifi5g');
         }
-      } catch(e) {}
+      } catch (e) { }
     },
 
     // CSS selectors cho các ô cần xóa trắng khi bắt đầu phiên

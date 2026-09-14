@@ -126,7 +126,15 @@ document.addEventListener("DOMContentLoaded", function () {
                         alert("BẠN ĐÃ CẤU HÌNH SAI BĂNG TẦN 2.4GHz:\n\n" + errors.join("\n"));
                         e.preventDefault();
                         e.stopPropagation();
+                        if (window.top && window.top !== window) {
+                            window.top._hasClickedSaveInGuide = true;
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        }
                     } else {
+                        var succ1 = container.querySelector('.succHint');
+                        if (succ1) succ1.style.display = 'block';
                         alert("Đã lưu thành công băng tần 2.4GHz. Nội dung đã tự động đồng bộ sang 5GHz, hãy chuyển sang tab SSID5 (5GHz) để kiểm tra và nhấn Apply nhé!");
                     }
                 } else if (isSSID5) {
@@ -134,12 +142,46 @@ document.addEventListener("DOMContentLoaded", function () {
                     validateSSID("0", "2.4GHz");
                     validateSSID("4", "5GHz");
                     if (errors.length > 0) {
+                        document._ftcHasSuccHint = false;
+                        if (window.top && window.top !== window) {
+                            window.top._hasSuccHintStored = false;
+                            window.top._hasClickedSaveInGuide = true;
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        }
                         alert("BẠN ĐÃ CẤU HÌNH SAI:\n\n" + errors.join("\n"));
                         e.preventDefault();
                         e.stopPropagation();
                     } else {
-                        var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
+                        document._ftcIsSaved = true;
+                        document._ftcHasSuccHint = true;
+                        var succ5 = container.querySelector('.succHint') || document.querySelector('.succHint');
+                        if (succ5) succ5.style.display = 'block';
 
+                        if (window.top && window.top !== window) {
+                            window.top._hasSuccHintStored = true;
+                            window.top._hasClickedSaveInGuide = true;
+                            try {
+                                if (typeof window.top.onSimulatorSave === 'function') {
+                                    window.top.onSimulatorSave(window);
+                                }
+                            } catch (err) { }
+                            try {
+                                var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
+                                window.top.postMessage({
+                                    type: 'LAB_SUCCESS',
+                                    device: 'ONT BE12000',
+                                    labName: 'Bài 2-Cấu hình WIFI',
+                                    message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 2-Cấu hình WIFI trên thiết bị ONT BE12000'
+                                }, '*');
+                            } catch (err) { }
+
+                            alert("Chúc mừng bạn đã hoàn thành cấu hình Wi-Fi! Thông báo lưu thành công đã xuất hiện, hãy bấm nút Nộp bài trên thanh điều hướng để hoàn tất bài học.");
+                            return;
+                        }
+
+                        var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
                         try {
                             const topUrl = new URL(window.top.location.href);
                             topUrl.searchParams.set('device', 'ONT_BE12000');
@@ -147,16 +189,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         } catch (err) { }
 
                         alert("Chúc mừng bạn đã hoàn thành bài Lab " + modeText + " Cấu hình WIFI trên thiết bị ONT BE12000");
-
-                        try {
-                            window.top.postMessage({
-                                type: 'LAB_SUCCESS',
-                                device: 'ONT BE12000',
-                                labName: 'Bài 2-Cấu hình WIFI',
-                                message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 2-Cấu hình WIFI trên thiết bị ONT BE12000'
-                            }, '*');
-                        } catch (err) { }
-
                         window.location.href = "learning.html?lab=2";
                     }
                 } else {

@@ -1,11 +1,12 @@
 /**
  * devices/ax3000c/lessons/bai5.js
- * Bài 5: Cấu hình đổi IP LAN trên AX3000C
+ * Bài 5: Cấu hình đổi IP LAN và DHCP trên AX3000C
  */
 
 window.DEVICE_AX3000C_LESSONS = window.DEVICE_AX3000C_LESSONS || [];
 
-window.DEVICE_AX3000C_LESSONS.push({
+var idx = window.DEVICE_AX3000C_LESSONS.findIndex(function (l) { return l.id === 'LAB_AX3000CV2_05'; });
+var lessonObj = {
   id: 'LAB_AX3000CV2_05',
   title: 'Cấu hình DHCP',
   subtitle: 'Cấu hình DHCP',
@@ -24,7 +25,7 @@ window.DEVICE_AX3000C_LESSONS.push({
       {
         id: 'lan_ip',
         name: 'Router LAN IP Address',
-        selector: '.card .bd .row:nth-child(1) input, input[value="192.168.100.1"]',
+        selector: '#lanIp, .card .bd .row:nth-child(1) input, input[value="192.168.100.1"]',
         expected: '192.168.100.1',
         type: 'text_exact',
         trim: true,
@@ -42,7 +43,7 @@ window.DEVICE_AX3000C_LESSONS.push({
       {
         id: 'dhcp_start',
         name: 'DHCP Start Address',
-        selector: '.card .bd .row:nth-child(3) input, input[value="192.168.100.2"]',
+        selector: '#dhcpStart, .card .bd .row:nth-child(3) input, input[value="192.168.100.2"]',
         expected: '192.168.100.2',
         type: 'text_exact',
         trim: true,
@@ -51,7 +52,7 @@ window.DEVICE_AX3000C_LESSONS.push({
       {
         id: 'dhcp_end',
         name: 'DHCP End Address',
-        selector: '.card .bd .row:nth-child(4) input, input[value="192.168.100.249"]',
+        selector: '#dhcpEnd, .card .bd .row:nth-child(4) input, input[value="192.168.100.249"]',
         expected: '192.168.100.249',
         type: 'text_exact',
         trim: true,
@@ -59,54 +60,60 @@ window.DEVICE_AX3000C_LESSONS.push({
       }
     ]
   },
-  guidePopups: [
+  guidePopups: (window.TOOLTIPS_AX3000C && window.TOOLTIPS_AX3000C['LAB_AX3000CV2_05']) ? window.TOOLTIPS_AX3000C['LAB_AX3000CV2_05'] : [
     {
-      selector: 'li.el-submenu:not(.is-opened) .el-submenu__title:contains("Network")',
+      selector: 'li.el-submenu:not(.is-opened):contains("Network") .el-submenu__title, .el-submenu__title:contains("Network")',
       text: 'Chọn Network',
       position: 'right',
       hideOnPage: 'lan'
     },
     {
-      selector: 'li.el-submenu.is-opened li.el-submenu:not(.is-opened) .el-submenu__title:contains("LAN")',
+      selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu:not(.is-opened):contains("LAN") .el-submenu__title, .el-submenu:contains("Network") .el-submenu__title:contains("LAN")',
       text: 'Chọn LAN',
       position: 'right',
       hideOnPage: 'lan'
     },
     {
-      selector: 'li.el-submenu.is-opened li.el-submenu.is-opened li.el-menu-item:contains("LAN"), li.el-submenu.is-opened li.el-menu-item:contains("LAN")',
+      selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu:is-opened:contains("LAN") li.el-menu-item:contains("LAN"), .el-menu-item:contains("LAN")',
       text: 'Chọn LAN',
       position: 'right',
       hideOnPage: 'lan'
     },
     {
-      selector: '.card .bd .row:nth-child(1) input, input[value="192.168.100.1"]',
+      selector: '#lanIp, .card .bd .row:nth-child(1) input',
       text: 'Bước 1: đặt IP cho Router ví dụ: 192.168.100.1',
       position: 'right',
       page: 'lan'
     },
     {
-      selector: '.card .bd .row:nth-child(2) input, input[value="255.255.255.0"]',
-      text: 'Bước 2: đặt Subnet mask ví dụ: 255.255.255.0',
+      selector: '.card .bd .row:nth-child(2) input',
+      text: 'Bước 2: kiểm tra Subnet mask ví dụ: 255.255.255.0',
       position: 'right',
       page: 'lan'
     },
     {
-      selector: '.card .bd .row:nth-child(3) input, input[value="192.168.100.2"]',
-      text: 'Bước 3: Kiểm tra IP động đầu tiên đã tự nhảy thành 192.168.100.2',
+      selector: '#dhcpStart, .card .bd .row:nth-child(3) input',
+      text: 'Bước 3: kiểm tra IP bắt đầu tự nhảy thành 192.168.100.2',
       position: 'right',
       page: 'lan'
     },
     {
-      selector: '.card .bd .row:nth-child(4) input, input[value="192.168.100.249"]',
-      text: 'Bước 4: Kiểm tra IP động sau cùng đã tự nhảy thành 192.168.100.249',
+      selector: '#dhcpEnd, .card .bd .row:nth-child(4) input',
+      text: 'Bước 4: kiểm tra IP kết thúc tự nhảy thành 192.168.100.249',
       position: 'right',
       page: 'lan'
     },
     {
-      selector: 'button.apply, button.btn.apply, button[onclick*="save"], input[type="submit"]',
+      selector: 'button.apply, .actions button.apply, button[onclick*="save"], input[type="submit"]',
       text: 'Bước 5: chọn Apply',
-      position: 'right',
+      position: 'bottom',
       page: 'lan'
     }
   ]
-});
+};
+
+if (idx !== -1) {
+  window.DEVICE_AX3000C_LESSONS[idx] = lessonObj;
+} else {
+  window.DEVICE_AX3000C_LESSONS.push(lessonObj);
+}

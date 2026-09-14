@@ -33,7 +33,8 @@
       if (dsDT.indexOf(f) < 0) return;      // khong co ban dien thoai
       f = TIEN_TO + f;
     }
-    location.href = '/' + f + '.html' + giuThamSo();
+    var baseDir = location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1);
+    location.href = baseDir + f + '.html' + giuThamSo();
   }
   function has(file) { return PAGES.indexOf(file) >= 0; }
 
@@ -48,13 +49,42 @@
     var sb = document.querySelector('.css-1nmx4e2');
     if (!sb) return [];
     var out = [];
-    var all = sb.querySelectorAll('div,li,span,p');
-    for (var i = 0; i < all.length; i++) {
-      var e = all[i], t = txt(e);
-      if (!t || t.length > 24) continue;
-      var kid = e.querySelector('div,li,span,p');
-      if (kid && txt(kid) === t) continue;
-      out.push({ el: e, text: t, hasIcon: !!e.querySelector('svg') });
+    var seen = new Set();
+
+    // 1. Uu tien cac dong menu (li) day du hang de click toan bo dong
+    var lis = sb.querySelectorAll('li.MuiMenuItem-root, li[role="menuitem"], li');
+    for (var i = 0; i < lis.length; i++) {
+      var li = lis[i], t = txt(li);
+      if (t && t.length <= 24 && !seen.has(t)) {
+        seen.add(t);
+        out.push({ el: li, text: t, hasIcon: !!li.querySelector('svg') });
+      }
+    }
+
+    // 2. Cac nhan nhom category (.css-1mtremo, .css-1fdfqlq)
+    var cats = sb.querySelectorAll('.css-1mtremo, .css-1fdfqlq');
+    for (var j = 0; j < cats.length; j++) {
+      var cat = cats[j], tc = txt(cat);
+      if (tc && tc.length <= 24 && !seen.has(tc)) {
+        seen.add(tc);
+        out.push({ el: cat, text: tc, hasIcon: !!cat.querySelector('svg') });
+      }
+    }
+
+    // 3. Fallback cho cac the text con lai neu co
+    if (out.length === 0) {
+      var all = sb.querySelectorAll('div,li,span,p');
+      for (var k = 0; k < all.length; k++) {
+        var e = all[k], te = txt(e);
+        if (!te || te.length > 24) continue;
+        var kid = e.querySelector('div,li,span,p');
+        if (kid && txt(kid) === te) continue;
+        var row = e.closest('li, button') || e;
+        if (!seen.has(te)) {
+          seen.add(te);
+          out.push({ el: row, text: te, hasIcon: !!row.querySelector('svg') });
+        }
+      }
     }
     return out;
   }
@@ -97,6 +127,11 @@
       }
       if (!target) return;
       it.el.style.cursor = 'pointer';
+      // Dam bao moi phan tu con deu co cursor pointer
+      var kids = it.el.querySelectorAll('*');
+      for (var k = 0; k < kids.length; k++) {
+        kids[k].style.cursor = 'pointer';
+      }
       it.el.addEventListener('click', function (e) { e.stopPropagation(); go(target); });
       n++;
     });
@@ -142,6 +177,7 @@
     var oNgoai = document.querySelector('.css-1nmx4e2');
     if (!oNgoai) return;
 
+    var hoverTimer = null;
     function datTrangThai(dangMo) {
       oNgoai.innerHTML = dangMo ? MO[k.mo] : GON[k.gon];
       wireMenu();
@@ -150,8 +186,16 @@
     /* Gan tren phan tu CHA .css-1nmx4e2 (khong phai .css-1hiau50 -- phan
        tu do bi THAY MOI moi lan doi trang thai, se mat chuoi mouseleave.
        Loi nay AP da mac va anh Huynn phat hien 2026-08-11.) */
-    oNgoai.addEventListener('mouseenter', function () { datTrangThai(true); });
-    oNgoai.addEventListener('mouseleave', function () { datTrangThai(false); });
+    oNgoai.addEventListener('mouseenter', function () {
+      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      datTrangThai(true);
+    });
+    oNgoai.addEventListener('mouseleave', function () {
+      if (hoverTimer) clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(function () {
+        datTrangThai(false);
+      }, 200);
+    });
 
     datTrangThai(false);
   }

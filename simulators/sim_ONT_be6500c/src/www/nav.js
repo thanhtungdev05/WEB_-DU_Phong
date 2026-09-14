@@ -9,7 +9,12 @@
   var PAGES = window.__PAGES || [];
 
   function txt(el) { return (el.textContent || '').replace(/\s+/g, ' ').trim(); }
-  function go(file) { location.href = '/' + file + '.html'; }
+
+  function go(file) {
+    var baseDir = location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1);
+    location.href = baseDir + file + '.html' + location.search;
+  }
+
   function has(file) { return PAGES.indexOf(file) >= 0; }
 
   // ten trang hien tai, bo hau to __tN
@@ -23,12 +28,25 @@
     var sb = document.querySelector('.css-1nmx4e2');
     if (!sb) return [];
     var out = [];
+    var seen = new Set();
+
+    // 1. Uu tien cac dong menu (li) day du hang de click toan bo dong
+    var lis = sb.querySelectorAll('li.MuiMenuItem-root, li[role="menuitem"], li');
+    for (var i = 0; i < lis.length; i++) {
+      var li = lis[i], t = txt(li);
+      if (t && t.length <= 24 && !seen.has(t)) {
+        seen.add(t);
+        out.push({ el: li, text: t, hasIcon: !!li.querySelector('svg') });
+      }
+    }
+
     var all = sb.querySelectorAll('div,li,span,p');
     for (var i = 0; i < all.length; i++) {
       var e = all[i], t = txt(e);
-      if (!t || t.length > 24) continue;
+      if (!t || t.length > 24 || seen.has(t)) continue;
       var kid = e.querySelector('div,li,span,p');
       if (kid && txt(kid) === t) continue;
+      seen.add(t);
       out.push({ el: e, text: t, hasIcon: !!e.querySelector('svg') });
     }
     return out;
@@ -53,32 +71,17 @@
       }
       if (!target) return;
       it.el.style.cursor = 'pointer';
+      var kids = it.el.querySelectorAll('*');
+      for (var k = 0; k < kids.length; k++) {
+        kids[k].style.cursor = 'pointer';
+      }
       it.el.addEventListener('click', function (e) { e.stopPropagation(); go(target); });
       n++;
     });
     return n;
   }
 
-  /* ---------- 2b. Sidebar mo/thu theo RE CHUOT ----------
-     Do truc tiep tren thiet bi that 2026-08-10 (qua Chrome, xem
-     src/dung_lai_sidebar.py). Co che that:
-       - Mac dinh THU GON (52px, chi icon, khong nhan chu, khong submenu).
-       - React gan onMouseEnter/onMouseLeave len CHINH .css-1hiau50
-         (da doc duoc tu __reactProps$ cua phan tu do).
-       - mouseenter -> them class "isExpand" (CSS san co:
-         .css-1hiau50{width:52px}, .css-1hiau50.isExpand{width:160px})
-         VA render them nhan chu + submenu cua nhom dang active.
-       - mouseleave -> bo class, go bo nhan chu + submenu.
-       - Nut hamburger [data-testid="MenuIcon"] co display:none tren
-         desktop -> KHONG PHAI nut thu gon sidebar (la nut cho giao dien
-         mobile). Ban truoc gan click thu gon vao nut nay -- HANH VI BIA,
-         da bo hoan toan cung voi localStorage luu trang thai (thiet bi
-         that khong luu trang thai nao ca).
-
-     Ban gia lap la HTML tinh, khong render lai duoc nhu React, nen hoan
-     doi giua HAI ban markup THAT da chup san (window.__SB_GON /
-     window.__SB_MO trong sidebar_data.js) -> DOM khop thiet bi that o ca
-     hai trang thai, khong phai an/hien bang CSS. */
+  /* ---------- 2b. Sidebar mo/thu theo RE CHUOT ---------- */
   function tenTrang() {
     return (location.pathname.split('/').pop() || 'index.html')
       .replace('.html', '');
@@ -102,22 +105,22 @@
     var oNgoai = document.querySelector('.css-1nmx4e2');
     if (!oNgoai) return;
 
+    var hoverTimer = null;
     function datTrangThai(dangMo) {
       oNgoai.innerHTML = dangMo ? MO[k.mo] : GON[k.gon];
       wireMenu();   // gan lai click cho markup vua thay
     }
 
-    /* LOI DA MAC (anh Huynn phat hien 2026-08-11): truoc day gan
-       mouseenter/mouseleave len chinh `.css-1hiau50` -- ma phan tu do bi
-       THAY MOI mỗi lan doi trang thai. Khi mouseenter chay, innerHTML bi
-       ghi de, phan tu cu bi go, phan tu MOI duoc chen ngay DUOI con tro.
-       Trinh duyet khong coi la chuot "da vao" phan tu moi nen KHONG BAO GIO
-       ban mouseleave -> sidebar mo ra roi khong bao gio thu lai.
-
-       Cach dung: gan len phan tu CHA `.css-1nmx4e2` -- cha khong bi thay,
-       nen chuoi mouseenter/mouseleave luon lien mach. */
-    oNgoai.addEventListener('mouseenter', function () { datTrangThai(true); });
-    oNgoai.addEventListener('mouseleave', function () { datTrangThai(false); });
+    oNgoai.addEventListener('mouseenter', function () {
+      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      datTrangThai(true);
+    });
+    oNgoai.addEventListener('mouseleave', function () {
+      if (hoverTimer) clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(function () {
+        datTrangThai(false);
+      }, 200);
+    });
 
     datTrangThai(false);   // thiet bi that: mac dinh thu gon
   }

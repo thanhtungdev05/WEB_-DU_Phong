@@ -274,7 +274,7 @@
       }
     });
     w.querySelector('.cancel').addEventListener('click', function () {
-      goThanhSave(); nap();
+      nap();
     });
   }
 
@@ -307,7 +307,10 @@
 
   function batDau() {
     if (!laTrangNay()) return;
-    nap().then(theoDoi);
+    nap().then(function () {
+      theoDoi();
+      hienThanhSave();
+    });
   }
 
   if (document.readyState === 'loading') {

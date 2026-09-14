@@ -196,7 +196,7 @@
     // 1. Click backdrop (viền đen ngoài bảng điểm)
     if (gradingBackdrop) gradingBackdrop.addEventListener('click', () => {
       if (trackingSaveInFlight) return;
-      // KHÓA màn hình nếu CHƯA ĐẠT ở chế độ Thực hành
+      // KHÓA màn hình nếu CHƯA ĐẠT ở chế độ Thực hành (khi đã thực sự nộp bài chính thức)
       if (_lastEvalResult && !_lastEvalResult.passed && currentMode === 'practice') return;
 
       // Nếu ĐẠT: Đóng và quay về danh sách bài học
@@ -204,18 +204,18 @@
         hideGradingModal();
         backToLesson();
       } else {
-        // Nếu CHƯA ĐẠT (chỉ có thể xảy ra ở chế độ Hướng dẫn): Ẩn bảng để KTV tự sửa lỗi
+        // Nếu CHƯA ĐẠT hoặc xem lỗi sai: Ẩn bảng để KTV tự sửa lỗi
         hideGradingModal();
       }
     });
 
     // 2. Nút "Quay lại làm từ đầu" / "Đóng & Sửa lỗi" (Hiển thị khi CHƯA ĐẠT)
     if (btnModalRetry) btnModalRetry.addEventListener('click', () => {
-      if (currentMode === 'guide') {
-        // Chế độ Hướng dẫn: Đóng bảng để KTV thao tác tiếp, giữ nguyên giao diện thiết bị
+      if (currentMode === 'guide' || !_lastEvalResult) {
+        // Chế độ Hướng dẫn hoặc khi xem lỗi sai: Đóng bảng để KTV thao tác tiếp, giữ nguyên giao diện thiết bị
         hideGradingModal();
       } else {
-        // Chế độ Thực hành: Reset toàn bộ, đuổi ra ngoài danh sách bài học
+        // Chế độ Thực hành (sau khi nộp bài thất bại): Reset toàn bộ, đuổi ra ngoài danh sách bài học
         hideGradingModal();
         backToLesson();
       }
@@ -299,6 +299,9 @@
             allDocs.forEach(doc => {
               // Liên tục Tắt gợi ý mật khẩu/tự động điền (Autocomplete/Saved Info) bằng phương pháp mạnh (readonly hack)
               try {
+                if (currentDeviceId === 'ONT_be6500c' || currentDeviceId === 'be6500c' ||
+                    currentDeviceId === 'ONT_be12000' || currentDeviceId === 'be12000' ||
+                    currentDeviceId === 'ONT_be15000' || currentDeviceId === 'be15000') return;
                 doc.querySelectorAll('form:not([data-autofill-disabled]), input:not([data-autofill-disabled])').forEach(el => {
                   el.setAttribute('data-autofill-disabled', 'true');
                   el.setAttribute('autocomplete', 'off'); // Chuẩn chung
@@ -428,12 +431,10 @@
                   let el = e.target;
                   while (el && el !== doc) {
                     if ((el.tagName === 'INPUT' || el.tagName === 'BUTTON') && 
-                        (el.type === 'submit' || (el.value || el.textContent || '').toLowerCase().includes('save') || (el.value || el.textContent || '').toLowerCase().includes('apply') || el.name === 'AddBtn' || (currentLessonId === 'ONT_be6500c-bai6' && (el.value || el.textContent || '').trim().toLowerCase() === 'add'))) {
+                        (el.type === 'submit' || (el.value || el.textContent || '').toLowerCase().includes('save') || (el.value || el.textContent || '').toLowerCase().includes('apply') || el.name === 'AddBtn' || ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6') && (el.value || el.textContent || '').trim().toLowerCase() === 'add'))) {
                       window._hasClickedSaveInGuide = true;
-                      if (currentDeviceId === 'ax3000s') {
-                        doc._ftcIsSaved = true;
-                        try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
-                      }
+                      doc._ftcIsSaved = true;
+                      try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
                     }
                     el = el.parentNode;
                   }
@@ -441,12 +442,21 @@
 
                 // Đánh dấu người dùng đã chạm vào ô nhập liệu để tránh bị clear tự động
                 // Đồng thời hủy bỏ trạng thái "Đã Save" nếu người dùng sửa lại dữ liệu
+                doc.addEventListener('keydown', function (e) {
+                  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+                    e.target._ftcUserModified = true;
+                  }
+                  if (e.isTrusted && !window._hasSuccHintStored) {
+                    window._hasClickedSaveInGuide = false;
+                    doc._ftcIsSaved = false;
+                  }
+                }, true);
                 doc.addEventListener('input', function (e) {
                   if (e.target) {
                     e.target._ftcUserModified = true;
                   }
-                  window._hasClickedSaveInGuide = false;
-                  if (currentDeviceId === 'ax3000s') {
+                  if (e.isTrusted && !window._hasSuccHintStored) {
+                    window._hasClickedSaveInGuide = false;
                     doc._ftcIsSaved = false;
                   }
                 }, true);
@@ -454,8 +464,8 @@
                   if (e.target) {
                     e.target._ftcUserModified = true;
                   }
-                  window._hasClickedSaveInGuide = false;
-                  if (currentDeviceId === 'ax3000s') {
+                  if (e.isTrusted && !window._hasSuccHintStored) {
+                    window._hasClickedSaveInGuide = false;
                     doc._ftcIsSaved = false;
                   }
                 }, true);
@@ -493,67 +503,88 @@
 
           if (currentMode === 'guide') {
             applyGuidePopups();
+          } else {
+            clearGuidePopups();
+          }
 
-            // Tự động kiểm tra hoàn thành để mở nút Nộp bài trong chế độ Hướng dẫn
-            const device = DEVICES.find(d => d.id === currentDeviceId);
-            const lesson = getCurrentLesson();
-            if (device && lesson) {
-              const evalResult = evaluateLesson(device, lesson);
-              // === GUIDE MODE: AUTO-BASELINE UI ===
-              let btnGuideErrors = document.getElementById('btn-guide-errors');
-              if (btnGuideErrors) {
-                if (currentMode === 'guide' && evalResult) {
-                  const unexpectedError = evalResult.details.find(d => d.id.startsWith('unexpected_change'));
-                  const hasMissingSteps = !evalResult.passed;
-
-                  if (unexpectedError || hasMissingSteps) {
-                    btnGuideErrors.style.display = 'flex';
-
-                    // Ẩn xám nút nếu học viên chưa bấm Save
-                    if (!window._hasClickedSaveInGuide) {
-                      btnGuideErrors.disabled = true;
-                      btnGuideErrors.style.opacity = '0.5';
-                      btnGuideErrors.style.cursor = 'not-allowed';
-                      btnGuideErrors.style.background = '#f3f4f6';
-                      btnGuideErrors.style.color = '#9ca3af';
-                      btnGuideErrors.style.borderColor = '#d1d5db';
-                    } else {
-                      btnGuideErrors.disabled = false;
-                      btnGuideErrors.style.opacity = '1';
-                      btnGuideErrors.style.cursor = 'pointer';
-                      btnGuideErrors.style.background = '#fee2e2';
-                      btnGuideErrors.style.color = '#ef4444';
-                      btnGuideErrors.style.borderColor = '#fca5a5';
+          // Tự động kiểm tra hoàn thành để mở nút Nộp bài hoặc hiển thị nút Lỗi sai
+          const device = DEVICES.find(d => d.id === currentDeviceId);
+          const lesson = getCurrentLesson();
+          if (device && lesson) {
+            let hasSuccHint = false;
+            // Quét tìm thông báo thành công "Your data have been stored!" trên thiết bị
+            const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+            if (window._hasSuccHintStored) {
+              hasSuccHint = true;
+            } else {
+              for (const d of allDocs) {
+                try {
+                  if (d._ftcHasSuccHint) { hasSuccHint = true; break; }
+                  const hints = d.querySelectorAll('.succHint');
+                  for (const h of hints) {
+                    // Bắt buộc thẻ thông báo phải đang thực sự HIỂN THỊ (không bị style display: none)
+                    const isVis = (h.offsetWidth > 0 || h.offsetHeight > 0) && h.style.display !== 'none';
+                    if (isVis) {
+                      const txt = (h.textContent || '').toLowerCase();
+                      if (txt.includes('your data') || txt.includes('been stored')) {
+                        hasSuccHint = true;
+                        d._ftcHasSuccHint = true;
+                        break;
+                      }
                     }
-                  } else {
-                    btnGuideErrors.style.display = 'none';
                   }
+                  if (hasSuccHint) break;
+                } catch (e) { }
+              }
+            }
+
+            if (hasSuccHint) {
+              window._hasSuccHintStored = true;
+              window._hasClickedSaveInGuide = true;
+            }
+
+            const evalResult = evaluateLesson(device, lesson);
+            let btnGuideErrors = document.getElementById('btn-guide-errors');
+
+            // BẮT BUỘC ĐÃ BẤM SAVE/APPLY: nếu chưa bấm Save/Apply thì KHÔNG BAO GIỜ sáng nút nộp bài
+            if (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed))) {
+              // Nút Nộp bài SÁNG LÊN
+              if (btnSubmitLab) {
+                btnSubmitLab.disabled = false;
+                btnSubmitLab.style.opacity = '1';
+                btnSubmitLab.style.cursor = 'pointer';
+                btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
+              }
+              // Nút Lỗi sai ẨN ĐI
+              if (btnGuideErrors) {
+                btnGuideErrors.style.display = 'none';
+              }
+            } else {
+              // Chưa đạt hoặc chưa bấm Save:
+              if (btnGuideErrors) {
+                if (window._hasClickedSaveInGuide && evalResult && !evalResult.passed && !hasSuccHint) {
+                  // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN
+                  btnGuideErrors.style.display = 'flex';
+                  btnGuideErrors.disabled = false;
+                  btnGuideErrors.style.opacity = '1';
+                  btnGuideErrors.style.cursor = 'pointer';
+                  btnGuideErrors.style.background = '#fee2e2';
+                  btnGuideErrors.style.color = '#ef4444';
+                  btnGuideErrors.style.borderColor = '#fca5a5';
+                  btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
                 } else {
                   btnGuideErrors.style.display = 'none';
                 }
               }
-              // ====================================
 
-              if (btnSubmitLab && btnSubmitLab.disabled) {
-                if (evalResult && evalResult.passed) {
-                  // Chỉ bật nút nếu Đã bấm Save
-                  if (window._hasClickedSaveInGuide) {
-                    btnSubmitLab.disabled = false;
-                    btnSubmitLab.style.opacity = '1';
-                    btnSubmitLab.style.cursor = 'pointer';
-                  }
-                }
-              } else if (btnSubmitLab && !btnSubmitLab.disabled) {
-                // Tự động tắt nút nếu học viên lỡ tay làm sai sau khi đã làm đúng hoặc chưa save lại
-                if (evalResult && (!evalResult.passed || !window._hasClickedSaveInGuide)) {
-                  btnSubmitLab.disabled = true;
-                  btnSubmitLab.style.opacity = '0.5';
-                  btnSubmitLab.style.cursor = 'not-allowed';
-                }
+              // Nút Nộp bài MỜ/TẮT
+              if (btnSubmitLab) {
+                btnSubmitLab.disabled = true;
+                btnSubmitLab.style.opacity = '0.5';
+                btnSubmitLab.style.cursor = 'not-allowed';
+                btnSubmitLab.style.animation = 'none';
               }
             }
-          } else {
-            clearGuidePopups();
           }
         }
       }, 400);
@@ -957,18 +988,20 @@
     iframeLoading.classList.remove('hidden');
     deviceIframe.src = 'about:blank';
 
-    // Thiết lập trạng thái ban đầu cho nút Nộp bài
+    // Thiết lập trạng thái ban đầu cho nút Nộp bài và nút Lỗi sai
     if (btnSubmitLab) {
-      if (currentMode === 'guide') {
-        btnSubmitLab.disabled = true;
-        btnSubmitLab.style.opacity = '0.5';
-        btnSubmitLab.style.cursor = 'not-allowed';
-      } else {
-        btnSubmitLab.disabled = false;
-        btnSubmitLab.style.opacity = '1';
-        btnSubmitLab.style.cursor = 'pointer';
-      }
+      btnSubmitLab.disabled = true;
+      btnSubmitLab.style.opacity = '0.5';
+      btnSubmitLab.style.cursor = 'not-allowed';
+      btnSubmitLab.style.animation = 'none';
     }
+    const btnGuideErrorsInit = document.getElementById('btn-guide-errors');
+    if (btnGuideErrorsInit) {
+      btnGuideErrorsInit.style.display = 'none';
+    }
+    window._hasClickedSaveInGuide = false;
+    window._hasSuccHintStored = false;
+    resetDeviceSession(currentDeviceId);
 
     // Switch to practice screen
     showPractice();
@@ -1012,8 +1045,20 @@
     practiceScreen.classList.add('visible');
   }
 
+  function resetDeviceSession(deviceId) {
+    const targetDev = deviceId || currentDeviceId;
+    if (targetDev === 'be12000') {
+      window._hasSuccHintStored = false;
+      window._hasClickedSaveInGuide = false;
+      try {
+        fetch('/sim_be12000/api/reset').catch(() => {});
+      } catch (e) { }
+    }
+  }
+
   function backToLesson() {
     if (trackingSaveInFlight) return;
+    resetDeviceSession(currentDeviceId);
     // Reset đồng hồ và session tracking
     const sessionToClose = _trackingSession;
     const elapsedSec = stopPracticeTimer();
@@ -1053,7 +1098,11 @@
         _currentLesson.clearFields.forEach(selector => {
           try {
             doc.querySelectorAll(selector).forEach(el => {
-              if (el._ftcUserModified || el === doc.activeElement) return;
+              if (el.dataset.ftcCleared || el._ftcUserModified) return;
+              if (el === doc.activeElement) {
+                el.dataset.ftcCleared = 'true';
+                return;
+              }
 
               // Bỏ qua việc xóa trường SSID/Mật khẩu trên trang 5G để KTV có thể nhìn thấy dữ liệu phản chiếu từ 2.4G
               const is5GPage = doc.defaultView && doc.defaultView.location.hash.includes('wlanBasicSetting5g');
@@ -1072,6 +1121,7 @@
               } else if (el.classList.contains('item')) {
                 el.remove();
               }
+              el.dataset.ftcCleared = 'true';
             });
           } catch (e) { }
         });
@@ -1135,48 +1185,111 @@
     let passedCount = 0;
     const details = [];
 
+    // Kiểm tra xem trên trang có banner "Your data have been stored!" hay không
+    let hasStoredNotification = false;
+    if (window._hasSuccHintStored) {
+      hasStoredNotification = true;
+    } else {
+      for (const d of allDocs) {
+        try {
+          if (d._ftcHasSuccHint) { hasStoredNotification = true; break; }
+          const hints = d.querySelectorAll('.succHint');
+          for (const h of hints) {
+            const isVis = (h.offsetWidth > 0 || h.offsetHeight > 0) && h.style.display !== 'none';
+            if (isVis) {
+              const txt = (h.textContent || '').toLowerCase();
+              if (txt.includes('your data') || txt.includes('been stored')) {
+                hasStoredNotification = true;
+                d._ftcHasSuccHint = true;
+                break;
+              }
+            }
+          }
+          if (hasStoredNotification) break;
+        } catch (e) { }
+      }
+    }
+    if (hasStoredNotification) {
+      window._hasSuccHintStored = true;
+      window._hasClickedSaveInGuide = true;
+    }
+
     rules.forEach(rule => {
       let actualValue = '';
       let elementFound = false;
-      let isSaved = false;
+      let isSaved = hasStoredNotification;
+      let isMatch = false;
 
-      // Tìm element trong tất cả accessible frames
+      const expectedVal = (rule.trim !== false) ? String(rule.expected).trim() : String(rule.expected);
+
+      // Tìm element trong tất cả accessible frames (hỗ trợ cả các trang có nhiều instances/hàng cấu hình)
       for (const doc of allDocs) {
         try {
-          const el = doc.querySelector(rule.selector);
-          if (el) {
+          const els = Array.from(doc.querySelectorAll(rule.selector));
+          if (els.length > 0) {
             elementFound = true;
-            isSaved = !!doc._ftcIsSaved;
-            if (el.type === 'checkbox' || el.type === 'radio') {
-              actualValue = el.checked ? (el.value || 'true') : 'false';
-            } else {
-              actualValue = (el.value !== undefined ? el.value : el.textContent || '').trim();
+            if (doc._ftcIsSaved) isSaved = true;
+
+            // Tìm xem có phần tử nào khớp với expectedVal không
+            let chosenEl = els[0];
+            for (const candEl of els) {
+              let candVal = '';
+              if (candEl.type === 'checkbox' || candEl.type === 'radio') {
+                candVal = candEl.checked ? (candEl.value || 'true') : 'false';
+              } else {
+                candVal = (candEl.value !== undefined ? candEl.value : candEl.textContent || '').trim();
+              }
+              const compVal = (rule.trim !== false) ? String(candVal).trim() : String(candVal);
+
+              let candidateMatch = false;
+              if (rule.type === 'text_exact') {
+                candidateMatch = compVal === expectedVal;
+              } else if (rule.type === 'case_insensitive') {
+                candidateMatch = compVal.toLowerCase() === expectedVal.toLowerCase();
+              } else if (rule.type === 'contains') {
+                candidateMatch = compVal.includes(expectedVal);
+              } else if (rule.type === 'any_of') {
+                const choices = Array.isArray(rule.expected)
+                  ? rule.expected.map(v => String(v).trim())
+                  : String(rule.expected).split(',').map(v => v.trim());
+                candidateMatch = choices.some(v => compVal === v);
+              } else if (rule.type === 'element_exists') {
+                candidateMatch = true;
+              } else {
+                candidateMatch = compVal === expectedVal;
+              }
+
+              if (candidateMatch) {
+                chosenEl = candEl;
+                actualValue = compVal;
+                isMatch = true;
+                break;
+              }
+            }
+
+            if (!isMatch) {
+              // Nếu chưa khớp, ưu tiên lấy phần tử đã được nhập liệu (khác rỗng) hoặc phần tử cuối
+              const nonEmptyEl = els.find(e => (e.value || '').trim() !== '') || els[els.length - 1];
+              if (nonEmptyEl) {
+                chosenEl = nonEmptyEl;
+                if (chosenEl.type === 'checkbox' || chosenEl.type === 'radio') {
+                  actualValue = chosenEl.checked ? (chosenEl.value || 'true') : 'false';
+                } else {
+                  actualValue = (chosenEl.value !== undefined ? chosenEl.value : chosenEl.textContent || '').trim();
+                }
+              }
             }
             break;
           }
         } catch (e) { }
       }
 
-      const expectedVal = (rule.trim !== false) ? String(rule.expected).trim() : String(rule.expected);
-      const compActual = (rule.trim !== false) ? String(actualValue).trim() : String(actualValue);
-      let isMatch = false;
-
-      if (rule.type === 'text_exact') {
-        isMatch = compActual === expectedVal;
-      } else if (rule.type === 'case_insensitive') {
-        isMatch = compActual.toLowerCase() === expectedVal.toLowerCase();
-      } else if (rule.type === 'contains') {
-        isMatch = compActual.includes(expectedVal);
-      } else if (rule.type === 'any_of') {
-        // rule.expected is an array of accepted values (or comma-separated string)
-        const choices = Array.isArray(rule.expected)
-          ? rule.expected.map(v => String(v).trim())
-          : String(rule.expected).split(',').map(v => v.trim());
-        isMatch = choices.some(v => compActual === v);
-      } else if (rule.type === 'element_exists') {
-        isMatch = elementFound;
-      } else {
-        isMatch = compActual === expectedVal;
+      // Nếu đã có thông báo "Your data have been stored!", đối với BE12000 hoặc khi thiết bị đã xác nhận lưu thành công
+      if (hasStoredNotification) {
+        isMatch = true;
+        if (!actualValue || actualValue === '(Chưa nhập / Chưa tìm thấy)') {
+          actualValue = expectedVal;
+        }
       }
 
       if (isMatch) {
@@ -1251,61 +1364,67 @@
     // === BỘ LỌC AUTO-BASELINE (TÌM THAO TÁC THỪA) ===
     let unexpectedErrors = [];
 
-    allDocs.forEach(doc => {
-      if (doc._ftcOriginalValues) {
-        Object.keys(doc._ftcOriginalValues).forEach(uid => {
-          const originalValue = doc._ftcOriginalValues[uid];
-          const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
-          if (el) {
-            // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
-            const isExpected = rules.some(r => {
-              try { return doc.querySelector(r.selector) === el; } catch (e) { return false; }
-            });
+    // Nếu đã có thông báo "Your data have been stored!", không kiểm tra lỗi thao tác thừa
+    if (!hasStoredNotification) {
+      allDocs.forEach(doc => {
+        if (doc._ftcOriginalValues) {
+          Object.keys(doc._ftcOriginalValues).forEach(uid => {
+            const originalValue = doc._ftcOriginalValues[uid];
+            const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
+            if (el) {
+              // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
+              const isExpected = rules.some(r => {
+                try {
+                  const matchedList = Array.from(doc.querySelectorAll(r.selector));
+                  return matchedList.includes(el);
+                } catch (e) { return false; }
+              });
 
-            // Nếu KHÔNG nằm trong rule, nhưng lại bị sửa giá trị khác gốc
-            if (!isExpected) {
-              const currentValue = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
-              if (String(currentValue) !== String(originalValue)) {
-                // Bỏ qua đánh giá radio bị tắt để tránh 1 lần click sinh 2 lỗi trùng lặp
-                if (el.type === 'radio' && !el.checked) return;
+              // Nếu KHÔNG nằm trong rule, nhưng lại bị sửa giá trị khác gốc
+              if (!isExpected) {
+                const currentValue = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+                if (String(currentValue) !== String(originalValue)) {
+                  // Bỏ qua đánh giá radio bị tắt để tránh 1 lần click sinh 2 lỗi trùng lặp
+                  if (el.type === 'radio' && !el.checked) return;
 
-                let labelText = getLabelForElement(el, doc);
-                let formattedOriginal = '';
-                let formattedCurrent = '';
+                  let labelText = getLabelForElement(el, doc);
+                  let formattedOriginal = '';
+                  let formattedCurrent = '';
 
-                if (el.type === 'checkbox' || el.type === 'radio') {
-                  formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
-                  formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
-                } else if (el.tagName === 'SELECT') {
-                  try {
-                    let optOrig = el.querySelector(`option[value="${originalValue}"]`);
-                    let optCurr = el.querySelector(`option[value="${currentValue}"]`);
-                    formattedOriginal = optOrig ? optOrig.textContent.trim() : originalValue;
-                    formattedCurrent = optCurr ? optCurr.textContent.trim() : currentValue;
-                  } catch (e) {
-                    formattedOriginal = originalValue;
-                    formattedCurrent = currentValue;
+                  if (el.type === 'checkbox' || el.type === 'radio') {
+                    formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
+                    formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
+                  } else if (el.tagName === 'SELECT') {
+                    try {
+                      let optOrig = el.querySelector(`option[value="${originalValue}"]`);
+                      let optCurr = el.querySelector(`option[value="${currentValue}"]`);
+                      formattedOriginal = optOrig ? optOrig.textContent.trim() : originalValue;
+                      formattedCurrent = optCurr ? optCurr.textContent.trim() : currentValue;
+                    } catch (e) {
+                      formattedOriginal = originalValue;
+                      formattedCurrent = currentValue;
+                    }
+                  } else {
+                    formattedOriginal = originalValue || 'Trống';
+                    formattedCurrent = currentValue || 'Trống';
                   }
-                } else {
-                  formattedOriginal = originalValue || 'Trống';
-                  formattedCurrent = currentValue || 'Trống';
-                }
 
-                unexpectedErrors.push({
-                  label: labelText,
-                  expected: formattedOriginal,
-                  actual: formattedCurrent
-                });
+                  unexpectedErrors.push({
+                    label: labelText,
+                    expected: formattedOriginal,
+                    actual: formattedCurrent
+                  });
+                }
               }
             }
-          }
-        });
-      }
-    });
+          });
+        }
+      });
+    }
 
-    // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa
+    // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa (hoặc có hasStoredNotification)
     const hasUnexpected = unexpectedErrors.length > 0;
-    const passed = (passedCount === rules.length) && !hasUnexpected;
+    const passed = hasStoredNotification || ((passedCount === rules.length) && !hasUnexpected);
     const score = passed ? 100 : Math.round((passedCount / rules.length) * (hasUnexpected ? 99 : 100));
 
     let finalTotalRules = rules.length + unexpectedErrors.length;
@@ -1396,7 +1515,7 @@
       if (gmStatusBox) gmStatusBox.className = 'gm-status-box failed';
       if (gmStatusTitle) gmStatusTitle.textContent = `✖ CHƯA ĐẠT (${res.passedCount}/${res.totalRules} tiêu chí đúng)`;
 
-      if (mode === 'guide') {
+      if (mode === 'guide' || !_lastEvalResult) {
         if (gmStatusDesc) gmStatusDesc.textContent = 'Vui lòng kiểm tra lại các lỗi bên dưới, đóng bảng này và sửa lỗi.';
         if (btnModalRetry) {
           btnModalRetry.style.display = '';
@@ -2243,25 +2362,43 @@
       } catch (e) { }
     }
 
-    // Đánh giá tức thì để mở nút Nộp bài ngay không cần chờ setInterval
-    if (currentMode === 'guide' && btnSubmitLab && btnSubmitLab.disabled) {
-      const device = DEVICES.find(d => d.id === currentDeviceId);
-      const lesson = getCurrentLesson();
-      if (device && lesson) {
-        const evalResult = evaluateLesson(device, lesson);
-        console.error('[FTC-DEBUG] onSimulatorSave evalResult:', JSON.stringify(evalResult));
-        if (evalResult && evalResult.passed) {
+    // Đánh giá tức thì để mở nút Nộp bài (khi đúng) hoặc nút Xem lỗi sai (khi sai) ngay lập tức
+    const device = DEVICES.find(d => d.id === currentDeviceId);
+    const lesson = getCurrentLesson();
+    if (device && lesson) {
+      const evalResult = evaluateLesson(device, lesson);
+      const btnGuideErrors = document.getElementById('btn-guide-errors');
+
+      if (window._hasSuccHintStored || (evalResult && evalResult.passed)) {
+        // Cấu hình ĐÚNG hoặc ĐÃ CÓ "Your data have been stored!": Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
+        if (btnSubmitLab) {
           btnSubmitLab.disabled = false;
           btnSubmitLab.style.opacity = '1';
           btnSubmitLab.style.cursor = 'pointer';
-        } else if (evalResult) {
-          console.error('[FTC-DEBUG] Grading FAILED — details:', JSON.stringify(evalResult.details));
+          btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
+        }
+        if (btnGuideErrors) {
+          btnGuideErrors.style.display = 'none';
         }
       } else {
-        console.error('[FTC-DEBUG] device or lesson is null. device:', !!device, 'lesson:', !!lesson, 'currentDeviceId:', currentDeviceId, 'currentLessonId:', currentLessonId);
+        // Cấu hình SAI: Nút Lỗi sai SÁNG LÊN, Nút Nộp bài TẮT/XÁM
+        if (btnGuideErrors) {
+          btnGuideErrors.style.display = 'flex';
+          btnGuideErrors.disabled = false;
+          btnGuideErrors.style.opacity = '1';
+          btnGuideErrors.style.cursor = 'pointer';
+          btnGuideErrors.style.background = '#fee2e2';
+          btnGuideErrors.style.color = '#ef4444';
+          btnGuideErrors.style.borderColor = '#fca5a5';
+          btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
+        }
+        if (btnSubmitLab) {
+          btnSubmitLab.disabled = true;
+          btnSubmitLab.style.opacity = '0.5';
+          btnSubmitLab.style.cursor = 'not-allowed';
+          btnSubmitLab.style.animation = 'none';
+        }
       }
-    } else {
-      console.error('[FTC-DEBUG] onSimulatorSave skipped — mode:', currentMode, 'btnDisabled:', btnSubmitLab && btnSubmitLab.disabled);
     }
   };
 

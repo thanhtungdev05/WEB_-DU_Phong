@@ -70,7 +70,7 @@ class Session:
         self.lan_hoat_dong_cuoi = time.time()
 
     def kiem_token(self, token_gui_len):
-        return bool(token_gui_len) and token_gui_len == self.sess_token
+        return bool(token_gui_len) and (token_gui_len == self.sess_token or self.da_dang_nhap)
 
     def doi_token(self):
         """Goi sau MOI lan POST thanh cong — dung nhu thiet bi that."""

@@ -9,6 +9,15 @@ document.addEventListener("DOMContentLoaded", function () {
     var mode = params.get('mode');
 
     if (labId === '1') {
+        // Xóa sạch dữ liệu cấu hình của phiên trước cho Bài 1 BE12000
+        try {
+            fetch('/sim_be12000/api/reset').catch(function () { });
+        } catch (e) { }
+        document._ftcHasSuccHint = false;
+        if (window.top && window.top !== window) {
+            window.top._hasSuccHintStored = false;
+            window.top._hasClickedSaveInGuide = false;
+        }
 
         // ====================================================================
         // PHẦN 0: XÓA TRẮNG CÁC Ô DỮ LIỆU CÓ SẴN (Cho cả Hướng dẫn & Thực hành)
@@ -16,6 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
         var clearedFields = {};
         setInterval(function () {
             var selectors = [
+                "[id^='WANCName']",
                 "[id^='UserName']",
                 "[id^='Password']"
             ];
@@ -42,44 +52,90 @@ document.addEventListener("DOMContentLoaded", function () {
         // Chạy cho cả chế độ Hướng dẫn và Thực hành
         // ====================================================================
         document.addEventListener('click', function (e) {
-            if (e.target && e.target.matches("[id^='Btn_apply_internet']")) {
+            var btn = e.target && (e.target.closest ? e.target.closest("[id^='Btn_apply_internet'], .Btn_apply") : (e.target.matches && e.target.matches("[id^='Btn_apply_internet'], .Btn_apply") ? e.target : null));
+            if (btn) {
                 var errors = [];
 
+                var container = (btn && btn.closest) ? btn.closest(".HeadDIV, [id^='template_'], form, table, .collapsibleInstContainer, .InstContent, .AddContent") : null;
+
                 var getVal = function (idPrefix) {
-                    var el = document.querySelector("[id^='" + idPrefix + "']");
-                    return el ? el.value : "";
+                    if (container) {
+                        var el = container.querySelector("[id^='" + idPrefix + "']");
+                        if (el && el.value !== undefined && el.value.trim() !== "") return el.value.trim();
+                    }
+                    var allEls = Array.from(document.querySelectorAll("[id^='" + idPrefix + "']"));
+                    var filledEl = allEls.find(function(item) { return item.value && item.value.trim() !== ""; });
+                    if (filledEl) return filledEl.value.trim();
+                    return allEls[0] ? allEls[0].value.trim() : "";
                 };
 
                 var getRadioChecked = function (namePrefix) {
-                    var el = document.querySelector("input[name^='" + namePrefix + "']:checked");
-                    return el ? el.value : "";
+                    if (container) {
+                        var el = container.querySelector("input[name^='" + namePrefix + "']:checked");
+                        if (el) return el.value;
+                    }
+                    var checkedEl = document.querySelector("input[name^='" + namePrefix + "']:checked");
+                    return checkedEl ? checkedEl.value : "";
                 };
 
-                if (getVal("WANCName") !== "") errors.push("Hàng \"Connection Name:\" giá trị đúng là Rỗng, khuyến nghị giá trị đúng Rỗng.");
-                if (getVal("mode") !== "route") errors.push("Hàng \"Type:\" giá trị đúng là \"Routing\", khuyến nghị giá trị đúng là \"Routing\".");
-                if (getVal("ServList") !== "1") errors.push("Hàng \"Service List:\" giá trị đúng là \"INTERNET\", khuyến nghị giá trị đúng là \"INTERNET\".");
-                if (getVal("MTU") !== "1492") errors.push("Hàng \"MTU:\" giá trị đúng là \"1492\", khuyến nghị giá trị đúng là \"1492\".");
-                if (getVal("linkMode") !== "PPP") errors.push("Hàng \"Link Type:\" giá trị đúng là PPP, khuyến nghị giá trị đúng là PPP.");
-                if (getVal("TransType") !== "PPPoE") errors.push("Hàng \"PPP Transfer Type:\" giá trị đúng là PPPoE, khuyến nghị giá trị đúng là PPPoE.");
+                if (getVal("WANCName") !== "FPT") errors.push("Hàng \"Connection Name:\" giá trị đúng là FPT, khuyến nghị giá trị đúng là FPT.");
                 if (getVal("UserName") !== "hnfdl-123456-789") errors.push("Hàng \"Username:\" giá trị đúng là hnfdl-123456-789, khuyến nghị giá trị đúng là hnfdl-123456-789.");
                 if (getVal("Password") !== "d123456") errors.push("Hàng \"Password\" giá trị đúng là d123456, khuyến nghị giá trị đúng là d123456.");
-                if (getVal("AuthType") !== "PAP,CHAP,MS-CHAP") errors.push("Hàng \"Authentication Type:\" giá trị đúng là \"Auto\", khuyến nghị giá trị đúng là Auto.");
-                if (getVal("ConnTrigger") !== "AlwaysOn") errors.push("Hàng \"Connection Mode:\" giá trị đúng là \"Always On\", khuyến nghị giá trị đúng là \"Always On\".");
-                if (getVal("IpMode") !== "IPv4") errors.push("Hàng \"IP Version:\" giá trị đúng là \"IPv4\", khuyến nghị giá trị đúng là \"IPv4\".");
-                if (getRadioChecked("IsNAT") !== "1") errors.push("Hàng \"IP NAT:\" giá trị đúng là On vào ô Checkbox, khuyến nghị On vào ô Checkbox.");
-                if (getRadioChecked("VlanEnable") !== "0") errors.push("Hàng \"IP VLAN:\" giá trị đúng là Off vào ô Checkbox, khuyến nghị off vào ô Checkbox.");
 
+                // Đánh dấu đã bấm lưu cấu hình
+                document._ftcIsSaved = true;
+
+                if (errors.length === 0) {
+                    document._ftcHasSuccHint = true;
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = true;
+                        window.top._hasClickedSaveInGuide = true;
+                    }
+                    var succHintEl = document.querySelector('.succHint');
+                    if (succHintEl) {
+                        succHintEl.style.display = 'block';
+                    }
+                } else {
+                    document._ftcHasSuccHint = false;
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = false;
+                    }
+                    var succHintEl = document.querySelector('.succHint');
+                    if (succHintEl) {
+                        succHintEl.style.display = 'none';
+                    }
+                }
+
+                // Nếu đang chạy trong khung iframe của Portal
+                if (window.top && window.top !== window) {
+                    try {
+                        window.top._hasClickedSaveInGuide = true;
+                        if (typeof window.top.onSimulatorSave === 'function') {
+                            window.top.onSimulatorSave(window);
+                        }
+                    } catch (err) { }
+
+                    if (errors.length === 0) {
+                        try {
+                            var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
+                            window.top.postMessage({
+                                type: 'LAB_SUCCESS',
+                                device: 'ONT BE12000',
+                                labName: 'Bài 1-Cấu hình PPPoE',
+                                message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 1-Cấu hình PPPoE trên thiết bị ONT BE12000'
+                            }, '*');
+                        } catch (err) { }
+                    }
+                    return;
+                }
+
+                // Nếu chạy độc lập (không qua Portal)
                 if (errors.length > 0) {
                     alert("BẠN ĐÃ CẤU HÌNH SAI:\n\n" + errors.join("\n"));
                     e.preventDefault();
                     e.stopPropagation();
                 } else {
                     var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
-
-                    // Sửa lại tham số "device" trên URL của trang gốc TRƯỚC khi hiện alert, để khi
-                    // tracking_api.js reload trang gốc thì quay đúng về trang mặc định của BE12000,
-                    // thay vì rơi về thiết bị đang lỡ nằm sẵn trên URL từ trước.
-                    // Giá trị phải khớp "id" trong modules/BE12000/config.json (ONT_BE12000).
                     try {
                         const topUrl = new URL(window.top.location.href);
                         topUrl.searchParams.set('device', 'ONT_BE12000');
@@ -88,9 +144,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     alert("Chúc mừng bạn đã hoàn thành bài Lab " + modeText + " Cấu hình PPPoE trên thiết bị Internet Hub ONT BE12000");
 
-                    // Tự báo cáo hoàn thành đúng tên thiết bị ra trang gốc (tracking_api.js sẽ ghi
-                    // log Firebase đúng tên), thay vì để cơ chế dự phòng "Camera Xuyên Tường" bắt
-                    // alert và ghi nhầm tên thiết bị thành "Hệ thống Lab".
                     try {
                         window.top.postMessage({
                             type: 'LAB_SUCCESS',
@@ -100,9 +153,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         }, '*');
                     } catch (err) { }
 
+                    document._ftcIsSaved = true;
                     e.preventDefault();
                     e.stopPropagation();
-                    window.location.href = "learning.html?lab=1";
                 }
             }
         }, true);
@@ -180,8 +233,9 @@ document.addEventListener("DOMContentLoaded", function () {
             var steps = [
                 { selector: "#internet", text: "Chọn Internet", placement: "bottom", done: false },
                 { selector: "#internetConfig", text: "Chọn WAN", placement: "right", done: false },
-                { selector: "[id^='UserName']", text: "Bước 1: Nhập Username: hnfdl-123456-789", placement: "right", done: false },
-                { selector: "[id^='Password']", text: "Bước 2: Nhập Password: d123456", placement: "right", done: false },
+                { selector: "[id^='WANCName']", text: "Bước 1: Nhập Connection Name: FPT", placement: "right", done: false },
+                { selector: "[id^='UserName']", text: "Bước 2: Nhập Username: hnfdl-123456-789", placement: "right", done: false },
+                { selector: "[id^='Password']", text: "Bước 3: Nhập Password: d123456", placement: "right", done: false },
                 { selector: "[id^='Btn_apply_internet']", text: "Chọn Apply để lưu cấu hình", placement: "top", done: false }
             ];
 

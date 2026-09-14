@@ -46,7 +46,10 @@
   function giaTri(ten) { var el = o(ten); return el ? el.value : ''; }
   function datGiaTri(ten, v) {
     var el = o(ten);
-    if (el) el.value = (v === undefined || v === null) ? '' : String(v);
+    if (el) {
+      el.value = (v === undefined || v === null) ? '' : String(v);
+      if (window.__capNhatNhan) window.__capNhatNhan(el);
+    }
   }
   function batTat(ten) { var el = o(ten); return !!(el && el.checked); }
   function datBatTat(ten, v) { var el = o(ten); if (el) el.checked = !!v; }
@@ -324,7 +327,8 @@
     if (!the) return null;
     var hs = [].slice.call(the.querySelectorAll('h6'));
     for (var i = 0; i < hs.length; i++) {
-      if (hs[i].textContent.trim() === 'DNS') return hs[i].closest('.MuiStack-root');
+      var t = hs[i].textContent.trim();
+      if (t === 'DNS' || t.indexOf('DNS') === 0) return hs[i].closest('.MuiStack-root');
     }
     return null;
   }
@@ -334,6 +338,18 @@
     var bocMau = mauRadio ? mauRadio.closest('.MuiFormControl-root') : null;
     var theV4 = theCua('IPv4 Connection Type');
     var theV6 = theCua('IPv6 Connection Type');
+
+    // Phan biet ro hai muc DNS: DNS (IPv4) va DNS (IPv6)
+    if (theV4) {
+      theV4.querySelectorAll('h6').forEach(function (h) {
+        if (h.textContent.trim() === 'DNS') h.textContent = 'DNS (IPv4)';
+      });
+    }
+    if (theV6) {
+      theV6.querySelectorAll('h6').forEach(function (h) {
+        if (h.textContent.trim() === 'DNS') h.textContent = 'DNS (IPv6)';
+      });
+    }
 
     /* --- B1. Danh dau cac nhom radio DNS CO SAN truoc (phai lam TRUOC khi
        nhan ban them nhom moi, neu khong se lan lon). Ban chup chi co nhom
@@ -515,6 +531,11 @@
 
         if (window.__simSync) window.__simSync();
         apDungAnHien();
+        document.querySelectorAll('.MuiFormControl-root input[type="text"], '
+          + '.MuiFormControl-root input[type="password"], .MuiFormControl-root textarea')
+          .forEach(function (inp) {
+            if (window.__capNhatNhan) window.__capNhatNhan(inp);
+          });
         console.log('[wan_binding] da nap ' + BAN_GHI.length + ' ban ghi usage=' + USAGE);
       })
       .catch(function (e) { console.error('[wan_binding] nap that bai:', e); })
@@ -712,6 +733,7 @@
     noiCacOChon();
     nap().then(function () {
       theoDoi();
+      hienThanhSave();
     });
   }
 

@@ -459,7 +459,6 @@
       });
     });
     w.querySelector('.cancel').addEventListener('click', function () {
-      goThanhSave();
       nap();
     });
   }
@@ -522,7 +521,8 @@
     });
     (canThietBi ? napThietBi() : Promise.resolve())
       .then(nap)
-      .then(theoDoi);
+      .then(theoDoi)
+      .then(hienThanhSave);
   }
 
   if (document.readyState === 'loading') {

@@ -17,37 +17,23 @@ window.TOOLTIPS_AC1000F['LAB_AC1000F_05'] = [
     text: 'Bước 2: chọn LAN',
     position: 'bottom'
   },
-  // Bước 3: IP Address
-  {
-    selector: 'input[name="uiViewIPAddr"], input[name="ipAddress"], #ipAddress',
-    text: 'Bước 3: nhập IP Address, ví dụ 192.168.1.1',
-    position: 'right',
-    expected: '192.168.1.1'
-  },
-  // Bước 4: IP Subnet Mask
-  {
-    selector: 'input[name="uiViewNetMask"], input[name="subnetMask"]',
-    text: 'Bước 4: nhập IP Subnet Mask, ví dụ 255.255.255.0',
-    position: 'right',
-    expected: '255.255.255.0'
-  },
-  // Bước 5: Đảm bảo chọn Enable ở mục DHCP
+  // Bước 3: Đảm bảo chọn Enable ở mục DHCP
   {
     selector: 'input[name="dhcpTypeRadio"][value="1"], input[name="dhcpTypeRadio"]',
-    text: 'Bước 5: đảm bảo chọn Enable cho DHCP Server',
-    position: 'right'
+    text: 'Bước 3: đảm bảo chọn Enable cho DHCP Server',
+    position: 'top'
   },
-  // Bước 6: Ô nhập Lease Time
+  // Bước 4: Ô nhập Lease Time
   {
     selector: 'input[name="dhcp_LeaseTime"], input[name="leaseTime"]',
-    text: 'Bước 6: nhập Lease Time là 86400',
+    text: 'Bước 4: nhập Lease Time là 86400',
     position: 'bottom',
     expected: '86400'
   },
-  // Bước 7: Chọn SAVE
+  // Bước 5: Chọn SAVE
   {
     selector: 'input[name="SaveBtn"], input[value="Save"], input[name="save"], #save, #btnSave, .button1',
-    text: 'Bước 7: chọn SAVE',
+    text: 'Bước 5: chọn Save để lưu cấu hình',
     position: 'right'
   }
 ];

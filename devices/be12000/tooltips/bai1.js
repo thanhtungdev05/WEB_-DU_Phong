@@ -17,19 +17,25 @@ window.TOOLTIPS_BE12000['LAB_BE12000_01'] = [
     position: 'right'
   },
   {
-    selector: '#addInstBar_Internet',
+    selector: '#Internet_container:not(:has([id^="template_Internet_"])) #addInstBar_Internet, #addInstBar_Internet',
     text: 'Chọn Create New Item',
     position: 'bottom'
   },
   {
+    selector: '#WANCName:not(:disabled), input[id^="WANCName"]:not(:disabled)',
+    text: 'Bước 1: Nhập Connection Name: FPT',
+    position: 'right',
+    expected: 'FPT'
+  },
+  {
     selector: '#UserName:not(:disabled), input[id^="UserName"]:not(:disabled)',
-    text: 'Bước 1: Nhập Username: hnfdl-123456-789',
+    text: 'Bước 2: Nhập Username: hnfdl-123456-789',
     position: 'right',
     expected: 'hnfdl-123456-789'
   },
   {
     selector: '#Password:not(:disabled), input[id^="Password"]:not(:disabled)',
-    text: 'Bước 2: Nhập Password: d123456',
+    text: 'Bước 3: Nhập Password: d123456',
     position: 'right',
     expected: 'd123456'
   },

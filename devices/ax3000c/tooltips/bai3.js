@@ -26,31 +26,33 @@ window.TOOLTIPS_AX3000C['LAB_AX3000CV2_03'] = [
     position: 'right',
     hideOnPage: 'wifi'
   },
-  // Bước 1: Khuyến khích đổi tab
+  // Bước 1: Chọn tab Specific SSID (cho IoT)
   {
-    selector: '.tabs:not(:has(.tab.active[data-t="guest"])) .tab[data-t="guest"]',
-    text: 'Bước 1: Cấu hình mạng Guest SSID (cho IoT)',
+    selector: '.tab[data-t="specific"]',
+    text: 'Bước 1: chọn tab Specific SSID',
     position: 'top',
     page: 'wifi'
   },
-  // Bước 2: Đặt tên WIFI IoT
+  // Bước 2: Đặt tên WIFI IoT (chỉ hiện khi đang ở tab Specific SSID)
   {
-    selector: '.tabs:has(.tab.active[data-t="guest"]) ~ .card .row input[type="text"]',
-    text: 'Bước 2: Đặt tên WIFI VD: FPT IoT',
+    selector: 'body[data-active-tab="specific"] .card .row input[type="text"], .tabs:has(.tab.active[data-t="specific"]) ~ .card .row input[type="text"]',
+    text: 'Bước 2: đặt tên WIFI IoT ví dụ: FPT IoT',
     position: 'right',
+    expected: 'FPT IoT',
     page: 'wifi'
   },
-  // Bước 3: Đặt mật khẩu WIFI IoT
+  // Bước 3: Đặt mật khẩu WIFI IoT (chỉ hiện khi đang ở tab Specific SSID)
   {
-    selector: '.tabs:has(.tab.active[data-t="guest"]) ~ .card #pp',
-    text: 'Bước 3: Đặt mật khẩu WIFI VD: fptiot123',
+    selector: 'body[data-active-tab="specific"] .card #pp, .tabs:has(.tab.active[data-t="specific"]) ~ .card #pp',
+    text: 'Bước 3: đặt mật khẩu WIFI IoT ví dụ: fptiot123',
     position: 'right',
+    expected: 'fptiot123',
     page: 'wifi'
   },
-  // Bước 4: Chọn Apply
+  // Bước 4: Chọn Apply (chỉ hiện khi đang ở tab Specific SSID)
   {
-    selector: '.tabs:has(.tab.active[data-t="guest"]) ~ .actions button.apply',
-    text: 'Bước 4: Chọn Apply',
+    selector: 'body[data-active-tab="specific"] .actions button.apply, .tabs:has(.tab.active[data-t="specific"]) ~ .actions button.apply',
+    text: 'Bước 4: chọn Apply để lưu cấu hình',
     position: 'bottom',
     page: 'wifi'
   }

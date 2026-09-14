@@ -366,7 +366,11 @@ class Dispatcher:
             return None, None
         thuc = os.path.join(self.www, *an_toan.split("/"))
         if not os.path.isfile(thuc):
-            return None, None
+            outer = os.path.join(os.path.dirname(self.src), "www", *an_toan.split("/"))
+            if os.path.isfile(outer):
+                thuc = outer
+            else:
+                return None, None
         with open(thuc, "rb") as f:
             du_lieu = f.read()
         kieu = self.KIEU.get(os.path.splitext(thuc)[1].lower(), "application/octet-stream")

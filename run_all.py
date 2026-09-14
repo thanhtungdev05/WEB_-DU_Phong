@@ -389,7 +389,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         if method != 'HEAD':
             try:
                 self.wfile.write(data)
-            except (BrokenPipeError, ConnectionResetError):
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError):
                 pass
 
     def _proxy_api(self, method):
@@ -478,7 +478,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         if method != 'HEAD':
             try:
                 self.wfile.write(data)
-            except (BrokenPipeError, ConnectionResetError):
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError):
                 pass
 
     def dispatch(self, method):

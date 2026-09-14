@@ -21,10 +21,9 @@ var lesson = {
   ],
   practiceUrl: '/sim_ac1000f/cgi-bin/index.asp?page=home_lan.asp',
 
-  // Xóa trắng ô IP Address và Subnet Mask để bắt buộc học viên tự nhập
+  // Xóa trắng ô Lease Time để người dùng tự nhập dữ liệu
   clearFields: [
-    'input[name="uiViewIPAddr"]',
-    'input[name="uiViewNetMask"]'
+    'input[name="dhcp_LeaseTime"]'
   ],
 
   grading: {

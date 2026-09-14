@@ -105,26 +105,16 @@
   (function injectCss() {
     var st = document.createElement('style');
     st.textContent =
+      '.MuiFormControl-root{position:relative !important;display:flex !important;flex-direction:column !important}' +
       '.MuiFormHelperText-root.Mui-disabled{color:rgba(0,0,0,.38)}' +
       '.MuiSelect-select.Mui-disabled,.MuiSelect-icon.Mui-disabled{color:rgba(0,0,0,.38);cursor:default}' +
-      /* NHAN O SELECT KHONG NHAY LEN -- loi bat duoc 2026-08-14 khi kiem
-         m_network__portforward (hop thoai Add New, o Protocol de trong luc
-         chup). '.MuiInputLabel-shrink' KHONG co dong nao trong emotion.css
-         (da kiem: 0 ket qua) -- vi MOI o tren cac trang da chup deu co san
-         gia tri that (vd IP LAN, Connection Type cua WAN) nen nhan cua
-         chung da o san trang thai 'nhay len' NGAY TU LUC CHUP, khac hoan
-         toan voi hop thoai Add New luon chup luc RONG. window.__noiOChon()
-         (dialog_data.js) da tu dat data-shrink/lop nay khi nguoi dung chon,
-         nhung lop khong co luat CSS nen khong doi gi tren man hinh. Day la
-         hang so THU VIEN MUI (bien the outlined, khong tuy bien theo thiet
-         bi) nen bo sung an toan, khong phai bia du lieu thiet bi. */
-      '.MuiInputLabel-root.MuiInputLabel-shrink{' +
-      'transform:translate(14px,-9px) scale(0.75);' +
-      'transform-origin:top left;max-width:calc(133% - 32px);' +
-      /* Chua dung "notch" that cua legend (can do that be rong chu that);
-         dan tam nen trang de chu khong bi vien duong cat ngang -- gan
-         dung, chua doi chieu tung pixel. */
-      'background:#fff;padding:0 4px;margin-left:-4px}' +
+      /* NHAN O SELECT VA O VAN BAN KHONG NHAY LEN -- dam bao luon shrink khi co gia tri hoac focus */
+      '.MuiInputLabel-root.MuiInputLabel-shrink,.MuiInputLabel-root[data-shrink="true"],label.css-1sqw6hd{' +
+      'transform:translate(14px,-9px) scale(0.75) !important;' +
+      'transform-origin:top left !important;max-width:calc(133% - 32px) !important;' +
+      'background:#fff !important;padding:0 4px !important;margin-left:-4px !important;z-index:2 !important;pointer-events:auto !important}' +
+      '.MuiInputLabel-root[data-shrink="false"]:not(.Mui-focused):not(.MuiInputLabel-shrink),label.css-4mi22k:not(.Mui-focused):not(.MuiInputLabel-shrink){' +
+      'transform:translate(14px,16px) scale(1) !important;background:transparent !important;pointer-events:none !important}' +
       /* CHAM GIUA CUA RADIO -- loi bat duoc 2026-08-13 khi kiem bang mat
          trang Advanced > LAN (PD Mode): DOM bao 'Manual' dang chon nhung
          cham van ve o 'Automatic'.
@@ -331,15 +321,44 @@
   function capNhatNhanOVanBan(inp, dangFocus) {
     var nhan = nhanCuaOVanBan(inp);
     if (!nhan) return;
+    var wrap = inp.closest('.MuiFormControl-root') || inp.closest('.MuiTextField-root');
     var root = inp.closest('.MuiOutlinedInput-root, .MuiInputBase-root');
-    var coGiaTri = !!inp.value;
+    var coGiaTri = !!(inp.value && String(inp.value).trim().length > 0);
     var nhay = dangFocus || coGiaTri;
+
     nhan.classList.toggle('MuiInputLabel-shrink', nhay);
     nhan.classList.toggle('MuiFormLabel-filled', coGiaTri);
     nhan.classList.toggle('Mui-focused', dangFocus);
     nhan.setAttribute('data-shrink', nhay ? 'true' : 'false');
+
+    if (nhay) {
+      nhan.classList.remove('css-4mi22k');
+      nhan.classList.add('css-1sqw6hd');
+    } else {
+      nhan.classList.remove('css-1sqw6hd');
+      nhan.classList.add('css-4mi22k');
+    }
+
+    if (wrap) {
+      var leg = wrap.querySelector('fieldset legend');
+      if (leg) {
+        if (nhay) {
+          leg.classList.remove('css-yjsfm1');
+          leg.classList.add('css-14lo706');
+        } else {
+          leg.classList.remove('css-14lo706');
+          leg.classList.add('css-yjsfm1');
+        }
+      }
+    }
+
     if (root) root.classList.toggle('Mui-focused', dangFocus);
   }
+
+  window.__capNhatNhan = function (inp) {
+    if (inp) capNhatNhanOVanBan(inp, document.activeElement === inp);
+  };
+
   function wireNhanOVanBan() {
     document.addEventListener('focusin', function (e) {
       var t = e.target;
@@ -359,10 +378,16 @@
         + 'input[type="email"], input[type="number"], input:not([type]), textarea')) return;
       capNhatNhanOVanBan(t, document.activeElement === t);
     }, true);
+    document.addEventListener('change', function (e) {
+      var t = e.target;
+      if (!t || !t.matches || !t.matches('input[type="text"], input[type="password"], '
+        + 'input[type="email"], input[type="number"], input:not([type]), textarea')) return;
+      capNhatNhanOVanBan(t, document.activeElement === t);
+    }, true);
     // dong bo ngay cac o da co gia tri san (vd sau khi trinh duyet tu dien lai)
     document.querySelectorAll('.MuiFormControl-root input[type="text"], '
       + '.MuiFormControl-root input[type="password"], .MuiFormControl-root textarea')
-      .forEach(function (inp) { if (inp.value) capNhatNhanOVanBan(inp, false); });
+      .forEach(function (inp) { capNhatNhanOVanBan(inp, false); });
   }
 
   /* ---------- 4. Select: bao cho nguoi dung biet ---------- */

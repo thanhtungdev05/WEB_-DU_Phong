@@ -490,14 +490,14 @@
   },
   {
    "ipv4Settings": {
-    "gateway": "192.168.1.254",
-    "ipAddress": "192.168.1.1",
-    "mask": "255.255.255.0",
+    "gateway": "",
+    "ipAddress": "",
+    "mask": "",
     "pppoe": {
      "username": "hnfdl-123456-789",
      "password": "d123456"
     },
-    "protocol": "static"
+    "protocol": "pppoe"
    },
    "id": "wan",
    "devices": [
@@ -506,7 +506,8 @@
    "name": "wan",
    "mtu": 1500,
    "dnsServers": [
-    "8.8.8.8"
+    "8.8.8.8",
+    "8.8.4.4"
    ],
    "usage": "Internet",
    "vlan": {
@@ -539,7 +540,12 @@
     "slaacEnabled": true
    },
    "autoDnsEnabled": false,
-   "usage": "Internet"
+   "usage": "Internet",
+   "vlan": {
+    "enabled": false,
+    "autoDetectionEnabled": false,
+    "id": 0
+   }
   },
   {
    "ipv4Settings": {
@@ -585,68 +591,7 @@
   "receivedPower": -30,
   "maxBitRate": 10000000000
  },
- "portForwarding/policies": [
-  {
-   "enabled": true,
-   "name": "camera",
-   "protocol": "TCP + UDP",
-   "source": {
-    "portRange": "8080",
-    "interfaceId": "wan"
-   },
-   "destination": {
-    "portRange": "80",
-    "ipAddress": "192.168.1.20",
-    "interfaceId": "lan"
-   },
-   "id": "cfg664200"
-  },
-  {
-   "enabled": true,
-   "name": "Camera",
-   "protocol": "TCP + UDP",
-   "source": {
-    "portRange": "8080",
-    "interfaceId": "wan"
-   },
-   "destination": {
-    "portRange": "80",
-    "ipAddress": "192.168.1.20",
-    "interfaceId": "lan"
-   },
-   "id": "cfg293433"
-  },
-  {
-   "enabled": true,
-   "name": "camera",
-   "protocol": "TCP + UDP",
-   "source": {
-    "portRange": "8080",
-    "interfaceId": "wan"
-   },
-   "destination": {
-    "portRange": "80",
-    "ipAddress": "192.168.1.20",
-    "interfaceId": "lan"
-   },
-   "id": "cfg379509"
-  },
-  {
-   "enabled": true,
-   "name": "camera",
-   "protocol": "TCP + UDP",
-   "source": {
-    "portRange": "8080",
-    "interfaceId": "wan"
-   },
-   "destination": {
-    "portRange": "80",
-    "ipAddress": "192.168.1.20",
-    "interfaceId": "lan"
-   },
-   "id": "cfg080045"
-  }
- ],
+ "portForwarding/policies": [],
  "publicLan": {
   "enabled": false,
   "routing": {

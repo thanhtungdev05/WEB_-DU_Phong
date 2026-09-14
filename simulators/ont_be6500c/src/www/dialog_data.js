@@ -61,39 +61,55 @@ window.__moHopThoaiBieuMau = function (tenPaper) {
   var d = document.createElement('div');
   d.setAttribute('role', 'presentation');
   d.className = 'MuiDialog-root MuiModal-root css-126xj0f';
-  d.innerHTML =
-    '<div aria-hidden="true" class="MuiBackdrop-root MuiModal-backdrop css-919eu4"></div>' +
+  d.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 1300 !important; display: flex !important; align-items: center !important; justify-content: center !important; overflow-y: auto !important; background: transparent !important;';
+  
+  var st = document.createElement('style');
+  st.textContent =
+    '.MuiDialog-root .MuiFormControl-root{position:relative !important;display:flex !important;flex-direction:column !important;width:100% !important;margin:0 !important}' +
+    '.MuiDialog-root .MuiDialogTitle-root{display:flex !important;align-items:center !important;justify-content:space-between !important;padding:16px 24px !important;border-bottom:1px solid #e5e7eb !important;margin:0 !important;position:relative !important}' +
+    '.MuiDialog-root .MuiDialogTitle-root .panel{order:2 !important;margin-left:auto !important}' +
+    '.MuiDialog-root .MuiDialogTitle-root h6,.MuiDialog-root .MuiDialogTitle-root h2{order:1 !important;margin:0 !important;font-size:18px !important;font-weight:600 !important;color:#111827 !important}' +
+    '.MuiDialog-root .MuiDialogTitle-root button{background:transparent !important;border:none !important;cursor:pointer !important;padding:4px !important;border-radius:50% !important;display:flex !important;align-items:center !important;justify-content:center !important;color:#6b7280 !important;transition:background-color 150ms,color 150ms !important}' +
+    '.MuiDialog-root .MuiDialogTitle-root button:hover{background-color:#f3f4f6 !important;color:#111827 !important}' +
+    '.MuiDialog-root .MuiDialogContent-root{padding:20px 24px !important;overflow-y:auto !important;box-sizing:border-box !important;display:flex !important;flex-direction:column !important;gap:16px !important}' +
+    '.MuiDialog-root .MuiDialogContent-root > .MuiStack-root{display:flex !important;flex-direction:column !important;gap:16px !important;width:100% !important}' +
+    '.MuiDialog-root .MuiStack-root.css-lgk7oi{display:flex !important;flex-direction:row !important;gap:16px !important;align-items:center !important;width:100% !important}' +
+    '.MuiDialog-root .MuiStack-root.css-lgk7oi > *{flex:1 1 0% !important;min-width:0 !important}' +
+    '.MuiDialog-root .MuiOutlinedInput-root,.MuiDialog-root .MuiInputBase-root{position:relative !important;border-radius:4px !important;box-sizing:border-box !important;width:100% !important;background-color:#ffffff !important}' +
+    '.MuiDialog-root .MuiOutlinedInput-input,.MuiDialog-root .MuiInputBase-input{box-sizing:border-box !important;padding:12px 14px !important;height:auto !important;width:100% !important;font-size:14px !important}' +
+    '.MuiDialog-root .MuiDialogActions-root{display:flex !important;align-items:center !important;justify-content:flex-end !important;padding:16px 24px !important;border-top:1px solid #e5e7eb !important;margin:0 !important;gap:12px !important}' +
+    '.MuiDialog-root .dialogForm,.MuiDialog-root .alternative-layout{display:flex !important;flex-direction:row !important;align-items:center !important;justify-content:flex-end !important;gap:12px !important;margin:0 !important}' +
+    '.MuiDialog-root button.dlg-luu,.MuiDialog-root button.submit{order:2 !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;background-color:#2f54eb !important;color:#ffffff !important;font-weight:600 !important;font-size:14px !important;padding:8px 24px !important;border-radius:4px !important;border:none !important;cursor:pointer !important;height:38px !important;min-width:80px !important;box-shadow:0 2px 4px rgba(47,84,235,0.25) !important;transition:all 150ms ease !important}' +
+    '.MuiDialog-root button.dlg-luu:hover,.MuiDialog-root button.submit:hover{background-color:#1d39c4 !important;box-shadow:0 4px 8px rgba(29,57,196,0.35) !important}' +
+    '.MuiDialog-root button.dlg-huybieumau,.MuiDialog-root button.cancel{order:1 !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;background-color:#ffffff !important;color:#4b5563 !important;font-weight:500 !important;font-size:14px !important;padding:8px 18px !important;border-radius:4px !important;border:1px solid #d1d5db !important;cursor:pointer !important;height:38px !important;min-width:80px !important;transition:all 150ms ease !important}' +
+    '.MuiDialog-root button.dlg-huybieumau:hover,.MuiDialog-root button.cancel:hover{background-color:#f9fafb !important;border-color:#9ca3af !important;color:#111827 !important}';
+  d.appendChild(st);
+
+  d.innerHTML +=
+    '<div aria-hidden="true" class="MuiBackdrop-root MuiModal-backdrop css-919eu4" style="position: fixed !important; inset: 0 !important; width: 100% !important; height: 100% !important; background-color: rgba(0, 0, 0, 0.5) !important; z-index: 1300 !important;"></div>' +
     '<div tabindex="0" data-testid="sentinelStart"></div>' +
-    '<div class="MuiDialog-container MuiDialog-scrollPaper css-16u656j" role="presentation" tabindex="-1">' +
+    '<div class="MuiDialog-container MuiDialog-scrollPaper css-16u656j" role="presentation" tabindex="-1" style="position: relative !important; z-index: 1301 !important; width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 20px !important; box-sizing: border-box !important; outline: 0 !important;">' +
     html + '</div><div tabindex="0" data-testid="sentinelEnd"></div>';
   document.body.appendChild(d);
+
+  var paper = d.querySelector('.MuiDialog-paper, .MuiPaper-root');
+  if (paper) {
+    paper.style.cssText = 'position: relative !important; z-index: 1302 !important; margin: auto !important; max-height: calc(100vh - 48px) !important; max-width: 600px !important; width: 100% !important; background: #ffffff !important; border-radius: 8px !important; box-shadow: 0 10px 40px rgba(0,0,0,0.35) !important; display: flex !important; flex-direction: column !important; overflow-y: auto !important; box-sizing: border-box !important;';
+  }
+
   function dong() { if (d.parentNode) d.parentNode.removeChild(d); }
+  var bd = d.querySelector('.MuiBackdrop-root');
+  if (bd) bd.addEventListener('click', dong);
   var oHuy = d.querySelector('.dlg-huybieumau');
   var oLuu = d.querySelector('.dlg-luu');
   if (oHuy) oHuy.addEventListener('click', dong);
-  // GD6 (2026-08-14), SUA LAI ket luan sai cua GD4: .css-vpb1cu (nut
-  // Add/ADD/Save/SAVE) co 'display:none' trong CSSOM chup tu thiet bi
-  // that KHONG PHAI la loi chup thieu -- do la trang thai PRISTINE that
-  // cua form (react-hook-form formState.isDirty=false). Da kiem truc
-  // tiep tren thiet bi that (192.168.1.1, dieu khien Chrome): mo hop
-  // thoai Add New -> nut AN, go 1 ky tu vao truong bat ky -> nut HIEN
-  // (class doi sang .css-tldruj, display:flex -- rule nay CUNG co san
-  // trong emotion.css, day du ca hai trang thai, khong thieu bang
-  // chung). Ket luan GD4 "van hien, da xac nhan bang mat" nhieu kha
-  // nang do luc do form DA CO du lieu go san khi thu (khong bat duoc
-  // trang thai pristine that su). Sua: KHONG ep display:flex nua -- de
-  // nut o dung trang thai an mac dinh cua lop chup duoc, roi tu hien
-  // ngay lan dau nguoi dung sua bat ky truong nao trong form (uy quyen
-  // cho goi() ben duoi, khop dung "isDirty" cua react-hook-form o muc
-  // don gian nhat: co it nhat mot lan input/change).
+  var nutDongX = d.querySelector('[data-testid="CloseOutlinedIcon"]');
+  if (nutDongX) {
+    var bX = nutDongX.closest('button');
+    if (bX) bX.addEventListener('click', dong);
+  }
   if (oLuu) {
-    var hienKhiSua = function () {
-      oLuu.style.display = 'flex';
-      d.removeEventListener('input', hienKhiSua);
-      d.removeEventListener('change', hienKhiSua);
-    };
-    d.addEventListener('input', hienKhiSua);
-    d.addEventListener('change', hienKhiSua);
+    oLuu.style.display = 'inline-flex';
   }
   return { goc: d, dong: dong, oHuy: oHuy, oLuu: oLuu };
 };
@@ -107,14 +123,17 @@ window.__moHopThoai = function (tenPaper) {
   var d = document.createElement('div');
   d.setAttribute('role', 'presentation');
   d.className = 'MuiDialog-root MuiModal-root css-126xj0f';
+  d.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 1300 !important; display: flex !important; align-items: center !important; justify-content: center !important; overflow-y: auto !important; background: transparent !important;';
   d.innerHTML =
-    '<div aria-hidden="true" class="MuiBackdrop-root MuiModal-backdrop css-919eu4"></div>' +
+    '<div aria-hidden="true" class="MuiBackdrop-root MuiModal-backdrop css-919eu4" style="position: fixed !important; inset: 0 !important; width: 100% !important; height: 100% !important; background-color: rgba(0, 0, 0, 0.5) !important; z-index: 1300 !important;"></div>' +
     '<div tabindex="0" data-testid="sentinelStart"></div>' +
-    '<div class="MuiDialog-container MuiDialog-scrollPaper css-16u656j" role="presentation" tabindex="-1">' +
-    '<div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation24 MuiDialog-paper MuiDialog-paperScrollPaper MuiDialog-paperWidthSm MuiDialog-paperFullWidth" role="dialog">' +
+    '<div class="MuiDialog-container MuiDialog-scrollPaper css-16u656j" role="presentation" tabindex="-1" style="position: relative !important; z-index: 1301 !important; width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 24px !important; box-sizing: border-box !important; outline: 0 !important;">' +
+    '<div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation24 MuiDialog-paper MuiDialog-paperScrollPaper MuiDialog-paperWidthSm MuiDialog-paperFullWidth" role="dialog" style="position: relative !important; z-index: 1302 !important; margin: auto !important; max-height: calc(100vh - 64px) !important; max-width: 500px !important; width: 100% !important; background: #ffffff !important; border-radius: 8px !important; box-shadow: 0 10px 40px rgba(0,0,0,0.35) !important; display: flex !important; flex-direction: column !important; overflow-y: auto !important;">' +
     html + '</div></div><div tabindex="0" data-testid="sentinelEnd"></div>';
   document.body.appendChild(d);
   function dong() { if (d.parentNode) d.parentNode.removeChild(d); }
+  var bd = d.querySelector('.MuiBackdrop-root');
+  if (bd) bd.addEventListener('click', dong);
   var oHuy = d.querySelector('.dlg-huy');
   var oTiepTuc = d.querySelector('.dlg-tieptuc');
   if (oHuy) oHuy.addEventListener('click', dong);
@@ -130,8 +149,9 @@ window.__moHopThoai = function (tenPaper) {
    ('sim-chon-*') o ba cho: o Mode cua trang LAN, o Protocol cua Port
    Forwarding, o Device/MAC cua Reserved IP. Nay thay het bang markup that.
 
-   window.__moMenuChon(oNeo, dsTuyChon, giaTriDangChon, khiChon)
-     oNeo            : phan tu .MuiSelect-select (hoac o Autocomplete) de neo vi tri
+   window.__moMenuChon(oAnchor, ten, dsTuyChon, giaTriDangChon, khiChon)
+     oAnchor         : phan tu de can le popup (MuiSelect-select hoac button)
+     ten             : ten dinh danh de dat id cho menu
      dsTuyChon       : [{gt: '<data-value>', chu: '<chu hien thi>', voHieu: false}]
      giaTriDangChon  : gia tri hien tai, de danh dau Mui-selected
      khiChon(gt,chu) : goi lai khi nguoi dung chon mot muc
@@ -143,10 +163,22 @@ window.__moHopThoai = function (tenPaper) {
    (xem reference/source/do_security_mode_wifi.json):
      { gt, chip: 'Default'|null, phan: ['WPA2/3', '(2.4GHz, 5GHz)'] }
    Tra ve ham dong() de tu dong neu can. */
-window.__moMenuChon = function (oNeo, dsTuyChon, giaTriDangChon, khiChon) {
+window.__moMenuChon = function (oAnchor, dsTuyChon, giaTriDangChon, khiChon) {
   var cu = document.querySelector('.MuiPopover-root[data-sim-menu]');
   if (cu) { cu.remove(); return null; }
-  if (!oNeo) return null;
+  if (!oAnchor) return null;
+
+  var ten = 'chon';
+  if (typeof dsTuyChon === 'string') {
+    ten = dsTuyChon;
+    dsTuyChon = arguments[2];
+    giaTriDangChon = arguments[3];
+    khiChon = arguments[4];
+  } else {
+    ten = oAnchor.getAttribute('name')
+      || (oAnchor.id || '').replace('mui-component-select-', '')
+      || 'chon';
+  }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -154,10 +186,7 @@ window.__moMenuChon = function (oNeo, dsTuyChon, giaTriDangChon, khiChon) {
     });
   }
 
-  var r = oNeo.getBoundingClientRect();
-  var ten = oNeo.getAttribute('name')
-    || (oNeo.id || '').replace('mui-component-select-', '')
-    || 'chon';
+  var r = oAnchor.getBoundingClientRect();
 
   function noiDung(t) {
     if (!t.phan) return esc(t.chu);
@@ -184,32 +213,22 @@ window.__moMenuChon = function (oNeo, dsTuyChon, giaTriDangChon, khiChon) {
       + (dangChon ? ' Mui-selected' : '')
       + (t.voHieu ? ' Mui-disabled' : '')
       + ' css-x3whsd';
+    var bgStyle = dangChon ? 'background-color: rgba(47, 84, 235, 0.08) !important; font-weight: 500 !important; color: #2f54eb !important;' : 'background-color: transparent; color: rgba(0, 0, 0, 0.87);';
+    var liStyle = 'list-style: none !important; margin: 0 !important; padding: 8px 16px !important; min-height: 36px !important; display: flex !important; align-items: center !important; cursor: pointer !important; font-family: Inter, -apple-system, sans-serif !important; font-size: 14px !important; box-sizing: border-box !important; ' + bgStyle;
     return '<li class="' + lop + '" tabindex="' + (dangChon ? '0' : '-1')
       + '" role="option" color="secondary"'
       + ' aria-selected="' + (dangChon ? 'true' : 'false') + '"'
       + (t.voHieu ? ' aria-disabled="true"' : '')
+      + ' style="' + liStyle + '"'
       + ' data-value="' + esc(t.gt) + '">' + noiDung(t)
       + '<span class="MuiTouchRipple-root css-w0pj6f"></span></li>';
   }).join('');
 
-  /* GD5 phan 2 (2026-08-14): bang chung chi chup MARKUP (class) cua popup,
-     KHONG chup duoc luat CSS 'position' cho '.MuiPopover-paper'/'css-ivedc8'
-     (emotion.css khong co dong nao chua 2 chuoi do -- da kiem: 0 ket qua).
-     Neu khong tu dat 'position' bang inline-style thi trinh duyet mac dinh
-     'static', top/left vo hieu -> popup ve LAC vao cuoi <body>, ngoai vung
-     nhin. O may tinh it lo vi trang dai; o dien thoai (khung 502x731) thi
-     lo ngay, phai cuon moi thay -- bat duoc khi kiem m_network__portforward.
-     Dung 'fixed' (khong phai 'absolute') de khoi phai cong them scrollY/X:
-     getBoundingClientRect() da la toa do theo khung nhin.
+  var menuTop = (r.bottom + 180 > window.innerHeight && r.top > 180)
+    ? Math.max(8, Math.round(r.top - 160))
+    : Math.round(r.bottom + 2);
+  var menuLeft = Math.max(8, Math.round(r.left));
 
-     Thu hai: can 'z-index' RO RANG. Moi MuiModal-root that (Dialog/Drawer)
-     mang z-index:1300 (hang so MUI mac dinh, dung captured trong emotion.css
-     vi da co dialog duoc chup). Popup cua ta khong dat gi -> 'auto', tuc la
-     KHONG lap stacking context rieng -> ve NGAY DUOI Dialog dang mo (z-index
-     1300) du DOM sau hon. Trieu chung: mo Select trong dialog Add New thi
-     popup 'co trong DOM, dung vi tri' nhung KHONG THAY -- bi Dialog che.
-     Dat cung 1300 nhu that thi thu tu DOM (ta luon la con cuoi cung cua
-     <body>) se thang khi z-index bang nhau. */
   var d = document.createElement('div');
   d.setAttribute('role', 'presentation');
   d.setAttribute('data-sim-menu', '1');
@@ -217,21 +236,32 @@ window.__moMenuChon = function (oNeo, dsTuyChon, giaTriDangChon, khiChon) {
   d.className = 'MuiPopover-root MuiMenu-root MuiModal-root css-1sucic7';
   d.innerHTML =
     '<div aria-hidden="true" class="MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-esi9ax" '
-    + 'style="opacity: 1; position: fixed; inset: 0; z-index: 1300;"></div>'
+    + 'style="opacity: 1; position: fixed; inset: 0; z-index: 1300; background: transparent;"></div>'
     + '<div tabindex="0" data-testid="sentinelStart"></div>'
     + '<div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation8 '
     + 'MuiPopover-paper MuiMenu-paper MuiMenu-paper css-ivedc8" tabindex="-1" '
-    + 'style="opacity: 1; transform: none; position: fixed; z-index: 1300; min-width: ' + Math.round(r.width) + 'px; '
-    + 'top: ' + Math.round(r.top) + 'px; '
-    + 'left: ' + Math.round(r.left) + 'px; transform-origin: 0px 0px;">'
+    + 'style="opacity: 1; transform: none; position: fixed; z-index: 1301; min-width: ' + Math.max(160, Math.round(r.width)) + 'px; '
+    + 'top: ' + menuTop + 'px; '
+    + 'left: ' + menuLeft + 'px; transform-origin: 0px 0px; background: #ffffff !important; border-radius: 4px !important; '
+    + 'box-shadow: 0px 5px 15px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14) !important; border: 1px solid #d0d7de !important; overflow-x: hidden; overflow-y: auto; max-height: calc(100% - 96px);">'
     + '<ul class="MuiList-root MuiList-padding MuiMenu-list css-r8u8y9" role="listbox" '
-    + 'tabindex="-1" style="padding: 0px;">' + muc + '</ul></div>'
+    + 'tabindex="-1" style="list-style: none !important; margin: 0 !important; padding: 6px 0 !important; background: #ffffff !important;">' + muc + '</ul></div>'
     + '<div tabindex="0" data-testid="sentinelEnd"></div>';
   document.body.appendChild(d);
 
   function dong() { if (d.parentNode) d.parentNode.removeChild(d); }
   d.querySelector('.MuiBackdrop-root').addEventListener('click', dong);
   d.querySelectorAll('li').forEach(function (li) {
+    li.addEventListener('mouseenter', function () {
+      if (li.className.indexOf('Mui-disabled') < 0 && li.className.indexOf('Mui-selected') < 0) {
+        li.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
+      }
+    });
+    li.addEventListener('mouseleave', function () {
+      if (li.className.indexOf('Mui-selected') < 0) {
+        li.style.backgroundColor = 'transparent';
+      }
+    });
     li.addEventListener('click', function () {
       if (li.className.indexOf('Mui-disabled') >= 0) return;
       dong();
@@ -474,7 +504,27 @@ window.__dongBoNhanChonThuc = function (nhan, coGiaTri) {
   nhan.setAttribute('data-shrink', coGiaTri ? 'true' : 'false');
   nhan.classList.toggle('MuiInputLabel-shrink', !!coGiaTri);
   nhan.classList.toggle('MuiFormLabel-filled', !!coGiaTri);
-}
+  if (coGiaTri) {
+    nhan.classList.remove('css-4mi22k');
+    nhan.classList.add('css-1sqw6hd');
+  } else {
+    nhan.classList.remove('css-1sqw6hd');
+    nhan.classList.add('css-4mi22k');
+  }
+  var fc = nhan.closest('.MuiFormControl-root');
+  if (fc) {
+    var leg = fc.querySelector('fieldset legend');
+    if (leg) {
+      if (coGiaTri) {
+        leg.classList.remove('css-yjsfm1');
+        leg.classList.add('css-14lo706');
+      } else {
+        leg.classList.remove('css-14lo706');
+        leg.classList.add('css-yjsfm1');
+      }
+    }
+  }
+};
 
 window.__noiOChon = function (oHienThi, oInput, dsTuyChon, khiDoi) {
   if (!oHienThi || !oInput || oHienThi.__simDaNoi) return;

@@ -2062,7 +2062,7 @@ function doIsolateIGMPChange(){
 							<tr height="30px">
 								<td width="250px" align=left class="tabdata" style="padding-left:20px;">Start IP</td>
 							     	<td align=left class="tabdata">
-							        	<INPUT TYPE="TEXT" NAME="StartIp" SIZE="15" MAXLENGTH="15" onblur=blockStartIP(); VALUE="" >	        
+							        	<INPUT TYPE="TEXT" NAME="StartIp" SIZE="15" MAXLENGTH="15" onblur=blockStartIP(); VALUE="192.168.1.2" >	        
 								</td>
 							</tr>
 							<!--cindy delete ip pool count-->
@@ -2077,7 +2077,7 @@ function doIsolateIGMPChange(){
 							<tr height="30px">
 								<td width="250px" align=left class="tabdata" style="padding-left:20px;"> End IP</td>
 							     	<td align=left class="tabdata">
-							        	<INPUT TYPE="TEXT" NAME="EndIp" SIZE="15" MAXLENGTH="15" onblur=blockEndIP(); VALUE="" >	        
+							        	<INPUT TYPE="TEXT" NAME="EndIp" SIZE="15" MAXLENGTH="15" onblur=blockEndIP(); VALUE="192.168.1.254" >	        
 							 	</td>
 							</tr>
 							<!--cindy add end ip-->

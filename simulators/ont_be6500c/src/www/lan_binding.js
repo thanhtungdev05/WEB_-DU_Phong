@@ -525,6 +525,7 @@
       wireModeSelect();
       nap().then(function () {
         theoDoi();
+        hienThanhSave();
       });
     } else {
       // Reserved IP: bang_binding.js da lo form cua trang nay, o day CHI

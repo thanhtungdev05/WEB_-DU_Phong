@@ -12,6 +12,7 @@ phuc vu muc tieu ao hoa kieu GNS3 (CLAUDE.md muc 3.3).
 Chi dung thu vien chuan Python, khong phu thuoc ngoai.
 """
 import argparse
+import json
 import os
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -77,6 +78,10 @@ class Handler(BaseHTTPRequestHandler):
         ts = self._tham_so_url()
         loai, tag = ts.get("_type"), ts.get("_tag")
 
+        if duong_dan in ("/api/reset", "/reset_lab") or ts.get("reset") == "1":
+            sim["store"].khoi_phuc_xuat_xuong()
+            return self._gui(json.dumps({"status": "ok", "message": "Reset to factory"}), "application/json; charset=utf-8")
+
         if loai == "loginData":
             return self._login_get(tag)
         if loai == "hiddenData":
@@ -100,7 +105,7 @@ class Handler(BaseHTTPRequestHandler):
 
         # trang khung: chua dang nhap -> trang dang nhap, da dang nhap -> trang chinh
         if duong_dan in ("/", "/index.html", "/login", "/login-page.html"):
-            if duong_dan in ("/login", "/login-page.html") or ts.get("logout") == "1":
+            if ts.get("logout") == "1":
                 sim["session"].da_dang_nhap = False
 
             da_vao = sim["session"].con_han()

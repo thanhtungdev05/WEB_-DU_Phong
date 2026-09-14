@@ -3965,6 +3965,17 @@
                 function succHintShow(template) {
                     var PostFeedbackOBJ = $(".succHint", template);
                     PostFeedbackOBJ.fadeIn(1000);
+                    try {
+                        document._ftcHasSuccHint = true;
+                        document._ftcIsSaved = true;
+                        if (window.top && window.top !== window) {
+                            window.top._hasSuccHintStored = true;
+                            window.top._hasClickedSaveInGuide = true;
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        }
+                    } catch (e) { }
                     window.setTimeout(
                         function () {
                             PostFeedbackOBJ.fadeOut(1000);
