@@ -1284,14 +1284,6 @@
         } catch (e) { }
       }
 
-      // Nếu đã có thông báo "Your data have been stored!", đối với BE12000 hoặc khi thiết bị đã xác nhận lưu thành công
-      if (hasStoredNotification) {
-        isMatch = true;
-        if (!actualValue || actualValue === '(Chưa nhập / Chưa tìm thấy)') {
-          actualValue = expectedVal;
-        }
-      }
-
       if (isMatch) {
         // Đối với thiết bị AX3000C, AX3000H v2 và AX3000S, bắt buộc trang chứa phần tử phải được bấm Save/Apply thành công
         if ((currentDeviceId === 'ax3000c' || currentDeviceId === 'ax3000hv2' || currentDeviceId === 'ax3000s') && !isSaved) {
@@ -1364,9 +1356,8 @@
     // === BỘ LỌC AUTO-BASELINE (TÌM THAO TÁC THỪA) ===
     let unexpectedErrors = [];
 
-    // Nếu đã có thông báo "Your data have been stored!", không kiểm tra lỗi thao tác thừa
-    if (!hasStoredNotification) {
-      allDocs.forEach(doc => {
+    // Save thành công chỉ xác nhận dữ liệu đã được lưu; vẫn phải kiểm tra thao tác thừa.
+    allDocs.forEach(doc => {
         if (doc._ftcOriginalValues) {
           Object.keys(doc._ftcOriginalValues).forEach(uid => {
             const originalValue = doc._ftcOriginalValues[uid];
@@ -1420,11 +1411,10 @@
           });
         }
       });
-    }
 
-    // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa (hoặc có hasStoredNotification)
+    // Chỉ pass khi đủ rule và không có thao tác thừa.
     const hasUnexpected = unexpectedErrors.length > 0;
-    const passed = hasStoredNotification || ((passedCount === rules.length) && !hasUnexpected);
+    const passed = (passedCount === rules.length) && !hasUnexpected;
     const score = passed ? 100 : Math.round((passedCount / rules.length) * (hasUnexpected ? 99 : 100));
 
     let finalTotalRules = rules.length + unexpectedErrors.length;

@@ -51,6 +51,7 @@ def apply_sim_state_to_html(html_str, p_path):
         defaults = {
             "StartIp": "192.168.1.2",
             "EndIp": "192.168.1.254",
+            "dhcp_LeaseTime": "86400",
         }
         for field_name, default_value in defaults.items():
             html_str = re.sub(
