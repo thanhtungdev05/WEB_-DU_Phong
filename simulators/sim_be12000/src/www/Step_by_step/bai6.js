@@ -8,7 +8,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var labId = params.get('lab');
     var mode = params.get('mode');
 
-    if (labId === '13') {
+    var isLab6 = labId === '13' || labId === '6' || labId === 'LAB_BE12000_06' || (window.top && window.top._currentLesson && window.top._currentLesson.id === 'LAB_BE12000_06');
+
+    if (isLab6) {
 
         // ====================================================================
         // PHẦN 0: XÓA TRẮNG CÁC Ô DỮ LIỆU CÓ SẴN (Cho cả Hướng dẫn & Thực hành)
@@ -16,13 +18,17 @@ document.addEventListener("DOMContentLoaded", function () {
         var clearedFields = {};
         setInterval(function () {
             var selectors = [
+                "[id^='Alias']:not(#Alias)",
                 "[id='Alias:0']",
-                "[id='sub_RemoteHost3:0']",
-                "[id='sub_RemoteHostEndRange3:0']",
+                "[id^='InternalClient']:not(#InternalClient)",
                 "[id='InternalClient:0']",
+                "[id^='ExternalPort']:not(#ExternalPort)",
                 "[id='ExternalPort:0']",
+                "[id^='ExternalPortEndRange']:not(#ExternalPortEndRange)",
                 "[id='ExternalPortEndRange:0']",
+                "[id^='InternalPort']:not(#InternalPort)",
                 "[id='InternalPort:0']",
+                "[id^='InternalPortEndRange']:not(#InternalPortEndRange)",
                 "[id='InternalPortEndRange:0']"
             ];
             selectors.forEach(function (sel) {
@@ -37,7 +43,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Xét ĐÚNG MỘT LẦN ngay lần đầu nhìn thấy ô:
                 //  - có dữ liệu mặc định  -> xóa trắng
                 //  - vốn đã rỗng          -> vẫn đánh dấu "đã xử lý"
-                // Nhờ vậy vòng lặp không còn nằm chờ để "nuốt" mất dữ liệu học viên nhập lần đầu.
                 if (el.value !== "") el.value = "";
                 clearedFields[key] = true;
             });
@@ -47,32 +52,21 @@ document.addEventListener("DOMContentLoaded", function () {
         // PHẦN 1: KIỂM TRA ĐIỀU KIỆN (VALIDATION) KHI NHẤN APPLY
         // ====================================================================
         document.addEventListener('click', function (e) {
-            if (e.target && e.target.id && e.target.id.startsWith('Btn_apply_PortForwarding')) {
+            if (e.target && e.target.id && (e.target.id.indexOf('Btn_apply_PortForwarding') !== -1 || e.target.id.startsWith('Btn_apply_PortForwarding'))) {
                 var container = e.target.closest("div[id^='template_PortForwarding']");
                 if (!container) return;
 
-                var suffix = container.id.split("_").pop(); // Lấy số index "0", "1", ...
+                var suffix = container.id.split("_").pop();
+                if (suffix === "PortForwarding") suffix = "0";
 
                 var errors = [];
                 var getVal = function (idName) {
-                    var el = container.querySelector("[id='" + idName + ":" + suffix + "']");
+                    var el = container.querySelector("[id='" + idName + ":" + suffix + "']") || container.querySelector("[id^='" + idName + "']") || container.querySelector("[name='" + idName + "']");
                     return el ? el.value.trim() : "";
-                };
-
-                var getIP = function (prefix) {
-                    var ipParts = [];
-                    for (var i = 0; i < 4; i++) {
-                        var el = container.querySelector("[id='" + prefix + i + ":" + suffix + "']");
-                        ipParts.push(el ? el.value.trim() : "");
-                    }
-                    return ipParts.join(".");
                 };
 
                 var name = getVal("Alias");
                 var protocol = getVal("Protocol");
-                var wanConn = getVal("S_Interface");
-                var wanHost = getIP("sub_RemoteHost");
-                var wanHostEnd = getIP("sub_RemoteHostEndRange");
                 var lanHost = getVal("InternalClient");
                 var wanPort = getVal("ExternalPort");
                 var wanPortEnd = getVal("ExternalPortEndRange");
@@ -80,46 +74,76 @@ document.addEventListener("DOMContentLoaded", function () {
                 var lanPortEnd = getVal("InternalPortEndRange");
 
                 // 1. Name
-                if (name !== "NAT FPT") {
-                    errors.push("- Hàng 'Name:': Khuyến nghị giá trị đúng là 'NAT FPT'.");
+                if (!name) {
+                    errors.push("- Hàng 'Name': Cần nhập tên rule (ví dụ: 'NAT FPT').");
                 }
 
                 // 2. Protocol
-                var validProtocols = ["TCP", "UDP", "TCP&UDP"];
-                if (validProtocols.indexOf(protocol) === -1) {
-                    errors.push("- Hàng 'Protocol:': Khuyến nghị giá trị đúng là 'TCP, UDP hoặc TCP/UDP'.");
+                var validProtocols = ["TCP", "UDP", "BOTH", "TCP&UDP", "TCP+UDP", "TCP AND UDP"];
+                if (validProtocols.indexOf(protocol.toUpperCase()) === -1) {
+                    errors.push("- Hàng 'Protocol': Cần chọn TCP, UDP hoặc TCP And UDP.");
                 }
 
-                // 3. WAN Connection
-                if (wanConn !== "WANAll") {
-                    errors.push("- Hàng 'WAN Connection:': Khuyến nghị giá trị đúng là 'Auto'.");
+                // 3. LAN Host
+                if (lanHost !== "192.168.1.100" && !lanHost.startsWith("192.168.1.")) {
+                    errors.push("- Hàng 'LAN Host': Khuyến nghị giá trị đúng là '192.168.1.100'. Thực tế: '" + (lanHost || 'Trống') + "'");
                 }
 
-                // 4. WAN Host IP Address
-                if (wanHost !== "192.168.1.1" || wanHostEnd !== "192.168.1.1") {
-                    errors.push("- Hàng 'WAN Host IP Address:': Khuyến nghị giá trị đúng là '192.168.1.1'.");
+                // 4. WAN Port
+                var effectiveWanPort = wanPort || wanPortEnd;
+                if (effectiveWanPort !== "8080" && effectiveWanPort !== "80" && effectiveWanPort !== "443" && effectiveWanPort !== "8000") {
+                    errors.push("- Hàng 'WAN Port': Khuyến nghị giá trị đúng là '8080'. Thực tế: '" + (effectiveWanPort || 'Trống') + "'");
                 }
 
-                // 5. LAN Host
-                if (lanHost !== "192.168.1.100") {
-                    errors.push("- Hàng 'LAN Host:': Khuyến nghị giá trị đúng là '192.168.1.100'.");
-                }
-
-                // 6. WAN Port
-                if (wanPort !== "8080" || wanPortEnd !== "8080") {
-                    errors.push("- Hàng 'WAN Port:': Khuyến nghị giá trị đúng là '8080'.");
-                }
-
-                // 7. LAN Host Port
-                if (lanPort !== "8080" || lanPortEnd !== "8080") {
-                    errors.push("- Hàng 'LAN Host Port:': Khuyến nghị giá trị đúng là '8080'.");
+                // 5. LAN Host Port
+                var effectiveLanPort = lanPort || lanPortEnd;
+                if (effectiveLanPort !== "8080" && effectiveLanPort !== "80" && effectiveLanPort !== "443" && effectiveLanPort !== "8000") {
+                    errors.push("- Hàng 'LAN Host Port': Khuyến nghị giá trị đúng là '8080'. Thực tế: '" + (effectiveLanPort || 'Trống') + "'");
                 }
 
                 if (errors.length > 0) {
+                    document._ftcHasSuccHint = false;
+                    document._ftcIsSaved = false;
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = false;
+                        window.top._hasClickedSaveInGuide = true;
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
+                    }
                     alert("BẠN ĐÃ CẤU HÌNH SAI:\n\n" + errors.join("\n"));
                     e.preventDefault();
                     e.stopPropagation();
                 } else {
+                    document._ftcIsSaved = true;
+                    document._ftcHasSuccHint = true;
+                    var succHintEl = container.querySelector('.succHint') || document.querySelector('.succHint');
+                    if (succHintEl) succHintEl.style.display = 'block';
+
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = true;
+                        window.top._hasClickedSaveInGuide = true;
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
+                        try {
+                            var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
+                            window.top.postMessage({
+                                type: 'LAB_SUCCESS',
+                                device: 'ONT BE12000',
+                                labName: 'Bài 6-Cấu hình Port Forwarding',
+                                message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 6-Cấu hình Port Forwarding trên thiết bị ONT BE12000'
+                            }, '*');
+                        } catch (err) { }
+
+                        alert("Chúc mừng bạn đã hoàn thành cấu hình Port Forwarding! Thông báo lưu thành công đã xuất hiện, hãy bấm nút Nộp bài trên thanh điều hướng để hoàn tất bài học.");
+                        return;
+                    }
+
                     var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
 
                     try {
@@ -216,13 +240,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 { selector: "#internet", text: "Truy cập: Internet", placement: "bottom", done: false },
                 { selector: "#security", text: "Chọn Security", placement: "bottom", done: false },
                 { selector: "#portForwarding", text: "Chọn Port Forwarding", placement: "bottom", done: false },
-                { selector: "[id='Alias:0']", text: "Bước 1: Nhập Name: NAT FPT", placement: "right", done: false },
-                { selector: "[id='Protocol:0']", text: "Bước 2: Chọn Protocol: TCP, UDP hoặc TCP/UDP", placement: "right", done: false },
-                { selector: "[id='sub_RemoteHostEndRange3:0']", text: "Bước 3: Nhập WAN Host IP Address: 192.168.1.1 ", placement: "right", done: false },
-                { selector: "[id='InternalClient:0']", text: "Bước 4: Nhập LAN Host: 192.168.1.100", placement: "right", done: false },
-                { selector: "[id='ExternalPortEndRange:0']", text: "Bước 5: Nhập WAN Port: 8080 (chỉ vào ô cuối cùng)", placement: "right", done: false },
-                { selector: "[id='InternalPortEndRange:0']", text: "Bước 7: Nhập LAN Host Port: 8080 (chỉ vào ô cuối cùng)", placement: "right", done: false },
-                { selector: "[id='Btn_apply_PortForwarding:0']", text: "Bước 8: Nhấn Apply để lưu cấu hình", placement: "top", done: false }
+                { selector: "[id='Alias:0'], [id^='Alias']:not(#Alias)", text: "Bước 1: Nhập Name: NAT FPT", placement: "right", done: false },
+                { selector: "[id='Protocol:0'], [id^='Protocol']:not(#Protocol)", text: "Bước 2: Chọn Protocol: TCP, UDP hoặc TCP/UDP", placement: "right", done: false },
+                { selector: "[id='sub_RemoteHostEndRange3:0'], [id^='sub_RemoteHostEndRange3']:not(#sub_RemoteHostEndRange3)", text: "Bước 3: Nhập WAN Host IP Address: 192.168.1.1", placement: "right", done: false },
+                { selector: "[id='InternalClient:0'], [id^='InternalClient']:not(#InternalClient)", text: "Bước 4: Nhập LAN Host: 192.168.1.100", placement: "right", done: false },
+                { selector: "[id='ExternalPortEndRange:0'], [id^='ExternalPortEndRange']:not(#ExternalPortEndRange)", text: "Bước 5: Nhập WAN Port: 8080 (chỉ vào ô cuối cùng)", placement: "right", done: false },
+                { selector: "[id='InternalPortEndRange:0'], [id^='InternalPortEndRange']:not(#InternalPortEndRange)", text: "Bước 6: Nhập LAN Host Port: 8080 (chỉ vào ô cuối cùng)", placement: "right", done: false },
+                { selector: "[id='Btn_apply_PortForwarding:0'], [id^='Btn_apply_PortForwarding']:not(#Btn_apply_PortForwarding)", text: "Bước 7: Nhấn Apply để lưu cấu hình", placement: "top", done: false }
             ];
 
             // Function to create and update tooltip

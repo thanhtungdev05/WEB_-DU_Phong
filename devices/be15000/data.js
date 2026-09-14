@@ -1,6 +1,6 @@
 /**
  * devices/be15000/data.js — Cấu hình chung cho BE15000
- * Các bài học chi tiết được quản lý độc lập trong thư mục devices/be15000/lessons/ (bai1.js .. bai10.js)
+ * Bài học chi tiết: devices/be15000/lessons/bai1.js (Xem thiết bị ONT BE15000)
  */
 
 window.DEVICE_BE15000 = {
@@ -24,7 +24,7 @@ window.DEVICE_BE15000 = {
 if (!window.TOOLTIPS_BE15000) window.TOOLTIPS_BE15000 = {};
 if (window.DEVICE_BE15000_LESSONS) {
   window.DEVICE_BE15000_LESSONS.forEach(lesson => {
-    if (lesson.guidePopups) {
+    if (lesson.guidePopups && lesson.guidePopups.length > 0) {
       window.TOOLTIPS_BE15000[lesson.id] = lesson.guidePopups;
     }
   });

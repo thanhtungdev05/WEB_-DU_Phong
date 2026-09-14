@@ -102,6 +102,14 @@
     return normalizeDeviceId(rawId);
   }
 
+  function isNoConfigDevice() {
+    if (currentDeviceId === 'be15000' || currentDeviceId === 'ONT_be15000') return true;
+    if (_currentLesson && _currentLesson.noConfig === true) return true;
+    const dev = DEVICES.find(d => d.id === currentDeviceId);
+    if (dev && dev.noConfig === true) return true;
+    return false;
+  }
+
   function populateDeviceDropdown(devices) {
     deviceSelect.replaceChildren();
     devices.forEach(device => {
@@ -434,7 +442,9 @@
                         (el.type === 'submit' || (el.value || el.textContent || '').toLowerCase().includes('save') || (el.value || el.textContent || '').toLowerCase().includes('apply') || el.name === 'AddBtn' || ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6') && (el.value || el.textContent || '').trim().toLowerCase() === 'add'))) {
                       window._hasClickedSaveInGuide = true;
                       doc._ftcIsSaved = true;
-                      try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
+                      setTimeout(function () {
+                        try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
+                      }, 50);
                     }
                     el = el.parentNode;
                   }
@@ -545,9 +555,10 @@
 
             const evalResult = evaluateLesson(device, lesson);
             let btnGuideErrors = document.getElementById('btn-guide-errors');
+            const noConfig = isNoConfigDevice();
 
-            // BẮT BUỘC ĐÃ BẤM SAVE/APPLY: nếu chưa bấm Save/Apply thì KHÔNG BAO GIỜ sáng nút nộp bài
-            if (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed))) {
+            // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT:
+            if (noConfig || (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed)))) {
               // Nút Nộp bài SÁNG LÊN
               if (btnSubmitLab) {
                 btnSubmitLab.disabled = false;
@@ -875,7 +886,7 @@
       currentMode = 'guide';
       // Reset session trước rồi mở trang login
       const resetUrl = device.resetSessionUrl || null;
-      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'logout=1&_t=' + Date.now();
+      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'logout=1&lab=' + encodeURIComponent(lesson.id) + '&mode=guide&_t=' + Date.now();
       if (resetUrl) {
         const cacheBustUrl = resetUrl + (resetUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
         fetch(cacheBustUrl, { cache: 'no-store' })
@@ -896,7 +907,7 @@
       }
       currentMode = 'practice';
       const resetUrl = device.resetSessionUrl || null;
-      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'logout=1&_t=' + Date.now();
+      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'logout=1&lab=' + encodeURIComponent(lesson.id) + '&mode=practice&_t=' + Date.now();
       if (resetUrl) {
         const cacheBustUrl = resetUrl + (resetUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
         fetch(cacheBustUrl, { cache: 'no-store' })
@@ -989,11 +1000,19 @@
     deviceIframe.src = 'about:blank';
 
     // Thiết lập trạng thái ban đầu cho nút Nộp bài và nút Lỗi sai
+    const noConfigInit = isNoConfigDevice();
     if (btnSubmitLab) {
-      btnSubmitLab.disabled = true;
-      btnSubmitLab.style.opacity = '0.5';
-      btnSubmitLab.style.cursor = 'not-allowed';
-      btnSubmitLab.style.animation = 'none';
+      if (noConfigInit) {
+        btnSubmitLab.disabled = false;
+        btnSubmitLab.style.opacity = '1';
+        btnSubmitLab.style.cursor = 'pointer';
+        btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
+      } else {
+        btnSubmitLab.disabled = true;
+        btnSubmitLab.style.opacity = '0.5';
+        btnSubmitLab.style.cursor = 'not-allowed';
+        btnSubmitLab.style.animation = 'none';
+      }
     }
     const btnGuideErrorsInit = document.getElementById('btn-guide-errors');
     if (btnGuideErrorsInit) {
@@ -1425,7 +1444,6 @@
     // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa (hoặc có hasStoredNotification)
     const hasUnexpected = unexpectedErrors.length > 0;
     const passed = hasStoredNotification || ((passedCount === rules.length) && !hasUnexpected);
-    const score = passed ? 100 : Math.round((passedCount / rules.length) * (hasUnexpected ? 99 : 100));
 
     let finalTotalRules = rules.length + unexpectedErrors.length;
 
@@ -1444,7 +1462,6 @@
 
     return {
       passed: passed,
-      score: score,
       passedCount: passedCount,
       totalRules: finalTotalRules,
       details: details
@@ -1501,10 +1518,17 @@
     if (res.passed) {
       if (gmIcon) gmIcon.textContent = '🎉';
       if (gmTitle) gmTitle.textContent = 'KẾT QUẢ: ĐẠT YÊU CẦU';
-      if (gmSubtitle) gmSubtitle.textContent = 'Chúc mừng bạn đã cấu hình chính xác bài thực hành!';
-      if (gmStatusBox) gmStatusBox.className = 'gm-status-box';
-      if (gmStatusTitle) gmStatusTitle.textContent = '✔ ĐẠT TOÀN BỘ TIÊU CHÍ (100%)';
-      if (gmStatusDesc) gmStatusDesc.textContent = 'Cấu hình hoàn toàn trùng khớp với thông số kỹ thuật chuẩn của FPT Telecom.';
+      if (isNoConfigDevice()) {
+        if (gmSubtitle) gmSubtitle.textContent = 'Đã ghi nhận khảo sát thiết bị ONT BE15000 thành công!';
+        if (gmStatusBox) gmStatusBox.className = 'gm-status-box';
+        if (gmStatusTitle) gmStatusTitle.textContent = '✔ ĐÃ HOÀN THÀNH XEM THIẾT BỊ';
+        if (gmStatusDesc) gmStatusDesc.textContent = 'Đã lưu kết quả khảo sát thiết bị ONT BE15000 vào hệ thống dashboard.';
+      } else {
+        if (gmSubtitle) gmSubtitle.textContent = 'Chúc mừng bạn đã cấu hình chính xác bài thực hành!';
+        if (gmStatusBox) gmStatusBox.className = 'gm-status-box';
+        if (gmStatusTitle) gmStatusTitle.textContent = '✔ ĐẠT TOÀN BỘ TIÊU CHÍ (100%)';
+        if (gmStatusDesc) gmStatusDesc.textContent = 'Cấu hình hoàn toàn trùng khớp với thông số kỹ thuật chuẩn của FPT Telecom.';
+      }
       // ĐẠT: hiện nút "Hoàn tất", ẩn nút "Quay lại làm từ đầu"
       if (btnModalClose) btnModalClose.style.display = '';
       if (btnModalRetry) btnModalRetry.style.display = 'none';
@@ -1760,7 +1784,6 @@
     if (!retryPayload && evalResult) {
       payload.status = evalResult.passed ? 'completed' : 'failed';
       payload.is_passed = evalResult.passed;
-      payload.score = evalResult.score;
       payload.grading_details = evalResult.details;
     }
 
@@ -2007,13 +2030,26 @@
   }
 
   function applyGuidePopups() {
-    if (currentMode !== 'guide' || window._hasClickedSaveInGuide) {
+    if (currentMode !== 'guide') {
       clearGuidePopups();
       return;
     }
 
+    const device = DEVICES.find(d => d.id === currentDeviceId);
     const lesson = getCurrentLesson();
     if (!lesson) return;
+
+    // Chỉ dọn dẹp popup hướng dẫn khi bài học ĐÃ LƯU THÀNH CÔNG (hoặc đã đạt kết quả chấm)
+    let isSavedSuccess = window._hasSuccHintStored;
+    if (!isSavedSuccess && device && lesson) {
+      const evalRes = evaluateLesson(device, lesson);
+      if (evalRes && evalRes.passed) isSavedSuccess = true;
+    }
+
+    if (window._hasClickedSaveInGuide && isSavedSuccess) {
+      clearGuidePopups();
+      return;
+    }
 
     // 1. Direct DOM injection cho từng document trong iframe (xử lý linh hoạt login vs bài học)
     try {
@@ -2368,9 +2404,10 @@
     if (device && lesson) {
       const evalResult = evaluateLesson(device, lesson);
       const btnGuideErrors = document.getElementById('btn-guide-errors');
+      const noConfigSaved = isNoConfigDevice();
 
-      if (window._hasSuccHintStored || (evalResult && evalResult.passed)) {
-        // Cấu hình ĐÚNG hoặc ĐÃ CÓ "Your data have been stored!": Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
+      if (noConfigSaved || window._hasSuccHintStored || (evalResult && evalResult.passed)) {
+        // Cấu hình ĐÚNG hoặc ĐÃ CÓ "Your data have been stored!" hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
         if (btnSubmitLab) {
           btnSubmitLab.disabled = false;
           btnSubmitLab.style.opacity = '1';

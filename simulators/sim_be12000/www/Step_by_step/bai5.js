@@ -1,6 +1,6 @@
 // ============================================================================
 // File: bai5.js
-// Mô tả: Kịch bản hướng dẫn và kiểm tra thực hành cho Bài 5: Cấu hình địa chỉ IP LAN trên BE12000
+// Mô tả: Kịch bản hướng dẫn và kiểm tra thực hành cho Bài 5: Cấu hình DHCP trên BE12000
 // ============================================================================
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -8,7 +8,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var labId = params.get('lab');
     var mode = params.get('mode');
 
-    if (labId === '6') {
+    var isLab5 = labId === '6' || labId === '5' || labId === 'LAB_BE12000_05' || (window.top && window.top._currentLesson && window.top._currentLesson.id === 'LAB_BE12000_05');
+
+    if (isLab5) {
 
         // ====================================================================
         // PHẦN 0: XÓA TRẮNG CÁC Ô DỮ LIỆU CÓ SẴN (Cho cả Hướng dẫn & Thực hành)
@@ -34,7 +36,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Xét ĐÚNG MỘT LẦN ngay lần đầu nhìn thấy ô:
                 //  - có dữ liệu mặc định  -> xóa trắng
                 //  - vốn đã rỗng          -> vẫn đánh dấu "đã xử lý"
-                // Nhờ vậy vòng lặp không còn nằm chờ để "nuốt" mất dữ liệu học viên nhập lần đầu.
                 if (el.value !== "") el.value = "";
                 clearedFields[key] = true;
             });
@@ -44,88 +45,102 @@ document.addEventListener("DOMContentLoaded", function () {
         // PHẦN 1: KIỂM TRA ĐIỀU KIỆN (VALIDATION) KHI NHẤN APPLY
         // ====================================================================
         document.addEventListener('click', function (e) {
-            if (e.target && e.target.id === 'Btn_apply_DHCPBasicCfg') {
+            if (e.target && (e.target.id === 'Btn_apply_DHCPBasicCfg' || (e.target.id && e.target.id.startsWith('Btn_apply_DHCPBasicCfg')))) {
+                var container = e.target.closest("div[id^='template_DHCPBasicCfg']") || document.querySelector("#template_DHCPBasicCfg") || e.target.closest(".HeadDIV");
                 var errors = [];
 
                 var getIP = function (prefix, suffix) {
                     var ipParts = [];
                     for (var i = 0; i < 4; i++) {
-                        var el = document.getElementById(prefix + i + (suffix || ""));
+                        var el = document.getElementById(prefix + i + (suffix || "")) || (container ? container.querySelector("[id='" + prefix + i + (suffix || "") + "']") : null);
                         ipParts.push(el ? el.value.trim() : "");
                     }
                     return ipParts.join(".");
                 };
 
-                var isIPEmpty = function (prefix, suffix) {
-                    var empty = true;
-                    for (var i = 0; i < 4; i++) {
-                        var el = document.getElementById(prefix + i + (suffix || ""));
-                        if (el && el.value.trim() !== "") {
-                            empty = false;
-                        }
-                    }
-                    return empty;
-                };
-
                 // 1. DHCP Server
-                var dhcpServerOn = document.getElementById("ServerEnable1");
+                var dhcpServerOn = document.getElementById("ServerEnable1") || (container ? container.querySelector("#ServerEnable1") : null);
                 if (dhcpServerOn && !dhcpServerOn.checked) {
-                    errors.push("- Hàng 'DHCP Server:': Khuyến nghị giá trị đúng là 'On'.");
+                    errors.push("- Hàng 'DHCP Server': Cần chọn 'On'.");
                 }
 
                 // 2. LAN IP Address
-                if (getIP("sub_IPAddr", ":DHCPBasicCfg") !== "192.168.1.1") {
-                    errors.push("- Hàng 'LAN IP Address:': Khuyến nghị giá trị đúng là '192.168.1.1'.");
+                var lanIP = getIP("sub_IPAddr", ":DHCPBasicCfg");
+                if (lanIP !== "192.168.1.1") {
+                    errors.push("- Hàng 'LAN IP Address': Khuyến nghị giá trị đúng là '192.168.1.1'. Thực tế: '" + (lanIP || 'Trống') + "'");
                 }
 
                 // 3. Subnet Mask
-                if (getIP("sub_SubMask") !== "255.255.255.0") {
-                    errors.push("- Hàng 'Subnet Mask:': Khuyến nghị giá trị đúng là '255.255.255.0'.");
+                var subMask = getIP("sub_SubMask", "");
+                if (subMask !== "255.255.255.0") {
+                    errors.push("- Hàng 'Subnet Mask': Khuyến nghị giá trị đúng là '255.255.255.0'. Thực tế: '" + (subMask || 'Trống') + "'");
                 }
 
                 // 4. DHCP Start IP Address
-                if (getIP("sub_MinAddress", ":DHCPBasicCfg") !== "192.168.1.2") {
-                    errors.push("- Hàng 'DHCP Start IP Address:': Khuyến nghị giá trị đúng là '192.168.1.2'.");
+                var startIP = getIP("sub_MinAddress", ":DHCPBasicCfg");
+                var startParts = startIP.split(".");
+                var startOctet3 = parseInt(startParts[3], 10);
+                var validStart = (startIP === "192.168.1.2") || (startParts.length === 4 && startParts[0] === "192" && startParts[1] === "168" && startParts[2] === "1" && !isNaN(startOctet3) && startOctet3 >= 2 && startOctet3 <= 253);
+                if (!validStart) {
+                    errors.push("- Hàng 'DHCP Start IP Address': Khuyến nghị giá trị đúng là '192.168.1.2'. Thực tế: '" + (startIP || 'Trống') + "'");
                 }
 
                 // 5. DHCP End IP Address
-                if (getIP("sub_MaxAddress", ":DHCPBasicCfg") !== "192.168.1.254") {
-                    errors.push("- Hàng 'DHCP End IP Address:': Khuyến nghị giá trị đúng là '192.168.1.254'.");
+                var endIP = getIP("sub_MaxAddress", ":DHCPBasicCfg");
+                var endParts = endIP.split(".");
+                var endOctet3 = parseInt(endParts[3], 10);
+                var validEnd = (endIP === "192.168.1.254" || endIP === "192.168.1.249" || endIP === "192.168.1.250") || (endParts.length === 4 && endParts[0] === "192" && endParts[1] === "168" && endParts[2] === "1" && !isNaN(endOctet3) && endOctet3 > startOctet3 && endOctet3 <= 254);
+                if (!validEnd) {
+                    errors.push("- Hàng 'DHCP End IP Address': Khuyến nghị giá trị đúng là '192.168.1.254'. Thực tế: '" + (endIP || 'Trống') + "'");
                 }
 
-                // 6. ISP DNS
-                var ispDnsOff = document.getElementById("DnsServerSource0");
-                if (ispDnsOff && !ispDnsOff.checked) {
-                    errors.push("- Hàng 'ISP DNS:': Khuyến nghị giá trị đúng là 'Off'.");
-                }
-
-                // 7. Primary DNS
-                if (!isIPEmpty("sub_DNSServer1")) {
-                    errors.push("- Hàng 'Primary DNS:': Khuyến nghị giá trị đúng là 'Rỗng'.");
-                }
-
-                // 8. Secondary DNS
-                if (!isIPEmpty("sub_DNSServer2")) {
-                    errors.push("- Hàng 'Secondary DNS:': Khuyến nghị giá trị đúng là 'Rỗng'.");
-                }
-
-                // 9. Lease Time Mode
-                var leaseMode = document.getElementById("LeaseTimeMode");
-                if (leaseMode && leaseMode.value !== "selfDefine") {
-                    errors.push("- Hàng 'Lease Time Mode': Khuyến nghị giá trị đúng là 'Custom'.");
-                }
-
-                // 10. Custom Lease Time
-                var leaseTime = document.getElementById("LeaseTimeSelfDefine");
-                if (leaseTime && leaseTime.value.trim() !== "86400") {
-                    errors.push("- Hàng 'Custom Lease Time:': Khuyến nghị giá trị đúng là '86400'.");
+                if (validStart && validEnd && startOctet3 >= endOctet3) {
+                    errors.push("- Dải DHCP IP không hợp lệ: Start IP (" + startIP + ") phải nhỏ hơn End IP (" + endIP + ").");
                 }
 
                 if (errors.length > 0) {
+                    document._ftcHasSuccHint = false;
+                    document._ftcIsSaved = false;
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = false;
+                        window.top._hasClickedSaveInGuide = true;
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
+                    }
                     alert("BẠN ĐÃ CẤU HÌNH SAI:\n\n" + errors.join("\n"));
                     e.preventDefault();
                     e.stopPropagation();
                 } else {
+                    document._ftcIsSaved = true;
+                    document._ftcHasSuccHint = true;
+                    var succHintEl = (container && container.querySelector('.succHint')) || document.querySelector('.succHint');
+                    if (succHintEl) succHintEl.style.display = 'block';
+
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = true;
+                        window.top._hasClickedSaveInGuide = true;
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
+                        try {
+                            var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
+                            window.top.postMessage({
+                                type: 'LAB_SUCCESS',
+                                device: 'ONT BE12000',
+                                labName: 'Bài 5-Cấu hình DHCP',
+                                message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 5-Cấu hình DHCP trên thiết bị ONT BE12000'
+                            }, '*');
+                        } catch (err) { }
+
+                        alert("Chúc mừng bạn đã hoàn thành cấu hình DHCP! Thông báo lưu thành công đã xuất hiện, hãy bấm nút Nộp bài trên thanh điều hướng để hoàn tất bài học.");
+                        return;
+                    }
+
                     var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
 
                     try {
@@ -134,14 +149,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         window.top.history.replaceState(null, '', topUrl.toString());
                     } catch (err) { }
 
-                    alert("Chúc mừng bạn đã hoàn thành bài Lab " + modeText + " Cấu hình IP LAN trên thiết bị ONT BE12000 ");
+                    alert("Chúc mừng bạn đã hoàn thành bài Lab " + modeText + " Cấu hình DHCP trên thiết bị ONT BE12000 ");
 
                     try {
                         window.top.postMessage({
                             type: 'LAB_SUCCESS',
                             device: 'ONT BE12000',
-                            labName: 'Bài 5-Cấu hình địa chỉ IP LAN',
-                            message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 5-Cấu hình địa chỉ IP LAN trên thiết bị ONT BE12000'
+                            labName: 'Bài 5-Cấu hình DHCP',
+                            message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 5-Cấu hình DHCP trên thiết bị ONT BE12000'
                         }, '*');
                     } catch (err) { }
 

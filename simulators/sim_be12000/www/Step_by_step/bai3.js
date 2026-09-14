@@ -8,7 +8,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var labId = params.get('lab');
     var mode = params.get('mode');
 
-    if (labId === '4') {
+    var isLab3 = labId === '4' || labId === '3' || labId === 'LAB_BE12000_03' || (window.top && window.top._currentLesson && window.top._currentLesson.id === 'LAB_BE12000_03');
+
+    if (isLab3) {
 
         // ====================================================================
         // PHẦN 0: XÓA TRẮNG CÁC Ô DỮ LIỆU CÓ SẴN (Cho cả Hướng dẫn & Thực hành)
@@ -93,10 +95,48 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 if (errors.length > 0) {
+                    document._ftcHasSuccHint = false;
+                    document._ftcIsSaved = false;
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = false;
+                        window.top._hasClickedSaveInGuide = true;
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
+                    }
                     alert("BẠN ĐÃ CẤU HÌNH SAI:\n\n" + errors.join("\n"));
                     e.preventDefault();
                     e.stopPropagation();
                 } else {
+                    document._ftcIsSaved = true;
+                    document._ftcHasSuccHint = true;
+                    var succHintEl = container.querySelector('.succHint') || document.querySelector('.succHint');
+                    if (succHintEl) succHintEl.style.display = 'block';
+
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = true;
+                        window.top._hasClickedSaveInGuide = true;
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
+                        try {
+                            var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
+                            window.top.postMessage({
+                                type: 'LAB_SUCCESS',
+                                device: 'ONT BE12000',
+                                labName: 'Bài 3-Cấu hình WIFI IOT',
+                                message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 3-Cấu hình WIFI IOT trên thiết bị ONT BE12000'
+                            }, '*');
+                        } catch (err) { }
+
+                        alert("Chúc mừng bạn đã hoàn thành cấu hình Wi-Fi IoT! Thông báo lưu thành công đã xuất hiện, hãy bấm nút Nộp bài trên thanh điều hướng để hoàn tất bài học.");
+                        return;
+                    }
+
                     var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
 
                     try {
