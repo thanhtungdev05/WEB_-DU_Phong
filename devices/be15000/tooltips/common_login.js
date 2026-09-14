@@ -13,8 +13,12 @@ window.TOOLTIPS_BE15000._common_login = [
   },
   {
     selector: 'input#Frm_Password, input[name="Frm_Password"]',
-    text: 'Nhập Password',
+    text: 'Nhập Password: admin',
     position: 'right'
+  },
+  {
+    selector: '#LoginId, input[type="button"].login',
+    text: 'Bấm Login để đăng nhập vào thiết bị',
+    position: 'bottom'
   }
-
 ];

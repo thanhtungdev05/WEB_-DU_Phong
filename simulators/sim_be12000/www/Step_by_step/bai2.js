@@ -8,7 +8,8 @@ document.addEventListener("DOMContentLoaded", function () {
     var labId = params.get('lab');
     var mode = params.get('mode');
 
-    if (labId === '2') {
+    var isLab2 = labId === '2' || labId === 'LAB_BE12000_02' || (window.top && window.top._currentLesson && window.top._currentLesson.id === 'LAB_BE12000_02');
+    if (isLab2) {
 
         // ====================================================================
         // PHẦN 0: XÓA TRẮNG CÁC Ô DỮ LIỆU CÓ SẴN (Cho cả Hướng dẫn & Thực hành)
@@ -123,15 +124,20 @@ document.addEventListener("DOMContentLoaded", function () {
                     // Khi lưu SSID1, chỉ cần validate SSID1
                     validateSSID("0", "2.4GHz");
                     if (errors.length > 0) {
+                        document._ftcHasSuccHint = false;
+                        document._ftcIsSaved = false;
+                        if (window.top && window.top !== window) {
+                            window.top._hasSuccHintStored = false;
+                            window.top._hasClickedSaveInGuide = true;
+                            try {
+                                if (typeof window.top.onSimulatorSave === 'function') {
+                                    window.top.onSimulatorSave(window);
+                                }
+                            } catch (err) { }
+                        }
                         alert("BẠN ĐÃ CẤU HÌNH SAI BĂNG TẦN 2.4GHz:\n\n" + errors.join("\n"));
                         e.preventDefault();
                         e.stopPropagation();
-                        if (window.top && window.top !== window) {
-                            window.top._hasClickedSaveInGuide = true;
-                            if (typeof window.top.onSimulatorSave === 'function') {
-                                window.top.onSimulatorSave(window);
-                            }
-                        }
                     } else {
                         var succ1 = container.querySelector('.succHint');
                         if (succ1) succ1.style.display = 'block';
@@ -143,12 +149,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     validateSSID("4", "5GHz");
                     if (errors.length > 0) {
                         document._ftcHasSuccHint = false;
+                        document._ftcIsSaved = false;
                         if (window.top && window.top !== window) {
                             window.top._hasSuccHintStored = false;
                             window.top._hasClickedSaveInGuide = true;
-                            if (typeof window.top.onSimulatorSave === 'function') {
-                                window.top.onSimulatorSave(window);
-                            }
+                            try {
+                                if (typeof window.top.onSimulatorSave === 'function') {
+                                    window.top.onSimulatorSave(window);
+                                }
+                            } catch (err) { }
                         }
                         alert("BẠN ĐÃ CẤU HÌNH SAI:\n\n" + errors.join("\n"));
                         e.preventDefault();

@@ -1,6 +1,6 @@
 // ============================================================================
 // File: bai4.js
-// Mô tả: Kịch bản hướng dẫn và kiểm tra thực hành cho Bài 4: Cấu hình DNS trên BE12000
+// Mô tả: Kịch bản hướng dẫn và kiểm tra thực hành cho Bài 4: Cấu hình DNS trên BE12000 (dns.html)
 // ============================================================================
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -8,7 +8,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var labId = params.get('lab');
     var mode = params.get('mode');
 
-    if (labId === '12') {
+    var isLab4 = labId === '12' || labId === '4' || labId === 'LAB_BE12000_04' || (window.top && window.top._currentLesson && window.top._currentLesson.id === 'LAB_BE12000_04');
+
+    if (isLab4) {
 
         // ====================================================================
         // PHẦN 0: XÓA TRẮNG CÁC Ô DỮ LIỆU CÓ SẴN (Cho cả Hướng dẫn & Thực hành)
@@ -16,8 +18,8 @@ document.addEventListener("DOMContentLoaded", function () {
         var clearedFields = {};
         setInterval(function () {
             var selectors = [
-                "#sub_DNSServer10", "#sub_DNSServer11", "#sub_DNSServer12", "#sub_DNSServer13",
-                "#sub_DNSServer20", "#sub_DNSServer21", "#sub_DNSServer22", "#sub_DNSServer23"
+                "#sub_SerIPAddress10", "#sub_SerIPAddress11", "#sub_SerIPAddress12", "#sub_SerIPAddress13",
+                "#sub_SerIPAddress20", "#sub_SerIPAddress21", "#sub_SerIPAddress22", "#sub_SerIPAddress23"
             ];
             selectors.forEach(function (sel) {
                 var el = document.querySelector(sel);
@@ -31,7 +33,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Xét ĐÚNG MỘT LẦN ngay lần đầu nhìn thấy ô:
                 //  - có dữ liệu mặc định  -> xóa trắng
                 //  - vốn đã rỗng          -> vẫn đánh dấu "đã xử lý"
-                // Nhờ vậy vòng lặp không còn nằm chờ để "nuốt" mất dữ liệu học viên nhập lần đầu.
                 if (el.value !== "") el.value = "";
                 clearedFields[key] = true;
             });
@@ -41,88 +42,76 @@ document.addEventListener("DOMContentLoaded", function () {
         // PHẦN 1: KIỂM TRA ĐIỀU KIỆN (VALIDATION) KHI NHẤN APPLY
         // ====================================================================
         document.addEventListener('click', function (e) {
-            if (e.target && e.target.id === 'Btn_apply_DHCPBasicCfg') {
+            if (e.target && (e.target.id === 'Btn_apply_LocalDnsServer' || (e.target.id && e.target.id.startsWith('Btn_apply_LocalDnsServer')))) {
+                var container = e.target.closest("div[id^='template_LocalDnsServer']") || document.querySelector("#template_LocalDnsServer") || e.target.closest(".HeadDIV");
                 var errors = [];
 
-                var getIP = function (prefix, suffix) {
+                var getIP = function (prefix) {
                     var ipParts = [];
                     for (var i = 0; i < 4; i++) {
-                        var el = document.getElementById(prefix + i + (suffix || ""));
+                        var el = document.getElementById(prefix + i) || (container ? container.querySelector("#" + prefix + i) : null);
                         ipParts.push(el ? el.value.trim() : "");
                     }
                     return ipParts.join(".");
                 };
 
-                var isIPEmpty = function (prefix, suffix) {
-                    var empty = true;
-                    for (var i = 0; i < 4; i++) {
-                        var el = document.getElementById(prefix + i + (suffix || ""));
-                        if (el && el.value.trim() !== "") {
-                            empty = false;
-                        }
-                    }
-                    return empty;
-                };
+                var dns1 = getIP("sub_SerIPAddress1");
+                var dns2 = getIP("sub_SerIPAddress2");
 
-                // 1. DHCP Server
-                var dhcpServerOn = document.getElementById("ServerEnable1");
-                if (dhcpServerOn && !dhcpServerOn.checked) {
-                    errors.push("- Hàng 'DHCP Server:': Khuyến nghị giá trị đúng là 'On'.");
+                var validDns1 = ["210.245.31.220", "210.245.31.221", "8.8.8.8", "1.1.1.1"];
+                var validDns2 = ["8.8.8.8", "8.8.4.4", "210.245.31.221", "210.245.31.220", "1.1.1.1"];
+
+                if (validDns1.indexOf(dns1) === -1) {
+                    errors.push("- Hàng 'IPv4 DNS Server1' (4 octet): Khuyến nghị giá trị đúng là '210.245.31.220' (hoặc '8.8.8.8'). Thực tế: '" + (dns1 || 'Trống') + "'");
                 }
 
-                // 2. LAN IP Address
-                if (!isIPEmpty("sub_IPAddr", ":DHCPBasicCfg")) {
-                    errors.push("- Hàng 'LAN IP Address:': Khuyến nghị giá trị đúng là 'Rỗng'.");
-                }
-
-                // 3. Subnet Mask
-                if (getIP("sub_SubMask") !== "255.255.255.0") {
-                    errors.push("- Hàng 'Subnet Mask:': Khuyến nghị giá trị đúng là '255.255.255.0'.");
-                }
-
-                // 4. DHCP Start IP Address
-                if (!isIPEmpty("sub_MinAddress", ":DHCPBasicCfg")) {
-                    errors.push("- Hàng 'DHCP Start IP Address:': Khuyến nghị giá trị đúng là 'Rỗng'.");
-                }
-
-                // 5. DHCP End IP Address
-                if (!isIPEmpty("sub_MaxAddress", ":DHCPBasicCfg")) {
-                    errors.push("- Hàng 'DHCP End IP Address:': Khuyến nghị giá trị đúng là 'Rỗng'.");
-                }
-
-                // 6. ISP DNS
-                var ispDnsOff = document.getElementById("DnsServerSource0");
-                if (ispDnsOff && !ispDnsOff.checked) {
-                    errors.push("- Hàng 'ISP DNS:': Khuyến nghị giá trị đúng là 'Off'.");
-                }
-
-                // 7. Primary DNS
-                if (getIP("sub_DNSServer1") !== "210.245.31.220") {
-                    errors.push("- Hàng 'Primary DNS:': Khuyến nghị giá trị đúng là '210.245.31.220'.");
-                }
-
-                // 8. Secondary DNS
-                if (getIP("sub_DNSServer2") !== "8.8.8.8") {
-                    errors.push("- Hàng 'Secondary DNS:': Khuyến nghị giá trị đúng là '8.8.8.8'.");
-                }
-
-                // 9. Lease Time Mode
-                var leaseMode = document.getElementById("LeaseTimeMode");
-                if (leaseMode && leaseMode.value !== "selfDefine") {
-                    errors.push("- Hàng 'Lease Time Mode': Khuyến nghị giá trị đúng là 'Custom'.");
-                }
-
-                // 10. Custom Lease Time
-                var leaseTime = document.getElementById("LeaseTimeSelfDefine");
-                if (leaseTime && leaseTime.value.trim() !== "86400") {
-                    errors.push("- Hàng 'Custom Lease Time:': Khuyến nghị giá trị đúng là '86400'.");
+                if (validDns2.indexOf(dns2) === -1) {
+                    errors.push("- Hàng 'IPv4 DNS Server2' (4 octet): Khuyến nghị giá trị đúng là '8.8.8.8' (hoặc '8.8.4.4'). Thực tế: '" + (dns2 || 'Trống') + "'");
                 }
 
                 if (errors.length > 0) {
+                    document._ftcHasSuccHint = false;
+                    document._ftcIsSaved = false;
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = false;
+                        window.top._hasClickedSaveInGuide = true;
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
+                    }
                     alert("BẠN ĐÃ CẤU HÌNH SAI:\n\n" + errors.join("\n"));
                     e.preventDefault();
                     e.stopPropagation();
                 } else {
+                    document._ftcIsSaved = true;
+                    document._ftcHasSuccHint = true;
+                    var succHintEl = (container && container.querySelector('.succHint')) || document.querySelector('.succHint');
+                    if (succHintEl) succHintEl.style.display = 'block';
+
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = true;
+                        window.top._hasClickedSaveInGuide = true;
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
+                        try {
+                            var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
+                            window.top.postMessage({
+                                type: 'LAB_SUCCESS',
+                                device: 'ONT BE12000',
+                                labName: 'Bài 4-Cấu hình DNS',
+                                message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 4-Cấu hình DNS trên thiết bị ONT BE12000'
+                            }, '*');
+                        } catch (err) { }
+
+                        alert("Chúc mừng bạn đã hoàn thành cấu hình DNS! Thông báo lưu thành công đã xuất hiện, hãy bấm nút Nộp bài trên thanh điều hướng để hoàn tất bài học.");
+                        return;
+                    }
+
                     var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
 
                     try {
@@ -217,13 +206,11 @@ document.addEventListener("DOMContentLoaded", function () {
             // Define steps
             var steps = [
                 { selector: "#localnet", text: "Chọn Local Network", placement: "bottom", done: false },
-                { selector: "#lanConfig", text: "Chọn LAN", placement: "bottom", done: false },
-                { selector: "#lanMgrIpv4", text: "Chọn IPv4", placement: "bottom", done: false },
-                { selector: "#DHCPBasicCfgBar", text: "Chọn DHCP Server", placement: "top", offsetX: 120, done: false },
-                { selector: "label[for='DnsServerSource0']", text: "Bước 1: Chọn Off của phần ISP DNS", placement: "right", done: false },
-                { selector: "#sub_DNSServer13", text: "Bước 2: Nhập Primary DNS: 210.245.31.220", placement: "right", done: false },
-                { selector: "#sub_DNSServer23", text: "Bước 3: Nhập Secondary DNS: 8.8.8.8", placement: "right", done: false },
-                { selector: "#Btn_apply_DHCPBasicCfg", text: "Bước 4: Nhấn Apply để lưu cấu hình", placement: "top", done: false }
+                { selector: "#dns", text: "Chọn DNS", placement: "right", done: false },
+                { selector: "#LocalDnsServerBar", text: "Mở mục DNS", placement: "top", done: false },
+                { selector: "#sub_SerIPAddress13", text: "Bước 1: Nhập IPv4 DNS Server 1: 210.245.31.220", placement: "right", done: false },
+                { selector: "#sub_SerIPAddress23", text: "Bước 2: Nhập IPv4 DNS Server 2: 8.8.8.8", placement: "right", done: false },
+                { selector: "#Btn_apply_LocalDnsServer", text: "Bước 3: Nhấn Apply để lưu cấu hình DNS", placement: "top", done: false }
             ];
 
             // Function to create and update tooltip

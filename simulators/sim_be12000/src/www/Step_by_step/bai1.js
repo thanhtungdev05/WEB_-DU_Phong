@@ -82,40 +82,45 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (getVal("UserName") !== "hnfdl-123456-789") errors.push("Hàng \"Username:\" giá trị đúng là hnfdl-123456-789, khuyến nghị giá trị đúng là hnfdl-123456-789.");
                 if (getVal("Password") !== "d123456") errors.push("Hàng \"Password\" giá trị đúng là d123456, khuyến nghị giá trị đúng là d123456.");
 
-                // Đánh dấu đã bấm lưu cấu hình
-                document._ftcIsSaved = true;
-
-                if (errors.length === 0) {
-                    document._ftcHasSuccHint = true;
-                    if (window.top && window.top !== window) {
-                        window.top._hasSuccHintStored = true;
-                        window.top._hasClickedSaveInGuide = true;
-                    }
-                    var succHintEl = document.querySelector('.succHint');
-                    if (succHintEl) {
-                        succHintEl.style.display = 'block';
-                    }
-                } else {
+                if (errors.length > 0) {
                     document._ftcHasSuccHint = false;
+                    document._ftcIsSaved = false;
                     if (window.top && window.top !== window) {
                         window.top._hasSuccHintStored = false;
+                        window.top._hasClickedSaveInGuide = true;
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
                     }
                     var succHintEl = document.querySelector('.succHint');
                     if (succHintEl) {
                         succHintEl.style.display = 'none';
                     }
-                }
-
-                // Nếu đang chạy trong khung iframe của Portal
-                if (window.top && window.top !== window) {
-                    try {
+                    alert("BẠN ĐÃ CẤU HÌNH SAI:\n\n" + errors.join("\n"));
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                } else {
+                    document._ftcHasSuccHint = true;
+                    document._ftcIsSaved = true;
+                    if (window.top && window.top !== window) {
+                        window.top._hasSuccHintStored = true;
                         window.top._hasClickedSaveInGuide = true;
-                        if (typeof window.top.onSimulatorSave === 'function') {
-                            window.top.onSimulatorSave(window);
-                        }
-                    } catch (err) { }
+                        try {
+                            if (typeof window.top.onSimulatorSave === 'function') {
+                                window.top.onSimulatorSave(window);
+                            }
+                        } catch (err) { }
+                    }
+                    var succHintEl = document.querySelector('.succHint');
+                    if (succHintEl) {
+                        succHintEl.style.display = 'block';
+                    }
 
-                    if (errors.length === 0) {
+                    // Nếu đang chạy trong khung iframe của Portal
+                    if (window.top && window.top !== window) {
                         try {
                             var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
                             window.top.postMessage({
@@ -125,16 +130,10 @@ document.addEventListener("DOMContentLoaded", function () {
                                 message: 'Hoàn thành Lab ' + (modeText === 'Hướng dẫn' ? 'có hướng dẫn' : 'thực hành') + ' Bài 1-Cấu hình PPPoE trên thiết bị ONT BE12000'
                             }, '*');
                         } catch (err) { }
+                        return;
                     }
-                    return;
-                }
 
-                // Nếu chạy độc lập (không qua Portal)
-                if (errors.length > 0) {
-                    alert("BẠN ĐÃ CẤU HÌNH SAI:\n\n" + errors.join("\n"));
-                    e.preventDefault();
-                    e.stopPropagation();
-                } else {
+                    // Nếu chạy độc lập (không qua Portal)
                     var modeText = mode === 'practice' ? 'Thực hành' : 'Hướng dẫn';
                     try {
                         const topUrl = new URL(window.top.location.href);
@@ -153,7 +152,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         }, '*');
                     } catch (err) { }
 
-                    document._ftcIsSaved = true;
                     e.preventDefault();
                     e.stopPropagation();
                 }
