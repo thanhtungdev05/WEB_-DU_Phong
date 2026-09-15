@@ -26,12 +26,12 @@ window.TOOLTIPS_AX3000C['LAB_AX3000CV2_05'] = [
     position: 'right',
     hideOnPage: 'lan'
   },
-  // Bước 1: Đặt IP cho Router ví dụ: 192.168.100.1 (chỉ hiện khi ở trang LAN)
+  // Bước 1: Đặt IP cho Router ví dụ: 192.168.1.1 (chỉ hiện khi ở trang LAN)
   {
     selector: '#lanIp, .card .bd .row:nth-child(1) input',
-    text: 'Bước 1: đặt IP cho Router ví dụ: 192.168.100.1',
+    text: 'Bước 1: đặt IP cho Router ví dụ: 192.168.1.1',
     position: 'right',
-    expected: '192.168.100.1',
+    expected: '192.168.1.1',
     page: 'lan'
   },
   // Bước 2: Đặt Subnet mask ví dụ: 255.255.255.0 (chỉ hiện khi ở trang LAN)
@@ -42,20 +42,20 @@ window.TOOLTIPS_AX3000C['LAB_AX3000CV2_05'] = [
     expected: '255.255.255.0',
     page: 'lan'
   },
-  // Bước 3: Kiểm tra IP bắt đầu tự nhảy thành 192.168.100.2 (chỉ hiện khi ở trang LAN)
+  // Bước 3: Kiểm tra IP bắt đầu tự nhảy thành 192.168.1.2 (chỉ hiện khi ở trang LAN)
   {
     selector: '#dhcpStart, .card .bd .row:nth-child(3) input',
-    text: 'Bước 3: kiểm tra IP bắt đầu tự nhảy thành 192.168.100.2',
+    text: 'Bước 3: kiểm tra IP bắt đầu tự nhảy thành 192.168.1.2',
     position: 'right',
-    expected: '192.168.100.2',
+    expected: '192.168.1.2',
     page: 'lan'
   },
-  // Bước 4: Kiểm tra IP kết thúc tự nhảy thành 192.168.100.249 (chỉ hiện khi ở trang LAN)
+  // Bước 4: Kiểm tra IP kết thúc tự nhảy thành 192.168.1.249 (chỉ hiện khi ở trang LAN)
   {
     selector: '#dhcpEnd, .card .bd .row:nth-child(4) input',
-    text: 'Bước 4: kiểm tra IP kết thúc tự nhảy thành 192.168.100.249',
+    text: 'Bước 4: kiểm tra IP kết thúc tự nhảy thành 192.168.1.249',
     position: 'right',
-    expected: '192.168.100.249',
+    expected: '192.168.1.249',
     page: 'lan'
   },
   // Bước 5: Chọn Apply để lưu cấu hình (chỉ hiện khi ở trang LAN)

@@ -29,7 +29,7 @@ CT = {
 
 def get_nav_and_tab_for_page(page_name):
     page_lower = page_name.lower()
-    if any(k in page_lower for k in ["home_wan", "home_wireless", "home_lan", "adv_nat", "adv_qos", "home_wizard"]):
+    if any(k in page_lower for k in ["home_wan", "home_wireless", "home_lan", "adv_nat", "adv_qos", "home_wizard", "wifi_basic", "wifi_guest", "wifi5"]):
         return "/cgi-bin/navigation-basic.asp", "Network"
     if any(k in page_lower for k in ["access_", "urlfilter", "ipfilter", "ddns", "cwmp", "snmp", "upnp", "samba"]):
         return "/cgi-bin/navigation-access.asp", "Access"
@@ -43,22 +43,35 @@ def get_nav_and_tab_for_page(page_name):
 
 SIM_STATE = {}
 
-def apply_sim_state_to_html(html_str, show_success=False):
-    if show_success:
-        # Inject: alert thÃ nh cÃ´ng + Ä‘Ã¡nh dáº¥u _ftcIsSaved + gá»i onSimulatorSave lÃªn Portal
+def apply_sim_state_to_html(html_str, show_success=False, page_path=""):
+    # Kiểm tra xem trang có dữ liệu trong SIM_STATE hay không
+    has_saved_data = False
+    if SIM_STATE:
+        p_lower = (page_path or "").lower()
+        if "wan" in p_lower and any(k in SIM_STATE for k in ["pppUserName", "pppPassword", "Username", "Password"]):
+            has_saved_data = True
+        elif ("lan" in p_lower or "dhcp" in p_lower) and any(k in SIM_STATE for k in ["uiViewIPAddr", "StartIp", "PoolSize", "PrimaryDns", "dnsTypeRadio"]):
+            has_saved_data = True
+        elif ("wireless" in p_lower or "wifi" in p_lower) and any(k in SIM_STATE for k in ["ESSID", "PreSharedKey", "wifi5SSid_2G"]):
+            has_saved_data = True
+
+    if show_success or has_saved_data:
+        # Inject: danh dau _ftcIsSaved + goi onSimulatorSave len Portal (khong alert native popup)
         save_js = """<script type="text/javascript">
+document._ftcIsSaved = true;
 window.addEventListener("DOMContentLoaded", function() {
-    alert("Operate successfully!");
-    // ÄÃ¡nh dáº¥u Ä‘Ã£ lÆ°u cáº¥u hÃ¬nh thÃ nh cÃ´ng Ä‘á»ƒ há»‡ thá»‘ng cháº¥m Ä‘iá»ƒm nháº­n biáº¿t
     document._ftcIsSaved = true;
-    // Láº¯ng nghe thay Ä‘á»•i input â†’ reset cá» náº¿u ngÆ°á»i dÃ¹ng sá»­a láº¡i
+    // Lang nghe thay doi input -> reset co neu nguoi dung sua lai
     document.addEventListener('input', function() { document._ftcIsSaved = false; });
     document.addEventListener('change', function() { document._ftcIsSaved = false; });
-    // ThÃ´ng bÃ¡o lÃªn Portal (app.js) qua postMessage Ä‘á»ƒ vÆ°á»£t qua giá»›i háº¡n cross-origin
+    // Thong bao len Portal (app.js) qua postMessage de vuot qua gioi han cross-origin
     try {
         window.top.postMessage({ type: 'FTC_SAVE_SUCCESS', source: 'ax3000hv2' }, '*');
     } catch(e) {}
 });
+try {
+    window.top.postMessage({ type: 'FTC_SAVE_SUCCESS', source: 'ax3000hv2' }, '*');
+} catch(e) {}
 </script>"""
         if re.search(r'</head>', html_str, re.IGNORECASE):
             html_str = re.sub(r'</head>', save_js + "</head>", html_str, flags=re.IGNORECASE)
@@ -216,7 +229,7 @@ class H(BaseHTTPRequestHandler):
                     html,
                 )
 
-                html = apply_sim_state_to_html(html, show_success)
+                html = apply_sim_state_to_html(html, show_success, page_param or p)
                 return self._send(html.encode("utf-8"), "text/html; charset=utf-8")
 
         # Xu ly dac biet cho /cgi-bin/status.asp de active tab truyen qua URL (?tab=Network)
@@ -253,7 +266,7 @@ class H(BaseHTTPRequestHandler):
                     else:
                         html = tab_script + html
 
-                html = apply_sim_state_to_html(html, show_success)
+                html = apply_sim_state_to_html(html, show_success, p)
                 return self._send(html.encode("utf-8"), "text/html; charset=utf-8")
 
         # Duong dan file trong www2
@@ -263,7 +276,7 @@ class H(BaseHTTPRequestHandler):
             if ext in (".asp", ".html", ".htm"):
                 with open(f, "r", encoding="utf-8", errors="replace") as fh:
                     text_content = fh.read()
-                text_content = apply_sim_state_to_html(text_content, show_success)
+                text_content = apply_sim_state_to_html(text_content, show_success, p)
                 return self._send(text_content.encode("utf-8"), CT.get(ext, "text/html; charset=utf-8"))
             else:
                 with open(f, "rb") as fh:
@@ -287,6 +300,10 @@ class H(BaseHTTPRequestHandler):
                             SIM_STATE["pppUserName"] = v[0]
                         elif k == "Password":
                             SIM_STATE["pppPassword"] = v[0]
+                        elif k == "PreSharedKey":
+                            SIM_STATE["PreSharedKey1"] = v[0]
+                        elif k == "PreSharedKey1":
+                            SIM_STATE["PreSharedKey"] = v[0]
                 # Log DNS-related state
                 dns_keys = {k: SIM_STATE[k] for k in ['dnsTypeRadio', 'PrimaryDns', 'SecondDns'] if k in SIM_STATE}
                 print(f"[AX3000HV2 POST] DNS state after save: {dns_keys}")

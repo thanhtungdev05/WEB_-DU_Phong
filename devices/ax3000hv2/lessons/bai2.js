@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ax3000hv2/lessons/bai2.js
  * Bài 2: Cấu hình Wi-Fi Host trên AX3000H v2
  */
@@ -12,33 +12,54 @@ var lessonObj = {
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình mạng Wi-Fi chính (Host) theo các thông số dưới đây:',
-    '- SSID Name: <span class="val">FPT Telecom</span>',
-    '- WPA Key: <span class="val">fpt12345</span>',
+    '- <b>Wi-Fi 2.4GHz:</b>',
+    '  + SSID Name: <span class="val">FPT Telecom</span>',
+    '  + Security Passphrase: <span class="val">fpt12345</span>',
+    '- <b>Wi-Fi 5GHz:</b>',
+    '  + SSID Name: <span class="val">FPT Telecom</span>',
+    '  + Security Passphrase: <span class="val">fpt12345</span>',
   ],
-  practiceUrl: '/sim_ax3000hv2/cgi-bin/index.asp?page=home_wireless.asp',
+  practiceUrl: '/sim_ax3000hv2/cgi-bin/index.asp?page=wifi_basic.asp',
   clearFields: [
     'input[name="ESSID"]',
-    'input[name="PreSharedKey1"]',
     'input[name="PreSharedKey"]',
     'input[name="ESSID_5g"]',
     'input[name="PreSharedKey_5g"]'
   ],
   grading: {
-    description: 'Kiểm tra SSID Host và WPA Key trên AX3000Hv2',
+    description: 'Kiểm tra SSID Host và WPA Key trên AX3000Hv2 (cả 2.4GHz và 5GHz)',
     rules: [
       {
-        id: 'host_ssid',
-        name: 'Tên Wi-Fi Host (SSID)',
-        selector: 'input[name="ESSID"], input[name="ssid"]',
-        expected: 'FPT Telecom',
+        id: 'host_ssid_2g',
+        name: 'Tên Wi-Fi 2.4GHz (SSID)',
+        selector: 'input[name="ESSID"]',
+        expected: ['FPT Telecom', 'FTP Telecom'],
+        type: 'any_of',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'host_key_2g',
+        name: 'Mật khẩu Wi-Fi 2.4GHz',
+        selector: 'input[name="PreSharedKey"]',
+        expected: 'fpt12345',
         type: 'text_exact',
         trim: true,
         required: true
       },
       {
-        id: 'host_key',
-        name: 'Mật khẩu Wi-Fi Host',
-        selector: 'input[name="PreSharedKey1"], input[name*="PreSharedKey"]',
+        id: 'host_ssid_5g',
+        name: 'Tên Wi-Fi 5GHz (SSID)',
+        selector: 'input[name="ESSID_5g"]',
+        expected: ['FPT Telecom', 'FTP Telecom'],
+        type: 'any_of',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'host_key_5g',
+        name: 'Mật khẩu Wi-Fi 5GHz',
+        selector: 'input[name="PreSharedKey_5g"]',
         expected: 'fpt12345',
         type: 'text_exact',
         trim: true,

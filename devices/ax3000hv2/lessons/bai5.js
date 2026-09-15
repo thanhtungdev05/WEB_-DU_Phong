@@ -11,29 +11,24 @@ var lessonObj = {
   subtitle: 'Cấu hình DHCP',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện thay đổi cấu hình DHCP trên thiết bị theo các thông số:',
-    '- IP Address: <span class="val">192.168.1.1</span>',
+    'Thực hiện đổi lớp mạng LAN và cấu hình DHCP trên thiết bị theo các thông số:',
+    '- IP Address: <span class="val">192.168.100.1</span>',
     '- IP Subnet Mask: <span class="val">255.255.255.0</span>',
     '- DHCP Server: <span class="val">Enable</span>',
-    '- Start IP: <span class="val">192.168.1.2</span>',
+    '- Start IP: <span class="val">192.168.100.2</span>',
     '- IP Pool Count: <span class="val">253</span>',
     '- Lease Time: <span class="val">86400</span>'
   ],
   practiceUrl: '/sim_ax3000hv2/cgi-bin/index.asp?page=home_lan.asp',
-  clearFields: [
-    'input[name="uiViewIPAddr"]',
-    'input[name="uiViewNetMask"]',
-    'input[name="PoolSize"]',
-    'input[name="dhcp_LeaseTime"]'
-  ],
+  clearFields: [],
   grading: {
-    description: 'Kiểm tra cấu hình DHCP trên AX3000Hv2',
+    description: 'Kiểm tra cấu hình đổi IP LAN và DHCP trên AX3000Hv2',
     rules: [
       {
         id: 'dhcp_ip',
         name: 'IP Address',
         selector: 'input[name="uiViewIPAddr"]',
-        expected: '192.168.1.1',
+        expected: '192.168.100.1',
         type: 'text_exact',
         trim: true,
         required: true
@@ -59,7 +54,7 @@ var lessonObj = {
         id: 'dhcp_start',
         name: 'Start IP',
         selector: 'input[name="StartIp"]',
-        expected: '192.168.1.2',
+        expected: '192.168.100.2',
         type: 'text_exact',
         trim: true,
         required: true
@@ -86,53 +81,48 @@ var lessonObj = {
   },
   guidePopups: [
     {
-      selector: 'a[onclick="change_basic(this);"]',
+      selector: '#MainMenu a:contains("Network"), a[onclick="change_basic(this);"]',
       text: 'Bước 1: Chọn Network',
-      position: 'top'
+      position: 'top',
+      hideOnPage: 'home_lan.asp'
     },
     {
-      selector: 'a[href*="home_lan.asp"]',
+      selector: 'a[href*="home_lan.asp"], a:contains("LAN")',
       text: 'Bước 2: Chọn LAN',
-      position: 'top'
+      position: 'top',
+      hideOnPage: 'home_lan.asp'
     },
     {
       selector: 'input[name="uiViewIPAddr" i]',
-      text: 'Bước 3: Nhập IP Address: 192.168.1.1',
+      page: 'home_lan.asp',
+      text: 'Bước 3: Đổi IP Address thành: 192.168.100.1',
       position: 'right',
       forcePosition: true
     },
     {
       selector: 'input[name="uiViewNetMask" i]',
-      text: 'Bước 4: Nhập IP Subnet Mask: 255.255.255.0',
+      page: 'home_lan.asp',
+      text: 'Bước 4: Kiểm tra IP Subnet Mask: 255.255.255.0',
       position: 'right',
       forcePosition: true
     },
     {
       selector: 'input[name="dhcpTypeRadio"][value="1" i]',
+      page: 'home_lan.asp',
       text: 'Bước 5: Ở mục DHCP, chọn Enable',
       position: 'top'
     },
     {
       selector: 'input[name="StartIp" i]',
-      text: 'Bước 6: Nhập Start IP: 192.168.1.2',
-      position: 'right',
-      forcePosition: true
-    },
-    {
-      selector: 'input[name="PoolSize" i]',
-      text: 'Bước 7: Nhập IP Pool Count: 253',
-      position: 'right',
-      forcePosition: true
-    },
-    {
-      selector: 'input[name="dhcp_LeaseTime" i]',
-      text: 'Bước 8: Nhập Lease Time: 86400',
+      page: 'home_lan.asp',
+      text: 'Bước 6: Đổi Start IP thành: 192.168.100.2',
       position: 'right',
       forcePosition: true
     },
     {
       selector: 'input[value="Save" i], input[name="SaveBtn" i]',
-      text: 'Bước 9: Chọn Save',
+      page: 'home_lan.asp',
+      text: 'Bước 7: Chọn Save',
       position: 'top'
     }
   ]

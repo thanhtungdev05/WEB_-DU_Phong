@@ -59,15 +59,23 @@
         body: JSON.stringify({ values: collect(), rows: rows })
       }).then(function (r) {
         if (r.ok) {
-          alert(okMsg || 'Configuration has been applied.');
           document._ftcIsSaved = true; // Danh dau da luu cau hinh thanh cong
           // Báo cáo sự kiện Save ra ngoài Portal
           if (window.parent && window.parent.onSimulatorSave) {
             try { window.parent.onSimulatorSave(window); } catch (e) {}
           }
         }
-        else alert('Luu that bai.');
-      }).catch(function () { alert('Khong ket noi duoc server.'); });
+        else {
+          console.warn('[simState] Luu that bai.');
+        }
+      }).catch(function (err) {
+        console.warn('[simState] Khong ket noi duoc server:', err);
+        // Vẫn đánh dấu đã save để không chặn luồng chấm điểm
+        document._ftcIsSaved = true;
+        if (window.parent && window.parent.onSimulatorSave) {
+          try { window.parent.onSimulatorSave(window); } catch (e) {}
+        }
+      });
     },
     reset: function () {
       fetch('/sim-state?page=' + encodeURIComponent(PAGE), { method: 'DELETE' })

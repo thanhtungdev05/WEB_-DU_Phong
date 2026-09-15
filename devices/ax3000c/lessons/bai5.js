@@ -13,10 +13,10 @@ var lessonObj = {
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện thay đổi cấu hình địa chỉ IP LAN trên thiết bị theo các thông số được cung cấp dưới đây.',
-    '- Router LAN IPv4 Address: <span class="val">192.168.100.1</span>',
+    '- Router LAN IPv4 Address: <span class="val">192.168.1.1</span>',
     '- Subnet mask: <span class="val">255.255.255.0</span>',
-    '- DHCP start address: <span class="val">192.168.100.2</span>',
-    '- DHCP end address: <span class="val">192.168.100.249</span>',
+    '- DHCP start address: <span class="val">192.168.1.2</span>',
+    '- DHCP end address: <span class="val">192.168.1.249</span>',
   ],
   practiceUrl: '/sim_ax3000c/#/network/lan',
   grading: {
@@ -25,8 +25,8 @@ var lessonObj = {
       {
         id: 'lan_ip',
         name: 'Router LAN IP Address',
-        selector: '#lanIp, .card .bd .row:nth-child(1) input, input[value="192.168.100.1"]',
-        expected: '192.168.100.1',
+        selector: '#lanIp, .card .bd .row:nth-child(1) input, input[value="192.168.1.1"]',
+        expected: '192.168.1.1',
         type: 'text_exact',
         trim: true,
         required: true
@@ -43,8 +43,8 @@ var lessonObj = {
       {
         id: 'dhcp_start',
         name: 'DHCP Start Address',
-        selector: '#dhcpStart, .card .bd .row:nth-child(3) input, input[value="192.168.100.2"]',
-        expected: '192.168.100.2',
+        selector: '#dhcpStart, .card .bd .row:nth-child(3) input, input[value="192.168.1.2"]',
+        expected: '192.168.1.2',
         type: 'text_exact',
         trim: true,
         required: true
@@ -52,8 +52,8 @@ var lessonObj = {
       {
         id: 'dhcp_end',
         name: 'DHCP End Address',
-        selector: '#dhcpEnd, .card .bd .row:nth-child(4) input, input[value="192.168.100.249"]',
-        expected: '192.168.100.249',
+        selector: '#dhcpEnd, .card .bd .row:nth-child(4) input, input[value="192.168.1.249"]',
+        expected: '192.168.1.249',
         type: 'text_exact',
         trim: true,
         required: true
@@ -81,7 +81,7 @@ var lessonObj = {
     },
     {
       selector: '#lanIp, .card .bd .row:nth-child(1) input',
-      text: 'Bước 1: đặt IP cho Router ví dụ: 192.168.100.1',
+      text: 'Bước 1: đặt IP cho Router ví dụ: 192.168.1.1',
       position: 'right',
       page: 'lan'
     },
@@ -93,13 +93,13 @@ var lessonObj = {
     },
     {
       selector: '#dhcpStart, .card .bd .row:nth-child(3) input',
-      text: 'Bước 3: kiểm tra IP bắt đầu tự nhảy thành 192.168.100.2',
+      text: 'Bước 3: kiểm tra IP bắt đầu tự nhảy thành 192.168.1.2',
       position: 'right',
       page: 'lan'
     },
     {
       selector: '#dhcpEnd, .card .bd .row:nth-child(4) input',
-      text: 'Bước 4: kiểm tra IP kết thúc tự nhảy thành 192.168.100.249',
+      text: 'Bước 4: kiểm tra IP kết thúc tự nhảy thành 192.168.1.249',
       position: 'right',
       page: 'lan'
     },

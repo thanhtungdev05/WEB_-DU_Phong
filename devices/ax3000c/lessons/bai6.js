@@ -84,7 +84,7 @@ var lessonObj = {
       hideOnPage: 'portfwd'
     },
     {
-      selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu:opened:contains("Access") li.el-menu-item:contains("Port"), .el-menu-item:contains("Port")',
+      selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu.is-opened:contains("Access") li.el-menu-item:contains("Port"), .el-menu-item:contains("Port")',
       text: 'Chọn Port Forwarding',
       position: 'right',
       hideOnPage: 'portfwd'

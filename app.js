@@ -170,11 +170,33 @@
     deviceSelect.disabled = true;
 
     // Bind events
-    deviceSelect.addEventListener('change', () => selectDevice(deviceSelect.value));
+    deviceSelect.addEventListener('change', () => {
+      if (!confirmLeavePracticeSession()) {
+        deviceSelect.value = currentDeviceId;
+        return;
+      }
+      if (practiceScreen && practiceScreen.classList.contains('visible')) {
+        backToLesson();
+      }
+      selectDevice(deviceSelect.value);
+    });
     btnCollapse.addEventListener('click', toggleSidebar);
 
     // Practice screen events
-    if (btnBackLesson) btnBackLesson.addEventListener('click', backToLesson);
+    if (btnBackLesson) {
+      btnBackLesson.addEventListener('click', () => {
+        if (!confirmLeavePracticeSession()) return;
+        backToLesson();
+      });
+    }
+    window.addEventListener('beforeunload', (e) => {
+      if (practiceScreen && practiceScreen.classList.contains('visible') &&
+          currentMode === 'practice' &&
+          _trackingSession && !_trackingSession.finalized) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
     if (btnOpenNewTab) btnOpenNewTab.addEventListener('click', () => {
       if (currentIframeUrl) window.open(currentIframeUrl, '_blank', 'noopener');
     });
@@ -246,13 +268,15 @@
       }
       // Nhận tín hiệu Save thành công từ simulator AX3000H v2 (qua postMessage cross-origin)
       if (event.data && event.data.type === 'FTC_SAVE_SUCCESS') {
+        window._hasClickedSaveInGuide = true;
         // Delay nhỏ để frame đã load xong và đặt document._ftcIsSaved = true trước khi đọc
         setTimeout(function () {
           try {
             const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
             let savedWin = null;
             for (const doc of allDocs) {
-              if (doc._ftcIsSaved) {
+              if (doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1'))) {
+                doc._ftcIsSaved = true;
                 savedWin = doc.defaultView || doc.parentWindow;
                 break;
               }
@@ -263,7 +287,7 @@
               window.onSimulatorSave(savedWin);
             }
           } catch (e) { }
-        }, 300);
+        }, 50);
       }
 
     });
@@ -438,13 +462,27 @@
                 doc.addEventListener('click', function (e) {
                   let el = e.target;
                   while (el && el !== doc) {
-                    if ((el.tagName === 'INPUT' || el.tagName === 'BUTTON') && 
-                        (el.type === 'submit' || (el.value || el.textContent || '').toLowerCase().includes('save') || (el.value || el.textContent || '').toLowerCase().includes('apply') || el.name === 'AddBtn' || ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6') && (el.value || el.textContent || '').trim().toLowerCase() === 'add'))) {
-                      window._hasClickedSaveInGuide = true;
-                      doc._ftcIsSaved = true;
-                      setTimeout(function () {
-                        try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
-                      }, 50);
+                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+                      const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
+                      const isExcludedAction = (btnVal === 'add' && currentLessonId !== 'ONT_be6500c-bai6' && currentLessonId !== 'be6500c-bai6' && currentLessonId !== 'LAB_AC1000F_06') ||
+                        btnVal === 'delete' || btnVal === 'undo' || btnVal === 'cancel' || btnVal === 'reset';
+
+                      if (!isExcludedAction) {
+                        const isSaveOrApply = btnVal.includes('save') || 
+                          btnVal.includes('apply') || 
+                          btnVal.includes('submit') || 
+                          btnVal.includes('lưu') || 
+                          ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
+                          (el.type === 'submit' && el.tagName === 'INPUT');
+
+                        if (isSaveOrApply) {
+                          window._hasClickedSaveInGuide = true;
+                          doc._ftcIsSaved = true;
+                          setTimeout(function () {
+                            try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
+                          }, 50);
+                        }
+                      }
                     }
                     el = el.parentNode;
                   }
@@ -479,6 +517,17 @@
                     doc._ftcIsSaved = false;
                   }
                 }, true);
+
+                // Đồng bộ vị trí tooltip tức thì khi cuộn trang
+                if (!doc._ftcScrollBound) {
+                  doc._ftcScrollBound = true;
+                  const win = doc.defaultView || window;
+                  if (win) {
+                    win.addEventListener('scroll', function () {
+                      if (currentMode === 'guide') applyGuidePopups();
+                    }, { passive: true });
+                  }
+                }
 
                 // === BẮT LỖI TƯƠNG TÁC CHÍNH XÁC TUYỆT ĐỐI (Dành riêng cho SPAs) ===
                 if (!doc._ftcOriginalValues) doc._ftcOriginalValues = {};
@@ -529,6 +578,12 @@
             } else {
               for (const d of allDocs) {
                 try {
+                  if (d.location && d.location.search && d.location.search.includes('save_success=1')) {
+                    if (d._ftcIsSaved !== false) {
+                      d._ftcIsSaved = true;
+                      window._hasClickedSaveInGuide = true;
+                    }
+                  }
                   if (d._ftcHasSuccHint) { hasSuccHint = true; break; }
                   const hints = d.querySelectorAll('.succHint');
                   for (const h of hints) {
@@ -557,43 +612,59 @@
             let btnGuideErrors = document.getElementById('btn-guide-errors');
             const noConfig = isNoConfigDevice();
 
-            // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT:
-            if (noConfig || (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed)))) {
-              // Nút Nộp bài SÁNG LÊN
+            if (currentMode === 'practice') {
+              // ⚡ CHẾ ĐỘ THỰC HÀNH:
+              // 1. Nút "Xem lỗi sai" LUÔN LUÔN ẨN (không tiết lộ lỗi trước khi nộp bài)
+              if (btnGuideErrors) {
+                btnGuideErrors.style.display = 'none';
+              }
+              // 2. Nút "Nộp bài & Chấm điểm" LUÔN KHẢ DỤNG để học viên nộp bài bất kỳ lúc nào (đúng hay sai đều nộp được)
               if (btnSubmitLab) {
                 btnSubmitLab.disabled = false;
                 btnSubmitLab.style.opacity = '1';
                 btnSubmitLab.style.cursor = 'pointer';
                 btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
               }
-              // Nút Lỗi sai ẨN ĐI
-              if (btnGuideErrors) {
-                btnGuideErrors.style.display = 'none';
-              }
             } else {
-              // Chưa đạt hoặc chưa bấm Save:
-              if (btnGuideErrors) {
-                if (window._hasClickedSaveInGuide && evalResult && !evalResult.passed && !hasSuccHint) {
-                  // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN
-                  btnGuideErrors.style.display = 'flex';
-                  btnGuideErrors.disabled = false;
-                  btnGuideErrors.style.opacity = '1';
-                  btnGuideErrors.style.cursor = 'pointer';
-                  btnGuideErrors.style.background = '#fee2e2';
-                  btnGuideErrors.style.color = '#ef4444';
-                  btnGuideErrors.style.borderColor = '#fca5a5';
-                  btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
-                } else {
+              // 💡 CHẾ ĐỘ HƯỚNG DẪN:
+              // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT:
+              if (noConfig || (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed)))) {
+                // Nút Nộp bài SÁNG LÊN
+                if (btnSubmitLab) {
+                  btnSubmitLab.disabled = false;
+                  btnSubmitLab.style.opacity = '1';
+                  btnSubmitLab.style.cursor = 'pointer';
+                  btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
+                }
+                // Nút Lỗi sai ẨN ĐI
+                if (btnGuideErrors) {
                   btnGuideErrors.style.display = 'none';
                 }
-              }
+              } else {
+                // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
+                if (btnGuideErrors) {
+                  if (window._hasClickedSaveInGuide && evalResult && !evalResult.passed && !hasSuccHint) {
+                    // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN để trợ giúp học tập
+                    btnGuideErrors.style.display = 'flex';
+                    btnGuideErrors.disabled = false;
+                    btnGuideErrors.style.opacity = '1';
+                    btnGuideErrors.style.cursor = 'pointer';
+                    btnGuideErrors.style.background = '#fee2e2';
+                    btnGuideErrors.style.color = '#ef4444';
+                    btnGuideErrors.style.borderColor = '#fca5a5';
+                    btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
+                  } else {
+                    btnGuideErrors.style.display = 'none';
+                  }
+                }
 
-              // Nút Nộp bài MỜ/TẮT
-              if (btnSubmitLab) {
-                btnSubmitLab.disabled = true;
-                btnSubmitLab.style.opacity = '0.5';
-                btnSubmitLab.style.cursor = 'not-allowed';
-                btnSubmitLab.style.animation = 'none';
+                // Nút Nộp bài MỜ/TẮT trong Hướng dẫn
+                if (btnSubmitLab) {
+                  btnSubmitLab.disabled = true;
+                  btnSubmitLab.style.opacity = '0.5';
+                  btnSubmitLab.style.cursor = 'not-allowed';
+                  btnSubmitLab.style.animation = 'none';
+                }
               }
             }
           }
@@ -832,7 +903,13 @@
           <span class="nav-num">${numPart}</span>
           <span class="nav-label" title="${lesson.title}">- ${labelPart}</span>`;
 
-        item.addEventListener('click', () => selectLesson(device, lesson, item));
+        item.addEventListener('click', () => {
+          if (!confirmLeavePracticeSession()) return;
+          if (practiceScreen && practiceScreen.classList.contains('visible')) {
+            backToLesson();
+          }
+          selectLesson(device, lesson, item);
+        });
         navList.appendChild(item);
       });
     });
@@ -1002,7 +1079,7 @@
     // Thiết lập trạng thái ban đầu cho nút Nộp bài và nút Lỗi sai
     const noConfigInit = isNoConfigDevice();
     if (btnSubmitLab) {
-      if (noConfigInit) {
+      if (currentMode === 'practice' || noConfigInit) {
         btnSubmitLab.disabled = false;
         btnSubmitLab.style.opacity = '1';
         btnSubmitLab.style.cursor = 'pointer';
@@ -1075,6 +1152,15 @@
     }
   }
 
+  function confirmLeavePracticeSession() {
+    if (practiceScreen && practiceScreen.classList.contains('visible') &&
+        currentMode === 'practice' &&
+        _trackingSession && !_trackingSession.finalized) {
+      return confirm('Bài thực hành chưa được nộp!\nNếu bạn rời đi bây giờ, phiên thực hành sẽ được tính là bỏ dở (chưa đạt).\n\nBạn có chắc chắn muốn rời khỏi bài thực hành không?');
+    }
+    return true;
+  }
+
   function backToLesson() {
     if (trackingSaveInFlight) return;
     resetDeviceSession(currentDeviceId);
@@ -1089,6 +1175,8 @@
     _lastTrackingPayload = null;
     _lastEvalResult = null;
     _lastSubmitDurationSec = 0;
+    window._hasClickedSaveInGuide = false;
+    window._hasSuccHintStored = false;
 
     deviceIframe.src = '';
     currentIframeUrl = '';
@@ -1110,10 +1198,26 @@
       try { _currentLesson.customClear(); } catch (e) { console.error(e); }
     }
 
+    try {
+      const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+      const isAnyDocSaved = allDocs.some(d => {
+        try {
+          return d._ftcIsSaved === true || (d.location && d.location.search && d.location.search.includes('save_success=1'));
+        } catch (e) { return false; }
+      });
+      if (isAnyDocSaved) {
+        window._hasClickedSaveInGuide = true;
+        return;
+      }
+    } catch (e) { }
+
     if (!Array.isArray(_currentLesson.clearFields) || _currentLesson.clearFields.length === 0) return;
     try {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       allDocs.forEach(doc => {
+        if (doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1'))) {
+          return;
+        }
         _currentLesson.clearFields.forEach(selector => {
           try {
             doc.querySelectorAll(selector).forEach(el => {
@@ -1239,7 +1343,9 @@
       let isSaved = hasStoredNotification;
       let isMatch = false;
 
-      const expectedVal = (rule.trim !== false) ? String(rule.expected).trim() : String(rule.expected);
+      const expectedVal = Array.isArray(rule.expected)
+        ? rule.expected.join(' hoặc ')
+        : ((rule.trim !== false) ? String(rule.expected).trim() : String(rule.expected));
 
       // Tìm element trong tất cả accessible frames (hỗ trợ cả các trang có nhiều instances/hàng cấu hình)
       for (const doc of allDocs) {
@@ -1247,7 +1353,9 @@
           const els = Array.from(doc.querySelectorAll(rule.selector));
           if (els.length > 0) {
             elementFound = true;
-            if (doc._ftcIsSaved) isSaved = true;
+            const isDocSaved = doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1') && doc._ftcIsSaved !== false);
+            const isSessionSaved = (window._hasClickedSaveInGuide === true && doc._ftcIsSaved !== false);
+            if (isDocSaved || isSessionSaved) isSaved = true;
 
             // Tìm xem có phần tử nào khớp với expectedVal không
             let chosenEl = els[0];
@@ -2039,17 +2147,7 @@
     const lesson = getCurrentLesson();
     if (!lesson) return;
 
-    // Chỉ dọn dẹp popup hướng dẫn khi bài học ĐÃ LƯU THÀNH CÔNG (hoặc đã đạt kết quả chấm)
-    let isSavedSuccess = window._hasSuccHintStored;
-    if (!isSavedSuccess && device && lesson) {
-      const evalRes = evaluateLesson(device, lesson);
-      if (evalRes && evalRes.passed) isSavedSuccess = true;
-    }
-
-    if (window._hasClickedSaveInGuide && isSavedSuccess) {
-      clearGuidePopups();
-      return;
-    }
+    // Trong chế độ Hướng dẫn, tooltip luôn luôn hiển thị theo đúng vị trí trỏ về
 
     // 1. Direct DOM injection cho từng document trong iframe (xử lý linh hoạt login vs bài học)
     try {
@@ -2250,8 +2348,9 @@
     // Render popups
     popups.forEach((pop, idx) => {
       // Filter by page / hideOnPage if specified
-      if (pop.page) {
-        const pName = pop.page.toLowerCase();
+      const targetPage = pop.page || pop.urlIncludes;
+      if (targetPage) {
+        const pName = targetPage.toLowerCase();
         const active = isPageActiveInTree(deviceIframe.contentWindow, pName) || fullUrl.includes(pName);
         if (!active) {
           const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
@@ -2259,8 +2358,9 @@
           return;
         }
       }
-      if (pop.hideOnPage) {
-        const hName = pop.hideOnPage.toLowerCase();
+      const hidePage = pop.hideOnPage || pop.hideOnUrlIncludes;
+      if (hidePage) {
+        const hName = hidePage.toLowerCase();
         const hidden = isPageActiveInTree(deviceIframe.contentWindow, hName) || fullUrl.includes(hName);
         if (hidden) {
           const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
@@ -2406,38 +2506,66 @@
       const btnGuideErrors = document.getElementById('btn-guide-errors');
       const noConfigSaved = isNoConfigDevice();
 
-      if (noConfigSaved || window._hasSuccHintStored || (evalResult && evalResult.passed)) {
-        // Cấu hình ĐÚNG hoặc ĐÃ CÓ "Your data have been stored!" hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
+      if (currentMode === 'practice') {
+        // ⚡ Chế độ Thực hành: Nút lỗi sai LUÔN ẨN, Nút Nộp bài LUÔN SÁNG để học viên nộp bài
+        if (btnGuideErrors) {
+          btnGuideErrors.style.display = 'none';
+        }
         if (btnSubmitLab) {
           btnSubmitLab.disabled = false;
           btnSubmitLab.style.opacity = '1';
           btnSubmitLab.style.cursor = 'pointer';
           btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
         }
-        if (btnGuideErrors) {
-          btnGuideErrors.style.display = 'none';
-        }
       } else {
-        // Cấu hình SAI: Nút Lỗi sai SÁNG LÊN, Nút Nộp bài TẮT/XÁM
-        if (btnGuideErrors) {
-          btnGuideErrors.style.display = 'flex';
-          btnGuideErrors.disabled = false;
-          btnGuideErrors.style.opacity = '1';
-          btnGuideErrors.style.cursor = 'pointer';
-          btnGuideErrors.style.background = '#fee2e2';
-          btnGuideErrors.style.color = '#ef4444';
-          btnGuideErrors.style.borderColor = '#fca5a5';
-          btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
-        }
-        if (btnSubmitLab) {
-          btnSubmitLab.disabled = true;
-          btnSubmitLab.style.opacity = '0.5';
-          btnSubmitLab.style.cursor = 'not-allowed';
-          btnSubmitLab.style.animation = 'none';
+        // 💡 Chế độ Hướng dẫn:
+        if (noConfigSaved || window._hasSuccHintStored || (evalResult && evalResult.passed)) {
+          // Cấu hình ĐÚNG hoặc ĐÃ CÓ "Your data have been stored!" hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
+          if (btnSubmitLab) {
+            btnSubmitLab.disabled = false;
+            btnSubmitLab.style.opacity = '1';
+            btnSubmitLab.style.cursor = 'pointer';
+            btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
+          }
+          if (btnGuideErrors) {
+            btnGuideErrors.style.display = 'none';
+          }
+        } else {
+          // Cấu hình SAI ở Hướng dẫn: Nút Lỗi sai SÁNG LÊN, Nút Nộp bài TẮT/XÁM
+          if (btnGuideErrors) {
+            btnGuideErrors.style.display = 'flex';
+            btnGuideErrors.disabled = false;
+            btnGuideErrors.style.opacity = '1';
+            btnGuideErrors.style.cursor = 'pointer';
+            btnGuideErrors.style.background = '#fee2e2';
+            btnGuideErrors.style.color = '#ef4444';
+            btnGuideErrors.style.borderColor = '#fca5a5';
+            btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
+          }
+          if (btnSubmitLab) {
+            btnSubmitLab.disabled = true;
+            btnSubmitLab.style.opacity = '0.5';
+            btnSubmitLab.style.cursor = 'not-allowed';
+            btnSubmitLab.style.animation = 'none';
+          }
         }
       }
     }
   };
+
+  // Lắng nghe sự kiện lưu cấu hình từ simulator (hỗ trợ postMessage từ iframe)
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'FTC_SAVE_SUCCESS') {
+      window._hasClickedSaveInGuide = true;
+      try {
+        const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+        allDocs.forEach(d => { d._ftcIsSaved = true; });
+      } catch (err) { }
+      if (typeof window.onSimulatorSave === 'function') {
+        try { window.onSimulatorSave(deviceIframe ? deviceIframe.contentWindow : null); } catch (err) { }
+      }
+    }
+  });
 
   // ── Boot ─────────────────────────────────────────────────────────
   init();
