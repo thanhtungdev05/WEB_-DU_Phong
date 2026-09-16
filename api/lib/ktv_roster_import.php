@@ -620,37 +620,48 @@ function ktv_roster_compact_change(array $row): array
     ];
 }
 
-function ktv_roster_load_region_cache(PDO $pdo): array
+function ktv_roster_load_unit_cache(PDO $pdo): array
 {
     $stmt = $pdo->query(
-        'SELECT region_id, region_code, dashboard_group, region_name
-           FROM regions
-          ORDER BY region_code'
+        <<<'SQL'
+        SELECT unit.unit_id, unit.unit_code, unit.unit_name,
+               region.region_id, region.region_code, region.region_name,
+               region.dashboard_group
+          FROM org_units unit
+          JOIN regions region ON region.region_id = unit.region_id
+         WHERE unit.is_active = TRUE
+           AND region.is_active = TRUE
+         ORDER BY unit.unit_code
+        SQL
     );
-    $cache = [
-        'by_code' => [],
-        'by_dashboard_group' => [],
-        'by_name' => [],
-    ];
-    foreach ($stmt->fetchAll() as $region) {
-        $regionId = (string)($region['region_id'] ?? '');
-        if ($regionId === '') {
-            continue;
-        }
-        $regionCode = trim((string)($region['region_code'] ?? ''));
-        $dashboardGroup = trim((string)($region['dashboard_group'] ?? ''));
-        $regionName = trim((string)($region['region_name'] ?? ''));
-        if ($regionCode !== '') {
-            $cache['by_code'][$regionCode] = $regionId;
-        }
-        if ($dashboardGroup !== '' && !isset($cache['by_dashboard_group'][$dashboardGroup])) {
-            $cache['by_dashboard_group'][$dashboardGroup] = $regionId;
-        }
-        if ($regionName !== '' && !isset($cache['by_name'][$regionName])) {
-            $cache['by_name'][$regionName] = $regionId;
+    $cache = [];
+    foreach ($stmt->fetchAll() as $unit) {
+        $unitCode = strtoupper(trim((string)($unit['unit_code'] ?? '')));
+        if ($unitCode !== '') {
+            $cache[$unitCode] = $unit;
         }
     }
     return $cache;
+}
+
+function ktv_roster_resolve_unit(array $row, array $cache): array
+{
+    $unitCode = strtoupper(trim((string)($row['unit_code'] ?? '')));
+    if ($unitCode === '') {
+        throw new RuntimeException('Unit code is required and must exist in the organization catalog.');
+    }
+    $unit = $cache[$unitCode] ?? null;
+    if (!is_array($unit)) {
+        throw new RuntimeException("Unsupported unit code: $unitCode.");
+    }
+    $sourceRegion = strtoupper(trim((string)($row['region_code'] ?? '')));
+    $catalogRegion = strtoupper(trim((string)($unit['region_code'] ?? '')));
+    if ($sourceRegion === '' || $sourceRegion !== $catalogRegion) {
+        throw new RuntimeException(
+            "Unit $unitCode belongs to region $catalogRegion, not $sourceRegion."
+        );
+    }
+    return $unit;
 }
 
 function ktv_roster_load_user_match_cache(PDO $pdo, array $rows, bool $forUpdate): array
@@ -723,70 +734,6 @@ function ktv_roster_cached_user_matches(array $cache, array $row): array
     return array_values($matches);
 }
 
-function ktv_roster_resolve_region(
-    PDO $pdo,
-    array $row,
-    bool $dryRun = false,
-    ?array &$cache = null
-): ?string
-{
-    $regionCode = (string)$row['region_code'];
-    $dashboardRegion = (string)$row['dashboard_region'];
-    $branchName = $row['branch'] ?: null;
-
-    if ($cache === null) {
-        $cache = $dryRun ? ktv_roster_load_region_cache($pdo) : [
-            'by_code' => [],
-            'by_dashboard_group' => [],
-            'by_name' => [],
-        ];
-    }
-
-    if ($dryRun) {
-        return $cache['by_code'][$regionCode]
-            ?? $cache['by_dashboard_group'][$dashboardRegion]
-            ?? $cache['by_name'][$dashboardRegion]
-            ?? null;
-    }
-
-    if (isset($cache['by_code'][$regionCode])) {
-        return $cache['by_code'][$regionCode];
-    }
-
-    $stmt = $pdo->prepare(
-        <<<'SQL'
-        INSERT INTO regions (
-            region_code, region_name, dashboard_group, branch_name,
-            is_active, created_at, updated_at
-        ) VALUES (
-            :region_code, :region_name, :dashboard_group, :branch_name,
-            TRUE, NOW(), NOW()
-        )
-        ON CONFLICT (region_code) DO UPDATE SET
-            region_name = EXCLUDED.region_name,
-            dashboard_group = COALESCE(EXCLUDED.dashboard_group, regions.dashboard_group),
-            branch_name = COALESCE(EXCLUDED.branch_name, regions.branch_name),
-            is_active = TRUE,
-            updated_at = NOW()
-        RETURNING region_id
-        SQL
-    );
-    $stmt->execute([
-        'region_code' => $regionCode,
-        'region_name' => $dashboardRegion,
-        'dashboard_group' => $dashboardRegion,
-        'branch_name' => $branchName,
-    ]);
-    $regionId = $stmt->fetchColumn();
-    if (!is_string($regionId) || $regionId === '') {
-        return null;
-    }
-    $cache['by_code'][$regionCode] = $regionId;
-    $cache['by_dashboard_group'][$dashboardRegion] ??= $regionId;
-    $cache['by_name'][$dashboardRegion] ??= $regionId;
-    return $regionId;
-}
-
 function ktv_roster_find_matching_user(PDO $pdo, array $row, bool $forUpdate): array
 {
     $sql = 'SELECT user_id, email, employee_id, display_name, is_terminated, employee_source
@@ -843,11 +790,7 @@ function sync_ktv_roster(
 
     $activeEmployeeIds = [];
     $activeEmails = [];
-    $regionCache = $dryRun ? ktv_roster_load_region_cache($pdo) : [
-        'by_code' => [],
-        'by_dashboard_group' => [],
-        'by_name' => [],
-    ];
+    $unitCache = ktv_roster_load_unit_cache($pdo);
     $userMatchCache = ktv_roster_load_user_match_cache(
         $pdo,
         array_merge($rows, $terminationRows),
@@ -863,14 +806,14 @@ function sync_ktv_roster(
                 email, display_name, role, iam_profile,
                 employee_id, job_title,
                 class_code, is_terminated, termination_date, termination_reason,
-                unit_code, unit_name, region_code, dashboard_region, region_id,
+                unit_id, unit_code, unit_name, region_code, dashboard_region, region_id,
                 employee_source, employee_seed_batch, employee_synced_at,
                 created_at, updated_at
             ) VALUES (
                 :email, :display_name, 'KTV', '{}'::jsonb,
                 :employee_id, :job_title,
                 :class_code, FALSE, NULL, NULL,
-                :unit_code, :unit_name, :region_code, :dashboard_region, :region_id,
+                :unit_id, :unit_code, :unit_name, :region_code, :dashboard_region, :region_id,
                 :employee_source, :employee_seed_batch, NOW(),
                 NOW(), NOW()
             )
@@ -887,6 +830,7 @@ function sync_ktv_roster(
                    is_terminated = FALSE,
                    termination_date = NULL,
                    termination_reason = NULL,
+                   unit_id = :unit_id,
                    unit_code = :unit_code,
                    unit_name = :unit_name,
                    region_code = :region_code,
@@ -906,7 +850,13 @@ function sync_ktv_roster(
         $activeEmails[strtolower((string)$row['email'])] = true;
 
         try {
-            $regionId = ktv_roster_resolve_region($pdo, $row, $dryRun, $regionCache);
+            $unit = ktv_roster_resolve_unit($row, $unitCache);
+            $regionId = (string)$unit['region_id'];
+            $row['unit_code'] = (string)$unit['unit_code'];
+            $row['unit_name'] = (string)$unit['unit_name'];
+            $row['region_code'] = (string)$unit['region_code'];
+            $row['dashboard_region'] = (string)($unit['dashboard_group'] ?: $unit['region_name']);
+            $row['branch'] = (string)$unit['unit_name'];
             $matches = ktv_roster_cached_user_matches($userMatchCache, $row);
             $userIds = array_values(array_unique(array_map(static fn(array $match): string => (string)$match['user_id'], $matches)));
             if (count($userIds) > 1) {
@@ -936,6 +886,7 @@ function sync_ktv_roster(
                 'employee_id' => $row['employee_id'],
                 'job_title' => $row['job_title'],
                 'class_code' => $row['class_code'],
+                'unit_id' => $unit['unit_id'],
                 'unit_code' => $row['unit_code'],
                 'unit_name' => $row['unit_name'],
                 'region_code' => $row['region_code'],
@@ -1107,6 +1058,26 @@ function sync_ktv_roster(
                 'user_id' => $managed['user_id'],
             ]);
         }
+    }
+
+    if (!$dryRun && !$result['errors']) {
+        $syncSnapshots = $pdo->prepare(
+            <<<'SQL'
+            UPDATE lab_assignments assignment
+               SET unit_id_snapshot = roster.unit_id,
+                   region_id_snapshot = roster.region_id,
+                   updated_at = NOW()
+              FROM class_enrollments enrollment
+              JOIN users roster ON roster.user_id = enrollment.user_id
+             WHERE enrollment.enrollment_id = assignment.enrollment_id
+               AND roster.employee_seed_batch = :batch
+               AND (
+                   assignment.unit_id_snapshot IS DISTINCT FROM roster.unit_id
+                   OR assignment.region_id_snapshot IS DISTINCT FROM roster.region_id
+               )
+            SQL
+        );
+        $syncSnapshots->execute(['batch' => $batch]);
     }
 
     $result['error_count'] = count($result['errors']);

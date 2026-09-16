@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+firebase-credentials/
 admin_app/.env.admin
 !admin_app/.env.admin.example
 

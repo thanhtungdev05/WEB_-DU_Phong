@@ -26,6 +26,8 @@ if (window.DEVICE_AC1000F_LESSONS) {
   window.DEVICE_AC1000F_LESSONS.forEach(lesson => {
     if (lesson.guidePopups) {
       window.TOOLTIPS_AC1000F[lesson.id] = lesson.guidePopups;
+    } else if (window.TOOLTIPS_AC1000F && window.TOOLTIPS_AC1000F[lesson.id]) {
+      lesson.guidePopups = window.TOOLTIPS_AC1000F[lesson.id];
     }
   });
 }

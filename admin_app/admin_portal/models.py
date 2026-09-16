@@ -105,6 +105,15 @@ class FtcUser(models.Model):
     job_title = models.CharField(max_length=200, blank=True, null=True, verbose_name='Chức danh')
     unit_code = models.CharField(max_length=100, blank=True, null=True, verbose_name='Mã đơn vị')
     unit_name = models.CharField(max_length=200, blank=True, null=True, verbose_name='Tên đơn vị')
+    unit = models.ForeignKey(
+        'OrgUnit',
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        to_field='unit_id',
+        db_column='unit_id',
+        related_name='users',
+        verbose_name='Đơn vị hiện tại',
+    )
     region_code = models.CharField(max_length=80, blank=True, null=True, verbose_name='Mã khu vực')
     dashboard_region = models.CharField(max_length=200, blank=True, null=True, verbose_name='Khu vực dashboard')
     region = models.ForeignKey(
@@ -329,6 +338,11 @@ class LabAssignment(models.Model):
         to_field='region_id', db_column='region_id_snapshot', related_name='lab_assignment_snapshots',
         verbose_name='Khu vực lúc giao',
     )
+    unit_snapshot = models.ForeignKey(
+        'OrgUnit', on_delete=models.PROTECT, null=True, blank=True,
+        to_field='unit_id', db_column='unit_id_snapshot', related_name='lab_assignment_snapshots',
+        verbose_name='Đơn vị lúc giao',
+    )
     class_snapshot = models.ForeignKey(
         TrainingClass, on_delete=models.PROTECT, to_field='class_id', db_column='class_id_snapshot',
         related_name='member_lab_assignments', verbose_name='Lớp lúc giao',
@@ -437,6 +451,8 @@ class TimerSession(models.Model):
         verbose_name='Trạng thái',
     )
     completed_first_try = models.BooleanField(null=True, blank=True, verbose_name='Đạt lần đầu')
+    practice_attempt_no = models.IntegerField(null=True, blank=True, verbose_name='Số lượt thực hành')
+    attempt_sequence_complete = models.BooleanField(default=True, verbose_name='Đủ chuỗi lần thử')
     last_action = models.TextField(blank=True, null=True, verbose_name='Hành động cuối')
     is_passed = models.BooleanField(null=True, blank=True, verbose_name='Đạt yêu cầu')
     score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Điểm số')
@@ -445,6 +461,7 @@ class TimerSession(models.Model):
     user_agent = models.TextField(blank=True, null=True, verbose_name='User Agent')
     is_mock = models.BooleanField(default=False, verbose_name='Dữ liệu Test')
     seed_batch = models.CharField(max_length=160, blank=True, null=True, verbose_name='Batch Seed')
+    seed_key = models.CharField(max_length=200, blank=True, null=True, verbose_name='Khóa dữ liệu nguồn')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Ngày tạo')
 
     class Meta:
@@ -505,6 +522,29 @@ class Region(models.Model):
 
     def __str__(self):
         return f"{self.region_name} ({self.region_code})"
+
+
+class OrgUnit(models.Model):
+    unit_id = models.UUIDField(primary_key=True, default=uuid.uuid4, verbose_name='Unit ID')
+    region = models.ForeignKey(
+        Region, on_delete=models.PROTECT, to_field='region_id', db_column='region_id',
+        related_name='org_units', verbose_name='Khu vực',
+    )
+    unit_code = models.CharField(max_length=100, unique=True, verbose_name='Mã đơn vị')
+    unit_name = models.TextField(verbose_name='Tên đơn vị/chi nhánh')
+    is_active = models.BooleanField(default=True, verbose_name='Hoạt động')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Ngày tạo')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Cập nhật')
+
+    class Meta:
+        managed = False
+        db_table = 'org_units'
+        ordering = ['region__region_name', 'unit_name', 'unit_code']
+        verbose_name = 'đơn vị'
+        verbose_name_plural = 'đơn vị'
+
+    def __str__(self):
+        return f"{self.unit_name} ({self.region.region_name})"
 
 
 # ===========================================================

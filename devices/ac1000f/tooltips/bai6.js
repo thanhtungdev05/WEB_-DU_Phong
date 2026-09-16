@@ -55,7 +55,7 @@ window.TOOLTIPS_AC1000F['LAB_AC1000F_06'] = [
     },
     // Bước 9: Nhấn Add để lưu cấu hình
     {
-        selector: 'input[name="AddBtn"], input[value="Add"], input[onclick*="Add_virtualsvr"]',
+        selector: 'input[onclick*="Add_virtualsvr"]',
         text: 'Bước 9: nhấn Add để lưu cấu hình',
         position: 'right'
     }

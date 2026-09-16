@@ -5,10 +5,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#f3f6fb">
-    <meta name="color-scheme" content="light">
+    <meta name="color-scheme" content="light dark">
     <title>Tổng quan thực hành KTV | FTC</title>
-    <link rel="stylesheet" href="css/styles.css?v=20260910-admin-column-filters-v23">
-    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260910-admin-column-filters-v23">
+    <script>
+        (function () {
+            const THEME_KEY = 'ftc_dashboard_theme';
+            const VALID_THEMES = ['light', 'dark', 'system'];
+            let setting = 'system';
+            try {
+                const saved = localStorage.getItem(THEME_KEY);
+                if (VALID_THEMES.includes(saved)) setting = saved;
+            } catch (e) { /* Storage may be unavailable in privacy mode. */ }
+
+            const resolved = setting === 'system'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : setting;
+            document.documentElement.dataset.theme = resolved;
+            document.documentElement.dataset.themeSetting = setting;
+            document.documentElement.style.colorScheme = resolved;
+        })();
+    </script>
+    <link rel="stylesheet" href="css/styles.css?v=20260916-theme-system-v27">
+    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260916-theme-system-v27">
 </head>
 
 <body>
@@ -109,6 +127,36 @@
                             <strong id="dashboardSyncTitle">Đang đồng bộ</strong>
                             <small id="dashboardSyncDetail">Đang kiểm tra dữ liệu mới nhất</small>
                         </span>
+                    </div>
+                    <div class="theme-switcher-control" id="themeSwitcher" role="group" aria-label="Tùy chọn giao diện">
+                        <button type="button" class="theme-btn" data-theme-value="light" title="Chế độ Sáng" aria-label="Chế độ Sáng" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                            <span class="theme-btn-label">Sáng</span>
+                        </button>
+                        <button type="button" class="theme-btn" data-theme-value="dark" title="Chế độ Tối" aria-label="Chế độ Tối" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                            <span class="theme-btn-label">Tối</span>
+                        </button>
+                        <button type="button" class="theme-btn" data-theme-value="system" title="Tự động theo hệ thống" aria-label="Tự động theo hệ thống" aria-pressed="true">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                            <span class="theme-btn-label">Tự động</span>
+                        </button>
                     </div>
                     <button class="button secondary dashboard-refresh-button" type="button" id="refreshDashboardBtn"
                         aria-label="Làm mới dữ liệu" title="Làm mới dữ liệu">
@@ -1097,7 +1145,7 @@
                                     <div class="roster-form-row">
                                         <label for="rosterEditRegionId">Khu vực / Chi nhánh</label>
                                         <select id="rosterEditRegionId">
-                                            <option value="">Chưa phân vùng</option>
+                                            <option value="">FTC</option>
                                         </select>
                                     </div>
                                     <div class="roster-form-row">
@@ -1106,11 +1154,11 @@
                                     </div>
                                     <div class="roster-form-row">
                                         <label for="rosterEditUnitCode">Mã đơn vị</label>
-                                        <input type="text" id="rosterEditUnitCode" maxlength="100">
+                                        <input type="text" id="rosterEditUnitCode" maxlength="100" readonly>
                                     </div>
                                     <div class="roster-form-row">
                                         <label for="rosterEditUnitName">Tên đơn vị</label>
-                                        <input type="text" id="rosterEditUnitName" maxlength="200">
+                                        <input type="text" id="rosterEditUnitName" maxlength="200" readonly>
                                     </div>
                                     <div class="roster-form-row">
                                         <label for="rosterEditClassCode">Lớp</label>
@@ -1514,7 +1562,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=20260910-admin-column-filters-v23"></script>
+    <script src="js/app.js?v=20260916-dashboard-performance-v28"></script>
 </body>
 
 </html>

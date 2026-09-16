@@ -25,9 +25,10 @@ const attemptMigration = fs.readFileSync(
 );
 const trackingHandler = fs.readFileSync(path.join(root, 'api/lib/tracking_handler.php'), 'utf8');
 
-assert.match(api, /JOIN lab_catalog active_lab[\s\S]*active_lab\.is_active = TRUE/);
-assert.match(api, /JOIN device_catalog active_device[\s\S]*active_device\.is_active = TRUE/);
-assert.match(api, /JOIN eligible_dashboard_identities dashboard_identity/);
+assert.match(api, /JOIN lab_catalog active_lab ON active_lab\.lab_id = timer\.lab_id/);
+assert.match(api, /JOIN device_catalog active_device ON active_device\.device_id = active_lab\.device_id/);
+assert.doesNotMatch(api, /active_lab\.is_active = TRUE[\s\S]*timer\.status/);
+assert.doesNotMatch(api, /JOIN eligible_dashboard_identities dashboard_identity/);
 assert.match(api, /AND NOT COALESCE\(timer\.is_mock, FALSE\)/);
 assert.match(api, /timer\.status IN \(\\'completed\\', \\'failed\\'\)/);
 assert.match(api, /timer\.is_passed/);
@@ -43,7 +44,7 @@ assert.match(report, /'source' => 'database'/);
 assert.match(report, /FROM lab_assignments assignment/);
 assert.match(report, /JOIN class_enrollments enrollment/);
 assert.match(report, /SELECT \(SELECT COUNT\(\*\) FROM cohort_pairs\) AS assigned_count/);
-assert.doesNotMatch(report, /CROSS JOIN active_labs/);
+assert.match(report, /cohort_pairs AS \([\s\S]*CROSS JOIN active_labs/);
 assert.match(report, /practice_attempt_no/);
 assert.match(report, /device\.is_active = TRUE AND lab\.is_active = TRUE/);
 assert.doesNotMatch(report, /is_passed IS TRUE OR\s*\(is_passed IS NULL/);
@@ -55,14 +56,17 @@ assert.match(report, /COALESCE\(assignment\.due_at::date, 'infinity'::date\)/);
 assert.match(report, /COALESCE\(class_assignment\.due_at::date, 'infinity'::date\)/);
 assert.match(report, /LEFT JOIN regions assignment_region ON assignment_region\.region_id = assignment\.region_id_snapshot/);
 assert.match(report, /class_assignment\.status IN \('assigned', 'active', 'closed'\)/);
-assert.match(report, /'region_fallback_pairs' => max\(0, \$grandTotal\['assigned_count'\] - \$regionSnapshotPairCount\)/);
-assert.match(report, /pair_progress AS/);
-assert.match(report, /SELECT DISTINCT ON \(person_id, lab_id\)/);
-assert.match(report, /progress\.completed IS TRUE/);
+assert.match(report, /COALESCE\(assignment\.region_id_snapshot, roster\.region_id\) AS region_id/);
+assert.match(report, /metric_pairs AS \([\s\S]*SELECT person_id, lab_id FROM activity[\s\S]*SELECT person_id, lab_id FROM progress WHERE completed IS TRUE/);
+assert.match(report, /FROM numbered_sessions session[\s\S]*GROUP BY session\.person_id, session\.lab_id/);
+assert.match(report, /Reuse it for the region matrix instead of[\s\S]*\$branchDrilldown = dashboard_report_branch_drilldown/);
+assert.doesNotMatch(report, /function dashboard_report_matrix[\s\S]*pair_activity AS/);
+assert.match(report, /include_branch_drilldown/);
+assert.match(report, /'branch_drilldown' => \$includeBranchDrilldown \? \$branchDrilldown : \['regions' => \[\]\]/);
 assert.match(report, /completion_metrics.*Cumulative passed KTV-lab assignments through the period end/);
 assert.match(report, /passed_count/);
-assert.match(report, /pass_rate' => 'Passed practice attempts divided by all practice attempts/);
-assert.match(report, /COALESCE\(attempt\.passed_count, 0\) \/ NULLIF\(attempt\.practice_attempts, 0\)/);
+assert.match(report, /pass_rate' => 'Passed practice attempts divided by graded practice attempts/);
+assert.match(report, /COALESCE\(attempt\.passed_count, 0\) \/ NULLIF\(attempt\.graded_count, 0\)/);
 assert.match(report, /timer\.status IN \('completed', 'failed'\)/);
 
 assert.match(dashboard, /let BASE_REGION_CATALOG = \[\];/);
@@ -104,6 +108,8 @@ assert.match(dashboard, /if \(isPassed === true\) return 'Đạt'/);
 assert.match(dashboard, /currentMetrics\.passed/);
 assert.doesNotMatch(dashboard, /function computeMetrics/);
 assert.match(dashboard, /allParams\.set\('include_assignments', assignmentsRequested \? '1' : '0'\)/);
+assert.match(dashboard, /include_branch_drilldown: activeDashboardView === 'analytics' \? '1' : '0'/);
+assert.match(dashboard, /dashboardReport\?\.meta\?\.includes_branch_drilldown !== true[\s\S]*reloadDashboardReport\(\)/);
 assert.match(dashboard, /\['instructors', 'class_matrix', 'analytics', 'technicians'\]\.includes\(activeDashboardView\)/);
 assert.match(dashboard, /data\.assignments_available === true/);
 assert.match(dashboard, /assignmentsRequested && data\.assignments_available !== true/);
@@ -158,7 +164,6 @@ assert.ok(
   dashboardHtml.indexOf('id="classOverviewCard"') < dashboardHtml.indexOf('id="classDetailCard"'),
   'class overview must stay above the drill-down table'
 );
-assert.match(dashboard, /regionQuality\.region_fallback_pairs/);
 assert.match(dashboardHtml, /id="detailReportDataQuality"/);
 assert.match(dashboard, /const emptyRow = region =>/);
 assert.match(dashboard, /catalog\.filter\(region => region\.children\?\.length\)/);

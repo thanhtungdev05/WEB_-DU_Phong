@@ -499,7 +499,7 @@ function safe_datetime(?string $value): ?string
 
 const USER_COLUMNS = 'user_id, email, display_name, role, last_login_at, iam_profile,
     employee_id, job_title, training_start_date, training_end_date, class_code,
-    is_terminated, termination_date, termination_reason, unit_code, unit_name,
+    is_terminated, termination_date, termination_reason, unit_id, unit_code, unit_name,
     region_code, dashboard_region, region_id, employee_source,
     employee_seed_batch, employee_synced_at, created_at, updated_at';
 const LOGIN_LOG_COLUMNS = 'id, created_at, event_type, user_id, employee_id, display_name, email, role, iam_subject, ip_address, user_agent, session_id_hash';
@@ -577,6 +577,8 @@ function user_response(?array $row): ?array
         'unit_code' => $row['unit_code'] ?? null,
         'unitName' => $row['unit_name'] ?? null,
         'unit_name' => $row['unit_name'] ?? null,
+        'unitId' => $row['unit_id'] ?? null,
+        'unit_id' => $row['unit_id'] ?? null,
         'regionCode' => $row['region_code'] ?? null,
         'region_code' => $row['region_code'] ?? null,
         'regionName' => $row['region_name'] ?? ($row['dashboard_region'] ?? null),
@@ -1483,7 +1485,7 @@ function roster_base_where(array &$params, bool $includeFilters = true, ?array $
             'parameter' => 'filter_job_title',
         ],
         'region' => [
-            'column' => "COALESCE(NULLIF(BTRIM(ktv.region_name), ''), 'Chưa phân vùng')",
+            'column' => "COALESCE(NULLIF(BTRIM(ktv.region_name), ''), 'FTC')",
             'parameter' => 'filter_region',
         ],
         'branch' => [
@@ -1565,13 +1567,13 @@ function roster_stats(PDO $pdo): array
 
     $regionStmt = $pdo
         ->prepare(
-            "SELECT COALESCE(NULLIF(ktv.region_name, ''), 'Chưa phân vùng') AS region,
+            "SELECT COALESCE(NULLIF(ktv.region_name, ''), 'FTC') AS region,
                     COUNT(*) AS total,
                     COUNT(*) FILTER (WHERE is_terminated = FALSE) AS active,
                     COUNT(*) FILTER (WHERE is_terminated = TRUE) AS terminated
                FROM v_ktv_directory ktv
               $whereSql
-              GROUP BY COALESCE(NULLIF(ktv.region_name, ''), 'Chưa phân vùng')
+              GROUP BY COALESCE(NULLIF(ktv.region_name, ''), 'FTC')
               ORDER BY region"
         );
     $regionStmt->execute($params);
@@ -1627,7 +1629,7 @@ function roster_filter_facets(PDO $pdo): array
                        COALESCE(NULLIF(BTRIM(job_title), ''), 'Chưa cập nhật') AS filter_value
                   FROM roster_values
                 UNION ALL
-                SELECT 'regions', COALESCE(NULLIF(BTRIM(region_name), ''), 'Chưa phân vùng')
+                SELECT 'regions', COALESCE(NULLIF(BTRIM(region_name), ''), 'FTC')
                   FROM roster_values
                 UNION ALL
                 SELECT 'branches', COALESCE(NULLIF(BTRIM(branch_name), ''), 'Chưa có chi nhánh')
@@ -1860,10 +1862,14 @@ function handle_roster_list(): void
 function handle_roster_regions(): void
 {
     $stmt = db()->query(
-        'SELECT region_id, region_code, region_name, branch_name, dashboard_group
-           FROM regions
-          WHERE is_active = TRUE
-          ORDER BY branch_name NULLS LAST, region_name, region_code'
+        'SELECT region.region_id, region.region_code, region.region_name,
+                region.dashboard_group,
+                unit.unit_id, unit.unit_code, unit.unit_name
+           FROM org_units unit
+           JOIN regions region ON region.region_id = unit.region_id
+          WHERE unit.is_active = TRUE
+            AND region.is_active = TRUE
+          ORDER BY region.region_name, unit.unit_name, unit.unit_code'
     );
     $items = array_map(static fn(array $row): array => [
         'regionId' => $row['region_id'],
@@ -1872,8 +1878,14 @@ function handle_roster_regions(): void
         'region_code' => $row['region_code'],
         'regionName' => $row['region_name'],
         'region_name' => $row['region_name'],
-        'branchName' => $row['branch_name'] ?? null,
-        'branch_name' => $row['branch_name'] ?? null,
+        'branchName' => $row['unit_name'],
+        'branch_name' => $row['unit_name'],
+        'unitId' => $row['unit_id'],
+        'unit_id' => $row['unit_id'],
+        'unitCode' => $row['unit_code'],
+        'unit_code' => $row['unit_code'],
+        'unitName' => $row['unit_name'],
+        'unit_name' => $row['unit_name'],
         'dashboardGroup' => $row['dashboard_group'] ?? null,
         'dashboard_group' => $row['dashboard_group'] ?? null,
     ], $stmt->fetchAll());
@@ -1990,51 +2002,63 @@ function handle_roster_update(string $employeeId): void
             fail(400, 'bad-request', 'Display name is required.');
         }
 
-        $regionIdSupplied = array_key_exists('regionId', $input) || array_key_exists('region_id', $input);
+        $locationSupplied = array_key_exists('unitId', $input)
+            || array_key_exists('unit_id', $input)
+            || array_key_exists('unitCode', $input)
+            || array_key_exists('unit_code', $input)
+            || array_key_exists('regionId', $input)
+            || array_key_exists('region_id', $input);
+        $unitId = $existing['unit_id'] ?? null;
+        $unitCode = $existing['unit_code'] ?? null;
+        $unitName = $existing['unit_name'] ?? null;
         $regionId = $existing['region_id'] ?? null;
         $regionCode = $existing['region_code'] ?? null;
         $dashboardRegion = $existing['dashboard_region'] ?? null;
-        if ($regionIdSupplied) {
-            $requestedRegionId = optional_text($input, 'regionId', 36)
-                ?? optional_text($input, 'region_id', 36);
-            if ($requestedRegionId === null) {
+        if ($locationSupplied) {
+            $requestedUnitId = optional_text($input, 'unitId', 36)
+                ?? optional_text($input, 'unit_id', 36);
+            $requestedUnitCode = optional_text($input, 'unitCode', 100)
+                ?? optional_text($input, 'unit_code', 100);
+            if ($requestedUnitId === null && $requestedUnitCode === null) {
+                $unitId = null;
+                $unitCode = null;
+                $unitName = null;
                 $regionId = null;
                 $regionCode = null;
                 $dashboardRegion = null;
             } else {
-                if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $requestedRegionId)) {
+                if ($requestedUnitId !== null
+                    && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $requestedUnitId)) {
                     $pdo->rollBack();
-                    fail(400, 'bad-request', 'Invalid region id.');
+                    fail(400, 'bad-request', 'Invalid unit id.');
                 }
-                $regionStmt = $pdo->prepare(
-                    'SELECT region_id, region_code, region_name, dashboard_group
-                       FROM regions
-                      WHERE region_id = :region_id AND is_active = TRUE'
+                $locationSql = $requestedUnitId !== null
+                    ? 'unit.unit_id = CAST(:location_key AS uuid)'
+                    : 'UPPER(unit.unit_code) = UPPER(:location_key)';
+                $locationStmt = $pdo->prepare(
+                    "SELECT unit.unit_id, unit.unit_code, unit.unit_name,
+                            region.region_id, region.region_code, region.region_name,
+                            region.dashboard_group
+                       FROM org_units unit
+                       JOIN regions region ON region.region_id = unit.region_id
+                      WHERE $locationSql
+                        AND unit.is_active = TRUE
+                        AND region.is_active = TRUE"
                 );
-                $regionStmt->execute(['region_id' => $requestedRegionId]);
-                $region = $regionStmt->fetch();
-                if (!$region) {
+                $locationStmt->execute([
+                    'location_key' => $requestedUnitId ?? strtoupper((string)$requestedUnitCode),
+                ]);
+                $location = $locationStmt->fetch();
+                if (!$location) {
                     $pdo->rollBack();
-                    fail(400, 'bad-request', 'Selected region is unavailable.');
+                    fail(400, 'bad-request', 'Selected unit is unavailable or is not in the organization catalog.');
                 }
-                $regionId = $region['region_id'];
-                $regionCode = $region['region_code'];
-                $dashboardRegion = $region['dashboard_group'] ?: $region['region_name'];
-            }
-        } else {
-            // Backward compatibility for older clients. New clients submit only region_id.
-            $regionCode = optional_text($input, 'regionCode', 80)
-                ?? optional_text($input, 'region_code', 80)
-                ?? $regionCode;
-            $dashboardRegion = optional_text($input, 'dashboardRegion', 100)
-                ?? optional_text($input, 'dashboard_region', 100)
-                ?? $dashboardRegion;
-            if ($regionCode && $dashboardRegion) {
-                $regionId = ktv_roster_resolve_region($pdo, [
-                    'region_code' => strtoupper($regionCode),
-                    'dashboard_region' => $dashboardRegion,
-                    'branch' => null,
-                ], false);
+                $unitId = $location['unit_id'];
+                $unitCode = $location['unit_code'];
+                $unitName = $location['unit_name'];
+                $regionId = $location['region_id'];
+                $regionCode = $location['region_code'];
+                $dashboardRegion = $location['dashboard_group'] ?: $location['region_name'];
             }
         }
 
@@ -2063,6 +2087,7 @@ function handle_roster_update(string $employeeId): void
                     is_terminated = :is_terminated,
                     termination_date = :termination_date,
                     termination_reason = :termination_reason,
+                    unit_id = :unit_id,
                     unit_code = :unit_code,
                     unit_name = :unit_name,
                     region_code = :region_code,
@@ -2092,12 +2117,9 @@ function handle_roster_update(string $employeeId): void
             'is_terminated' => $isTerminated,
             'termination_date' => $terminationDate,
             'termination_reason' => $terminationReason,
-            'unit_code' => optional_text($input, 'unitCode', 100)
-                ?? optional_text($input, 'unit_code', 100)
-                ?? ($existing['unit_code'] ?? null),
-            'unit_name' => optional_text($input, 'unitName', 200)
-                ?? optional_text($input, 'unit_name', 200)
-                ?? ($existing['unit_name'] ?? null),
+            'unit_id' => $unitId,
+            'unit_code' => $unitCode,
+            'unit_name' => $unitName,
             'region_code' => $regionCode ? strtoupper($regionCode) : null,
             'dashboard_region' => $dashboardRegion,
             'region_id' => $regionId,
@@ -2109,6 +2131,30 @@ function handle_roster_update(string $employeeId): void
             $pdo->rollBack();
             fail(500, 'save-failed', 'Roster update returned no data.');
         }
+        $snapshotUpdate = $pdo->prepare(
+            <<<'SQL'
+            WITH target AS (
+                SELECT CAST(:unit_id AS uuid) AS unit_id,
+                       CAST(:region_id AS uuid) AS region_id
+            )
+            UPDATE lab_assignments assignment
+               SET unit_id_snapshot = target.unit_id,
+                   region_id_snapshot = target.region_id,
+                   updated_at = NOW()
+              FROM class_enrollments enrollment, target
+             WHERE enrollment.enrollment_id = assignment.enrollment_id
+               AND enrollment.user_id = :user_id
+               AND (
+                   assignment.unit_id_snapshot IS DISTINCT FROM target.unit_id
+                   OR assignment.region_id_snapshot IS DISTINCT FROM target.region_id
+               )
+            SQL
+        );
+        $snapshotUpdate->execute([
+            'unit_id' => $unitId,
+            'region_id' => $regionId,
+            'user_id' => $updated['user_id'],
+        ]);
         $directoryStmt = $pdo->prepare('SELECT * FROM v_ktv_directory WHERE user_id = :user_id');
         $directoryStmt->execute(['user_id' => $updated['user_id']]);
         $directoryRow = $directoryStmt->fetch() ?: $updated;
@@ -2537,6 +2583,7 @@ function handle_dashboard(array $segments, string $method): void
                                           FROM timer_sessions
                                     ), 'epoch'::timestamptz),
                                    COALESCE((SELECT MAX(updated_at) FROM regions), 'epoch'::timestamptz),
+                                   COALESCE((SELECT MAX(updated_at) FROM org_units), 'epoch'::timestamptz),
                                    COALESCE((SELECT MAX(updated_at) FROM device_catalog), 'epoch'::timestamptz),
                                    COALESCE((SELECT MAX(updated_at) FROM lab_catalog), 'epoch'::timestamptz),
                                    COALESCE((SELECT MAX(updated_at) FROM training_classes), 'epoch'::timestamptz),
@@ -2550,6 +2597,7 @@ function handle_dashboard(array $segments, string $method): void
                            ':', (SELECT COUNT(*) FROM users),
                            ':', (SELECT COUNT(*) FROM timer_sessions),
                            ':', (SELECT COUNT(*) FROM regions),
+                           ':', (SELECT COUNT(*) FROM org_units),
                            ':', (SELECT COUNT(*) FROM training_classes),
                            ':', (SELECT COUNT(*) FROM class_enrollments),
                            ':', (SELECT COUNT(*) FROM lab_assignments),
@@ -2590,26 +2638,7 @@ function handle_dashboard(array $segments, string $method): void
         }
         unset($userLookupRows);
 
-        $timerSql = 'WITH eligible_dashboard_ktv AS (
-                    SELECT DISTINCT
-                           COALESCE(user_id::text, NULLIF(LOWER(email), \'\'), NULLIF(employee_id, \'\')) AS person_id,
-                           user_id,
-                           email,
-                           employee_id
-                      FROM v_ktv_directory
-                     WHERE is_terminated = FALSE
-                 ),
-                 eligible_dashboard_identities AS (
-                    SELECT person_id, \'user:\' || user_id::text AS identity_key
-                      FROM eligible_dashboard_ktv WHERE user_id IS NOT NULL
-                    UNION
-                    SELECT person_id, \'email:\' || LOWER(email)
-                      FROM eligible_dashboard_ktv WHERE NULLIF(email, \'\') IS NOT NULL
-                    UNION
-                    SELECT person_id, \'employee:\' || employee_id
-                      FROM eligible_dashboard_ktv WHERE NULLIF(employee_id, \'\') IS NOT NULL
-                 )
-                 SELECT
+        $timerSql = 'SELECT
                     timer.id AS session_id,
                     timer.user_id,
                     timer.technician_id,
@@ -2629,18 +2658,8 @@ function handle_dashboard(array $segments, string $method): void
                     timer.practice_attempt_no,
                     COALESCE(attribution.class_codes, \'[]\'::jsonb) AS assignment_class_codes
                  FROM timer_sessions timer
-                 JOIN lab_catalog active_lab
-                   ON active_lab.lab_id = timer.lab_id
-                  AND active_lab.is_active = TRUE
-                 JOIN device_catalog active_device
-                   ON active_device.device_id = active_lab.device_id
-                  AND active_device.is_active = TRUE
-                  JOIN eligible_dashboard_identities dashboard_identity
-                   ON dashboard_identity.identity_key = CASE
-                       WHEN timer.user_id IS NOT NULL THEN \'user:\' || timer.user_id::text
-                       WHEN NULLIF(timer.email, \'\') IS NOT NULL THEN \'email:\' || LOWER(timer.email)
-                        ELSE \'employee:\' || COALESCE(timer.technician_id, \'\')
-                    END
+                 JOIN lab_catalog active_lab ON active_lab.lab_id = timer.lab_id
+                 JOIN device_catalog active_device ON active_device.device_id = active_lab.device_id
                   LEFT JOIN LATERAL (
                       SELECT TO_JSONB(ARRAY_AGG(DISTINCT training.class_code ORDER BY training.class_code)) AS class_codes
                         FROM timer_session_assignment_links link
@@ -2728,6 +2747,48 @@ function handle_dashboard(array $segments, string $method): void
                 SQL
             )
             ->fetchAll();
+
+        $firebaseFtcRows = $pdo->query(
+            <<<'SQL'
+            SELECT LOWER(timer.email) AS email,
+                   MAX(NULLIF(timer.name, '')) AS display_name
+              FROM timer_sessions timer
+             WHERE timer.seed_batch LIKE 'firebase-v1-%'
+               AND NULLIF(timer.email, '') IS NOT NULL
+               AND NOT COALESCE(timer.is_mock, FALSE)
+               AND NOT EXISTS (
+                   SELECT 1
+                     FROM v_ktv_directory directory
+                    WHERE directory.is_terminated = FALSE
+                      AND LOWER(directory.email) = LOWER(timer.email)
+               )
+             GROUP BY LOWER(timer.email)
+             ORDER BY LOWER(timer.email)
+            SQL
+        )->fetchAll();
+        foreach ($firebaseFtcRows as $firebaseFtcRow) {
+            $technicianRows[] = [
+                'user_id' => null,
+                'employee_id' => null,
+                'email' => (string)$firebaseFtcRow['email'],
+                'display_name' => (string)($firebaseFtcRow['display_name'] ?: $firebaseFtcRow['email']),
+                'role' => 'FTC',
+                'job_title' => 'Tài khoản FTC/Test',
+                'unit_code' => 'FTC',
+                'unit_name' => 'FTC',
+                'region_id' => null,
+                'region_code' => 'FTC',
+                'region_name' => 'FTC',
+                'dashboard_region' => 'FTC',
+                'dashboard_group' => 'FTC',
+                'branch_name' => 'FTC',
+                'location_assigned' => false,
+                'is_terminated' => false,
+                'class_code' => null,
+                'active_class_code' => null,
+                'active_class_name' => null,
+            ];
+        }
 
     } catch (Throwable $e) {
         report_exception($e, 'dashboard-core-queries');
@@ -2818,11 +2879,31 @@ function handle_dashboard(array $segments, string $method): void
     }
 
     $assignments = [];
+    $classMemberships = [];
     $assignmentsAvailable = true;
     $includeAssignments = !array_key_exists('include_assignments', $_GET)
         || filter_var($_GET['include_assignments'], FILTER_VALIDATE_BOOLEAN);
     if ($includeAssignments) {
         try {
+            $membershipRows = $pdo->query(
+                <<<'SQL'
+                SELECT training.class_code, training.class_name, roster.email
+                  FROM class_enrollments enrollment
+                  JOIN training_classes training ON training.class_id = enrollment.class_id
+                  JOIN users roster ON roster.user_id = enrollment.user_id
+                 WHERE enrollment.status = 'active'
+                   AND training.is_mock = FALSE
+                   AND roster.is_terminated = FALSE
+                 ORDER BY training.class_code, roster.email
+                SQL
+            )->fetchAll();
+            foreach ($membershipRows as $row) {
+                $classMemberships[] = [
+                    'class_code' => (string)$row['class_code'],
+                    'class_name' => (string)($row['class_name'] ?? ''),
+                    'email' => strtolower(trim((string)($row['email'] ?? ''))),
+                ];
+            }
             $assignmentRows = $pdo
                 ->query(
                 <<<'SQL'
@@ -2836,16 +2917,18 @@ function handle_dashboard(array $segments, string $method): void
                        progress.first_pass_attempt_no
                   FROM v_lab_assignment_progress progress
                   JOIN users roster ON roster.user_id = progress.user_id
-                  JOIN training_classes training ON training.class_id = progress.class_id
-                  JOIN lab_assignments assignment ON assignment.assignment_id = progress.assignment_id
+                   JOIN training_classes training ON training.class_id = progress.class_id
+                   JOIN lab_assignments assignment ON assignment.assignment_id = progress.assignment_id
+                   JOIN class_enrollments enrollment ON enrollment.enrollment_id = assignment.enrollment_id
                   LEFT JOIN class_lab_assignments class_assignment
                     ON class_assignment.class_lab_assignment_id = assignment.class_lab_assignment_id
-                 WHERE roster.is_terminated = FALSE
+                  WHERE roster.is_terminated = FALSE
+                    AND enrollment.status = 'active'
                    AND training.is_mock = FALSE
                    AND progress.assignment_status <> 'waived'
                    AND (
                        class_assignment.class_lab_assignment_id IS NULL
-                       OR class_assignment.status IN ('assigned', 'active', 'closed')
+                       OR class_assignment.status IN ('assigned', 'active')
                    )
                  ORDER BY progress.class_code, progress.email,
                           progress.device_name, progress.lab_name
@@ -2882,6 +2965,7 @@ function handle_dashboard(array $segments, string $method): void
         'class_name' => $row['class_name'] ?? null,
         'unit_code' => $row['unit_code'] ?? null,
         'unit_name' => $row['unit_name'] ?? null,
+        'unit_id' => $row['unit_id'] ?? null,
         'region_id' => $row['region_id'] ?? null,
         'region_code' => $row['region_code'] ?? null,
         'region_name' => $row['region_name'] ?? null,
@@ -2899,6 +2983,7 @@ function handle_dashboard(array $segments, string $method): void
         'labs' => array_values($labMap),
         'technicians' => $dashboardTechnicians,
         'assignments' => $assignments,
+        'class_memberships' => $classMemberships,
         'assignments_available' => $includeAssignments ? $assignmentsAvailable : null,
     ]]);
 }

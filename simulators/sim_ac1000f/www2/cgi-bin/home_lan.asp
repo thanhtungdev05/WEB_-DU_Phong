@@ -1659,7 +1659,32 @@ function dhcp6sPDDisable()
 
 
 //cindy add start 0911
+function autoSyncDHCP() {
+	var form = document.uiViewLanForm;
+	if (!form || !form.uiViewIPAddr) return;
+	var val = form.uiViewIPAddr.value.trim();
+	var IPdigits = val.split('.');
+	if (IPdigits.length === 4 && IPdigits[3] !== '') {
+		var addr1 = Number(IPdigits[0]);
+		var addr2 = Number(IPdigits[1]);
+		var addr3 = Number(IPdigits[2]);
+		var addr4 = Number(IPdigits[3]);
+		if (!isNaN(addr1) && !isNaN(addr2) && !isNaN(addr3) && !isNaN(addr4)) {
+			if ((addr4 > 0) && (addr4 < 200)) {
+				if (form.StartIp) form.StartIp.value = addr1 + '.' + addr2 + '.' + addr3 + '.' + (addr4 + 1);
+				if (form.EndIp) form.EndIp.value = addr1 + '.' + addr2 + '.' + addr3 + '.254';
+				if (form.PoolSize) form.PoolSize.value = 255 - (addr4 + 1);
+			} else if ((addr4 >= 200) && (addr4 <= 254)) {
+				if (form.StartIp) form.StartIp.value = addr1 + '.' + addr2 + '.' + addr3 + '.1';
+				if (form.EndIp) form.EndIp.value = addr1 + '.' + addr2 + '.' + addr3 + '.' + (addr4 - 1);
+				if (form.PoolSize) form.PoolSize.value = addr4 - 1;
+			}
+		}
+	}
+}
+
 function blockIP(){
+ autoSyncDHCP();
  IP=document.uiViewLanForm.uiViewIPAddr;
  StartIP=document.uiViewLanForm.StartIp;
  PoolSize=document.uiViewLanForm.PoolSize;
@@ -1843,7 +1868,7 @@ function doIsolateIGMPChange(){
 					<table width="640" border="0" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF" style="table-layout: fixed">
 						<tr height="30px">
 							<td align=left class="tabdata" style="width:250px;padding-left:20px;">IP Address</td>
-							<td align=left class="tabdata"> <INPUT TYPE="TEXT" NAME="uiViewIPAddr" SIZE="15" MAXLENGTH="15" onblur=blockIP(); VALUE="192.168.1.1" >	
+							<td align=left class="tabdata"> <INPUT TYPE="TEXT" NAME="uiViewIPAddr" SIZE="15" MAXLENGTH="15" oninput="autoSyncDHCP();" onchange="autoSyncDHCP();" onblur="blockIP();" VALUE="192.168.1.1" >	
 							    <INPUT TYPE="HIDDEN" NAME="dhcpFlag" VALUE="1">
 							    <INPUT TYPE="HIDDEN" NAME="lanFlag" VALUE="0">
 							    <INPUT TYPE="HIDDEN" NAME="DNSproxy" VALUE='Yes'> 
@@ -2087,7 +2112,7 @@ function doIsolateIGMPChange(){
 							<tr height="30px">
 							    	<td width="250px" align=left class="tabdata" style="padding-left:20px;"> Lease Time</td>
 							     	<td align=left class="tabdata">
-							        	<INPUT TYPE="TEXT" NAME="dhcp_LeaseTime" SIZE="6" MAXLENGTH="6" VALUE="" >
+							        	<INPUT TYPE="TEXT" NAME="dhcp_LeaseTime" SIZE="6" MAXLENGTH="6" VALUE="86400" >
 							        	seconds   (0 sets to default value of 259200)	        
 							     	</td>
 							</tr>

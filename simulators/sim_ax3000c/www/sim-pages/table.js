@@ -18,7 +18,7 @@
       var e = document.getElementById('empty'); if(e) e.remove();
       var tr = document.createElement('tr');
       var html = cols.map(function(fn,i){ return '<td>'+fn(vals[i])+'</td>'; }).join('');
-      html += '<td><button class="btn undo btn-sm" onclick="simDel(this)">Delete</button></td>';
+      html += '<td><button type="button" class="btn undo btn-sm" onclick="simDel(this)">Delete</button></td>';
       tr.innerHTML = html;
       tb.appendChild(tr);
     };
@@ -30,6 +30,6 @@
   };
   window.simApply = function(){
     var n = document.querySelectorAll('#tb tr').length - (document.getElementById('empty')?1:0);
-    alert('Da luu '+n+' muc.\n(Ban demo giao dien: khong ghi cau hinh vao thiet bi that)');
+    console.log('[simTable] Da luu '+n+' muc.');
   };
 })();

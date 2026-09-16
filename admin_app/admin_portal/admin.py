@@ -13,7 +13,7 @@ from django.utils.html import format_html
 
 from .models import (
     DeviceCatalog, LabCatalog, Role, FtcUser, TimerSession, TimerSessionAssignmentLink,
-    Region, LoginLog, RosterImportLog, SchemaMigration,
+    Region, OrgUnit, LoginLog, RosterImportLog, SchemaMigration,
     Curriculum, CurriculumLab, TrainingClass, ClassEnrollment,
     ClassLabAssignment, LabAssignment, AssignmentImportLog,
 )
@@ -177,17 +177,18 @@ class FtcUserAdmin(admin.ModelAdmin):
         'unit_name', 'region_badge', 'branch_badge', 'assigned_classes_badge',
         'employment_status_badge', 'last_login_at',
     ]
-    list_filter = ['role', TerminationFilter, 'region']
+    list_filter = ['role', TerminationFilter, 'unit__region']
     search_fields = ['email', 'display_name', 'employee_id',
                      'unit_code', 'unit_name', 'class_code',
                      'class_enrollments__training_class__class_code',
                      'class_enrollments__training_class__class_name',
-                     'region__region_code', 'region__region_name',
-                     'region__branch_name']
-    list_select_related = ['role', 'region']
+                     'unit__unit_code', 'unit__unit_name',
+                     'unit__region__region_code', 'unit__region__region_name']
+    list_select_related = ['role', 'unit', 'unit__region']
     readonly_fields = [
         'user_id', 'last_login_at', 'created_at', 'updated_at',
         'employee_source', 'employee_seed_batch', 'employee_synced_at',
+        'unit_code', 'unit_name', 'region',
         'region_code', 'dashboard_region', 'class_code',
     ]
     fieldsets = [
@@ -199,7 +200,7 @@ class FtcUserAdmin(admin.ModelAdmin):
                        'training_start_date', 'training_end_date')
         }),
         ('Đơn vị & Khu vực', {
-            'fields': ('unit_code', 'unit_name', 'region')
+            'fields': ('unit', 'unit_code', 'unit_name', 'region')
         }),
         ('Trạng thái công việc', {
             'fields': ('is_terminated', 'termination_date', 'termination_reason')
@@ -212,6 +213,7 @@ class FtcUserAdmin(admin.ModelAdmin):
         }),
     ]
     list_per_page = 50
+    autocomplete_fields = ['unit']
     show_full_result_count = True
     date_hierarchy = 'created_at'
 
@@ -253,24 +255,37 @@ class FtcUserAdmin(admin.ModelAdmin):
         return '-'
 
     def save_model(self, request, obj, form, change):
-        # region_id is canonical; keep legacy import/display columns synchronized
-        # for older consumers while they are being phased out.
-        if obj.region_id and obj.region:
-            obj.region_code = obj.region.region_code
-            obj.dashboard_region = obj.region.dashboard_group or obj.region.region_name
+        # unit_id is canonical; keep legacy columns synchronized for old consumers.
+        if obj.unit_id and obj.unit:
+            obj.unit_code = obj.unit.unit_code
+            obj.unit_name = obj.unit.unit_name
+            obj.region = obj.unit.region
+            obj.region_code = obj.unit.region.region_code
+            obj.dashboard_region = obj.unit.region.dashboard_group or obj.unit.region.region_name
+        else:
+            obj.unit_code = None
+            obj.unit_name = None
+            obj.region = None
+            obj.region_code = None
+            obj.dashboard_region = None
         super().save_model(request, obj, form, change)
+        LabAssignment.objects.filter(enrollment__user_id=obj.user_id).update(
+            unit_snapshot_id=obj.unit_id,
+            region_snapshot_id=obj.region_id,
+            updated_at=timezone.now(),
+        )
 
     def region_badge(self, obj):
-        if obj.region_id and obj.region:
+        if obj.unit_id and obj.unit and obj.unit.region:
             return format_html(
                 '<span style="background:#1d4ed8;color:#fff;padding:2px 8px;'
                 'border-radius:4px;font-size:12px;font-weight:500;">{}</span>',
-                obj.region.region_name
+                obj.unit.region.region_name
             )
         return '-'
 
     def branch_badge(self, obj):
-        return obj.region.branch_name if obj.region_id and obj.region else '-'
+        return obj.unit.unit_name if obj.unit_id and obj.unit else '-'
     branch_badge.short_description = 'Chi nhánh'
     region_badge.short_description = 'Khu vực'
 
@@ -418,7 +433,7 @@ class TimerSessionAdmin(admin.ModelAdmin):
         }),
         ('Kết quả đánh giá', {
             'fields': ('status', 'is_passed', 'score', 'completed_first_try',
-                       'last_action')
+                       'practice_attempt_no', 'attempt_sequence_complete', 'last_action')
         }),
         ('Thời gian', {
             'fields': ('started_at', 'finished_at', 'created_at')
@@ -429,7 +444,7 @@ class TimerSessionAdmin(admin.ModelAdmin):
         }),
         ('Telemetry & Audit', {
             'classes': ('collapse',),
-            'fields': ('client_ip', 'user_agent', 'is_mock', 'seed_batch')
+            'fields': ('client_ip', 'user_agent', 'is_mock', 'seed_batch', 'seed_key')
         }),
     ]
     date_hierarchy = 'finished_at'
@@ -587,12 +602,27 @@ class TimerSessionAdmin(admin.ModelAdmin):
 
 @admin.register(Region)
 class RegionAdmin(admin.ModelAdmin):
-    list_display = ['region_code', 'region_name', 'branch_name',
-                    'dashboard_group', 'is_active']
+    list_display = ['region_code', 'region_name', 'dashboard_group', 'is_active']
     list_filter = ['is_active', 'dashboard_group']
-    search_fields = ['region_code', 'region_name', 'branch_name']
+    search_fields = ['region_code', 'region_name']
     readonly_fields = ['region_id', 'created_at', 'updated_at']
     list_per_page = 100
+
+
+@admin.register(OrgUnit)
+class OrgUnitAdmin(admin.ModelAdmin):
+    list_display = ['unit_code', 'unit_name', 'region', 'is_active', 'updated_at']
+    list_filter = ['is_active', 'region']
+    search_fields = ['unit_code', 'unit_name', 'region__region_code', 'region__region_name']
+    list_select_related = ['region']
+    readonly_fields = ['unit_id', 'unit_code', 'unit_name', 'region', 'is_active', 'created_at', 'updated_at']
+    list_per_page = 100
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # ===========================================================
@@ -766,7 +796,8 @@ class ClassLabAssignmentAdmin(ReadOnlyAuditAdmin):
 @admin.register(LabAssignment)
 class LabAssignmentAdmin(ReadOnlyAuditAdmin):
     list_display = [
-        'technician', 'training_class', 'lab_name', 'device_name', 'reporting_region', 'status',
+        'technician', 'training_class', 'lab_name', 'device_name',
+        'reporting_region', 'reporting_branch', 'status',
         'assigned_at', 'due_at', 'first_pass_attempt_no', 'assignment_source',
     ]
     list_filter = [
@@ -778,12 +809,15 @@ class LabAssignmentAdmin(ReadOnlyAuditAdmin):
         'enrollment__user__employee_id', 'enrollment__user__email',
         'enrollment__user__display_name', 'class_snapshot__class_code',
         'region_snapshot__region_code', 'region_snapshot__region_name',
+        'unit_snapshot__unit_code', 'unit_snapshot__unit_name',
         'enrollment__user__region__region_code', 'enrollment__user__region__region_name',
+        'enrollment__user__unit__unit_code', 'enrollment__user__unit__unit_name',
         'curriculum_lab__lab__lab_id', 'curriculum_lab__lab__lab_name',
     ]
     list_select_related = [
-        'enrollment', 'enrollment__user', 'enrollment__user__region',
-        'class_snapshot', 'region_snapshot', 'curriculum_lab',
+        'enrollment', 'enrollment__user', 'enrollment__user__unit',
+        'enrollment__user__unit__region', 'class_snapshot', 'region_snapshot',
+        'unit_snapshot', 'unit_snapshot__region', 'curriculum_lab',
         'curriculum_lab__lab', 'curriculum_lab__lab__device',
     ]
     date_hierarchy = 'assigned_at'
@@ -801,7 +835,7 @@ class LabAssignmentAdmin(ReadOnlyAuditAdmin):
 
     @admin.display(description='Vùng báo cáo', ordering='region_snapshot__region_code')
     def reporting_region(self, obj):
-        region = obj.region_snapshot or obj.enrollment.user.region
+        region = obj.region_snapshot or (obj.enrollment.user.unit.region if obj.enrollment.user.unit_id else None)
         if not region:
             return '-'
         if obj.region_snapshot_id:
@@ -811,6 +845,11 @@ class LabAssignmentAdmin(ReadOnlyAuditAdmin):
             'style="color:#92400e;font-size:11px;">(vùng hiện tại)</span>',
             region,
         )
+
+    @admin.display(description='Chi nhánh', ordering='unit_snapshot__unit_name')
+    def reporting_branch(self, obj):
+        unit = obj.unit_snapshot or obj.enrollment.user.unit
+        return unit.unit_name if unit else '-'
 
     @admin.display(description='Bài lab', ordering='curriculum_lab__lab__lab_name')
     def lab_name(self, obj):

@@ -7091,6 +7091,14 @@ th:nth-last-child(2) .header-filter-popover .popover-dropdown {
 .report-lab-head.report-device-tone-3 { background: #eef3fa !important; }
 .report-lab-head.report-device-tone-4 { background: #f7eff7 !important; }
 
+thead th.report-device-group:hover,
+thead th.report-lab-head:hover,
+thead th.instructor-progress-group:hover,
+thead th.instructor-progress-lab:hover {
+    background-color: var(--lector-navy) !important;
+    color: #ffffff !important;
+}
+
 .detail-report-table .group-start {
     border-left: 2px solid #a9b7cb !important;
 }
@@ -7396,6 +7404,61 @@ table.unified-data-table td a,
 table.unified-data-table td strong,
 table.unified-data-table td span {
     white-space: nowrap;
+}
+
+/* Resizable column handles */
+.column-resizable {
+    position: relative;
+}
+
+.column-resizable > .column-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -6px;
+    bottom: 0;
+    z-index: 40;
+    width: 13px;
+    min-width: 13px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    cursor: col-resize;
+    touch-action: none;
+    transform: none !important;
+}
+
+.column-resize-handle::after {
+    content: "";
+    position: absolute;
+    top: 12%;
+    bottom: 12%;
+    left: 4px;
+    width: 3px;
+    border-radius: 999px;
+    background: #2f6fed;
+    opacity: 0.22;
+    transition: opacity 120ms ease, background 120ms ease;
+}
+
+.column-resizable:hover > .column-resize-handle::after,
+.column-resize-handle:focus-visible::after,
+.column-resize-handle:active::after {
+    opacity: 1;
+    background: #2f6fed;
+}
+
+.column-resize-handle:focus-visible {
+    outline: 2px solid rgba(47, 111, 237, 0.7);
+    outline-offset: -2px;
+}
+
+body.table-column-resizing,
+body.table-column-resizing * {
+    cursor: col-resize !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 input[type="checkbox"] {
@@ -8485,6 +8548,9 @@ select:not(.searchable-select-source):focus-visible {
 }
 
 .instructor-progress-table {
+    --instructor-index-width: 52px;
+    --instructor-total-width: 104px;
+    --instructor-rate-width: 78px;
     width: max-content;
     min-width: 100%;
     border-collapse: separate;
@@ -8930,12 +8996,12 @@ select:not(.searchable-select-source):focus-visible {
 }
 
 .instructor-progress-index {
-    width: 52px;
-    min-width: 52px;
+    width: var(--instructor-index-width);
+    min-width: var(--instructor-index-width);
 }
 
 .instructor-progress-email {
-    left: 52px;
+    left: var(--instructor-index-width);
     width: 270px;
     min-width: 270px;
     font-size: 12.5px;
@@ -9001,10 +9067,10 @@ select:not(.searchable-select-source):focus-visible {
 
 .instructor-progress-total {
     position: sticky;
-    right: 78px;
+    right: var(--instructor-rate-width);
     z-index: 3;
-    width: 104px;
-    min-width: 104px;
+    width: var(--instructor-total-width);
+    min-width: var(--instructor-total-width);
     background: #ffffff;
     box-shadow: -5px 0 9px rgba(36, 48, 70, 0.045);
 }
@@ -9013,8 +9079,8 @@ select:not(.searchable-select-source):focus-visible {
     position: sticky;
     right: 0;
     z-index: 3;
-    width: 78px;
-    min-width: 78px;
+    width: var(--instructor-rate-width);
+    min-width: var(--instructor-rate-width);
 }
 
 .instructor-progress-table thead .instructor-progress-total,
@@ -9291,6 +9357,33 @@ select:not(.searchable-select-source):focus-visible {
     background: var(--lector-navy, #263348);
     border-bottom: 1px solid #344156;
     white-space: nowrap;
+}
+
+.dashboard-formula-guide {
+    margin: 0 0 18px;
+    border: 1px solid #dbe5f2;
+    border-radius: 12px;
+    background: #f8fbff;
+    color: #334155;
+}
+
+.dashboard-formula-guide summary {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.dashboard-formula-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px 18px;
+    padding: 0 16px 14px;
+}
+
+.dashboard-formula-grid p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.55;
 }
 
 .roster-table thead .admin-table-sort {
@@ -11511,4 +11604,3 @@ select:not(.searchable-select-source):focus-visible {
         text-align: left;
     }
 }
-

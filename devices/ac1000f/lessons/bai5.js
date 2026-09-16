@@ -12,19 +12,16 @@ var lesson = {
   subtitle: 'Cấu hình DHCP',
   instructions: [
     '<b>Yêu cầu:</b> Thực hiện thay đổi cấu hình DHCP trên thiết bị theo các thông số:',
-    '- IP Address: <span class="val">192.168.1.1</span>',
+    '- IP Address: <span class="val">192.168.10.1</span>',
     '- IP Subnet Mask: <span class="val">255.255.255.0</span>',
     '- DHCP Server: <span class="val">Enable</span>',
-    '- Start IP: <span class="val">192.168.1.2</span>',
-    '- End IP: <span class="val">192.168.1.254</span>',
+    '- Start IP: <span class="val">192.168.10.2</span>',
+    '- End IP: <span class="val">192.168.10.254</span>',
     '- Lease Time: <span class="val">86400</span>'
   ],
   practiceUrl: '/sim_ac1000f/cgi-bin/index.asp?page=home_lan.asp',
 
-  // Xóa trắng ô Lease Time để người dùng tự nhập dữ liệu
-  clearFields: [
-    'input[name="dhcp_LeaseTime"]'
-  ],
+  clearFields: [],
 
   grading: {
     description: 'Kiểm tra cấu hình IP LAN và DHCP',
@@ -56,11 +53,11 @@ var lesson = {
       }
 
       var rules = [
-        { id: '1', name: 'IP Address', expected: '192.168.1.1', actual: getVal('input[name="uiViewIPAddr"]') },
+        { id: '1', name: 'IP Address', expected: '192.168.10.1', actual: getVal('input[name="uiViewIPAddr"]') },
         { id: '2', name: 'IP Subnet Mask', expected: '255.255.255.0', actual: getVal('input[name="uiViewNetMask"]') },
         { id: '3', name: 'DHCP', expected: 'Enable', actual: getRadio('dhcpTypeRadio') === '1' ? 'Enable' : 'Disable' },
-        { id: '4', name: 'Start IP', expected: '192.168.1.2', actual: getVal('input[name="StartIp"]') },
-        { id: '5', name: 'End IP', expected: '192.168.1.254', actual: getVal('input[name="EndIp"]') },
+        { id: '4', name: 'Start IP', expected: '192.168.10.2', actual: getVal('input[name="StartIp"]') },
+        { id: '5', name: 'End IP', expected: '192.168.10.254', actual: getVal('input[name="EndIp"]') },
         { id: '6', name: 'Lease Time', expected: '86400', actual: getVal('input[name="dhcp_LeaseTime"]') }
       ];
 

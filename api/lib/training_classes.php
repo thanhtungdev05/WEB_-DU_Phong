@@ -259,12 +259,12 @@ function training_class_add_members(
         <<<'SQL'
         INSERT INTO lab_assignments (
             enrollment_id, class_lab_assignment_id, curriculum_lab_id,
-            assigned_at, due_at, status, region_id_snapshot, class_id_snapshot,
+            assigned_at, due_at, status, region_id_snapshot, unit_id_snapshot, class_id_snapshot,
             assignment_source, is_inferred, created_at, updated_at
         )
         SELECT enrollment.enrollment_id, class_assignment.class_lab_assignment_id,
                class_assignment.curriculum_lab_id, class_assignment.assigned_at,
-                class_assignment.due_at, 'assigned', COALESCE(training.region_id, roster.region_id),
+                class_assignment.due_at, 'assigned', roster.region_id, roster.unit_id,
                 training.class_id, :source, FALSE, NOW(), NOW()
            FROM class_lab_assignments class_assignment
            JOIN training_classes training ON training.class_id = class_assignment.class_id
@@ -334,12 +334,12 @@ function training_class_add_devices(
         <<<'SQL'
         INSERT INTO lab_assignments (
             enrollment_id, class_lab_assignment_id, curriculum_lab_id,
-            assigned_at, due_at, status, region_id_snapshot, class_id_snapshot,
+            assigned_at, due_at, status, region_id_snapshot, unit_id_snapshot, class_id_snapshot,
             assignment_source, is_inferred, created_at, updated_at
         )
         SELECT enrollment.enrollment_id, class_assignment.class_lab_assignment_id,
                class_assignment.curriculum_lab_id, class_assignment.assigned_at,
-                class_assignment.due_at, 'assigned', COALESCE(training.region_id, roster.region_id),
+                class_assignment.due_at, 'assigned', roster.region_id, roster.unit_id,
                 training.class_id, :assignment_source, FALSE, NOW(), NOW()
            FROM class_enrollments enrollment
            JOIN training_classes training ON training.class_id = enrollment.class_id
@@ -1252,11 +1252,10 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
 
     // 1. User profile and region
     $userQuery = $pdo->prepare(
-        'SELECT u.user_id, u.employee_id, u.display_name, u.email, u.role, u.job_title,
-                u.unit_code, u.unit_name, u.region_id, r.region_code, r.region_name, r.branch_name
-           FROM users u
-           LEFT JOIN regions r ON r.region_id = u.region_id
-          WHERE u.user_id = CAST(:user_id AS uuid)'
+        'SELECT user_id, employee_id, display_name, email, role, job_title,
+                unit_id, unit_code, unit_name, region_id, region_code, region_name, branch_name
+           FROM v_ktv_directory
+          WHERE user_id = CAST(:user_id AS uuid)'
     );
     $userQuery->execute(['user_id' => $userId]);
     $userInfo = $userQuery->fetch(PDO::FETCH_ASSOC) ?: $user;
@@ -1301,9 +1300,15 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                device.sort_order AS device_sort_order,
                lab.sort_order AS lab_sort_order
           FROM v_lab_assignment_progress progress
+          JOIN lab_assignments assignment ON assignment.assignment_id = progress.assignment_id
+          JOIN class_enrollments enrollment ON enrollment.enrollment_id = assignment.enrollment_id
+          JOIN training_classes training ON training.class_id = progress.class_id
           JOIN device_catalog device ON device.device_id = progress.device_id
           JOIN lab_catalog lab ON lab.lab_id = progress.lab_id
          WHERE progress.user_id = CAST(:user_id AS uuid)
+           AND progress.assignment_status <> 'waived'
+           AND enrollment.status = 'active'
+           AND training.status IN ('planned', 'active')
          ORDER BY device.sort_order, progress.device_name, lab.sort_order, progress.lab_name
         SQL
     );
@@ -1316,6 +1321,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
     $passedLabsCount = 0;
     $inProgressLabsCount = 0;
     $firstTryPassCount = 0;
+    $firstTryEligibleCount = 0;
     $assignments = [];
 
     foreach ($rawAssignments as $row) {
@@ -1338,8 +1344,11 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         if ($status === 'passed') {
             $deviceProgressMap[$devId]['passed_labs']++;
             $passedLabsCount++;
-            if (!empty($row['first_try_success']) || (int)($row['first_pass_attempt_no'] ?? 0) === 1) {
-                $firstTryPassCount++;
+            if ($row['first_pass_attempt_no'] !== null) {
+                $firstTryEligibleCount++;
+                if ((int)$row['first_pass_attempt_no'] === 1) {
+                    $firstTryPassCount++;
+                }
             }
         } elseif ($status === 'in_progress') {
             $deviceProgressMap[$devId]['in_progress_labs']++;
@@ -1401,6 +1410,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             OR (NULLIF(:employee_id, '') IS NOT NULL AND s.technician_id = :employee_id)
          )
            AND s.status IN ('completed', 'failed')
+           AND NOT COALESCE(s.is_mock, FALSE)
          ORDER BY s.finished_at DESC NULLS LAST, s.id DESC
          LIMIT 500
         SQL
@@ -1419,13 +1429,6 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
     $gradedPracticeSessionsCount = 0;
     $passedPracticeSessionsCount = 0;
     $trendDaysMap = [];
-
-    // Stats computed from timer_sessions (independent of assignments)
-    // so KTVs who did labs not yet assigned still get counted in the overview.
-    $sessionPassedLabIds  = [];   // lab_id => true  (passed at least once)
-    $sessionAttemptedLabs = [];   // lab_id => true  (attempted at least once)
-    $sessionFirstTryPass  = 0;    // sessions with practice_attempt_no=1 AND is_passed=true
-    $sessionFirstTryTotal = 0;    // sessions with practice_attempt_no=1 (practice mode)
 
     foreach ($rawSessions as $sess) {
         $mode = (string)($sess['mode'] ?? 'Thực hành');
@@ -1451,22 +1454,6 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                 }
             }
 
-            // Track unique labs attempted/passed from sessions
-            if ($labId !== '') {
-                $sessionAttemptedLabs[$labId] = true;
-                if ($isPassed === true) {
-                    $sessionPassedLabIds[$labId] = true;
-                }
-            }
-
-            // First-try stats
-            $attemptNo = $sess['practice_attempt_no'] !== null ? (int)$sess['practice_attempt_no'] : null;
-            if ($attemptNo === 1) {
-                $sessionFirstTryTotal++;
-                if ($isPassed === true) {
-                    $sessionFirstTryPass++;
-                }
-            }
         }
 
         $timestamp = $sess['finished_at'] ?? $sess['started_at'] ?? null;
@@ -1514,19 +1501,6 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         ];
     }
 
-    // Merge assignment-based counts with session-based counts.
-    // For labs that ARE assigned, assignment progress is authoritative.
-    // For labs that are NOT assigned (or when assignment tracking is absent),
-    // fall back to what timer_sessions actually recorded.
-    $effectivePassedLabs     = max($passedLabsCount, count($sessionPassedLabIds));
-    $effectiveInProgressLabs = $inProgressLabsCount; // kept from assignment view
-    // Denominator: prefer assigned total; if none, use unique attempted labs
-    $effectiveTotalLabs = $totalAssignedLabs > 0 ? $totalAssignedLabs : count($sessionAttemptedLabs);
-
-    // First-try rate: combine assignment-based and session-based counts
-    $effectiveFirstTryPass  = max($firstTryPassCount, $sessionFirstTryPass);
-    $effectiveFirstTryTotal = $passedLabsCount > 0 ? $passedLabsCount : $sessionFirstTryTotal;
-
     ksort($trendDaysMap);
     $trendList = [];
     foreach ($trendDaysMap as $d => $data) {
@@ -1545,8 +1519,100 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         ];
     }
 
-    $completionRate = $effectiveTotalLabs > 0 ? round(($effectivePassedLabs / $effectiveTotalLabs) * 100, 1) : 0;
-    $firstTryRate = $effectiveFirstTryTotal > 0 ? round(($effectiveFirstTryPass / $effectiveFirstTryTotal) * 100, 1) : 0;
+    // KPI and daily trend must cover the complete history even though the
+    // detailed session list is intentionally capped for payload safety.
+    $sessionStatsQuery = $pdo->prepare(
+        <<<'SQL'
+        SELECT COUNT(*) AS total_sessions_count,
+               COUNT(*) FILTER (WHERE COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide') AS guide_count,
+               COUNT(*) FILTER (WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')) AS practice_count,
+               COUNT(*) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND s.is_passed IS NOT NULL
+               ) AS graded_count,
+               COUNT(*) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND s.is_passed IS TRUE
+               ) AS passed_count,
+               COALESCE(SUM(COALESCE(s.duration_sec, 0)) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+               ), 0) AS practice_duration_sec
+          FROM timer_sessions s
+         WHERE (
+               s.user_id = CAST(:user_id AS uuid)
+            OR (NULLIF(:email, '') IS NOT NULL AND LOWER(s.email) = LOWER(:email))
+            OR (NULLIF(:employee_id, '') IS NOT NULL AND s.technician_id = :employee_id)
+         )
+           AND s.status IN ('completed', 'failed')
+           AND NOT COALESCE(s.is_mock, FALSE)
+        SQL
+    );
+    $sessionStatsQuery->execute([
+        'user_id' => $userId,
+        'email' => $user['email'] ?? '',
+        'employee_id' => $user['employee_id'] ?? '',
+    ]);
+    $allSessionStats = $sessionStatsQuery->fetch(PDO::FETCH_ASSOC) ?: [];
+    $practiceCount = (int)($allSessionStats['practice_count'] ?? 0);
+    $guideCount = (int)($allSessionStats['guide_count'] ?? 0);
+    $gradedPracticeSessionsCount = (int)($allSessionStats['graded_count'] ?? 0);
+    $passedPracticeSessionsCount = (int)($allSessionStats['passed_count'] ?? 0);
+    $totalDurationSec = (int)($allSessionStats['practice_duration_sec'] ?? 0);
+    $allSessionsCount = (int)($allSessionStats['total_sessions_count'] ?? 0);
+
+    $sessionTrendQuery = $pdo->prepare(
+        <<<'SQL'
+        SELECT COALESCE(s.finished_at, s.started_at)::date AS activity_date,
+               COUNT(*) FILTER (WHERE COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide') AS guide_count,
+               COUNT(*) FILTER (WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')) AS practice_count,
+               COUNT(*) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND s.is_passed IS NOT NULL
+               ) AS graded_count,
+               COUNT(*) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND s.is_passed IS TRUE
+               ) AS passed_count,
+               COALESCE(SUM(COALESCE(s.duration_sec, 0)) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+               ), 0) AS duration_sec
+          FROM timer_sessions s
+         WHERE (
+               s.user_id = CAST(:user_id AS uuid)
+            OR (NULLIF(:email, '') IS NOT NULL AND LOWER(s.email) = LOWER(:email))
+            OR (NULLIF(:employee_id, '') IS NOT NULL AND s.technician_id = :employee_id)
+         )
+           AND s.status IN ('completed', 'failed')
+           AND NOT COALESCE(s.is_mock, FALSE)
+           AND COALESCE(s.finished_at, s.started_at) IS NOT NULL
+         GROUP BY activity_date
+         ORDER BY activity_date
+        SQL
+    );
+    $sessionTrendQuery->execute([
+        'user_id' => $userId,
+        'email' => $user['email'] ?? '',
+        'employee_id' => $user['employee_id'] ?? '',
+    ]);
+    $trendList = array_map(static function (array $row): array {
+        $graded = (int)$row['graded_count'];
+        $passed = (int)$row['passed_count'];
+        $practice = (int)$row['practice_count'];
+        $guide = (int)$row['guide_count'];
+        return [
+            'date' => (string)$row['activity_date'],
+            'total_sessions' => $practice + $guide,
+            'practice_count' => $practice,
+            'guide_count' => $guide,
+            'graded_count' => $graded,
+            'passed_count' => $passed,
+            'pass_rate_percent' => $graded > 0 ? round(100 * $passed / $graded, 1) : null,
+            'duration_sec' => (int)$row['duration_sec'],
+        ];
+    }, $sessionTrendQuery->fetchAll(PDO::FETCH_ASSOC));
+
+    $completionRate = $totalAssignedLabs > 0 ? round(($passedLabsCount / $totalAssignedLabs) * 100, 1) : 0;
+    $firstTryRate = $firstTryEligibleCount > 0 ? round(($firstTryPassCount / $firstTryEligibleCount) * 100, 1) : 0;
     $practicePassRate = $gradedPracticeSessionsCount > 0
         ? round(100 * $passedPracticeSessionsCount / $gradedPracticeSessionsCount, 1)
         : 0;
@@ -1566,12 +1632,14 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         'classes' => $enrolledClasses,
         'stats' => [
             'total_assigned_labs'        => $totalAssignedLabs,
-            'passed_labs'                => $effectivePassedLabs,
-            'in_progress_labs'           => $effectiveInProgressLabs,
-            'unstarted_labs'             => max(0, $effectiveTotalLabs - $effectivePassedLabs - $effectiveInProgressLabs),
+            'passed_labs'                => $passedLabsCount,
+            'in_progress_labs'           => $inProgressLabsCount,
+            'unstarted_labs'             => max(0, $totalAssignedLabs - $passedLabsCount - $inProgressLabsCount),
             'completion_rate_percent'    => $completionRate,
             'first_try_pass_rate_percent'=> $firstTryRate,
-            'total_sessions_count'       => count($sessions),
+            'first_try_eligible_labs'    => $firstTryEligibleCount,
+            'first_try_passed_labs'      => $firstTryPassCount,
+            'total_sessions_count'       => $allSessionsCount,
             'practice_sessions_count'    => $practiceCount,
             'guide_sessions_count'       => $guideCount,
             'graded_practice_sessions_count' => $gradedPracticeSessionsCount,
@@ -1582,6 +1650,8 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         'device_progress' => $deviceProgressList,
         'assignments' => $assignments,
         'sessions' => $sessions,
+        'session_history_returned_count' => count($sessions),
+        'session_history_truncated' => count($sessions) < $allSessionsCount,
         'trend' => $trendList,
     ];
 }

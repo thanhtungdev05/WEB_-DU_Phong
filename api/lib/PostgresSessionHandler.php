@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-final class PostgresSessionHandler implements SessionHandlerInterface
+final class PostgresSessionHandler implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface
 {
     private Closure $connectionFactory;
     private ?PDO $connection = null;
@@ -44,6 +44,30 @@ final class PostgresSessionHandler implements SessionHandlerInterface
         return $stmt->execute([
             'session_id_hash' => $this->hashId($id),
             'data' => $data,
+            'ttl_seconds' => $this->ttlSeconds,
+        ]);
+    }
+
+    public function validateId(string $id): bool
+    {
+        $stmt = $this->db()->prepare(
+            'SELECT 1 FROM app_sessions WHERE session_id_hash = :session_id_hash AND expires_at > NOW()'
+        );
+        $stmt->execute(['session_id_hash' => $this->hashId($id)]);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    public function updateTimestamp(string $id, string $data): bool
+    {
+        $stmt = $this->db()->prepare(
+            'UPDATE app_sessions
+                SET expires_at = NOW() + make_interval(secs => CAST(:ttl_seconds AS INTEGER)),
+                    updated_at = NOW()
+              WHERE session_id_hash = :session_id_hash
+                AND expires_at > NOW()'
+        );
+        return $stmt->execute([
+            'session_id_hash' => $this->hashId($id),
             'ttl_seconds' => $this->ttlSeconds,
         ]);
     }

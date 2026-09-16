@@ -130,7 +130,7 @@ API phải kiểm tra `roles.is_admin` cho chức năng quản trị và
 
 - Danh sách và bộ lọc KTV: lấy khu vực/chi nhánh từ `v_ktv_directory`.
 - Ma trận tiến độ hiện tại: dùng khu vực hiện tại của KTV từ
-  `v_ktv_directory`; KTV chưa được gán khu vực hiển thị là chưa phân vùng.
+  `v_ktv_directory`; KTV chưa được gán khu vực hiển thị trong nhóm `FTC`.
 - Báo cáo lịch sử cố định: có thể dùng `region_id_snapshot` nếu nghiệp vụ yêu
   cầu giữ nguyên khu vực tại thời điểm giao bài.
 - Lớp hiện tại lấy từ `class_enrollments`/`training_classes`, nhưng không ghi đè

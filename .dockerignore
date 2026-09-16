@@ -3,6 +3,7 @@
 .env
 .env.*
 !.env.example
+firebase-credentials/
 __pycache__
 *.py[cod]
 vendor

@@ -19,6 +19,7 @@
   let _lastTrackingPayload = null; // Giữ nguyên payload/idempotency key khi retry lỗi mạng
   let _catalogDeviceIds = null;
   let _catalogLabIds = null;
+  let _catalogLabNames = null;
 
   function escapeHTML(str) {
     if (!str) return '';
@@ -82,6 +83,9 @@
   // Track current iframe URL
   let currentIframeUrl = '';
   let trackingSaveInFlight = false;
+  let currentUserRequest = null;
+  let sessionHeartbeatInterval = null;
+  const SESSION_HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
 
   function normalizeDeviceId(id) {
     if (!id) return '';
@@ -113,6 +117,26 @@
     deviceSelect.disabled = devices.length === 0;
   }
 
+  function synchronizePortalLessonNames(catalogDevices) {
+    _catalogLabNames = new Map();
+    catalogDevices.forEach(function (device) {
+      (Array.isArray(device.labs) ? device.labs : []).forEach(function (lab) {
+        const labId = normalizeLabId(lab.lab_id);
+        const labName = String(lab.lab_name || '').trim();
+        if (labId && labName) _catalogLabNames.set(labId, labName);
+      });
+    });
+    DEVICES.forEach(function (device) {
+      (device.categories || []).forEach(function (category) {
+        (category.lessons || []).forEach(function (lesson) {
+          const catalogName = _catalogLabNames.get(normalizeLabId(lesson.id));
+          if (catalogName) lesson.title = catalogName;
+        });
+      });
+    });
+    return _catalogLabNames;
+  }
+
   function loadLearningCatalog() {
     return fetch('/api/index.php/learning/catalog', { credentials: 'include' })
       .then(function (response) {
@@ -122,9 +146,7 @@
       .then(function (data) {
         const catalogDevices = Array.isArray(data.devices) ? data.devices : [];
         _catalogDeviceIds = new Set(catalogDevices.map(databaseDeviceToPortalId));
-        _catalogLabIds = new Set(catalogDevices.flatMap(function (device) {
-          return Array.isArray(device.labs) ? device.labs.map(function (lab) { return normalizeLabId(lab.lab_id); }) : [];
-        }));
+        _catalogLabIds = new Set(synchronizePortalLessonNames(catalogDevices).keys());
         const visibleDevices = DEVICES.filter(function (device) {
           return !_catalogDeviceIds || _catalogDeviceIds.has(normalizeDeviceId(device.id));
         });
@@ -660,67 +682,117 @@
    * Kết quả được cache vào _currentUser để dùng khi gửi Tracking API.
    * Nếu chưa đăng nhập, tự động chuyển hướng về trang login.
    */
-  function fetchCurrentUser() {
-    fetch('/api/index.php/auth/session', { credentials: 'include' })
-      .then(function (res) { return res.ok ? res.json() : null; })
-      .then(function (data) {
-        const u = data && data.user;
-        if (u) {
-          _currentUser = {
-            technician_id: u.user_id || u.id || 'UNKNOWN',
-            employee_id: u.employee_id || u.employeeId || '',
-            name: u.displayName || u.display_name || u.email || 'KTV',
-            email: u.email || '',
-            role: String(u.role || 'KTV').toUpperCase(),
-            role_name: u.roleName || u.role_name || '',
-            is_admin: Boolean(u.isAdmin ?? u.is_admin ?? u.permissions?.admin),
-            can_export_reports: Boolean(u.canExportReports ?? u.can_export_reports ?? u.permissions?.exportReports),
-            job_title: u.job_title || u.jobTitle || ''
-          };
-          renderUserProfile();
-          if (_currentUser && _currentUser.is_admin) {
-            const btnDashboard = document.getElementById('btn-dashboard');
-            if (btnDashboard) {
-              btnDashboard.style.display = '';
-              btnDashboard.onclick = function () {
-                window.location.href = '/dashboard-authen/';
-              };
-            }
-          }
-          loadLearningCatalog().catch(function (error) {
-            console.warn('[Catalog] Không thể tải danh sách bài luyện tập, chuyển sang chế độ offline:', error);
-            _catalogDeviceIds = null;
-            _catalogLabIds = null;
-            populateDeviceDropdown(DEVICES);
-            const urlParams = new URLSearchParams(window.location.search);
-            const reqDevice = urlParams.get('device');
-            const reqLab = urlParams.get('lab');
-            const reqMode = urlParams.get('mode');
-            let initialDev = null;
-            if (reqDevice) {
-              const normReq = normalizeDeviceId(reqDevice);
-              initialDev = DEVICES.find(function (d) {
-                return normalizeDeviceId(d.id) === normReq;
-              });
-            }
-            if (!initialDev && DEVICES.length > 0) {
-              initialDev = DEVICES[0];
-            }
-            if (initialDev) {
-              selectDevice(initialDev.id, reqLab, reqMode);
-            } else {
-              navList.innerHTML = '<div class="empty-state"><p>Không thể tải danh sách bài luyện tập.</p></div>';
-            }
-          });
-        } else {
-          _currentUser = null;
-          renderUserProfile();
-          redirectToLogin();
+  function applyCurrentUser(u) {
+    _currentUser = u ? {
+      technician_id: u.user_id || u.id || 'UNKNOWN',
+      employee_id: u.employee_id || u.employeeId || '',
+      name: u.displayName || u.display_name || u.email || 'KTV',
+      email: u.email || '',
+      role: String(u.role || 'KTV').toUpperCase(),
+      role_name: u.roleName || u.role_name || '',
+      is_admin: Boolean(u.isAdmin ?? u.is_admin ?? u.permissions?.admin),
+      can_export_reports: Boolean(u.canExportReports ?? u.can_export_reports ?? u.permissions?.exportReports),
+      job_title: u.job_title || u.jobTitle || ''
+    } : null;
+    renderUserProfile();
+    return _currentUser;
+  }
+
+  function requestCurrentUserSession() {
+    if (currentUserRequest) return currentUserRequest;
+    currentUserRequest = fetch('/api/index.php/auth/session', {
+      credentials: 'include',
+      cache: 'no-store'
+    })
+      .then(function (res) {
+        if (!res.ok) {
+          const error = new Error(`Không kiểm tra được phiên đăng nhập (HTTP ${res.status}).`);
+          error.status = res.status;
+          throw error;
         }
+        return res.json();
       })
-      .catch(function () {
-        console.warn('[Tracking] Không thể lấy thông tin user từ API.');
+      .then(function (data) {
+        return applyCurrentUser(data && data.user ? data.user : null);
+      })
+      .finally(function () {
+        currentUserRequest = null;
+      });
+    return currentUserRequest;
+  }
+
+  function refreshSessionHeartbeat() {
+    if (document.visibilityState === 'hidden' || !_currentUser) return;
+    requestCurrentUserSession().then(function (user) {
+      if (!user && sessionHeartbeatInterval) {
+        clearInterval(sessionHeartbeatInterval);
+        sessionHeartbeatInterval = null;
+      }
+    }).catch(function (error) {
+      console.warn('[Auth] Chưa thể gia hạn phiên đăng nhập:', error);
+    });
+  }
+
+  function startSessionHeartbeat() {
+    if (!sessionHeartbeatInterval) {
+      sessionHeartbeatInterval = setInterval(refreshSessionHeartbeat, SESSION_HEARTBEAT_INTERVAL_MS);
+    }
+    if (document.body.dataset.sessionHeartbeatBound !== 'true') {
+      document.body.dataset.sessionHeartbeatBound = 'true';
+      window.addEventListener('focus', refreshSessionHeartbeat);
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') refreshSessionHeartbeat();
+      });
+    }
+  }
+
+  function loadCatalogWithOfflineFallback() {
+    return loadLearningCatalog().catch(function (error) {
+      console.warn('[Catalog] Không thể tải danh sách bài luyện tập, chuyển sang chế độ offline:', error);
+      _catalogDeviceIds = null;
+      _catalogLabIds = null;
+      _catalogLabNames = null;
+      populateDeviceDropdown(DEVICES);
+      const urlParams = new URLSearchParams(window.location.search);
+      const reqDevice = urlParams.get('device');
+      const reqLab = urlParams.get('lab');
+      const reqMode = urlParams.get('mode');
+      let initialDev = null;
+      if (reqDevice) {
+        const normReq = normalizeDeviceId(reqDevice);
+        initialDev = DEVICES.find(function (d) {
+          return normalizeDeviceId(d.id) === normReq;
+        });
+      }
+      if (!initialDev && DEVICES.length > 0) initialDev = DEVICES[0];
+      if (initialDev) selectDevice(initialDev.id, reqLab, reqMode);
+      else navList.innerHTML = '<div class="empty-state"><p>Không thể tải danh sách bài luyện tập.</p></div>';
+    });
+  }
+
+  function fetchCurrentUser() {
+    return requestCurrentUserSession()
+      .then(function (user) {
+        if (!user) {
+          redirectToLogin();
+          return null;
+        }
+        if (user.is_admin) {
+          const btnDashboard = document.getElementById('btn-dashboard');
+          if (btnDashboard) {
+            btnDashboard.style.display = '';
+            btnDashboard.onclick = function () {
+              window.location.href = '/dashboard-authen/';
+            };
+          }
+        }
+        startSessionHeartbeat();
+        return loadCatalogWithOfflineFallback().then(function () { return user; });
+      })
+      .catch(function (error) {
+        console.warn('[Tracking] Không thể lấy thông tin user từ API:', error);
         redirectToLogin();
+        return null;
       });
   }
 
@@ -971,7 +1043,9 @@
       lesson: lesson,
       mode: enableGuide ? 'Hướng dẫn' : 'Thực hành',
       startedAt: new Date().toISOString(),
-      submissionId: crypto.randomUUID ? crypto.randomUUID() : ('sub-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10))
+      submissionId: crypto.randomUUID ? crypto.randomUUID() : ('sub-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10)),
+      ruleCache: {},
+      cachedUnexpectedErrors: []
     };
     const sessionToReserve = _trackingSession;
     _trackingSession.startSettled = sessionToReserve.mode !== 'Thực hành';
@@ -1070,6 +1144,7 @@
     _lastTrackingPayload = null;
     _lastEvalResult = null;
     _lastSubmitDurationSec = 0;
+    window._sessionRuleCache = null;
 
     deviceIframe.src = '';
     currentIframeUrl = '';
@@ -1284,10 +1359,53 @@
         } catch (e) { }
       }
 
+      // Nếu không tìm thấy element trong các frame hiện hành (do học viên đã chuyển trang khác như LAN, Wi-Fi...)
+      // thì kiểm tra xem rule này đã từng được nhập và lưu thành công trong phiên làm việc hiện tại hay chưa (Session Cache)
+      if (!elementFound) {
+        const cached = (_trackingSession && _trackingSession.ruleCache && _trackingSession.ruleCache[rule.id]) ||
+                       (window._sessionRuleCache && window._sessionRuleCache[rule.id]);
+        if (cached) {
+          elementFound = true;
+          actualValue = cached.actualValue;
+          isSaved = cached.isSaved;
+          isMatch = cached.isMatch;
+        }
+      }
+
       if (isMatch) {
         // Đối với thiết bị AX3000C, AX3000H v2 và AX3000S, bắt buộc trang chứa phần tử phải được bấm Save/Apply thành công
         if ((currentDeviceId === 'ax3000c' || currentDeviceId === 'ax3000hv2' || currentDeviceId === 'ax3000s') && !isSaved) {
           isMatch = false;
+        }
+      }
+
+      // Cập nhật hoặc đồng bộ bộ nhớ đệm phiên (Session Cache):
+      // - Nếu phần tử tìm thấy và đã được lưu thành công: lưu vào cache để dùng khi học viên chuyển trang khác
+      // - Nếu phần tử tìm thấy trên trang đang mở nhưng chưa được lưu (bị sửa đổi): xóa khỏi cache để tránh dùng lại giá trị cũ
+      if (elementFound) {
+        if (isSaved) {
+          if (!window._sessionRuleCache) window._sessionRuleCache = {};
+          window._sessionRuleCache[rule.id] = {
+            actualValue: actualValue,
+            isSaved: isSaved,
+            isMatch: isMatch
+          };
+          if (_trackingSession) {
+            if (!_trackingSession.ruleCache) _trackingSession.ruleCache = {};
+            _trackingSession.ruleCache[rule.id] = {
+              actualValue: actualValue,
+              isSaved: isSaved,
+              isMatch: isMatch
+            };
+          }
+        } else {
+          const isActuallyInDom = allDocs.some(d => {
+            try { return d.querySelector(rule.selector) !== null; } catch (e) { return false; }
+          });
+          if (isActuallyInDom) {
+            if (window._sessionRuleCache) delete window._sessionRuleCache[rule.id];
+            if (_trackingSession && _trackingSession.ruleCache) delete _trackingSession.ruleCache[rule.id];
+          }
         }
       }
 
@@ -1363,6 +1481,44 @@
             const originalValue = doc._ftcOriginalValues[uid];
             const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
             if (el) {
+              // Bỏ qua các trường thuộc trang hoặc form đăng nhập router
+              const isLoginField = (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
+                el.id === 'username' || el.id === 'password' ||
+                (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
+                (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password'))) ||
+                (el.value === 'admin' && (originalValue === '' || originalValue === null || originalValue === undefined));
+              if (isLoginField) return;
+
+              // Bỏ qua các trường được cho phép hoặc nằm trong guidePopups (hướng dẫn từng bước của bài học)
+              const effectiveLesson = lesson || _currentLesson;
+              const guideList = (effectiveLesson && Array.isArray(effectiveLesson.guidePopups)) ? effectiveLesson.guidePopups : [];
+              const allowedSelectors = [
+                ...(effectiveLesson && Array.isArray(effectiveLesson.allowedSelectors) ? effectiveLesson.allowedSelectors : []),
+                ...(effectiveLesson && effectiveLesson.grading && Array.isArray(effectiveLesson.grading.allowedSelectors) ? effectiveLesson.grading.allowedSelectors : []),
+                ...guideList.map(g => g.selector).filter(Boolean)
+              ];
+              const isAllowedByLesson = allowedSelectors.some(sel => {
+                try {
+                  const matchedList = Array.from(doc.querySelectorAll(sel));
+                  return matchedList.includes(el);
+                } catch (e) { return false; }
+              });
+              if (isAllowedByLesson) return;
+
+              // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, Wi-Fi IoT / WiFi5 enable, SSID broadcast
+              const isAuxToggle = (el.name && (
+                el.name.toLowerCase() === 'dnstyperadio' ||
+                el.name.toLowerCase().includes('enable_wifi') ||
+                el.name.toLowerCase().includes('wifi5') ||
+                el.name.toLowerCase().includes('essid_hide')
+              )) ||
+              (el.id && (
+                el.id.toLowerCase().includes('dnsrelay') ||
+                el.id.toLowerCase().includes('wifi5_enable') ||
+                el.id.toLowerCase().includes('enable_wifi')
+              ));
+              if (isAuxToggle) return;
+
               // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
               const isExpected = rules.some(r => {
                 try {
@@ -1412,10 +1568,36 @@
         }
       });
 
-    // Chỉ pass khi đủ rule và không có thao tác thừa.
+    // Đồng bộ lỗi thao tác thừa theo phiên nếu có (giữ nguyên lỗi nếu học viên chuyển sang trang khác)
+    if (_trackingSession) {
+      if (unexpectedErrors.length > 0) {
+        _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
+      }
+    }
+    if (unexpectedErrors.length === 0 && _trackingSession && Array.isArray(_trackingSession.cachedUnexpectedErrors) && _trackingSession.cachedUnexpectedErrors.length > 0) {
+      unexpectedErrors = _trackingSession.cachedUnexpectedErrors;
+    }
+
+    // Lọc triệt để loại bỏ các trường đăng nhập admin/admin, dnsTypeRadio, wifi5/IoT toggle khỏi danh sách lỗi thao tác thừa
+    unexpectedErrors = unexpectedErrors.filter(err => {
+      const lbl = (err.label || '').toLowerCase();
+      const act = (err.actual || '').toLowerCase();
+      if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) && (act === 'admin' || act === '')) {
+        return false;
+      }
+      if (lbl.includes('dns relay') || lbl.includes('dnstyperadio')) {
+        return false;
+      }
+      if (lbl.includes('2.4g wifi') || lbl.includes('5g wifi') || lbl.includes('wifi5') || lbl.includes('wifi 5') || lbl.includes('enable_wifi') || lbl.includes('ssid broadcast')) {
+        return false;
+      }
+      return true;
+    });
+
+    // Chỉ pass khi đủ rule và không có thao tác thừa
+    const criteria = rules.filter(r => r.required !== false);
     const hasUnexpected = unexpectedErrors.length > 0;
-    const passed = (passedCount === rules.length) && !hasUnexpected;
-    const score = passed ? 100 : Math.round((passedCount / rules.length) * (hasUnexpected ? 99 : 100));
+    const passed = (passedCount === criteria.length) && !hasUnexpected;
 
     let finalTotalRules = rules.length + unexpectedErrors.length;
 
@@ -1434,7 +1616,7 @@
 
     return {
       passed: passed,
-      score: score,
+      gradable: rules.length > 0,
       passedCount: passedCount,
       totalRules: finalTotalRules,
       details: details
@@ -1680,7 +1862,7 @@
    * @param {object|null} evalResult - Kết quả chấm điểm
    * @param {number} durationSec - Thời gian làm bài (giây), lấy từ đồng hồ đã dừng
    */
-  function setTrackingSaveStatus(status, message, allowRetry) {
+  function setTrackingSaveStatus(status, message, recoveryAction) {
     if (!gmSaveStatus) return;
     gmSaveStatus.hidden = !message;
     gmSaveStatus.className = `gm-save-status${status ? ` is-${status}` : ''}`;
@@ -1690,12 +1872,18 @@
     const text = document.createElement('span');
     text.textContent = message;
     gmSaveStatus.appendChild(text);
-    if (allowRetry) {
+    if (recoveryAction) {
       const retry = document.createElement('button');
       retry.type = 'button';
       retry.className = 'gm-save-retry';
-      retry.textContent = 'Thử lưu lại';
-      retry.addEventListener('click', () => sendTrackingTimer(_lastEvalResult, _lastSubmitDurationSec, _lastTrackingPayload));
+      retry.textContent = recoveryAction === 'login' ? 'Đăng nhập lại' : 'Thử lưu lại';
+      retry.addEventListener('click', function () {
+        if (recoveryAction === 'login') {
+          redirectToLogin();
+          return;
+        }
+        sendTrackingTimer(_lastEvalResult, _lastSubmitDurationSec, _lastTrackingPayload);
+      });
       gmSaveStatus.appendChild(retry);
     }
   }
@@ -1706,17 +1894,33 @@
     });
   }
 
-  function sendTrackingTimer(evalResult, durationSec, retryPayload = null) {
+  function sendTrackingTimer(evalResult, durationSec, retryPayload = null, authenticationChecked = false) {
     if (!_trackingSession) return; // Chưa có phiên nào được bắt đầu
     const session = _trackingSession;
     if (session.startPromise && !session.startSettled) {
       return session.startPromise.then(function () {
-        return sendTrackingTimer(evalResult, durationSec, retryPayload);
+        return sendTrackingTimer(evalResult, durationSec, retryPayload, authenticationChecked);
       });
     }
     if (trackingSaveInFlight) return;
+    if (!authenticationChecked) {
+      setTrackingSaveStatus('saving', 'Đang kiểm tra phiên đăng nhập trước khi lưu kết quả...');
+      return requestCurrentUserSession()
+        .then(function (user) {
+          if (!user) {
+            setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
+            return false;
+          }
+          return sendTrackingTimer(evalResult, durationSec, retryPayload, true);
+        })
+        .catch(function (error) {
+          console.warn('[Tracking] Không thể kiểm tra phiên đăng nhập:', error);
+          setTrackingSaveStatus('error', 'Chưa thể kiểm tra phiên đăng nhập do lỗi kết nối.', 'retry');
+          return false;
+        });
+    }
     if (!_currentUser) {
-      setTrackingSaveStatus('error', 'Phiên đăng nhập không còn hợp lệ. Hãy đăng nhập lại trước khi nộp bài.');
+      setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
       return Promise.resolve(false);
     }
     trackingSaveInFlight = true;
@@ -1772,7 +1976,10 @@
             const message = err && err.error && err.error.message
               ? err.error.message
               : `Không lưu được kết quả (HTTP ${res.status}).`;
-            throw new Error(message);
+            const requestError = new Error(message);
+            requestError.status = res.status;
+            requestError.code = err && err.error ? err.error.code : '';
+            throw requestError;
           });
         }
         return res.json().then(function (data) {
@@ -1793,7 +2000,12 @@
       })
       .catch(function (err) {
         console.warn('[Tracking] Không thể gửi dữ liệu tracking:', err);
-        setTrackingSaveStatus('error', `Chưa lưu được kết quả: ${err.message || 'lỗi kết nối.'}`, true);
+        if (err.status === 401 || err.code === 'auth/unauthenticated') {
+          applyCurrentUser(null);
+          setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
+        } else {
+          setTrackingSaveStatus('error', `Chưa lưu được kết quả: ${err.message || 'lỗi kết nối.'}`, 'retry');
+        }
       })
       .finally(function () {
         trackingSaveInFlight = false;
@@ -2344,6 +2556,7 @@
       }
     }
 
+    triggerSaveFlashEffect(simWin ? simWin.document : null, null);
     window._hasClickedSaveInGuide = true;
 
     if (_currentLesson && typeof _currentLesson.onSimSave === 'function') {
@@ -2391,6 +2604,20 @@
       }
     }
   };
+
+  // Lắng nghe sự kiện lưu cấu hình từ simulator (hỗ trợ postMessage từ iframe)
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'FTC_SAVE_SUCCESS') {
+      window._hasClickedSaveInGuide = true;
+      try {
+        const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+        allDocs.forEach(d => { d._ftcIsSaved = true; });
+      } catch (err) { }
+      if (typeof window.onSimulatorSave === 'function') {
+        try { window.onSimulatorSave(deviceIframe ? deviceIframe.contentWindow : null); } catch (err) { }
+      }
+    }
+  });
 
   // ── Boot ─────────────────────────────────────────────────────────
   init();

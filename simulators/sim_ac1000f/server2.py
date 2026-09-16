@@ -51,7 +51,6 @@ def apply_sim_state_to_html(html_str, p_path):
         defaults = {
             "StartIp": "192.168.1.2",
             "EndIp": "192.168.1.254",
-            "dhcp_LeaseTime": "86400",
         }
         for field_name, default_value in defaults.items():
             html_str = re.sub(
@@ -74,7 +73,31 @@ def apply_sim_state_to_html(html_str, p_path):
             p_val = SIM_STATE["wan_PPPPassword"]
             html_str = re.sub(r'(NAME=["\']wan_PPPPassword["\'][^>]*?VALUE=["\'])[^"\']*?(["\'])', rf'\g<1>{p_val}\2', html_str, flags=re.IGNORECASE)
             html_str = re.sub(r'(VALUE=["\'])[^"\']*?(["\'][^>]*?NAME=["\']wan_PPPPassword["\'])', rf'\g<1>{p_val}\2', html_str, flags=re.IGNORECASE)
-            
+
+    # Neu la trang home_lan.asp: inject cac truong IP, DHCP, DNS neu da luu
+    if "home_lan" in p_path.lower():
+        lan_fields = ["uiViewIPAddr", "uiViewNetMask", "StartIp", "EndIp", "dhcp_LeaseTime", "PrimaryDns", "SecondDns"]
+        for fld in lan_fields:
+            if fld in SIM_STATE:
+                val = SIM_STATE[fld]
+                html_str = re.sub(
+                    rf'(<input\b[^>]*\bname=["\']{fld}["\'][^>]*\bvalue=["\'])[^"\']*?(["\'])',
+                    rf'\g<1>{val}\2',
+                    html_str,
+                    flags=re.IGNORECASE,
+                )
+                html_str = re.sub(
+                    rf'(<input\b[^>]*\bvalue=["\'])[^"\']*?(["\'][^>]*\bname=["\']{fld}["\'])',
+                    rf'\g<1>{val}\2',
+                    html_str,
+                    flags=re.IGNORECASE,
+                )
+        if "dnsTypeRadio" in SIM_STATE:
+            dns_type = SIM_STATE["dnsTypeRadio"]
+            if str(dns_type) == "1":
+                html_str = re.sub(r'(<option\s+value=["\']0["\'])\s+selected>', r'\1>', html_str, flags=re.IGNORECASE)
+                html_str = re.sub(r'(<option\s+value=["\']1["\'])>', r'\1 selected>', html_str, flags=re.IGNORECASE)
+
     return html_str
 
 

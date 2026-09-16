@@ -86,7 +86,7 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
     def test_dashboard_counts_only_explicit_assignment_pairs(self):
         api = (ROOT / "api" / "index.php").read_text(encoding="utf-8")
         report = (ROOT / "api" / "lib" / "dashboard_report.php").read_text(encoding="utf-8")
-        timer_scope = re.search(r"\$timerSql = 'WITH eligible_dashboard_ktv AS \(.*?\$timerParams", api, re.S)
+        timer_scope = re.search(r"\$timerSql = 'SELECT.*?\$timerParams", api, re.S)
         technician_scope = re.search(r"SELECT directory\.\*,.*?->fetchAll\(\);", api, re.S)
         self.assertIsNotNone(timer_scope)
         self.assertIsNotNone(technician_scope)
@@ -103,7 +103,7 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
     def test_new_assignments_snapshot_class_or_current_user_region(self):
         library = (ROOT / "api" / "lib" / "training_classes.php").read_text(encoding="utf-8")
         self.assertGreaterEqual(
-            library.count("COALESCE(training.region_id, roster.region_id)"),
+            library.count("class_assignment.due_at, 'assigned', roster.region_id, roster.unit_id"),
             2,
         )
 

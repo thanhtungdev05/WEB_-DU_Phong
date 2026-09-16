@@ -234,7 +234,8 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn(".class-overview-action", self.css)
 
     def test_asset_version_prevents_stale_control_styles(self):
-        self.assertEqual(self.html.count("20260910-admin-column-filters-v23"), 3)
+        self.assertEqual(self.html.count("20260916-theme-system-v27"), 2)
+        self.assertEqual(self.html.count("20260916-dashboard-performance-v28"), 1)
 
     def test_dashboard_copy_is_short_consistent_and_user_friendly(self):
         for label in (

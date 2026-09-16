@@ -4,6 +4,7 @@ let sessions = [];
 let deviceCatalog = [];
 let technicianCatalog = [];
 let trainingAssignments = [];
+let classMemberships = [];
 let dashboardReport = null;
 let technicianByIdentity = new Map();
 let technicianCatalogAuthoritative = false;
@@ -110,6 +111,8 @@ const state = {
     detailSearchLab: '',
 
     detailReportExpandedRegions: new Set(['TDDT', 'TNMT']),
+    branchMatrixRegionCode: '',
+    branchMatrixUnitCode: '',
     regionUsageYear: now.getFullYear(),
     overviewSelectedRegion: '',
     overviewMonthlyExpanded: false,
@@ -190,6 +193,16 @@ const els = {
     detailReportHead: document.getElementById('detailReportHead'),
     detailReportBody: document.getElementById('detailReportBody'),
     detailReportFoot: document.getElementById('detailReportFoot'),
+    branchMatrixCard: document.getElementById('branchMatrixCard'),
+    branchMatrixTitle: document.getElementById('branchMatrixTitle'),
+    branchMatrixHead: document.getElementById('branchMatrixHead'),
+    branchMatrixBody: document.getElementById('branchMatrixBody'),
+    branchMatrixFoot: document.getElementById('branchMatrixFoot'),
+    branchKtvMatrixCard: document.getElementById('branchKtvMatrixCard'),
+    branchKtvMatrixTitle: document.getElementById('branchKtvMatrixTitle'),
+    branchKtvMatrixHead: document.getElementById('branchKtvMatrixHead'),
+    branchKtvMatrixBody: document.getElementById('branchKtvMatrixBody'),
+    branchKtvMatrixFoot: document.getElementById('branchKtvMatrixFoot'),
     sessionCountBadge: document.getElementById('sessionCountBadge'),
     learnerDetailCard: document.getElementById('learnerDetailCard'),
     learnerDetailTitle: document.getElementById('learnerDetailTitle'),
@@ -538,6 +551,12 @@ function mapReportMetrics(metric) {
     };
 }
 
+function dashboardReportMatchesSelectedPeriod() {
+    const periods = getKpiComparisonPeriods();
+    const reportPeriod = dashboardReport?.meta?.period;
+    return reportPeriod?.from === periods.currentStart && reportPeriod?.to === periods.currentEnd;
+}
+
 function renderKpis() {
     const periods = getKpiComparisonPeriods();
     const definitions = [
@@ -547,9 +566,7 @@ function renderKpis() {
         { key: 'passRate', valueId: 'kpiPassRate', comparisonId: 'kpiPassRateComparison', contextId: 'kpiPassRateContext', type: 'rate', unit: '%' }
     ];
 
-    const reportPeriod = dashboardReport?.meta?.period;
-    const reportMatchesPeriod = reportPeriod?.from === periods.currentStart
-        && reportPeriod?.to === periods.currentEnd;
+    const reportMatchesPeriod = dashboardReportMatchesSelectedPeriod();
     const authoritativeSummary = reportMatchesPeriod ? dashboardReport?.summary : null;
     if (!authoritativeSummary) {
         const message = state.dashboardReportStatus === 'loading'
@@ -608,10 +625,12 @@ function renderKpis() {
                 } else if (definition.type === 'duration') {
                     changeText = formatDuration(Math.abs(difference));
                 } else {
-                    const percentChange = previousValue
-                        ? Math.round((difference / previousValue) * 100)
-                        : 100;
-                    changeText = `${formatNumber.format(Math.abs(difference))} (${percentChange > 0 ? '+' : ''}${percentChange}%)`;
+                    if (previousValue === 0) {
+                        changeText = `${formatNumber.format(Math.abs(difference))} (kỳ trước: 0)`;
+                    } else {
+                        const percentChange = Math.round((difference / previousValue) * 100);
+                        changeText = `${formatNumber.format(Math.abs(difference))} (${percentChange > 0 ? '+' : ''}${percentChange}%)`;
+                    }
                 }
             }
 
@@ -624,7 +643,7 @@ function renderKpis() {
 
         if (contextElement) {
             if (definition.key === 'passRate') {
-                contextElement.textContent = `${periods.currentLabel} • ${formatNumber.format(currentMetrics.passed)}/${formatNumber.format(currentMetrics.totalSessions)} lượt thực hành đạt`;
+                contextElement.textContent = `${periods.currentLabel} • ${formatNumber.format(currentMetrics.passed)}/${formatNumber.format(currentMetrics.graded)} phiên đã chấm đạt`;
             } else {
                 contextElement.textContent = `${periods.currentLabel} • Lũy kế ${formatMetric(lifetimeValue, definition)}${definition.type === 'count' ? ` ${definition.unit}` : ''}`;
             }
@@ -646,14 +665,14 @@ function renderDashboardDataNotice(currentMetrics) {
     }
     const unassignedRegions = currentMetrics ? (dashboardReport?.matrix?.rows || []).filter(row => {
         const region = row?.region || {};
-        return !region.region_id || String(region.code || region.region_code || '').toUpperCase() === 'UNASSIGNED';
+        return !region.region_id || ['UNASSIGNED', 'FTC'].includes(String(region.code || region.region_code || '').toUpperCase());
     }) : [];
-    const unassignedAssignments = unassignedRegions.reduce(
-        (sum, row) => sum + Number(row?.total?.assigned_count || row?.total?.eligible || 0),
+    const unassignedPopulationPairs = unassignedRegions.reduce(
+        (sum, row) => sum + Number(row?.total?.population_count || 0),
         0
     );
-    if (unassignedAssignments > 0) {
-        messages.push(`${formatNumber.format(unassignedAssignments)} lượt KTV–lab chưa có khu vực nên đang được gom vào “Chưa xác định”.`);
+    if (unassignedPopulationPairs > 0) {
+        messages.push(`${formatNumber.format(unassignedPopulationPairs)} cặp tài khoản–bài chưa có khu vực hoặc thuộc tài khoản FTC/Test đang được gom vào “FTC”.`);
     }
     if (currentMetrics && currentMetrics.ungradedCompleted > 0) {
         messages.push(`${formatNumber.format(currentMetrics.ungradedCompleted)} lượt thực hành đã hoàn thành thao tác nhưng chưa có kết quả đánh giá; các lượt này chưa được tính là đạt chuẩn.`);
@@ -703,7 +722,8 @@ function buildLearnerSummaries(rows) {
 
     return [...map.values()].map(item => {
         const latest = getLatestSession(item.rows);
-        const completed = item.rows.filter(isSuccessfulSession).length;
+        const practiceRows = item.rows.filter(row => row.mode === 'Thực hành' || row.mode === 'practice');
+        const completed = practiceRows.filter(isSuccessfulSession).length;
         const modesArray = [...item.modes];
         const primaryMode = modesArray.length === 1 ? modesArray[0] : (latest?.mode || 'Thực hành');
         return {
@@ -723,7 +743,7 @@ function buildLearnerSummaries(rows) {
             lastDateTimeFormatted: formatDateTime(latest?.date, latest?.time),
             lastAction: latest?.lastAction || 'N/A',
             latestDuration: latest?.duration ?? null,
-            completion: item.rows.length ? Math.round((completed / item.rows.length) * 100) : 0
+            passRate: practiceRows.length ? Math.round((completed / practiceRows.length) * 100) : null
         };
     });
 }
@@ -761,7 +781,7 @@ function renderSessions(rows) {
             <tr class="clickable-row ${state.selectedLearner === item.learner ? 'active' : ''}">
                 <td>
                     <button type="button" class="learner-link" data-open-learner data-learner="${escapeHTML(item.learner)}" title="Mở chi tiết ${escapeHTML(item.learner)}">${escapeHTML(getLearnerName(item.learner))}</button>
-                    <div class="item-sub">${item.completion}% hoàn thành</div>
+                    <div class="item-sub">${item.passRate === null ? 'Chưa có phiên thực hành' : `${item.passRate}% phiên thực hành đạt`}</div>
                 </td>
                 <td>${escapeHTML(item.learner)}</td>
                 <td>${escapeHTML(item.region)}</td>
@@ -959,7 +979,22 @@ function renderOverviewMonthlyTrend(rows) {
     const matchedIndex = periods.findIndex(period => period.key === selectedKey);
     const selectedIndex = matchedIndex >= 0 ? matchedIndex : periods.length - 1;
     const currentPeriod = periods[selectedIndex] || periods[Math.min(today.getMonth(), periods.length - 1)];
-    const previousPeriod = periods[Math.max(0, selectedIndex - 1)];
+    let previousPeriod = periods[selectedIndex - 1];
+    if (!previousPeriod) {
+        const previousDate = new Date(reportYear, 0, 1);
+        previousDate.setMonth(previousDate.getMonth() - 1);
+        const previousSessions = rows.filter(session => {
+            const date = parseDate(session.date);
+            return date.getFullYear() === previousDate.getFullYear()
+                && date.getMonth() === previousDate.getMonth()
+                && isPracticeSession(session)
+                && (!effectiveRegion || getLearnerRegion(session.learner) === effectiveRegion);
+        });
+        previousPeriod = {
+            totalSessions: previousSessions.length,
+            passedSessions: previousSessions.filter(isSuccessfulSession).length
+        };
+    }
     const difference = currentPeriod.totalSessions - previousPeriod.totalSessions;
     const changeClass = difference > 0 ? 'positive' : (difference < 0 ? 'negative' : 'neutral');
     const changeText = difference === 0 ? 'Không đổi' : `${difference > 0 ? '↑' : '↓'} ${Math.abs(difference)} lượt`;
@@ -1466,7 +1501,7 @@ async function fetchAndBuildRegionCatalog() {
 
 function getLearnerRegion(learner) {
     const key = String(learner || '').trim().toLowerCase();
-    return technicianByIdentity.get(key)?.dashboardRegion || 'Chưa phân vùng';
+    return technicianByIdentity.get(key)?.dashboardRegion || 'FTC';
 }
 
 function normalizeRegionName(region, learner) {
@@ -1510,12 +1545,12 @@ function detailReportCellKey(region, device, lab) {
 }
 
 function aggregateAuthoritativeMetrics(metrics = []) {
-    const result = { assigned_count: 0, attempted_count: 0, completed_count: 0, attempt_count: 0 };
+    const result = { population_count: 0, attempted_count: 0, completed_count: 0, attempt_count: 0 };
     metrics.forEach(metric => {
         Object.keys(result).forEach(key => { result[key] += Number(metric?.[key]) || 0; });
     });
-    result.completion_rate = result.assigned_count
-        ? Math.round((result.completed_count / result.assigned_count) * 1000) / 10
+    result.completion_rate = result.population_count
+        ? Math.round((result.completed_count / result.population_count) * 1000) / 10
         : null;
     return result;
 }
@@ -1591,17 +1626,112 @@ function buildAuthoritativeRegionRows(reportRows = [], columns = []) {
     return result;
 }
 
+function reportMatrixHeader(groups, columns, firstLabel, lastLabel) {
+    return `
+        <tr class="report-device-header-row">
+            <th class="report-region-head" rowspan="2" scope="col"><strong>${escapeHTML(firstLabel)}</strong></th>
+            ${groups.map((group, index) => `<th class="report-device-group report-device-tone-${index % 5}" colspan="${(group.labs || []).length}" scope="colgroup">${escapeHTML(group.device?.name || group.device_name || '')}<span>${(group.labs || []).length} bài lab</span></th>`).join('')}
+            <th class="report-summary-head" rowspan="2" scope="col">${escapeHTML(lastLabel)}</th>
+        </tr>
+        <tr class="report-lab-header-row">${columns.map(column => `<th class="report-lab-head report-device-tone-${column.groupIndex % 5} ${column.isFirst ? 'group-start' : ''} ${column.isLast ? 'group-end' : ''}" scope="col" title="${escapeHTML(`${column.device} • ${column.lab}`)}">${escapeHTML(column.lab)}</th>`).join('')}</tr>`;
+}
+
+function renderBranchReportDrilldown(reportMatrix, groups, columns, completionCell) {
+    const drilldownRegions = reportMatrix.branch_drilldown?.regions || [];
+    const selectedRegion = drilldownRegions.find(item => String(item.region?.code || '') === state.branchMatrixRegionCode);
+    if (!selectedRegion) {
+        state.branchMatrixRegionCode = '';
+        state.branchMatrixUnitCode = '';
+        if (els.branchMatrixCard) els.branchMatrixCard.hidden = true;
+        if (els.branchKtvMatrixCard) els.branchKtvMatrixCard.hidden = true;
+        return;
+    }
+
+    const branches = selectedRegion.branches || [];
+    els.branchMatrixCard.hidden = false;
+    els.branchMatrixTitle.textContent = `Chi nhánh thuộc ${selectedRegion.region?.name || selectedRegion.region?.code || ''}`;
+    els.branchMatrixHead.innerHTML = reportMatrixHeader(groups, columns, 'Chi nhánh', 'Tổng');
+    els.branchMatrixBody.innerHTML = branches.map(branch => `
+        <tr class="branch-report-row ${String(branch.unit_code) === state.branchMatrixUnitCode ? 'is-selected' : ''}">
+            <th class="report-region-cell" scope="row"><button type="button" class="branch-report-open" data-branch-unit-code="${escapeHTML(branch.unit_code)}">${escapeHTML(branch.name || branch.unit_code)}</button></th>
+            ${columns.map(column => completionCell(branch.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}
+            ${completionCell(branch.total, 'report-row-total', true)}
+        </tr>`).join('') || `<tr><td colspan="${columns.length + 2}" class="empty">Khu vực này chưa có chi nhánh trong danh mục tổ chức.</td></tr>`;
+    const branchAggregate = aggregateAuthoritativeRows(branches, columns);
+    els.branchMatrixFoot.innerHTML = `<tr><th class="report-region-cell report-grand-label" scope="row">Tổng khu vực</th>${columns.map(column => completionCell(branchAggregate.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}${completionCell(branchAggregate.total, 'report-row-total report-grand-total', true)}</tr>`;
+
+    els.branchMatrixBody.querySelectorAll('[data-branch-unit-code]').forEach(button => {
+        button.addEventListener('click', () => {
+            state.branchMatrixUnitCode = button.dataset.branchUnitCode || '';
+            renderBranchReportDrilldown(reportMatrix, groups, columns, completionCell);
+            els.branchKtvMatrixTitle?.focus({ preventScroll: true });
+            els.branchKtvMatrixCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    const selectedBranch = branches.find(item => String(item.unit_code || '') === state.branchMatrixUnitCode);
+    if (!selectedBranch) {
+        state.branchMatrixUnitCode = '';
+        els.branchKtvMatrixCard.hidden = true;
+        return;
+    }
+
+    const technicians = selectedBranch.technicians || [];
+    const passMetricCell = (cell = {}, extraClass = '') => {
+        const passes = Number(cell.pass_count) || 0;
+        const attempts = Number(cell.attempt_count) || 0;
+        const rate = attempts ? Math.round((passes / attempts) * 1000) / 10 : null;
+        const cssClass = rate === null ? 'report-cell-zero' : (rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
+        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${passes} phiên đạt / ${attempts} phiên thực hành`)}"><strong>${passes}/${attempts}</strong><span>${rate === null ? '—' : `${rate}%`}</span></td>`;
+    };
+    els.branchKtvMatrixCard.hidden = false;
+    els.branchKtvMatrixTitle.textContent = `KTV thuộc chi nhánh ${selectedBranch.name || selectedBranch.unit_code}`;
+    els.branchKtvMatrixHead.innerHTML = `
+        <tr class="report-device-header-row">
+            <th class="ktv-stt-head" rowspan="2" scope="col">STT</th>
+            <th class="ktv-code-head" rowspan="2" scope="col">Mã NV</th>
+            <th class="ktv-info-head" rowspan="2" scope="col">Kỹ thuật viên</th>
+            ${groups.map((group, index) => `<th class="report-device-group report-device-tone-${index % 5}" colspan="${(group.labs || []).length}" scope="colgroup">${escapeHTML(group.device?.name || group.device_name || '')}<span>${(group.labs || []).length} bài lab</span></th>`).join('')}
+            <th class="ktv-total-head" rowspan="2" scope="col">Đã đạt / lượt</th>
+            <th class="ktv-rate-head" rowspan="2" scope="col">Tỷ lệ</th>
+        </tr>
+        <tr class="report-lab-header-row">${columns.map(column => `<th class="report-lab-head report-device-tone-${column.groupIndex % 5} ${column.isFirst ? 'group-start' : ''}" scope="col">${escapeHTML(column.lab)}</th>`).join('')}</tr>`;
+    els.branchKtvMatrixBody.innerHTML = technicians.map((technician, index) => {
+        const totalAttempts = Number(technician.total?.attempt_count) || 0;
+        const totalPasses = Number(technician.total?.pass_count) || 0;
+        const totalRate = totalAttempts ? Math.round((totalPasses / totalAttempts) * 1000) / 10 : null;
+        const totalClass = totalRate === null ? 'report-cell-zero' : (totalRate >= 80 ? 'report-cell-high' : (totalRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
+        return `
+        <tr>
+            <td class="ktv-stt-cell">${index + 1}</td>
+            <td class="ktv-code-cell">${escapeHTML(technician.employee_id || '—')}</td>
+            <th class="ktv-info-cell" scope="row"><div class="ktv-info-wrap"><span class="ktv-info-name">${escapeHTML(technician.display_name || technician.email || 'Chưa có tên')}</span><div class="ktv-info-meta"><span>${escapeHTML(technician.email || '')}</span></div></div></th>
+            ${columns.map(column => passMetricCell(technician.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}
+            <td class="ktv-total-cell ${totalClass}"><strong>${totalPasses}/${totalAttempts}</strong></td>
+            <td class="ktv-rate-cell ${totalClass}">${totalRate === null ? '—' : `${totalRate}%`}</td>
+        </tr>`;
+    }).join('') || `<tr><td colspan="${columns.length + 5}" class="empty">Chi nhánh này chưa có KTV đang hoạt động.</td></tr>`;
+    const technicianTotals = Object.fromEntries(columns.map(column => [column.labId, { pass_count: 0, attempt_count: 0 }]));
+    const overall = { pass_count: 0, attempt_count: 0 };
+    technicians.forEach(technician => {
+        columns.forEach(column => {
+            technicianTotals[column.labId].pass_count += Number(technician.cells?.[column.labId]?.pass_count) || 0;
+            technicianTotals[column.labId].attempt_count += Number(technician.cells?.[column.labId]?.attempt_count) || 0;
+        });
+        overall.pass_count += Number(technician.total?.pass_count) || 0;
+        overall.attempt_count += Number(technician.total?.attempt_count) || 0;
+    });
+    const overallRate = overall.attempt_count ? Math.round((overall.pass_count / overall.attempt_count) * 1000) / 10 : null;
+    els.branchKtvMatrixFoot.innerHTML = `<tr><td class="ktv-footer-stt" aria-hidden="true"></td><td class="ktv-footer-code" aria-hidden="true"></td><th class="ktv-footer-label" scope="row">Tổng chi nhánh</th>${columns.map(column => passMetricCell(technicianTotals[column.labId], column.isFirst ? 'group-start' : '')).join('')}<td class="ktv-footer-total"><strong>${overall.pass_count}/${overall.attempt_count}</strong></td><td class="ktv-footer-rate">${overallRate === null ? '—' : `${overallRate}%`}</td></tr>`;
+}
+
 function renderAuthoritativeDetailedReport(reportMatrix) {
     if (!els.detailReportHead || !els.detailReportBody || !els.detailReportFoot) return;
     const groups = reportMatrix.device_groups || [];
     const qualityNote = document.getElementById('detailReportDataQuality');
-    const regionQuality = dashboardReport?.meta?.data_quality || reportMatrix.data_quality || {};
-    const fallbackPairs = Number(regionQuality.region_fallback_pairs) || 0;
     if (qualityNote) {
-        qualityNote.hidden = fallbackPairs === 0;
-        qualityNote.textContent = fallbackPairs
-            ? `${formatNumber.format(fallbackPairs)} cặp KTV–Lab thiếu snapshot khu vực; báo cáo đang dùng vùng hiện tại của KTV cho các cặp này.`
-            : '';
+        qualityNote.hidden = false;
+        qualityNote.textContent = 'Phạm vi gồm toàn bộ KTV đang hoạt động theo khu vực/chi nhánh hiện tại; phiên thực hành không cần có assignment.';
     }
     const columns = groups.flatMap((group, groupIndex) => (group.labs || []).map((lab, labIndex) => ({
         device: group.device?.name || group.device?.device_name || group.device_name || '',
@@ -1612,41 +1742,47 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
         isFirst: labIndex === 0,
         isLast: labIndex === group.labs.length - 1
     })));
-    const metricCell = (cell = {}, extraClass = '') => {
-        const assigned = Number(cell.assigned_count) || 0;
+    const metricCell = (cell = {}, extraClass = '', aggregate = false) => {
+        const population = Number(cell.population_count) || 0;
         const completed = Number(cell.completed_count) || 0;
         const rate = cell.completion_rate === null || cell.completion_rate === undefined
             ? null
             : Number(cell.completion_rate);
-        if (!assigned || rate === null) {
-            return `<td class="report-metric-cell report-cell-zero ${extraClass}" title="Không có dữ liệu phân công trong kỳ"><strong>—</strong><span aria-hidden="true">&nbsp;</span></td>`;
+        if (!population || rate === null) {
+            return `<td class="report-metric-cell report-cell-zero ${extraClass}" title="Không có KTV đang hoạt động trong phạm vi"><strong>—</strong><span aria-hidden="true">&nbsp;</span></td>`;
         }
         const cssClass = rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low');
         const attempted = Number(cell.attempted_count) || 0;
         const attempts = Number(cell.attempt_count) || 0;
-        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${completed}/${assigned} KTV hoàn thành • ${attempted} KTV đã thực hành • ${attempts} lượt thực hành`)}"><strong>${completed}/${assigned}</strong><span>${rate}%</span></td>`;
+        const unit = aggregate ? 'cặp KTV–bài' : 'KTV';
+        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${completed}/${population} ${unit} đã đạt • ${attempted} ${unit} đã thực hành • ${attempts} lượt thực hành`)}"><strong>${completed}/${population}</strong><span>${rate}%</span></td>`;
     };
-    els.detailReportHead.innerHTML = `
-        <tr class="report-device-header-row">
-            <th class="report-region-head" rowspan="2" scope="col"><strong>Khu vực / CN</strong></th>
-            ${groups.map((group, index) => `<th class="report-device-group report-device-tone-${index % 5}" colspan="${(group.labs || []).length}" scope="colgroup">${escapeHTML(group.device?.name || group.device_name || '')}<span>${(group.labs || []).length} bài lab</span></th>`).join('')}
-            <th class="report-summary-head" rowspan="2" scope="col">Tổng</th>
-        </tr>
-        <tr class="report-lab-header-row">${columns.map(column => `<th class="report-lab-head report-device-tone-${column.groupIndex % 5} ${column.isFirst ? 'group-start' : ''} ${column.isLast ? 'group-end' : ''}" scope="col" title="${escapeHTML(`${column.device} • ${column.lab}`)}">${escapeHTML(column.lab)}</th>`).join('')}</tr>`;
+    els.detailReportHead.innerHTML = reportMatrixHeader(groups, columns, 'Khu vực / CN', 'Tổng');
     const visibleRows = buildAuthoritativeRegionRows(reportMatrix.rows || [], columns);
+    const drilldownRegions = reportMatrix.branch_drilldown?.regions || [];
+    const normalizeRegionLabel = value => String(value || '').trim().toLocaleLowerCase('vi');
     const visibleRegionCount = visibleRows.filter(row => !row.isParent).length;
     els.detailReportBody.innerHTML = visibleRows.map(row => {
         const region = row.region || {};
         const regionName = region.name || region.region_name || region.code || region.region_code || '';
         const locationLabel = regionName;
         const rowClass = row.isParent ? 'report-region-parent' : (row.isChild ? 'report-region-child' : '');
+        const regionCode = String(region.code || region.region_code || '');
+        const drilldownRegion = row.isParent ? null : drilldownRegions.find(item => {
+            const candidate = item.region || {};
+            return String(candidate.code || '') === regionCode
+                || normalizeRegionLabel(candidate.name) === normalizeRegionLabel(regionName);
+        });
+        const drilldownRegionCode = String(drilldownRegion?.region?.code || '');
         const regionLabel = row.isParent
             ? `<button type="button" class="report-region-toggle" data-report-region-toggle="${escapeHTML(regionName)}" aria-expanded="${row.isExpanded}"><span>${row.isExpanded ? '▾' : '▸'}</span>${escapeHTML(regionName)}</button>`
-            : `<div class="report-region-label">${row.isChild ? '<span class="report-region-bullet">•</span>' : '<span class="report-region-spacer"></span>'}${escapeHTML(locationLabel)}</div>`;
-        return `<tr class="${rowClass}"><th class="report-region-cell" scope="row">${regionLabel}</th>${columns.map(column => metricCell(row.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}${metricCell(row.total, 'report-row-total')}</tr>`;
-    }).join('') || `<tr><td colspan="${columns.length + 2}" class="empty">Không có assignment phù hợp với kỳ báo cáo.</td></tr>`;
+            : (drilldownRegion
+                ? `<button type="button" class="report-region-label report-region-open" data-branch-region-code="${escapeHTML(drilldownRegionCode)}">${row.isChild ? '<span class="report-region-bullet">•</span>' : '<span class="report-region-spacer"></span>'}${escapeHTML(locationLabel)}</button>`
+                : `<div class="report-region-label">${row.isChild ? '<span class="report-region-bullet">•</span>' : '<span class="report-region-spacer"></span>'}${escapeHTML(locationLabel)}</div>`);
+        return `<tr class="${rowClass} ${drilldownRegionCode === state.branchMatrixRegionCode ? 'is-selected' : ''}"><th class="report-region-cell" scope="row">${regionLabel}</th>${columns.map(column => metricCell(row.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}${metricCell(row.total, 'report-row-total', true)}</tr>`;
+    }).join('') || `<tr><td colspan="${columns.length + 2}" class="empty">Không có KTV đang hoạt động trong danh mục khu vực.</td></tr>`;
     const grand = reportMatrix.grand_total || {};
-    els.detailReportFoot.innerHTML = `<tr><th class="report-region-cell report-grand-label" scope="row">Tổng hệ thống</th>${columns.map(column => metricCell(grand.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}${metricCell(grand.total || grand, 'report-row-total report-grand-total')}</tr>`;
+    els.detailReportFoot.innerHTML = `<tr><th class="report-region-cell report-grand-label" scope="row">Tổng hệ thống</th>${columns.map(column => metricCell(grand.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}${metricCell(grand.total || grand, 'report-row-total report-grand-total', true)}</tr>`;
     const summaryValues = {
         detailReportPeriod: dashboardReport?.meta?.period?.label || getRangeLabel(),
         detailReportSessions: formatNumber.format(Number(grand.total?.attempt_count || grand.attempt_count) || 0),
@@ -1668,6 +1804,27 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
             renderAuthoritativeDetailedReport(reportMatrix);
         });
     });
+    els.detailReportBody.querySelectorAll('[data-branch-region-code]').forEach(button => {
+        button.addEventListener('click', () => {
+            state.branchMatrixRegionCode = button.dataset.branchRegionCode || '';
+            state.branchMatrixUnitCode = '';
+            renderAuthoritativeDetailedReport(reportMatrix);
+            els.branchMatrixTitle?.focus({ preventScroll: true });
+            els.branchMatrixCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+    renderBranchReportDrilldown(reportMatrix, groups, columns, metricCell);
+    const branchClose = document.getElementById('branchMatrixClose');
+    if (branchClose) branchClose.onclick = () => {
+        state.branchMatrixRegionCode = '';
+        state.branchMatrixUnitCode = '';
+        renderAuthoritativeDetailedReport(reportMatrix);
+    };
+    const technicianClose = document.getElementById('branchKtvMatrixClose');
+    if (technicianClose) technicianClose.onclick = () => {
+        state.branchMatrixUnitCode = '';
+        renderBranchReportDrilldown(reportMatrix, groups, columns, metricCell);
+    };
 }
 
 function resetLearnerDetailFilters() {
@@ -1767,127 +1924,28 @@ function renderDetailReportMetricCell(cell, extraClass = '') {
 
 function renderDetailedReport(rows) {
     if (!els.detailReportHead || !els.detailReportBody || !els.detailReportFoot) return;
-    if (dashboardReport?.matrix) {
+    if (dashboardReport?.matrix && dashboardReportMatchesSelectedPeriod()) {
         renderAuthoritativeDetailedReport(dashboardReport.matrix);
+        const qualityNote = document.getElementById('detailReportDataQuality');
+        if (qualityNote && state.dashboardReportStatus === 'stale') {
+            qualityNote.hidden = false;
+            qualityNote.textContent = 'Đang hiển thị bản báo cáo thành công gần nhất đúng với kỳ đã chọn; dữ liệu mới chưa đồng bộ được.';
+        }
         return;
     }
+    const columns = Math.max(1, (deviceCatalog || []).reduce((sum, device) => sum + (device.labs || []).length, 0));
+    els.detailReportHead.innerHTML = '';
+    els.detailReportFoot.innerHTML = '';
+    els.detailReportBody.innerHTML = `<tr><td colspan="${columns + 2}" class="empty">Không tải được báo cáo KTV theo khu vực cho kỳ đã chọn.</td></tr>`;
     const qualityNote = document.getElementById('detailReportDataQuality');
-    if (qualityNote) qualityNote.hidden = true;
-
-    const groups = getDetailReportDeviceGroups(rows);
-    const columns = groups.flatMap((group, groupIndex) => group.labs.map((lab, labIndex) => ({
-        device: group.device,
-        lab,
-        groupIndex,
-        isFirst: labIndex === 0,
-        isLast: labIndex === group.labs.length - 1
-    })));
-    const cellIndex = buildDetailReportIndex(rows);
-    const rowDefinitions = [];
-
-    REGION_CATALOG.forEach(region => {
-        if (!region.children) {
-            rowDefinitions.push({ name: region.code, regionKeys: [region.code] });
-            return;
-        }
-        rowDefinitions.push({
-            name: region.code,
-            regionKeys: region.children,
-            isParent: true,
-            isExpanded: state.detailReportExpandedRegions.has(region.code)
-        });
-        if (state.detailReportExpandedRegions.has(region.code)) {
-            region.children.forEach(child => rowDefinitions.push({ name: child, regionKeys: [child], isChild: true }));
-        }
-    });
-
-    els.detailReportHead.innerHTML = `
-        <tr class="report-device-header-row">
-            <th class="report-region-head" rowspan="2" scope="col">
-                <strong>Khu vực / CN</strong>
-            </th>
-            ${groups.map((group, index) => `
-                <th class="report-device-group report-device-tone-${index % 5}" colspan="${group.labs.length}" scope="colgroup">
-                    ${escapeHTML(group.device)}
-                    <span>${group.labs.length} bài lab</span>
-                </th>
-            `).join('')}
-            <th class="report-summary-head" rowspan="2" scope="col">Tổng</th>
-        </tr>
-        <tr class="report-lab-header-row">
-            ${columns.map(column => `
-                <th class="report-lab-head report-device-tone-${column.groupIndex % 5} ${column.isFirst ? 'group-start' : ''} ${column.isLast ? 'group-end' : ''}"
-                    scope="col" title="${escapeHTML(`${column.device} • ${column.lab}`)}">
-                    ${escapeHTML(column.lab)}
-                </th>
-            `).join('')}
-        </tr>
-    `;
-
-    els.detailReportBody.innerHTML = rowDefinitions.map(row => {
-        const rowTotal = getDetailReportTotal(cellIndex, row.regionKeys, columns);
-        const rowClass = row.isParent ? 'report-region-parent' : (row.isChild ? 'report-region-child' : '');
-        const regionLabel = row.isParent
-            ? `<button type="button" class="report-region-toggle" data-report-region-toggle="${escapeHTML(row.name)}" aria-expanded="${row.isExpanded}">
-                    <span>${row.isExpanded ? '▾' : '▸'}</span>${escapeHTML(row.name)}
-               </button>`
-            : `<div class="report-region-label">${row.isChild ? '<span class="report-region-bullet">•</span>' : '<span class="report-region-spacer"></span>'}${escapeHTML(row.name)}</div>`;
-        return `
-            <tr class="${rowClass}">
-                <th class="report-region-cell" scope="row">${regionLabel}</th>
-                ${columns.map(column => renderDetailReportMetricCell(getDetailReportCell(cellIndex, row.regionKeys, column), column.isFirst ? 'group-start' : '')).join('')}
-                ${renderDetailReportMetricCell(rowTotal, 'report-row-total')}
-            </tr>
-        `;
-    }).join('');
-
-    const allRegionKeys = [...REGION_FILTER_OPTIONS];
-    const grandTotal = getDetailReportTotal(cellIndex, allRegionKeys, columns);
-    els.detailReportFoot.innerHTML = `
-        <tr>
-            <th class="report-region-cell report-grand-label" scope="row">Tổng hệ thống</th>
-            ${columns.map(column => renderDetailReportMetricCell(getDetailReportCell(cellIndex, allRegionKeys, column), column.isFirst ? 'group-start' : '')).join('')}
-            ${renderDetailReportMetricCell(grandTotal, 'report-row-total report-grand-total')}
-        </tr>
-    `;
-
-    const activeRegions = new Set(rows.map(item => item.region || getLearnerRegion(item.learner)));
-    const activeLabs = new Set(rows.map(item => `${item.device}\u001f${item.lab}`));
-    const completedPairs = new Set(rows
-        .filter(isSuccessfulSession)
-        .map(item => `${item.learner}\u001f${item.device}\u001f${item.lab}`)).size;
-    const eligiblePairs = technicianCatalog.filter(item => !item.isTerminated && item.email).length * columns.length;
-    const completionRate = eligiblePairs ? Math.round((completedPairs / eligiblePairs) * 100) : 0;
-    const summaryValues = {
-        detailReportPeriod: getRangeLabel(),
-        detailReportSessions: formatNumber.format(rows.length),
-        detailReportRegions: formatNumber.format(activeRegions.size),
-        detailReportLabs: formatNumber.format(activeLabs.size),
-        detailReportCompletion: `${completionRate}%`
-    };
-    Object.entries(summaryValues).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    });
-
-    els.detailReportBody.querySelectorAll('[data-report-region-toggle]').forEach(button => {
-        button.addEventListener('click', () => {
-            const region = button.dataset.reportRegionToggle;
-            if (state.detailReportExpandedRegions.has(region)) state.detailReportExpandedRegions.delete(region);
-            else state.detailReportExpandedRegions.add(region);
-            renderDetailedReport(rows);
-        });
-    });
-
-    const scrollContainer = document.getElementById('detailReportScroll');
-    if (scrollContainer && scrollContainer.dataset.wheelBound !== 'true') {
-        scrollContainer.dataset.wheelBound = 'true';
-        scrollContainer.addEventListener('wheel', (event) => {
-            if (!event.shiftKey || Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
-            event.preventDefault();
-            scrollContainer.scrollLeft += event.deltaY;
-        }, { passive: false });
+    if (qualityNote) {
+        qualityNote.hidden = false;
+        qualityNote.textContent = 'Không thể tải danh mục KTV đang hoạt động và phiên thực hành cho kỳ này; các chỉ số được để trống để tránh gây hiểu nhầm.';
     }
+    ['detailReportSessions', 'detailReportRegions', 'detailReportLabs', 'detailReportCompletion'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = '—';
+    });
 }
 
 const REGION_USAGE_COLORS = [
@@ -1913,7 +1971,7 @@ function getRegionUsageSeries(year) {
     technicianCatalog
         .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId))
         .forEach(technician => {
-            const region = technician.dashboardRegion || 'Chưa phân vùng';
+            const region = technician.dashboardRegion || 'FTC';
             headcountByRegion.set(region, (headcountByRegion.get(region) || 0) + 1);
         });
 
@@ -2278,9 +2336,9 @@ function normalizeTechnicianCatalog(apiTechnicians = []) {
         unitName: item.unit_name || item.unitName || '',
         regionId: item.region_id || item.regionId || '',
         regionCode: item.region_code || item.regionCode || '',
-        regionName: item.region_name || item.regionName || item.dashboard_region || item.dashboardRegion || 'Chưa phân vùng',
+        regionName: item.region_name || item.regionName || item.dashboard_region || item.dashboardRegion || 'FTC',
         branchName: item.branch_name || item.branchName || '',
-        dashboardRegion: item.dashboard_region || item.dashboardRegion || item.region_name || item.regionName || 'Chưa phân vùng',
+        dashboardRegion: item.dashboard_region || item.dashboardRegion || item.region_name || item.regionName || 'FTC',
         locationAssigned: Boolean(item.location_assigned ?? item.locationAssigned ?? item.region_id ?? item.regionId),
         isTerminated: Boolean(item.is_terminated ?? item.isTerminated)
     }));
@@ -2472,7 +2530,8 @@ function dashboardReportQuery() {
         to: periods.currentEnd,
         compare_from: periods.previousStart,
         compare_to: periods.previousEnd,
-        cohort: 'assigned_as_of_period_end'
+        cohort: 'assigned_as_of_period_end',
+        include_branch_drilldown: activeDashboardView === 'analytics' ? '1' : '0'
     });
 }
 
@@ -2501,7 +2560,7 @@ async function reloadDashboardReport() {
         state.dashboardReportStatus = 'ready';
         renderAll();
     } catch (error) {
-        console.warn('Không tải được báo cáo assignment theo kỳ.', error);
+        console.warn('Không tải được báo cáo dashboard theo kỳ.', error);
         if (requestSequence !== dashboardReportRequestSequence) return;
         state.dashboardReportStatus = dashboardReport ? 'stale' : 'unavailable';
         renderAll();
@@ -2579,6 +2638,7 @@ async function fetchDashboardData(versionHint = '') {
         technicians,
         techniciansAuthoritative,
         assignments: normalizeTrainingAssignments(data.assignments || []),
+        classMemberships: normalizeClassMemberships(data.class_memberships || []),
         assignmentsRequested,
         assignmentsAvailable: data.assignments_available === true,
         report,
@@ -2594,6 +2654,7 @@ function applyDashboardData(data) {
     technicianCatalog = data.technicians || [];
     if (data.assignmentsRequested && data.assignmentsAvailable) {
         trainingAssignments = data.assignments || [];
+        classMemberships = data.classMemberships || [];
         state.assignmentsLoaded = true;
     }
     if (data.report !== undefined) dashboardReport = data.report;
@@ -3548,7 +3609,8 @@ function getInstructorLearners() {
 function getDatabaseInstructorClasses() {
     const classes = new Map();
     if (state.assignmentsLoaded) {
-        trainingAssignments.forEach(item => {
+        const rosterSource = classMemberships.length ? classMemberships : trainingAssignments;
+        rosterSource.forEach(item => {
             if (!item.classCode || !item.learner) return;
             if (!classes.has(item.classCode)) {
                 classes.set(item.classCode, {
@@ -3716,9 +3778,208 @@ const multiSelectFilterIds = new Set([
     'classStatusFilter'
 ]);
 
+const TABLE_COLUMN_WIDTH_STORAGE_KEY = 'ftc-dashboard-column-widths-v1';
+const TABLE_COLUMN_MIN_WIDTH = 56;
+const TABLE_COLUMN_MAX_WIDTH = 640;
+
+function getDashboardTableKey(table) {
+    if (table.id) return `id:${table.id}`;
+    const scope = table.closest('[data-page-view], [id]');
+    const scopeName = scope?.dataset?.pageView || scope?.id || 'dashboard';
+    const scopeTables = [...(scope || document).querySelectorAll('table')];
+    return `${scopeName}:table-${Math.max(0, scopeTables.indexOf(table))}`;
+}
+
+function normalizeClassMemberships(apiMemberships = []) {
+    return apiMemberships
+        .map(item => ({
+            learner: String(item.email || item.learner || '').trim().toLowerCase(),
+            classCode: item.class_code || item.classCode || '',
+            className: item.class_name || item.className || item.class_code || item.classCode || ''
+        }))
+        .filter(item => item.learner && item.classCode);
+}
+
+function readDashboardColumnWidths() {
+    try {
+        const parsed = JSON.parse(window.localStorage.getItem(TABLE_COLUMN_WIDTH_STORAGE_KEY) || '{}');
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+function writeDashboardColumnWidth(table, columnIndex, width) {
+    try {
+        const allWidths = readDashboardColumnWidths();
+        const tableKey = getDashboardTableKey(table);
+        if (!allWidths[tableKey]) allWidths[tableKey] = {};
+        if (width === null) delete allWidths[tableKey][columnIndex];
+        else allWidths[tableKey][columnIndex] = width;
+        if (!Object.keys(allWidths[tableKey]).length) delete allWidths[tableKey];
+        window.localStorage.setItem(TABLE_COLUMN_WIDTH_STORAGE_KEY, JSON.stringify(allWidths));
+    } catch (error) {
+        // Resizing remains available when browser storage is disabled.
+    }
+}
+
+function getTableCellPlacements(table) {
+    const grid = [];
+    const placements = new Map();
+    [...table.rows].forEach((row, rowIndex) => {
+        if (!grid[rowIndex]) grid[rowIndex] = [];
+        let columnIndex = 0;
+        [...row.cells].forEach(cell => {
+            while (grid[rowIndex][columnIndex]) columnIndex += 1;
+            const columnSpan = Math.max(1, cell.colSpan || 1);
+            const rowSpan = Math.max(1, cell.rowSpan || 1);
+            placements.set(cell, { columnIndex, columnSpan });
+            for (let rowOffset = 0; rowOffset < rowSpan; rowOffset += 1) {
+                if (!grid[rowIndex + rowOffset]) grid[rowIndex + rowOffset] = [];
+                for (let columnOffset = 0; columnOffset < columnSpan; columnOffset += 1) {
+                    grid[rowIndex + rowOffset][columnIndex + columnOffset] = cell;
+                }
+            }
+            columnIndex += columnSpan;
+        });
+    });
+    return placements;
+}
+
+function getTableLeafCount(placements) {
+    return Math.max(0, ...[...placements.values()].map(item => item.columnIndex + item.columnSpan));
+}
+
+function getColumnWidthVariable(table, columnIndex, leafCount) {
+    if (table.matches('.class-matrix-table')) {
+        if (columnIndex === 0) return '--ktv-stt-width';
+        if (columnIndex === 1) return '--ktv-code-width';
+        if (columnIndex === 2) return '--ktv-info-width';
+        if (columnIndex === leafCount - 2) return '--ktv-total-width';
+        if (columnIndex === leafCount - 1) return '--ktv-rate-width';
+        return '';
+    }
+    if (table.matches('.instructor-progress-table')) {
+        if (columnIndex === 0) return '--instructor-index-width';
+        if (columnIndex === leafCount - 2) return '--instructor-total-width';
+        if (columnIndex === leafCount - 1) return '--instructor-rate-width';
+    }
+    return '';
+}
+
+function applyDashboardColumnWidth(table, columnIndex, width) {
+    const placements = getTableCellPlacements(table);
+    const normalizedWidth = Math.max(TABLE_COLUMN_MIN_WIDTH, Math.min(TABLE_COLUMN_MAX_WIDTH, Math.round(width)));
+    placements.forEach((placement, cell) => {
+        if (placement.columnIndex !== columnIndex || placement.columnSpan !== 1) return;
+        cell.style.setProperty('width', `${normalizedWidth}px`, 'important');
+        cell.style.setProperty('min-width', `${normalizedWidth}px`, 'important');
+        cell.style.setProperty('max-width', `${normalizedWidth}px`, 'important');
+    });
+    const variable = getColumnWidthVariable(table, columnIndex, getTableLeafCount(placements));
+    if (variable) table.style.setProperty(variable, `${normalizedWidth}px`);
+    return normalizedWidth;
+}
+
+function resetDashboardColumnWidth(table, columnIndex) {
+    const placements = getTableCellPlacements(table);
+    placements.forEach((placement, cell) => {
+        if (placement.columnIndex !== columnIndex || placement.columnSpan !== 1) return;
+        cell.style.removeProperty('width');
+        cell.style.removeProperty('min-width');
+        cell.style.removeProperty('max-width');
+    });
+    const variable = getColumnWidthVariable(table, columnIndex, getTableLeafCount(placements));
+    if (variable) table.style.removeProperty(variable);
+    writeDashboardColumnWidth(table, columnIndex, null);
+}
+
+function startDashboardColumnResize(event, table, header, columnIndex) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startWidth = header.getBoundingClientRect().width;
+    const pointerId = event.pointerId;
+    document.body.classList.add('table-column-resizing');
+    event.currentTarget.setPointerCapture?.(pointerId);
+    const move = moveEvent => {
+        if (moveEvent.pointerId === pointerId) {
+            applyDashboardColumnWidth(table, columnIndex, startWidth + moveEvent.clientX - startX);
+        }
+    };
+    const finish = endEvent => {
+        if (endEvent.pointerId !== pointerId) return;
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', finish);
+        document.removeEventListener('pointercancel', finish);
+        document.body.classList.remove('table-column-resizing');
+        writeDashboardColumnWidth(table, columnIndex, Math.round(header.getBoundingClientRect().width));
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', finish);
+    document.addEventListener('pointercancel', finish);
+}
+
+function syncDashboardTableColumnResizers(table) {
+    if (!table.tHead) return;
+    const placements = getTableCellPlacements(table);
+    const headerByColumn = new Map();
+    [...table.tHead.querySelectorAll('th')].forEach(header => {
+        const placement = placements.get(header);
+        if (placement?.columnSpan === 1) headerByColumn.set(placement.columnIndex, header);
+    });
+    const storedWidths = readDashboardColumnWidths()[getDashboardTableKey(table)] || {};
+    headerByColumn.forEach((header, columnIndex) => {
+        header.classList.add('column-resizable');
+        header.dataset.resizeColumnIndex = String(columnIndex);
+        let handle = [...header.children].find(child => child.matches?.('.column-resize-handle'));
+        if (!handle) {
+            const label = header.textContent.replace(/\s+/g, ' ').trim() || `cột ${columnIndex + 1}`;
+            handle = document.createElement('button');
+            handle.type = 'button';
+            handle.className = 'column-resize-handle';
+            handle.setAttribute('aria-label', `Điều chỉnh độ rộng cột ${label}`);
+            handle.title = 'Kéo để đổi độ rộng; nhấp đúp để đặt lại';
+            handle.addEventListener('pointerdown', event => startDashboardColumnResize(event, table, header, columnIndex));
+            handle.addEventListener('dblclick', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                resetDashboardColumnWidth(table, columnIndex);
+            });
+            handle.addEventListener('keydown', event => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) return;
+                event.preventDefault();
+                event.stopPropagation();
+                if (event.key === 'Home') {
+                    resetDashboardColumnWidth(table, columnIndex);
+                    return;
+                }
+                const step = event.shiftKey ? 32 : 12;
+                const direction = event.key === 'ArrowRight' ? 1 : -1;
+                const width = applyDashboardColumnWidth(table, columnIndex, header.getBoundingClientRect().width + step * direction);
+                writeDashboardColumnWidth(table, columnIndex, width);
+            });
+            header.appendChild(handle);
+        }
+        const storedWidth = Number(storedWidths[columnIndex]);
+        if (Number.isFinite(storedWidth)) applyDashboardColumnWidth(table, columnIndex, storedWidth);
+    });
+}
+
 function enhanceDashboardTables(root = document) {
-    const tables = root.matches?.('table') ? [root] : [...root.querySelectorAll?.('table') || []];
+    const tables = new Set();
+    if (root.matches?.('table')) {
+        tables.add(root);
+    } else {
+        (root.querySelectorAll?.('table') || []).forEach(table => tables.add(table));
+        const ancestor = root.closest?.('table');
+        if (ancestor) tables.add(ancestor);
+    }
     tables.forEach(table => {
+        // Re-running the resizer sync on every pass re-attaches handles and re-applies
+        // stored widths after the header/body are re-rendered by filtering or sorting.
+        syncDashboardTableColumnResizers(table);
         if (table.dataset.unifiedTable === 'true') return;
         table.dataset.unifiedTable = 'true';
         // The class matrix owns fixed/sticky column widths. Applying the generic
@@ -4429,7 +4690,11 @@ function getClassMatrixData() {
     }
     const learners = selectedClass ? (selectedClass.members || []) : allClassLearners;
 
-    const allGroups = getInstructorDeviceGroups(null, { includeAllActive: true });
+    // A class drill-down must follow its current assignment scope. The overview
+    // still needs the active catalog so it can aggregate every class/device.
+    const allGroups = selectedClass
+        ? getInstructorDeviceGroups(selectedClass)
+        : getInstructorDeviceGroups(null, { includeAllActive: true });
     const availableDevices = allGroups.map(group => group.device);
     const selectedDeviceNames = state.classMatrixSelectedDevices === null
         ? [...availableDevices]
@@ -4479,6 +4744,9 @@ function getClassMatrixData() {
         if (!sessionsByCell.has(cellKey)) sessionsByCell.set(cellKey, []);
         sessionsByCell.get(cellKey).push(s);
     });
+    const classSessionsForCell = (classCode, learner, device, lab) => (
+        sessionsByCell.get(`${String(learner).toLowerCase()}\u001f${device}\u001f${lab}`) || []
+    ).filter(session => session.assignmentClassCodes.includes(classCode));
 
     const activeDeviceNames = new Set(allGroups.map(group => group.device));
     const assignmentsByClass = new Map();
@@ -4508,7 +4776,9 @@ function getClassMatrixData() {
         let ktvAttempts = 0;
 
         const cells = columns.map(col => {
-            const labSessions = sessionsByCell.get(`${learnerKey}\u001f${col.device}\u001f${col.lab}`) || [];
+            const labSessions = selectedClass
+                ? classSessionsForCell(selectedClass.code, learnerKey, col.device, col.lab)
+                : [];
             const attempts = labSessions.length;
             const passCount = labSessions.filter(session => session.isPassed === true).length;
             const assignment = selectedClass
@@ -4585,11 +4855,12 @@ function getClassMatrixData() {
 
     const labStats = new Map(columns.map(col => [
         `${col.device}\u001f${col.lab}`,
-        { people: rows.length, completed: 0, passes: 0, attempts: 0 }
+        { assigned: 0, completed: 0, passes: 0, attempts: 0 }
     ]));
     rows.forEach(row => row.cells.forEach(cell => {
         const stat = labStats.get(`${cell.device}\u001f${cell.lab}`);
         if (!stat) return;
+        if (cell.assigned) stat.assigned += 1;
         if (cell.completed) stat.completed += 1;
         stat.passes += cell.passCount;
         stat.attempts += cell.attempts;
@@ -4598,8 +4869,11 @@ function getClassMatrixData() {
     const totalClassAttempts = rows.reduce((sum, row) => sum + row.attempts, 0);
     const totalAssignedAll = rows.reduce((s, r) => s + r.assigned, 0);
     const totalCompletedAll = rows.reduce((s, r) => s + r.completed, 0);
-    const fullyCompletedPeople = candidateRows.filter(row => row.fullyCompleted).length;
-    let overallRate = candidateRows.length ? Math.round((fullyCompletedPeople / candidateRows.length) * 100) : 0;
+    const assignmentCompletionRate = totalAssignedAll
+        ? Math.round((totalCompletedAll / totalAssignedAll) * 100)
+        : 0;
+    const fullyCompletedPeople = rows.filter(row => row.fullyCompleted).length;
+    let overallRate = rows.length ? Math.round((fullyCompletedPeople / rows.length) * 100) : 0;
 
     const availableClassIds = new Set(classes.map(item => item.id));
     if (state.classOverviewSelectedClasses instanceof Set) {
@@ -4624,7 +4898,7 @@ function getClassMatrixData() {
             }).length;
             const assignedDevices = new Set(classAssignments.map(assignment => assignment.device));
             const attempts = members.reduce((total, email) => total + overviewColumns.reduce((columnTotal, column) =>
-                columnTotal + (sessionsByCell.get(`${String(email).toLowerCase()}\u001f${column.device}\u001f${column.lab}`)?.length || 0)
+                columnTotal + classSessionsForCell(item.code, email, column.device, column.lab).length
             , 0), 0);
             return {
                 ...item,
@@ -4645,7 +4919,9 @@ function getClassMatrixData() {
     });
 
     const scopedClasses = selectedClass ? [selectedClass] : classes;
-    const scopedMembers = [...new Set(scopedClasses.flatMap(item => item.members || []).map(email => String(email).toLowerCase()))];
+    const scopedMembers = selectedClass
+        ? rows.map(row => String(row.email).toLowerCase())
+        : [...new Set(scopedClasses.flatMap(item => item.members || []).map(email => String(email).toLowerCase()))];
     const scopedClassCodes = new Set(scopedClasses.map(item => item.code));
     const scopedAssignments = [...assignmentsByClass.entries()]
         .filter(([classCode]) => scopedClassCodes.has(classCode))
@@ -4689,6 +4965,7 @@ function getClassMatrixData() {
         totalSessions: totalClassAttempts,
         totalAssignedAll,
         totalCompletedAll,
+        assignmentCompletionRate,
         overallRate,
         fullyCompletedPeople,
         labStats,
@@ -5122,7 +5399,7 @@ function renderClassMatrixReport() {
     };
     const personnelTotal = data.isOverview
         ? data.summaryRows.reduce((sum, row) => sum + row.memberCount, 0)
-        : data.totalKtv;
+        : data.filteredCount;
     const personnelCompleted = data.isOverview
         ? data.summaryRows.reduce((sum, row) => sum + row.fullyCompletedCount, 0)
         : data.fullyCompletedPeople;
@@ -5216,7 +5493,7 @@ function renderClassMatrixReport() {
             `).join('')}
             <th class="ktv-total-head" scope="col" rowspan="2">
                 <div class="ktv-total-header-wrap">
-                    <span class="ktv-header-label">Đã đạt</span>
+                    <span class="ktv-header-label">Bài đạt / được giao</span>
                     <div class="popover-filter-wrapper ktv-header-filter ${state.classMatrixProgressFilter !== null ? 'has-value' : ''}" id="classProgressFilterWrapper">
                         <button type="button" class="popover-trigger-btn" id="classProgressFilterTrigger"
                             aria-label="Lọc theo tiến độ nhân sự" aria-haspopup="dialog" aria-expanded="false"></button>
@@ -5295,13 +5572,13 @@ function renderClassMatrixReport() {
             <th class="ktv-footer-label" scope="row">Tổng</th>
             ${data.columns.map(col => {
                 const colKey = `${col.device}\u001f${col.lab}`;
-                const stat = data.labStats.get(colKey) || { people: 0, completed: 0, attempts: 0 };
-                const rate = stat.people > 0 ? Math.round((stat.completed / stat.people) * 100) : null;
+                const stat = data.labStats.get(colKey) || { assigned: 0, completed: 0, attempts: 0 };
+                const rate = stat.assigned > 0 ? Math.round((stat.completed / stat.assigned) * 100) : null;
                 const cellClass = rate === null ? 'report-cell-zero' : (rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-                const tooltip = `${stat.completed}/${stat.people} KTV đã đạt • ${stat.attempts} lượt thực hành`;
+                const tooltip = `${stat.completed}/${stat.assigned} KTV được giao đã hoàn thành • ${stat.attempts} lượt thực hành`;
                 return `
                     <td class="report-metric-cell ${cellClass} ${col.isFirst ? 'group-start' : ''}" title="${escapeHTML(tooltip)}">
-                        <strong>${stat.completed}/${stat.people}</strong>
+                        <strong>${stat.completed}/${stat.assigned}</strong>
                     </td>
                 `;
             }).join('')}
@@ -5309,7 +5586,7 @@ function renderClassMatrixReport() {
                 <strong>${data.totalCompletedAll}/${data.totalAssignedAll}</strong>
             </td>
             <td class="ktv-footer-rate report-grand-total">
-                <strong>${data.overallRate}%</strong>
+                <strong>${data.assignmentCompletionRate}%</strong>
             </td>
         </tr>
     `;
@@ -6003,14 +6280,14 @@ function buildActivityReportDescriptor() {
 }
 
 function formatAuthoritativeRegionMetric(cell = {}) {
-    const assigned = Number(cell.assigned_count) || 0;
-    if (!assigned) return '—';
+    const population = Number(cell.population_count) || 0;
+    if (!population) return '—';
     const completed = Number(cell.completed_count) || 0;
     const attempts = Number(cell.attempt_count) || 0;
     const rate = cell.completion_rate === null || cell.completion_rate === undefined
-        ? Math.round((completed / assigned) * 100)
+        ? Math.round((completed / population) * 100)
         : Number(cell.completion_rate);
-    return `${completed}/${assigned} (${rate}%) · ${attempts} lượt`;
+    return `${completed}/${population} (${rate}%) · ${attempts} lượt`;
 }
 
 function buildAuthoritativeRegionReportDescriptor(matrix) {
@@ -6039,54 +6316,32 @@ function buildAuthoritativeRegionReportDescriptor(matrix) {
         filename: buildReportFilename('FTC_Tien_do_theo_chi_nhanh'),
         countLabel: `${formatNumber.format(rows.length)} khu vực · ${formatNumber.format(columns.length)} bài lab`,
         available: rows.length > 0 && columns.length > 0,
-        metadata: [['Quy ước ô dữ liệu', 'Hoàn thành/phạm vi (tỷ lệ) · lượt thực hành']],
+        metadata: [
+            ['Phạm vi', 'Toàn bộ KTV đang hoạt động theo khu vực hiện tại; không yêu cầu assignment'],
+            ['Quy ước ô dữ liệu', 'KTV đã đạt/tổng KTV khu vực (tỷ lệ) · lượt thực hành']
+        ],
         headers: ['STT', 'Khu vực / Chi nhánh', ...columns.map(column => `${column.device} - ${column.lab}`), 'Tổng khu vực'],
         columnTypes: ['integer', 'text', ...columns.map(() => 'text'), 'text'],
         rows
     };
 }
 
-function formatLocalRegionMetric(cell) {
-    if (!cell?.eligible) return '—';
-    if (!cell.attempts) return `0/${cell.eligible} (0%) · 0 lượt`;
-    return `${cell.completed}/${cell.eligible} (${cell.rate ?? 0}%) · ${cell.attempts} lượt`;
-}
-
 function buildRegionReportDescriptor() {
-    if (dashboardReport?.matrix) return buildAuthoritativeRegionReportDescriptor(dashboardReport.matrix);
-    const sourceRows = getDateFilteredSessions().filter(item => item.mode === 'Thực hành');
-    const groups = getDetailReportDeviceGroups(sourceRows);
-    const columns = groups.flatMap(group => group.labs.map(lab => ({ device: group.device, lab })));
-    const index = buildDetailReportIndex(sourceRows);
-    const regionNames = [...new Set([
-        ...REGION_FILTER_OPTIONS,
-        ...sourceRows.map(item => item.region).filter(Boolean)
-    ])];
-    const rows = regionNames.map((region, rowIndex) => {
-        const regionKeys = [region];
-        const total = getDetailReportTotal(index, regionKeys, columns);
-        return [
-            rowIndex + 1,
-            region,
-            ...columns.map(column => formatLocalRegionMetric(getDetailReportCell(index, regionKeys, column))),
-            formatLocalRegionMetric(total)
-        ];
-    });
+    if (dashboardReport?.matrix && dashboardReportMatchesSelectedPeriod()) {
+        return buildAuthoritativeRegionReportDescriptor(dashboardReport.matrix);
+    }
     return {
         type: 'region',
         title: 'FTC - BÁO CÁO TIẾN ĐỘ THỰC HÀNH THEO CHI NHÁNH',
         period: getRangeLabel(),
-        scope: 'Kết quả theo khu vực, thiết bị và bài lab',
+        scope: 'Không tải được dữ liệu KTV và phiên thực hành theo khu vực',
         filename: buildReportFilename('FTC_Tien_do_theo_chi_nhanh'),
-        countLabel: `${formatNumber.format(rows.length)} khu vực · ${formatNumber.format(columns.length)} bài lab`,
-        available: rows.length > 0 && columns.length > 0,
-        metadata: [
-            ['Quy ước ô dữ liệu', 'Hoàn thành/phạm vi (tỷ lệ) · lượt thực hành'],
-            ['Nguồn phạm vi', 'Danh mục KTV đang hoạt động và danh mục bài lab']
-        ],
-        headers: ['STT', 'Khu vực / Chi nhánh', ...columns.map(column => `${column.device} - ${column.lab}`), 'Tổng khu vực'],
-        columnTypes: ['integer', 'text', ...columns.map(() => 'text'), 'text'],
-        rows
+        countLabel: 'Chưa thể lập báo cáo chính xác',
+        available: false,
+        metadata: [['Trạng thái', 'Không xuất tỷ lệ khi không tải được danh mục KTV đang hoạt động']],
+        headers: [],
+        columnTypes: [],
+        rows: []
     };
 }
 
@@ -6141,7 +6396,7 @@ function buildClassMatrixReportDescriptor() {
         metadata: [
             ['Lớp học', classLabel],
             ['Thiết bị', deviceLabel],
-            ['Tiến độ tổng', `${data.totalCompletedAll}/${data.totalAssignedAll} (${data.overallRate}%)`],
+            ['Tiến độ tổng', `${data.totalCompletedAll}/${data.totalAssignedAll} (${data.assignmentCompletionRate}%)`],
             ['Tổng lượt thực hành', data.totalSessions],
             ['Quy ước ô dữ liệu', 'Số phiên Đạt / Tổng số phiên thực hiện bài lab']
         ],
@@ -6222,6 +6477,7 @@ async function ensureTrainingAssignmentsLoaded({ force = false } = {}) {
         throw new Error('Dữ liệu phân lớp hiện không khả dụng.');
     }
     trainingAssignments = normalizeTrainingAssignments(data.assignments || []);
+    classMemberships = normalizeClassMemberships(data.class_memberships || []);
     state.assignmentsLoaded = true;
     initializeInstructorClasses();
     if (['instructors', 'class_matrix', 'analytics', 'technicians'].includes(activeDashboardView)) renderAll();
@@ -6926,6 +7182,12 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
     });
 
     renderAll();
+    if (activeDashboardView === 'analytics'
+        && state.dashboardDataLoaded
+        && dashboardReport?.meta?.includes_branch_drilldown !== true
+        && state.dashboardReportStatus !== 'loading') {
+        reloadDashboardReport();
+    }
     if (activeDashboardView === 'roster') {
         setDataSourceLabel('Hồ sơ KTV từ cơ sở dữ liệu');
         if (!state.rosterLoaded) loadRosterList();
@@ -7345,22 +7607,26 @@ function renderRosterRegionOptions(selectedRegionId = '') {
     const select = document.getElementById('rosterEditRegionId');
     if (!select) return;
     const options = state.rosterRegions.map(region => {
-        const id = region.region_id || region.regionId || '';
+        const id = region.unit_id || region.unitId || '';
         const name = region.region_name || region.regionName || region.region_code || region.regionCode || '';
-        const branch = region.branch_name || region.branchName || 'Chưa có chi nhánh';
+        const branch = region.unit_name || region.unitName || region.branch_name || region.branchName || 'Chưa có chi nhánh';
         const code = region.region_code || region.regionCode || '';
-        const label = `${name} · ${branch}${code ? ` (${code})` : ''}`;
+        const label = `${branch} · ${name}${code ? ` (${code})` : ''}`;
         return `<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`;
     }).join('');
-    select.innerHTML = '<option value="">Chưa phân vùng</option>' + options;
+    select.innerHTML = '<option value="">FTC</option>' + options;
     select.value = selectedRegionId || '';
 }
 
 function updateRosterEditBranch() {
-    const regionId = document.getElementById('rosterEditRegionId')?.value || '';
-    const region = state.rosterRegions.find(item => (item.region_id || item.regionId) === regionId);
+    const unitId = document.getElementById('rosterEditRegionId')?.value || '';
+    const region = state.rosterRegions.find(item => (item.unit_id || item.unitId) === unitId);
     const branchInput = document.getElementById('rosterEditBranchName');
-    if (branchInput) branchInput.value = region?.branch_name || region?.branchName || '';
+    const unitCodeInput = document.getElementById('rosterEditUnitCode');
+    const unitNameInput = document.getElementById('rosterEditUnitName');
+    if (branchInput) branchInput.value = region?.unit_name || region?.unitName || region?.branch_name || region?.branchName || '';
+    if (unitCodeInput) unitCodeInput.value = region?.unit_code || region?.unitCode || '';
+    if (unitNameInput) unitNameInput.value = region?.unit_name || region?.unitName || '';
 }
 
 function renderRosterList() {
@@ -7382,7 +7648,7 @@ function renderRosterTableBody() {
         const rawEmployeeId = item.employee_id || item.employeeId || '';
         const eid = escapeHTML(rawEmployeeId);
         const employeeCell = eid || '<span title="Có thể bổ sung qua lần import hồ sơ nhân sự sau">Chưa cập nhật</span>';
-        const region = escapeHTML(item.region_name || item.regionName || item.dashboard_region || item.dashboardRegion || 'Chưa phân vùng');
+        const region = escapeHTML(item.region_name || item.regionName || item.dashboard_region || item.dashboardRegion || 'FTC');
         const branch = escapeHTML(item.branch_name || item.branchName || '—');
         const editButton = rawEmployeeId
             ? `<button type="button" class="button secondary roster-edit-btn" data-employee-id="${eid}" aria-label="Sửa hồ sơ ${escapeHTML(item.display_name || item.displayName || rawEmployeeId)}">Sửa</button>`
@@ -7749,7 +8015,7 @@ async function openRosterEdit(employeeId) {
     document.getElementById('rosterEditDisplayName').value = item.display_name || item.displayName || '';
     document.getElementById('rosterEditEmail').value = item.email || '';
     document.getElementById('rosterEditJobTitle').value = item.job_title || item.jobTitle || '';
-    renderRosterRegionOptions(item.region_id || item.regionId || '');
+    renderRosterRegionOptions(item.unit_id || item.unitId || '');
     updateRosterEditBranch();
     document.getElementById('rosterEditUnitCode').value = item.unit_code || item.unitCode || '';
     document.getElementById('rosterEditUnitName').value = item.unit_name || item.unitName || '';
@@ -7782,9 +8048,7 @@ async function submitRosterEdit(e) {
         display_name: document.getElementById('rosterEditDisplayName').value.trim(),
         email: document.getElementById('rosterEditEmail').value.trim(),
         job_title: document.getElementById('rosterEditJobTitle').value.trim() || null,
-        region_id: document.getElementById('rosterEditRegionId').value || null,
-        unit_code: document.getElementById('rosterEditUnitCode').value.trim() || null,
-        unit_name: document.getElementById('rosterEditUnitName').value.trim() || null,
+        unit_id: document.getElementById('rosterEditRegionId').value || null,
         class_code: document.getElementById('rosterEditClassCode').value.trim() || null,
         is_terminated: document.getElementById('rosterEditTerminated').value === '1',
     };
@@ -8335,7 +8599,8 @@ async function submitTrainingClass(event) {
         await loadTrainingClasses();
         await Promise.allSettled([
             loadRosterList(),
-            refreshDashboardData({ force: true })
+            refreshDashboardData({ force: true }),
+            ensureTrainingAssignmentsLoaded({ force: true })
         ]);
         activateClassTab('list');
     } catch (error) {
@@ -8499,7 +8764,94 @@ function initTrainingClasses() {
     updateTrainingClassSummary();
 }
 
+
+// ── Theme Manager (Light, Dark, System) ──────────────────────────
+function initThemeManager() {
+    const THEME_STORAGE_KEY = 'ftc_dashboard_theme';
+    const VALID_THEME_SETTINGS = new Set(['light', 'dark', 'system']);
+    const THEME_COLORS = { light: '#f3f6fb', dark: '#111a2e' };
+    const switcher = document.getElementById('themeSwitcher');
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    let currentSetting = 'system';
+
+    function normalizeThemeSetting(value) {
+        return VALID_THEME_SETTINGS.has(value) ? value : 'system';
+    }
+
+    function getSavedThemeSetting() {
+        try {
+            return normalizeThemeSetting(localStorage.getItem(THEME_STORAGE_KEY));
+        } catch (e) {
+            return 'system';
+        }
+    }
+
+    function applyTheme(requestedSetting, { persist = false } = {}) {
+        const setting = normalizeThemeSetting(requestedSetting);
+        const prefersDark = mediaQuery.matches;
+        const resolvedTheme = setting === 'system' ? (prefersDark ? 'dark' : 'light') : setting;
+        currentSetting = setting;
+
+        document.documentElement.dataset.theme = resolvedTheme;
+        document.documentElement.dataset.themeSetting = setting;
+        document.documentElement.style.colorScheme = resolvedTheme;
+        if (themeColorMeta) themeColorMeta.content = THEME_COLORS[resolvedTheme];
+
+        if (persist) {
+            try {
+                localStorage.setItem(THEME_STORAGE_KEY, setting);
+            } catch (e) { /* Keep the selected theme for this page session. */ }
+        }
+
+        if (switcher) {
+            switcher.querySelectorAll('.theme-btn').forEach(btn => {
+                const val = btn.getAttribute('data-theme-value');
+                const isActive = val === setting;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', String(isActive));
+            });
+        }
+
+        window.dispatchEvent(new CustomEvent('ftc:themechange', {
+            detail: { setting, resolvedTheme }
+        }));
+    }
+
+    applyTheme(getSavedThemeSetting());
+
+    if (switcher) {
+        switcher.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTheme = btn.getAttribute('data-theme-value');
+                if (VALID_THEME_SETTINGS.has(targetTheme)) {
+                    applyTheme(targetTheme, { persist: true });
+                }
+            });
+        });
+    }
+
+    const handleSystemThemeChange = () => {
+        if (currentSetting === 'system') applyTheme('system');
+    };
+
+    try {
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+    } catch (e) {
+        if (typeof mediaQuery.addListener === 'function') {
+            mediaQuery.addListener(handleSystemThemeChange);
+        }
+    }
+
+    window.addEventListener('storage', event => {
+        if (event.key === THEME_STORAGE_KEY) {
+            applyTheme(normalizeThemeSetting(event.newValue));
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    initThemeManager();
     initDashboardViewRouting();
     initSidebarNavigation();
     initDashboardExperience();

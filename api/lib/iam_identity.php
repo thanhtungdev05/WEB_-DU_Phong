@@ -62,15 +62,20 @@ function iam_profile_email(array $profile, ?string $employeeId, string $fallback
 
 function iam_profile_display_name(array $profile): ?string
 {
+    $given = iam_claim_string($profile, ['given_name', 'givenName']);
+    $family = iam_claim_string($profile, ['family_name', 'familyName']);
+    if ($given !== null && $family !== null) {
+        // OpenID Connect defines family_name as the surname and given_name as
+        // the remaining personal name. Vietnamese displays use surname first.
+        return trim($family . ' ' . $given);
+    }
+
     $name = iam_claim_string($profile, ['name', 'displayName', 'display_name', 'fullName', 'full_name']);
     if ($name) {
         return $name;
     }
 
-    $given = iam_claim_string($profile, ['given_name', 'givenName']);
-    $family = iam_claim_string($profile, ['family_name', 'familyName']);
-    $combined = trim(($given ?? '') . ' ' . ($family ?? ''));
-    return $combined !== '' ? $combined : null;
+    return $family ?? $given;
 }
 
 function iam_identity_from_profile(array $profile, string $fallbackDomain): array

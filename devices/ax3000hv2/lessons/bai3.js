@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ax3000hv2/lessons/bai3.js
  * Bài 3: Cấu hình Wi-Fi IoT trên AX3000H v2
  */
@@ -61,8 +61,20 @@ var lessonObj = {
         trim: true,
         required: true
       }
+    ],
+    allowedSelectors: [
+      'input[name="Enable_Wifi5_2G"]',
+      'input[name="Enable_Wifi5_5G"]',
+      'input[name="ESSID_HIDE_Selection_2G"]',
+      'input[name="ESSID_HIDE_Selection_5G"]'
     ]
   },
+  allowedSelectors: [
+    'input[name="Enable_Wifi5_2G"]',
+    'input[name="Enable_Wifi5_5G"]',
+    'input[name="ESSID_HIDE_Selection_2G"]',
+    'input[name="ESSID_HIDE_Selection_5G"]'
+  ],
   guidePopups: [
     {
       selector: 'a[onclick="change_basic(this);"]',

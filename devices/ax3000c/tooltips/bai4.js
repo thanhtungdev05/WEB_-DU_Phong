@@ -7,7 +7,7 @@ if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
 window.TOOLTIPS_AX3000C['LAB_AX3000CV2_04'] = [
   // 1. Chọn Network ở Menu bên trái
   {
-    selector: 'li.el-submenu:not(.is-opened):contains("Network") .el-submenu__title',
+    selector: '.el-submenu[index="/network"]:not(.is-opened) .el-submenu__title, li.el-submenu:not(.is-opened) .el-submenu__title:contains("Network")',
     text: 'Chọn Network',
     position: 'right',
     hideOnPage: 'lan'
@@ -33,17 +33,17 @@ window.TOOLTIPS_AX3000C['LAB_AX3000CV2_04'] = [
     position: 'right',
     page: 'lan'
   },
-  // Bước 2: nhập DNS Server 1 ví dụ: 8.8.8.8 (chỉ hiện khi ở trang LAN)
+  // Bước 2: nhập DNS Server 1 ví dụ: 210.245.31.220 (chỉ hiện khi ở trang LAN)
   {
     selector: '.card .bd .row:nth-child(7) input, .row:has(.lbl:contains("DNS Server 1")) input',
-    text: 'Bước 2: nhập DNS Server 1 ví dụ: 8.8.8.8',
+    text: 'Bước 2: nhập DNS Server 1 ví dụ: 210.245.31.220',
     position: 'right',
     page: 'lan'
   },
-  // Bước 3: nhập DNS Server 2 ví dụ: 8.8.4.4 (chỉ hiện khi ở trang LAN)
+  // Bước 3: nhập DNS Server 2 ví dụ: 8.8.8.8 (chỉ hiện khi ở trang LAN)
   {
     selector: '.card .bd .row:nth-child(8) input, .row:has(.lbl:contains("DNS Server 2")) input',
-    text: 'Bước 3: nhập DNS Server 2 ví dụ: 8.8.4.4',
+    text: 'Bước 3: nhập DNS Server 2 ví dụ: 8.8.8.8',
     position: 'right',
     page: 'lan'
   },

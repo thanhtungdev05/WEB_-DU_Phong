@@ -2409,6 +2409,12 @@ var tableData = [
       maskEl.addEventListener('change', ftcUpdateStartIp);
       maskEl.addEventListener('blur', ftcUpdateStartIp);
     }
+    var ipEl = document.getElementById('uiViewIPAddr');
+    if (ipEl) {
+      ipEl.addEventListener('change', ftcUpdateStartIp);
+      ipEl.addEventListener('blur', ftcUpdateStartIp);
+      ipEl.addEventListener('input', ftcUpdateStartIp);
+    }
   });
 })();
 </script>

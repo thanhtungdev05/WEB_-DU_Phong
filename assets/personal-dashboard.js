@@ -243,7 +243,7 @@
 
     const firstTryPct = stats.first_try_pass_rate_percent || 0;
     if (elMetricFirstTryVal) elMetricFirstTryVal.textContent = `${firstTryPct}%`;
-    if (elMetricFirstTrySub) elMetricFirstTrySub.textContent = `Tỷ lệ đạt lần 1`;
+    if (elMetricFirstTrySub) elMetricFirstTrySub.textContent = `${stats.first_try_passed_labs || 0}/${stats.first_try_eligible_labs || 0} bài đạt có dữ liệu số lần`;
     if (elMetricFirstTryBar) elMetricFirstTryBar.style.width = `${Math.min(100, firstTryPct)}%`;
 
     const passRate = stats.practice_pass_rate_percent || 0;
@@ -292,15 +292,15 @@
     if (elStatUnstartedCount) elStatUnstartedCount.textContent = `${stats.unstarted_labs || 0} bài`;
   }
 
-  function getAvailableMonths(sessions) {
+  function getAvailableMonths(trend) {
     const monthsSet = new Set();
     const now = new Date();
     monthsSet.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
 
-    (sessions || []).forEach(s => {
-      const timeStr = s.finished_at || s.started_at;
+    (trend || []).forEach(item => {
+      const timeStr = item.date;
       if (timeStr) {
-        const d = new Date(timeStr.replace(' ', 'T'));
+        const d = new Date(`${timeStr}T00:00:00`);
         if (!isNaN(d.getTime())) {
           monthsSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
         }
@@ -323,8 +323,8 @@
     if (!elTrendChartContainer) return;
     elTrendChartContainer.innerHTML = '';
 
-    const sessions = _dashboardData?.sessions || [];
-    const availableMonths = getAvailableMonths(sessions);
+    const trend = _dashboardData?.trend || [];
+    const availableMonths = getAvailableMonths(trend);
     if (!selectedMonthStr || !availableMonths.includes(selectedMonthStr)) {
       selectedMonthStr = availableMonths[0] || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
     }
@@ -356,27 +356,22 @@
       duration_sec: 0
     }));
 
-    // Aggregate sessions for this month
-    sessions.forEach(sess => {
-      const timeStr = sess.finished_at || sess.started_at;
-      if (!timeStr) return;
-      const dateObj = new Date(timeStr.replace(' ', 'T'));
+    // Daily aggregates come from the complete server-side history, not the
+    // capped detailed-session payload.
+    trend.forEach(point => {
+      if (!point.date) return;
+      const dateObj = new Date(`${point.date}T00:00:00`);
       if (isNaN(dateObj.getTime())) return;
       if (dateObj.getFullYear() === year && (dateObj.getMonth() + 1) === month) {
         const d = dateObj.getDate();
         if (d >= 1 && d <= totalDays) {
           const item = daysData[d - 1];
-          item.total++;
-          const isPractice = sess.mode === 'Thực hành' || sess.mode === 'practice' || sess.session_type === 'practice';
-          if (isPractice) {
-            item.practice++;
-            if (sess.is_passed === true || sess.status === 'Đạt' || sess.status === 'Hoàn thành') {
-              item.passed++;
-            }
-          } else {
-            item.guide++;
-          }
-          item.duration_sec += (sess.duration_sec || 0);
+          item.practice += Number(point.practice_count) || 0;
+          item.guide += Number(point.guide_count) || 0;
+          const pointTotal = Number(point.total_sessions);
+          item.total += Number.isFinite(pointTotal) ? pointTotal : (Number(point.practice_count) || 0) + (Number(point.guide_count) || 0);
+          item.passed += Number(point.passed_count) || 0;
+          item.duration_sec += Number(point.duration_sec) || 0;
         }
       }
     });
@@ -498,8 +493,24 @@
       return;
     }
 
-    // Take last 14 days
-    const recentTrend = trend.slice(-14);
+    // Always use 14 consecutive calendar days; missing days remain N/A instead
+    // of silently becoming "14 activity days".
+    const trendByDate = new Map(trend.map(item => [item.date, item]));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const recentTrend = Array.from({ length: 14 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (13 - index));
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      return trendByDate.get(key) || {
+        date: key,
+        practice_count: 0,
+        guide_count: 0,
+        graded_count: 0,
+        passed_count: 0,
+        pass_rate_percent: null
+      };
+    });
     const width = elTrendChartContainer.clientWidth || 680;
     const height = 220;
     const padding = { top: 20, right: 30, bottom: 35, left: 40 };
@@ -512,39 +523,42 @@
     // Tỷ lệ phiên Đạt theo ngày; chỉ tính các phiên thực hành đã có kết quả.
     const resultPoints = recentTrend.map((d, i) => {
       const x = padding.left + (recentTrend.length > 1 ? i * stepX : chartW / 2);
-      const passRate = d.pass_rate_percent == null ? 0 : Number(d.pass_rate_percent);
-      const y = padding.top + chartH - (passRate / 100) * chartH;
+      const hasGrade = d.pass_rate_percent !== null && d.pass_rate_percent !== undefined;
+      const passRate = hasGrade ? Number(d.pass_rate_percent) : null;
+      const y = hasGrade ? padding.top + chartH - (passRate / 100) * chartH : null;
       return {
         x,
         y,
         date: d.date,
         passRate,
+        hasGrade,
         passed: Number(d.passed_count) || 0,
         graded: Number(d.graded_count) || 0,
         practice: Number(d.practice_count) || 0,
         guide: Number(d.guide_count) || 0
       };
     });
+    const gradedResultPoints = resultPoints.filter(point => point.hasGrade);
 
     let pathD = '';
     let areaD = '';
 
-    if (resultPoints.length === 1) {
-      const p = resultPoints[0];
+    if (gradedResultPoints.length === 1) {
+      const p = gradedResultPoints[0];
       pathD = `M ${padding.left} ${p.y} L ${padding.left + chartW} ${p.y}`;
       areaD = `M ${padding.left} ${p.y} L ${padding.left + chartW} ${p.y} L ${padding.left + chartW} ${padding.top + chartH} L ${padding.left} ${padding.top + chartH} Z`;
-    } else {
-      pathD = `M ${resultPoints[0].x} ${resultPoints[0].y}`;
-      for (let i = 1; i < resultPoints.length; i++) {
-        const prev = resultPoints[i - 1];
-        const curr = resultPoints[i];
+    } else if (gradedResultPoints.length > 1) {
+      pathD = `M ${gradedResultPoints[0].x} ${gradedResultPoints[0].y}`;
+      for (let i = 1; i < gradedResultPoints.length; i++) {
+        const prev = gradedResultPoints[i - 1];
+        const curr = gradedResultPoints[i];
         const cpX1 = prev.x + (curr.x - prev.x) / 2;
         const cpY1 = prev.y;
         const cpX2 = prev.x + (curr.x - prev.x) / 2;
         const cpY2 = curr.y;
         pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${curr.x} ${curr.y}`;
       }
-      areaD = `${pathD} L ${resultPoints[resultPoints.length - 1].x} ${padding.top + chartH} L ${resultPoints[0].x} ${padding.top + chartH} Z`;
+      areaD = `${pathD} L ${gradedResultPoints[gradedResultPoints.length - 1].x} ${padding.top + chartH} L ${gradedResultPoints[0].x} ${padding.top + chartH} Z`;
     }
 
     // Grid lines (0, 25, 50, 75, 100)
@@ -573,7 +587,7 @@
 
     // Circles / Tooltip triggers
     let pointsSvg = '';
-    resultPoints.forEach(p => {
+    gradedResultPoints.forEach(p => {
       const tooltipText = `${p.date}: ${p.passed}/${p.graded} phiên Đạt (${p.passRate}%; ${p.practice} thực hành, ${p.guide} hướng dẫn)`;
       pointsSvg += `
         <circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#4f46e5" stroke="#ffffff" stroke-width="2.5" class="chart-dot">
@@ -746,7 +760,11 @@
     elSessionsBody.innerHTML = '';
 
     if (elSessionsCount) {
-      elSessionsCount.textContent = `(${_filteredSessions.length} phiên)`;
+      const truncated = _dashboardData?.session_history_truncated === true;
+      const totalHistory = Number(_dashboardData?.stats?.total_sessions_count) || _filteredSessions.length;
+      elSessionsCount.textContent = truncated
+        ? `(${_filteredSessions.length} kết quả trong 500 phiên gần nhất · ${totalHistory} phiên toàn lịch sử)`
+        : `(${_filteredSessions.length} phiên)`;
     }
 
     if (_filteredSessions.length === 0) {

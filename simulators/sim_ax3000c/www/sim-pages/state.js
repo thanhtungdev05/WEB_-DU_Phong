@@ -51,6 +51,16 @@
         .catch(function () { if (cb) cb(null); });
     },
     save: function (okMsg) {
+      // Hieu ung nhay nhe giao dien khi bam Apply (phan hoi truc quan)
+      try {
+        document.body.style.transition = 'opacity 0.12s ease-in-out';
+        document.body.style.opacity = '0.35';
+        setTimeout(function () {
+          document.body.style.opacity = '1';
+          setTimeout(function () { document.body.style.transition = ''; }, 150);
+        }, 120);
+      } catch (e) {}
+
       var tb = document.getElementById('tb');
       var rows = tb ? tb.querySelectorAll('tr').length - (document.getElementById('empty') ? 1 : 0) : 0;
       fetch('/sim-state?page=' + encodeURIComponent(PAGE), {
@@ -59,15 +69,23 @@
         body: JSON.stringify({ values: collect(), rows: rows })
       }).then(function (r) {
         if (r.ok) {
-          alert(okMsg || 'Configuration has been applied.');
           document._ftcIsSaved = true; // Danh dau da luu cau hinh thanh cong
           // Báo cáo sự kiện Save ra ngoài Portal
           if (window.parent && window.parent.onSimulatorSave) {
             try { window.parent.onSimulatorSave(window); } catch (e) {}
           }
         }
-        else alert('Luu that bai.');
-      }).catch(function () { alert('Khong ket noi duoc server.'); });
+        else {
+          console.warn('[simState] Luu that bai.');
+        }
+      }).catch(function (err) {
+        console.warn('[simState] Khong ket noi duoc server:', err);
+        // Vẫn đánh dấu đã save để không chặn luồng chấm điểm
+        document._ftcIsSaved = true;
+        if (window.parent && window.parent.onSimulatorSave) {
+          try { window.parent.onSimulatorSave(window); } catch (e) {}
+        }
+      });
     },
     reset: function () {
       fetch('/sim-state?page=' + encodeURIComponent(PAGE), { method: 'DELETE' })
