@@ -8525,6 +8525,7 @@ async function previewClassMembers(file) {
         if (data.errors && data.errors.length > 0) {
             const firstError = data.errors[0];
             const msg = firstError ? `Dòng ${firstError.row || '?'}: ${firstError.message || 'Dữ liệu không hợp lệ'}` : 'File KTV có lỗi.';
+            if (info) info.textContent = `${file.name} — file có lỗi, chưa nạp được KTV nào. Kiểm tra lại file.`;
             showToast(`File KTV không hợp lệ: ${msg}`, 'error');
             return;
         }
@@ -8544,6 +8545,7 @@ async function previewClassMembers(file) {
         showToast(`Đã đọc thành công ${total} KTV từ file. Hãy kiểm tra thành viên và chọn thiết bị.`, 'success');
         await openClassConfigModal();
     } catch (error) {
+        if (info) info.textContent = `${file.name} — không đọc được file. Hãy thử lại.`;
         showToast(`Không thể đọc file KTV: ${error.message}`, 'error');
     } finally {
         state.classMemberImportBusy = false;

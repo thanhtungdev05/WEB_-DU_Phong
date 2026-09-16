@@ -106,6 +106,14 @@
     return normalizeDeviceId(rawId);
   }
 
+  function isNoConfigDevice() {
+    if (currentDeviceId === 'be15000' || currentDeviceId === 'ONT_be15000') return true;
+    if (_currentLesson && _currentLesson.noConfig === true) return true;
+    const dev = DEVICES.find(d => d.id === currentDeviceId);
+    if (dev && dev.noConfig === true) return true;
+    return false;
+  }
+
   function populateDeviceDropdown(devices) {
     deviceSelect.replaceChildren();
     devices.forEach(device => {
@@ -567,44 +575,61 @@
 
             const evalResult = evaluateLesson(device, lesson);
             let btnGuideErrors = document.getElementById('btn-guide-errors');
+            const noConfig = isNoConfigDevice();
 
-            // BẮT BUỘC ĐÃ BẤM SAVE/APPLY: nếu chưa bấm Save/Apply thì KHÔNG BAO GIỜ sáng nút nộp bài
-            if (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed))) {
-              // Nút Nộp bài SÁNG LÊN
+            if (currentMode === 'practice') {
+              // ⚡ CHẾ ĐỘ THỰC HÀNH:
+              // 1. Nút "Xem lỗi sai" LUÔN LUÔN ẨN (không tiết lộ lỗi trước khi nộp bài)
+              if (btnGuideErrors) {
+                btnGuideErrors.style.display = 'none';
+              }
+              // 2. Nút "Nộp bài & Chấm điểm" LUÔN KHẢ DỤNG để học viên nộp bài bất kỳ lúc nào (đúng hay sai đều nộp được)
               if (btnSubmitLab) {
                 btnSubmitLab.disabled = false;
                 btnSubmitLab.style.opacity = '1';
                 btnSubmitLab.style.cursor = 'pointer';
                 btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
               }
-              // Nút Lỗi sai ẨN ĐI
-              if (btnGuideErrors) {
-                btnGuideErrors.style.display = 'none';
-              }
             } else {
-              // Chưa đạt hoặc chưa bấm Save:
-              if (btnGuideErrors) {
-                if (window._hasClickedSaveInGuide && evalResult && !evalResult.passed && !hasSuccHint) {
-                  // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN
-                  btnGuideErrors.style.display = 'flex';
-                  btnGuideErrors.disabled = false;
-                  btnGuideErrors.style.opacity = '1';
-                  btnGuideErrors.style.cursor = 'pointer';
-                  btnGuideErrors.style.background = '#fee2e2';
-                  btnGuideErrors.style.color = '#ef4444';
-                  btnGuideErrors.style.borderColor = '#fca5a5';
-                  btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
-                } else {
+              // 💡 CHẾ ĐỘ HƯỚNG DẪN:
+              // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT:
+              if (noConfig || (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed)))) {
+                // Nút Nộp bài SÁNG LÊN
+                if (btnSubmitLab) {
+                  btnSubmitLab.disabled = false;
+                  btnSubmitLab.style.opacity = '1';
+                  btnSubmitLab.style.cursor = 'pointer';
+                  btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
+                }
+                // Nút Lỗi sai ẨN ĐI
+                if (btnGuideErrors) {
                   btnGuideErrors.style.display = 'none';
                 }
-              }
+              } else {
+                // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
+                if (btnGuideErrors) {
+                  if (window._hasClickedSaveInGuide && evalResult && !evalResult.passed && !hasSuccHint) {
+                    // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN để trợ giúp học tập
+                    btnGuideErrors.style.display = 'flex';
+                    btnGuideErrors.disabled = false;
+                    btnGuideErrors.style.opacity = '1';
+                    btnGuideErrors.style.cursor = 'pointer';
+                    btnGuideErrors.style.background = '#fee2e2';
+                    btnGuideErrors.style.color = '#ef4444';
+                    btnGuideErrors.style.borderColor = '#fca5a5';
+                    btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
+                  } else {
+                    btnGuideErrors.style.display = 'none';
+                  }
+                }
 
-              // Nút Nộp bài MỜ/TẮT
-              if (btnSubmitLab) {
-                btnSubmitLab.disabled = true;
-                btnSubmitLab.style.opacity = '0.5';
-                btnSubmitLab.style.cursor = 'not-allowed';
-                btnSubmitLab.style.animation = 'none';
+                // Nút Nộp bài MỜ/TẮT trong Hướng dẫn
+                if (btnSubmitLab) {
+                  btnSubmitLab.disabled = true;
+                  btnSubmitLab.style.opacity = '0.5';
+                  btnSubmitLab.style.cursor = 'not-allowed';
+                  btnSubmitLab.style.animation = 'none';
+                }
               }
             }
           }
@@ -1063,11 +1088,19 @@
     deviceIframe.src = 'about:blank';
 
     // Thiết lập trạng thái ban đầu cho nút Nộp bài và nút Lỗi sai
+    const noConfigInit = isNoConfigDevice();
     if (btnSubmitLab) {
-      btnSubmitLab.disabled = true;
-      btnSubmitLab.style.opacity = '0.5';
-      btnSubmitLab.style.cursor = 'not-allowed';
-      btnSubmitLab.style.animation = 'none';
+      if (currentMode === 'practice' || noConfigInit) {
+        btnSubmitLab.disabled = false;
+        btnSubmitLab.style.opacity = '1';
+        btnSubmitLab.style.cursor = 'pointer';
+        btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
+      } else {
+        btnSubmitLab.disabled = true;
+        btnSubmitLab.style.opacity = '0.5';
+        btnSubmitLab.style.cursor = 'not-allowed';
+        btnSubmitLab.style.animation = 'none';
+      }
     }
     const btnGuideErrorsInit = document.getElementById('btn-guide-errors');
     if (btnGuideErrorsInit) {
@@ -2571,35 +2604,50 @@
     if (device && lesson) {
       const evalResult = evaluateLesson(device, lesson);
       const btnGuideErrors = document.getElementById('btn-guide-errors');
+      const noConfigSaved = isNoConfigDevice();
 
-      if (window._hasSuccHintStored || (evalResult && evalResult.passed)) {
-        // Cấu hình ĐÚNG hoặc ĐÃ CÓ "Your data have been stored!": Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
+      if (currentMode === 'practice') {
+        // ⚡ Chế độ Thực hành: Nút lỗi sai LUÔN ẨN, Nút Nộp bài LUÔN SÁNG để học viên nộp bài
+        if (btnGuideErrors) {
+          btnGuideErrors.style.display = 'none';
+        }
         if (btnSubmitLab) {
           btnSubmitLab.disabled = false;
           btnSubmitLab.style.opacity = '1';
           btnSubmitLab.style.cursor = 'pointer';
           btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
         }
-        if (btnGuideErrors) {
-          btnGuideErrors.style.display = 'none';
-        }
       } else {
-        // Cấu hình SAI: Nút Lỗi sai SÁNG LÊN, Nút Nộp bài TẮT/XÁM
-        if (btnGuideErrors) {
-          btnGuideErrors.style.display = 'flex';
-          btnGuideErrors.disabled = false;
-          btnGuideErrors.style.opacity = '1';
-          btnGuideErrors.style.cursor = 'pointer';
-          btnGuideErrors.style.background = '#fee2e2';
-          btnGuideErrors.style.color = '#ef4444';
-          btnGuideErrors.style.borderColor = '#fca5a5';
-          btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
-        }
-        if (btnSubmitLab) {
-          btnSubmitLab.disabled = true;
-          btnSubmitLab.style.opacity = '0.5';
-          btnSubmitLab.style.cursor = 'not-allowed';
-          btnSubmitLab.style.animation = 'none';
+        // 💡 Chế độ Hướng dẫn:
+        if (noConfigSaved || window._hasSuccHintStored || (evalResult && evalResult.passed)) {
+          // Cấu hình ĐÚNG hoặc ĐÃ CÓ "Your data have been stored!" hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
+          if (btnSubmitLab) {
+            btnSubmitLab.disabled = false;
+            btnSubmitLab.style.opacity = '1';
+            btnSubmitLab.style.cursor = 'pointer';
+            btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
+          }
+          if (btnGuideErrors) {
+            btnGuideErrors.style.display = 'none';
+          }
+        } else {
+          // Cấu hình SAI ở Hướng dẫn: Nút Lỗi sai SÁNG LÊN, Nút Nộp bài TẮT/XÁM
+          if (btnGuideErrors) {
+            btnGuideErrors.style.display = 'flex';
+            btnGuideErrors.disabled = false;
+            btnGuideErrors.style.opacity = '1';
+            btnGuideErrors.style.cursor = 'pointer';
+            btnGuideErrors.style.background = '#fee2e2';
+            btnGuideErrors.style.color = '#ef4444';
+            btnGuideErrors.style.borderColor = '#fca5a5';
+            btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
+          }
+          if (btnSubmitLab) {
+            btnSubmitLab.disabled = true;
+            btnSubmitLab.style.opacity = '0.5';
+            btnSubmitLab.style.cursor = 'not-allowed';
+            btnSubmitLab.style.animation = 'none';
+          }
         }
       }
     }
