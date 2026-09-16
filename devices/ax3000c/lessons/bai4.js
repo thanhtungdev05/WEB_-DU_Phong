@@ -55,7 +55,7 @@ window.DEVICE_AX3000C_LESSONS.push({
   },
   guidePopups: [
     {
-      selector: 'li.el-submenu:not(.is-opened) .el-submenu__title:contains("Network")',
+      selector: '.el-submenu[index="/network"]:not(.is-opened) .el-submenu__title, li.el-submenu:not(.is-opened) .el-submenu__title:contains("Network")',
       text: 'Chọn Network',
       position: 'right',
       hideOnPage: 'lan'

@@ -41,8 +41,14 @@ var lessonObj = {
         trim: true,
         required: true
       }
+    ],
+    allowedSelectors: [
+      'input[name="dnsTypeRadio"]'
     ]
   },
+  allowedSelectors: [
+    'input[name="dnsTypeRadio"]'
+  ],
   guidePopups: [
     {
       selector: 'a[onclick="change_basic(this);"]',

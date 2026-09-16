@@ -7,21 +7,21 @@ if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
 window.TOOLTIPS_AX3000C['LAB_AX3000CV2_05'] = [
   // 1. Chọn Network ở Menu bên trái (chỉ hiện khi chưa ở trang LAN)
   {
-    selector: 'li.el-submenu:not(.is-opened):contains("Network") .el-submenu__title, .el-submenu__title:contains("Network")',
+    selector: '.el-submenu[index="/network"]:not(.is-opened) .el-submenu__title, li.el-submenu:not(.is-opened) .el-submenu__title:contains("Network")',
     text: 'Chọn Network',
     position: 'right',
     hideOnPage: 'lan'
   },
   // 2. Chọn LAN ở Menu bên trái cấp 1 (chỉ hiện khi chưa ở trang LAN)
   {
-    selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu:not(.is-opened):contains("LAN") .el-submenu__title, .el-submenu:contains("Network") .el-submenu__title:contains("LAN")',
+    selector: 'li.el-submenu.is-opened li.el-submenu:not(.is-opened) .el-submenu__title:contains("LAN"), .el-submenu[index="/network/lan"]:not(.is-opened) .el-submenu__title',
     text: 'Chọn LAN',
     position: 'right',
     hideOnPage: 'lan'
   },
   // 3. Chọn LAN ở Submenu bên trái cấp 2 (chỉ hiện khi chưa ở trang LAN)
   {
-    selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu:not(.is-opened):contains("LAN") li.el-menu-item:contains("LAN"), .el-menu-item:contains("LAN")',
+    selector: 'li.el-submenu.is-opened li.el-submenu.is-opened li.el-menu-item:contains("LAN"), li.el-submenu.is-opened li.el-menu-item:contains("LAN"), .el-menu-item[index="/network/lan/lan"]',
     text: 'Chọn LAN',
     position: 'right',
     hideOnPage: 'lan'

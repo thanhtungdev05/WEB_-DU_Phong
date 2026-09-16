@@ -314,6 +314,59 @@
       }
     });
 
+    // ── Hiệu ứng phản hồi thị giác khi bấm Apply / Save (Screen & Button Flash) ──
+    function triggerSaveFlashEffect(targetDoc, triggerBtn) {
+      const now = Date.now();
+      if (window._lastSaveFlashTime && (now - window._lastSaveFlashTime < 500)) return;
+      window._lastSaveFlashTime = now;
+
+      try {
+        // 1. Nháy toàn bộ khung thiết bị deviceIframe 1 lần (100% -> 35% -> 100%)
+        if (deviceIframe) {
+          deviceIframe.style.transition = 'opacity 0.12s ease-in-out';
+          deviceIframe.style.opacity = '0.35';
+          setTimeout(function () {
+            if (deviceIframe) {
+              deviceIframe.style.opacity = '1';
+              setTimeout(function () {
+                if (deviceIframe) deviceIframe.style.transition = '';
+              }, 150);
+            }
+          }, 120);
+        }
+
+        // 2. Nháy nội dung bên trong document con nếu có
+        if (targetDoc && targetDoc.body && targetDoc.body !== document.body) {
+          targetDoc.body.style.transition = 'opacity 0.12s ease-in-out';
+          targetDoc.body.style.opacity = '0.35';
+          setTimeout(function () {
+            if (targetDoc && targetDoc.body) {
+              targetDoc.body.style.opacity = '1';
+              setTimeout(function () {
+                if (targetDoc && targetDoc.body) targetDoc.body.style.transition = '';
+              }, 150);
+            }
+          }, 120);
+        }
+
+        // 3. Phản hồi lún nhẹ và bừng sáng trên nút bấm
+        if (triggerBtn) {
+          triggerBtn.style.transition = 'transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease';
+          triggerBtn.style.transform = 'scale(0.95)';
+          triggerBtn.style.filter = 'brightness(1.25)';
+          triggerBtn.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.6)';
+          setTimeout(function () {
+            triggerBtn.style.transform = '';
+            triggerBtn.style.filter = '';
+            triggerBtn.style.boxShadow = '';
+            setTimeout(function () {
+              triggerBtn.style.transition = '';
+            }, 150);
+          }, 200);
+        }
+      } catch (e) { }
+    }
+
     // Periodic sync interval while practice screen is active
     if (!guideSyncInterval) {
       guideSyncInterval = setInterval(() => {
@@ -478,6 +531,7 @@
                         if (isSaveOrApply) {
                           window._hasClickedSaveInGuide = true;
                           doc._ftcIsSaved = true;
+                          triggerSaveFlashEffect(doc, el);
                           setTimeout(function () {
                             try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
                           }, 50);
@@ -541,6 +595,17 @@
                     if (input) el = input;
                   }
                   if (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA') {
+                    // Bỏ qua các trường thuộc trang hoặc form đăng nhập (login)
+                    const loc = (doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
+                    const hsh = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
+                    const isLoginPage = loc.includes('login') || hsh.includes('login');
+                    const isLoginField = isLoginPage ||
+                      (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
+                      el.id === 'username' || el.id === 'password' ||
+                      (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
+                      (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password')));
+                    if (isLoginField) return;
+
                     if (!el.dataset.ftcId) el.dataset.ftcId = 'ftc_' + Math.random().toString(36).substr(2, 9);
                     const uid = el.dataset.ftcId;
                     // Lưu lại giá trị của field NGAY TRƯỚC KHI người dùng kịp thay đổi nó
@@ -1054,12 +1119,15 @@
     window._hasClickedSaveInGuide = false;
 
     // ── Ghi nhận thời điểm BẮT ĐẦU phiên thực hành (Tracking) ──
+    window._sessionRuleCache = {};
     _trackingSession = {
       device: device,
       lesson: lesson,
       mode: enableGuide ? 'Hướng dẫn' : 'Thực hành',
       startedAt: new Date().toISOString(),
-      submissionId: crypto.randomUUID ? crypto.randomUUID() : ('sub-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10))
+      submissionId: crypto.randomUUID ? crypto.randomUUID() : ('sub-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10)),
+      ruleCache: {},
+      cachedUnexpectedErrors: []
     };
     const sessionToReserve = _trackingSession;
     _trackingSession.startSettled = sessionToReserve.mode !== 'Thực hành';
@@ -1177,6 +1245,7 @@
     _lastSubmitDurationSec = 0;
     window._hasClickedSaveInGuide = false;
     window._hasSuccHintStored = false;
+    window._sessionRuleCache = null;
 
     deviceIframe.src = '';
     currentIframeUrl = '';
@@ -1411,6 +1480,19 @@
         } catch (e) { }
       }
 
+      // Nếu không tìm thấy element trong các frame hiện hành (do học viên đã chuyển trang khác như LAN, Wi-Fi...)
+      // thì kiểm tra xem rule này đã từng được nhập và lưu thành công trong phiên làm việc hiện tại hay chưa (Session Cache)
+      if (!elementFound) {
+        const cached = (_trackingSession && _trackingSession.ruleCache && _trackingSession.ruleCache[rule.id]) ||
+                       (window._sessionRuleCache && window._sessionRuleCache[rule.id]);
+        if (cached) {
+          elementFound = true;
+          actualValue = cached.actualValue;
+          isSaved = cached.isSaved;
+          isMatch = cached.isMatch;
+        }
+      }
+
       // Nếu đã có thông báo "Your data have been stored!", đối với BE12000 hoặc khi thiết bị đã xác nhận lưu thành công
       if (hasStoredNotification) {
         isMatch = true;
@@ -1423,6 +1505,36 @@
         // Đối với thiết bị AX3000C, AX3000H v2 và AX3000S, bắt buộc trang chứa phần tử phải được bấm Save/Apply thành công
         if ((currentDeviceId === 'ax3000c' || currentDeviceId === 'ax3000hv2' || currentDeviceId === 'ax3000s') && !isSaved) {
           isMatch = false;
+        }
+      }
+
+      // Cập nhật hoặc đồng bộ bộ nhớ đệm phiên (Session Cache):
+      // - Nếu phần tử tìm thấy và đã được lưu thành công: lưu vào cache để dùng khi học viên chuyển trang khác
+      // - Nếu phần tử tìm thấy trên trang đang mở nhưng chưa được lưu (bị sửa đổi): xóa khỏi cache để tránh dùng lại giá trị cũ
+      if (elementFound) {
+        if (isSaved) {
+          if (!window._sessionRuleCache) window._sessionRuleCache = {};
+          window._sessionRuleCache[rule.id] = {
+            actualValue: actualValue,
+            isSaved: isSaved,
+            isMatch: isMatch
+          };
+          if (_trackingSession) {
+            if (!_trackingSession.ruleCache) _trackingSession.ruleCache = {};
+            _trackingSession.ruleCache[rule.id] = {
+              actualValue: actualValue,
+              isSaved: isSaved,
+              isMatch: isMatch
+            };
+          }
+        } else {
+          const isActuallyInDom = allDocs.some(d => {
+            try { return d.querySelector(rule.selector) !== null; } catch (e) { return false; }
+          });
+          if (isActuallyInDom) {
+            if (window._sessionRuleCache) delete window._sessionRuleCache[rule.id];
+            if (_trackingSession && _trackingSession.ruleCache) delete _trackingSession.ruleCache[rule.id];
+          }
         }
       }
 
@@ -1499,6 +1611,44 @@
             const originalValue = doc._ftcOriginalValues[uid];
             const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
             if (el) {
+              // Bỏ qua các trường thuộc trang hoặc form đăng nhập router
+              const isLoginField = (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
+                el.id === 'username' || el.id === 'password' ||
+                (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
+                (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password'))) ||
+                (el.value === 'admin' && (originalValue === '' || originalValue === null || originalValue === undefined));
+              if (isLoginField) return;
+
+              // Bỏ qua các trường được cho phép hoặc nằm trong guidePopups (hướng dẫn từng bước của bài học)
+              const effectiveLesson = lesson || _currentLesson;
+              const guideList = (effectiveLesson && Array.isArray(effectiveLesson.guidePopups)) ? effectiveLesson.guidePopups : [];
+              const allowedSelectors = [
+                ...(effectiveLesson && Array.isArray(effectiveLesson.allowedSelectors) ? effectiveLesson.allowedSelectors : []),
+                ...(effectiveLesson && effectiveLesson.grading && Array.isArray(effectiveLesson.grading.allowedSelectors) ? effectiveLesson.grading.allowedSelectors : []),
+                ...guideList.map(g => g.selector).filter(Boolean)
+              ];
+              const isAllowedByLesson = allowedSelectors.some(sel => {
+                try {
+                  const matchedList = Array.from(doc.querySelectorAll(sel));
+                  return matchedList.includes(el);
+                } catch (e) { return false; }
+              });
+              if (isAllowedByLesson) return;
+
+              // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, Wi-Fi IoT / WiFi5 enable, SSID broadcast
+              const isAuxToggle = (el.name && (
+                el.name.toLowerCase() === 'dnstyperadio' ||
+                el.name.toLowerCase().includes('enable_wifi') ||
+                el.name.toLowerCase().includes('wifi5') ||
+                el.name.toLowerCase().includes('essid_hide')
+              )) ||
+              (el.id && (
+                el.id.toLowerCase().includes('dnsrelay') ||
+                el.id.toLowerCase().includes('wifi5_enable') ||
+                el.id.toLowerCase().includes('enable_wifi')
+              ));
+              if (isAuxToggle) return;
+
               // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
               const isExpected = rules.some(r => {
                 try {
@@ -1548,6 +1698,32 @@
         }
       });
     }
+
+    // Đồng bộ lỗi thao tác thừa theo phiên nếu có (giữ nguyên lỗi nếu học viên chuyển sang trang khác)
+    if (_trackingSession) {
+      if (unexpectedErrors.length > 0) {
+        _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
+      }
+    }
+    if (unexpectedErrors.length === 0 && _trackingSession && Array.isArray(_trackingSession.cachedUnexpectedErrors) && _trackingSession.cachedUnexpectedErrors.length > 0) {
+      unexpectedErrors = _trackingSession.cachedUnexpectedErrors;
+    }
+
+    // Lọc triệt để loại bỏ các trường đăng nhập admin/admin, dnsTypeRadio, wifi5/IoT toggle khỏi danh sách lỗi thao tác thừa
+    unexpectedErrors = unexpectedErrors.filter(err => {
+      const lbl = (err.label || '').toLowerCase();
+      const act = (err.actual || '').toLowerCase();
+      if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) && (act === 'admin' || act === '')) {
+        return false;
+      }
+      if (lbl.includes('dns relay') || lbl.includes('dnstyperadio')) {
+        return false;
+      }
+      if (lbl.includes('2.4g wifi') || lbl.includes('5g wifi') || lbl.includes('wifi5') || lbl.includes('wifi 5') || lbl.includes('enable_wifi') || lbl.includes('ssid broadcast')) {
+        return false;
+      }
+      return true;
+    });
 
     // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa (hoặc có hasStoredNotification)
     const hasUnexpected = unexpectedErrors.length > 0;
@@ -2490,6 +2666,7 @@
       }
     }
 
+    triggerSaveFlashEffect(simWin ? simWin.document : null, null);
     window._hasClickedSaveInGuide = true;
 
     if (_currentLesson && typeof _currentLesson.onSimSave === 'function') {

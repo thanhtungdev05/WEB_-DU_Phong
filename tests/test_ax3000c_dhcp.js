@@ -60,7 +60,13 @@ assert.ok(ttStep4 && ttStep4.text.includes('192.168.1.249') && ttStep4.expected 
 
 // 4. Verify portal.html cachebuster
 const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(portalContent.includes('devices/ax3000c/lessons/bai5.js?v=20260915160200'), 'portal.html must have updated cachebuster');
+assert.ok(portalContent.includes('devices/ax3000c/lessons/bai5.js?v=20260916101500'), 'portal.html must have updated cachebuster');
+
+// Verify tooltip selector for Network points to Network title and not Status
+const ttNetwork = tooltips.find(t => t.text.includes('Chọn Network'));
+assert.ok(ttNetwork, 'Must have Chọn Network tooltip');
+assert.ok(!ttNetwork.selector.includes(':not(.is-opened):contains("Network")'), 'Selector must not match parent submenu by contains');
+assert.ok(ttNetwork.selector.includes('index="/network"'), 'Selector must target /network index');
 
 // 5. Simulate grading
 function simulateGrading(inputs) {

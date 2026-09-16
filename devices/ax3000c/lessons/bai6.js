@@ -72,19 +72,19 @@ var lessonObj = {
   },
   guidePopups: (window.TOOLTIPS_AX3000C && window.TOOLTIPS_AX3000C['LAB_AX3000CV2_06']) ? window.TOOLTIPS_AX3000C['LAB_AX3000CV2_06'] : [
     {
-      selector: 'li.el-submenu:not(.is-opened):contains("Network") .el-submenu__title, .el-submenu__title:contains("Network")',
+      selector: '.el-submenu[index="/network"]:not(.is-opened) .el-submenu__title, li.el-submenu:not(.is-opened) .el-submenu__title:contains("Network")',
       text: 'Chọn Network',
       position: 'right',
       hideOnPage: 'portfwd'
     },
     {
-      selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu:not(.is-opened):contains("Access") .el-submenu__title, .el-submenu:contains("Network") .el-submenu__title:contains("Access")',
+      selector: 'li.el-submenu.is-opened li.el-submenu:not(.is-opened) .el-submenu__title:contains("Access"), .el-submenu[index="/network/access"]:not(.is-opened) .el-submenu__title',
       text: 'Chọn Access',
       position: 'right',
       hideOnPage: 'portfwd'
     },
     {
-      selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu.is-opened:contains("Access") li.el-menu-item:contains("Port"), .el-menu-item:contains("Port")',
+      selector: 'li.el-submenu.is-opened li.el-submenu.is-opened li.el-menu-item:contains("Port Forwarding"), li.el-submenu.is-opened li.el-menu-item:contains("Port"), .el-menu-item[index="/network/access/portfwd"]',
       text: 'Chọn Port Forwarding',
       position: 'right',
       hideOnPage: 'portfwd'

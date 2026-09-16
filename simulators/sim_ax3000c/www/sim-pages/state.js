@@ -51,6 +51,16 @@
         .catch(function () { if (cb) cb(null); });
     },
     save: function (okMsg) {
+      // Hieu ung nhay nhe giao dien khi bam Apply (phan hoi truc quan)
+      try {
+        document.body.style.transition = 'opacity 0.12s ease-in-out';
+        document.body.style.opacity = '0.35';
+        setTimeout(function () {
+          document.body.style.opacity = '1';
+          setTimeout(function () { document.body.style.transition = ''; }, 150);
+        }, 120);
+      } catch (e) {}
+
       var tb = document.getElementById('tb');
       var rows = tb ? tb.querySelectorAll('tr').length - (document.getElementById('empty') ? 1 : 0) : 0;
       fetch('/sim-state?page=' + encodeURIComponent(PAGE), {
