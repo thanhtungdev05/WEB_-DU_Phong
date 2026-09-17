@@ -85,6 +85,40 @@ NULLIF(
        AND lab.is_active = TRUE
        AND device.is_active = TRUE
 ),
+reportable_people AS (
+    SELECT roster.user_id::text AS person_id,
+           roster.user_id,
+           roster.employee_id,
+           roster.email
+      FROM v_ktv_directory roster
+     WHERE roster.is_terminated = FALSE
+    UNION ALL
+    SELECT 'firebase:' || LOWER(event.normalized_email) AS person_id,
+           NULL::uuid AS user_id,
+           NULL::varchar AS employee_id,
+           LOWER(event.normalized_email) AS email
+      FROM firebase_legacy_import_events event
+     WHERE event.account_group = 'KTV'
+       AND event.resolution_status = 'imported'
+       AND NULLIF(event.normalized_email, '') IS NOT NULL
+       AND NOT EXISTS (
+           SELECT 1
+             FROM v_ktv_directory roster
+            WHERE roster.is_terminated = FALSE
+              AND LOWER(roster.email) = LOWER(event.normalized_email)
+       )
+     GROUP BY LOWER(event.normalized_email)
+),
+reportable_identities AS (
+    SELECT person_id, 'user:' || user_id::text AS identity_key
+      FROM reportable_people WHERE user_id IS NOT NULL
+    UNION
+    SELECT person_id, 'email:' || LOWER(email)
+      FROM reportable_people WHERE NULLIF(email, '') IS NOT NULL
+    UNION
+    SELECT person_id, 'employee:' || employee_id
+      FROM reportable_people WHERE NULLIF(employee_id, '') IS NOT NULL
+),
 eligible AS (
     SELECT DISTINCT person_id, user_id, employee_id, email
       FROM assignment_pairs
@@ -110,12 +144,7 @@ active_labs AS (
 ),
 all_valid_sessions AS (
     SELECT timer.id,
-           COALESCE(
-               timer.user_id::text,
-               NULLIF(LOWER(timer.email), ''),
-               NULLIF(timer.technician_id, ''),
-               'session:' || timer.id::text
-           ) AS person_id,
+           identity.person_id,
            timer.lab_id,
            timer.device_id,
            COALESCE(timer.started_at, timer.finished_at, timer.created_at) AS occurred_at,
@@ -127,6 +156,12 @@ all_valid_sessions AS (
            timer.attempt_sequence_complete,
            timer.duration_sec
       FROM timer_sessions timer
+      JOIN reportable_identities identity
+        ON identity.identity_key = CASE
+            WHEN timer.user_id IS NOT NULL THEN 'user:' || timer.user_id::text
+            WHEN NULLIF(timer.email, '') IS NOT NULL THEN 'email:' || LOWER(timer.email)
+            ELSE 'employee:' || COALESCE(timer.technician_id, '')
+        END
      WHERE NOT COALESCE(timer.is_mock, FALSE)
        AND timer.status IN ('completed', 'failed')
 ),
@@ -246,18 +281,25 @@ SELECT (SELECT COUNT(*) FROM cohort_pairs) AS assigned_count,
        ) AS ungraded_completed_count,
        (SELECT COUNT(*) FROM pair_outcomes WHERE completed IS TRUE) AS completed_count,
        COUNT(*) FILTER (
-            WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.is_passed IS NOT NULL
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+              AND activity_scoped.is_passed IS NOT NULL
+              AND activity_scoped.attempt_sequence_complete IS TRUE
        ) AS graded_count,
        COUNT(*) FILTER (
-            WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.is_passed IS TRUE
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+              AND activity_scoped.is_passed IS TRUE
+              AND activity_scoped.attempt_sequence_complete IS TRUE
        ) AS passed_count,
        ROUND(100.0 * (SELECT COUNT(*) FROM pair_outcomes WHERE completed IS TRUE)
            / NULLIF((SELECT COUNT(*) FROM cohort_pairs), 0), 2) AS completion_rate,
        ROUND(100.0 * COUNT(*) FILTER (
-            WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.is_passed IS TRUE
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+              AND activity_scoped.is_passed IS TRUE
+              AND activity_scoped.attempt_sequence_complete IS TRUE
         ) / NULLIF(COUNT(*) FILTER (
              WHERE activity_scoped.mode IN ('Thực hành', 'practice')
                AND activity_scoped.is_passed IS NOT NULL
+               AND activity_scoped.attempt_sequence_complete IS TRUE
         ), 0), 2) AS pass_rate,
        ROUND(100.0 * (SELECT COUNT(*) FROM pair_outcomes WHERE first_pass_attempt_no = 1)
             / NULLIF((SELECT COUNT(*) FROM pair_outcomes WHERE first_pass_attempt_no IS NOT NULL), 0), 2) AS first_try_rate,
@@ -311,8 +353,16 @@ attempt_metrics AS (
            COUNT(*) FILTER (WHERE mode IN ('Thực hành', 'practice')) AS practice_attempts,
            COUNT(*) FILTER (WHERE mode IN ('Hướng dẫn', 'guide')) AS guide_attempts,
            COUNT(DISTINCT scoped.person_id) AS participating_technicians,
-           COUNT(*) FILTER (WHERE mode IN ('Thực hành', 'practice') AND is_passed IS NOT NULL) AS graded_count,
-           COUNT(*) FILTER (WHERE mode IN ('Thực hành', 'practice') AND is_passed IS TRUE) AS passed_count,
+           COUNT(*) FILTER (
+               WHERE mode IN ('Thực hành', 'practice')
+                 AND is_passed IS NOT NULL
+                 AND attempt_sequence_complete IS TRUE
+           ) AS graded_count,
+           COUNT(*) FILTER (
+               WHERE mode IN ('Thực hành', 'practice')
+                 AND is_passed IS TRUE
+                 AND attempt_sequence_complete IS TRUE
+           ) AS passed_count,
            ROUND(AVG(duration_sec) FILTER (WHERE mode IN ('Thực hành', 'practice') AND duration_sec > 0)) AS avg_duration_sec,
            COUNT(*) FILTER (WHERE mode IN ('Thực hành', 'practice') AND duration_sec > 0) AS duration_known_count
       FROM scoped
@@ -397,12 +447,12 @@ WITH roster_people AS (
       FROM v_ktv_directory roster
      WHERE roster.is_terminated = FALSE
 ),
-firebase_ftc_people AS (
-    SELECT 'firebase:' || LOWER(timer.email) AS person_id,
+firebase_ktv_people AS (
+    SELECT 'firebase:' || LOWER(event.normalized_email) AS person_id,
            NULL::uuid AS user_id,
            NULL::varchar AS employee_id,
            MAX(NULLIF(timer.name, '')) AS display_name,
-           LOWER(timer.email) AS email,
+           LOWER(event.normalized_email) AS email,
            NULL::uuid AS region_id,
            'FTC'::varchar AS region_code,
            'FTC'::varchar AS region_name,
@@ -410,20 +460,22 @@ firebase_ftc_people AS (
            NULL::uuid AS unit_id,
            'FTC'::varchar AS unit_code,
            'FTC'::varchar AS branch_name
-      FROM timer_sessions timer
-     WHERE timer.seed_batch LIKE 'firebase-v1-%'
-       AND NULLIF(timer.email, '') IS NOT NULL
+      FROM firebase_legacy_import_events event
+      JOIN timer_sessions timer ON timer.id = event.timer_session_id
+     WHERE event.account_group = 'KTV'
+       AND event.resolution_status = 'imported'
+       AND NULLIF(event.normalized_email, '') IS NOT NULL
        AND NOT COALESCE(timer.is_mock, FALSE)
        AND NOT EXISTS (
            SELECT 1 FROM roster_people roster
-            WHERE LOWER(roster.email) = LOWER(timer.email)
+            WHERE LOWER(roster.email) = LOWER(event.normalized_email)
        )
-     GROUP BY LOWER(timer.email)
+     GROUP BY LOWER(event.normalized_email)
 ),
 regional_people AS (
     SELECT * FROM roster_people
     UNION ALL
-    SELECT * FROM firebase_ftc_people
+    SELECT * FROM firebase_ktv_people
 ),
 regional_identities AS (
     SELECT person_id, 'user:' || user_id::text AS identity_key
@@ -456,6 +508,7 @@ numbered_sessions AS (
            timer.mode,
            timer.status,
            timer.is_passed,
+           timer.attempt_sequence_complete,
            timer.duration_sec
       FROM timer_sessions timer
       JOIN active_labs lab ON lab.lab_id = timer.lab_id
@@ -477,10 +530,21 @@ function dashboard_report_branch_drilldown(PDO $pdo, string $from, string $to): 
 activity AS (
     SELECT session.person_id,
            session.lab_id,
-           COUNT(session.id) FILTER (WHERE session.mode IN ('Thực hành', 'practice')) AS attempt_count,
            COUNT(session.id) FILTER (
-               WHERE session.mode IN ('Thực hành', 'practice') AND session.is_passed IS TRUE
-           ) AS pass_count
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS NOT NULL
+                 AND session.attempt_sequence_complete IS TRUE
+           ) AS attempt_count,
+           COUNT(session.id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS TRUE
+                 AND session.attempt_sequence_complete IS TRUE
+           ) AS pass_count,
+           COUNT(session.id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS TRUE
+                 AND session.attempt_sequence_complete IS FALSE
+           ) AS incomplete_attempt_count
       FROM numbered_sessions session
      WHERE session.occurred_at >= CAST(:from_date AS date)
        AND session.occurred_at < CAST(:to_date AS date) + INTERVAL '1 day'
@@ -510,6 +574,7 @@ SELECT person.*,
        lab.lab_sort_order,
        COALESCE(activity.attempt_count, 0) AS attempt_count,
        COALESCE(activity.pass_count, 0) AS pass_count,
+       COALESCE(activity.incomplete_attempt_count, 0) AS incomplete_attempt_count,
        COALESCE(progress.completed, FALSE) AS completed
   FROM metric_pairs metric
   JOIN regional_people person USING (person_id)
@@ -554,7 +619,7 @@ SQL;
                 'unit_code' => (string)$organization['unit_code'],
                 'name' => (string)$organization['unit_name'],
                 'cells' => [],
-                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0],
+                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
                 'technicians' => [],
             ];
         }
@@ -588,7 +653,7 @@ SQL;
                 'unit_code' => (string)$roster['unit_code'],
                 'name' => (string)$roster['branch_name'],
                 'cells' => [],
-                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0],
+                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
                 'technicians' => [],
             ];
         }
@@ -599,7 +664,7 @@ SQL;
             'display_name' => (string)($roster['display_name'] ?? ''),
             'email' => (string)($roster['email'] ?? ''),
             'cells' => [],
-            'total' => ['pass_count' => 0, 'attempt_count' => 0],
+            'total' => ['pass_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
         ];
     }
 
@@ -619,6 +684,7 @@ SQL;
                     'attempted_count' => 0,
                     'completed_count' => 0,
                     'attempt_count' => 0,
+                    'incomplete_attempt_count' => 0,
                 ];
                 $branch['total']['population_count'] += $population;
             }
@@ -648,23 +714,26 @@ SQL;
                 'unit_code' => (string)$row['unit_code'],
                 'name' => (string)$row['branch_name'],
                 'cells' => [],
-                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0],
+                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
                 'technicians' => [],
             ];
         }
         $branch =& $regions[$regionKey]['branches'][$unitKey];
         if (!isset($branch['cells'][$labId])) {
-            $branch['cells'][$labId] = ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0];
+            $branch['cells'][$labId] = ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0];
         }
         $attempts = (int)$row['attempt_count'];
         $passes = (int)$row['pass_count'];
+        $incompleteAttempts = (int)$row['incomplete_attempt_count'];
         $completed = in_array($row['completed'], [true, 1, '1', 't', 'true'], true);
         $branch['cells'][$labId]['attempted_count'] += $attempts > 0 ? 1 : 0;
         $branch['cells'][$labId]['completed_count'] += $completed ? 1 : 0;
         $branch['cells'][$labId]['attempt_count'] += $attempts;
+        $branch['cells'][$labId]['incomplete_attempt_count'] += $incompleteAttempts;
         $branch['total']['attempted_count'] += $attempts > 0 ? 1 : 0;
         $branch['total']['completed_count'] += $completed ? 1 : 0;
         $branch['total']['attempt_count'] += $attempts;
+        $branch['total']['incomplete_attempt_count'] += $incompleteAttempts;
         if (!isset($branch['technicians'][$personKey])) {
             $branch['technicians'][$personKey] = [
                 'user_id' => $row['user_id'] ?? null,
@@ -672,17 +741,19 @@ SQL;
                 'display_name' => (string)($row['display_name'] ?? ''),
                 'email' => (string)($row['email'] ?? ''),
                 'cells' => [],
-                'total' => ['pass_count' => 0, 'attempt_count' => 0],
+                'total' => ['pass_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
             ];
         }
         $technician =& $branch['technicians'][$personKey];
         $technician['cells'][$labId] = [
             'pass_count' => $passes,
             'attempt_count' => $attempts,
+            'incomplete_attempt_count' => $incompleteAttempts,
             'pass_rate' => $attempts ? round(100 * $passes / $attempts, 2) : null,
         ];
         $technician['total']['pass_count'] += $passes;
         $technician['total']['attempt_count'] += $attempts;
+        $technician['total']['incomplete_attempt_count'] += $incompleteAttempts;
         unset($technician, $branch);
     }
 
@@ -773,6 +844,7 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
                         'attempted_count' => 0,
                         'completed_count' => 0,
                         'attempt_count' => 0,
+                        'incomplete_attempt_count' => 0,
                     ];
                 }
                 $aggregate =& $rowsByRegionLab[$key];
@@ -780,7 +852,7 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
                 if ($branchName !== '') {
                     $aggregate['branch_names'][$branchName] = true;
                 }
-                foreach (['population_count', 'attempted_count', 'completed_count', 'attempt_count'] as $metric) {
+                foreach (['population_count', 'attempted_count', 'completed_count', 'attempt_count', 'incomplete_attempt_count'] as $metric) {
                     $aggregate[$metric] += (int)($cell[$metric] ?? 0);
                 }
                 unset($aggregate);
@@ -801,7 +873,7 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
 
     $regionRows = [];
     $grandCells = [];
-    $grandTotal = ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0];
+    $grandTotal = ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0];
     foreach ($rows as $row) {
         $regionKey = (string)($row['region_id'] ?? '') . '|' . (string)$row['region_name'];
         if (!isset($regionRows[$regionKey])) {
@@ -814,7 +886,7 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
                     'branch_name' => $row['branch_name'] ?? null,
                 ],
                 'cells' => [],
-                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0],
+                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
             ];
         }
         $cell = [
@@ -822,11 +894,12 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
             'attempted_count' => (int)$row['attempted_count'],
             'completed_count' => (int)$row['completed_count'],
             'attempt_count' => (int)$row['attempt_count'],
+            'incomplete_attempt_count' => (int)$row['incomplete_attempt_count'],
             'completion_rate' => $row['completion_rate'] === null ? null : (float)$row['completion_rate'],
         ];
         $labId = (string)$row['lab_id'];
         $regionRows[$regionKey]['cells'][$labId] = $cell;
-        foreach (['population_count', 'attempted_count', 'completed_count', 'attempt_count'] as $metric) {
+        foreach (['population_count', 'attempted_count', 'completed_count', 'attempt_count', 'incomplete_attempt_count'] as $metric) {
             $regionRows[$regionKey]['total'][$metric] += $cell[$metric];
             $grandTotal[$metric] += $cell[$metric];
             $grandCells[$labId][$metric] = ($grandCells[$labId][$metric] ?? 0) + $cell[$metric];
@@ -857,6 +930,8 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
         'data_quality' => [
             'location_source' => 'current_roster',
             'scope' => 'all_active_technicians_x_active_labs',
+            'incomplete_attempt_count' => (int)($grandTotal['incomplete_attempt_count'] ?? 0),
+            'incomplete_attempt_policy' => 'completion_evidence_only_excluded_from_attempt_rates',
         ],
     ];
 }
@@ -900,9 +975,9 @@ function dashboard_report_payload(PDO $pdo, array $query): array
             'cohort' => 'assigned_as_of_period_end',
             'metric_semantics' => [
                 'assigned_count' => 'KTV-lab assignments effective at the period end.',
-                'attempt_metrics' => 'Practice and guide attempts occurring inside the selected period.',
+                'attempt_metrics' => 'Practice and guide attempts by verified KTV accounts occurring inside the selected period.',
                 'completion_metrics' => 'Cumulative passed KTV-lab assignments through the period end.',
-                'pass_rate' => 'Passed practice attempts divided by graded practice attempts in the selected period.',
+                'pass_rate' => 'Passed practice attempts divided by graded practice attempts with complete attempt evidence in the selected period.',
                 'first_try_rate' => 'Passed assignments whose first recorded passing attempt is attempt 1, divided by passed assignments with reliable attempt-number evidence.',
                 'region_matrix' => 'All active technicians in the current region roster are in scope for every active lab; sessions do not require an assignment.',
             ],

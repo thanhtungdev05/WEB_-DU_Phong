@@ -488,6 +488,19 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         if is_sensitive_path(path_only):
             self.send_error(404, 'Not Found')
             return
+
+        # /login va /login/ (kem theo query ?redirect=...) LUON LUON phai mo duoc
+        # trang dang nhap. Mot so client cu hoac JS bi cache trong browser van dieu
+        # huong toi /login/ khi phien het han; redirect sang /login/index.html de
+        # tranh 404 khi phuc vu tren cac front-server khong tu dong resolve
+        # thu muc ra index.html (vi du: Render).
+        if method in ('GET', 'HEAD') and path_only in ('/login', '/login/'):
+            query = self.path.split('?', 1)[1] if '?' in self.path else ''
+            self.send_response(302)
+            self.send_header('Location', '/login/index.html' + (('?' + query) if query else ''))
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+            return
         if (path_only == '/api' or path_only.startswith('/api/')) and not path_only.startswith('/api/v1/data/'):
             return self._proxy_api(method)
 

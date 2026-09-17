@@ -163,7 +163,7 @@
     })
       .then(res => {
         if (res.status === 401) {
-          window.location.href = '/login/?redirect=' + encodeURIComponent(window.location.pathname);
+          window.location.href = '/login/index.html?redirect=' + encodeURIComponent(window.location.pathname);
           return null;
         }
         if (!res.ok) {
@@ -860,7 +860,7 @@
       method: 'POST',
       credentials: 'include'
     }).finally(() => {
-      window.location.href = '/login/';
+      window.location.href = '/login/index.html';
     });
   }
 

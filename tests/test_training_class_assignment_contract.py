@@ -241,6 +241,9 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertIn('href="/personal-dashboard.html"', portal)
         self.assertIn('id="btn-goto-practice"', dashboard_html)
         self.assertIn("/api/index.php/learning/personal-dashboard", dashboard_js)
+        self.assertIn("'/login/index.html?redirect='", dashboard_js)
+        self.assertIn("window.location.href = '/login/index.html';", dashboard_js)
+        self.assertNotIn("'/login/?redirect='", dashboard_js)
 
 
 if __name__ == "__main__":

@@ -2578,10 +2578,8 @@ function handle_dashboard(array $segments, string $method): void
                            TO_CHAR(
                                GREATEST(
                                    COALESCE((SELECT MAX(updated_at) FROM users), 'epoch'::timestamptz),
-                                    COALESCE((
-                                        SELECT MAX(GREATEST(created_at, COALESCE(finished_at, started_at, created_at)))
-                                          FROM timer_sessions
-                                    ), 'epoch'::timestamptz),
+                                   COALESCE((SELECT MAX(updated_at) FROM timer_sessions), 'epoch'::timestamptz),
+                                   COALESCE((SELECT MAX(updated_at) FROM firebase_legacy_import_events), 'epoch'::timestamptz),
                                    COALESCE((SELECT MAX(updated_at) FROM regions), 'epoch'::timestamptz),
                                    COALESCE((SELECT MAX(updated_at) FROM org_units), 'epoch'::timestamptz),
                                    COALESCE((SELECT MAX(updated_at) FROM device_catalog), 'epoch'::timestamptz),
@@ -2656,6 +2654,7 @@ function handle_dashboard(array $segments, string $method): void
                     timer.completed_first_try,
                     timer.last_action,
                     timer.practice_attempt_no,
+                    timer.attempt_sequence_complete,
                     COALESCE(attribution.class_codes, \'[]\'::jsonb) AS assignment_class_codes
                  FROM timer_sessions timer
                  JOIN lab_catalog active_lab ON active_lab.lab_id = timer.lab_id
@@ -2674,6 +2673,25 @@ function handle_dashboard(array $segments, string $method): void
                  )
                    AND NOT COALESCE(timer.is_mock, FALSE)
                    AND timer.status IN (\'completed\', \'failed\')
+                   AND (
+                       EXISTS (
+                           SELECT 1
+                             FROM v_ktv_directory directory
+                            WHERE directory.is_terminated = FALSE
+                              AND (
+                                  (timer.user_id IS NOT NULL AND directory.user_id = timer.user_id)
+                                  OR (NULLIF(timer.email, \'\') IS NOT NULL AND LOWER(directory.email) = LOWER(timer.email))
+                                  OR (NULLIF(timer.technician_id, \'\') IS NOT NULL AND directory.employee_id = timer.technician_id)
+                              )
+                       )
+                       OR EXISTS (
+                           SELECT 1
+                             FROM firebase_legacy_import_events legacy
+                            WHERE legacy.timer_session_id = timer.id
+                              AND legacy.account_group = \'KTV\'
+                              AND legacy.resolution_status = \'imported\'
+                       )
+                   )
                    AND NOT (
                      timer.user_id IS NULL
                      AND (
@@ -2750,20 +2768,22 @@ function handle_dashboard(array $segments, string $method): void
 
         $firebaseFtcRows = $pdo->query(
             <<<'SQL'
-            SELECT LOWER(timer.email) AS email,
+            SELECT LOWER(event.normalized_email) AS email,
                    MAX(NULLIF(timer.name, '')) AS display_name
-              FROM timer_sessions timer
-             WHERE timer.seed_batch LIKE 'firebase-v1-%'
-               AND NULLIF(timer.email, '') IS NOT NULL
+              FROM firebase_legacy_import_events event
+              JOIN timer_sessions timer ON timer.id = event.timer_session_id
+             WHERE event.account_group = 'KTV'
+               AND event.resolution_status = 'imported'
+               AND NULLIF(event.normalized_email, '') IS NOT NULL
                AND NOT COALESCE(timer.is_mock, FALSE)
                AND NOT EXISTS (
                    SELECT 1
                      FROM v_ktv_directory directory
                     WHERE directory.is_terminated = FALSE
-                      AND LOWER(directory.email) = LOWER(timer.email)
+                      AND LOWER(directory.email) = LOWER(event.normalized_email)
                )
-             GROUP BY LOWER(timer.email)
-             ORDER BY LOWER(timer.email)
+             GROUP BY LOWER(event.normalized_email)
+             ORDER BY LOWER(event.normalized_email)
             SQL
         )->fetchAll();
         foreach ($firebaseFtcRows as $firebaseFtcRow) {
@@ -2772,8 +2792,8 @@ function handle_dashboard(array $segments, string $method): void
                 'employee_id' => null,
                 'email' => (string)$firebaseFtcRow['email'],
                 'display_name' => (string)($firebaseFtcRow['display_name'] ?: $firebaseFtcRow['email']),
-                'role' => 'FTC',
-                'job_title' => 'Tài khoản FTC/Test',
+                'role' => 'KTV',
+                'job_title' => 'KTV lịch sử chưa đối chiếu khu vực',
                 'unit_code' => 'FTC',
                 'unit_name' => 'FTC',
                 'region_id' => null,
@@ -2872,6 +2892,7 @@ function handle_dashboard(array $segments, string $method): void
             'status' => (string)($row['status'] ?? ((isset($row['is_passed']) && $row['is_passed'] === false) ? 'failed' : 'completed')),
             'completed_first_try' => database_nullable_boolean($row['completed_first_try'] ?? null),
             'practice_attempt_no' => $row['practice_attempt_no'] !== null ? (int)$row['practice_attempt_no'] : null,
+            'attempt_sequence_complete' => database_boolean($row['attempt_sequence_complete'] ?? true),
             'last_action' => (string)($row['last_action'] ?? ''),
             'assignment_class_codes' => $assignmentClassCodes,
         ];

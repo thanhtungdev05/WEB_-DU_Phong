@@ -148,6 +148,23 @@ class DispatcherSecurityTests(unittest.TestCase):
         self.assertTrue(normalized_headers.get('content-disposition', '').startswith('attachment;'))
         self.assertEqual(body, b'')
 
+    def test_login_dispatch_redirects_to_login_index_html(self):
+        for request_path, expected_location in (
+            ('/login', '/login/index.html'),
+            ('/login/', '/login/index.html'),
+            ('/login/?redirect=%2Fpersonal-dashboard.html', '/login/index.html?redirect=%2Fpersonal-dashboard.html'),
+        ):
+            with self.subTest(request_path=request_path):
+                status, headers, _ = self.request(request_path)
+                normalized_headers = {key.lower(): value for key, value in headers.items()}
+                self.assertEqual(status, 302)
+                self.assertEqual(normalized_headers.get('location'), expected_location)
+
+        # Following the redirect serves the actual login page (no 404).
+        status, _, body = self.request('/login/index.html?redirect=%2Fpersonal-dashboard.html')
+        self.assertEqual(status, 200)
+        self.assertIn(b'iam-login', body)
+
     def test_source_configuration_and_directory_listing_are_not_public(self):
         for path in (
             '/run_all.py',

@@ -131,6 +131,13 @@ API phải kiểm tra `roles.is_admin` cho chức năng quản trị và
 - Danh sách và bộ lọc KTV: lấy khu vực/chi nhánh từ `v_ktv_directory`.
 - Ma trận tiến độ hiện tại: dùng khu vực hiện tại của KTV từ
   `v_ktv_directory`; KTV chưa được gán khu vực hiển thị trong nhóm `FTC`.
+- Ma trận khu vực bao phủ toàn bộ KTV đang hoạt động × toàn bộ bài lab đang hoạt động;
+  phiên thực hành không bắt buộc phải có assignment.
+- Tỷ lệ phiên Đạt chỉ dùng các dòng `timer_sessions.attempt_sequence_complete = TRUE`.
+  Phiên Firebase v1 thiếu chuỗi lần làm vẫn là bằng chứng đã hoàn thành bài nhưng không
+  tham gia tử số hoặc mẫu số của tỷ lệ phiên Đạt.
+- Migration `045_dashboard_change_tracking.sql` cập nhật `updated_at` ở mức database và
+  đồng bộ snapshot giao bài khi KTV đổi đơn vị hoặc đơn vị đổi khu vực.
 - Báo cáo lịch sử cố định: có thể dùng `region_id_snapshot` nếu nghiệp vụ yêu
   cầu giữ nguyên khu vực tại thời điểm giao bài.
 - Lớp hiện tại lấy từ `class_enrollments`/`training_classes`, nhưng không ghi đè

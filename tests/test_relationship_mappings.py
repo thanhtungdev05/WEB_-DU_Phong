@@ -256,11 +256,11 @@ class AdminRelationshipMappingTests(unittest.TestCase):
         self.assertEqual(session.device_id, 'DEV_AX3000S')
 
     def test_admin_preloads_relations_used_in_lists(self):
-        self.assertEqual(FtcUserAdmin.list_select_related, ['role', 'region'])
+        self.assertEqual(FtcUserAdmin.list_select_related, ['role', 'unit', 'unit__region'])
         self.assertEqual(TimerSessionAdmin.list_select_related, ['user', 'device'])
         self.assertIn('curriculum_lab__lab__device', ClassLabAssignmentAdmin.list_select_related)
         self.assertIn('enrollment__user', LabAssignmentAdmin.list_select_related)
-        self.assertIn('enrollment__user__region', LabAssignmentAdmin.list_select_related)
+        self.assertIn('enrollment__user__unit__region', LabAssignmentAdmin.list_select_related)
 
     def test_timer_sessions_are_immutable_in_admin(self):
         self.assertFalse(TimerSessionAdmin.has_add_permission(None, None))

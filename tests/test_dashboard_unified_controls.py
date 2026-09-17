@@ -234,8 +234,16 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn(".class-overview-action", self.css)
 
     def test_asset_version_prevents_stale_control_styles(self):
-        self.assertEqual(self.html.count("20260916-theme-system-v27"), 2)
-        self.assertEqual(self.html.count("20260916-dashboard-performance-v28"), 1)
+        self.assertIn("css/styles.css?v=20260916-theme-system-v27", self.html)
+        self.assertIn("css/dashboard-professional.css?v=20260917-top-actions-right-v29", self.html)
+        self.assertEqual(self.html.count("20260917-dashboard-consistency-v31"), 1)
+
+    def test_wrapped_desktop_topbar_actions_stay_right_aligned(self):
+        breakpoint_start = self.professional_css.index("@media (max-width: 1400px) and (min-width: 961px)")
+        breakpoint_end = self.professional_css.index("@media (max-width: 1280px)", breakpoint_start)
+        breakpoint_css = self.professional_css[breakpoint_start:breakpoint_end]
+        self.assertIn(".top-actions", breakpoint_css)
+        self.assertIn("justify-content: flex-end", breakpoint_css)
 
     def test_dashboard_copy_is_short_consistent_and_user_friendly(self):
         for label in (

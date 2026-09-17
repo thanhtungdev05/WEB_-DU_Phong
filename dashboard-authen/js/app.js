@@ -672,10 +672,14 @@ function renderDashboardDataNotice(currentMetrics) {
         0
     );
     if (unassignedPopulationPairs > 0) {
-        messages.push(`${formatNumber.format(unassignedPopulationPairs)} cặp tài khoản–bài chưa có khu vực hoặc thuộc tài khoản FTC/Test đang được gom vào “FTC”.`);
+        messages.push(`${formatNumber.format(unassignedPopulationPairs)} cặp KTV–bài chưa có khu vực đang được tạm gom vào “FTC”; khi KTV được cập nhật đơn vị, báo cáo sẽ tự chuyển sang khu vực tương ứng.`);
     }
     if (currentMetrics && currentMetrics.ungradedCompleted > 0) {
         messages.push(`${formatNumber.format(currentMetrics.ungradedCompleted)} lượt thực hành đã hoàn thành thao tác nhưng chưa có kết quả đánh giá; các lượt này chưa được tính là đạt chuẩn.`);
+    }
+    const incompleteAttempts = Number(dashboardReport?.matrix?.data_quality?.incomplete_attempt_count) || 0;
+    if (incompleteAttempts > 0) {
+        messages.push(`${formatNumber.format(incompleteAttempts)} phiên đạt lịch sử Firebase v1 vẫn được ghi nhận là đã hoàn thành bài, nhưng không được dùng để tính tỷ lệ phiên đạt vì thiếu chuỗi lần làm đầy đủ.`);
     }
 
     notice.hidden = messages.length === 0;
@@ -723,7 +727,8 @@ function buildLearnerSummaries(rows) {
     return [...map.values()].map(item => {
         const latest = getLatestSession(item.rows);
         const practiceRows = item.rows.filter(row => row.mode === 'Thực hành' || row.mode === 'practice');
-        const completed = practiceRows.filter(isSuccessfulSession).length;
+        const rateEligibleRows = practiceRows.filter(hasCompleteAttemptEvidence);
+        const completed = rateEligibleRows.filter(isSuccessfulSession).length;
         const modesArray = [...item.modes];
         const primaryMode = modesArray.length === 1 ? modesArray[0] : (latest?.mode || 'Thực hành');
         return {
@@ -743,7 +748,7 @@ function buildLearnerSummaries(rows) {
             lastDateTimeFormatted: formatDateTime(latest?.date, latest?.time),
             lastAction: latest?.lastAction || 'N/A',
             latestDuration: latest?.duration ?? null,
-            passRate: practiceRows.length ? Math.round((completed / practiceRows.length) * 100) : null
+            passRate: rateEligibleRows.length ? Math.round((completed / rateEligibleRows.length) * 100) : null
         };
     });
 }
@@ -1434,11 +1439,14 @@ function aggregateBy(rows, key) {
     const map = new Map();
     rows.forEach(item => {
         if (!map.has(item[key])) {
-            map.set(item[key], { name: item[key], sessions: 0, completed: 0, duration: 0, durationCount: 0 });
+            map.set(item[key], { name: item[key], sessions: 0, rateSessions: 0, completed: 0, duration: 0, durationCount: 0 });
         }
         const row = map.get(item[key]);
         row.sessions += 1;
-        row.completed += isSuccessfulSession(item) ? 1 : 0;
+        if ((item.mode === 'Thực hành' || item.mode === 'practice') && hasCompleteAttemptEvidence(item)) {
+            row.rateSessions += 1;
+            row.completed += isSuccessfulSession(item) ? 1 : 0;
+        }
         if (Number(item.duration) > 0) {
             row.duration += Number(item.duration);
             row.durationCount += 1;
@@ -1446,7 +1454,7 @@ function aggregateBy(rows, key) {
     });
     return [...map.values()].map(item => ({
         ...item,
-        completion: item.sessions ? Math.round((item.completed / item.sessions) * 100) : 0,
+        completion: item.rateSessions ? Math.round((item.completed / item.rateSessions) * 100) : null,
         avgDuration: item.durationCount ? Math.round(item.duration / item.durationCount) : null
     }));
 }
@@ -1680,9 +1688,13 @@ function renderBranchReportDrilldown(reportMatrix, groups, columns, completionCe
     const passMetricCell = (cell = {}, extraClass = '') => {
         const passes = Number(cell.pass_count) || 0;
         const attempts = Number(cell.attempt_count) || 0;
+        const incompleteAttempts = Number(cell.incomplete_attempt_count) || 0;
         const rate = attempts ? Math.round((passes / attempts) * 1000) / 10 : null;
         const cssClass = rate === null ? 'report-cell-zero' : (rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${passes} phiên đạt / ${attempts} phiên thực hành`)}"><strong>${passes}/${attempts}</strong><span>${rate === null ? '—' : `${rate}%`}</span></td>`;
+        const legacyNote = incompleteAttempts
+            ? `; ${incompleteAttempts} phiên đạt Firebase v1 chỉ dùng làm bằng chứng hoàn thành, không tính vào tỷ lệ`
+            : '';
+        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${passes} phiên đạt / ${attempts} phiên thực hành đủ bằng chứng${legacyNote}`)}"><strong>${passes}/${attempts}</strong><span>${rate === null ? '—' : `${rate}%`}</span></td>`;
     };
     els.branchKtvMatrixCard.hidden = false;
     els.branchKtvMatrixTitle.textContent = `KTV thuộc chi nhánh ${selectedBranch.name || selectedBranch.unit_code}`;
@@ -1692,7 +1704,7 @@ function renderBranchReportDrilldown(reportMatrix, groups, columns, completionCe
             <th class="ktv-code-head" rowspan="2" scope="col">Mã NV</th>
             <th class="ktv-info-head" rowspan="2" scope="col">Kỹ thuật viên</th>
             ${groups.map((group, index) => `<th class="report-device-group report-device-tone-${index % 5}" colspan="${(group.labs || []).length}" scope="colgroup">${escapeHTML(group.device?.name || group.device_name || '')}<span>${(group.labs || []).length} bài lab</span></th>`).join('')}
-            <th class="ktv-total-head" rowspan="2" scope="col">Đã đạt / lượt</th>
+            <th class="ktv-total-head" rowspan="2" scope="col">Đạt / lượt đủ dữ liệu</th>
             <th class="ktv-rate-head" rowspan="2" scope="col">Tỷ lệ</th>
         </tr>
         <tr class="report-lab-header-row">${columns.map(column => `<th class="report-lab-head report-device-tone-${column.groupIndex % 5} ${column.isFirst ? 'group-start' : ''}" scope="col">${escapeHTML(column.lab)}</th>`).join('')}</tr>`;
@@ -1711,15 +1723,17 @@ function renderBranchReportDrilldown(reportMatrix, groups, columns, completionCe
             <td class="ktv-rate-cell ${totalClass}">${totalRate === null ? '—' : `${totalRate}%`}</td>
         </tr>`;
     }).join('') || `<tr><td colspan="${columns.length + 5}" class="empty">Chi nhánh này chưa có KTV đang hoạt động.</td></tr>`;
-    const technicianTotals = Object.fromEntries(columns.map(column => [column.labId, { pass_count: 0, attempt_count: 0 }]));
-    const overall = { pass_count: 0, attempt_count: 0 };
+    const technicianTotals = Object.fromEntries(columns.map(column => [column.labId, { pass_count: 0, attempt_count: 0, incomplete_attempt_count: 0 }]));
+    const overall = { pass_count: 0, attempt_count: 0, incomplete_attempt_count: 0 };
     technicians.forEach(technician => {
         columns.forEach(column => {
             technicianTotals[column.labId].pass_count += Number(technician.cells?.[column.labId]?.pass_count) || 0;
             technicianTotals[column.labId].attempt_count += Number(technician.cells?.[column.labId]?.attempt_count) || 0;
+            technicianTotals[column.labId].incomplete_attempt_count += Number(technician.cells?.[column.labId]?.incomplete_attempt_count) || 0;
         });
         overall.pass_count += Number(technician.total?.pass_count) || 0;
         overall.attempt_count += Number(technician.total?.attempt_count) || 0;
+        overall.incomplete_attempt_count += Number(technician.total?.incomplete_attempt_count) || 0;
     });
     const overallRate = overall.attempt_count ? Math.round((overall.pass_count / overall.attempt_count) * 1000) / 10 : null;
     els.branchKtvMatrixFoot.innerHTML = `<tr><td class="ktv-footer-stt" aria-hidden="true"></td><td class="ktv-footer-code" aria-hidden="true"></td><th class="ktv-footer-label" scope="row">Tổng chi nhánh</th>${columns.map(column => passMetricCell(technicianTotals[column.labId], column.isFirst ? 'group-start' : '')).join('')}<td class="ktv-footer-total"><strong>${overall.pass_count}/${overall.attempt_count}</strong></td><td class="ktv-footer-rate">${overallRate === null ? '—' : `${overallRate}%`}</td></tr>`;
@@ -1730,8 +1744,9 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
     const groups = reportMatrix.device_groups || [];
     const qualityNote = document.getElementById('detailReportDataQuality');
     if (qualityNote) {
+        const incompleteAttempts = Number(reportMatrix.data_quality?.incomplete_attempt_count) || 0;
         qualityNote.hidden = false;
-        qualityNote.textContent = 'Phạm vi gồm toàn bộ KTV đang hoạt động theo khu vực/chi nhánh hiện tại; phiên thực hành không cần có assignment.';
+        qualityNote.textContent = `Phạm vi gồm toàn bộ KTV đang hoạt động × toàn bộ bài lab đang hoạt động theo khu vực/chi nhánh hiện tại; phiên thực hành không cần có assignment.${incompleteAttempts ? ` ${formatNumber.format(incompleteAttempts)} phiên đạt Firebase v1 chỉ được dùng làm bằng chứng hoàn thành, không tính vào tỷ lệ phiên đạt.` : ''}`;
     }
     const columns = groups.flatMap((group, groupIndex) => (group.labs || []).map((lab, labIndex) => ({
         device: group.device?.name || group.device?.device_name || group.device_name || '',
@@ -2446,6 +2461,10 @@ function mapApiSessions(apiSessions = []) {
             practiceAttemptNo: item.practice_attempt_no === null || item.practice_attempt_no === undefined
                 ? null
                 : Number(item.practice_attempt_no),
+            attemptSequenceComplete: item.attempt_sequence_complete === null || item.attempt_sequence_complete === undefined
+                ? true
+                : item.attempt_sequence_complete === true || item.attempt_sequence_complete === 1
+                    || ['1', 't', 'true', 'yes'].includes(String(item.attempt_sequence_complete).trim().toLowerCase()),
             lastAction: normalizeActionText(item)
         };
         });
@@ -2579,6 +2598,7 @@ function buildDashboardSignature(data) {
     const completedCount = list.filter(item => item.status === 'completed').length;
     const knownFirstTryCount = list.filter(item => item.completed_first_try !== null && item.completed_first_try !== undefined).length;
     const firstTryCount = list.filter(item => item.completed_first_try === true).length;
+    const completeAttemptEvidenceCount = list.filter(item => item.attempt_sequence_complete !== false).length;
     return [
         list.length,
         first?.session_id || '',
@@ -2591,6 +2611,7 @@ function buildDashboardSignature(data) {
         completedCount,
         knownFirstTryCount,
         firstTryCount,
+        completeAttemptEvidenceCount,
         data.data_version || '',
         data.report_meta?.data_version || ''
     ].join('|');
@@ -2700,6 +2721,10 @@ function getCanonicalDeviceList() {
 
 function isSuccessfulSession(item) {
     return (item?.mode === 'Thực hành' || item?.mode === 'practice') && item?.isPassed === true;
+}
+
+function hasCompleteAttemptEvidence(item) {
+    return item?.attemptSequenceComplete !== false;
 }
 
 function getCanonicalLabList() {
@@ -4779,8 +4804,9 @@ function getClassMatrixData() {
             const labSessions = selectedClass
                 ? classSessionsForCell(selectedClass.code, learnerKey, col.device, col.lab)
                 : [];
-            const attempts = labSessions.length;
-            const passCount = labSessions.filter(session => session.isPassed === true).length;
+            const rateEligibleSessions = labSessions.filter(hasCompleteAttemptEvidence);
+            const attempts = rateEligibleSessions.length;
+            const passCount = rateEligibleSessions.filter(session => session.isPassed === true).length;
             const assignment = selectedClass
                 ? assignmentByCell.get(`${selectedClass.code}\u001f${learnerKey}\u001f${col.device}\u001f${col.lab}`)
                 : null;
@@ -7863,7 +7889,14 @@ async function confirmRosterImport() {
             );
             state.rosterLoaded = false;
             state.rosterHistoryLoaded = false;
-            await Promise.allSettled([loadRosterList(), loadRosterHistory(), refreshDashboardData()]);
+            // Import happens while the roster tab is active. A normal refresh is
+            // intentionally skipped on that tab, so force it to keep every
+            // dashboard view in sync with the newly committed KTV locations.
+            await Promise.allSettled([
+                loadRosterList(),
+                loadRosterHistory(),
+                refreshDashboardData({ force: true })
+            ]);
         }
     } catch (err) {
         showRosterResult('Lỗi khi nhập dữ liệu: ' + err.message, false);
@@ -8065,7 +8098,10 @@ async function submitRosterEdit(e) {
         }
         closeRosterEdit();
         state.rosterLoaded = false;
-        await loadRosterList();
+        await Promise.allSettled([
+            loadRosterList(),
+            refreshDashboardData({ force: true })
+        ]);
         showToast('Đã cập nhật hồ sơ KTV.', 'success');
     } catch (err) {
         showToast(`Không thể cập nhật hồ sơ: ${err.message}`, 'error');

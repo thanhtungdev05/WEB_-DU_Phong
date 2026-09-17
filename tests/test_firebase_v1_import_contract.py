@@ -10,6 +10,7 @@ class FirebaseV1ImportContractTests(unittest.TestCase):
     def setUpClass(cls):
         cls.importer = (ROOT / "api" / "import_firebase_v1.php").read_text(encoding="utf-8")
         cls.migration = (ROOT / "api" / "migrations" / "044_firebase_v1_history_import.sql").read_text(encoding="utf-8")
+        cls.sync_migration = (ROOT / "api" / "migrations" / "045_dashboard_change_tracking.sql").read_text(encoding="utf-8")
         cls.report = (ROOT / "api" / "lib" / "dashboard_report.php").read_text(encoding="utf-8")
         cls.api = (ROOT / "api" / "index.php").read_text(encoding="utf-8")
         cls.dashboard = (ROOT / "dashboard-authen" / "js" / "app.js").read_text(encoding="utf-8")
@@ -77,13 +78,29 @@ class FirebaseV1ImportContractTests(unittest.TestCase):
         self.assertIn("FALSE, NOW(), NOW()", self.importer)
         self.assertGreaterEqual(self.importer.count("ON CONFLICT"), 4)
 
-    def test_dashboard_uses_ftc_for_test_and_unassigned_accounts(self):
-        self.assertIn("firebase_ftc_people AS", self.report)
+    def test_dashboard_only_uses_verified_legacy_ktv_accounts(self):
+        self.assertIn("firebase_ktv_people AS", self.report)
         self.assertIn("'FTC'::varchar AS region_name", self.report)
-        self.assertIn("timer.seed_batch LIKE 'firebase-v1-%'", self.report)
+        self.assertIn("event.account_group = 'KTV'", self.report)
+        self.assertIn("reportable_identities AS", self.report)
         self.assertIn("$firebaseFtcRows", self.api)
         self.assertIn("'dashboard_region' => 'FTC'", self.api)
+        self.assertIn("legacy.account_group = \\'KTV\\'", self.api)
+        self.assertNotIn("'role' => 'FTC'", self.api)
         self.assertNotIn("Chưa phân vùng", self.dashboard)
+
+    def test_pass_rate_excludes_legacy_rows_without_complete_attempt_evidence(self):
+        self.assertGreaterEqual(self.report.count("attempt_sequence_complete IS TRUE"), 6)
+        self.assertIn("graded practice attempts with complete attempt evidence", self.report)
+        self.assertIn("AS incomplete_attempt_count", self.report)
+        self.assertIn("session.attempt_sequence_complete IS TRUE", self.report)
+        self.assertIn("incomplete_attempt_count", self.dashboard)
+
+    def test_dashboard_version_tracks_in_place_session_and_legacy_corrections(self):
+        self.assertIn("ADD COLUMN IF NOT EXISTS updated_at", self.sync_migration)
+        self.assertIn("dashboard_touch_updated_at", self.sync_migration)
+        self.assertIn("MAX(updated_at) FROM timer_sessions", self.api)
+        self.assertIn("MAX(updated_at) FROM firebase_legacy_import_events", self.api)
 
     def test_overview_attempt_metrics_include_historical_catalog(self):
         self.assertIn("all_valid_sessions AS", self.report)

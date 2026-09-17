@@ -16,6 +16,7 @@ class OrgUnitCatalogContractTests(unittest.TestCase):
         cls.reporting = (ROOT / 'api' / 'lib' / 'dashboard_report.php').read_text(encoding='utf-8')
         cls.dashboard = (ROOT / 'dashboard-authen' / 'js' / 'app.js').read_text(encoding='utf-8')
         cls.dashboard_html = (ROOT / 'dashboard-authen' / 'index.html').read_text(encoding='utf-8')
+        cls.sync_migration = (ROOT / 'api' / 'migrations' / '045_dashboard_change_tracking.sql').read_text(encoding='utf-8')
 
     def test_catalog_contains_exactly_205_unique_units_and_10_regions(self):
         source = self.sql.split(
@@ -57,7 +58,7 @@ class OrgUnitCatalogContractTests(unittest.TestCase):
     def test_historical_reporting_reads_unit_snapshot(self):
         self.assertIn('assignment_unit.unit_name', self.reporting)
         self.assertIn('assignment.unit_id_snapshot', self.reporting)
-        self.assertIn("STRING_AGG(DISTINCT cohort.branch_name, ', '", self.reporting)
+        self.assertIn("$aggregate['branch_name'] = implode(', ', $branchNames)", self.reporting)
         self.assertNotRegex(self.reporting, r'GROUP BY[\s\S]*?cohort\.dashboard_group,\s*cohort\.branch_name,')
 
     def test_roster_editor_submits_catalog_unit_instead_of_free_text(self):
@@ -66,6 +67,27 @@ class OrgUnitCatalogContractTests(unittest.TestCase):
         self.assertNotIn("unit_code: document.getElementById('rosterEditUnitCode')", self.dashboard)
         self.assertRegex(self.dashboard_html, r'id="rosterEditUnitCode"[^>]+readonly')
         self.assertRegex(self.dashboard_html, r'id="rosterEditUnitName"[^>]+readonly')
+
+    def test_roster_location_changes_sync_assignments_and_dashboard_immediately(self):
+        self.assertIn('SET unit_id_snapshot = roster.unit_id', self.importer)
+        self.assertIn('region_id_snapshot = roster.region_id', self.importer)
+        self.assertIn('SET unit_id_snapshot = target.unit_id', self.api)
+        self.assertIn('region_id_snapshot = target.region_id', self.api)
+        self.assertRegex(
+            self.dashboard,
+            r"loadRosterHistory\(\),\s*refreshDashboardData\(\{ force: true \}\)",
+        )
+        self.assertRegex(
+            self.dashboard,
+            r"loadRosterList\(\),\s*refreshDashboardData\(\{ force: true \}\)",
+        )
+
+    def test_database_guards_location_snapshot_consistency(self):
+        self.assertIn('dashboard_sync_user_assignment_location', self.sync_migration)
+        self.assertIn('AFTER UPDATE OF unit_id ON users', self.sync_migration)
+        self.assertIn('dashboard_sync_org_unit_region', self.sync_migration)
+        self.assertIn('AFTER UPDATE OF region_id ON org_units', self.sync_migration)
+        self.assertIn('SET region_id_snapshot = NEW.region_id', self.sync_migration)
 
 
 if __name__ == '__main__':

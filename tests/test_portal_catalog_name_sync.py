@@ -28,7 +28,7 @@ class PortalCatalogNameSyncContractTests(unittest.TestCase):
     def test_portal_and_report_share_the_database_catalog_contract(self):
         self.assertIn("lab.lab_id, lab.lab_name", self.catalog_api)
         self.assertIn("lab.lab_id, lab.lab_name", self.dashboard_report)
-        self.assertIn("app.js?v=20260915-catalog-lab-names", self.portal)
+        self.assertIn("app.js?v=20260916-practice-submit-fix", self.portal)
 
     def test_offline_fallback_does_not_reuse_stale_catalog_names(self):
         self.assertIn("_catalogLabNames = null", self.portal_js)
