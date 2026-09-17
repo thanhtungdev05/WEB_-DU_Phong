@@ -612,11 +612,31 @@
     }
 
     if (CH.loaiBang === 'portforward') {
+      // Protocol la MUI Select. Ket noi ngay khong can doi napThietBi() de nguoi dung chon duoc ngay
+      var oProtocol = goc.querySelector('[name="protocol"]');
+      var hopChon = goc.querySelector('#mui-component-select-protocol');
+      if (hopChon && oProtocol) {
+        var oChu = hopChon.querySelector('span') || hopChon;
+        if (oProtocol.value) oChu.textContent = oProtocol.value;
+        window.__noiOChon(hopChon, oProtocol, [
+          { gt: 'TCP', chu: 'TCP' },
+          { gt: 'UDP', chu: 'UDP' },
+          { gt: 'TCP + UDP', chu: 'TCP + UDP' }
+        ], function (gt) {
+          var s = hopChon.querySelector('span');
+          if (s) s.textContent = gt; else hopChon.textContent = gt;
+        });
+      }
+
       napThietBi().then(function () {
         if (bgSua) {
           goc.querySelector('[name="enabled"]').checked = !!bgSua.enabled;
           goc.querySelector('[name="name"]').value = bgSua.name || '';
-          goc.querySelector('[name="protocol"]').value = bgSua.protocol || '';
+          if (oProtocol) oProtocol.value = bgSua.protocol || '';
+          if (hopChon) {
+            var s2 = hopChon.querySelector('span');
+            if (s2) s2.textContent = bgSua.protocol || ''; else hopChon.textContent = bgSua.protocol || '';
+          }
           goc.querySelector('[name="source.portRange"]').value = (bgSua.source || {}).portRange || '';
           goc.querySelector('[name="destination.portRange"]').value = (bgSua.destination || {}).portRange || '';
           var oIp = goc.querySelector('.MuiAutocomplete-input');
@@ -626,26 +646,6 @@
             oIp.value = tb ? (tb.hostname + ' (' + ip + ')') : ip;
             oIp.dataset.simIp = ip;
           }
-        }
-        // Protocol la MUI Select. Dung markup menu THAT (chup 2026-08-13,
-        // xem reference/source/do_nhanh_an_wan.json) qua __noiOChon() --
-        // truoc day dung hop chon tu che 'sim-chon-protocol' vi chua chup
-        // duoc popup that, nay da bo.
-        var oProtocol = goc.querySelector('[name="protocol"]');
-        var hopChon = goc.querySelector('#mui-component-select-protocol');
-        if (hopChon && oProtocol) {
-          var oChu = hopChon.querySelector('span') || hopChon;
-          if (oProtocol.value) oChu.textContent = oProtocol.value;
-          window.__noiOChon(hopChon, oProtocol, [
-            { gt: 'TCP', chu: 'TCP' },
-            { gt: 'UDP', chu: 'UDP' },
-            { gt: 'TCP + UDP', chu: 'TCP + UDP' }
-          ], function (gt) {
-            // O nay co <span class="notranslate"> ben trong -- ghi chu vao
-            // dung span do de khong pha cau truc chup duoc.
-            var s = hopChon.querySelector('span');
-            if (s) s.textContent = gt; else hopChon.textContent = gt;
-          });
         }
       });
     } else {
@@ -670,13 +670,21 @@
   function guiBieuMau(goc, h, bgSua) {
     var than, phuong;
     if (CH.loaiBang === 'portforward') {
-      var enabled = goc.querySelector('[name="enabled"]').checked;
-      var name = goc.querySelector('[name="name"]').value;
-      var protocol = goc.querySelector('[name="protocol"]').value;
-      var srcPort = goc.querySelector('[name="source.portRange"]').value;
-      var dstPort = goc.querySelector('[name="destination.portRange"]').value;
+      var oEnabled = goc.querySelector('[name="enabled"]');
+      var enabled = oEnabled ? oEnabled.checked : true;
+      var name = (goc.querySelector('[name="name"]') ? goc.querySelector('[name="name"]').value : '').trim();
+
+      var oProtocolInput = goc.querySelector('[name="protocol"]');
+      var oProtocolSelect = goc.querySelector('#mui-component-select-protocol');
+      var protocol = (oProtocolInput ? oProtocolInput.value : '') || (oProtocolSelect ? oProtocolSelect.textContent.trim() : '');
+      protocol = (protocol || '').trim();
+      if (protocol === 'TCP_UDP') protocol = 'TCP + UDP';
+      if (oProtocolInput) oProtocolInput.value = protocol;
+
+      var srcPort = (goc.querySelector('[name="source.portRange"]') ? goc.querySelector('[name="source.portRange"]').value : '').trim();
+      var dstPort = (goc.querySelector('[name="destination.portRange"]') ? goc.querySelector('[name="destination.portRange"]').value : '').trim();
       var oIp = goc.querySelector('.MuiAutocomplete-input');
-      var ip = oIp ? (oIp.dataset.simIp || oIp.value) : '';
+      var ip = (oIp ? (oIp.dataset.simIp || oIp.value) : '').trim();
       if (!name || !protocol || !srcPort || !dstPort || !ip) {
         baoLoi('Vui long dien du cac truong bat buoc.');
         return;
@@ -730,6 +738,13 @@
       if (!r.ok) throw new Error('HTTP ' + r.status);
       h.dong();
       return napLai();
+    }).then(function () {
+      if (window.parent && typeof window.parent.onSimulatorSave === 'function') {
+        try { window.parent.onSimulatorSave(window); } catch (e) { }
+      }
+      if (window.top && typeof window.top.onSimulatorSave === 'function') {
+        try { window.top.onSimulatorSave(window); } catch (e) { }
+      }
     }).catch(function (e) {
       baoLoi('Changes saving failed, please try again.  (' + e.message + ')');
     });

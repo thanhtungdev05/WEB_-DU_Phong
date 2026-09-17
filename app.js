@@ -19,7 +19,6 @@
   let _lastTrackingPayload = null; // Giữ nguyên payload/idempotency key khi retry lỗi mạng
   let _catalogDeviceIds = null;
   let _catalogLabIds = null;
-  let _catalogLabNames = null;
 
   function escapeHTML(str) {
     if (!str) return '';
@@ -83,9 +82,6 @@
   // Track current iframe URL
   let currentIframeUrl = '';
   let trackingSaveInFlight = false;
-  let currentUserRequest = null;
-  let sessionHeartbeatInterval = null;
-  const SESSION_HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
 
   function normalizeDeviceId(id) {
     if (!id) return '';
@@ -125,26 +121,6 @@
     deviceSelect.disabled = devices.length === 0;
   }
 
-  function synchronizePortalLessonNames(catalogDevices) {
-    _catalogLabNames = new Map();
-    catalogDevices.forEach(function (device) {
-      (Array.isArray(device.labs) ? device.labs : []).forEach(function (lab) {
-        const labId = normalizeLabId(lab.lab_id);
-        const labName = String(lab.lab_name || '').trim();
-        if (labId && labName) _catalogLabNames.set(labId, labName);
-      });
-    });
-    DEVICES.forEach(function (device) {
-      (device.categories || []).forEach(function (category) {
-        (category.lessons || []).forEach(function (lesson) {
-          const catalogName = _catalogLabNames.get(normalizeLabId(lesson.id));
-          if (catalogName) lesson.title = catalogName;
-        });
-      });
-    });
-    return _catalogLabNames;
-  }
-
   function loadLearningCatalog() {
     return fetch('/api/index.php/learning/catalog', { credentials: 'include' })
       .then(function (response) {
@@ -154,7 +130,9 @@
       .then(function (data) {
         const catalogDevices = Array.isArray(data.devices) ? data.devices : [];
         _catalogDeviceIds = new Set(catalogDevices.map(databaseDeviceToPortalId));
-        _catalogLabIds = new Set(synchronizePortalLessonNames(catalogDevices).keys());
+        _catalogLabIds = new Set(catalogDevices.flatMap(function (device) {
+          return Array.isArray(device.labs) ? device.labs.map(function (lab) { return normalizeLabId(lab.lab_id); }) : [];
+        }));
         const visibleDevices = DEVICES.filter(function (device) {
           return !_catalogDeviceIds || _catalogDeviceIds.has(normalizeDeviceId(device.id));
         });
@@ -192,11 +170,33 @@
     deviceSelect.disabled = true;
 
     // Bind events
-    deviceSelect.addEventListener('change', () => selectDevice(deviceSelect.value));
+    deviceSelect.addEventListener('change', () => {
+      if (!confirmLeavePracticeSession()) {
+        deviceSelect.value = currentDeviceId;
+        return;
+      }
+      if (practiceScreen && practiceScreen.classList.contains('visible')) {
+        backToLesson();
+      }
+      selectDevice(deviceSelect.value);
+    });
     btnCollapse.addEventListener('click', toggleSidebar);
 
     // Practice screen events
-    if (btnBackLesson) btnBackLesson.addEventListener('click', backToLesson);
+    if (btnBackLesson) {
+      btnBackLesson.addEventListener('click', () => {
+        if (!confirmLeavePracticeSession()) return;
+        backToLesson();
+      });
+    }
+    window.addEventListener('beforeunload', (e) => {
+      if (practiceScreen && practiceScreen.classList.contains('visible') &&
+          currentMode === 'practice' &&
+          _trackingSession && !_trackingSession.finalized) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
     if (btnOpenNewTab) btnOpenNewTab.addEventListener('click', () => {
       if (currentIframeUrl) window.open(currentIframeUrl, '_blank', 'noopener');
     });
@@ -268,13 +268,15 @@
       }
       // Nhận tín hiệu Save thành công từ simulator AX3000H v2 (qua postMessage cross-origin)
       if (event.data && event.data.type === 'FTC_SAVE_SUCCESS') {
+        window._hasClickedSaveInGuide = true;
         // Delay nhỏ để frame đã load xong và đặt document._ftcIsSaved = true trước khi đọc
         setTimeout(function () {
           try {
             const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
             let savedWin = null;
             for (const doc of allDocs) {
-              if (doc._ftcIsSaved) {
+              if (doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1'))) {
+                doc._ftcIsSaved = true;
                 savedWin = doc.defaultView || doc.parentWindow;
                 break;
               }
@@ -285,7 +287,7 @@
               window.onSimulatorSave(savedWin);
             }
           } catch (e) { }
-        }, 300);
+        }, 50);
       }
 
     });
@@ -312,6 +314,59 @@
       }
     });
 
+    // ── Hiệu ứng phản hồi thị giác khi bấm Apply / Save (Screen & Button Flash) ──
+    function triggerSaveFlashEffect(targetDoc, triggerBtn) {
+      const now = Date.now();
+      if (window._lastSaveFlashTime && (now - window._lastSaveFlashTime < 500)) return;
+      window._lastSaveFlashTime = now;
+
+      try {
+        // 1. Nháy toàn bộ khung thiết bị deviceIframe 1 lần (100% -> 35% -> 100%)
+        if (deviceIframe) {
+          deviceIframe.style.transition = 'opacity 0.12s ease-in-out';
+          deviceIframe.style.opacity = '0.35';
+          setTimeout(function () {
+            if (deviceIframe) {
+              deviceIframe.style.opacity = '1';
+              setTimeout(function () {
+                if (deviceIframe) deviceIframe.style.transition = '';
+              }, 150);
+            }
+          }, 120);
+        }
+
+        // 2. Nháy nội dung bên trong document con nếu có
+        if (targetDoc && targetDoc.body && targetDoc.body !== document.body) {
+          targetDoc.body.style.transition = 'opacity 0.12s ease-in-out';
+          targetDoc.body.style.opacity = '0.35';
+          setTimeout(function () {
+            if (targetDoc && targetDoc.body) {
+              targetDoc.body.style.opacity = '1';
+              setTimeout(function () {
+                if (targetDoc && targetDoc.body) targetDoc.body.style.transition = '';
+              }, 150);
+            }
+          }, 120);
+        }
+
+        // 3. Phản hồi lún nhẹ và bừng sáng trên nút bấm
+        if (triggerBtn) {
+          triggerBtn.style.transition = 'transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease';
+          triggerBtn.style.transform = 'scale(0.95)';
+          triggerBtn.style.filter = 'brightness(1.25)';
+          triggerBtn.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.6)';
+          setTimeout(function () {
+            triggerBtn.style.transform = '';
+            triggerBtn.style.filter = '';
+            triggerBtn.style.boxShadow = '';
+            setTimeout(function () {
+              triggerBtn.style.transition = '';
+            }, 150);
+          }, 200);
+        }
+      } catch (e) { }
+    }
+
     // Periodic sync interval while practice screen is active
     if (!guideSyncInterval) {
       guideSyncInterval = setInterval(() => {
@@ -329,43 +384,45 @@
             allDocs.forEach(doc => {
               // Liên tục Tắt gợi ý mật khẩu/tự động điền (Autocomplete/Saved Info) bằng phương pháp mạnh (readonly hack)
               try {
-                if (currentDeviceId === 'ONT_be6500c' || currentDeviceId === 'be6500c' ||
+                const skipAutofillHack = (currentDeviceId === 'ONT_be6500c' || currentDeviceId === 'be6500c' ||
                     currentDeviceId === 'ONT_be12000' || currentDeviceId === 'be12000' ||
-                    currentDeviceId === 'ONT_be15000' || currentDeviceId === 'be15000') return;
-                doc.querySelectorAll('form:not([data-autofill-disabled]), input:not([data-autofill-disabled])').forEach(el => {
-                  el.setAttribute('data-autofill-disabled', 'true');
-                  el.setAttribute('autocomplete', 'off'); // Chuẩn chung
-                  el.setAttribute('data-lpignore', 'true'); // Chặn LastPass
-                  el.setAttribute('data-form-type', 'other');
+                    currentDeviceId === 'ONT_be15000' || currentDeviceId === 'be15000');
+                if (!skipAutofillHack) {
+                  doc.querySelectorAll('form:not([data-autofill-disabled]), input:not([data-autofill-disabled])').forEach(el => {
+                    el.setAttribute('data-autofill-disabled', 'true');
+                    el.setAttribute('autocomplete', 'off'); // Chuẩn chung
+                    el.setAttribute('data-lpignore', 'true'); // Chặn LastPass
+                    el.setAttribute('data-form-type', 'other');
 
-                  if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'password' || el.type === 'number')) {
-                    // Bỏ qua các ô vốn dĩ đã bị khóa (readonly / disabled) từ mã HTML gốc
-                    if (el.hasAttribute('readonly') || el.hasAttribute('disabled')) {
-                      return;
+                    if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'password' || el.type === 'number')) {
+                      // Bỏ qua các ô vốn dĩ đã bị khóa (readonly / disabled) từ mã HTML gốc
+                      if (el.hasAttribute('readonly') || el.hasAttribute('disabled')) {
+                        return;
+                      }
+
+                      // Cài cắm cạm bẫy readonly: Edge/Chrome sẽ không hiện popup Saved Info trên ô readonly.
+                      // Khi người dùng thực sự bấm vào hoặc tab vào, ta mới gỡ readonly ra.
+                      el.setAttribute('readonly', 'readonly');
+
+                      const removeReadonly = function () {
+                        if (el.hasAttribute('readonly')) {
+                          el.removeAttribute('readonly');
+                        }
+                      };
+
+                      el.addEventListener('focus', removeReadonly);
+                      el.addEventListener('click', removeReadonly);
+                      el.addEventListener('mousedown', removeReadonly);
+
+                      // Khôi phục readonly khi rời chuột/focus để đảm bảo chặn triệt để
+                      el.addEventListener('blur', function () {
+                        if (el.value === '') {
+                          el.setAttribute('readonly', 'readonly');
+                        }
+                      });
                     }
-
-                    // Cài cắm cạm bẫy readonly: Edge/Chrome sẽ không hiện popup Saved Info trên ô readonly.
-                    // Khi người dùng thực sự bấm vào hoặc tab vào, ta mới gỡ readonly ra.
-                    el.setAttribute('readonly', 'readonly');
-
-                    const removeReadonly = function () {
-                      if (el.hasAttribute('readonly')) {
-                        el.removeAttribute('readonly');
-                      }
-                    };
-
-                    el.addEventListener('focus', removeReadonly);
-                    el.addEventListener('click', removeReadonly);
-                    el.addEventListener('mousedown', removeReadonly);
-
-                    // Khôi phục readonly khi rời chuột/focus để đảm bảo chặn triệt để
-                    el.addEventListener('blur', function () {
-                      if (el.value === '') {
-                        el.setAttribute('readonly', 'readonly');
-                      }
-                    });
-                  }
-                });
+                  });
+                }
               } catch (e) { }
 
               if (!doc._ftcSaveListenerAttached) {
@@ -456,15 +513,63 @@
                   }, true);
                 }
 
+                // Bắt trước thao tác bấm nút Save/Apply ngay từ pointerdown/mousedown để tránh blur/change của input xóa cờ
+                const markSaveInteraction = function (e) {
+                  let el = e.target;
+                  while (el && el !== doc) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || (el.getAttribute && el.getAttribute('role') === 'button')) {
+                      const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
+                      const isSaveOrApply = btnVal.includes('save') || 
+                        btnVal.includes('apply') || 
+                        btnVal.includes('submit') || 
+                        btnVal.includes('lưu') || 
+                        ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
+                        (el.type === 'submit' && el.tagName === 'INPUT');
+                      if (isSaveOrApply) {
+                        doc._ftcLastSaveInteraction = Date.now();
+                        break;
+                      }
+                    }
+                    el = el.parentNode;
+                  }
+                };
+                doc.addEventListener('pointerdown', markSaveInteraction, true);
+                doc.addEventListener('mousedown', markSaveInteraction, true);
+
                 // Sự kiện click nút Save/Apply
                 doc.addEventListener('click', function (e) {
                   let el = e.target;
                   while (el && el !== doc) {
-                    if ((el.tagName === 'INPUT' || el.tagName === 'BUTTON') && 
-                        (el.type === 'submit' || (el.value || el.textContent || '').toLowerCase().includes('save') || (el.value || el.textContent || '').toLowerCase().includes('apply') || el.name === 'AddBtn' || ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6') && (el.value || el.textContent || '').trim().toLowerCase() === 'add'))) {
-                      window._hasClickedSaveInGuide = true;
-                      doc._ftcIsSaved = true;
-                      try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
+                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+                      const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
+                      const isOntBai6 = (currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6');
+
+                      // Nút "Add New" trên thanh công cụ dùng để mở modal thêm mới, KHÔNG phải nút lưu cấu hình
+                      const isAddNewBtn = btnVal === 'add new' || el.classList.contains('sim-them') || (isOntBai6 && btnVal === 'add' && !el.closest('.MuiDialog-root, .MuiPaper-root') && !el.classList.contains('dlg-luu'));
+
+                      const isExcludedAction = isAddNewBtn ||
+                        (btnVal === 'add' && !isOntBai6 && currentLessonId !== 'LAB_AC1000F_06') ||
+                        btnVal === 'delete' || btnVal === 'undo' || btnVal === 'cancel' || btnVal === 'reset';
+
+                      if (!isExcludedAction) {
+                        const isSaveOrApply = btnVal.includes('save') || 
+                          btnVal.includes('apply') || 
+                          btnVal.includes('submit') || 
+                          btnVal.includes('lưu') || 
+                          (isOntBai6 && (el.classList.contains('dlg-luu') || el.closest('.MuiDialogActions-root') || btnVal === 'add')) ||
+                          ((currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
+                          (el.type === 'submit' && el.tagName === 'INPUT');
+
+                        if (isSaveOrApply) {
+                          doc._ftcLastSaveInteraction = Date.now();
+                          window._hasClickedSaveInGuide = true;
+                          doc._ftcIsSaved = true;
+                          triggerSaveFlashEffect(doc, el);
+                          setTimeout(function () {
+                            try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
+                          }, isOntBai6 ? 350 : 50);
+                        }
+                      }
                     }
                     el = el.parentNode;
                   }
@@ -495,10 +600,25 @@
                     e.target._ftcUserModified = true;
                   }
                   if (e.isTrusted && !window._hasSuccHintStored) {
+                    // Nếu sự kiện change phát sinh do người dùng vừa click nút Save/Apply (blur khỏi input trong vòng 1.5s), không hủy cờ Save
+                    if (doc._ftcLastSaveInteraction && (Date.now() - doc._ftcLastSaveInteraction < 1500)) {
+                      return;
+                    }
                     window._hasClickedSaveInGuide = false;
                     doc._ftcIsSaved = false;
                   }
                 }, true);
+
+                // Đồng bộ vị trí tooltip tức thì khi cuộn trang
+                if (!doc._ftcScrollBound) {
+                  doc._ftcScrollBound = true;
+                  const win = doc.defaultView || window;
+                  if (win) {
+                    win.addEventListener('scroll', function () {
+                      if (currentMode === 'guide') applyGuidePopups();
+                    }, { passive: true });
+                  }
+                }
 
                 // === BẮT LỖI TƯƠNG TÁC CHÍNH XÁC TUYỆT ĐỐI (Dành riêng cho SPAs) ===
                 if (!doc._ftcOriginalValues) doc._ftcOriginalValues = {};
@@ -511,7 +631,26 @@
                     const input = el.querySelector('input, select, textarea');
                     if (input) el = input;
                   }
+                  // Hỗ trợ bắt component Material-UI (MUI) khi click vào container, textfield, radio, checkbox, select
+                  if (el.tagName !== 'INPUT' && el.tagName !== 'SELECT' && el.tagName !== 'TEXTAREA') {
+                    const muiContainer = el.closest ? el.closest('.MuiInputBase-root, .MuiRadio-root, .MuiSwitch-root, .MuiCheckbox-root, .MuiFormControl-root, label') : null;
+                    if (muiContainer) {
+                      const nestedInput = muiContainer.querySelector('input, select, textarea');
+                      if (nestedInput) el = nestedInput;
+                    }
+                  }
                   if (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA') {
+                    // Bỏ qua các trường thuộc trang hoặc form đăng nhập (login)
+                    const loc = (doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
+                    const hsh = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
+                    const isLoginPage = loc.includes('login') || hsh.includes('login');
+                    const isLoginField = isLoginPage ||
+                      (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
+                      el.id === 'username' || el.id === 'password' ||
+                      (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
+                      (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password')));
+                    if (isLoginField) return;
+
                     if (!el.dataset.ftcId) el.dataset.ftcId = 'ftc_' + Math.random().toString(36).substr(2, 9);
                     const uid = el.dataset.ftcId;
                     // Lưu lại giá trị của field NGAY TRƯỚC KHI người dùng kịp thay đổi nó
@@ -521,7 +660,8 @@
                   }
                 };
 
-                // Mousedown và Focusin kích hoạt ngay trước khi giá trị kịp thay đổi
+                // Mousedown, Pointerdown và Focusin kích hoạt ngay trước khi giá trị kịp thay đổi
+                doc.addEventListener('pointerdown', captureBeforeEdit, true);
                 doc.addEventListener('mousedown', captureBeforeEdit, true);
                 doc.addEventListener('focusin', captureBeforeEdit, true);
                 // =================================================================
@@ -549,6 +689,12 @@
             } else {
               for (const d of allDocs) {
                 try {
+                  if (d.location && d.location.search && d.location.search.includes('save_success=1')) {
+                    if (d._ftcIsSaved !== false) {
+                      d._ftcIsSaved = true;
+                      window._hasClickedSaveInGuide = true;
+                    }
+                  }
                   if (d._ftcHasSuccHint) { hasSuccHint = true; break; }
                   const hints = d.querySelectorAll('.succHint');
                   for (const h of hints) {
@@ -707,117 +853,67 @@
    * Kết quả được cache vào _currentUser để dùng khi gửi Tracking API.
    * Nếu chưa đăng nhập, tự động chuyển hướng về trang login.
    */
-  function applyCurrentUser(u) {
-    _currentUser = u ? {
-      technician_id: u.user_id || u.id || 'UNKNOWN',
-      employee_id: u.employee_id || u.employeeId || '',
-      name: u.displayName || u.display_name || u.email || 'KTV',
-      email: u.email || '',
-      role: String(u.role || 'KTV').toUpperCase(),
-      role_name: u.roleName || u.role_name || '',
-      is_admin: Boolean(u.isAdmin ?? u.is_admin ?? u.permissions?.admin),
-      can_export_reports: Boolean(u.canExportReports ?? u.can_export_reports ?? u.permissions?.exportReports),
-      job_title: u.job_title || u.jobTitle || ''
-    } : null;
-    renderUserProfile();
-    return _currentUser;
-  }
-
-  function requestCurrentUserSession() {
-    if (currentUserRequest) return currentUserRequest;
-    currentUserRequest = fetch('/api/index.php/auth/session', {
-      credentials: 'include',
-      cache: 'no-store'
-    })
-      .then(function (res) {
-        if (!res.ok) {
-          const error = new Error(`Không kiểm tra được phiên đăng nhập (HTTP ${res.status}).`);
-          error.status = res.status;
-          throw error;
-        }
-        return res.json();
-      })
-      .then(function (data) {
-        return applyCurrentUser(data && data.user ? data.user : null);
-      })
-      .finally(function () {
-        currentUserRequest = null;
-      });
-    return currentUserRequest;
-  }
-
-  function refreshSessionHeartbeat() {
-    if (document.visibilityState === 'hidden' || !_currentUser) return;
-    requestCurrentUserSession().then(function (user) {
-      if (!user && sessionHeartbeatInterval) {
-        clearInterval(sessionHeartbeatInterval);
-        sessionHeartbeatInterval = null;
-      }
-    }).catch(function (error) {
-      console.warn('[Auth] Chưa thể gia hạn phiên đăng nhập:', error);
-    });
-  }
-
-  function startSessionHeartbeat() {
-    if (!sessionHeartbeatInterval) {
-      sessionHeartbeatInterval = setInterval(refreshSessionHeartbeat, SESSION_HEARTBEAT_INTERVAL_MS);
-    }
-    if (document.body.dataset.sessionHeartbeatBound !== 'true') {
-      document.body.dataset.sessionHeartbeatBound = 'true';
-      window.addEventListener('focus', refreshSessionHeartbeat);
-      document.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'visible') refreshSessionHeartbeat();
-      });
-    }
-  }
-
-  function loadCatalogWithOfflineFallback() {
-    return loadLearningCatalog().catch(function (error) {
-      console.warn('[Catalog] Không thể tải danh sách bài luyện tập, chuyển sang chế độ offline:', error);
-      _catalogDeviceIds = null;
-      _catalogLabIds = null;
-      _catalogLabNames = null;
-      populateDeviceDropdown(DEVICES);
-      const urlParams = new URLSearchParams(window.location.search);
-      const reqDevice = urlParams.get('device');
-      const reqLab = urlParams.get('lab');
-      const reqMode = urlParams.get('mode');
-      let initialDev = null;
-      if (reqDevice) {
-        const normReq = normalizeDeviceId(reqDevice);
-        initialDev = DEVICES.find(function (d) {
-          return normalizeDeviceId(d.id) === normReq;
-        });
-      }
-      if (!initialDev && DEVICES.length > 0) initialDev = DEVICES[0];
-      if (initialDev) selectDevice(initialDev.id, reqLab, reqMode);
-      else navList.innerHTML = '<div class="empty-state"><p>Không thể tải danh sách bài luyện tập.</p></div>';
-    });
-  }
-
   function fetchCurrentUser() {
-    return requestCurrentUserSession()
-      .then(function (user) {
-        if (!user) {
-          redirectToLogin();
-          return null;
-        }
-        if (user.is_admin) {
-          const btnDashboard = document.getElementById('btn-dashboard');
-          if (btnDashboard) {
-            btnDashboard.style.display = '';
-            btnDashboard.onclick = function () {
-              window.location.href = '/dashboard-authen/';
-            };
+    fetch('/api/index.php/auth/session', { credentials: 'include' })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        const u = data && data.user;
+        if (u) {
+          _currentUser = {
+            technician_id: u.user_id || u.id || 'UNKNOWN',
+            employee_id: u.employee_id || u.employeeId || '',
+            name: u.displayName || u.display_name || u.email || 'KTV',
+            email: u.email || '',
+            role: String(u.role || 'KTV').toUpperCase(),
+            role_name: u.roleName || u.role_name || '',
+            is_admin: Boolean(u.isAdmin ?? u.is_admin ?? u.permissions?.admin),
+            can_export_reports: Boolean(u.canExportReports ?? u.can_export_reports ?? u.permissions?.exportReports),
+            job_title: u.job_title || u.jobTitle || ''
+          };
+          renderUserProfile();
+          if (_currentUser && _currentUser.is_admin) {
+            const btnDashboard = document.getElementById('btn-dashboard');
+            if (btnDashboard) {
+              btnDashboard.style.display = '';
+              btnDashboard.onclick = function () {
+                window.location.href = '/dashboard-authen/';
+              };
+            }
           }
+          loadLearningCatalog().catch(function (error) {
+            console.warn('[Catalog] Không thể tải danh sách bài luyện tập, chuyển sang chế độ offline:', error);
+            _catalogDeviceIds = null;
+            _catalogLabIds = null;
+            populateDeviceDropdown(DEVICES);
+            const urlParams = new URLSearchParams(window.location.search);
+            const reqDevice = urlParams.get('device');
+            const reqLab = urlParams.get('lab');
+            const reqMode = urlParams.get('mode');
+            let initialDev = null;
+            if (reqDevice) {
+              const normReq = normalizeDeviceId(reqDevice);
+              initialDev = DEVICES.find(function (d) {
+                return normalizeDeviceId(d.id) === normReq;
+              });
+            }
+            if (!initialDev && DEVICES.length > 0) {
+              initialDev = DEVICES[0];
+            }
+            if (initialDev) {
+              selectDevice(initialDev.id, reqLab, reqMode);
+            } else {
+              navList.innerHTML = '<div class="empty-state"><p>Không thể tải danh sách bài luyện tập.</p></div>';
+            }
+          });
+        } else {
+          _currentUser = null;
+          renderUserProfile();
+          redirectToLogin();
         }
-        startSessionHeartbeat();
-        return loadCatalogWithOfflineFallback().then(function () { return user; });
       })
-      .catch(function (error) {
-        console.warn('[Tracking] Không thể lấy thông tin user từ API:', error);
+      .catch(function () {
+        console.warn('[Tracking] Không thể lấy thông tin user từ API.');
         redirectToLogin();
-        return null;
       });
   }
 
@@ -831,6 +927,7 @@
 
     currentDeviceId = device.id;
     currentLessonId = null;
+    resetDeviceSession(device.id);
 
     // Sync dropdown
     deviceSelect.value = device.id;
@@ -918,7 +1015,13 @@
           <span class="nav-num">${numPart}</span>
           <span class="nav-label" title="${lesson.title}">- ${labelPart}</span>`;
 
-        item.addEventListener('click', () => selectLesson(device, lesson, item));
+        item.addEventListener('click', () => {
+          if (!confirmLeavePracticeSession()) return;
+          if (practiceScreen && practiceScreen.classList.contains('visible')) {
+            backToLesson();
+          }
+          selectLesson(device, lesson, item);
+        });
         navList.appendChild(item);
       });
     });
@@ -970,19 +1073,8 @@
         return;
       }
       currentMode = 'guide';
-      // Reset session trước rồi mở trang login
-      const resetUrl = device.resetSessionUrl || null;
-      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'logout=1&_t=' + Date.now();
-      if (resetUrl) {
-        const cacheBustUrl = resetUrl + (resetUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
-        fetch(cacheBustUrl, { cache: 'no-store' })
-          .catch(() => { })
-          .finally(() => {
-            openInFrame(device, lesson, loginUrl, '💡 Hướng dẫn', true);
-          });
-      } else {
-        openInFrame(device, lesson, loginUrl, '💡 Hướng dẫn', true);
-      }
+      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'lab=' + encodeURIComponent(lesson.id) + '&mode=guide&_t=' + Date.now();
+      openInFrame(device, lesson, loginUrl, '💡 Hướng dẫn', true);
     };
 
     // ⚡ Thực hành — mở trang login của thiết bị và TẮT POPUP (bắt buộc học viên login vào)
@@ -992,18 +1084,8 @@
         return;
       }
       currentMode = 'practice';
-      const resetUrl = device.resetSessionUrl || null;
-      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'logout=1&_t=' + Date.now();
-      if (resetUrl) {
-        const cacheBustUrl = resetUrl + (resetUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
-        fetch(cacheBustUrl, { cache: 'no-store' })
-          .catch(() => { })
-          .finally(() => {
-            openInFrame(device, lesson, loginUrl, '⚡ Thực hành', false);
-          });
-      } else {
-        openInFrame(device, lesson, loginUrl, '⚡ Thực hành', false);
-      }
+      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'lab=' + encodeURIComponent(lesson.id) + '&mode=practice&_t=' + Date.now();
+      openInFrame(device, lesson, loginUrl, '⚡ Thực hành', false);
     };
   }
 
@@ -1063,6 +1145,7 @@
     window._hasClickedSaveInGuide = false;
 
     // ── Ghi nhận thời điểm BẮT ĐẦU phiên thực hành (Tracking) ──
+    window._sessionRuleCache = {};
     _trackingSession = {
       device: device,
       lesson: lesson,
@@ -1154,13 +1237,45 @@
 
   function resetDeviceSession(deviceId) {
     const targetDev = deviceId || currentDeviceId;
-    if (targetDev === 'be12000') {
-      window._hasSuccHintStored = false;
-      window._hasClickedSaveInGuide = false;
-      try {
-        fetch('/sim_be12000/api/reset').catch(() => {});
-      } catch (e) { }
+    window._hasSuccHintStored = false;
+    window._hasClickedSaveInGuide = false;
+    if (!targetDev) return;
+
+    let simFolder = '';
+    if (typeof DEVICES !== 'undefined' && Array.isArray(DEVICES)) {
+      const dev = DEVICES.find(d => normalizeDeviceId(d.id) === normalizeDeviceId(targetDev));
+      if (dev && dev.folder) simFolder = dev.folder;
     }
+    if (!simFolder) {
+      simFolder = 'sim_' + targetDev;
+    }
+
+    try {
+      fetch('/' + simFolder + '/api/reset', { method: 'POST', cache: 'no-store' })
+        .catch(() => {
+          return fetch('/' + simFolder + '/api/reset?_t=' + Date.now(), { cache: 'no-store' });
+        })
+        .catch(() => {});
+    } catch (e) { }
+
+    try {
+      localStorage.removeItem('ftc_sim_wifi24');
+      localStorage.removeItem('ftc_sim_wifi5g');
+      sessionStorage.removeItem('ftc_ac1000f_wan_PPPUsername');
+      sessionStorage.removeItem('ftc_ac1000f_wan_PPPPassword');
+      sessionStorage.removeItem('BE12000_session');
+      sessionStorage.removeItem('BE12000_loginToken');
+      sessionStorage.removeItem('sid');
+    } catch (e) { }
+  }
+
+  function confirmLeavePracticeSession() {
+    if (practiceScreen && practiceScreen.classList.contains('visible') &&
+        currentMode === 'practice' &&
+        _trackingSession && !_trackingSession.finalized) {
+      return confirm('Bài thực hành chưa được nộp!\nNếu bạn rời đi bây giờ, phiên thực hành sẽ được tính là bỏ dở (chưa đạt).\n\nBạn có chắc chắn muốn rời khỏi bài thực hành không?');
+    }
+    return true;
   }
 
   function backToLesson() {
@@ -1177,6 +1292,8 @@
     _lastTrackingPayload = null;
     _lastEvalResult = null;
     _lastSubmitDurationSec = 0;
+    window._hasClickedSaveInGuide = false;
+    window._hasSuccHintStored = false;
     window._sessionRuleCache = null;
 
     deviceIframe.src = '';
@@ -1199,10 +1316,26 @@
       try { _currentLesson.customClear(); } catch (e) { console.error(e); }
     }
 
+    try {
+      const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+      const isAnyDocSaved = allDocs.some(d => {
+        try {
+          return Boolean(d._ftcLastSaveInteraction && (d._ftcIsSaved === true || (d.location && d.location.search && d.location.search.includes('save_success=1'))));
+        } catch (e) { return false; }
+      });
+      if (isAnyDocSaved) {
+        window._hasClickedSaveInGuide = true;
+        return;
+      }
+    } catch (e) { }
+
     if (!Array.isArray(_currentLesson.clearFields) || _currentLesson.clearFields.length === 0) return;
     try {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       allDocs.forEach(doc => {
+        if (doc._ftcLastSaveInteraction && (doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1')))) {
+          return;
+        }
         _currentLesson.clearFields.forEach(selector => {
           try {
             doc.querySelectorAll(selector).forEach(el => {
@@ -1251,6 +1384,17 @@
       ? lesson.grading.rules
       : [];
 
+    // Loại bỏ hoàn toàn ràng buộc "Chế độ DNS" / "DNS Mode" / "manual" nếu còn sót lại ở bài 4 ONT BE6500C / BE6500C
+    if (lesson.id === 'ONT_be6500c-bai4' || lesson.id === 'be6500c-bai4' ||
+        ((currentDeviceId === 'ONT_be6500c' || currentDeviceId === 'be6500c') && lesson.id && lesson.id.includes('bai4'))) {
+      rules = rules.filter(r => {
+        const n = (r.name || '').toLowerCase();
+        const id = (r.id || '').toLowerCase();
+        const exp = (r.expected || '').toString().toLowerCase();
+        return !n.includes('chế độ dns') && !n.includes('dns mode') && id !== 'dns_mode' && exp !== 'manual';
+      });
+    }
+
     // Tự động đọc đáp án từ tooltips nếu chưa định nghĩa rules riêng
     if (rules.length === 0) {
       const deviceTooltipsVar = `TOOLTIPS_${device.id.toUpperCase()}`;
@@ -1270,22 +1414,32 @@
     }
 
     if (rules.length === 0) {
-      // Nếu bài học chưa có rule chi tiết và tooltip không có expected, mặc định xem như hoàn tất thao tác
+      if (isNoConfigDevice()) {
+        return {
+          passed: true,
+          gradable: true,
+          score: 100,
+          passedCount: 1,
+          totalRules: 1,
+          details: [
+            {
+              id: 'default',
+              name: 'Thao tác cấu hình',
+              expected: 'Hoàn tất theo yêu cầu đề bài',
+              actual: 'Đã hoàn thành',
+              passed: true,
+              message: 'Đã hoàn thành các bước yêu cầu'
+            }
+          ]
+        };
+      }
       return {
-        passed: true,
-        score: 100,
-        passedCount: 1,
-        totalRules: 1,
-        details: [
-          {
-            id: 'default',
-            name: 'Thao tác cấu hình',
-            expected: 'Hoàn tất theo yêu cầu đề bài',
-            actual: 'Đã hoàn thành',
-            passed: true,
-            message: 'Đã hoàn thành các bước yêu cầu'
-          }
-        ]
+        gradable: false,
+        passed: false,
+        score: 0,
+        passedCount: 0,
+        totalRules: 0,
+        details: []
       };
     }
 
@@ -1328,7 +1482,9 @@
       let isSaved = hasStoredNotification;
       let isMatch = false;
 
-      const expectedVal = (rule.trim !== false) ? String(rule.expected).trim() : String(rule.expected);
+      const expectedVal = Array.isArray(rule.expected)
+        ? rule.expected.join(' hoặc ')
+        : ((rule.trim !== false) ? String(rule.expected).trim() : String(rule.expected));
 
       // Tìm element trong tất cả accessible frames (hỗ trợ cả các trang có nhiều instances/hàng cấu hình)
       for (const doc of allDocs) {
@@ -1336,7 +1492,9 @@
           const els = Array.from(doc.querySelectorAll(rule.selector));
           if (els.length > 0) {
             elementFound = true;
-            if (doc._ftcIsSaved) isSaved = true;
+            const isDocSaved = doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1') && doc._ftcIsSaved !== false);
+            const isSessionSaved = (window._hasClickedSaveInGuide === true && doc._ftcIsSaved !== false);
+            if (isDocSaved || isSessionSaved) isSaved = true;
 
             // Tìm xem có phần tử nào khớp với expectedVal không
             let chosenEl = els[0];
@@ -1376,8 +1534,9 @@
             }
 
             if (!isMatch) {
-              // Nếu chưa khớp, ưu tiên lấy phần tử đã được nhập liệu (khác rỗng) hoặc phần tử cuối
-              const nonEmptyEl = els.find(e => (e.value || '').trim() !== '') || els[els.length - 1];
+              // Nếu chưa khớp, ưu tiên lấy radio/checkbox đang được chọn (checked), hoặc phần tử đã được nhập liệu (khác rỗng), hoặc phần tử cuối
+              const activeRadio = els.find(e => (e.type === 'checkbox' || e.type === 'radio') && e.checked);
+              const nonEmptyEl = activeRadio || els.find(e => (e.value || '').trim() !== '') || els[els.length - 1];
               if (nonEmptyEl) {
                 chosenEl = nonEmptyEl;
                 if (chosenEl.type === 'checkbox' || chosenEl.type === 'radio') {
@@ -1402,6 +1561,14 @@
           actualValue = cached.actualValue;
           isSaved = cached.isSaved;
           isMatch = cached.isMatch;
+        }
+      }
+
+      // Nếu đã có thông báo "Your data have been stored!", đối với BE12000 hoặc khi thiết bị đã xác nhận lưu thành công
+      if (hasStoredNotification) {
+        isMatch = true;
+        if (!actualValue || actualValue === '(Chưa nhập / Chưa tìm thấy)') {
+          actualValue = expectedVal;
         }
       }
 
@@ -1457,11 +1624,19 @@
         }
       }
 
+      let displayExpected = rule.displayExpected || expectedVal;
+      let displayActual = actualValue;
+      if (rule.selector && rule.selector.includes('dhcpTypeRadio')) {
+        if (actualValue === '1' || actualValue === 'true') displayActual = 'Bật/Enable';
+        else if (actualValue === '0' || actualValue === 'false') displayActual = 'Tắt/Disable';
+        else if (actualValue === '2') displayActual = 'Relay';
+      }
+
       details.push({
         id: rule.id,
         name: rule.name,
-        expected: expectedVal,
-        actual: ((currentDeviceId === 'ax3000c' || currentDeviceId === 'ax3000hv2' || currentDeviceId === 'ax3000s') && elementFound && !isSaved) ? `${actualValue} (Chưa lưu)` : (actualValue || '(Chưa nhập / Chưa tìm thấy)'),
+        expected: displayExpected,
+        actual: ((currentDeviceId === 'ax3000c' || currentDeviceId === 'ax3000hv2' || currentDeviceId === 'ax3000s') && elementFound && !isSaved) ? `${displayActual} (Chưa lưu)` : (displayActual || '(Chưa nhập / Chưa tìm thấy)'),
         passed: isMatch,
         message: msg
       });
@@ -1507,8 +1682,9 @@
     // === BỘ LỌC AUTO-BASELINE (TÌM THAO TÁC THỪA) ===
     let unexpectedErrors = [];
 
-    // Save thành công chỉ xác nhận dữ liệu đã được lưu; vẫn phải kiểm tra thao tác thừa.
-    allDocs.forEach(doc => {
+    // Nếu đã có thông báo "Your data have been stored!", không kiểm tra lỗi thao tác thừa
+    if (!hasStoredNotification) {
+      allDocs.forEach(doc => {
         if (doc._ftcOriginalValues) {
           Object.keys(doc._ftcOriginalValues).forEach(uid => {
             const originalValue = doc._ftcOriginalValues[uid];
@@ -1533,20 +1709,30 @@
               const isAllowedByLesson = allowedSelectors.some(sel => {
                 try {
                   const matchedList = Array.from(doc.querySelectorAll(sel));
-                  return matchedList.includes(el);
+                  if (matchedList.includes(el)) return true;
+                  // Tự động cho phép input đi kèm với component dropdown/select (ví dụ MUI Select)
+                  return matchedList.some(m => {
+                    if (m.contains && m.contains(el)) return true;
+                    if (el.name && m.id && m.id.includes(el.name)) return true;
+                    if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
+                    const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
+                    return mParent && mParent.contains(el);
+                  });
                 } catch (e) { return false; }
               });
               if (isAllowedByLesson) return;
 
-              // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, Wi-Fi IoT / WiFi5 enable, SSID broadcast
+              // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, DHCP, Wi-Fi IoT / WiFi5 enable, SSID broadcast
               const isAuxToggle = (el.name && (
                 el.name.toLowerCase() === 'dnstyperadio' ||
+                el.name.toLowerCase() === 'dhcptyperadio' ||
                 el.name.toLowerCase().includes('enable_wifi') ||
                 el.name.toLowerCase().includes('wifi5') ||
                 el.name.toLowerCase().includes('essid_hide')
               )) ||
               (el.id && (
                 el.id.toLowerCase().includes('dnsrelay') ||
+                el.id.toLowerCase().includes('dhcp') ||
                 el.id.toLowerCase().includes('wifi5_enable') ||
                 el.id.toLowerCase().includes('enable_wifi')
               ));
@@ -1556,7 +1742,14 @@
               const isExpected = rules.some(r => {
                 try {
                   const matchedList = Array.from(doc.querySelectorAll(r.selector));
-                  return matchedList.includes(el);
+                  if (matchedList.includes(el)) return true;
+                  return matchedList.some(m => {
+                    if (m.contains && m.contains(el)) return true;
+                    if (el.name && m.id && m.id.includes(el.name)) return true;
+                    if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
+                    const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
+                    return mParent && mParent.contains(el);
+                  });
                 } catch (e) { return false; }
               });
 
@@ -1600,25 +1793,42 @@
           });
         }
       });
+    }
 
     // Đồng bộ lỗi thao tác thừa theo phiên nếu có (giữ nguyên lỗi nếu học viên chuyển sang trang khác)
     if (_trackingSession) {
       if (unexpectedErrors.length > 0) {
         _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
+      } else {
+        // Nếu trang hiện tại chứa các input cấu hình chính và không còn thao tác thừa, xóa cache cũ
+        const hasFormFields = allDocs.some(d => {
+          try {
+            return rules.some(r => d.querySelector(r.selector) !== null);
+          } catch(e) { return false; }
+        });
+        if (hasFormFields) {
+          _trackingSession.cachedUnexpectedErrors = [];
+        }
       }
     }
     if (unexpectedErrors.length === 0 && _trackingSession && Array.isArray(_trackingSession.cachedUnexpectedErrors) && _trackingSession.cachedUnexpectedErrors.length > 0) {
       unexpectedErrors = _trackingSession.cachedUnexpectedErrors;
     }
 
-    // Lọc triệt để loại bỏ các trường đăng nhập admin/admin, dnsTypeRadio, wifi5/IoT toggle khỏi danh sách lỗi thao tác thừa
+    // Lọc triệt để loại bỏ các trường đăng nhập admin/admin, dnsTypeRadio, dhcpTypeRadio, wifi5/IoT toggle khỏi danh sách lỗi thao tác thừa
     unexpectedErrors = unexpectedErrors.filter(err => {
       const lbl = (err.label || '').toLowerCase();
       const act = (err.actual || '').toLowerCase();
       if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) && (act === 'admin' || act === '')) {
         return false;
       }
-      if (lbl.includes('dns relay') || lbl.includes('dnstyperadio')) {
+      if (lbl.includes('dns relay') || lbl.includes('dnstyperadio') || lbl.includes('chế độ dns') || lbl.includes('dns mode')) {
+        return false;
+      }
+      if (lbl.includes('dns') && (act === 'manual' || act === 'auto' || act === 'bật/enable' || act === 'tắt/disable')) {
+        return false;
+      }
+      if (lbl === 'dhcp' || lbl === 'dhcp server' || lbl.includes('dhcptyperadio')) {
         return false;
       }
       if (lbl.includes('2.4g wifi') || lbl.includes('5g wifi') || lbl.includes('wifi5') || lbl.includes('wifi 5') || lbl.includes('enable_wifi') || lbl.includes('ssid broadcast')) {
@@ -1627,10 +1837,10 @@
       return true;
     });
 
-    // Chỉ pass khi đủ rule và không có thao tác thừa
-    const criteria = rules.filter(r => r.required !== false);
+    // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa (hoặc có hasStoredNotification)
+    const criteria = rules;
     const hasUnexpected = unexpectedErrors.length > 0;
-    const passed = (passedCount === criteria.length) && !hasUnexpected;
+    const passed = hasStoredNotification || ((passedCount === criteria.length) && !hasUnexpected);
 
     let finalTotalRules = rules.length + unexpectedErrors.length;
 
@@ -1649,7 +1859,6 @@
 
     return {
       passed: passed,
-      gradable: rules.length > 0,
       passedCount: passedCount,
       totalRules: finalTotalRules,
       details: details
@@ -1670,6 +1879,12 @@
     // Lưu kết quả tạm để nút modal dùng khi cần thiết
     _lastEvalResult = evalResult;
     _lastSubmitDurationSec = durationSec;
+
+    if (!evalResult || evalResult.gradable === false) {
+      setTrackingSaveStatus('warning', 'Bài thực hành chưa có đủ tiêu chí chấm nên kết quả không được ghi nhận.');
+      showGradingModal(evalResult, device, lesson, currentMode, durationSec);
+      return;
+    }
 
     // =========================================================================
     // [GỬI TEAM DATA] LƯU Ý VỀ LUỒNG TRACKING API 
@@ -1706,10 +1921,17 @@
     if (res.passed) {
       if (gmIcon) gmIcon.textContent = '🎉';
       if (gmTitle) gmTitle.textContent = 'KẾT QUẢ: ĐẠT YÊU CẦU';
-      if (gmSubtitle) gmSubtitle.textContent = 'Chúc mừng bạn đã cấu hình chính xác bài thực hành!';
-      if (gmStatusBox) gmStatusBox.className = 'gm-status-box';
-      if (gmStatusTitle) gmStatusTitle.textContent = '✔ ĐẠT TOÀN BỘ TIÊU CHÍ (100%)';
-      if (gmStatusDesc) gmStatusDesc.textContent = 'Cấu hình hoàn toàn trùng khớp với thông số kỹ thuật chuẩn của FPT Telecom.';
+      if (isNoConfigDevice()) {
+        if (gmSubtitle) gmSubtitle.textContent = 'Đã ghi nhận khảo sát thiết bị ONT BE15000 thành công!';
+        if (gmStatusBox) gmStatusBox.className = 'gm-status-box';
+        if (gmStatusTitle) gmStatusTitle.textContent = '✔ ĐÃ HOÀN THÀNH XEM THIẾT BỊ';
+        if (gmStatusDesc) gmStatusDesc.textContent = 'Đã lưu kết quả khảo sát thiết bị ONT BE15000 vào hệ thống dashboard.';
+      } else {
+        if (gmSubtitle) gmSubtitle.textContent = 'Chúc mừng bạn đã cấu hình chính xác bài thực hành!';
+        if (gmStatusBox) gmStatusBox.className = 'gm-status-box';
+        if (gmStatusTitle) gmStatusTitle.textContent = '✔ ĐẠT TOÀN BỘ TIÊU CHÍ (100%)';
+        if (gmStatusDesc) gmStatusDesc.textContent = 'Cấu hình hoàn toàn trùng khớp với thông số kỹ thuật chuẩn của FPT Telecom.';
+      }
       // ĐẠT: hiện nút "Hoàn tất", ẩn nút "Quay lại làm từ đầu"
       if (btnModalClose) btnModalClose.style.display = '';
       if (btnModalRetry) btnModalRetry.style.display = 'none';
@@ -1895,7 +2117,7 @@
    * @param {object|null} evalResult - Kết quả chấm điểm
    * @param {number} durationSec - Thời gian làm bài (giây), lấy từ đồng hồ đã dừng
    */
-  function setTrackingSaveStatus(status, message, recoveryAction) {
+  function setTrackingSaveStatus(status, message, allowRetry) {
     if (!gmSaveStatus) return;
     gmSaveStatus.hidden = !message;
     gmSaveStatus.className = `gm-save-status${status ? ` is-${status}` : ''}`;
@@ -1905,18 +2127,12 @@
     const text = document.createElement('span');
     text.textContent = message;
     gmSaveStatus.appendChild(text);
-    if (recoveryAction) {
+    if (allowRetry) {
       const retry = document.createElement('button');
       retry.type = 'button';
       retry.className = 'gm-save-retry';
-      retry.textContent = recoveryAction === 'login' ? 'Đăng nhập lại' : 'Thử lưu lại';
-      retry.addEventListener('click', function () {
-        if (recoveryAction === 'login') {
-          redirectToLogin();
-          return;
-        }
-        sendTrackingTimer(_lastEvalResult, _lastSubmitDurationSec, _lastTrackingPayload);
-      });
+      retry.textContent = 'Thử lưu lại';
+      retry.addEventListener('click', () => sendTrackingTimer(_lastEvalResult, _lastSubmitDurationSec, _lastTrackingPayload));
       gmSaveStatus.appendChild(retry);
     }
   }
@@ -1927,33 +2143,17 @@
     });
   }
 
-  function sendTrackingTimer(evalResult, durationSec, retryPayload = null, authenticationChecked = false) {
+  function sendTrackingTimer(evalResult, durationSec, retryPayload = null) {
     if (!_trackingSession) return; // Chưa có phiên nào được bắt đầu
     const session = _trackingSession;
     if (session.startPromise && !session.startSettled) {
       return session.startPromise.then(function () {
-        return sendTrackingTimer(evalResult, durationSec, retryPayload, authenticationChecked);
+        return sendTrackingTimer(evalResult, durationSec, retryPayload);
       });
     }
     if (trackingSaveInFlight) return;
-    if (!authenticationChecked) {
-      setTrackingSaveStatus('saving', 'Đang kiểm tra phiên đăng nhập trước khi lưu kết quả...');
-      return requestCurrentUserSession()
-        .then(function (user) {
-          if (!user) {
-            setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
-            return false;
-          }
-          return sendTrackingTimer(evalResult, durationSec, retryPayload, true);
-        })
-        .catch(function (error) {
-          console.warn('[Tracking] Không thể kiểm tra phiên đăng nhập:', error);
-          setTrackingSaveStatus('error', 'Chưa thể kiểm tra phiên đăng nhập do lỗi kết nối.', 'retry');
-          return false;
-        });
-    }
     if (!_currentUser) {
-      setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
+      setTrackingSaveStatus('error', 'Phiên đăng nhập không còn hợp lệ. Hãy đăng nhập lại trước khi nộp bài.');
       return Promise.resolve(false);
     }
     trackingSaveInFlight = true;
@@ -1987,7 +2187,6 @@
     if (!retryPayload && evalResult) {
       payload.status = evalResult.passed ? 'completed' : 'failed';
       payload.is_passed = evalResult.passed;
-      payload.score = evalResult.score;
       payload.grading_details = evalResult.details;
     }
 
@@ -2009,10 +2208,7 @@
             const message = err && err.error && err.error.message
               ? err.error.message
               : `Không lưu được kết quả (HTTP ${res.status}).`;
-            const requestError = new Error(message);
-            requestError.status = res.status;
-            requestError.code = err && err.error ? err.error.code : '';
-            throw requestError;
+            throw new Error(message);
           });
         }
         return res.json().then(function (data) {
@@ -2033,12 +2229,7 @@
       })
       .catch(function (err) {
         console.warn('[Tracking] Không thể gửi dữ liệu tracking:', err);
-        if (err.status === 401 || err.code === 'auth/unauthenticated') {
-          applyCurrentUser(null);
-          setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
-        } else {
-          setTrackingSaveStatus('error', `Chưa lưu được kết quả: ${err.message || 'lỗi kết nối.'}`, 'retry');
-        }
+        setTrackingSaveStatus('error', `Chưa lưu được kết quả: ${err.message || 'lỗi kết nối.'}`, true);
       })
       .finally(function () {
         trackingSaveInFlight = false;
@@ -2242,13 +2433,16 @@
   }
 
   function applyGuidePopups() {
-    if (currentMode !== 'guide' || window._hasClickedSaveInGuide) {
+    if (currentMode !== 'guide') {
       clearGuidePopups();
       return;
     }
 
+    const device = DEVICES.find(d => d.id === currentDeviceId);
     const lesson = getCurrentLesson();
     if (!lesson) return;
+
+    // Trong chế độ Hướng dẫn, tooltip luôn luôn hiển thị theo đúng vị trí trỏ về
 
     // 1. Direct DOM injection cho từng document trong iframe (xử lý linh hoạt login vs bài học)
     try {
@@ -2449,8 +2643,9 @@
     // Render popups
     popups.forEach((pop, idx) => {
       // Filter by page / hideOnPage if specified
-      if (pop.page) {
-        const pName = pop.page.toLowerCase();
+      const targetPage = pop.page || pop.urlIncludes;
+      if (targetPage) {
+        const pName = targetPage.toLowerCase();
         const active = isPageActiveInTree(deviceIframe.contentWindow, pName) || fullUrl.includes(pName);
         if (!active) {
           const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
@@ -2458,8 +2653,9 @@
           return;
         }
       }
-      if (pop.hideOnPage) {
-        const hName = pop.hideOnPage.toLowerCase();
+      const hidePage = pop.hideOnPage || pop.hideOnUrlIncludes;
+      if (hidePage) {
+        const hName = hidePage.toLowerCase();
         const hidden = isPageActiveInTree(deviceIframe.contentWindow, hName) || fullUrl.includes(hName);
         if (hidden) {
           const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
@@ -2562,6 +2758,14 @@
       } else if (pos === 'top') {
         calcLeft = targetLeft + (rect.width / 2) - (bWidth / 2);
         calcTop = targetTop - bHeight - 8;
+      }
+
+      // Nếu target đã bị cuộn ra khỏi viewport nhìn thấy (quá đỉnh hoặc quá đáy màn hình), tạm ẩn bubble để không bị kẹt dồn ở top: 5px
+      const isTargetVisibleInViewport = (rect.bottom >= 0 && rect.top <= winH);
+      if (!isTargetVisibleInViewport) {
+        bubble.style.display = 'none';
+      } else {
+        bubble.style.display = '';
       }
 
       // Giữ vị trí chính xác sát target, tránh đè lên ô nhập

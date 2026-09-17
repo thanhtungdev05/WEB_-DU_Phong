@@ -51,10 +51,14 @@ class H(BaseHTTPRequestHandler):
     def _chuyen(self, to):
         self.send_response(302)
         self.send_header("Location", to)
+        self.send_header("Content-Length", "0")
         self.end_headers()
 
     def do_GET(self):
         p = unquote(urlparse(self.path).path)
+
+        if p in ("/api/reset", "/resetsession"):
+            return self._gui(b'{"status":"ok","message":"AX3000S state reset"}', "application/json")
 
         if p in ("/", "/index.html"):
             return self._chuyen("/login.html")
@@ -76,6 +80,9 @@ class H(BaseHTTPRequestHandler):
         return self._gui(b"Not found", "text/plain", 404)
 
     def do_POST(self):
+        p = unquote(urlparse(self.path).path)
+        if p in ("/api/reset", "/resetsession"):
+            return self._gui(b'{"status":"ok","message":"AX3000S state reset"}', "application/json")
         self._chuyen(self.headers.get("Referer") or "/app.html")
 
     def log_message(self, *a):

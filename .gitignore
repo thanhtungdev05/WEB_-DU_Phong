@@ -30,6 +30,7 @@ node_modules/
 scratch/
 sim_state.json
 **/sim_state.json
+simulators/sim_be12000/src/state/user-*.json
 
 # ── Logs & Temporary Files ────────────────────────────────────
 *.log

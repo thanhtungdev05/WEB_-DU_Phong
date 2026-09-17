@@ -17,6 +17,7 @@ nhat, CHUA duoc xac nhan rieng cho tung resource -- xem ISSUES.md.
 """
 import json
 import os
+import copy
 import threading
 import time
 
@@ -27,7 +28,18 @@ _STATE_DIR = os.path.join(_BASE, "state")
 _STATE_FILE = os.path.join(_STATE_DIR, "state.json")
 
 _lock = threading.Lock()
+_SESSION_CTX = threading.local()
+_USER_CACHES = {}
 _cache = None
+
+
+def dat_nguoi_dung_hien_tai(user_key):
+    """Ghi nho user_key cua thread hien tai de phan lap state."""
+    _SESSION_CTX.user_key = user_key
+
+
+def lay_nguoi_dung_hien_tai():
+    return getattr(_SESSION_CTX, "user_key", None)
 
 
 def _seed():
@@ -42,25 +54,45 @@ def _seed():
 
 
 def _tai():
+    user_key = lay_nguoi_dung_hien_tai()
     global _cache
-    if _cache is not None:
-        return _cache
-    os.makedirs(_STATE_DIR, exist_ok=True)
-    if os.path.exists(_STATE_FILE):
-        with open(_STATE_FILE, encoding="utf-8") as f:
-            _cache = json.load(f)
-        # bo sung resource moi co trong seed ma state cu chua co
-        for k, v in _seed().items():
-            _cache.setdefault(k, v)
-    else:
-        _cache = _seed()
-        _luu()
+    if _cache is None:
+        os.makedirs(_STATE_DIR, exist_ok=True)
+        if os.path.exists(_STATE_FILE):
+            try:
+                with open(_STATE_FILE, encoding="utf-8") as f:
+                    _cache = json.load(f)
+                # bo sung resource moi co trong seed ma state cu chua co
+                for k, v in _seed().items():
+                    _cache.setdefault(k, v)
+            except Exception:
+                _cache = _seed()
+        else:
+            _cache = _seed()
+            _luu()
+
+    if user_key:
+        if user_key not in _USER_CACHES:
+            _USER_CACHES[user_key] = copy.deepcopy(_cache)
+        return _USER_CACHES[user_key]
+
     return _cache
 
 
 def _luu():
+    user_key = lay_nguoi_dung_hien_tai()
+    if user_key and user_key in _USER_CACHES:
+        return
     with open(_STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(_cache, f, ensure_ascii=False, indent=1)
+
+
+def dat_lai_factory():
+    global _cache
+    with _lock:
+        _cache = _seed()
+        _USER_CACHES.clear()
+        _luu()
 
 
 def co(resource):
@@ -213,6 +245,11 @@ def them(resource, du_lieu):
 def dat_lai_factory():
     """Xoa state, quay ve dung seed that (dung cho test tay)."""
     global _cache
+    user_key = lay_nguoi_dung_hien_tai()
     with _lock:
+        if user_key and user_key in _USER_CACHES:
+            _USER_CACHES[user_key] = copy.deepcopy(_cache or _seed())
+            return _USER_CACHES[user_key]
         _cache = _seed()
         _luu()
+        return _cache

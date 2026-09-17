@@ -7,30 +7,50 @@ Chay: python server.py [port]   (mac dinh 8090)
 """
 import os, sys, json, socket
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlparse, parse_qs, unquote
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8090
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "www")
 
-# phien dang nhap gia - NGAU NHIEN moi lan khoi dong (giong thiet bi that reboot mat phien cu)
-# -> SID cu luu trong trinh duyet khong con khop -> bat dang nhap lai
+import threading, time
+
+# Quan ly phien dang nhap theo mo hinh Multi-Session
+_SESSION_LOCK = threading.Lock()
 SID = os.urandom(16).hex()
+ACTIVE_SESSIONS = {SID: {"user": "admin", "last_active": time.time(), "state": {}}}
 
-def reset_sid():
-    """Tao SID moi -> tat ca phien cu khong hop le -> SPA buoc hien trang login."""
+def reset_sid(target_sid=None):
+    """Xoa phien chi dinh hoac don dep phien cu qua han, khong lam anh huong cac KTV khac."""
     global SID
-    SID = os.urandom(16).hex()
+    with _SESSION_LOCK:
+        if target_sid and target_sid in ACTIVE_SESSIONS:
+            ACTIVE_SESSIONS.pop(target_sid, None)
+        elif not target_sid:
+            now = time.time()
+            expired = [s for s, v in ACTIVE_SESSIONS.items() if now - v.get("last_active", now) > 7200]
+            for s in expired:
+                ACTIVE_SESSIONS.pop(s, None)
+            if not ACTIVE_SESSIONS:
+                SID = os.urandom(16).hex()
+                ACTIVE_SESSIONS[SID] = {"user": "admin", "last_active": now, "state": {}}
 
-# Muc 1: trang thai cau hinh nguoi dung luu lai (ton tai qua restart)
+# Muc 1: trang thai cau hinh nguoi dung (ho tro per-session namespace trong RAM)
 STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sim_state.json")
+USER_STATES = {}
 
-def load_state():
+def load_state(key=None):
+    if key and key in USER_STATES:
+        return USER_STATES[key]
     try:
         with open(STATE_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return {}
 
-def save_state(st):
+def save_state(st, key=None):
+    if key:
+        USER_STATES[key] = st
+        return
     try:
         with open(STATE_FILE, "w", encoding="utf-8") as f:
             json.dump(st, f, indent=1)
@@ -175,25 +195,39 @@ def handle_ubus(req):
             # user HOAC pass rong -> tu choi (giong thiet bi that) -> SPA hien form login
             if not user or not pw:
                 return ubus_result(rid, 6)   # PERMISSION_DENIED
+            user_sid = os.urandom(16).hex()
+            with _SESSION_LOCK:
+                now = time.time()
+                # don dep cac session khong hoat dong > 4 gio
+                for s in [k for k, v in ACTIVE_SESSIONS.items() if now - v.get("last_active", now) > 14400]:
+                    ACTIVE_SESSIONS.pop(s, None)
+                ACTIVE_SESSIONS[user_sid] = {"user": user, "last_active": now, "state": {}}
             return ubus_result(rid, 0, {
-                "ubus_rpc_session": SID,
+                "ubus_rpc_session": user_sid,
                 "timeout": 3600, "expires": 3600,
                 "acls": {"access-group": {"unauthenticated": ["read"]}, "ubus": {"*": ["*"]}},
                 "data": {"username": user},
             })
         # dang xuat: huy phien -> tra ok, client se ve trang login
         if obj == "session" and fn in ("destroy", "logout"):
+            with _SESSION_LOCK:
+                ACTIVE_SESSIONS.pop(sid, None)
             return ubus_result(rid, 0, {})
-        # chi chap nhan khi dung SID that; SID rong/null (sau logout hoac chua login)
-        # -> tu choi de SPA hien trang Login
+        # chi chap nhan khi dung SID hop le trong ACTIVE_SESSIONS
         if obj == "session" and fn == "access":
-            if sid == SID:
-                return ubus_result(rid, 0, {"access": True})
-            return ubus_result(rid, 0, {"access": False})
+            with _SESSION_LOCK:
+                is_valid = sid in ACTIVE_SESSIONS
+                if is_valid:
+                    ACTIVE_SESSIONS[sid]["last_active"] = time.time()
+            return ubus_result(rid, 0, {"access": is_valid})
         if obj == "session" and fn == "get":
-            if sid == SID:
-                return ubus_result(rid, 0, {"username": "admin", "access": True,
-                                            "ubus_rpc_session": SID})
+            with _SESSION_LOCK:
+                sdata = ACTIVE_SESSIONS.get(sid)
+                if sdata:
+                    sdata["last_active"] = time.time()
+            if sdata:
+                return ubus_result(rid, 0, {"username": sdata.get("user", "admin"), "access": True,
+                                            "ubus_rpc_session": sid})
             return ubus_result(rid, 6)   # PERMISSION_DENIED -> chua dang nhap
         # doc cau hinh get
         if obj == "session" and fn == "wizardstate_get":
@@ -204,10 +238,13 @@ def handle_ubus(req):
                 return ubus_result(rid, 0, DATA)
             return ubus_result(rid, 0, {"model_name": "AP-AX3000CV2", "release": {"revision": "AP-AX3000C-0.10.2"}})
 
-        # KIEM TRA SID NGHIEM NGAT CHO TAT CA CAC CALL DU LIEU:
-        # Neu SID khong khop (do vua reset_session hoac chua login) -> tu choi tat ca cac call du lieu!
-        # Dieu nay khien Vue SPA nhan loi PERMISSION_DENIED va phai hien trang Login.
-        if sid != SID:
+        # KIEM TRA SID CHO CAC CALL DU LIEU:
+        # Neu SID khong hop le trong ACTIVE_SESSIONS -> tu choi call du lieu.
+        with _SESSION_LOCK:
+            is_valid = sid in ACTIVE_SESSIONS
+            if is_valid:
+                ACTIVE_SESSIONS[sid]["last_active"] = time.time()
+        if not is_valid:
             return ubus_result(rid, 6)   # UBUS_STATUS_PERMISSION_DENIED
 
         # -- Cac goi du lieu duoi day CHI DUOC THUC HIEN KHI KHOP SID --
@@ -247,7 +284,6 @@ class Handler(SimpleHTTPRequestHandler):
 
     # ---- Muc 1: luu trang thai cau hinh that ra sim_state.json ----
     def _state_page(self):
-        from urllib.parse import urlparse, parse_qs
         q = parse_qs(urlparse(self.path).query)
         return (q.get("page", [""])[0] or "").strip()
 
@@ -259,20 +295,43 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(resp)
 
+    def _client_session_key(self):
+        cookie = self.headers.get("Cookie", "")
+        if cookie:
+            import re
+            m = re.search(r'(?:ftc_session|ax3000c_sid|PHPSESSID|ktv_client_id)=([a-zA-Z0-9_-]+)', cookie)
+            if m:
+                return m.group(1)
+        addr = getattr(self, "client_address", None)
+        return str(addr[0]) if addr else "default"
+
     def do_DELETE(self):
         if self.path.split("?")[0].rstrip("/") == "/sim-state":
-            st = load_state(); st.pop(self._state_page(), None); save_state(st)
+            key = self._client_session_key()
+            st = load_state(key); st.pop(self._state_page(), None); save_state(st, key)
             return self._send_json({"ok": True})
         self.send_error(404)
 
     def do_POST(self):
+        path_clean = self.path.split("?")[0].rstrip("/")
+        if path_clean in ("/sim-reset-session", "/api/reset", "/resetsession"):
+            with _SESSION_LOCK:
+                ACTIVE_SESSIONS.clear()
+            USER_STATES.clear()
+            try:
+                with open(STATE_FILE, "w", encoding="utf-8") as f:
+                    json.dump({}, f, indent=1)
+            except Exception:
+                pass
+            return self._send_json({"status": "ok", "message": "AX3000C state reset"})
         if self.path.split("?")[0].rstrip("/") == "/sim-state":
             ln = int(self.headers.get("Content-Length", 0))
             try:
                 data = json.loads(self.rfile.read(ln) if ln else b"{}")
             except Exception:
                 data = {}
-            st = load_state(); st[self._state_page()] = data; save_state(st)
+            key = self._client_session_key()
+            st = load_state(key); st[self._state_page()] = data; save_state(st, key)
             return self._send_json({"ok": True})
         if self.path.rstrip("/") == "/ubus":
             ln = int(self.headers.get("Content-Length", 0))
@@ -298,7 +357,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         if self.path.split("?")[0].rstrip("/") == "/sim-state":
-            return self._send_json(load_state().get(self._state_page(), {}))
+            key = self._client_session_key()
+            return self._send_json(load_state(key).get(self._state_page(), {}))
         # endpoint debug: liet ke cac call /ubus da nhan
         if self.path.rstrip("/") == "/__ubuslog":
             resp = json.dumps(UBUS_LOG, indent=1).encode()
@@ -308,24 +368,23 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(resp)
             return
-        # reset session -> SID moi -> SPA phai hien trang login (dung cho nut Huong dan)
+        # reset session / API reset -> xoa sach state
         path_clean = self.path.split("?")[0].rstrip("/")
-        if path_clean == "/sim-reset-session":
-            reset_sid()
-            # Xoa sim_state.json de reset cau hinh sach
-            if os.path.exists(STATE_FILE):
-                try:
-                    os.remove(STATE_FILE)
-                except Exception:
-                    pass
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("Content-Length", "9")
-            self.end_headers()
-            self.wfile.write(b'{"ok":1}')
-            return
+        if path_clean in ("/sim-reset-session", "/api/reset", "/resetsession"):
+            q = parse_qs(urlparse(self.path).query)
+            target_sid = q.get("sid", [""])[0] or None
+            if target_sid:
+                reset_sid(target_sid)
+            else:
+                with _SESSION_LOCK:
+                    ACTIVE_SESSIONS.clear()
+            USER_STATES.clear()
+            try:
+                with open(STATE_FILE, "w", encoding="utf-8") as f:
+                    json.dump({}, f, indent=1)
+            except Exception:
+                pass
+            return self._send_json({"status": "ok", "message": "AX3000C state reset"})
         # trang chu -> oui.html (SPA shell)
         if path_clean in ("", "/", "/index.html"):
             q = "?" + self.path.split("?", 1)[1] if "?" in self.path else ""

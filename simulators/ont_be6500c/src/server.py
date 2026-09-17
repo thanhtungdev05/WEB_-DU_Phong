@@ -146,16 +146,29 @@ class H(SimpleHTTPRequestHandler):
     # ---------------------------------------------------------------
     def _quan_tri(self):
         p = urlparse(self.path).path
-        if p == "/__sim/dat_lai":
+        if p in ("/__sim/dat_lai", "/api/reset", "/resetsession"):
             config_store.dat_lai_factory()
-            return self._tra_json({"ok": True, "da": "dat lai kho ve seed"})
+            return self._tra_json({"status": "ok", "message": "AP BE6500C state reset"})
         if p == "/__sim/trang_thai":
             return self._tra_json({"ok": True,
                                    "resource": config_store.danh_sach()})
         return None
 
+    def _client_id(self):
+        cookie_raw = self.headers.get("Cookie", "")
+        for part in cookie_raw.split(";"):
+            part = part.strip()
+            if part.startswith("ftc_session=") or part.startswith("PHPSESSID=") or part.startswith("ktv_client_id=") or part.startswith("be6500c_sid="):
+                return part.split("=", 1)[1]
+        client_ip = self.headers.get("X-Forwarded-For") or (self.client_address[0] if getattr(self, "client_address", None) else "default")
+        return client_ip.split(",")[0].strip()
+
     def do_GET(self):
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
         p = urlparse(self.path).path
+        if p in ("/api/reset", "/resetsession"):
+            config_store.dat_lai_factory()
+            return self._tra_json({"status": "ok", "message": "AP BE6500C state reset"})
         if p.startswith("/__sim/"):
             kq = self._quan_tri()
             if kq is not None:
@@ -233,6 +246,7 @@ class H(SimpleHTTPRequestHandler):
              "goi_y": "xem spec/seed_api.json; chua thu duoc thi KHONG bia"}, 501)
 
     def do_PATCH(self):
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
         kq = self._chuan_bi_ghi("PATCH")
         if kq is None:
             return
@@ -242,6 +256,7 @@ class H(SimpleHTTPRequestHandler):
         return self._tra_rong()
 
     def do_DELETE(self):
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
         kq = self._chuan_bi_ghi("DELETE")
         if kq is None:
             return
@@ -290,7 +305,12 @@ class H(SimpleHTTPRequestHandler):
                       "xem reference/har/system_user_doi_mk.har"}, 501)
 
     def do_POST(self):
-        if urlparse(self.path).path == "/oui-rpc":
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
+        p = urlparse(self.path).path
+        if p in ("/api/reset", "/resetsession"):
+            config_store.dat_lai_factory()
+            return self._tra_json({"status": "ok", "message": "AP BE6500C state reset"})
+        if p == "/oui-rpc":
             return self._oui_rpc()
         kq = self._chuan_bi_ghi("POST")
         if kq is None:

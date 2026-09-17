@@ -18,12 +18,26 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 FILE = os.path.join(BASE, "config.json")
 
 _khoa = threading.RLock()
+_SESSION_CTX = threading.local()
+USER_CONFIGS = {}
 _cfg = None
 _mtime = 0
 
 
-def _nap(bat_buoc=False):
-    """Nap config.json, tu nap lai khi file doi (de sua tay khong can restart)."""
+def dat_nguoi_dung_hien_tai(user_key):
+    """Ghi nho user_key cua thread hien tai de phan lap state."""
+    _SESSION_CTX.user_key = user_key
+
+
+def lay_nguoi_dung_hien_tai():
+    return getattr(_SESSION_CTX, "user_key", None)
+
+
+def _nap(bat_buoc=False, user_key=None):
+    """Nap config.json, ho tro state rieng cho tung user/phien."""
+    if user_key is None:
+        user_key = lay_nguoi_dung_hien_tai()
+
     global _cfg, _mtime
     with _khoa:
         try:
@@ -37,12 +51,24 @@ def _nap(bat_buoc=False):
             else:
                 _cfg = {"_meta": {}, "pages": {}, "post_endpoints": {}}
             _mtime = mt
+
+        if user_key:
+            if user_key not in USER_CONFIGS or bat_buoc:
+                USER_CONFIGS[user_key] = copy.deepcopy(_cfg)
+            return USER_CONFIGS[user_key]
+
         return _cfg
 
 
-def _ghi():
+def _ghi(user_key=None):
+    if user_key is None:
+        user_key = lay_nguoi_dung_hien_tai()
+
     global _mtime
     with _khoa:
+        if user_key and user_key in USER_CONFIGS:
+            # User dang thao tac tren ban sao rieng trong bo nho -> khong de len config.json tren dia
+            return
         tmp = FILE + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(_cfg, f, ensure_ascii=False, indent=1)
@@ -51,6 +77,7 @@ def _ghi():
             _mtime = os.path.getmtime(FILE)
         except OSError:
             pass
+
 
 
 # ---------------------------------------------------------------- doc
@@ -169,6 +196,13 @@ def ghi_post(duong_dan_cgi, tham_so, trang_goc=None):
 
 def nap_lai():
     _nap(bat_buoc=True)
+
+
+def dat_lai_factory():
+    with _khoa:
+        USER_CONFIGS.clear()
+        nap_lai()
+
 
 
 if __name__ == "__main__":

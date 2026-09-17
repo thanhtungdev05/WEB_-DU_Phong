@@ -23,11 +23,25 @@ import copy
 import json
 import os
 import threading
+import time
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 DUONG_DAN_STATE = os.path.join(_HERE, "state.json")
 
 _khoa = threading.RLock()
+_SESSION_CTX = threading.local()
+ACTIVE_SESSIONS = {}
+USER_STATES = {}
+
+
+def dat_phien_hien_tai(session_id):
+    """Ghi nho session_id cua thread hien tai de doc/ghi state phan lap."""
+    _SESSION_CTX.sid = session_id
+
+
+def lay_phien_hien_tai():
+    return getattr(_SESSION_CTX, "sid", None)
+
 
 
 # --------------------------------------------------------------------------
@@ -455,10 +469,15 @@ _state = None
 _mtime = 0.0            # thoi diem sua file state.json ma ta da nap
 
 
-def _nap():
+def _nap(sid=None):
     """
-    Nap kho tu dia. TU NAP LAI khi file state.json bi tien trinh khac sua.
+    Nap kho tu dia hoac lay tu USER_STATES cua phien hien tai.
     """
+    if sid is None:
+        sid = lay_phien_hien_tai()
+    if sid and sid in USER_STATES:
+        return USER_STATES[sid]
+
     global _state, _mtime
     try:
         m = os.path.getmtime(DUONG_DAN_STATE)
@@ -508,10 +527,10 @@ def _luu():
         pass
 
 
-def doc(duong_dan_khoa, mac_dinh=None):
+def doc(duong_dan_khoa, mac_dinh=None, sid=None):
     """doc('device.model') -> gia tri, hoac mac_dinh neu khong co."""
     with _khoa:
-        cur = _nap()
+        cur = _nap(sid=sid)
         for phan in duong_dan_khoa.split("."):
             if not isinstance(cur, dict) or phan not in cur:
                 return mac_dinh
@@ -519,36 +538,43 @@ def doc(duong_dan_khoa, mac_dinh=None):
         return cur
 
 
-def ghi(duong_dan_khoa, gia_tri):
+def ghi(duong_dan_khoa, gia_tri, sid=None):
     """ghi('device.hostname', 'x') — tao nhanh trung gian neu chua co."""
     with _khoa:
-        cur = _nap()
+        s = sid or lay_phien_hien_tai()
+        cur = _nap(sid=s)
         phan = duong_dan_khoa.split(".")
         for p in phan[:-1]:
             if p not in cur or not isinstance(cur[p], dict):
                 cur[p] = {}
             cur = cur[p]
         cur[phan[-1]] = gia_tri
-        _luu()
+        if not s or s not in USER_STATES:
+            _luu()
         return gia_tri
 
 
-def tat_ca():
+def tat_ca(sid=None):
     with _khoa:
-        return copy.deepcopy(_nap())
+        return copy.deepcopy(_nap(sid=sid))
 
 
-def dat_lai_factory():
+def dat_lai_factory(sid=None):
     """Dua kho ve dung seed ban dau (dung khi day hoc xong mot buoi)."""
     global _state
     with _khoa:
+        s = sid or lay_phien_hien_tai()
+        if s and s in USER_STATES:
+            USER_STATES[s] = copy.deepcopy(SEED)
+            USER_STATES[s].setdefault("session", {})["id_hien_tai"] = s
+            return USER_STATES[s]
         _state = copy.deepcopy(SEED)
         _luu()
         return _state
 
 
 # --------------------------------------------------------------------------
-# Phien dang nhap
+# Phien dang nhap (Multi-session ho tro nhieu KTV hoc cung luc)
 # --------------------------------------------------------------------------
 def kiem_tra_dang_nhap(uid, psw):
     """Tra True neu dung cap tai khoan trong kho."""
@@ -556,15 +582,38 @@ def kiem_tra_dang_nhap(uid, psw):
 
 
 def mo_phien(session_id):
-    ghi("session.id_hien_tai", session_id)
-    return session_id
+    with _khoa:
+        ACTIVE_SESSIONS[session_id] = {
+            "created_at": time.time(),
+            "last_seen": time.time(),
+        }
+        base = _nap(sid=None)
+        USER_STATES[session_id] = copy.deepcopy(base)
+        USER_STATES[session_id].setdefault("session", {})["id_hien_tai"] = session_id
+        return session_id
 
 
 def phien_hop_le(session_id):
     if not session_id:
         return False
-    return session_id == doc("session.id_hien_tai")
+    with _khoa:
+        if session_id in ACTIVE_SESSIONS:
+            ACTIVE_SESSIONS[session_id]["last_seen"] = time.time()
+            return True
+        return session_id == (_state.get("session", {}).get("id_hien_tai") if _state else None)
 
 
-def dong_phien():
-    ghi("session.id_hien_tai", None)
+def dong_phien(session_id=None):
+    with _khoa:
+        s = session_id or lay_phien_hien_tai()
+        if s:
+            ACTIVE_SESSIONS.pop(s, None)
+            USER_STATES.pop(s, None)
+            if _state and _state.get("session", {}).get("id_hien_tai") == s:
+                _state["session"]["id_hien_tai"] = None
+        else:
+            ACTIVE_SESSIONS.clear()
+            USER_STATES.clear()
+            if _state and "session" in _state:
+                _state["session"]["id_hien_tai"] = None
+

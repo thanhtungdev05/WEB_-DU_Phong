@@ -1,41 +1,56 @@
 /**
- * devices/be6500c/lessons/bai4.js
+ * devices/ONT_be6500c/lessons/bai4.js
  */
 window.DEVICE_ONT_BE6500C_LESSONS = window.DEVICE_ONT_BE6500C_LESSONS || [];
+
 window.DEVICE_ONT_BE6500C_LESSONS.push({
   id: 'ONT_be6500c-bai4',
   title: 'Cấu hình DNS',
   subtitle: 'Cấu hình DNS',
   instructions: [
-  "<b>Yêu cầu:</b>",
-  "Cấu hình DNS cho thiết bị:",
-  "- Primary DNS: <span class=\"val\">8.8.8.8</span>",
-  "- Secondary DNS: <span class=\"val\">8.8.4.4</span>"
-],
+    "<b>Yêu cầu:</b>",
+    "Cấu hình DNS cho thiết bị:",
+    "- Primary DNS: <span class=\"val\">8.8.8.8</span>",
+    "- Secondary DNS: <span class=\"val\">8.8.4.4</span>"
+  ],
   practiceUrl: '/sim_ONT_be6500c/advanced__wan.html',
   clearFields: ['input[name="ipv4Settings.dns.dnsServers.primary"]', 'input[name="ipv4Settings.dns.dnsServers.secondary"]'],
+  allowedSelectors: [
+    '[data-sim-nhom="dns4"] input',
+    'input[name="radio-dns4"]',
+    'input[name="radio"]',
+    '[data-sim-nhom="dns6"] input',
+    'input[name="radio-dns6"]'
+  ],
   grading: {
     description: 'Kiểm tra bài 4',
+    allowedSelectors: [
+      '[data-sim-nhom="dns4"] input',
+      'input[name="radio-dns4"]',
+      'input[name="radio"]',
+      '[data-sim-nhom="dns6"] input',
+      'input[name="radio-dns6"]'
+    ],
     rules: [
-  {
-    "id": "dns_1",
-    "name": "Primary DNS",
-    "selector": "input[name=\"ipv4Settings.dns.dnsServers.primary\"]",
-    "expected": "8.8.8.8",
-    "type": "text_exact",
-    "trim": true,
-    "required": true
-  },
-  {
-    "id": "dns_2",
-    "name": "Secondary DNS",
-    "selector": "input[name=\"ipv4Settings.dns.dnsServers.secondary\"]",
-    "expected": "8.8.4.4",
-    "type": "text_exact",
-    "trim": true,
-    "required": true
-  }
-]
+      {
+        "id": "dns_1",
+        "name": "Primary DNS",
+        "selector": "input[name=\"ipv4Settings.dns.dnsServers.primary\"]",
+        "expected": "8.8.8.8",
+        "type": "text_exact",
+        "trim": true,
+        "required": true
+      },
+      {
+        "id": "dns_2",
+        "name": "Secondary DNS",
+        "selector": "input[name=\"ipv4Settings.dns.dnsServers.secondary\"]",
+        "expected": "8.8.4.4",
+        "type": "text_exact",
+        "trim": true,
+        "required": true
+      }
+    ]
   },
   guidePopups: [
     {

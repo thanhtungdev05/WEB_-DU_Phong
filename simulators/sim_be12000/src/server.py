@@ -32,11 +32,17 @@ BASE = os.path.dirname(THU_MUC)
 FACTORY = os.path.join(THU_MUC, "state", "factory.json")
 CGI_MAP = os.path.join(os.path.dirname(THU_MUC), "spec", "cgi-map.json")
 
+import threading
+import time
+
+_SIM_LOCK = threading.Lock()
+_CGI_MAP_OBJ = nap_ban_do_ngu_canh(CGI_MAP)
 _DEFAULT_STATE = os.path.join(THU_MUC, "state", "instance-01.json")
 _store = ConfigStore(_DEFAULT_STATE, FACTORY)
 _session = Session("admin", "admin")
-_disp = Dispatcher(THU_MUC, _store, _session, nap_ban_do_ngu_canh(CGI_MAP))
+_disp = Dispatcher(THU_MUC, _store, _session, _CGI_MAP_OBJ)
 GLOBAL_SIM = {"store": _store, "session": _session, "disp": _disp, "chi_tiet": False}
+_USER_SIMS = {}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -53,6 +59,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", kieu)
         self.send_header("Content-Length", str(len(du_lieu)))
         self.send_header("Cache-Control", "no-store")
+        if not getattr(self, "_has_be_cookie", True) and hasattr(self, "_current_be_sid"):
+            self.send_header("Set-Cookie", f"be12000_sid={self._current_be_sid}; Path=/; SameSite=Lax")
+            self._has_be_cookie = True
         self.end_headers()
         self.wfile.write(du_lieu)
 
@@ -66,9 +75,53 @@ class Handler(BaseHTTPRequestHandler):
         q = parse_qs(raw, keep_blank_values=True)
         return {k: v[0] for k, v in q.items()}
 
+    def _client_session_info(self):
+        cookie = self.headers.get("Cookie", "")
+        if cookie:
+            import re
+            m = re.search(r'(?:ftc_session|be12000_sid|PHPSESSID|ktv_client_id)=([a-zA-Z0-9_-]+)', cookie)
+            if m:
+                self._has_be_cookie = True
+                self._current_be_sid = m.group(1)
+                return m.group(1)
+        addr = getattr(self, "client_address", None)
+        ip = str(addr[0]) if addr else "127.0.0.1"
+        self._has_be_cookie = False
+        self._current_be_sid = f"{ip}_{os.urandom(6).hex()}"
+        return self._current_be_sid
+
+    def _get_or_create_user_sim(self):
+        client_id = self._client_session_info()
+        now = time.time()
+        with _SIM_LOCK:
+            expired = [cid for cid, s in _USER_SIMS.items() if now - s.get("last_active", now) > 14400]
+            for cid in expired:
+                _USER_SIMS.pop(cid, None)
+
+            if client_id not in _USER_SIMS:
+                safe_id = "".join(c for c in client_id if c.isalnum() or c in ("-", "_"))[:32] or "default"
+                user_state_file = os.path.join(THU_MUC, "state", f"user-{safe_id}.json")
+                store = ConfigStore(user_state_file, FACTORY)
+                session = Session("admin", "admin")
+                disp = Dispatcher(THU_MUC, store, session, _CGI_MAP_OBJ)
+                _USER_SIMS[client_id] = {
+                    "store": store,
+                    "session": session,
+                    "disp": disp,
+                    "chi_tiet": False,
+                    "last_active": now,
+                    "state_file": user_state_file
+                }
+            sim = _USER_SIMS[client_id]
+            sim["last_active"] = now
+            return sim
+
     @property
     def _sim(self):
-        return getattr(self.server, 'sim', None) or GLOBAL_SIM
+        server_sim = getattr(self.server, 'sim', None)
+        if server_sim:
+            return server_sim
+        return self._get_or_create_user_sim()
 
     # ---------- GET ----------
 
@@ -137,7 +190,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         sim = self._sim
+        duong_dan = urlparse(self.path).path
         ts = self._tham_so_url()
+        if duong_dan in ("/api/reset", "/reset_lab") or ts.get("reset") == "1":
+            sim["store"].khoi_phuc_xuat_xuong()
+            return self._gui(json.dumps({"status": "ok", "message": "Reset to factory"}), "application/json; charset=utf-8")
         loai, tag = ts.get("_type"), ts.get("_tag")
         than = self._than_post()
 

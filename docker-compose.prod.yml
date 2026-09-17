@@ -1,0 +1,60 @@
+# ==============================================================================
+# DOCKER COMPOSE CHO MÔI TRƯỜNG PRODUCTION CHỊU TẢI CAO (> 1.000 KTV TOÀN QUỐC)
+# Sử dụng: docker compose -f docker-compose.prod.yml up -d --build
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. NGINX REVERSE PROXY & STATIC ASSET ACCELERATOR
+  # Cổng tiếp nhận chính, xử lý kết nối đồng thời, cache tĩnh và nén Gzip.
+  # ----------------------------------------------------------------------------
+  proxy:
+    image: nginx:alpine
+    container_name: ftc-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./:/app:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - ftc-network
+
+  # ----------------------------------------------------------------------------
+  # 2. APPLICATION CORE (Python Simulators + PHP API + Django Admin)
+  # ----------------------------------------------------------------------------
+  app:
+    build: .
+    image: ftc-virtual:production
+    container_name: ftc-virtual-app
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: "8080"
+      API_PORT: "8081"
+      DJANGO_PORT: "8083"
+      API_BIND_HOST: "0.0.0.0"
+      DJANGO_BIND_HOST: "0.0.0.0"
+      INSIDE_DOCKER_CONTAINER: "1"
+      # Tối ưu hóa số worker cho tải cao
+      PHP_API_WORKERS: "16"
+      DJANGO_WORKERS: "4"
+      DJANGO_THREADS: "8"
+    networks:
+      - ftc-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('PORT', '8080') + '/api/health', timeout=4).read()"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+networks:
+  ftc-network:
+    driver: bridge

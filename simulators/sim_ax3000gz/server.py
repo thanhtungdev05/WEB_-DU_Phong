@@ -72,10 +72,13 @@ class H(BaseHTTPRequestHandler):
     def _chuyen(self, to):
         self.send_response(302)
         self.send_header("Location", to)
+        self.send_header("Content-Length", "0")
         self.end_headers()
 
     def do_GET(self):
         path = unquote(urlparse(self.path).path)
+        if path in ("/api/reset", "/resetsession"):
+            return self._gui(b'{"status":"ok","message":"AX3000GZ state reset"}', "application/json")
 
         # Vao trang goc -> trang dang nhap TRUOC (giong thiet bi that:
         # go 192.168.1.1 se ra login, dang nhap xong moi vao home).
@@ -133,6 +136,9 @@ class H(BaseHTTPRequestHandler):
         return self._gui(b"Not found", "text/plain", 404)
 
     def do_POST(self):
+        path = unquote(urlparse(self.path).path)
+        if path in ("/api/reset", "/resetsession"):
+            return self._gui(b'{"status":"ok","message":"AX3000GZ state reset"}', "application/json")
         self._chuyen(self.headers.get("Referer") or TRANG_CHU)
 
     def log_message(self, *a):
