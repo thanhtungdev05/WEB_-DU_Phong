@@ -40,14 +40,39 @@ def get_nav_and_tab_for_page(page_name):
     return "/cgi-bin/navigation-basic.asp", "Network"
 
 
-SIM_STATE = {}
+def rewrite_sim_urls(content: str, sim_id: str = "sim_ac1000f") -> str:
+    if not content:
+        return content
+    # Rewrite un-prefixed /cgi-bin/
+    content = re.sub(rf'(?<!/{sim_id})(?<!{sim_id})/cgi-bin/', f'/{sim_id}/cgi-bin/', content)
+    # Rewrite root static assets to remain inside simulator namespace
+    content = re.sub(
+        rf'(?<!/{sim_id})(?<!{sim_id})/(val\.js|style\.css|general\.js|ip\.js|ip_new\.js|jsl\.js|chksel\.js|spin\.js|pvc\.js|mac\.js|wanfunc\.js|[a-zA-Z0-9_-]+\.(?:png|gif|jpg|jpeg|ico|svg))',
+        rf'/{sim_id}/\1',
+        content,
+        flags=re.IGNORECASE
+    )
+    return content
 
-def apply_sim_state_to_html(html_str, p_path):
+
+import threading
+
+_STATE_LOCK = threading.Lock()
+SIM_STATE = {}
+USER_STATES = {}
+
+def get_client_state(key):
+    if not key:
+        return SIM_STATE
+    with _STATE_LOCK:
+        if key not in USER_STATES:
+            USER_STATES[key] = dict(SIM_STATE)
+        return USER_STATES[key]
+
+def apply_sim_state_to_html(html_str, p_path, state=None):
+    if state is None:
+        state = SIM_STATE
     if "home_lan" in p_path.lower():
-        # DNS and DHCP share the same firmware form. The captured HTML left
-        # unrelated DHCP fields empty, so saving only DNS failed the firmware's
-        # whole-form validation. Restore the device's normal LAN defaults; the
-        # lesson clearFields mechanism still blanks fields KTV must enter.
         defaults = {
             "StartIp": "192.168.1.2",
             "EndIp": "192.168.1.254",
@@ -60,17 +85,17 @@ def apply_sim_state_to_html(html_str, p_path):
                 flags=re.IGNORECASE,
             )
 
-    if not SIM_STATE:
+    if not state:
         return html_str
     
     # Neu la trang home_wan.asp: inject wan_PPPUsername, wan_PPPPassword neu da luu
     if "home_wan" in p_path.lower():
-        if "wan_PPPUsername" in SIM_STATE:
-            u_val = SIM_STATE["wan_PPPUsername"]
+        if "wan_PPPUsername" in state:
+            u_val = state["wan_PPPUsername"]
             html_str = re.sub(r'(NAME=["\']wan_PPPUsername["\'][^>]*?VALUE=["\'])[^"\']*?(["\'])', rf'\g<1>{u_val}\2', html_str, flags=re.IGNORECASE)
             html_str = re.sub(r'(VALUE=["\'])[^"\']*?(["\'][^>]*?NAME=["\']wan_PPPUsername["\'])', rf'\g<1>{u_val}\2', html_str, flags=re.IGNORECASE)
-        if "wan_PPPPassword" in SIM_STATE:
-            p_val = SIM_STATE["wan_PPPPassword"]
+        if "wan_PPPPassword" in state:
+            p_val = state["wan_PPPPassword"]
             html_str = re.sub(r'(NAME=["\']wan_PPPPassword["\'][^>]*?VALUE=["\'])[^"\']*?(["\'])', rf'\g<1>{p_val}\2', html_str, flags=re.IGNORECASE)
             html_str = re.sub(r'(VALUE=["\'])[^"\']*?(["\'][^>]*?NAME=["\']wan_PPPPassword["\'])', rf'\g<1>{p_val}\2', html_str, flags=re.IGNORECASE)
 
@@ -78,8 +103,8 @@ def apply_sim_state_to_html(html_str, p_path):
     if "home_lan" in p_path.lower():
         lan_fields = ["uiViewIPAddr", "uiViewNetMask", "StartIp", "EndIp", "dhcp_LeaseTime", "PrimaryDns", "SecondDns"]
         for fld in lan_fields:
-            if fld in SIM_STATE:
-                val = SIM_STATE[fld]
+            if fld in state:
+                val = state[fld]
                 html_str = re.sub(
                     rf'(<input\b[^>]*\bname=["\']{fld}["\'][^>]*\bvalue=["\'])[^"\']*?(["\'])',
                     rf'\g<1>{val}\2',
@@ -92,8 +117,8 @@ def apply_sim_state_to_html(html_str, p_path):
                     html_str,
                     flags=re.IGNORECASE,
                 )
-        if "dnsTypeRadio" in SIM_STATE:
-            dns_type = SIM_STATE["dnsTypeRadio"]
+        if "dnsTypeRadio" in state:
+            dns_type = state["dnsTypeRadio"]
             if str(dns_type) == "1":
                 html_str = re.sub(r'(<option\s+value=["\']0["\'])\s+selected>', r'\1>', html_str, flags=re.IGNORECASE)
                 html_str = re.sub(r'(<option\s+value=["\']1["\'])>', r'\1 selected>', html_str, flags=re.IGNORECASE)
@@ -117,6 +142,7 @@ class H(BaseHTTPRequestHandler):
         self.send_response(302)
         self.send_header("Location", to)
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Length", "0")
         self.end_headers()
 
     def do_OPTIONS(self):
@@ -126,17 +152,35 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "*")
         self.end_headers()
 
+    def _client_key(self):
+        cookie = self.headers.get("Cookie", "")
+        if cookie:
+            import re
+            m = re.search(r'(?:ftc_session|ac1000f_sid|PHPSESSID|ktv_client_id)=([a-zA-Z0-9_-]+)', cookie)
+            if m:
+                return m.group(1)
+        addr = getattr(self, "client_address", None)
+        return str(addr[0]) if addr else "default"
+
     def do_GET(self):
-        global SIM_STATE
+        client_key = self._client_key()
+        client_state = get_client_state(client_key)
         parsed = urlparse(self.path)
         p = unquote(parsed.path)
 
         if p in ("/", "/index.html", "/cgi-bin/login.html"):
             return self._redirect("/cgi-bin/login.asp")
 
-        # Reset session / Logout -> xoa state
-        if "logout" in p.lower() or p.endswith("/doLogout") or "resetsession" in p.lower():
-            SIM_STATE.clear()
+        # Reset session / API reset -> xoa state
+        if p in ("/api/reset", "/resetsession") or "resetsession" in self.path.lower():
+            with _STATE_LOCK:
+                SIM_STATE.clear()
+                USER_STATES.clear()
+            resp = b'{"status":"ok","message":"AC1000F state reset"}'
+            return self._send(resp, "application/json; charset=utf-8")
+
+        if "logout" in self.path.lower() or p.endswith("/doLogout"):
+            client_state.clear()
             return self._redirect("/cgi-bin/login.asp")
 
         # Dang nhap: login.asp goi submitform() -> top.location "/cgi-bin/requestFromLoginPage"
@@ -162,15 +206,11 @@ class H(BaseHTTPRequestHandler):
                     final_tab = tab_param if tab_param else auto_tab
 
                     html = re.sub(r'src=["\']/cgi-bin/status\.asp["\']', f'src="/cgi-bin/status.asp?tab={final_tab}"', html)
-                    html = re.sub(r'src=["\']/cgi-bin/navigation-status\.asp["\']', f'src="{final_nav}"', html)
+                    html = re.sub(r'src=["\']/cgi-bin/navigation-status\.asp["\']', f'src="{final_nav}?page={clean_page}"', html)
                     html = re.sub(r'src=["\']/cgi-bin/status_deviceinfo\.asp["\']', f'src="{clean_page}"', html)
 
-                html = re.sub(
-                    r'(?i)(\bsrc=["\'])/cgi-bin/',
-                    r'\1/sim_ac1000f/cgi-bin/',
-                    html,
-                )
-
+                # Rewrite all /cgi-bin/ and static links to /sim_ac1000f/
+                html = rewrite_sim_urls(html, "sim_ac1000f")
                 data = html.encode("utf-8")
                 return self._send(data, "text/html; charset=utf-8")
 
@@ -189,7 +229,7 @@ class H(BaseHTTPRequestHandler):
                     <script type="text/javascript">
                     window.addEventListener('DOMContentLoaded', function() {{
                         var tabTarget = '{tab_val}'.toLowerCase();
-                        var menu = document.getElementById('menu');
+                        var menu = document.getElementById('menu') || document.getElementById('MainMenu');
                         if (menu) {{
                             var links = menu.getElementsByTagName('a');
                             for (var i = 0; i < links.length; i++) {{
@@ -203,8 +243,12 @@ class H(BaseHTTPRequestHandler):
                     }});
                     </script>
                     """
-                    html = html.replace('</head>', tab_script + '</head>')
+                    if re.search(r'</head>', html, re.IGNORECASE):
+                        html = re.sub(r'</head>', tab_script + "</head>", html, flags=re.IGNORECASE)
+                    else:
+                        html = tab_script + html
 
+                html = rewrite_sim_urls(html, "sim_ac1000f")
                 return self._send(html.encode("utf-8"), "text/html; charset=utf-8")
 
         # Duong dan file trong www2
@@ -214,7 +258,54 @@ class H(BaseHTTPRequestHandler):
             if ext in (".asp", ".html", ".htm"):
                 with open(f, "r", encoding="utf-8", errors="replace") as fh:
                     text_content = fh.read()
-                text_content = apply_sim_state_to_html(text_content, p)
+
+                if p.startswith("/cgi-bin/navigation"):
+                    qs = parse_qs(parsed.query)
+                    page_query = qs.get("page", [""])[0]
+                    nav_guard_script = f"""
+                    <script type="text/javascript">
+                    (function() {{
+                        var targetPage = '{page_query}'.split('/').pop().toLowerCase();
+                        if (!targetPage) {{
+                            var m = (window.location.search || '').match(/page=([^&]+)/);
+                            if (m) targetPage = decodeURIComponent(m[1]).split('/').pop().toLowerCase();
+                        }}
+                        if (targetPage) {{
+                            var origDoLoad = window.doLoad;
+                            window.doLoad = function() {{
+                                try {{
+                                    if (window.innerHeight != undefined)
+                                        document.getElementsByTagName("body")[0].style.height = window.innerHeight + "px";
+                                    else
+                                        document.getElementsByTagName("body")[0].style.height = document.documentElement.clientHeight + "px";
+                                }} catch(e) {{}}
+                                var menu = document.getElementById("MainMenu") || document.getElementById("menu");
+                                if (menu) {{
+                                    var links = menu.getElementsByTagName("a");
+                                    for (var i = 0; i < links.length; i++) {{
+                                        var href = (links[i].getAttribute("href") || "").toLowerCase();
+                                        if (href.indexOf(targetPage) !== -1) {{
+                                            for (var j = 0; j < links.length; j++) {{
+                                                links[j].className = "other";
+                                                links[j].style.color = "";
+                                            }}
+                                            links[i].className = "current";
+                                            break;
+                                        }}
+                                    }}
+                                }}
+                            }};
+                        }}
+                    }})();
+                    </script>
+                    """
+                    if re.search(r'</head>', text_content, re.IGNORECASE):
+                        text_content = re.sub(r'</head>', nav_guard_script + "</head>", text_content, count=1, flags=re.IGNORECASE)
+                    else:
+                        text_content = nav_guard_script + text_content
+
+                text_content = rewrite_sim_urls(text_content, "sim_ac1000f")
+                text_content = apply_sim_state_to_html(text_content, p, state=client_state)
                 return self._send(text_content.encode("utf-8"), CT.get(ext, "text/html; charset=utf-8"))
             else:
                 with open(f, "rb") as fh:
@@ -224,7 +315,17 @@ class H(BaseHTTPRequestHandler):
         return self._send(b"Not found: " + p.encode(), "text/plain", 404)
 
     def do_POST(self):
-        global SIM_STATE
+        parsed = urlparse(self.path)
+        p = unquote(parsed.path)
+        if p in ("/api/reset", "/resetsession") or "resetsession" in self.path.lower():
+            with _STATE_LOCK:
+                SIM_STATE.clear()
+                USER_STATES.clear()
+            resp = b'{"status":"ok","message":"AC1000F state reset"}'
+            return self._send(resp, "application/json; charset=utf-8")
+
+        client_key = self._client_key()
+        client_state = get_client_state(client_key)
         try:
             length = int(self.headers.get("Content-Length", 0) or 0)
             if length > 0:
@@ -234,6 +335,7 @@ class H(BaseHTTPRequestHandler):
                     params = parse_qs(body_bytes.decode("utf-8", errors="replace"))
                     for k, v in params.items():
                         if v:
+                            client_state[k] = v[0]
                             SIM_STATE[k] = v[0]
         except Exception as e:
             pass

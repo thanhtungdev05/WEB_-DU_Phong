@@ -44,7 +44,11 @@ def load_env():
                         continue
                     k, v = line.split('=', 1)
                     k = k.strip()
-                    v = v.strip().strip("'").strip('"')
+                    v = v.strip()
+                    if v.startswith(("'", '"')) and len(v) >= 2 and v[0] == v[-1]:
+                        v = v[1:-1].strip()
+                    else:
+                        v = v.split('#', 1)[0].strip().strip("'").strip('"')
                     if k and k not in os.environ:
                         os.environ[k] = v
         except Exception:
@@ -233,6 +237,12 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=BASE_DIR, **kwargs)
 
+    def handle(self):
+        try:
+            super().handle()
+        except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+            pass
+
     def end_headers(self):
         request_url = urlparse(self.path)
         extension = os.path.splitext(request_url.path.lower())[1]
@@ -314,11 +324,14 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 prefix = '/' + sim_id
                 if ref_path == prefix or ref_path.startswith(prefix + '/'):
                     return sim_id
+                # Ho tro khi referer chua ten simulator trong query hoac duong dan long nhau
+                if ('/' + sim_id + '/') in referer or ('/' + sim_id + '?') in referer or referer.endswith('/' + sim_id):
+                    return sim_id
 
         # 3. Kiểm tra Cookie (Fallback an toàn nhất)
         cookie = self.headers.get('Cookie', '')
         if cookie:
-            m = re.search(r'current_sim=(sim_[a-zA-Z0-9_]+)', cookie)
+            m = re.search(r'(?:current_sim|active_sim|sim_id)=(sim_[a-zA-Z0-9_]+)', cookie)
             if m:
                 sim_id = m.group(1)
                 # Chống cướp quyền (hijacking) Portal: request rõ ràng thuộc Portal thì bỏ qua Cookie
@@ -524,77 +537,73 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
 
         sim_id = self.detect_simulator()
         if sim_id:
-            if sim_id:
-                # A few legacy handlers read relative paths from process-wide CWD.
-                # Serialize only simulator dispatches so concurrent requests cannot
-                # switch each other's working directory or handler class mid-flight.
-                # WARNING: sim_mikrotik_hexs uses long-polling and will deadlock if locked!
-                needs_lock = (sim_id != 'sim_mikrotik_hexs')
-                if needs_lock:
-                    SIM_DISPATCH_LOCK.acquire()
+            mod = SIM_MODULES[sim_id]
+            original_class = self.__class__
+            original_directory = getattr(self, 'directory', None)
+            original_send_header = self.send_header
+            original_end_headers = self.end_headers
+            try:
+                handler_class = SIM_HANDLERS[sim_id]
+                self.__class__ = handler_class
+                if hasattr(mod, 'ROOT'):
+                    self.directory = getattr(mod, 'ROOT')
+                elif hasattr(mod, 'WWW'):
+                    self.directory = getattr(mod, 'WWW')
+                else:
+                    sim_dir_candidates = [
+                        os.path.join(BASE_DIR, "simulators", sim_id, "www"),
+                        os.path.join(BASE_DIR, sim_id, "www"),
+                        os.path.join(BASE_DIR, "simulators", sim_id),
+                        os.path.join(BASE_DIR, sim_id),
+                    ]
+                    for cand in sim_dir_candidates:
+                        if os.path.isdir(cand):
+                            self.directory = cand
+                            break
+
+                def custom_send_header(keyword, value):
+                    if keyword.lower() == 'location':
+                        if value.startswith('/') and not value.startswith('/' + sim_id + '/') and value != '/' + sim_id:
+                            value = '/' + sim_id + value
+                        elif '://' in value:
+                            try:
+                                parsed = urlparse(value)
+                                if parsed.path.startswith('/') and not parsed.path.startswith('/' + sim_id + '/') and parsed.path != '/' + sim_id:
+                                    value = '/' + sim_id + parsed.path + (('?' + parsed.query) if parsed.query else '')
+                            except Exception:
+                                pass
+                    original_send_header(keyword, value)
+                self.send_header = custom_send_header
+
+                def custom_end_headers():
+                    original_send_header('Set-Cookie', f'current_sim={sim_id}; Path=/; SameSite=Lax')
+                    original_send_header('Cache-Control', 'no-cache, must-revalidate')
+                    original_end_headers()
+                self.end_headers = custom_end_headers
+
+                handler_method = getattr(self, 'do_' + method, None)
+                if handler_method is None:
+                    self.send_error(501, 'Unsupported method')
+                    return
+                return handler_method()
+            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+                return
+            except Exception as e:
+                import traceback
+                print(f"Error in {sim_id} {method}: {e}")
+                traceback.print_exc()
+                self.__class__ = original_class
                 try:
-                    mod = SIM_MODULES[sim_id]
-                    original_class = self.__class__
-                    original_directory = getattr(self, 'directory', None)
-                    original_send_header = self.send_header
-                    original_end_headers = self.end_headers
-                    old_cwd = os.getcwd()
-                    try:
-                        if hasattr(mod, 'BASE'):
-                            os.chdir(mod.BASE)
-
-                        handler_class = SIM_HANDLERS[sim_id]
-                        self.__class__ = handler_class
-                        if hasattr(mod, 'ROOT'):
-                            self.directory = getattr(mod, 'ROOT')
-                        elif hasattr(mod, 'WWW'):
-                            self.directory = getattr(mod, 'WWW')
-                        else:
-                            sim_dir_candidates = [
-                                os.path.join(BASE_DIR, "simulators", sim_id, "www"),
-                                os.path.join(BASE_DIR, sim_id, "www"),
-                                os.path.join(BASE_DIR, "simulators", sim_id),
-                                os.path.join(BASE_DIR, sim_id),
-                            ]
-                            for cand in sim_dir_candidates:
-                                if os.path.isdir(cand):
-                                    self.directory = cand
-                                    break
-
-                        def custom_send_header(keyword, value):
-                            if keyword.lower() == 'location' and value.startswith('/'):
-                                value = '/' + sim_id + value
-                            original_send_header(keyword, value)
-                        self.send_header = custom_send_header
-
-                        def custom_end_headers():
-                            original_send_header('Set-Cookie', f'current_sim={sim_id}; Path=/; SameSite=Lax')
-                            original_send_header('Cache-Control', 'no-cache, must-revalidate')
-                            original_end_headers()
-                        self.end_headers = custom_end_headers
-
-                        handler_method = getattr(self, 'do_' + method, None)
-                        if handler_method is None:
-                            self.send_error(501, 'Unsupported method')
-                            return
-                        return handler_method()
-                    except Exception as e:
-                        import traceback
-                        print(f"Error in {sim_id} {method}: {e}")
-                        traceback.print_exc()
-                        self.__class__ = original_class
-                        self.send_error(500, 'Internal Server Error')
-                        return
-                    finally:
-                        self.__class__ = original_class
-                        if original_directory is not None:
-                            self.directory = original_directory
-                        self.send_header = original_send_header
-                        self.end_headers = original_end_headers
-                        os.chdir(old_cwd)
-                finally:
-                    if needs_lock:
-                        SIM_DISPATCH_LOCK.release()
+                    self.send_error(500, 'Internal Server Error')
+                except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+                    pass
+                return
+            finally:
+                self.__class__ = original_class
+                if original_directory is not None:
+                    self.directory = original_directory
+                self.send_header = original_send_header
+                self.end_headers = original_end_headers
         
         # Nếu không trúng simulator nào -> phục vụ file tĩnh của Portal
         if method in ('GET', 'HEAD') and is_public_root_path(path_only):
@@ -633,6 +642,7 @@ class DualStackServer(ThreadingHTTPServer):
     daemon_threads = True
     # Windows SO_REUSEADDR cho phep bind trung cong -> tat de chi 1 instance chay duoc
     allow_reuse_address = False
+    request_queue_size = 4096
 
     def server_bind(self):
         try:
@@ -640,6 +650,12 @@ class DualStackServer(ThreadingHTTPServer):
         except (AttributeError, OSError):
             pass
         super().server_bind()
+
+    def handle_error(self, request, client_address):
+        exc_type, exc_val, _ = sys.exc_info()
+        if exc_type in (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+            return
+        super().handle_error(request, client_address)
 
 
 def listening_pids(local_target):
@@ -722,13 +738,18 @@ def start_php_api():
     try:
         log_path = os.path.join(BASE_DIR, 'php_api.log')
         log_file = open(log_path, 'a', encoding='utf-8', errors='replace')
+        env = dict(os.environ)
+        workers = env.get('PHP_API_WORKERS') or str(max(8, (os.cpu_count() or 4) * 2))
+        env.setdefault('PHP_CLI_SERVER_WORKERS', workers)
         proc = subprocess.Popen(
-            [php, '-S', '127.0.0.1:%d' % API_PORT, '-t', BASE_DIR],
+            [php, '-d', 'post_max_size=30M', '-d', 'upload_max_filesize=30M', '-d', 'memory_limit=512M',
+             '-S', '127.0.0.1:%d' % API_PORT, '-t', BASE_DIR],
             cwd=BASE_DIR,
+            env=env,
             stdout=log_file,
             stderr=subprocess.STDOUT,
         )
-        print("[API] PHP noi bo chi lang nghe 127.0.0.1:%d (pid %d, log: %s)" % (API_PORT, proc.pid, log_path))
+        print("[API] PHP noi bo chi lang nghe 127.0.0.1:%d (workers: %s, pid %d, log: %s)" % (API_PORT, env['PHP_CLI_SERVER_WORKERS'], proc.pid, log_path))
         print("[API] /api/* duoc dispatcher proxy tu http://127.0.0.1:%d" % PORT)
         return proc
     except Exception as exc:
@@ -783,6 +804,33 @@ def start_django_admin():
 def start_server():
     os.chdir(BASE_DIR)
 
+    # 0. Tu dong nhan dien che do Production (> 1.000 KTV Toan Quoc)
+    is_prod = (
+        '--prod' in sys.argv
+        or os.environ.get('PRODUCTION', '0') == '1'
+        or os.environ.get('PROD', '0') == '1'
+    )
+    if is_prod and not os.environ.get('INSIDE_DOCKER_CONTAINER'):
+        prod_compose = os.path.join(BASE_DIR, 'docker-compose.prod.yml')
+        docker_bin = shutil.which('docker')
+        if docker_bin and os.path.isfile(prod_compose):
+            print("=" * 65)
+            print("   HE THONG GIA LAP MANG FPT - CHE DO PRODUCTION")
+            print("   Tu dong khoi dong cum Nginx + Workers (> 1.000 KTV)...")
+            print("=" * 65)
+            try:
+                if '--stop' in sys.argv or '--down' in sys.argv:
+                    subprocess.run([docker_bin, 'compose', '-f', prod_compose, 'down'], cwd=BASE_DIR)
+                else:
+                    subprocess.run([docker_bin, 'compose', '-f', prod_compose, 'up', '--build'], cwd=BASE_DIR)
+                return
+            except KeyboardInterrupt:
+                print("\nDa dung cum Production.")
+                return
+            except Exception as e:
+                print(f"[CANH BAO] Loi khi chay Docker Compose: {e}")
+                print("Chuyen ve chay truc tiep bang Master Dispatcher...")
+
     # Chong chay 2 instance: neu cong PORT da co trinh lang nghe -> tu dong tat instance cu cua minh
     owners = listening_pids(str(PORT))
     foreign = []
@@ -814,7 +862,17 @@ def start_server():
     try:
         srv = DualStackServer(('::', PORT), MasterDispatcher)
     except (OSError, ValueError):
-        fallback_srv = type('IPv4Server', (ThreadingHTTPServer,), {'allow_reuse_address': False})
+        def _fallback_handle_error(self, request, client_address):
+            exc_type, exc_val, _ = sys.exc_info()
+            if exc_type in (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+                return
+            super(type(self), self).handle_error(request, client_address)
+
+        fallback_srv = type('IPv4Server', (ThreadingHTTPServer,), {
+            'allow_reuse_address': False,
+            'request_queue_size': 4096,
+            'handle_error': _fallback_handle_error,
+        })
         srv = fallback_srv(('0.0.0.0', PORT), MasterDispatcher)
     srv.daemon_threads = True
     print("=" * 65)
@@ -824,6 +882,7 @@ def start_server():
     print(f"   Quan tri Admin Panel:   http://127.0.0.1:{PORT}/admin/")
     print(f"   API noi bo (/api/*) ->  PHP (127.0.0.1:{API_PORT})")
     print(f"   Admin (/admin/*)    ->  Django (127.0.0.1:{DJANGO_PORT})")
+    print(f"   TCP Queue Backlog:      4096 ket noi cho")
     print("=" * 65)
     
 

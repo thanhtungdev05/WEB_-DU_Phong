@@ -91,6 +91,7 @@
         var b = BANG[ten];
         var el = document.querySelector('[name="' + ten + '"]');
         if (!el || kho[b.resource] == null) { hong++; return; }
+        if (el._ftcUserModified) { da++; return; }
         if (datVaoO(el, docSau(kho[b.resource], b.duong_dan))) da++; else hong++;
       });
       if (window.__simSync) window.__simSync();
@@ -207,13 +208,18 @@
 
     Promise.all(viec).then(function (kq) {
       var loi = kq.filter(function (x) { return !x.ok; });
-      goThanhSave();
       nap();
-      if (loi.length) {
-        alert('Co ' + loi.length + ' resource khong luu duoc: '
-          + loi.map(function (x) { return x.r + ' (' + x.ma + ')'; }).join(', '));
+      if (window.parent && typeof window.parent.onSimulatorSave === 'function') {
+        try { window.parent.onSimulatorSave(window); } catch(e){}
+      } else if (window.top && typeof window.top.onSimulatorSave === 'function') {
+        try { window.top.onSimulatorSave(window); } catch(e){}
       } else {
-        alert('Da luu vao config_store that.');
+        if (loi.length) {
+          alert('Co ' + loi.length + ' resource khong luu duoc: '
+            + loi.map(function (x) { return x.r + ' (' + x.ma + ')'; }).join(', '));
+        } else {
+          alert('Da luu vao config_store that.');
+        }
       }
     });
   }
@@ -225,6 +231,7 @@
     var coGhi = Object.keys(BANG).some(function (t) { return coTheGhi(resourceGhi(BANG[t])); });
     if (!coGhi) return;
     form.__daTheoDoi = true;
+    hienThanhSave(BANG);
     ['input', 'change'].forEach(function (loai) {
       form.addEventListener(loai, function (e) {
         if (thanhSave && thanhSave.contains(e.target)) return;

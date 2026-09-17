@@ -222,6 +222,9 @@ function reserve_tracking_timer_start(array $trackingActor, array $input): array
     $email = (string)($trackingActor['email'] ?? '');
     $name = (string)($trackingActor['display_name'] ?? '');
 
+    $actorExists = $userId !== '' && (bool)$pdo->query('SELECT 1 FROM users WHERE user_id = ' . $pdo->quote($userId))->fetchColumn();
+    $validUserId = $actorExists ? $userId : null;
+
     try {
         $pdo->beginTransaction();
         $submissionLock = $pdo->prepare('SELECT pg_advisory_xact_lock(hashtextextended(:lock_key, 0))');
@@ -238,7 +241,8 @@ function reserve_tracking_timer_start(array $trackingActor, array $input): array
         $existingStatement->execute(['submission_id' => $submissionId]);
         $existing = $existingStatement->fetch();
         if ($existing) {
-            if ((string)$existing['user_id'] !== $userId
+            $existingUserId = (string)($existing['user_id'] ?? '');
+            if (($validUserId !== null && $existingUserId !== $validUserId)
                 || (string)$existing['lab_id'] !== $labId
                 || (string)$existing['mode'] !== $mode) {
                 $pdo->rollBack();
@@ -264,7 +268,7 @@ function reserve_tracking_timer_start(array $trackingActor, array $input): array
                  WHERE lab_id = :lab_id
                    AND mode IN ('Thực hành', 'practice')
                    AND (
-                       user_id = CAST(:user_id AS uuid)
+                       (:user_id IS NOT NULL AND user_id = CAST(:user_id AS uuid))
                        OR (NULLIF(:email, '') IS NOT NULL AND LOWER(email) = LOWER(:email))
                        OR (NULLIF(:technician_id, '') IS NOT NULL AND technician_id = :technician_id)
                    )
@@ -272,7 +276,7 @@ function reserve_tracking_timer_start(array $trackingActor, array $input): array
             );
             $nextAttempt->execute([
                 'lab_id' => $labId,
-                'user_id' => $userId,
+                'user_id' => $validUserId,
                 'email' => $email,
                 'technician_id' => $employeeId,
             ]);
@@ -297,7 +301,7 @@ function reserve_tracking_timer_start(array $trackingActor, array $input): array
             SQL
         );
         $insert->execute([
-            'user_id' => $userId,
+            'user_id' => $validUserId,
             'technician_id' => $employeeId,
             'name' => $name,
             'email' => $email,

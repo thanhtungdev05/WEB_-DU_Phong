@@ -197,13 +197,16 @@ class H(SimpleHTTPRequestHandler):
 
     # ---- dinh tuyen ----
     def do_GET(self):                                        # noqa: N802
+        sid = self._cookie("SESSIONID")
+        kho.dat_phien_hien_tai(sid)
         p = urlparse(self.path).path
 
         # 1) Duong dan quan tri CHI CO o ban gia lap (khong ton tai tren thiet
         #    bi that) — dat tien to __sim/ de khong bao gio lan voi duong that.
-        if p == "/__sim/dat_lai":
+        if p in ("/__sim/dat_lai", "/api/reset", "/resetsession"):
             kho.dat_lai_factory()
-            return self._tra_json({"ok": True, "da": "dat lai kho ve seed"})
+            kho.dong_phien()
+            return self._tra_json({"status": "ok", "message": "AC1000HI factory reset"})
         if p == "/__sim/kho":
             return self._tra_json(kho.tat_ca())
 
@@ -226,7 +229,7 @@ class H(SimpleHTTPRequestHandler):
 
         # 4) Dang xuat
         if p == "/cgi-bin/logout.cgi":
-            kho.dong_phien()
+            kho.dong_phien(sid)
             return self._chuyen_huong("/cgi-bin/login.asp")
 
         # 5) Hai trang thiet bi that tra 404 — giu nguyen
@@ -271,7 +274,14 @@ class H(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):                                       # noqa: N802
+        sid = self._cookie("SESSIONID")
+        kho.dat_phien_hien_tai(sid)
         p = urlparse(self.path).path
+
+        if p in ("/__sim/dat_lai", "/api/reset", "/resetsession"):
+            kho.dat_lai_factory()
+            kho.dong_phien()
+            return self._tra_json({"status": "ok", "message": "AC1000HI factory reset"})
 
         # ------------------------------------------------------------------
         # /__sim/nhan_file?ten=<ten file>

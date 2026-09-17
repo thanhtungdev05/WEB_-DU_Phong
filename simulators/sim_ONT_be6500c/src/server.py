@@ -73,8 +73,21 @@ class H(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _client_id(self):
+        cookie_raw = self.headers.get("Cookie", "")
+        for part in cookie_raw.split(";"):
+            part = part.strip()
+            if part.startswith("ftc_session=") or part.startswith("PHPSESSID=") or part.startswith("ktv_client_id=") or part.startswith("be6500c_sid="):
+                return part.split("=", 1)[1]
+        client_ip = self.headers.get("X-Forwarded-For") or (self.client_address[0] if getattr(self, "client_address", None) else "default")
+        return client_ip.split(",")[0].strip()
+
     def do_GET(self):
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
         p = urlparse(self.path).path
+        if p in ("/api/reset", "/resetsession"):
+            config_store.dat_lai_factory()
+            return self._tra_json({"status": "ok", "message": "ONT BE6500C state reset"})
         r = _ten_resource(p)
         if r is not None:
             if r in API_503:
@@ -91,6 +104,7 @@ class H(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_PATCH(self):
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
         p = urlparse(self.path).path
         r = _ten_resource(p)
         if r is None:
@@ -148,9 +162,15 @@ class H(SimpleHTTPRequestHandler):
         return self._tra_json(ket_qua)
 
     def do_DELETE(self):
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
         return self._ghi_theo_method("DELETE", config_store.xoa)
 
     def do_POST(self):
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
+        p = urlparse(self.path).path
+        if p in ("/api/reset", "/resetsession"):
+            config_store.dat_lai_factory()
+            return self._tra_json({"status": "ok", "message": "ONT BE6500C state reset"})
         # ext/logpull la HANH DONG (bat dau thu thap log), khong phai them
         # ban ghi vao danh sach -- ma goc goi setLogPull khong kem body.
         if _ten_resource(urlparse(self.path).path) == "ext/logpull":

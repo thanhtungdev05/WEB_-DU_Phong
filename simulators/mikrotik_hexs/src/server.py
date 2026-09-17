@@ -971,6 +971,9 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         p = self.path.split("?", 1)[0]
+        if p in ("/api/reset", "/resetsession"):
+            KHO.xoa_sach()
+            return self._tra(200, b'{"status":"ok","message":"Mikrotik hEX S state reset"}', "application/json")
         if p == "/":
             p = "/index.html"
         elif p == "/webfig" or p == "/webfig/":
@@ -1034,7 +1037,11 @@ class H(BaseHTTPRequestHandler):
 
     # ------------------------------------------------------------- jsproxy
     def do_POST(self):
-        if self.path.split("?", 1)[0] != "/jsproxy":
+        p = self.path.split("?", 1)[0]
+        if p in ("/api/reset", "/resetsession"):
+            KHO.xoa_sach()
+            return self._tra(200, b'{"status":"ok","message":"Mikrotik hEX S state reset"}', "application/json")
+        if p != "/jsproxy":
             return self._tra(404, b"404 Not Found", "text/plain")
 
         n = int(self.headers.get("Content-Length", 0))

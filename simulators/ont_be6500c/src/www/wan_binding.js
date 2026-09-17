@@ -42,11 +42,19 @@
   var G4 = null, G6 = null;     // ban ghi co ipv4Settings / ipv6Settings
   var dangNap = false, dangGhi = false, thanhSave = null;
 
-  function o(ten) { return document.querySelector('[name="' + CSS.escape(ten) + '"]'); }
+  function o(ten) {
+    if (!ten) return null;
+    return document.querySelector('[name="' + ten + '"]') ||
+      (window.CSS && CSS.escape ? document.querySelector('[name="' + CSS.escape(ten) + '"]') : null) ||
+      document.getElementById(ten);
+  }
   function giaTri(ten) { var el = o(ten); return el ? el.value : ''; }
-  function datGiaTri(ten, v) {
+  function datGiaTri(ten, v, force) {
     var el = o(ten);
     if (el) {
+      if (!force && el._ftcUserModified && el.value !== '') {
+        return;
+      }
       el.value = (v === undefined || v === null) ? '' : String(v);
       if (window.__capNhatNhan) window.__capNhatNhan(el);
     }
@@ -278,11 +286,17 @@
     // 2. Trong khoi IPv4: PPPoE / Static
     ['ipv4Settings.pppoe.username', 'ipv4Settings.pppoe.password'].forEach(function (n) {
       var el = o(n);
-      if (el) el.closest('.MuiFormControl-root').style.display = (p4 === 'pppoe') ? '' : 'none';
+      if (el) {
+        var fc = el.closest('.MuiFormControl-root');
+        if (fc) fc.style.display = (p4 === 'pppoe') ? '' : 'none';
+      }
     });
     ['ipv4Settings.ipAddress', 'ipv4Settings.mask', 'ipv4Settings.gateway'].forEach(function (n) {
       var el = o(n);
-      if (el) el.closest('.MuiFormControl-root').style.display = (p4 === 'static') ? '' : 'none';
+      if (el) {
+        var fc = el.closest('.MuiFormControl-root');
+        if (fc) fc.style.display = (p4 === 'static') ? '' : 'none';
+      }
     });
 
     // 3. Trong khoi IPv6: Static
@@ -570,13 +584,13 @@
           devices: bg.devices,
           ipv4Settings: {
             protocol: p4,
-            mask: p4 === 'static' ? giaTri('ipv4Settings.mask') : '',
+            mask: giaTri('ipv4Settings.mask'),
             pppoe: {
               username: p4 === 'pppoe' ? giaTri('ipv4Settings.pppoe.username') : '',
               password: p4 === 'pppoe' ? giaTri('ipv4Settings.pppoe.password') : ''
             },
-            ipAddress: p4 === 'static' ? giaTri('ipv4Settings.ipAddress') : '',
-            gateway: p4 === 'static' ? giaTri('ipv4Settings.gateway') : ''
+            ipAddress: giaTri('ipv4Settings.ipAddress'),
+            gateway: giaTri('ipv4Settings.gateway')
           },
           autoDnsEnabled: dns4Auto,
           dnsServers: dns4Auto ? [] : [
@@ -637,6 +651,17 @@
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return nap();
     }).then(function () {
+      if (window.parent && typeof window.parent.onSimulatorSave === 'function') {
+        try { window.parent.onSimulatorSave(window); } catch (e) { }
+      }
+      try {
+        if (window.top && window.top !== window) {
+          window.top._hasClickedSaveInGuide = true;
+          if (typeof window.top.onSimulatorSave === 'function') {
+            window.top.onSimulatorSave(window);
+          }
+        }
+      } catch (e) { }
       return new Promise(function (ok) { setTimeout(function () { dangGhi = false; ok(); }, 0); });
     }, function (e) {
       dangGhi = false;
@@ -688,7 +713,17 @@
       + 'Cancel<span class="MuiTouchRipple-root css-w0pj6f"></span></button>';
     neo.appendChild(w);
     thanhSave = w;
-    w.querySelector('.submit').addEventListener('click', function () { luu(); });
+    w.querySelector('.submit').addEventListener('click', function () {
+      try {
+        if (window.top && window.top !== window) {
+          window.top._hasClickedSaveInGuide = true;
+        }
+        if (window.parent && typeof window.parent.onSimulatorSave === 'function') {
+          window.parent.onSimulatorSave(window);
+        }
+      } catch (e) { }
+      luu();
+    });
     w.querySelector('.cancel').addEventListener('click', function () { nap(); });
   }
 

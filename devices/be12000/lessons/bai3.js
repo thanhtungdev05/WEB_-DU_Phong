@@ -26,7 +26,6 @@ var lessonData = {
   practiceUrl: '/sim_be12000/login',
   onSimLoad: function (simWin) {
     try {
-      fetch('/sim_be12000/api/reset').catch(function () { });
       if (simWin && simWin.top) {
         simWin.top._hasSuccHintStored = false;
         simWin.top._hasClickedSaveInGuide = false;

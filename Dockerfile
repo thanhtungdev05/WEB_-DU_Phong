@@ -14,6 +14,7 @@ RUN apt-get update \
         unzip \
         dos2unix \
         php-cli \
+        php-fpm \
         php-curl \
         php-gd \
         php-mbstring \

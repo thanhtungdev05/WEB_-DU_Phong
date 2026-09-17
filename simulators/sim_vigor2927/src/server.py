@@ -189,9 +189,19 @@ class H(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass
 
+    def _client_id(self):
+        cookie_raw = self.headers.get("Cookie", "")
+        for part in cookie_raw.split(";"):
+            part = part.strip()
+            if part.startswith("ftc_session=") or part.startswith("PHPSESSID=") or part.startswith("ktv_client_id=") or part.startswith("vg_session="):
+                return part.split("=", 1)[1]
+        client_ip = self.headers.get("X-Forwarded-For") or (self.client_address[0] if getattr(self, "client_address", None) else "default")
+        return client_ip.split(",")[0].strip()
+
     def _redirect(self, to):
         self.send_response(302)
         self.send_header("Location", to)
+        self.send_header("Content-Length", "0")
         self.end_headers()
 
     def _file(self, rel):
@@ -282,6 +292,7 @@ class H(BaseHTTPRequestHandler):
         return self._send("", "text/html; charset=utf-8")
 
     def do_GET(self):
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
         u = urlparse(self.path)
         p = unquote(u.path)
 
@@ -296,7 +307,19 @@ class H(BaseHTTPRequestHandler):
                 if self._phuc_vu_moi("index.htm", p):
                     return
             return self._file("index.htm")
+        if p in ("/api/reset", "/resetsession"):
+            config_store.dat_lai_factory()
+            data = b'{"status":"ok","message":"Vigor2927 state reset"}'
+            self.send_response(200)
+            self._cors()
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
         if "logout" in p.lower():
+            uid = self._client_id()
+            config_store.USER_CONFIGS.pop(uid, None)
             return self._redirect("/")
         if p.lstrip("/") in FRAME_PAGES:
             rel = p.lstrip("/")
@@ -336,6 +359,7 @@ class H(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
+        config_store.dat_nguoi_dung_hien_tai(self._client_id())
         u = urlparse(self.path)
         p = unquote(u.path)
         # doc body
@@ -346,6 +370,17 @@ class H(BaseHTTPRequestHandler):
         body = self.rfile.read(n).decode("utf-8", "ignore") if n else ""
         params = self._flat(u.query)
         params.update(self._flat(body))
+
+        if p in ("/api/reset", "/resetsession"):
+            config_store.dat_lai_factory()
+            data = b'{"status":"ok","message":"Vigor2927 state reset"}'
+            self.send_response(200)
+            self._cors()
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
 
         # Bo thu thap tich hop (thay collector.py rieng): POST /save?name=X&ext=Y
         # Ghi vao captures_new/ de dung khi can crawl lai tu thiet bi that.

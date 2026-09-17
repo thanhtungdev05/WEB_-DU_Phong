@@ -23,7 +23,7 @@ window.DEVICE_BE6500C_LESSONS.push({
       {
         "id": "pf_name",
         "name": "Name",
-        "selector": "tbody tr td:nth-child(3)",
+        "selector": "tbody tr td:nth-child(3), .MuiDialog-root input[name=\"name\"]",
         "expected": "Camera",
         "type": "case_insensitive",
         "trim": true,
@@ -32,7 +32,7 @@ window.DEVICE_BE6500C_LESSONS.push({
       {
         "id": "pf_protocol",
         "name": "Protocol",
-        "selector": "tbody tr td:nth-child(4)",
+        "selector": "tbody tr td:nth-child(4), .MuiDialog-root [name=\"protocol\"], #mui-component-select-protocol",
         "expected": ["TCP_UDP", "TCP + UDP"],
         "type": "any_of",
         "trim": true,
@@ -41,7 +41,7 @@ window.DEVICE_BE6500C_LESSONS.push({
       {
         "id": "pf_ext_port",
         "name": "External Port",
-        "selector": "tbody tr td:nth-child(5)",
+        "selector": "tbody tr td:nth-child(5), .MuiDialog-root input[name=\"source.portRange\"]",
         "expected": "8080",
         "type": "text_exact",
         "trim": true,
@@ -50,7 +50,7 @@ window.DEVICE_BE6500C_LESSONS.push({
       {
         "id": "pf_ip",
         "name": "Internal IP",
-        "selector": "tbody tr td:nth-child(6) span",
+        "selector": "tbody tr td:nth-child(6), tbody tr td:nth-child(6) span, .MuiDialog-root .MuiAutocomplete-input",
         "expected": "192.168.1.20",
         "type": "contains",
         "trim": true,
@@ -59,7 +59,7 @@ window.DEVICE_BE6500C_LESSONS.push({
       {
         "id": "pf_int_port",
         "name": "Internal Port",
-        "selector": "tbody tr td:nth-child(7)",
+        "selector": "tbody tr td:nth-child(7), .MuiDialog-root input[name=\"destination.portRange\"]",
         "expected": "80",
         "type": "text_exact",
         "trim": true,

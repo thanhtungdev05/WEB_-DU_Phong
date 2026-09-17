@@ -21,8 +21,14 @@ var lessonObj = {
   ],
   practiceUrl: '/sim_ax3000hv2/cgi-bin/index.asp?page=home_lan.asp',
   clearFields: [],
+  allowedSelectors: [
+    'input[name="dhcpTypeRadio"]'
+  ],
   grading: {
     description: 'Kiểm tra cấu hình đổi IP LAN và DHCP trên AX3000Hv2',
+    allowedSelectors: [
+      'input[name="dhcpTypeRadio"]'
+    ],
     rules: [
       {
         id: 'dhcp_ip',
@@ -44,10 +50,11 @@ var lessonObj = {
       },
       {
         id: 'dhcp_enable',
-        name: 'DHCP Server Enable',
-        selector: 'input[name="dhcpTypeRadio"][value="1" i]:checked',
-        expected: 'Enable',
-        type: 'element_exists',
+        name: 'DHCP',
+        selector: 'input[name="dhcpTypeRadio"]',
+        expected: ['1', 'Enable', 'Bật/Enable'],
+        displayExpected: 'Bật/Enable',
+        type: 'any_of',
         required: true
       },
       {
@@ -81,13 +88,13 @@ var lessonObj = {
   },
   guidePopups: [
     {
-      selector: '#MainMenu a:contains("Network"), a[onclick="change_basic(this);"]',
+      selector: 'a[onclick="change_basic(this);"], #MainMenu a',
       text: 'Bước 1: Chọn Network',
       position: 'top',
       hideOnPage: 'home_lan.asp'
     },
     {
-      selector: 'a[href*="home_lan.asp"], a:contains("LAN")',
+      selector: 'a[href*="home_lan.asp"]',
       text: 'Bước 2: Chọn LAN',
       position: 'top',
       hideOnPage: 'home_lan.asp'
@@ -107,7 +114,7 @@ var lessonObj = {
       forcePosition: true
     },
     {
-      selector: 'input[name="dhcpTypeRadio"][value="1" i]',
+      selector: 'input[name="dhcpTypeRadio"][value="1"]',
       page: 'home_lan.asp',
       text: 'Bước 5: Ở mục DHCP, chọn Enable',
       position: 'top'

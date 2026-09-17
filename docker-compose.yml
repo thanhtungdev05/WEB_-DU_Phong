@@ -10,6 +10,7 @@ services:
       PORT: "8080"
       API_PORT: "8081"
       DJANGO_PORT: "8083"
+      INSIDE_DOCKER_CONTAINER: "1"
     ports:
       - "8080:8080"
     restart: unless-stopped

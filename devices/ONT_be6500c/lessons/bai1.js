@@ -18,7 +18,15 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   grading: {
     description: 'Kiểm tra cấu hình PPPoE',
     rules: [
-
+      {
+        "id": "wan_protocol",
+        "name": "Connection Type",
+        "selector": "input[name=\"ipv4Settings.protocol\"]",
+        "expected": "pppoe",
+        "type": "text_exact",
+        "trim": true,
+        "required": true
+      },
       {
         "id": "pppoe_user",
         "name": "Username",
@@ -39,6 +47,10 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       }
     ]
   },
+  allowedSelectors: [
+    'div[id*="ipv4Settings.protocol"]',
+    'input[name="ipv4Settings.protocol"]'
+  ],
   guidePopups: [
     {
       "selector": ".MuiTypography-subtitle2:contains(\"Advanced\"), svg[data-testid=\"TuneTwoToneIcon\"], svg[data-testid=\"TuneOutlinedIcon\"]",
@@ -66,7 +78,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       "position": "right"
     },
     {
-      "selector": "body:has(input[name=\"ipv4Settings.pppoe.username\"]) button.alternative-layout--submit",
+      "selector": "button.alternative-layout--submit, .formActionButton.submit, body:has(input[name=\"ipv4Settings.pppoe.username\"]) button.alternative-layout--submit",
       "text": "Bước 3 chọn Save để lưu cấu hình nút Save chiếu vào Nút nộp bài hoặc nút Xem lỗi sai",
       "position": "right"
     }
