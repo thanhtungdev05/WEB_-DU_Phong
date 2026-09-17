@@ -243,7 +243,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
     def test_asset_version_prevents_stale_control_styles(self):
         self.assertIn("css/styles.css?v=20260916-theme-system-v27", self.html)
         self.assertIn("css/dashboard-professional.css?v=20260917-top-actions-inline-v30", self.html)
-        self.assertEqual(self.html.count("20260917-dashboard-metric-semantics-v32"), 1)
+        self.assertEqual(self.html.count("20260917-branch-summary-four-cards-v33"), 1)
 
     def test_wrapped_desktop_topbar_actions_stay_right_aligned(self):
         breakpoint_start = self.professional_css.index("@media (max-width: 1180px) and (min-width: 961px)")

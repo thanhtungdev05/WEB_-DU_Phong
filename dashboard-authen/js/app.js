@@ -1824,8 +1824,6 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
     const summaryValues = {
         detailReportPeriod: dashboardReport?.meta?.period?.label || getRangeLabel(),
         detailReportSessions: formatNumber.format(Number(grand.total?.submitted_attempt_count ?? grand.submitted_attempt_count ?? grand.total?.attempt_count ?? grand.attempt_count) || 0),
-        detailReportEligibleSessions: formatNumber.format(Number(grand.total?.rate_eligible_attempt_count ?? grand.rate_eligible_attempt_count ?? grand.total?.attempt_count ?? grand.attempt_count) || 0),
-        detailReportIncompleteSessions: formatNumber.format(Number(grand.total?.legacy_incomplete_attempt_count ?? grand.legacy_incomplete_attempt_count ?? grand.total?.incomplete_attempt_count ?? grand.incomplete_attempt_count) || 0),
         detailReportRegions: formatNumber.format(visibleRegionCount),
         detailReportLabs: formatNumber.format(columns.length),
         detailReportCompletion: grand.total?.completion_rate === null || grand.completion_rate === null
@@ -1982,7 +1980,7 @@ function renderDetailedReport(rows) {
         qualityNote.hidden = false;
         qualityNote.textContent = 'Không thể tải danh mục KTV đang hoạt động và phiên thực hành cho kỳ này; các chỉ số được để trống để tránh gây hiểu nhầm.';
     }
-    ['detailReportSessions', 'detailReportEligibleSessions', 'detailReportIncompleteSessions', 'detailReportRegions', 'detailReportLabs', 'detailReportCompletion'].forEach(id => {
+    ['detailReportSessions', 'detailReportRegions', 'detailReportLabs', 'detailReportCompletion'].forEach(id => {
         const element = document.getElementById(id);
         if (element) element.textContent = '—';
     });
