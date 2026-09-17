@@ -26,7 +26,7 @@
         })();
     </script>
     <link rel="stylesheet" href="css/styles.css?v=20260916-theme-system-v27">
-    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260917-top-actions-inline-v30">
+    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260917-roster-loading-v31">
 </head>
 
 <body>
@@ -269,7 +269,7 @@
                             <button type="button" class="kpi-card kpi-card-action" id="overviewSessionsDrilldown"
                                 aria-controls="overviewMonthlyCard" aria-expanded="false"
                                 title="Xem biểu đồ lượt thực hành theo từng tháng">
-                                <span class="kpi-label">Lượt thực hành phát sinh</span>
+                                <span class="kpi-label">Lượt thực hành</span>
                                 <span class="kpi-value blue" id="kpiSessions">0</span>
                                 <span class="kpi-comparison" id="kpiSessionsComparison"></span>
                                 <span class="kpi-note" id="kpiSessionsContext">Đang tính dữ liệu so sánh</span>
@@ -601,7 +601,7 @@
                                 <div>
                                     <span class="detail-report-eyebrow">Báo cáo quản lý đào tạo</span>
                                     <h2>Kết quả thực hành theo khu vực</h2>
-                                    <p>Lượt phát sinh tính trong kỳ; hoàn thành là kết quả lũy kế đến ngày cuối kỳ theo cơ cấu KTV hiện tại.</p>
+                                    <p>Lượt thực hành trong kỳ chỉ tính phiên có đầy đủ kết quả và chuỗi lần làm; hoàn thành là kết quả lũy kế đến ngày cuối kỳ theo cơ cấu KTV hiện tại.</p>
                                 </div>
                                 <div class="detail-report-period">
                                     <span>Thời gian báo cáo</span>
@@ -614,7 +614,7 @@
 
                             <div class="detail-report-summary" aria-label="Tóm tắt báo cáo chi tiết">
                                 <div class="detail-report-stat report-stat-blue">
-                                    <span>Lượt phát sinh</span>
+                                    <span>Lượt thực hành</span>
                                     <strong id="detailReportSessions">0</strong>
                                 </div>
                                 <div class="detail-report-stat report-stat-purple">
@@ -1562,7 +1562,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=20260917-roster-fast-list-v34"></script>
+    <script src="js/app.js?v=20260917-roster-fast-pagination-v35"></script>
 </body>
 
 </html>

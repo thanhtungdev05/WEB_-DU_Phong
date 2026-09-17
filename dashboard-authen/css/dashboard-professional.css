@@ -1240,6 +1240,15 @@ body.report-export-open {
     }
 }
 
+#rosterTableBody {
+    transition: opacity 140ms ease;
+}
+
+#rosterTableBody.is-refreshing {
+    opacity: .55;
+    pointer-events: none;
+}
+
 @media (max-width: 1180px) and (min-width: 961px) {
     .topbar {
         align-items: flex-start;

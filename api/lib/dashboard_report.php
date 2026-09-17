@@ -257,6 +257,7 @@ pair_outcomes AS (
            BOOL_OR(
                 mode IN ('Thực hành', 'practice')
                 AND is_passed IS TRUE
+                AND attempt_sequence_complete IS TRUE
            ) AS completed,
            MIN(practice_attempt_no) FILTER (
                 WHERE mode IN ('Thực hành', 'practice')
@@ -319,15 +320,26 @@ SELECT (SELECT COUNT(*) FROM cohort_pairs) AS assigned_count,
        ROUND(100.0 * (SELECT COUNT(*) FROM pair_outcomes WHERE first_pass_attempt_no = 1)
             / NULLIF((SELECT COUNT(*) FROM pair_outcomes WHERE first_pass_attempt_no IS NOT NULL), 0), 2) AS first_try_rate,
        ROUND(AVG(activity_scoped.duration_sec) FILTER (
-            WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.duration_sec > 0
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+              AND activity_scoped.is_passed IS NOT NULL
+              AND activity_scoped.attempt_sequence_complete IS TRUE
+              AND activity_scoped.duration_sec > 0
        )) AS avg_duration_sec,
        COUNT(*) FILTER (
-            WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.duration_sec > 0
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+              AND activity_scoped.is_passed IS NOT NULL
+              AND activity_scoped.attempt_sequence_complete IS TRUE
+              AND activity_scoped.duration_sec > 0
        ) AS duration_known_count,
        ROUND(100.0 * COUNT(*) FILTER (
-            WHERE activity_scoped.mode IN ('Thực hành', 'practice') AND activity_scoped.duration_sec > 0
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+              AND activity_scoped.is_passed IS NOT NULL
+              AND activity_scoped.attempt_sequence_complete IS TRUE
+              AND activity_scoped.duration_sec > 0
        ) / NULLIF(COUNT(*) FILTER (
             WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+              AND activity_scoped.is_passed IS NOT NULL
+              AND activity_scoped.attempt_sequence_complete IS TRUE
         ), 0), 2) AS duration_coverage_rate
   FROM activity_scoped
 SQL;
@@ -393,8 +405,18 @@ attempt_metrics AS (
                WHERE mode IN ('Thực hành', 'practice')
                  AND attempt_sequence_complete IS FALSE
            ) AS legacy_incomplete_attempt_count,
-           ROUND(AVG(duration_sec) FILTER (WHERE mode IN ('Thực hành', 'practice') AND duration_sec > 0)) AS avg_duration_sec,
-           COUNT(*) FILTER (WHERE mode IN ('Thực hành', 'practice') AND duration_sec > 0) AS duration_known_count
+           ROUND(AVG(duration_sec) FILTER (
+               WHERE mode IN ('Thực hành', 'practice')
+                 AND is_passed IS NOT NULL
+                 AND attempt_sequence_complete IS TRUE
+                 AND duration_sec > 0
+           )) AS avg_duration_sec,
+           COUNT(*) FILTER (
+               WHERE mode IN ('Thực hành', 'practice')
+                 AND is_passed IS NOT NULL
+                 AND attempt_sequence_complete IS TRUE
+                 AND duration_sec > 0
+           ) AS duration_known_count
       FROM scoped
      GROUP BY scoped.month
 ),
@@ -405,6 +427,7 @@ monthly_pair_outcomes AS (
            BOOL_OR(
                session.mode IN ('Thực hành', 'practice')
                AND session.is_passed IS TRUE
+               AND session.attempt_sequence_complete IS TRUE
            ) AS completed,
            MIN(session.practice_attempt_no) FILTER (
                WHERE session.mode IN ('Thực hành', 'practice')
@@ -604,7 +627,9 @@ progress AS (
     SELECT session.person_id,
            session.lab_id,
            BOOL_OR(
-               session.mode IN ('Thực hành', 'practice') AND session.is_passed IS TRUE
+               session.mode IN ('Thực hành', 'practice')
+               AND session.is_passed IS TRUE
+               AND session.attempt_sequence_complete IS TRUE
            ) AS completed
       FROM numbered_sessions session
      WHERE session.occurred_at < CAST(:to_date AS date) + INTERVAL '1 day'
@@ -1067,11 +1092,11 @@ function dashboard_report_payload(PDO $pdo, array $query): array
             'cohort' => 'assigned_as_of_period_end',
             'metric_semantics' => [
                 'assigned_count' => 'KTV-lab assignments effective at the period end.',
-                'attempt_metrics' => 'Practice and guide attempts by verified KTV accounts occurring inside the selected period.',
-                'submitted_attempt_count' => 'All submitted practice attempts in the selected period, including imported legacy attempts.',
-                'rate_eligible_attempt_count' => 'Practice attempts with a recorded result and complete attempt-sequence evidence; this is the pass-rate denominator.',
+                'attempt_metrics' => 'Official dashboard practice metrics use attempts with a recorded result and complete attempt-sequence evidence.',
+                'submitted_attempt_count' => 'Audit-only count of all submitted practice attempts in the selected period, including imported legacy attempts.',
+                'rate_eligible_attempt_count' => 'Official practice-attempt count: attempts with a recorded result and complete attempt-sequence evidence; this is also the pass-rate denominator.',
                 'passed_eligible_attempt_count' => 'Passed practice attempts with complete attempt-sequence evidence; this is the pass-rate numerator.',
-                'legacy_incomplete_attempt_count' => 'Practice attempts lacking complete attempt-sequence evidence. They remain completion evidence but are excluded from attempt-based rates.',
+                'legacy_incomplete_attempt_count' => 'Audit-only count of practice attempts lacking complete attempt-sequence evidence; they are excluded from official dashboard attempts, passes, completion evidence, and rates.',
                 'completion_metrics' => 'Cumulative passed KTV-lab assignments through the period end.',
                 'pass_rate' => 'Passed practice attempts divided by graded practice attempts with complete attempt evidence in the selected period.',
                 'first_try_rate' => 'Passed assignments whose first recorded passing attempt is attempt 1, divided by passed assignments with reliable attempt-number evidence.',

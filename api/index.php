@@ -1415,6 +1415,24 @@ LEFT JOIN (
 SQL;
 }
 
+function roster_assigned_class_lateral_join_sql(): string
+{
+    return <<<'SQL'
+LEFT JOIN LATERAL (
+    SELECT STRING_AGG(DISTINCT training.class_code, ', ' ORDER BY training.class_code) AS assigned_class_code,
+           STRING_AGG(DISTINCT training.class_name, ', ' ORDER BY training.class_name) AS assigned_class_name
+      FROM class_enrollments enrollment
+      JOIN training_classes training ON training.class_id = enrollment.class_id
+     WHERE enrollment.user_id = ktv.user_id
+       AND enrollment.status = 'active'
+       AND enrollment.is_mock = FALSE
+       AND (enrollment.valid_to IS NULL OR enrollment.valid_to >= CURRENT_DATE)
+       AND training.status IN ('planned', 'active')
+       AND training.is_mock = FALSE
+) assigned_class ON TRUE
+SQL;
+}
+
 function roster_base_where(array &$params, bool $includeFilters = true, ?array $filters = null): array
 {
     $where = [];
@@ -1841,15 +1859,31 @@ function handle_roster_list(): void
         fail(400, 'bad-sort', 'Unsupported roster sort direction.');
     }
     $sortSql = $sortKey !== ''
-        ? $sortColumns[$sortKey] . ' ' . strtoupper($sortDirection) . ' NULLS LAST, ktv.display_name NULLS LAST, ktv.email'
-        : 'ktv.is_terminated ASC, ktv.region_name NULLS LAST, ktv.branch_name NULLS LAST, ktv.display_name NULLS LAST, ktv.email';
+        ? $sortColumns[$sortKey] . ' ' . strtoupper($sortDirection) . ' NULLS LAST, ktv.display_name NULLS LAST, ktv.email, ktv.user_id'
+        : 'ktv.is_terminated ASC, ktv.region_name NULLS LAST, ktv.branch_name NULLS LAST, ktv.display_name NULLS LAST, ktv.email, ktv.user_id';
 
-    $sql = "SELECT ktv.*, assigned_class.assigned_class_code, assigned_class.assigned_class_name
-              FROM v_ktv_directory ktv
-              $classJoinSql
-             $whereSql
-             ORDER BY $sortSql
-             LIMIT :limit OFFSET :offset";
+    $dataNeedsClassBeforeLimit = $countNeedsClassJoin || $sortKey === 'className';
+    if ($dataNeedsClassBeforeLimit) {
+        $sql = "SELECT ktv.*, assigned_class.assigned_class_code, assigned_class.assigned_class_name
+                  FROM v_ktv_directory ktv
+                  $classJoinSql
+                 $whereSql
+                 ORDER BY $sortSql
+                 LIMIT :limit OFFSET :offset";
+    } else {
+        $pageClassJoinSql = roster_assigned_class_lateral_join_sql();
+        $sql = "WITH roster_page AS (
+                    SELECT ktv.*
+                      FROM v_ktv_directory ktv
+                     $whereSql
+                     ORDER BY $sortSql
+                     LIMIT :limit OFFSET :offset
+                )
+                SELECT ktv.*, assigned_class.assigned_class_code, assigned_class.assigned_class_name
+                  FROM roster_page ktv
+                  $pageClassJoinSql
+                 ORDER BY $sortSql";
+    }
     $stmt = $pdo->prepare($sql);
     foreach ($params as $key => $value) {
         $stmt->bindValue(':' . $key, $value);

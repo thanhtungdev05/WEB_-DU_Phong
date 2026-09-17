@@ -160,7 +160,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertNotIn("function computeMetrics", self.javascript)
 
     def test_desktop_header_keeps_actions_inline_with_dashboard_title(self):
-        self.assertIn("20260917-top-actions-inline-v30", self.html)
+        self.assertIn("20260917-roster-loading-v31", self.html)
         self.assertIn("@media (max-width: 1180px) and (min-width: 961px)", self.professional_css)
         self.assertNotIn("@media (max-width: 1400px) and (min-width: 961px)", self.professional_css)
 
@@ -242,8 +242,8 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
 
     def test_asset_version_prevents_stale_control_styles(self):
         self.assertIn("css/styles.css?v=20260916-theme-system-v27", self.html)
-        self.assertIn("css/dashboard-professional.css?v=20260917-top-actions-inline-v30", self.html)
-        self.assertEqual(self.html.count("20260917-roster-fast-list-v34"), 1)
+        self.assertIn("css/dashboard-professional.css?v=20260917-roster-loading-v31", self.html)
+        self.assertEqual(self.html.count("20260917-roster-fast-pagination-v35"), 1)
 
     def test_wrapped_desktop_topbar_actions_stay_right_aligned(self):
         breakpoint_start = self.professional_css.index("@media (max-width: 1180px) and (min-width: 961px)")
