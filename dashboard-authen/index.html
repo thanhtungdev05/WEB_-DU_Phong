@@ -26,7 +26,7 @@
         })();
     </script>
     <link rel="stylesheet" href="css/styles.css?v=20260916-theme-system-v27">
-    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260917-top-actions-right-v29">
+    <link rel="stylesheet" href="css/dashboard-professional.css?v=20260917-top-actions-inline-v30">
 </head>
 
 <body>
@@ -262,27 +262,27 @@
 
                         <section class="kpi-section-group activity-kpis" aria-labelledby="activityKpiGroupTitle">
                             <div class="kpi-section-heading">
-                                <h3 id="activityKpiGroupTitle">Hoạt động trong tháng</h3>
-                                <span>Các chỉ số phát sinh trong tháng báo cáo đang chọn.</span>
+                                <h3 id="activityKpiGroupTitle">Hoạt động trong kỳ</h3>
+                                <span>Các chỉ số phát sinh trong khoảng thời gian báo cáo đang chọn.</span>
                             </div>
                             <div class="kpi-grid">
                             <button type="button" class="kpi-card kpi-card-action" id="overviewSessionsDrilldown"
                                 aria-controls="overviewMonthlyCard" aria-expanded="false"
                                 title="Xem biểu đồ lượt thực hành theo từng tháng">
-                                <span class="kpi-label">Lượt thực hành trong tháng</span>
+                                <span class="kpi-label">Lượt thực hành phát sinh</span>
                                 <span class="kpi-value blue" id="kpiSessions">0</span>
                                 <span class="kpi-comparison" id="kpiSessionsComparison"></span>
                                 <span class="kpi-note" id="kpiSessionsContext">Đang tính dữ liệu so sánh</span>
                                 <span class="kpi-action-hint">Xem theo tháng <span aria-hidden="true">→</span></span>
                             </button>
                             <div class="kpi-card" title="Tổng số phiên KTV mở chế độ hướng dẫn từng bước để làm quen thao tác cấu hình">
-                                <div class="kpi-label">Lượt hướng dẫn trong tháng</div>
+                                <div class="kpi-label">Lượt hướng dẫn trong kỳ</div>
                                 <div class="kpi-value violet" id="kpiGuideSessions">0</div>
                                 <div class="kpi-comparison" id="kpiGuideSessionsComparison"></div>
                                 <div class="kpi-note" id="kpiGuideSessionsContext">Đang tính dữ liệu so sánh</div>
                             </div>
                             <div class="kpi-card" title="Số lượng KTV có phát sinh ít nhất 1 phiên học tập hoặc thực hành trong kỳ">
-                                <div class="kpi-label">KTV tham gia trong tháng</div>
+                                <div class="kpi-label">KTV tham gia trong kỳ</div>
                                 <div class="kpi-value green" id="kpiLearners">0</div>
                                 <div class="kpi-comparison" id="kpiLearnersComparison"></div>
                                 <div class="kpi-note" id="kpiLearnersContext">Đang tính dữ liệu so sánh</div>
@@ -601,7 +601,7 @@
                                 <div>
                                     <span class="detail-report-eyebrow">Báo cáo quản lý đào tạo</span>
                                     <h2>Kết quả thực hành theo khu vực</h2>
-                                    <p>Lượt thực hành tính trong kỳ; kết quả hoàn thành được chốt đến ngày cuối kỳ.</p>
+                                    <p>Lượt phát sinh tính trong kỳ; hoàn thành là kết quả lũy kế đến ngày cuối kỳ theo cơ cấu KTV hiện tại.</p>
                                 </div>
                                 <div class="detail-report-period">
                                     <span>Thời gian báo cáo</span>
@@ -614,8 +614,16 @@
 
                             <div class="detail-report-summary" aria-label="Tóm tắt báo cáo chi tiết">
                                 <div class="detail-report-stat report-stat-blue">
-                                    <span>Lượt thực hành</span>
+                                    <span>Lượt phát sinh</span>
                                     <strong id="detailReportSessions">0</strong>
+                                </div>
+                                <div class="detail-report-stat report-stat-cyan">
+                                    <span>Lượt đủ dữ liệu đánh giá</span>
+                                    <strong id="detailReportEligibleSessions">0</strong>
+                                </div>
+                                <div class="detail-report-stat report-stat-purple">
+                                    <span>Thiếu dữ liệu lịch sử</span>
+                                    <strong id="detailReportIncompleteSessions">0</strong>
                                 </div>
                                 <div class="detail-report-stat report-stat-purple">
                                     <span>Khu vực</span>
@@ -626,7 +634,7 @@
                                     <strong id="detailReportLabs">0</strong>
                                 </div>
                                 <div class="detail-report-stat report-stat-green">
-                                    <span>Tỷ lệ hoàn thành</span>
+                                    <span>Tỷ lệ hoàn thành KTV–bài</span>
                                     <strong id="detailReportCompletion">0%</strong>
                                 </div>
                             </div>
@@ -1562,7 +1570,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=20260917-dashboard-consistency-v31"></script>
+    <script src="js/app.js?v=20260917-dashboard-metric-semantics-v32"></script>
 </body>
 
 </html>

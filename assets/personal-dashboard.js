@@ -211,9 +211,9 @@
       `;
     }
 
-    const activeClass = classes.length > 0 ? classes[0] : null;
     if (elTagClass) {
-      const className = activeClass ? (activeClass.class_name || activeClass.class_code) : 'Tự do / Chưa gán lớp';
+      const classNames = classes.map(item => item.class_name || item.class_code).filter(Boolean);
+      const className = classNames.length ? classNames.join(', ') : 'Tự do / Chưa gán lớp';
       elTagClass.innerHTML = `
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -236,28 +236,32 @@
     }
 
     // 2. Metrics Ribbon
-    const completionPct = stats.completion_rate_percent || 0;
-    if (elMetricCompletionVal) elMetricCompletionVal.textContent = `${completionPct}%`;
+    const completionPct = stats.completion_rate_percent ?? null;
+    if (elMetricCompletionVal) elMetricCompletionVal.textContent = completionPct === null ? '—' : `${completionPct}%`;
     if (elMetricCompletionSub) elMetricCompletionSub.textContent = `${stats.passed_labs || 0}/${stats.total_assigned_labs || 0} bài đạt`;
-    if (elMetricCompletionBar) elMetricCompletionBar.style.width = `${Math.min(100, completionPct)}%`;
+    if (elMetricCompletionBar) elMetricCompletionBar.style.width = `${Math.min(100, completionPct || 0)}%`;
 
-    const firstTryPct = stats.first_try_pass_rate_percent || 0;
-    if (elMetricFirstTryVal) elMetricFirstTryVal.textContent = `${firstTryPct}%`;
+    const firstTryPct = stats.first_try_pass_rate_percent ?? null;
+    if (elMetricFirstTryVal) elMetricFirstTryVal.textContent = firstTryPct === null ? '—' : `${firstTryPct}%`;
     if (elMetricFirstTrySub) elMetricFirstTrySub.textContent = `${stats.first_try_passed_labs || 0}/${stats.first_try_eligible_labs || 0} bài đạt có dữ liệu số lần`;
-    if (elMetricFirstTryBar) elMetricFirstTryBar.style.width = `${Math.min(100, firstTryPct)}%`;
+    if (elMetricFirstTryBar) elMetricFirstTryBar.style.width = `${Math.min(100, firstTryPct || 0)}%`;
 
-    const passRate = stats.practice_pass_rate_percent || 0;
-    const passedSessions = stats.passed_practice_sessions_count || 0;
-    const gradedSessions = stats.graded_practice_sessions_count || 0;
-    if (elMetricPassRateVal) elMetricPassRateVal.textContent = `${passRate}%`;
-    if (elMetricPassRateSub) elMetricPassRateSub.textContent = `${passedSessions}/${gradedSessions} phiên Đạt`;
-    if (elMetricPassRateBar) elMetricPassRateBar.style.width = `${Math.min(100, passRate)}%`;
+    const passRate = stats.practice_pass_rate_percent ?? null;
+    const submittedSessions = stats.submitted_practice_sessions_count ?? stats.practice_sessions_count ?? 0;
+    const passedSessions = stats.passed_eligible_practice_sessions_count ?? stats.passed_practice_sessions_count ?? 0;
+    const gradedSessions = stats.rate_eligible_practice_sessions_count ?? stats.graded_practice_sessions_count ?? 0;
+    const incompleteSessions = stats.legacy_incomplete_practice_sessions_count ?? 0;
+    if (elMetricPassRateVal) elMetricPassRateVal.textContent = passRate === null ? '—' : `${passRate}%`;
+    if (elMetricPassRateSub) elMetricPassRateSub.textContent = `${passedSessions}/${gradedSessions} lượt đủ dữ liệu đạt · ${submittedSessions} phát sinh · ${incompleteSessions} thiếu lịch sử`;
+    if (elMetricPassRateBar) elMetricPassRateBar.style.width = `${Math.min(100, passRate || 0)}%`;
 
     const durationSec = stats.total_practice_duration_sec || 0;
     const durFormatted = formatDurationHuman(durationSec);
     if (elMetricTimeVal) elMetricTimeVal.textContent = durFormatted.primary;
-    if (elMetricTimeSub) elMetricTimeSub.textContent = durFormatted.secondary;
-    if (elMetricTimeBar) elMetricTimeBar.style.width = `${Math.min(100, (durationSec / 7200) * 100)}%`;
+    const durationKnownCount = stats.practice_duration_known_count || 0;
+    const durationCoverage = stats.practice_duration_coverage_percent ?? null;
+    if (elMetricTimeSub) elMetricTimeSub.textContent = `${durFormatted.secondary} · ${durationKnownCount}/${submittedSessions} lượt có thời lượng`;
+    if (elMetricTimeBar) elMetricTimeBar.style.width = `${Math.min(100, durationCoverage || 0)}%`;
 
     // 3. Donut Progress
     renderDonutProgress(completionPct, stats);
@@ -278,12 +282,13 @@
   }
 
   function renderDonutProgress(percent, stats) {
-    if (elDonutPercent) elDonutPercent.textContent = `${percent}%`;
+    const drawablePercent = percent === null || percent === undefined ? 0 : Number(percent);
+    if (elDonutPercent) elDonutPercent.textContent = percent === null || percent === undefined ? '—' : `${percent}%`;
     if (elDonutCircle) {
       const radius = 64;
       const circumference = 2 * Math.PI * radius;
       elDonutCircle.style.strokeDasharray = `${circumference} ${circumference}`;
-      const offset = circumference - (percent / 100) * circumference;
+      const offset = circumference - (drawablePercent / 100) * circumference;
       elDonutCircle.style.strokeDashoffset = offset;
     }
 

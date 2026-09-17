@@ -1308,7 +1308,10 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
          WHERE progress.user_id = CAST(:user_id AS uuid)
            AND progress.assignment_status <> 'waived'
            AND enrollment.status = 'active'
+           AND enrollment.valid_from <= CURRENT_DATE
+           AND (enrollment.valid_to IS NULL OR enrollment.valid_to >= CURRENT_DATE)
            AND training.status IN ('planned', 'active')
+           AND training.start_date <= CURRENT_DATE
          ORDER BY device.sort_order, progress.device_name, lab.sort_order, progress.lab_name
         SQL
     );
@@ -1401,6 +1404,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                s.started_at,
                s.finished_at,
                s.practice_attempt_no,
+               s.attempt_sequence_complete,
                s.last_action
           FROM timer_sessions s
           LEFT JOIN device_catalog d ON d.device_id = s.device_id
@@ -1428,6 +1432,8 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
     $guideCount = 0;
     $gradedPracticeSessionsCount = 0;
     $passedPracticeSessionsCount = 0;
+    $legacyIncompletePracticeSessionsCount = 0;
+    $durationKnownPracticeSessionsCount = 0;
     $trendDaysMap = [];
 
     foreach ($rawSessions as $sess) {
@@ -1440,6 +1446,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         $finishedAt = safe_datetime($sess['finished_at']);
         $startedAt = safe_datetime($sess['started_at']);
         $isPractice = !($mode === 'Hướng dẫn' || $sessionType === 'guide');
+        $attemptSequenceComplete = database_boolean($sess['attempt_sequence_complete'] ?? false);
         $labId = (string)($sess['lab_id'] ?? '');
 
         if (!$isPractice) {
@@ -1447,7 +1454,13 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         } else {
             $practiceCount++;
             $totalDurationSec += $duration;
-            if ($isPassed !== null) {
+            if ($duration > 0) {
+                $durationKnownPracticeSessionsCount++;
+            }
+            if (!$attemptSequenceComplete) {
+                $legacyIncompletePracticeSessionsCount++;
+            }
+            if ($isPassed !== null && $attemptSequenceComplete) {
                 $gradedPracticeSessionsCount++;
                 if ($isPassed) {
                     $passedPracticeSessionsCount++;
@@ -1466,6 +1479,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                     'guide_count' => 0,
                     'graded_count' => 0,
                     'passed_count' => 0,
+                    'legacy_incomplete_count' => 0,
                     'duration_sec' => 0,
                 ];
             }
@@ -1473,7 +1487,10 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                 $trendDaysMap[$dateKey]['guide_count']++;
             } else {
                 $trendDaysMap[$dateKey]['practice_count']++;
-                if ($isPassed !== null) {
+                if (!$attemptSequenceComplete) {
+                    $trendDaysMap[$dateKey]['legacy_incomplete_count']++;
+                }
+                if ($isPassed !== null && $attemptSequenceComplete) {
                     $trendDaysMap[$dateKey]['graded_count']++;
                     if ($isPassed) {
                         $trendDaysMap[$dateKey]['passed_count']++;
@@ -1497,6 +1514,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'started_at' => $startedAt,
             'finished_at' => $finishedAt,
             'practice_attempt_no' => $sess['practice_attempt_no'] !== null ? (int)$sess['practice_attempt_no'] : null,
+            'attempt_sequence_complete' => $attemptSequenceComplete,
             'last_action' => (string)($sess['last_action'] ?? ''),
         ];
     }
@@ -1514,6 +1532,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'guide_count' => $data['guide_count'],
             'graded_count' => $data['graded_count'],
             'passed_count' => $data['passed_count'],
+            'legacy_incomplete_count' => $data['legacy_incomplete_count'],
             'pass_rate_percent' => $dailyPassRate,
             'duration_sec' => $data['duration_sec'],
         ];
@@ -1529,11 +1548,21 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                COUNT(*) FILTER (
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
                      AND s.is_passed IS NOT NULL
+                     AND s.attempt_sequence_complete IS TRUE
                ) AS graded_count,
                COUNT(*) FILTER (
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
                      AND s.is_passed IS TRUE
+                     AND s.attempt_sequence_complete IS TRUE
                ) AS passed_count,
+               COUNT(*) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND NOT COALESCE(s.attempt_sequence_complete, FALSE)
+               ) AS legacy_incomplete_count,
+               COUNT(*) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND COALESCE(s.duration_sec, 0) > 0
+               ) AS duration_known_count,
                COALESCE(SUM(COALESCE(s.duration_sec, 0)) FILTER (
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
                ), 0) AS practice_duration_sec
@@ -1557,6 +1586,8 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
     $guideCount = (int)($allSessionStats['guide_count'] ?? 0);
     $gradedPracticeSessionsCount = (int)($allSessionStats['graded_count'] ?? 0);
     $passedPracticeSessionsCount = (int)($allSessionStats['passed_count'] ?? 0);
+    $legacyIncompletePracticeSessionsCount = (int)($allSessionStats['legacy_incomplete_count'] ?? 0);
+    $durationKnownPracticeSessionsCount = (int)($allSessionStats['duration_known_count'] ?? 0);
     $totalDurationSec = (int)($allSessionStats['practice_duration_sec'] ?? 0);
     $allSessionsCount = (int)($allSessionStats['total_sessions_count'] ?? 0);
 
@@ -1568,11 +1599,17 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                COUNT(*) FILTER (
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
                      AND s.is_passed IS NOT NULL
+                     AND s.attempt_sequence_complete IS TRUE
                ) AS graded_count,
                COUNT(*) FILTER (
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
                      AND s.is_passed IS TRUE
+                     AND s.attempt_sequence_complete IS TRUE
                ) AS passed_count,
+               COUNT(*) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND NOT COALESCE(s.attempt_sequence_complete, FALSE)
+               ) AS legacy_incomplete_count,
                COALESCE(SUM(COALESCE(s.duration_sec, 0)) FILTER (
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
                ), 0) AS duration_sec
@@ -1606,16 +1643,17 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'guide_count' => $guide,
             'graded_count' => $graded,
             'passed_count' => $passed,
+            'legacy_incomplete_count' => (int)$row['legacy_incomplete_count'],
             'pass_rate_percent' => $graded > 0 ? round(100 * $passed / $graded, 1) : null,
             'duration_sec' => (int)$row['duration_sec'],
         ];
     }, $sessionTrendQuery->fetchAll(PDO::FETCH_ASSOC));
 
-    $completionRate = $totalAssignedLabs > 0 ? round(($passedLabsCount / $totalAssignedLabs) * 100, 1) : 0;
-    $firstTryRate = $firstTryEligibleCount > 0 ? round(($firstTryPassCount / $firstTryEligibleCount) * 100, 1) : 0;
+    $completionRate = $totalAssignedLabs > 0 ? round(($passedLabsCount / $totalAssignedLabs) * 100, 1) : null;
+    $firstTryRate = $firstTryEligibleCount > 0 ? round(($firstTryPassCount / $firstTryEligibleCount) * 100, 1) : null;
     $practicePassRate = $gradedPracticeSessionsCount > 0
         ? round(100 * $passedPracticeSessionsCount / $gradedPracticeSessionsCount, 1)
-        : 0;
+        : null;
 
     return [
         'user' => [
@@ -1641,11 +1679,19 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'first_try_passed_labs'      => $firstTryPassCount,
             'total_sessions_count'       => $allSessionsCount,
             'practice_sessions_count'    => $practiceCount,
+            'submitted_practice_sessions_count' => $practiceCount,
             'guide_sessions_count'       => $guideCount,
             'graded_practice_sessions_count' => $gradedPracticeSessionsCount,
+            'rate_eligible_practice_sessions_count' => $gradedPracticeSessionsCount,
             'passed_practice_sessions_count' => $passedPracticeSessionsCount,
+            'passed_eligible_practice_sessions_count' => $passedPracticeSessionsCount,
+            'legacy_incomplete_practice_sessions_count' => $legacyIncompletePracticeSessionsCount,
             'practice_pass_rate_percent' => $practicePassRate,
             'total_practice_duration_sec'=> $totalDurationSec,
+            'practice_duration_known_count' => $durationKnownPracticeSessionsCount,
+            'practice_duration_coverage_percent' => $practiceCount > 0
+                ? round(100 * $durationKnownPracticeSessionsCount / $practiceCount, 1)
+                : null,
         ],
         'device_progress' => $deviceProgressList,
         'assignments' => $assignments,

@@ -58,7 +58,7 @@ class DashboardThemeContractTests(unittest.TestCase):
     def test_topbar_compacts_before_controls_can_cover_title(self):
         self.assertIn("@media (max-width: 1680px)", self.theme_css)
         self.assertIn(".app-main .brand > div:last-child", self.theme_css)
-        self.assertIn("@media (max-width: 1400px) and (min-width: 961px)", self.theme_css)
+        self.assertIn("@media (max-width: 1180px) and (min-width: 961px)", self.theme_css)
         self.assertRegex(
             self.theme_css,
             r"\.app-main \.brand,\s*\.top-actions\s*\{\s*width: 100%;",

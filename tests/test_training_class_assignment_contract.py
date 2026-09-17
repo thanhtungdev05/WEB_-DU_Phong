@@ -237,6 +237,11 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertIn("training_class_personal_dashboard_payload", api)
         self.assertIn("personal-dashboard", api)
         self.assertIn("function training_class_personal_dashboard_payload", library)
+        self.assertIn("submitted_practice_sessions_count", library)
+        self.assertIn("rate_eligible_practice_sessions_count", library)
+        self.assertIn("legacy_incomplete_practice_sessions_count", library)
+        self.assertIn("s.attempt_sequence_complete IS TRUE", library)
+        self.assertIn("practice_duration_coverage_percent", library)
         self.assertIn('id="btn-personal-dashboard"', portal)
         self.assertIn('href="/personal-dashboard.html"', portal)
         self.assertIn('id="btn-goto-practice"', dashboard_html)
@@ -244,6 +249,8 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertIn("'/login/index.html?redirect='", dashboard_js)
         self.assertIn("window.location.href = '/login/index.html';", dashboard_js)
         self.assertNotIn("'/login/?redirect='", dashboard_js)
+        self.assertIn("stats.submitted_practice_sessions_count", dashboard_js)
+        self.assertIn("stats.legacy_incomplete_practice_sessions_count", dashboard_js)
 
 
 if __name__ == "__main__":

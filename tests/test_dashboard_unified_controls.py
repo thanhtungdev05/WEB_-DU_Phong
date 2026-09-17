@@ -159,6 +159,11 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn("Không có dữ liệu báo cáo tổng hợp cho kỳ đã chọn", self.javascript)
         self.assertNotIn("function computeMetrics", self.javascript)
 
+    def test_desktop_header_keeps_actions_inline_with_dashboard_title(self):
+        self.assertIn("20260917-top-actions-inline-v30", self.html)
+        self.assertIn("@media (max-width: 1180px) and (min-width: 961px)", self.professional_css)
+        self.assertNotIn("@media (max-width: 1400px) and (min-width: 961px)", self.professional_css)
+
     def test_report_year_follows_the_selected_month(self):
         self.assertIn("state.regionUsageYear = bounds.year", self.javascript)
         self.assertIn("Khác kỳ báo cáo đang chọn", self.javascript)
@@ -170,7 +175,9 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         for heading in (
             "Số KTV",
             "Thiết bị đã giao",
-            "Lượt thực hành",
+            "Lượt phát sinh",
+            "Lượt đủ dữ liệu",
+            "Thiếu dữ liệu lịch sử",
             "KTV hoàn thành",
             "Tỷ lệ hoàn thành",
         ):
@@ -235,11 +242,11 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
 
     def test_asset_version_prevents_stale_control_styles(self):
         self.assertIn("css/styles.css?v=20260916-theme-system-v27", self.html)
-        self.assertIn("css/dashboard-professional.css?v=20260917-top-actions-right-v29", self.html)
-        self.assertEqual(self.html.count("20260917-dashboard-consistency-v31"), 1)
+        self.assertIn("css/dashboard-professional.css?v=20260917-top-actions-inline-v30", self.html)
+        self.assertEqual(self.html.count("20260917-dashboard-metric-semantics-v32"), 1)
 
     def test_wrapped_desktop_topbar_actions_stay_right_aligned(self):
-        breakpoint_start = self.professional_css.index("@media (max-width: 1400px) and (min-width: 961px)")
+        breakpoint_start = self.professional_css.index("@media (max-width: 1180px) and (min-width: 961px)")
         breakpoint_end = self.professional_css.index("@media (max-width: 1280px)", breakpoint_start)
         breakpoint_css = self.professional_css[breakpoint_start:breakpoint_end]
         self.assertIn(".top-actions", breakpoint_css)
@@ -247,8 +254,8 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
 
     def test_dashboard_copy_is_short_consistent_and_user_friendly(self):
         for label in (
-            "Hoạt động trong tháng",
-            "Lượt hướng dẫn trong tháng",
+            "Hoạt động trong kỳ",
+            "Lượt hướng dẫn trong kỳ",
             "Tỷ lệ thực hành đạt",
             "Tỷ lệ KTV thực hành đạt",
             "Biểu đồ thi đua giữa các khu vực",
@@ -260,7 +267,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         ):
             self.assertIn(label, self.html)
         for old_label in (
-            "Hoạt động trong kỳ",
+            "Hoạt động trong tháng",
             "Lượt xem hướng dẫn trong tháng",
             "Tỷ lệ KTV có thực hành đạt",
             "Biểu đồ đua giữa các khu vực",

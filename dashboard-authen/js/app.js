@@ -513,7 +513,10 @@ const MIN_DURATION_SAMPLE_COUNT = 30;
 const MIN_DURATION_COVERAGE_RATE = 10;
 
 function mapReportMetrics(metric) {
-    const practiceAttempts = Number(metric?.practice_attempts) || 0;
+    const practiceAttempts = Number(metric?.submitted_attempt_count ?? metric?.practice_attempts) || 0;
+    const rateEligibleAttempts = Number(metric?.rate_eligible_attempt_count ?? metric?.graded_count) || 0;
+    const passedEligibleAttempts = Number(metric?.passed_eligible_attempt_count ?? metric?.passed_count) || 0;
+    const legacyIncompleteAttempts = Number(metric?.legacy_incomplete_attempt_count) || 0;
     const durationKnown = Number(metric?.duration_known_count) || 0;
     const durationCoverage = metric?.duration_coverage_rate === null || metric?.duration_coverage_rate === undefined
         ? (practiceAttempts ? Math.round((durationKnown / practiceAttempts) * 1000) / 10 : null)
@@ -526,6 +529,10 @@ function mapReportMetrics(metric) {
         assigned: Number(metric?.assigned_count) || 0,
         graded: Number(metric?.graded_count) || 0,
         passed: Number(metric?.passed_count) || 0,
+        submittedAttempts: practiceAttempts,
+        rateEligibleAttempts,
+        passedEligibleAttempts,
+        legacyIncompleteAttempts,
         activityCompleted: Number(metric?.activity_completed_count) || 0,
         ungradedCompleted: Number(metric?.ungraded_completed_count) || 0,
         totalSessions: practiceAttempts,
@@ -643,7 +650,9 @@ function renderKpis() {
 
         if (contextElement) {
             if (definition.key === 'passRate') {
-                contextElement.textContent = `${periods.currentLabel} • ${formatNumber.format(currentMetrics.passed)}/${formatNumber.format(currentMetrics.graded)} phiên đã chấm đạt`;
+                contextElement.textContent = `${periods.currentLabel} • ${formatNumber.format(currentMetrics.passedEligibleAttempts)}/${formatNumber.format(currentMetrics.rateEligibleAttempts)} lượt đủ dữ liệu đạt`;
+            } else if (definition.key === 'totalSessions') {
+                contextElement.textContent = `${periods.currentLabel} • ${formatNumber.format(currentMetrics.rateEligibleAttempts)} đủ dữ liệu đánh giá • ${formatNumber.format(currentMetrics.legacyIncompleteAttempts)} thiếu chuỗi lịch sử`;
             } else {
                 contextElement.textContent = `${periods.currentLabel} • Lũy kế ${formatMetric(lifetimeValue, definition)}${definition.type === 'count' ? ` ${definition.unit}` : ''}`;
             }
@@ -677,9 +686,9 @@ function renderDashboardDataNotice(currentMetrics) {
     if (currentMetrics && currentMetrics.ungradedCompleted > 0) {
         messages.push(`${formatNumber.format(currentMetrics.ungradedCompleted)} lượt thực hành đã hoàn thành thao tác nhưng chưa có kết quả đánh giá; các lượt này chưa được tính là đạt chuẩn.`);
     }
-    const incompleteAttempts = Number(dashboardReport?.matrix?.data_quality?.incomplete_attempt_count) || 0;
+    const incompleteAttempts = Number(dashboardReport?.matrix?.data_quality?.legacy_incomplete_attempt_count ?? dashboardReport?.matrix?.data_quality?.incomplete_attempt_count) || 0;
     if (incompleteAttempts > 0) {
-        messages.push(`${formatNumber.format(incompleteAttempts)} phiên đạt lịch sử Firebase v1 vẫn được ghi nhận là đã hoàn thành bài, nhưng không được dùng để tính tỷ lệ phiên đạt vì thiếu chuỗi lần làm đầy đủ.`);
+        messages.push(`${formatNumber.format(incompleteAttempts)} lượt lịch sử thiếu chuỗi lần làm không được dùng để tính tỷ lệ phiên đạt; lượt có kết quả đạt vẫn được giữ làm bằng chứng hoàn thành bài.`);
     }
 
     notice.hidden = messages.length === 0;
@@ -933,6 +942,8 @@ function renderOverviewMonthlyTrend(rows) {
 
     const monthlySessions = new Map();
     const monthlyPassedSessions = new Map();
+    const monthlyEligibleSessions = new Map();
+    const monthlyIncompleteSessions = new Map();
     rows.forEach(session => {
         const date = parseDate(session.date);
         if (date.getTime() <= 0 || date.getFullYear() !== reportYear) return;
@@ -940,7 +951,12 @@ function renderOverviewMonthlyTrend(rows) {
         if (effectiveRegion && getLearnerRegion(session.learner) !== effectiveRegion) return;
         const monthIndex = date.getMonth();
         monthlySessions.set(monthIndex, (monthlySessions.get(monthIndex) || 0) + 1);
-        if (isSuccessfulSession(session)) {
+        if (isRateEligiblePracticeSession(session)) {
+            monthlyEligibleSessions.set(monthIndex, (monthlyEligibleSessions.get(monthIndex) || 0) + 1);
+        } else if (!hasCompleteAttemptEvidence(session)) {
+            monthlyIncompleteSessions.set(monthIndex, (monthlyIncompleteSessions.get(monthIndex) || 0) + 1);
+        }
+        if (isRateEligiblePracticeSession(session) && isSuccessfulSession(session)) {
             monthlyPassedSessions.set(monthIndex, (monthlyPassedSessions.get(monthIndex) || 0) + 1);
         }
     });
@@ -954,6 +970,8 @@ function renderOverviewMonthlyTrend(rows) {
             shortLabel: `T${String(date.getMonth() + 1).padStart(2, '0')}`,
             isFuture: date > new Date(today.getFullYear(), today.getMonth(), 1),
             totalSessions: monthlySessions.get(index) || 0,
+            eligibleSessions: monthlyEligibleSessions.get(index) || 0,
+            incompleteSessions: monthlyIncompleteSessions.get(index) || 0,
             passedSessions: monthlyPassedSessions.get(index) || 0
         };
     });
@@ -970,13 +988,13 @@ function renderOverviewMonthlyTrend(rows) {
         const height = period.totalSessions ? Math.max(12, Math.round((period.totalSessions / maxSessions) * 100)) : 0;
         const isSelected = period.key === selectedKey;
         return `
-            <div class="ktv-month-column ${isSelected ? 'selected' : ''} ${period.isFuture ? 'future' : ''}" title="${period.label}: ${period.totalSessions} lượt thực hành, ${period.passedSessions} lượt đạt">
+            <div class="ktv-month-column ${isSelected ? 'selected' : ''} ${period.isFuture ? 'future' : ''}" title="${period.label}: ${period.totalSessions} lượt phát sinh, ${period.eligibleSessions} lượt đủ dữ liệu, ${period.incompleteSessions} lượt thiếu lịch sử, ${period.passedSessions} lượt đủ dữ liệu đạt">
                 <strong>${period.totalSessions}</strong>
                 <div class="ktv-month-bar-track">
                     <div class="ktv-month-bar" style="height: ${height}%;"></div>
                 </div>
                 <span class="ktv-month-label">${period.shortLabel}</span>
-                <span class="ktv-month-rate">${period.passedSessions} đạt</span>
+                <span class="ktv-month-rate">${period.eligibleSessions} đủ dữ liệu</span>
             </div>
         `;
     }).join('');
@@ -997,7 +1015,9 @@ function renderOverviewMonthlyTrend(rows) {
         });
         previousPeriod = {
             totalSessions: previousSessions.length,
-            passedSessions: previousSessions.filter(isSuccessfulSession).length
+            eligibleSessions: previousSessions.filter(isRateEligiblePracticeSession).length,
+            incompleteSessions: previousSessions.filter(session => !hasCompleteAttemptEvidence(session)).length,
+            passedSessions: previousSessions.filter(session => isRateEligiblePracticeSession(session) && isSuccessfulSession(session)).length
         };
     }
     const difference = currentPeriod.totalSessions - previousPeriod.totalSessions;
@@ -1007,7 +1027,7 @@ function renderOverviewMonthlyTrend(rows) {
         summary.className = `ktv-monthly-summary ${changeClass}`;
         summary.innerHTML = `
             <strong>${currentPeriod.label}</strong>
-            <span>${changeText} so với tháng trước · ${currentPeriod.passedSessions} lượt đạt</span>
+            <span>${changeText} so với tháng trước · ${currentPeriod.eligibleSessions} đủ dữ liệu · ${currentPeriod.incompleteSessions} thiếu lịch sử</span>
         `;
     }
 }
@@ -1686,15 +1706,14 @@ function renderBranchReportDrilldown(reportMatrix, groups, columns, completionCe
 
     const technicians = selectedBranch.technicians || [];
     const passMetricCell = (cell = {}, extraClass = '') => {
-        const passes = Number(cell.pass_count) || 0;
-        const attempts = Number(cell.attempt_count) || 0;
-        const incompleteAttempts = Number(cell.incomplete_attempt_count) || 0;
+        const passes = Number(cell.passed_eligible_attempt_count ?? cell.pass_count) || 0;
+        const attempts = Number(cell.rate_eligible_attempt_count ?? cell.attempt_count) || 0;
+        const submittedAttempts = Number(cell.submitted_attempt_count ?? attempts) || 0;
+        const incompleteAttempts = Number(cell.legacy_incomplete_attempt_count ?? cell.incomplete_attempt_count) || 0;
         const rate = attempts ? Math.round((passes / attempts) * 1000) / 10 : null;
         const cssClass = rate === null ? 'report-cell-zero' : (rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-        const legacyNote = incompleteAttempts
-            ? `; ${incompleteAttempts} phiên đạt Firebase v1 chỉ dùng làm bằng chứng hoàn thành, không tính vào tỷ lệ`
-            : '';
-        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${passes} phiên đạt / ${attempts} phiên thực hành đủ bằng chứng${legacyNote}`)}"><strong>${passes}/${attempts}</strong><span>${rate === null ? '—' : `${rate}%`}</span></td>`;
+        const qualityNote = `; ${submittedAttempts} lượt phát sinh; ${incompleteAttempts} lượt thiếu chuỗi lịch sử không tính vào tỷ lệ`;
+        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${passes} lượt đạt / ${attempts} lượt đủ dữ liệu đánh giá${qualityNote}`)}"><strong>${passes}/${attempts}</strong><span>${rate === null ? '—' : `${rate}%`}</span></td>`;
     };
     els.branchKtvMatrixCard.hidden = false;
     els.branchKtvMatrixTitle.textContent = `KTV thuộc chi nhánh ${selectedBranch.name || selectedBranch.unit_code}`;
@@ -1709,8 +1728,8 @@ function renderBranchReportDrilldown(reportMatrix, groups, columns, completionCe
         </tr>
         <tr class="report-lab-header-row">${columns.map(column => `<th class="report-lab-head report-device-tone-${column.groupIndex % 5} ${column.isFirst ? 'group-start' : ''}" scope="col">${escapeHTML(column.lab)}</th>`).join('')}</tr>`;
     els.branchKtvMatrixBody.innerHTML = technicians.map((technician, index) => {
-        const totalAttempts = Number(technician.total?.attempt_count) || 0;
-        const totalPasses = Number(technician.total?.pass_count) || 0;
+        const totalAttempts = Number(technician.total?.rate_eligible_attempt_count ?? technician.total?.attempt_count) || 0;
+        const totalPasses = Number(technician.total?.passed_eligible_attempt_count ?? technician.total?.pass_count) || 0;
         const totalRate = totalAttempts ? Math.round((totalPasses / totalAttempts) * 1000) / 10 : null;
         const totalClass = totalRate === null ? 'report-cell-zero' : (totalRate >= 80 ? 'report-cell-high' : (totalRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
         return `
@@ -1723,16 +1742,18 @@ function renderBranchReportDrilldown(reportMatrix, groups, columns, completionCe
             <td class="ktv-rate-cell ${totalClass}">${totalRate === null ? '—' : `${totalRate}%`}</td>
         </tr>`;
     }).join('') || `<tr><td colspan="${columns.length + 5}" class="empty">Chi nhánh này chưa có KTV đang hoạt động.</td></tr>`;
-    const technicianTotals = Object.fromEntries(columns.map(column => [column.labId, { pass_count: 0, attempt_count: 0, incomplete_attempt_count: 0 }]));
-    const overall = { pass_count: 0, attempt_count: 0, incomplete_attempt_count: 0 };
+    const technicianTotals = Object.fromEntries(columns.map(column => [column.labId, { pass_count: 0, attempt_count: 0, submitted_attempt_count: 0, incomplete_attempt_count: 0 }]));
+    const overall = { pass_count: 0, attempt_count: 0, submitted_attempt_count: 0, incomplete_attempt_count: 0 };
     technicians.forEach(technician => {
         columns.forEach(column => {
             technicianTotals[column.labId].pass_count += Number(technician.cells?.[column.labId]?.pass_count) || 0;
             technicianTotals[column.labId].attempt_count += Number(technician.cells?.[column.labId]?.attempt_count) || 0;
+            technicianTotals[column.labId].submitted_attempt_count += Number(technician.cells?.[column.labId]?.submitted_attempt_count) || 0;
             technicianTotals[column.labId].incomplete_attempt_count += Number(technician.cells?.[column.labId]?.incomplete_attempt_count) || 0;
         });
         overall.pass_count += Number(technician.total?.pass_count) || 0;
         overall.attempt_count += Number(technician.total?.attempt_count) || 0;
+        overall.submitted_attempt_count += Number(technician.total?.submitted_attempt_count) || 0;
         overall.incomplete_attempt_count += Number(technician.total?.incomplete_attempt_count) || 0;
     });
     const overallRate = overall.attempt_count ? Math.round((overall.pass_count / overall.attempt_count) * 1000) / 10 : null;
@@ -1744,9 +1765,9 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
     const groups = reportMatrix.device_groups || [];
     const qualityNote = document.getElementById('detailReportDataQuality');
     if (qualityNote) {
-        const incompleteAttempts = Number(reportMatrix.data_quality?.incomplete_attempt_count) || 0;
+        const incompleteAttempts = Number(reportMatrix.data_quality?.legacy_incomplete_attempt_count ?? reportMatrix.data_quality?.incomplete_attempt_count) || 0;
         qualityNote.hidden = false;
-        qualityNote.textContent = `Phạm vi gồm toàn bộ KTV đang hoạt động × toàn bộ bài lab đang hoạt động theo khu vực/chi nhánh hiện tại; phiên thực hành không cần có assignment.${incompleteAttempts ? ` ${formatNumber.format(incompleteAttempts)} phiên đạt Firebase v1 chỉ được dùng làm bằng chứng hoàn thành, không tính vào tỷ lệ phiên đạt.` : ''}`;
+        qualityNote.textContent = `Phạm vi gồm toàn bộ KTV đang hoạt động × toàn bộ bài lab đang hoạt động theo khu vực/chi nhánh hiện tại; phiên thực hành không cần có assignment.${incompleteAttempts ? ` ${formatNumber.format(incompleteAttempts)} lượt lịch sử thiếu chuỗi lần làm vẫn được dùng làm bằng chứng hoàn thành khi có kết quả đạt, nhưng không tính vào tỷ lệ phiên đạt.` : ''}`;
     }
     const columns = groups.flatMap((group, groupIndex) => (group.labs || []).map((lab, labIndex) => ({
         device: group.device?.name || group.device?.device_name || group.device_name || '',
@@ -1768,9 +1789,11 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
         }
         const cssClass = rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low');
         const attempted = Number(cell.attempted_count) || 0;
-        const attempts = Number(cell.attempt_count) || 0;
+        const submittedAttempts = Number(cell.submitted_attempt_count ?? cell.attempt_count) || 0;
+        const eligibleAttempts = Number(cell.rate_eligible_attempt_count ?? cell.attempt_count) || 0;
+        const incompleteAttempts = Number(cell.legacy_incomplete_attempt_count ?? cell.incomplete_attempt_count) || 0;
         const unit = aggregate ? 'cặp KTV–bài' : 'KTV';
-        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${completed}/${population} ${unit} đã đạt • ${attempted} ${unit} đã thực hành • ${attempts} lượt thực hành`)}"><strong>${completed}/${population}</strong><span>${rate}%</span></td>`;
+        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${completed}/${population} ${unit} đã đạt • ${attempted} ${unit} có lượt đủ dữ liệu • ${submittedAttempts} lượt phát sinh • ${eligibleAttempts} lượt đủ dữ liệu đánh giá • ${incompleteAttempts} lượt thiếu chuỗi lịch sử`)}"><strong>${completed}/${population}</strong><span>${rate}%</span></td>`;
     };
     els.detailReportHead.innerHTML = reportMatrixHeader(groups, columns, 'Khu vực / CN', 'Tổng');
     const visibleRows = buildAuthoritativeRegionRows(reportMatrix.rows || [], columns);
@@ -1800,7 +1823,9 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
     els.detailReportFoot.innerHTML = `<tr><th class="report-region-cell report-grand-label" scope="row">Tổng hệ thống</th>${columns.map(column => metricCell(grand.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}${metricCell(grand.total || grand, 'report-row-total report-grand-total', true)}</tr>`;
     const summaryValues = {
         detailReportPeriod: dashboardReport?.meta?.period?.label || getRangeLabel(),
-        detailReportSessions: formatNumber.format(Number(grand.total?.attempt_count || grand.attempt_count) || 0),
+        detailReportSessions: formatNumber.format(Number(grand.total?.submitted_attempt_count ?? grand.submitted_attempt_count ?? grand.total?.attempt_count ?? grand.attempt_count) || 0),
+        detailReportEligibleSessions: formatNumber.format(Number(grand.total?.rate_eligible_attempt_count ?? grand.rate_eligible_attempt_count ?? grand.total?.attempt_count ?? grand.attempt_count) || 0),
+        detailReportIncompleteSessions: formatNumber.format(Number(grand.total?.legacy_incomplete_attempt_count ?? grand.legacy_incomplete_attempt_count ?? grand.total?.incomplete_attempt_count ?? grand.incomplete_attempt_count) || 0),
         detailReportRegions: formatNumber.format(visibleRegionCount),
         detailReportLabs: formatNumber.format(columns.length),
         detailReportCompletion: grand.total?.completion_rate === null || grand.completion_rate === null
@@ -1957,7 +1982,7 @@ function renderDetailedReport(rows) {
         qualityNote.hidden = false;
         qualityNote.textContent = 'Không thể tải danh mục KTV đang hoạt động và phiên thực hành cho kỳ này; các chỉ số được để trống để tránh gây hiểu nhầm.';
     }
-    ['detailReportSessions', 'detailReportRegions', 'detailReportLabs', 'detailReportCompletion'].forEach(id => {
+    ['detailReportSessions', 'detailReportEligibleSessions', 'detailReportIncompleteSessions', 'detailReportRegions', 'detailReportLabs', 'detailReportCompletion'].forEach(id => {
         const element = document.getElementById(id);
         if (element) element.textContent = '—';
     });
@@ -2117,9 +2142,10 @@ function renderRegionUsageChart() {
     yearSelect.value = String(state.regionUsageYear);
     const selectedReportYear = state.startDate ? parseDate(state.startDate).getFullYear() : state.regionUsageYear;
     if (periodNote) {
-        periodNote.textContent = selectedReportYear !== state.regionUsageYear
-            ? `Khác kỳ báo cáo đang chọn (${selectedReportYear}).`
+        const mismatch = selectedReportYear !== state.regionUsageYear
+            ? ` Khác kỳ báo cáo đang chọn (${selectedReportYear}).`
             : '';
+        periodNote.textContent = `Toàn năm ${state.regionUsageYear}; quy về cơ cấu KTV/khu vực hiện tại.${mismatch}`;
     }
 
     const series = getRegionUsageSeries(state.regionUsageYear);
@@ -2725,6 +2751,10 @@ function isSuccessfulSession(item) {
 
 function hasCompleteAttemptEvidence(item) {
     return item?.attemptSequenceComplete !== false;
+}
+
+function isRateEligiblePracticeSession(item) {
+    return hasCompleteAttemptEvidence(item) && item?.isPassed !== null && item?.isPassed !== undefined;
 }
 
 function getCanonicalLabList() {
@@ -4799,13 +4829,17 @@ function getClassMatrixData() {
         let ktvCompleted = 0;
         let ktvAssigned = 0;
         let ktvAttempts = 0;
+        let ktvSubmittedAttempts = 0;
+        let ktvIncompleteAttempts = 0;
 
         const cells = columns.map(col => {
             const labSessions = selectedClass
                 ? classSessionsForCell(selectedClass.code, learnerKey, col.device, col.lab)
                 : [];
-            const rateEligibleSessions = labSessions.filter(hasCompleteAttemptEvidence);
+            const rateEligibleSessions = labSessions.filter(isRateEligiblePracticeSession);
             const attempts = rateEligibleSessions.length;
+            const submittedAttempts = labSessions.length;
+            const legacyIncompleteAttempts = labSessions.filter(session => !hasCompleteAttemptEvidence(session)).length;
             const passCount = rateEligibleSessions.filter(session => session.isPassed === true).length;
             const assignment = selectedClass
                 ? assignmentByCell.get(`${selectedClass.code}\u001f${learnerKey}\u001f${col.device}\u001f${col.lab}`)
@@ -4815,6 +4849,8 @@ function getClassMatrixData() {
             if (isAssigned) ktvAssigned += 1;
             if (assignmentCompleted) ktvCompleted += 1;
             ktvAttempts += attempts;
+            ktvSubmittedAttempts += submittedAttempts;
+            ktvIncompleteAttempts += legacyIncompleteAttempts;
 
             return {
                 device: col.device,
@@ -4822,6 +4858,8 @@ function getClassMatrixData() {
                 assigned: isAssigned,
                 completed: assignmentCompleted,
                 attempts,
+                submittedAttempts,
+                legacyIncompleteAttempts,
                 passCount,
                 lastSession: labSessions[labSessions.length - 1] || null
             };
@@ -4841,6 +4879,8 @@ function getClassMatrixData() {
             allAssigned: allAssignedCount,
             fullyCompleted: allAssignedCount > 0 && allCompletedCount === allAssignedCount,
             attempts: ktvAttempts,
+            submittedAttempts: ktvSubmittedAttempts,
+            legacyIncompleteAttempts: ktvIncompleteAttempts,
             rate,
             progressKey: `${ktvCompleted}/${ktvAssigned}`
         };
@@ -4881,7 +4921,7 @@ function getClassMatrixData() {
 
     const labStats = new Map(columns.map(col => [
         `${col.device}\u001f${col.lab}`,
-        { assigned: 0, completed: 0, passes: 0, attempts: 0 }
+        { assigned: 0, completed: 0, passes: 0, attempts: 0, submittedAttempts: 0, legacyIncompleteAttempts: 0 }
     ]));
     rows.forEach(row => row.cells.forEach(cell => {
         const stat = labStats.get(`${cell.device}\u001f${cell.lab}`);
@@ -4890,9 +4930,13 @@ function getClassMatrixData() {
         if (cell.completed) stat.completed += 1;
         stat.passes += cell.passCount;
         stat.attempts += cell.attempts;
+        stat.submittedAttempts += cell.submittedAttempts;
+        stat.legacyIncompleteAttempts += cell.legacyIncompleteAttempts;
     }));
 
     const totalClassAttempts = rows.reduce((sum, row) => sum + row.attempts, 0);
+    const totalClassSubmittedAttempts = rows.reduce((sum, row) => sum + row.submittedAttempts, 0);
+    const totalClassIncompleteAttempts = rows.reduce((sum, row) => sum + row.legacyIncompleteAttempts, 0);
     const totalAssignedAll = rows.reduce((s, r) => s + r.assigned, 0);
     const totalCompletedAll = rows.reduce((s, r) => s + r.completed, 0);
     const assignmentCompletionRate = totalAssignedAll
@@ -4923,15 +4967,20 @@ function getClassMatrixData() {
                 return assignments.length > 0 && assignments.every(assignment => assignment.completed);
             }).length;
             const assignedDevices = new Set(classAssignments.map(assignment => assignment.device));
-            const attempts = members.reduce((total, email) => total + overviewColumns.reduce((columnTotal, column) =>
-                columnTotal + classSessionsForCell(item.code, email, column.device, column.lab).length
-            , 0), 0);
+            const classLabSessions = members.flatMap(email => overviewColumns.flatMap(column =>
+                classSessionsForCell(item.code, email, column.device, column.lab)
+            ));
+            const submittedAttempts = classLabSessions.length;
+            const attempts = classLabSessions.filter(isRateEligiblePracticeSession).length;
+            const legacyIncompleteAttempts = classLabSessions.filter(session => !hasCompleteAttemptEvidence(session)).length;
             return {
                 ...item,
                 memberCount: members.length,
                 deviceCount: assignedDevices.size,
                 fullyCompletedCount,
                 attempts,
+                submittedAttempts,
+                legacyIncompleteAttempts,
                 rate: members.length ? Math.round((fullyCompletedCount / members.length) * 100) : null
             };
         });
@@ -4989,6 +5038,8 @@ function getClassMatrixData() {
         totalKtv: mappedLearners.length,
         allLearnersCount: allClassLearners.length,
         totalSessions: totalClassAttempts,
+        totalSubmittedSessions: totalClassSubmittedAttempts,
+        totalIncompleteSessions: totalClassIncompleteAttempts,
         totalAssignedAll,
         totalCompletedAll,
         assignmentCompletionRate,
@@ -5089,7 +5140,9 @@ function renderClassOverview(data) {
         </th>
         <th scope="col">${sortHeader('Số KTV', 'memberCount')}</th>
         <th scope="col">${sortHeader('Thiết bị đã giao', 'deviceCount')}</th>
-        <th scope="col">${sortHeader('Lượt thực hành', 'attempts')}</th>
+        <th scope="col">${sortHeader('Lượt phát sinh', 'submittedAttempts')}</th>
+        <th scope="col">${sortHeader('Lượt đủ dữ liệu', 'attempts')}</th>
+        <th scope="col">${sortHeader('Thiếu dữ liệu lịch sử', 'legacyIncompleteAttempts')}</th>
         <th scope="col">${sortHeader('KTV hoàn thành', 'fullyCompletedCount')}</th>
         <th scope="col">${sortHeader('Tỷ lệ hoàn thành', 'rate')}</th>
         <th scope="col"><span class="sr-only">Thao tác</span></th>
@@ -5107,7 +5160,9 @@ function renderClassOverview(data) {
             </th>
             <td class="class-overview-number">${formatNumber.format(row.memberCount)}</td>
             <td class="class-overview-number">${formatNumber.format(row.deviceCount)}</td>
+            <td class="class-overview-number">${formatNumber.format(row.submittedAttempts)}</td>
             <td class="class-overview-number">${formatNumber.format(row.attempts)}</td>
+            <td class="class-overview-number">${formatNumber.format(row.legacyIncompleteAttempts)}</td>
             <td class="class-overview-achieved">
                 <button type="button" class="class-overview-completion class-overview-open" data-class-id="${escapeHTML(row.id)}" aria-label="Xem ${row.fullyCompletedCount} trên ${row.memberCount} KTV hoàn thành lớp ${escapeHTML(row.name)}">
                     <strong>${row.fullyCompletedCount}/${row.memberCount}</strong><span>KTV</span>
@@ -5129,14 +5184,18 @@ function renderClassOverview(data) {
 
     const classPeople = data.summaryRows.reduce((sum, row) => sum + row.memberCount, 0);
     const assignedDeviceCount = data.summaryRows.reduce((sum, row) => sum + row.deviceCount, 0);
+    const totalSubmittedAttempts = data.summaryRows.reduce((sum, row) => sum + row.submittedAttempts, 0);
     const totalAttempts = data.summaryRows.reduce((sum, row) => sum + row.attempts, 0);
+    const totalIncompleteAttempts = data.summaryRows.reduce((sum, row) => sum + row.legacyIncompleteAttempts, 0);
     const completedPeople = data.summaryRows.reduce((sum, row) => sum + row.fullyCompletedCount, 0);
     const overallRate = classPeople ? Math.round((completedPeople / classPeople) * 100) : null;
     foot.innerHTML = `<tr>
         <th scope="row">Tổng</th>
         <td>${formatNumber.format(classPeople)}</td>
         <td>${formatNumber.format(assignedDeviceCount)}</td>
+        <td>${formatNumber.format(totalSubmittedAttempts)}</td>
         <td>${formatNumber.format(totalAttempts)}</td>
+        <td>${formatNumber.format(totalIncompleteAttempts)}</td>
         <td><strong>${completedPeople}/${classPeople}</strong></td>
         <td><strong>${overallRate === null ? '—' : `${overallRate}%`}</strong></td>
         <td></td>
@@ -5577,7 +5636,7 @@ function renderClassMatrixReport() {
                 ${row.cells.map(cell => {
                     const passRate = cell.attempts ? Math.round((cell.passCount / cell.attempts) * 100) : null;
                     const cellClass = passRate === null ? 'report-cell-zero' : (passRate >= 80 ? 'report-cell-high' : (passRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: ${cell.passCount}/${cell.attempts} phiên Đạt`;
+                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: ${cell.passCount}/${cell.attempts} lượt đủ dữ liệu đạt • ${cell.submittedAttempts} lượt phát sinh • ${cell.legacyIncompleteAttempts} lượt thiếu chuỗi lịch sử`;
                     return `<td class="report-metric-cell ${cellClass}" title="${escapeHTML(tooltip)}"><strong>${cell.passCount}/${cell.attempts}</strong></td>`;
                 }).join('')}
                 <td class="ktv-total-cell ${rateClass}">
@@ -5598,10 +5657,10 @@ function renderClassMatrixReport() {
             <th class="ktv-footer-label" scope="row">Tổng</th>
             ${data.columns.map(col => {
                 const colKey = `${col.device}\u001f${col.lab}`;
-                const stat = data.labStats.get(colKey) || { assigned: 0, completed: 0, attempts: 0 };
+                const stat = data.labStats.get(colKey) || { assigned: 0, completed: 0, attempts: 0, submittedAttempts: 0, legacyIncompleteAttempts: 0 };
                 const rate = stat.assigned > 0 ? Math.round((stat.completed / stat.assigned) * 100) : null;
                 const cellClass = rate === null ? 'report-cell-zero' : (rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-                const tooltip = `${stat.completed}/${stat.assigned} KTV được giao đã hoàn thành • ${stat.attempts} lượt thực hành`;
+                const tooltip = `${stat.completed}/${stat.assigned} KTV được giao đã hoàn thành • ${stat.submittedAttempts} lượt phát sinh • ${stat.attempts} lượt đủ dữ liệu • ${stat.legacyIncompleteAttempts} lượt thiếu chuỗi lịch sử`;
                 return `
                     <td class="report-metric-cell ${cellClass} ${col.isFirst ? 'group-start' : ''}" title="${escapeHTML(tooltip)}">
                         <strong>${stat.completed}/${stat.assigned}</strong>
@@ -6309,11 +6368,13 @@ function formatAuthoritativeRegionMetric(cell = {}) {
     const population = Number(cell.population_count) || 0;
     if (!population) return '—';
     const completed = Number(cell.completed_count) || 0;
-    const attempts = Number(cell.attempt_count) || 0;
+    const submittedAttempts = Number(cell.submitted_attempt_count ?? cell.attempt_count) || 0;
+    const eligibleAttempts = Number(cell.rate_eligible_attempt_count ?? cell.attempt_count) || 0;
+    const incompleteAttempts = Number(cell.legacy_incomplete_attempt_count ?? cell.incomplete_attempt_count) || 0;
     const rate = cell.completion_rate === null || cell.completion_rate === undefined
         ? Math.round((completed / population) * 100)
         : Number(cell.completion_rate);
-    return `${completed}/${population} (${rate}%) · ${attempts} lượt`;
+    return `${completed}/${population} (${rate}%) · phát sinh ${submittedAttempts} · đủ dữ liệu ${eligibleAttempts} · thiếu lịch sử ${incompleteAttempts}`;
 }
 
 function buildAuthoritativeRegionReportDescriptor(matrix) {
@@ -6344,7 +6405,7 @@ function buildAuthoritativeRegionReportDescriptor(matrix) {
         available: rows.length > 0 && columns.length > 0,
         metadata: [
             ['Phạm vi', 'Toàn bộ KTV đang hoạt động theo khu vực hiện tại; không yêu cầu assignment'],
-            ['Quy ước ô dữ liệu', 'KTV đã đạt/tổng KTV khu vực (tỷ lệ) · lượt thực hành']
+            ['Quy ước ô dữ liệu', 'KTV đã đạt/tổng KTV khu vực (tỷ lệ) · lượt phát sinh · lượt đủ dữ liệu đánh giá · lượt thiếu dữ liệu lịch sử']
         ],
         headers: ['STT', 'Khu vực / Chi nhánh', ...columns.map(column => `${column.device} - ${column.lab}`), 'Tổng khu vực'],
         columnTypes: ['integer', 'text', ...columns.map(() => 'text'), 'text'],
@@ -6397,15 +6458,17 @@ function buildClassMatrixReportDescriptor() {
                 ['KTV hoàn thành', 'KTV hoàn thành tất cả bài lab được giao'],
                 ['Tỷ lệ hoàn thành', 'KTV hoàn thành tất cả bài được giao / Tổng KTV của lớp']
             ],
-            headers: ['STT', 'Mã lớp', 'Tên lớp', 'Số KTV', 'Thiết bị đã giao', 'Lượt thực hành', 'KTV hoàn thành', 'Tỷ lệ hoàn thành'],
-            columnTypes: ['integer', 'text', 'text', 'integer', 'integer', 'integer', 'text', 'percent'],
+            headers: ['STT', 'Mã lớp', 'Tên lớp', 'Số KTV', 'Thiết bị đã giao', 'Lượt phát sinh', 'Lượt đủ dữ liệu', 'Thiếu dữ liệu lịch sử', 'KTV hoàn thành', 'Tỷ lệ hoàn thành'],
+            columnTypes: ['integer', 'text', 'text', 'integer', 'integer', 'integer', 'integer', 'integer', 'text', 'percent'],
             rows: data.summaryRows.map((row, index) => [
                 index + 1,
                 row.code || '',
                 row.name || '',
                 row.memberCount,
                 row.deviceCount,
+                row.submittedAttempts,
                 row.attempts,
+                row.legacyIncompleteAttempts,
                 `${row.fullyCompletedCount}/${row.memberCount}`,
                 row.rate === null ? '' : row.rate / 100
             ])
@@ -6423,18 +6486,20 @@ function buildClassMatrixReportDescriptor() {
             ['Lớp học', classLabel],
             ['Thiết bị', deviceLabel],
             ['Tiến độ tổng', `${data.totalCompletedAll}/${data.totalAssignedAll} (${data.assignmentCompletionRate}%)`],
-            ['Tổng lượt thực hành', data.totalSessions],
-            ['Quy ước ô dữ liệu', 'Số phiên Đạt / Tổng số phiên thực hiện bài lab']
+            ['Tổng lượt phát sinh', data.totalSubmittedSessions],
+            ['Lượt đủ dữ liệu đánh giá', data.totalSessions],
+            ['Thiếu dữ liệu lịch sử', data.totalIncompleteSessions],
+            ['Quy ước ô dữ liệu', 'Số lượt Đạt / Số lượt đủ dữ liệu đánh giá; lượt thiếu chuỗi lịch sử không tính vào tỷ lệ']
         ],
         headers: [
             'STT', 'Mã NV', 'Họ và tên', 'Email', 'Khu vực / Chi nhánh', 'Lớp học',
             ...data.columns.map(column => `${column.device} - ${column.lab}`),
-            'Bài đã đạt', 'Bài trong phạm vi', 'Tỷ lệ hoàn thành (%)', 'Lượt thực hành'
+            'Bài đã đạt', 'Bài trong phạm vi', 'Tỷ lệ hoàn thành (%)', 'Lượt phát sinh', 'Lượt đủ dữ liệu', 'Thiếu dữ liệu lịch sử'
         ],
         columnTypes: [
             'integer', 'text', 'text', 'text', 'text', 'text',
             ...data.columns.map(() => 'text'),
-            'integer', 'integer', 'percent', 'integer'
+            'integer', 'integer', 'percent', 'integer', 'integer', 'integer'
         ],
         rows: data.rows.map((row, index) => [
             index + 1,
@@ -6447,7 +6512,9 @@ function buildClassMatrixReportDescriptor() {
             row.completed,
             row.assigned,
             row.rate === null || row.rate === undefined ? '' : row.rate / 100,
-            row.attempts
+            row.submittedAttempts,
+            row.attempts,
+            row.legacyIncompleteAttempts
         ])
     };
 }
