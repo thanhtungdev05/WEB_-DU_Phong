@@ -8,37 +8,45 @@ window.TOOLTIPS_AC1000F['LAB_AC1000F_04'] = [
   // Bước 1: Chọn tab Network
   {
     selector: 'a[onclick*="change_bg2"]',
-    text: 'Bước 1: chọn Network',
-    position: 'top'
+    text: 'Bước 1: Chọn tab Network',
+    position: 'top',
+    hideOnPage: 'home_lan.asp'
   },
   // Bước 2: Chọn LAN
   {
     selector: 'a[href*="home_lan.asp"]',
-    text: 'Bước 2: chọn LAN',
-    position: 'bottom'
+    text: 'Bước 2: Chọn LAN',
+    position: 'bottom',
+    hideOnPage: 'home_lan.asp'
   },
   // Bước 3: Đảm bảo chọn DNS Relay là Manually
   {
+    page: 'home_lan.asp',
     selector: 'select[name="dnsTypeRadio"], select[name="dnsRelay"]',
-    text: 'Bước 3: chọn Manually',
+    text: 'Bước 3: Chọn Manually ở DNS Relay',
     position: 'right'
   },
   // Bước 4: Nhập Primary DNS
   {
+    page: 'home_lan.asp',
     selector: 'input[name="PrimaryDns"], input[name="PrimaryDNS"]',
-    text: 'Bước 4: nhập Primary DNS, ví dụ: 8.8.8.8',
-    position: 'right'
+    text: 'Bước 4: Nhập Primary DNS (VD: 8.8.8.8)',
+    position: 'right',
+    expected: '8.8.8.8'
   },
   // Bước 5: Nhập Secondary DNS
   {
+    page: 'home_lan.asp',
     selector: 'input[name="SecondDns"], input[name="SecondaryDNS"]',
-    text: 'Bước 5: nhập Secondary DNS, ví dụ: 8.8.4.4',
-    position: 'right'
+    text: 'Bước 5: Nhập Secondary DNS (VD: 8.8.4.4)',
+    position: 'right',
+    expected: '8.8.4.4'
   },
   // Bước 6: Chọn SAVE
   {
-    selector: 'input[name="SaveBtn"], input[value="Save"], input[name="save"], #save, #btnSave, .button1',
-    text: 'Bước 6: chọn Save để lưu cấu hình',
+    page: 'home_lan.asp',
+    selector: 'input[name="SaveBtn"], input[value="Save"], input[name="save"], #save, #btnSave',
+    text: 'Bước 6: Chọn Save để lưu cấu hình',
     position: 'right'
   }
 ];

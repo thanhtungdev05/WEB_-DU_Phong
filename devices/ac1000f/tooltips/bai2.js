@@ -9,108 +9,65 @@ window.TOOLTIPS_AC1000F['LAB_AC1000F_02'] = [
   {
     selector: 'a[onclick*="change_bg2"]',
     text: 'Bước 1: Chọn tab Network',
-    position: 'top'
+    position: 'top',
+    hideOnPage: 'home_wireless.asp'
   },
   {
     selector: 'a[href*="home_wireless.asp"]',
     text: 'Bước 2: Chọn Wireless 2.4G',
-    position: 'top'
+    position: 'top',
+    hideOnPage: 'home_wireless.asp'
   },
 
   // --- 2.4G (Chỉ hiện ở trang home_wireless.asp) ---
   {
     page: 'home_wireless.asp',
-    selector: 'input[name="wlan_APenable"][value="1"], input[name="wlan_APenable"]',
-    text: 'Bước 3: Chọn Enable',
-    position: 'top'
-  },
-  {
-    page: 'home_wireless.asp',
-    selector: 'select[name="WirelessMode"]',
-    text: 'Bước 4: Chọn 802.11b+g+n',
-    position: 'right'
-  },
-  {
-    page: 'home_wireless.asp',
-    selector: 'select[name="Countries_Channels"]',
-    text: 'Bước 5: Chọn VIETNAM và Auto',
-    position: 'bottom'
-  },
-  {
-    page: 'home_wireless.asp',
-    selector: 'select[name="WLANChannelBandwidth"]',
-    text: 'Bước 6: Chọn Auto',
-    position: 'right'
-  },
-  {
-    page: 'home_wireless.asp',
     selector: 'input[name="ESSID"], input[name="ssid"]',
-    text: 'Bước 7: nhập tên Wifi bạn muốn ví dụ: FPT Telecom-7EA8',
+    text: 'Bước 3: Nhập tên Wifi bạn muốn (VD: FPT Telecom)',
     position: 'right',
-    expected: 'FPT Telecom-7EA8'
+    expected: 'FPT Telecom'
   },
   {
     page: 'home_wireless.asp',
     selector: 'input[name="PreSharedKey1"], input[name="PreSharedKey2"], input[name="PreSharedKey3"], input[name*="PreSharedKey"]',
-    text: 'Bước 8: nhập mật khẩu bạn muốn ví dụ: 00032934',
+    text: 'Bước 4: Nhập mật khẩu bạn muốn (VD: 19006600)',
     position: 'right',
-    expected: '00032934'
+    expected: '19006600'
   },
   {
     page: 'home_wireless.asp',
     selector: 'input[name="SaveBtn"], input[value="Save"], input[name="save"], #save, #btnSave, .button1',
-    text: 'Bước 9: Chọn Save & Apply cho 2.4G',
+    text: 'Bước 5: Chọn Save & Apply cho 2.4G',
     position: 'right'
   },
 
   // --- 5G (Tiếp nối, menu luôn hiện) ---
   {
     selector: 'a[href*="home_wireless_5g.asp"]',
-    text: 'Bước 10: Chọn sang Wireless 5G',
-    position: 'bottom'
+    text: 'Bước 6: Chọn sang Wireless 5G',
+    position: 'bottom',
+    hideOnPage: 'home_wireless_5g.asp'
   },
 
   // (Chỉ hiện ở trang home_wireless_5g.asp)
   {
     page: 'home_wireless_5g.asp',
-    selector: 'input[name="wlan_APenable"][value="1"], input[name="wlan_APenable"]',
-    text: 'Bước 11: Chọn Enable',
-    position: 'top'
-  },
-  {
-    page: 'home_wireless_5g.asp',
-    selector: 'select[name="WirelessMode"]',
-    text: 'Bước 12: Chọn Auto',
-    position: 'right'
-  },
-  {
-    page: 'home_wireless_5g.asp',
-    selector: 'select[name="Countries_Channels"]',
-    text: 'Bước 13: Chọn VIETNAM và Auto',
-    position: 'bottom'
-  },
-  {
-    page: 'home_wireless_5g.asp',
-    selector: 'select[name="WLANChannelBandwidth"]',
-    text: 'Bước 14: Chọn Auto',
-    position: 'right'
-  },
-  {
-    page: 'home_wireless_5g.asp',
     selector: 'input[name="ESSID"], input[name="ssid"]',
-    text: 'Bước 15: Nhập tên Wifi 5G (VD: FPT Telecom-7EA8)',
-    position: 'right'
+    text: 'Bước 7: Nhập tên Wifi 5G (VD: FPT Telecom)',
+    position: 'right',
+    expected: 'FPT Telecom'
   },
   {
     page: 'home_wireless_5g.asp',
     selector: 'input[name="PreSharedKey1"], input[name="PreSharedKey2"], input[name="PreSharedKey3"], input[name*="PreSharedKey"]',
-    text: 'Bước 16: Nhập mật khẩu 5G (VD: 00032934)',
-    position: 'right'
+    text: 'Bước 8: Nhập mật khẩu 5G (VD: 19006600)',
+    position: 'right',
+    expected: '19006600'
   },
   {
     page: 'home_wireless_5g.asp',
     selector: 'input[name="SaveBtn"], input[value="Save"], input[name="save"], #save, #btnSave, .button1',
-    text: 'Bước 17: Chọn Save & Apply cho 5G',
+    text: 'Bước 9: Chọn Save & Apply cho 5G',
     position: 'right'
   }
 ];

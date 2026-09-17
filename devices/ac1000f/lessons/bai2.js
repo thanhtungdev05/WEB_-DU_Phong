@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ac1000f/lessons/bai2.js
  * Bài 2: Cấu hình mạng Wi-Fi trên ONT AC1000F
  */
@@ -13,8 +13,8 @@
     instructions: [
       '<b>Yêu cầu:</b>',
       'Cấu hình đúng cho cả 2 băng tần <b>2.4G</b> và <b>5G</b> theo thông số:',
-      '- SSID Name: <span class="val">FPT Telecom-7EA8</span>',
-      '- WPA Key: <span class="val">00032934</span>',
+      '- SSID Name: <span class="val">FPT Telecom</span>',
+      '- WPA Key: <span class="val">19006600</span>',
     ],
     practiceUrl: '/sim_ac1000f/cgi-bin/index.asp?page=home_wireless.asp',
     // Xóa localStorage wifi cũ khi bắt đầu phiên mới (trên trang login, không xóa khi đang ở trang wireless)
@@ -111,10 +111,10 @@
           addRule('24_ap', '[2.4G] Radio', 'Enable', ap24 === '1' ? 'Enable' : 'Disable', ap24 === '1' && is24Saved);
 
           var ssid24 = g(data24, 'ESSID') || g(data24, 'ssid');
-          addRule('24_ssid', '[2.4G] SSID Name', 'FPT Telecom-7EA8', ssid24, ssid24 === 'FPT Telecom-7EA8' && is24Saved);
+          addRule('24_ssid', '[2.4G] SSID Name', 'FPT Telecom', ssid24, ssid24 === 'FPT Telecom' && is24Saved);
 
           var key24 = getKey(data24);
-          addRule('24_key', '[2.4G] WPA Passphrase', '00032934', key24, key24 === '00032934' && is24Saved);
+          addRule('24_key', '[2.4G] WPA Passphrase', '19006600', key24, key24 === '19006600' && is24Saved);
 
           if (!is24Saved) {
             totalRules++;
@@ -132,10 +132,10 @@
           addRule('5g_ap', '[5G] Radio', 'Enable', ap5 === '1' ? 'Enable' : 'Disable', ap5 === '1' && is5gSaved);
 
           var ssid5 = g(data5G, 'ESSID') || g(data5G, 'ssid');
-          addRule('5g_ssid', '[5G] SSID Name', 'FPT Telecom-7EA8', ssid5, ssid5 === 'FPT Telecom-7EA8' && is5gSaved);
+          addRule('5g_ssid', '[5G] SSID Name', 'FPT Telecom', ssid5, ssid5 === 'FPT Telecom' && is5gSaved);
 
           var key5 = getKey(data5G);
-          addRule('5g_key', '[5G] WPA Passphrase', '00032934', key5, key5 === '00032934' && is5gSaved);
+          addRule('5g_key', '[5G] WPA Passphrase', '19006600', key5, key5 === '19006600' && is5gSaved);
 
           if (!is5gSaved) {
             totalRules++;
