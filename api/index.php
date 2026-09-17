@@ -1399,18 +1399,19 @@ function roster_item_response(array $row): array
 function roster_assigned_class_join_sql(): string
 {
     return <<<'SQL'
-LEFT JOIN LATERAL (
-    SELECT STRING_AGG(DISTINCT training.class_code, ', ' ORDER BY training.class_code) AS assigned_class_code,
+LEFT JOIN (
+    SELECT enrollment.user_id,
+           STRING_AGG(DISTINCT training.class_code, ', ' ORDER BY training.class_code) AS assigned_class_code,
            STRING_AGG(DISTINCT training.class_name, ', ' ORDER BY training.class_name) AS assigned_class_name
       FROM class_enrollments enrollment
       JOIN training_classes training ON training.class_id = enrollment.class_id
-     WHERE enrollment.user_id = ktv.user_id
-        AND enrollment.status = 'active'
+     WHERE enrollment.status = 'active'
         AND enrollment.is_mock = FALSE
         AND (enrollment.valid_to IS NULL OR enrollment.valid_to >= CURRENT_DATE)
         AND training.status IN ('planned', 'active')
         AND training.is_mock = FALSE
- ) assigned_class ON TRUE
+     GROUP BY enrollment.user_id
+ ) assigned_class ON assigned_class.user_id = ktv.user_id
 SQL;
 }
 
@@ -1803,7 +1804,16 @@ function handle_roster_list(): void
     $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
     $classJoinSql = roster_assigned_class_join_sql();
 
-    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM v_ktv_directory ktv $classJoinSql $whereSql");
+    $filterHasValue = static function (mixed $value): bool {
+        if (is_array($value)) {
+            return count(array_filter($value, static fn(mixed $item): bool => trim((string)$item) !== '')) > 0;
+        }
+        return trim((string)$value) !== '';
+    };
+    $countNeedsClassJoin = $filterHasValue($_GET['className'] ?? null)
+        || $filterHasValue($_GET['search'] ?? null);
+    $countClassJoinSql = $countNeedsClassJoin ? $classJoinSql : '';
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM v_ktv_directory ktv $countClassJoinSql $whereSql");
     $countStmt->execute($params);
     $total = (int)$countStmt->fetchColumn();
 
@@ -1832,7 +1842,7 @@ function handle_roster_list(): void
     }
     $sortSql = $sortKey !== ''
         ? $sortColumns[$sortKey] . ' ' . strtoupper($sortDirection) . ' NULLS LAST, ktv.display_name NULLS LAST, ktv.email'
-        : 'ktv.is_terminated ASC, ktv.region_name NULLS LAST, ktv.branch_name NULLS LAST, COALESCE(assigned_class.assigned_class_name, assigned_class.assigned_class_code, ktv.class_code) NULLS LAST, ktv.display_name NULLS LAST, ktv.email';
+        : 'ktv.is_terminated ASC, ktv.region_name NULLS LAST, ktv.branch_name NULLS LAST, ktv.display_name NULLS LAST, ktv.email';
 
     $sql = "SELECT ktv.*, assigned_class.assigned_class_code, assigned_class.assigned_class_name
               FROM v_ktv_directory ktv
@@ -1849,11 +1859,24 @@ function handle_roster_list(): void
     $stmt->execute();
     $rows = $stmt->fetchAll();
 
-    respond(['data' => [
+    $response = [
         'items' => array_map('roster_item_response', $rows),
         'total' => $total,
         'page' => $page,
         'limit' => $limit,
+    ];
+    $includeMeta = !array_key_exists('include_meta', $_GET) || roster_parse_bool_query('include_meta');
+    if ($includeMeta) {
+        $response['stats'] = roster_stats($pdo);
+        $response['facets'] = roster_filter_facets($pdo);
+    }
+    respond(['data' => $response]);
+}
+
+function handle_roster_meta(): void
+{
+    $pdo = db();
+    respond(['data' => [
         'stats' => roster_stats($pdo),
         'facets' => roster_filter_facets($pdo),
     ]]);
@@ -2320,6 +2343,8 @@ function handle_roster(array $segments, string $method): void
         handle_roster_import($actor);
     } elseif ($action === 'list' && $method === 'GET') {
         handle_roster_list();
+    } elseif ($action === 'meta' && $method === 'GET') {
+        handle_roster_meta();
     } elseif ($action === 'regions' && $method === 'GET') {
         handle_roster_regions();
     } elseif ($action === 'history' && $method === 'GET') {

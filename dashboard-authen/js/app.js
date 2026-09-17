@@ -130,6 +130,8 @@ const state = {
     rosterRegions: [],
     rosterRegionsLoaded: false,
     rosterStats: null,
+    rosterMetaLoaded: false,
+    rosterMetaRequest: null,
     rosterPage: 1,
     rosterTotal: 0,
     rosterStatusFilter: ['active'],
@@ -7642,6 +7644,7 @@ async function loadRosterList() {
     try {
         const params = appendRosterFilters(new URLSearchParams());
         params.set('page', String(state.rosterPage));
+        params.set('include_meta', '0');
         const resp = await fetch(`${API_BASE_URL}/roster/list?${params}`);
         if (!resp.ok) {
             let detail = '';
@@ -7658,11 +7661,10 @@ async function loadRosterList() {
         if (requestSequence !== state.rosterRequestSequence) return false;
         const data = json.data || {};
         state.rosterItems = data.items || [];
-        state.rosterStats = data.stats || null;
         state.rosterTotal = data.total || 0;
-        state.rosterFilterFacets = data.facets || state.rosterFilterFacets;
         state.rosterLoaded = true;
         renderRosterList();
+        void loadRosterMeta();
         if (activeDashboardView === 'roster') {
             state.lastSuccessfulRefreshAt = new Date();
             setDashboardSyncState('ready');
@@ -7683,6 +7685,32 @@ async function loadRosterList() {
     } finally {
         if (requestSequence === state.rosterRequestSequence) tbody?.removeAttribute('aria-busy');
     }
+}
+
+async function loadRosterMeta(force = false) {
+    if (state.rosterMetaLoaded && !force) return true;
+    if (state.rosterMetaRequest && !force) return state.rosterMetaRequest;
+
+    const request = (async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/roster/meta`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const json = await response.json();
+            const data = json.data || {};
+            state.rosterStats = data.stats || null;
+            state.rosterFilterFacets = data.facets || state.rosterFilterFacets;
+            state.rosterMetaLoaded = true;
+            renderRosterFilterFacets();
+            return true;
+        } catch (error) {
+            console.error('loadRosterMeta error:', error);
+            return false;
+        } finally {
+            if (state.rosterMetaRequest === request) state.rosterMetaRequest = null;
+        }
+    })();
+    state.rosterMetaRequest = request;
+    return request;
 }
 
 async function loadRosterRegions() {
@@ -7953,6 +7981,7 @@ async function confirmRosterImport() {
                 true
             );
             state.rosterLoaded = false;
+            state.rosterMetaLoaded = false;
             state.rosterHistoryLoaded = false;
             // Import happens while the roster tab is active. A normal refresh is
             // intentionally skipped on that tab, so force it to keep every
@@ -8163,6 +8192,7 @@ async function submitRosterEdit(e) {
         }
         closeRosterEdit();
         state.rosterLoaded = false;
+        state.rosterMetaLoaded = false;
         await Promise.allSettled([
             loadRosterList(),
             refreshDashboardData({ force: true })
@@ -8699,6 +8729,7 @@ async function submitTrainingClass(event) {
         showToast(editing ? `Đã cập nhật lớp ${code}.` : `Đã tạo lớp ${code} và giao bài thành công.`, 'success');
         resetTrainingClassForm();
         state.classLoaded = false;
+        state.rosterMetaLoaded = false;
         await loadTrainingClasses();
         await Promise.allSettled([
             loadRosterList(),
