@@ -4664,6 +4664,11 @@
                         template.trigger(PostSuccHandler, [data, template]);
                         if (template.hasError(data, "_noExist") == 0) {
                            $(".SpecialPassword", template).each(function (i) {
+                              var curVal = $(this).val();
+                              if (curVal && curVal.replace(/[\t\s]/g, '') !== '') {
+                                 this._ftcRealValue = curVal;
+                                 $(this).attr("data-ftc-real-value", curVal);
+                              }
                               $(this).val("						");
                            });
                         }

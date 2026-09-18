@@ -19,6 +19,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   ],
   practiceUrl: '/sim_ONT_be6500c/advanced__lan.html',
   clearFields: [
+    'input[name="ipv4Settings.ipAddress"]',
     '.MuiAutocomplete-input',
     'input[name="ipv4Settings.dhcp.startAddress"]',
     'input[name="ipv4Settings.dhcp.endAddress"]',
@@ -103,6 +104,12 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       "selector": "li.MuiMenuItem-root:contains(\"LAN\")",
       "text": "Chọn LAN",
       "position": "right"
+    },
+    {
+      "selector": "input[name=\"ipv4Settings.ipAddress\"]",
+      "text": "Nhập IP Address (Gateway) VD: 192.168.1.1",
+      "position": "right",
+      "expected": "192.168.1.1"
     },
     {
       "selector": ".MuiAutocomplete-input",

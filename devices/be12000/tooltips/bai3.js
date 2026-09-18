@@ -46,7 +46,8 @@ window.TOOLTIPS_BE12000['LAB_BE12000_03'] = [
   {
     selector: 'label[for="ESSIDHideEnable1:1"], input[id="ESSIDHideEnable1:1"]',
     text: 'Bước 4: Chọn Off của phần SSID Hide (tắt ẩn mạng)',
-    position: 'right'
+    position: 'right',
+    expected: '0'
   },
   {
     selector: '[id="EncryptionType:1"]:not(:disabled), select[id="EncryptionType:1"]:not(:disabled)',

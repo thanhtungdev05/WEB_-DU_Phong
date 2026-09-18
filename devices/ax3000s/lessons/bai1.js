@@ -1,11 +1,11 @@
-﻿/**
+/**
  * devices/ax3000s/lessons/bai1.js
  * Bài 1: Cấu hình PPPoE trên AX3000S
  */
 
 window.DEVICE_AX3000S_LESSONS = window.DEVICE_AX3000S_LESSONS || [];
 
-window.DEVICE_AX3000S_LESSONS.push({
+var lessonObj = {
   id: 'LAB_AX3000S_01',
   title: 'Cấu hình PPPoE',
   subtitle: 'Cấu hình PPPoE',
@@ -43,5 +43,12 @@ window.DEVICE_AX3000S_LESSONS.push({
       }
     ]
   },
-  guidePopups: []
-});
+  guidePopups: (window.TOOLTIPS_AX3000S && window.TOOLTIPS_AX3000S['LAB_AX3000S_01']) || []
+};
+
+var idx = window.DEVICE_AX3000S_LESSONS.findIndex(function (l) { return l.id === 'LAB_AX3000S_01'; });
+if (idx >= 0) {
+  window.DEVICE_AX3000S_LESSONS[idx] = lessonObj;
+} else {
+  window.DEVICE_AX3000S_LESSONS.push(lessonObj);
+}

@@ -79,9 +79,21 @@ document.addEventListener("DOMContentLoaded", function () {
                     return checkedEl ? checkedEl.value : "";
                 };
 
-                if (getVal("WANCName") !== "FPT") errors.push("Hàng \"Connection Name:\" giá trị đúng là FPT, khuyến nghị giá trị đúng là FPT.");
-                if (getVal("UserName") !== "hnfdl-123456-789") errors.push("Hàng \"Username:\" giá trị đúng là hnfdl-123456-789, khuyến nghị giá trị đúng là hnfdl-123456-789.");
-                if (getVal("Password") !== "d123456") errors.push("Hàng \"Password\" giá trị đúng là d123456, khuyến nghị giá trị đúng là d123456.");
+                var actualWancName = getVal("WANCName");
+                var actualUserName = getVal("UserName");
+                var actualPassword = getVal("Password");
+
+                // Lưu lại giá trị password thực tế vào element và document trước khi router ZTE mask thành tabs
+                var pwdEl = (container ? container.querySelector("[id^='Password']") : null) || document.querySelector("[id^='Password']");
+                if (pwdEl && actualPassword) {
+                    pwdEl._ftcRealValue = actualPassword;
+                    pwdEl.dataset.ftcRealValue = actualPassword;
+                }
+                document._ftcRealPassword = actualPassword;
+
+                if (actualWancName !== "FPT") errors.push("Hàng \"Connection Name:\" giá trị đúng là FPT, khuyến nghị giá trị đúng là FPT.");
+                if (actualUserName !== "hnfdl-123456-789") errors.push("Hàng \"Username:\" giá trị đúng là hnfdl-123456-789, khuyến nghị giá trị đúng là hnfdl-123456-789.");
+                if (actualPassword !== "d123456") errors.push("Hàng \"Password\" giá trị đúng là d123456, khuyến nghị giá trị đúng là d123456.");
 
                 if (errors.length > 0) {
                     document._ftcHasSuccHint = false;

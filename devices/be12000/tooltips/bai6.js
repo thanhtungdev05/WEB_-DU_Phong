@@ -34,32 +34,26 @@ window.TOOLTIPS_BE12000['LAB_BE12000_06'] = [
     expected: ['TCP', 'UDP', 'BOTH', 'TCP&UDP', 'TCP+UDP']
   },
   {
-    selector: '[id="sub_RemoteHostEndRange3:0"]:not(:disabled), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="sub_RemoteHostEndRange3"]:not(:disabled)',
-    text: 'Bước 3: Nhập WAN Host IP Address: 192.168.1.1',
-    position: 'right',
-    expected: '1'
-  },
-  {
     selector: '[id="InternalClient:0"]:not(:disabled), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="InternalClient"]:not(:disabled)',
-    text: 'Bước 4: Nhập LAN Host: 192.168.1.100',
+    text: 'Bước 3: Nhập LAN Host: 192.168.1.100',
     position: 'right',
     expected: '192.168.1.100'
   },
   {
     selector: '[id="ExternalPortEndRange:0"]:not(:disabled), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="ExternalPortEndRange"]:not(:disabled)',
-    text: 'Bước 5: Nhập WAN Port: 8080 (chỉ vào ô cuối cùng)',
+    text: 'Bước 4: Nhập WAN Port: 8080 (chỉ vào ô cuối cùng)',
     position: 'right',
     expected: '8080'
   },
   {
     selector: '[id="InternalPortEndRange:0"]:not(:disabled), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="InternalPortEndRange"]:not(:disabled)',
-    text: 'Bước 6: Nhập LAN Host Port: 8080 (chỉ vào ô cuối cùng)',
+    text: 'Bước 5: Nhập LAN Host Port: 8080 (chỉ vào ô cuối cùng)',
     position: 'right',
     expected: '8080'
   },
   {
     selector: '[id="Btn_apply_PortForwarding:0"]:not(.disableBtn), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="Btn_apply_PortForwarding"]:not(.disableBtn)',
-    text: 'Bước 7: Nhấn Apply để lưu cấu hình',
+    text: 'Bước 6: Nhấn Apply để lưu cấu hình',
     position: 'top'
   }
 ];

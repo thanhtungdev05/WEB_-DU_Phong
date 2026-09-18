@@ -17,51 +17,61 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   grading: {
     description: 'Kiểm tra bài 3',
     rules: [
-  {
-    "id": "iot_ssid",
-    "name": "Tên Wi-Fi IoT",
-    "selector": "input[name=\"networks.0.name\"]",
-    "expected": "FPT IoT",
-    "type": "text_exact",
-    "trim": true,
-    "required": true
-  },
-  {
-    "id": "iot_pass",
-    "name": "Mật khẩu IoT",
-    "selector": "input[name=\"networks.0.passphrase\"]",
-    "expected": "fpt12345",
-    "type": "text_exact",
-    "trim": true,
-    "required": true
-  }
-]
+      {
+        "id": "iot_tab",
+        "name": "Tab SMARTHOME NETWORK",
+        "selector": "button#SmartHome[aria-selected=\"true\"], #tabpanel-SmartHome:not([hidden])",
+        "expected": "true",
+        "type": "element_exists",
+        "required": true
+      },
+      {
+        "id": "iot_ssid",
+        "name": "Tên Wi-Fi IoT",
+        "selector": "#tabpanel-SmartHome input[name=\"networks.0.name\"], div[role=\"tabpanel\"][id*=\"SmartHome\"] input[name=\"networks.0.name\"]",
+        "expected": "FPT IoT",
+        "type": "text_exact",
+        "trim": true,
+        "required": true
+      },
+      {
+        "id": "iot_pass",
+        "name": "Mật khẩu IoT",
+        "selector": "#tabpanel-SmartHome input[name=\"networks.0.passphrase\"], div[role=\"tabpanel\"][id*=\"SmartHome\"] input[name=\"networks.0.passphrase\"]",
+        "expected": "fpt12345",
+        "type": "text_exact",
+        "trim": true,
+        "required": true
+      }
+    ]
   },
   guidePopups: [
-  {
-    "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\")",
-    "text": "Chọn Wi-Fi",
-    "position": "right"
-  },
-  {
-    "selector": "button[id=\"SmartHome\"]",
-    "text": "Chuyển sang tab SMARTHOME NETWORK",
-    "position": "bottom"
-  },
-  {
-    "selector": "input[name=\"networks.0.name\"]",
-    "text": "Nhập tên Wi-Fi cho IoT",
-    "position": "right"
-  },
-  {
-    "selector": "input[name=\"networks.0.passphrase\"]",
-    "text": "Nhập mật khẩu cho IoT",
-    "position": "right"
-  },
-  {
-    "selector": "button:contains(\"Save\")",
-    "text": "Chọn Save",
-    "position": "right"
-  }
-]
+    {
+      "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\")",
+      "text": "Chọn Wi-Fi",
+      "position": "right"
+    },
+    {
+      "selector": "button[id=\"SmartHome\"]",
+      "text": "Chuyển sang tab SMARTHOME NETWORK",
+      "position": "bottom"
+    },
+    {
+      "selector": "#tabpanel-SmartHome input[name=\"networks.0.name\"], input[name=\"networks.0.name\"]",
+      "text": "Nhập tên Wi-Fi cho IoT (VD: FPT IoT)",
+      "position": "right",
+      "expected": "FPT IoT"
+    },
+    {
+      "selector": "#tabpanel-SmartHome input[name=\"networks.0.passphrase\"], input[name=\"networks.0.passphrase\"]",
+      "text": "Nhập mật khẩu cho IoT (VD: fpt12345)",
+      "position": "right",
+      "expected": "fpt12345"
+    },
+    {
+      "selector": "button:contains(\"Save\")",
+      "text": "Chọn Save",
+      "position": "right"
+    }
+  ]
 });

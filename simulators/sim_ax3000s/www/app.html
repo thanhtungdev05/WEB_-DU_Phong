@@ -32,6 +32,13 @@
   <!-- CSS gốc của thiết bị (đúng như header.htm gốc: chỉ 2 file này) -->
   <link href="luci-static/skgwfpt/sk_181_form.css" rel="stylesheet">
   <link href="luci-static/skgwfpt/jquery.jOrgChart.css" rel="stylesheet">
+  <style>
+    /* Tránh việc thẻ <a> bao ngoài <li> bị collapse inline box khiến vị trí tooltip bị lệch */
+    .nav-layer1 a {
+      display: block;
+      float: left;
+    }
+  </style>
 
   <!-- 1) jQuery, 2) backend ảo, 3) lớp chặn mạng, 4) menu + envcar -->
   <script src="luci-static/resources/jquery-3.5.1.min.js"></script>

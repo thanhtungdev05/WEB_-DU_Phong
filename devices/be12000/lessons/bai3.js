@@ -19,8 +19,6 @@ var lessonData = {
     '- SSID Hide: <span class="val">Off</span>',
     '- Encryption Type: <span class="val">WPA2-PSK-AES</span>',
     '- WPA Passphrase: <span class="val">19006600</span>',
-    '- SSID Isolation: <span class="val">Off</span>',
-    '- Maximum Clients: <span class="val">32</span>',
     'Nhấn <b>Apply</b> để lưu cấu hình'
   ],
   practiceUrl: '/sim_be12000/login',
@@ -57,6 +55,16 @@ var lessonData = {
         name: 'SSID Name (FPT Telecom-IoT)',
         selector: '[id="ESSID:1"], #ESSID\\:1, input[id="ESSID:1"]',
         expected: 'FPT Telecom-IoT',
+        type: 'text_exact',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'iot_hide',
+        name: 'SSID Hide (Off)',
+        selector: 'input[name="ESSIDHideEnable:1"]:checked, #ESSIDHideEnable1\\:1, input[id="ESSIDHideEnable1:1"]',
+        expected: '0',
+        displayExpected: 'Off',
         type: 'text_exact',
         trim: true,
         required: true
@@ -122,7 +130,8 @@ var lessonData = {
     {
       selector: 'label[for="ESSIDHideEnable1:1"], input[id="ESSIDHideEnable1:1"]',
       text: 'Bước 4: Chọn Off của phần SSID Hide (tắt ẩn mạng)',
-      position: 'right'
+      position: 'right',
+      expected: '0'
     },
     {
       selector: '[id="EncryptionType:1"]:not(:disabled), select[id="EncryptionType:1"]:not(:disabled)',
