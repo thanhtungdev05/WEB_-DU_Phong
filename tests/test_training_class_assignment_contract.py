@@ -241,6 +241,10 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertIn("rate_eligible_practice_sessions_count", library)
         self.assertIn("legacy_incomplete_practice_sessions_count", library)
         self.assertIn("s.attempt_sequence_complete IS TRUE", library)
+        self.assertGreaterEqual(library.count("JOIN lab_catalog l ON l.lab_id = s.lab_id AND l.is_active = TRUE"), 3)
+        self.assertIn("official_attempt_count", library)
+        self.assertIn("has_completion_pass", library)
+        self.assertIn("historical_passed_sessions_count", library)
         self.assertIn("practice_duration_coverage_percent", library)
         self.assertIn('id="btn-personal-dashboard"', portal)
         self.assertIn('href="/personal-dashboard.html"', portal)
@@ -249,8 +253,11 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertIn("'/login/index.html?redirect='", dashboard_js)
         self.assertIn("window.location.href = '/login/index.html';", dashboard_js)
         self.assertNotIn("'/login/?redirect='", dashboard_js)
-        self.assertIn("stats.submitted_practice_sessions_count", dashboard_js)
-        self.assertIn("stats.legacy_incomplete_practice_sessions_count", dashboard_js)
+        self.assertNotIn("stats.submitted_practice_sessions_count", dashboard_js)
+        self.assertNotIn("stats.legacy_incomplete_practice_sessions_count", dashboard_js)
+        self.assertIn("${passedSessions}/${gradedSessions} lượt đạt", dashboard_js)
+        self.assertIn("historicalPassedSessions", dashboard_js)
+        self.assertIn("20260918-recorded-practice-v4", dashboard_html)
 
 
 if __name__ == "__main__":

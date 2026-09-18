@@ -154,6 +154,12 @@ all_valid_sessions AS (
            timer.completed_first_try,
            timer.practice_attempt_no,
            timer.attempt_sequence_complete,
+           timer.seed_batch,
+           (
+               timer.is_passed IS TRUE
+               AND timer.attempt_sequence_complete IS FALSE
+               AND timer.seed_batch LIKE 'firebase-v1-%'
+           ) AS is_historical_pass,
            timer.duration_sec
       FROM timer_sessions timer
       JOIN reportable_identities identity
@@ -164,6 +170,24 @@ all_valid_sessions AS (
         END
      WHERE NOT COALESCE(timer.is_mock, FALSE)
        AND timer.status IN ('completed', 'failed')
+),
+catalog_sessions AS (
+    SELECT session.id,
+           session.person_id,
+           lab.lab_id,
+           lab.device_id,
+           session.occurred_at,
+           session.mode,
+           session.status,
+           session.is_passed,
+           session.completed_first_try,
+           session.practice_attempt_no,
+           session.attempt_sequence_complete,
+           session.seed_batch,
+           session.is_historical_pass,
+           session.duration_sec
+      FROM all_valid_sessions session
+      JOIN active_labs lab ON lab.lab_id = session.lab_id
 ),
 resolved_sessions AS (
     SELECT timer.id,
@@ -177,6 +201,12 @@ resolved_sessions AS (
            timer.completed_first_try,
            timer.practice_attempt_no,
            timer.attempt_sequence_complete,
+           timer.seed_batch,
+           (
+               timer.is_passed IS TRUE
+               AND timer.attempt_sequence_complete IS FALSE
+               AND timer.seed_batch LIKE 'firebase-v1-%'
+           ) AS is_historical_pass,
            timer.duration_sec
       FROM timer_sessions timer
       JOIN active_labs lab ON lab.lab_id = timer.lab_id
@@ -241,7 +271,7 @@ cohort_pairs AS (
 ),
 activity_scoped AS (
     SELECT session.*
-      FROM all_valid_sessions session
+      FROM catalog_sessions session
      $predicate
 ),
 progress_scoped AS (
@@ -257,7 +287,10 @@ pair_outcomes AS (
            BOOL_OR(
                 mode IN ('Thực hành', 'practice')
                 AND is_passed IS TRUE
-                AND attempt_sequence_complete IS TRUE
+                AND (
+                    attempt_sequence_complete IS TRUE
+                    OR is_historical_pass
+                )
            ) AS completed,
            MIN(practice_attempt_no) FILTER (
                 WHERE mode IN ('Thực hành', 'practice')
@@ -271,7 +304,16 @@ SELECT (SELECT COUNT(*) FROM cohort_pairs) AS assigned_count,
        COUNT(*) FILTER (WHERE activity_scoped.mode IN ('Thực hành', 'practice')) AS practice_attempts,
        COUNT(*) FILTER (WHERE activity_scoped.mode IN ('Thực hành', 'practice')) AS submitted_attempt_count,
        COUNT(*) FILTER (WHERE activity_scoped.mode IN ('Hướng dẫn', 'guide')) AS guide_attempts,
-       COUNT(DISTINCT activity_scoped.person_id) AS participating_technicians,
+       COUNT(DISTINCT activity_scoped.person_id) FILTER (
+           WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+             AND (
+                 (
+                     activity_scoped.is_passed IS NOT NULL
+                     AND activity_scoped.attempt_sequence_complete IS TRUE
+                 )
+                 OR activity_scoped.is_historical_pass
+             )
+       ) AS participating_technicians,
        COUNT(*) FILTER (
            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
              AND activity_scoped.status IN ('completed', 'Hoàn thành')
@@ -292,6 +334,20 @@ SELECT (SELECT COUNT(*) FROM cohort_pairs) AS assigned_count,
               AND activity_scoped.is_passed IS NOT NULL
               AND activity_scoped.attempt_sequence_complete IS TRUE
        ) AS rate_eligible_attempt_count,
+       COUNT(*) FILTER (
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+              AND (
+                  (
+                      activity_scoped.is_passed IS NOT NULL
+                      AND activity_scoped.attempt_sequence_complete IS TRUE
+                  )
+                  OR activity_scoped.is_historical_pass
+              )
+       ) AS recorded_practice_count,
+       COUNT(*) FILTER (
+            WHERE activity_scoped.mode IN ('Thực hành', 'practice')
+              AND activity_scoped.is_historical_pass
+       ) AS historical_pass_count,
        COUNT(*) FILTER (
             WHERE activity_scoped.mode IN ('Thực hành', 'practice')
               AND activity_scoped.is_passed IS TRUE
@@ -371,7 +427,7 @@ month_cohort AS (
 scoped AS (
     SELECT numbered.*,
            DATE_TRUNC('month', occurred_at)::date AS month
-      FROM all_valid_sessions numbered
+      FROM catalog_sessions numbered
      WHERE occurred_at >= CAST(:year_start AS date)
        AND occurred_at < CAST(:year_start AS date) + INTERVAL '1 year'
 ),
@@ -380,7 +436,13 @@ attempt_metrics AS (
            COUNT(*) FILTER (WHERE mode IN ('Thực hành', 'practice')) AS practice_attempts,
            COUNT(*) FILTER (WHERE mode IN ('Thực hành', 'practice')) AS submitted_attempt_count,
            COUNT(*) FILTER (WHERE mode IN ('Hướng dẫn', 'guide')) AS guide_attempts,
-           COUNT(DISTINCT scoped.person_id) AS participating_technicians,
+           COUNT(DISTINCT scoped.person_id) FILTER (
+               WHERE mode IN ('Thực hành', 'practice')
+                 AND (
+                     (is_passed IS NOT NULL AND attempt_sequence_complete IS TRUE)
+                     OR is_historical_pass
+                 )
+           ) AS participating_technicians,
            COUNT(*) FILTER (
                WHERE mode IN ('Thực hành', 'practice')
                  AND is_passed IS NOT NULL
@@ -391,6 +453,17 @@ attempt_metrics AS (
                  AND is_passed IS NOT NULL
                  AND attempt_sequence_complete IS TRUE
            ) AS rate_eligible_attempt_count,
+           COUNT(*) FILTER (
+               WHERE mode IN ('Thực hành', 'practice')
+                 AND (
+                     (is_passed IS NOT NULL AND attempt_sequence_complete IS TRUE)
+                     OR is_historical_pass
+                 )
+           ) AS recorded_practice_count,
+           COUNT(*) FILTER (
+               WHERE mode IN ('Thực hành', 'practice')
+                 AND is_historical_pass
+           ) AS historical_pass_count,
            COUNT(*) FILTER (
                WHERE mode IN ('Thực hành', 'practice')
                  AND is_passed IS TRUE
@@ -427,7 +500,10 @@ monthly_pair_outcomes AS (
            BOOL_OR(
                session.mode IN ('Thực hành', 'practice')
                AND session.is_passed IS TRUE
-               AND session.attempt_sequence_complete IS TRUE
+               AND (
+                   session.attempt_sequence_complete IS TRUE
+                   OR session.is_historical_pass
+               )
            ) AS completed,
            MIN(session.practice_attempt_no) FILTER (
                WHERE session.mode IN ('Thực hành', 'practice')
@@ -459,6 +535,8 @@ SELECT TO_CHAR(months.month, 'YYYY-MM') AS month,
        COALESCE(pair.completed_count, 0) AS completed_count,
        COALESCE(attempt.graded_count, 0) AS graded_count,
        COALESCE(attempt.rate_eligible_attempt_count, 0) AS rate_eligible_attempt_count,
+       COALESCE(attempt.recorded_practice_count, 0) AS recorded_practice_count,
+       COALESCE(attempt.historical_pass_count, 0) AS historical_pass_count,
        COALESCE(attempt.passed_count, 0) AS passed_count,
        COALESCE(attempt.passed_eligible_attempt_count, 0) AS passed_eligible_attempt_count,
        COALESCE(attempt.legacy_incomplete_attempt_count, 0) AS legacy_incomplete_attempt_count,
@@ -566,6 +644,12 @@ numbered_sessions AS (
            timer.status,
            timer.is_passed,
            timer.attempt_sequence_complete,
+           timer.seed_batch,
+           (
+               timer.is_passed IS TRUE
+               AND timer.attempt_sequence_complete IS FALSE
+               AND timer.seed_batch LIKE 'firebase-v1-%'
+           ) AS is_historical_pass,
            timer.duration_sec
       FROM timer_sessions timer
       JOIN active_labs lab ON lab.lab_id = timer.lab_id
@@ -602,6 +686,20 @@ activity AS (
            ) AS rate_eligible_attempt_count,
            COUNT(session.id) FILTER (
                WHERE session.mode IN ('Thực hành', 'practice')
+                 AND (
+                     (
+                         session.is_passed IS NOT NULL
+                         AND session.attempt_sequence_complete IS TRUE
+                     )
+                     OR session.is_historical_pass
+                 )
+           ) AS recorded_practice_count,
+           COUNT(session.id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_historical_pass
+           ) AS historical_pass_count,
+           COUNT(session.id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
                  AND session.is_passed IS TRUE
                  AND session.attempt_sequence_complete IS TRUE
            ) AS pass_count,
@@ -629,7 +727,10 @@ progress AS (
            BOOL_OR(
                session.mode IN ('Thực hành', 'practice')
                AND session.is_passed IS TRUE
-               AND session.attempt_sequence_complete IS TRUE
+               AND (
+                   session.attempt_sequence_complete IS TRUE
+                   OR session.is_historical_pass
+               )
            ) AS completed
       FROM numbered_sessions session
      WHERE session.occurred_at < CAST(:to_date AS date) + INTERVAL '1 day'
@@ -650,6 +751,8 @@ SELECT person.*,
        COALESCE(activity.submitted_attempt_count, 0) AS submitted_attempt_count,
        COALESCE(activity.attempt_count, 0) AS attempt_count,
        COALESCE(activity.rate_eligible_attempt_count, 0) AS rate_eligible_attempt_count,
+       COALESCE(activity.recorded_practice_count, 0) AS recorded_practice_count,
+       COALESCE(activity.historical_pass_count, 0) AS historical_pass_count,
        COALESCE(activity.pass_count, 0) AS pass_count,
        COALESCE(activity.passed_eligible_attempt_count, 0) AS passed_eligible_attempt_count,
        COALESCE(activity.incomplete_attempt_count, 0) AS incomplete_attempt_count,
@@ -698,7 +801,7 @@ SQL;
                 'unit_code' => (string)$organization['unit_code'],
                 'name' => (string)$organization['unit_name'],
                 'cells' => [],
-                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
+                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'recorded_practice_count' => 0, 'historical_pass_count' => 0, 'incomplete_attempt_count' => 0],
                 'technicians' => [],
             ];
         }
@@ -732,7 +835,7 @@ SQL;
                 'unit_code' => (string)$roster['unit_code'],
                 'name' => (string)$roster['branch_name'],
                 'cells' => [],
-                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
+                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'recorded_practice_count' => 0, 'historical_pass_count' => 0, 'incomplete_attempt_count' => 0],
                 'technicians' => [],
             ];
         }
@@ -743,7 +846,7 @@ SQL;
             'display_name' => (string)($roster['display_name'] ?? ''),
             'email' => (string)($roster['email'] ?? ''),
             'cells' => [],
-            'total' => ['pass_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
+            'total' => ['pass_count' => 0, 'attempt_count' => 0, 'recorded_practice_count' => 0, 'historical_pass_count' => 0, 'incomplete_attempt_count' => 0],
         ];
     }
 
@@ -765,6 +868,8 @@ SQL;
                     'submitted_attempt_count' => 0,
                     'attempt_count' => 0,
                     'rate_eligible_attempt_count' => 0,
+                    'recorded_practice_count' => 0,
+                    'historical_pass_count' => 0,
                     'pass_count' => 0,
                     'passed_eligible_attempt_count' => 0,
                     'incomplete_attempt_count' => 0,
@@ -798,33 +903,39 @@ SQL;
                 'unit_code' => (string)$row['unit_code'],
                 'name' => (string)$row['branch_name'],
                 'cells' => [],
-                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
+                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'attempt_count' => 0, 'recorded_practice_count' => 0, 'historical_pass_count' => 0, 'incomplete_attempt_count' => 0],
                 'technicians' => [],
             ];
         }
         $branch =& $regions[$regionKey]['branches'][$unitKey];
         if (!isset($branch['cells'][$labId])) {
-            $branch['cells'][$labId] = ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'submitted_attempt_count' => 0, 'attempt_count' => 0, 'rate_eligible_attempt_count' => 0, 'pass_count' => 0, 'passed_eligible_attempt_count' => 0, 'incomplete_attempt_count' => 0, 'legacy_incomplete_attempt_count' => 0];
+            $branch['cells'][$labId] = ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'submitted_attempt_count' => 0, 'attempt_count' => 0, 'rate_eligible_attempt_count' => 0, 'recorded_practice_count' => 0, 'historical_pass_count' => 0, 'pass_count' => 0, 'passed_eligible_attempt_count' => 0, 'incomplete_attempt_count' => 0, 'legacy_incomplete_attempt_count' => 0];
         }
         $submittedAttempts = (int)$row['submitted_attempt_count'];
         $attempts = (int)$row['attempt_count'];
+        $recordedPractices = (int)$row['recorded_practice_count'];
+        $historicalPasses = (int)$row['historical_pass_count'];
         $passes = (int)$row['pass_count'];
         $incompleteAttempts = (int)$row['incomplete_attempt_count'];
         $completed = in_array($row['completed'], [true, 1, '1', 't', 'true'], true);
-        $branch['cells'][$labId]['attempted_count'] += $attempts > 0 ? 1 : 0;
+        $branch['cells'][$labId]['attempted_count'] += $recordedPractices > 0 ? 1 : 0;
         $branch['cells'][$labId]['completed_count'] += $completed ? 1 : 0;
         $branch['cells'][$labId]['submitted_attempt_count'] += $submittedAttempts;
         $branch['cells'][$labId]['attempt_count'] += $attempts;
         $branch['cells'][$labId]['rate_eligible_attempt_count'] += $attempts;
+        $branch['cells'][$labId]['recorded_practice_count'] += $recordedPractices;
+        $branch['cells'][$labId]['historical_pass_count'] += $historicalPasses;
         $branch['cells'][$labId]['pass_count'] += $passes;
         $branch['cells'][$labId]['passed_eligible_attempt_count'] += $passes;
         $branch['cells'][$labId]['incomplete_attempt_count'] += $incompleteAttempts;
         $branch['cells'][$labId]['legacy_incomplete_attempt_count'] += $incompleteAttempts;
-        $branch['total']['attempted_count'] += $attempts > 0 ? 1 : 0;
+        $branch['total']['attempted_count'] += $recordedPractices > 0 ? 1 : 0;
         $branch['total']['completed_count'] += $completed ? 1 : 0;
         $branch['total']['submitted_attempt_count'] = ($branch['total']['submitted_attempt_count'] ?? 0) + $submittedAttempts;
         $branch['total']['attempt_count'] += $attempts;
         $branch['total']['rate_eligible_attempt_count'] = ($branch['total']['rate_eligible_attempt_count'] ?? 0) + $attempts;
+        $branch['total']['recorded_practice_count'] += $recordedPractices;
+        $branch['total']['historical_pass_count'] += $historicalPasses;
         $branch['total']['pass_count'] = ($branch['total']['pass_count'] ?? 0) + $passes;
         $branch['total']['passed_eligible_attempt_count'] = ($branch['total']['passed_eligible_attempt_count'] ?? 0) + $passes;
         $branch['total']['incomplete_attempt_count'] += $incompleteAttempts;
@@ -836,7 +947,7 @@ SQL;
                 'display_name' => (string)($row['display_name'] ?? ''),
                 'email' => (string)($row['email'] ?? ''),
                 'cells' => [],
-                'total' => ['pass_count' => 0, 'attempt_count' => 0, 'incomplete_attempt_count' => 0],
+                'total' => ['pass_count' => 0, 'attempt_count' => 0, 'recorded_practice_count' => 0, 'historical_pass_count' => 0, 'incomplete_attempt_count' => 0],
             ];
         }
         $technician =& $branch['technicians'][$personKey];
@@ -845,6 +956,8 @@ SQL;
             'pass_count' => $passes,
             'attempt_count' => $attempts,
             'rate_eligible_attempt_count' => $attempts,
+            'recorded_practice_count' => $recordedPractices,
+            'historical_pass_count' => $historicalPasses,
             'passed_eligible_attempt_count' => $passes,
             'incomplete_attempt_count' => $incompleteAttempts,
             'legacy_incomplete_attempt_count' => $incompleteAttempts,
@@ -854,6 +967,8 @@ SQL;
         $technician['total']['pass_count'] += $passes;
         $technician['total']['attempt_count'] += $attempts;
         $technician['total']['rate_eligible_attempt_count'] = ($technician['total']['rate_eligible_attempt_count'] ?? 0) + $attempts;
+        $technician['total']['recorded_practice_count'] += $recordedPractices;
+        $technician['total']['historical_pass_count'] += $historicalPasses;
         $technician['total']['passed_eligible_attempt_count'] = ($technician['total']['passed_eligible_attempt_count'] ?? 0) + $passes;
         $technician['total']['incomplete_attempt_count'] += $incompleteAttempts;
         $technician['total']['legacy_incomplete_attempt_count'] = ($technician['total']['legacy_incomplete_attempt_count'] ?? 0) + $incompleteAttempts;
@@ -949,6 +1064,8 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
                         'submitted_attempt_count' => 0,
                         'attempt_count' => 0,
                         'rate_eligible_attempt_count' => 0,
+                        'recorded_practice_count' => 0,
+                        'historical_pass_count' => 0,
                         'pass_count' => 0,
                         'passed_eligible_attempt_count' => 0,
                         'incomplete_attempt_count' => 0,
@@ -960,7 +1077,7 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
                 if ($branchName !== '') {
                     $aggregate['branch_names'][$branchName] = true;
                 }
-                foreach (['population_count', 'attempted_count', 'completed_count', 'submitted_attempt_count', 'attempt_count', 'rate_eligible_attempt_count', 'pass_count', 'passed_eligible_attempt_count', 'incomplete_attempt_count', 'legacy_incomplete_attempt_count'] as $metric) {
+                foreach (['population_count', 'attempted_count', 'completed_count', 'submitted_attempt_count', 'attempt_count', 'rate_eligible_attempt_count', 'recorded_practice_count', 'historical_pass_count', 'pass_count', 'passed_eligible_attempt_count', 'incomplete_attempt_count', 'legacy_incomplete_attempt_count'] as $metric) {
                     $aggregate[$metric] += (int)($cell[$metric] ?? 0);
                 }
                 unset($aggregate);
@@ -981,7 +1098,7 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
 
     $regionRows = [];
     $grandCells = [];
-    $grandTotal = ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'submitted_attempt_count' => 0, 'attempt_count' => 0, 'rate_eligible_attempt_count' => 0, 'pass_count' => 0, 'passed_eligible_attempt_count' => 0, 'incomplete_attempt_count' => 0, 'legacy_incomplete_attempt_count' => 0];
+    $grandTotal = ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'submitted_attempt_count' => 0, 'attempt_count' => 0, 'rate_eligible_attempt_count' => 0, 'recorded_practice_count' => 0, 'historical_pass_count' => 0, 'pass_count' => 0, 'passed_eligible_attempt_count' => 0, 'incomplete_attempt_count' => 0, 'legacy_incomplete_attempt_count' => 0];
     foreach ($rows as $row) {
         $regionKey = (string)($row['region_id'] ?? '') . '|' . (string)$row['region_name'];
         if (!isset($regionRows[$regionKey])) {
@@ -994,7 +1111,7 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
                     'branch_name' => $row['branch_name'] ?? null,
                 ],
                 'cells' => [],
-                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'submitted_attempt_count' => 0, 'attempt_count' => 0, 'rate_eligible_attempt_count' => 0, 'pass_count' => 0, 'passed_eligible_attempt_count' => 0, 'incomplete_attempt_count' => 0, 'legacy_incomplete_attempt_count' => 0],
+                'total' => ['population_count' => 0, 'attempted_count' => 0, 'completed_count' => 0, 'submitted_attempt_count' => 0, 'attempt_count' => 0, 'rate_eligible_attempt_count' => 0, 'recorded_practice_count' => 0, 'historical_pass_count' => 0, 'pass_count' => 0, 'passed_eligible_attempt_count' => 0, 'incomplete_attempt_count' => 0, 'legacy_incomplete_attempt_count' => 0],
             ];
         }
         $cell = [
@@ -1004,6 +1121,8 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
             'submitted_attempt_count' => (int)$row['submitted_attempt_count'],
             'attempt_count' => (int)$row['attempt_count'],
             'rate_eligible_attempt_count' => (int)$row['rate_eligible_attempt_count'],
+            'recorded_practice_count' => (int)$row['recorded_practice_count'],
+            'historical_pass_count' => (int)$row['historical_pass_count'],
             'pass_count' => (int)$row['pass_count'],
             'passed_eligible_attempt_count' => (int)$row['passed_eligible_attempt_count'],
             'incomplete_attempt_count' => (int)$row['incomplete_attempt_count'],
@@ -1012,7 +1131,7 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
         ];
         $labId = (string)$row['lab_id'];
         $regionRows[$regionKey]['cells'][$labId] = $cell;
-        foreach (['population_count', 'attempted_count', 'completed_count', 'submitted_attempt_count', 'attempt_count', 'rate_eligible_attempt_count', 'pass_count', 'passed_eligible_attempt_count', 'incomplete_attempt_count', 'legacy_incomplete_attempt_count'] as $metric) {
+        foreach (['population_count', 'attempted_count', 'completed_count', 'submitted_attempt_count', 'attempt_count', 'rate_eligible_attempt_count', 'recorded_practice_count', 'historical_pass_count', 'pass_count', 'passed_eligible_attempt_count', 'incomplete_attempt_count', 'legacy_incomplete_attempt_count'] as $metric) {
             $regionRows[$regionKey]['total'][$metric] += $cell[$metric];
             $grandTotal[$metric] += $cell[$metric];
             $grandCells[$labId][$metric] = ($grandCells[$labId][$metric] ?? 0) + $cell[$metric];
@@ -1045,6 +1164,8 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
             'scope' => 'all_active_technicians_x_active_labs',
             'submitted_attempt_count' => (int)($grandTotal['submitted_attempt_count'] ?? 0),
             'rate_eligible_attempt_count' => (int)($grandTotal['rate_eligible_attempt_count'] ?? 0),
+            'recorded_practice_count' => (int)($grandTotal['recorded_practice_count'] ?? 0),
+            'historical_pass_count' => (int)($grandTotal['historical_pass_count'] ?? 0),
             'passed_eligible_attempt_count' => (int)($grandTotal['passed_eligible_attempt_count'] ?? 0),
             'legacy_incomplete_attempt_count' => (int)($grandTotal['legacy_incomplete_attempt_count'] ?? 0),
             'incomplete_attempt_count' => (int)($grandTotal['incomplete_attempt_count'] ?? 0),
@@ -1092,12 +1213,14 @@ function dashboard_report_payload(PDO $pdo, array $query): array
             'cohort' => 'assigned_as_of_period_end',
             'metric_semantics' => [
                 'assigned_count' => 'KTV-lab assignments effective at the period end.',
-                'attempt_metrics' => 'Official dashboard practice metrics use attempts with a recorded result and complete attempt-sequence evidence.',
-                'submitted_attempt_count' => 'Audit-only count of all submitted practice attempts in the selected period, including imported legacy attempts.',
+                'attempt_metrics' => 'Recorded practice combines rate-eligible attempts with mapped historical passed results.',
+                'recorded_practice_count' => 'Displayed recorded-practice count: rate-eligible attempts plus mapped Firebase historical passed results.',
+                'historical_pass_count' => 'Mapped Firebase passed results used as completion evidence and displayed activity, but excluded from attempt-based rates.',
+                'submitted_attempt_count' => 'Audit-only count of submitted practice attempts mapped to the active V2 lab catalog, including incomplete imported legacy attempts.',
                 'rate_eligible_attempt_count' => 'Official practice-attempt count: attempts with a recorded result and complete attempt-sequence evidence; this is also the pass-rate denominator.',
                 'passed_eligible_attempt_count' => 'Passed practice attempts with complete attempt-sequence evidence; this is the pass-rate numerator.',
-                'legacy_incomplete_attempt_count' => 'Audit-only count of practice attempts lacking complete attempt-sequence evidence; they are excluded from official dashboard attempts, passes, completion evidence, and rates.',
-                'completion_metrics' => 'Cumulative passed KTV-lab assignments through the period end.',
+                'legacy_incomplete_attempt_count' => 'Audit count of practice rows lacking complete attempt-sequence evidence.',
+                'completion_metrics' => 'Cumulative passed KTV-lab outcomes through period end, including mapped historical passed evidence.',
                 'pass_rate' => 'Passed practice attempts divided by graded practice attempts with complete attempt evidence in the selected period.',
                 'first_try_rate' => 'Passed assignments whose first recorded passing attempt is attempt 1, divided by passed assignments with reliable attempt-number evidence.',
                 'region_matrix' => 'All active technicians in the current region roster are in scope for every active lab; sessions do not require an assignment.',

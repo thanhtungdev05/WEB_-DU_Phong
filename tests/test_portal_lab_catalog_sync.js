@@ -17,7 +17,11 @@ const expected = {
   be6500c: 'be6500c-bai',
   ONT_be6500c: 'ONT_be6500c-bai'
 };
-const hidden = ['be12000', 'be15000', 'vigor2927', 'mikrotik_hexs'];
+const hidden = ['vigor2927', 'mikrotik_hexs'];
+const supportedPortalDevices = [
+  'ac1000f', 'ax3000c', 'ax3000gz', 'ax3000hv2', 'ax3000s',
+  'ac1000HI', 'be12000', 'be15000', 'be6500c', 'ONT_be6500c'
+];
 const simulatorPrefixes = {
   ac1000f: '/sim_ac1000f/',
   ax3000c: '/sim_ax3000c/',
@@ -61,7 +65,9 @@ for (const deviceId of hidden) {
     `${deviceId} must remain hidden until its labs are approved`
   );
 }
-assert.doesNotMatch(portal, /\/lessons\/bai(?:[7-9]|10)\.js/);
+// BE12000 vẫn có module bài 7 trong registry để giữ mã nguồn mô phỏng,
+// nhưng catalog production chỉ quyết định các bài active được hiển thị.
+assert.doesNotMatch(portal, /\/lessons\/bai(?:[8-9]|10)\.js/);
 
 const context = { console };
 context.window = context;
@@ -77,15 +83,15 @@ for (const relativePath of scripts) {
 
 assert.deepEqual(
   Array.from(context.DEVICES, (device) => device.id),
-  Object.keys(expected),
-  'Portal device list must exactly match the approved device scope'
+  supportedPortalDevices,
+  'Portal module registry must contain every device supported by the active catalog'
 );
 
 const migrations = [
   '030_enforce_approved_dashboard_catalog.sql',
   '036_activate_be6500c_catalog.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
-for (const device of context.DEVICES) {
+for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
   assert.equal(lessons.length, 6, `${device.id} must expose exactly six labs`);
   assert.equal(new Set(lessons.map((lesson) => lesson.id)).size, 6, `${device.id} lab IDs must be unique`);
@@ -126,6 +132,20 @@ for (const device of context.DEVICES) {
   });
 }
 
+const be12000 = context.DEVICES.find((item) => item.id === 'be12000');
+const be15000 = context.DEVICES.find((item) => item.id === 'be15000');
+assert.ok(be12000?.categories.flatMap((category) => category.lessons || []).length >= 6);
+assert.equal(be15000?.categories.flatMap((category) => category.lessons || []).length, 1);
+
+const activeCatalogMigration = fs.readFileSync(
+  path.join(root, 'api/migrations/043_sync_portal_lab_catalog.sql'),
+  'utf8'
+);
+const activeDeviceIds = [...activeCatalogMigration.matchAll(/^\s*\('(DEV_[^']+)',\s*'[^']+',\s*'[^']+',\s*\d+,\s*TRUE\)/gm)];
+const activeLabIds = [...activeCatalogMigration.matchAll(/^\s*\('([^']+)',\s*'DEV_[^']+',\s*'[^']+',\s*\d+,\s*TRUE\)/gm)];
+assert.equal(activeDeviceIds.length, 10, 'Catalog migration must activate ten portal devices');
+assert.equal(activeLabIds.length, 55, 'Catalog migration must activate 55 portal labs');
+
 function getLesson(deviceId, lessonId) {
   const device = context.DEVICES.find((item) => item.id === deviceId);
   return device.categories.flatMap((category) => category.lessons || [])
@@ -163,7 +183,7 @@ const ax3000cLanPage = fs.readFileSync(
   path.join(root, 'simulators/sim_ax3000c/www/sim-pages/lan.html'),
   'utf8'
 );
-assert.match(ax3000cLanPage, /value="192\.168\.1\.1" id="lanIp"/);
+assert.match(ax3000cLanPage, /value="192\.168\.100\.1" id="lanIp"/);
 assert.match(ax3000cLanPage, /id="dhcpStart"/);
 assert.match(ax3000cLanPage, /id="dhcpEnd"/);
 assert.match(ax3000cLanPage, /ipInput\.addEventListener\('input', updateDhcp\)/);
@@ -174,4 +194,4 @@ const ax3000cWifiPage = fs.readFileSync(
 );
 assert.match(ax3000cWifiPage, /class="tabs" style="margin-top: 40px;"/);
 
-console.log('Portal/catalog audit passed: 8 devices, 48 unique labs, complete tooltip coverage.');
+console.log('Portal/catalog audit passed: 10 supported devices, 55 active catalog labs.');

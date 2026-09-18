@@ -17,8 +17,10 @@
   let _trackingSession = null; // { device, lesson, mode, startedAt }
   let _currentUser = null;    // { technician_id, name, email } — lấy từ API auth/session
   let _lastTrackingPayload = null; // Giữ nguyên payload/idempotency key khi retry lỗi mạng
-  let _catalogDeviceIds = null;
-  let _catalogLabIds = null;
+  let _catalogDeviceIds = new Set();
+  let _catalogLabIds = new Set();
+  let _catalogLabNames = new Map();
+  let _catalogLabOrder = new Map();
 
   function escapeHTML(str) {
     if (!str) return '';
@@ -82,6 +84,9 @@
   // Track current iframe URL
   let currentIframeUrl = '';
   let trackingSaveInFlight = false;
+  let currentUserRequest = null;
+  let sessionHeartbeatInterval = null;
+  const SESSION_HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
 
   function normalizeDeviceId(id) {
     if (!id) return '';
@@ -128,6 +133,56 @@
     deviceSelect.disabled = devices.length === 0;
   }
 
+  function synchronizePortalCatalog(catalogDevices) {
+    _catalogLabNames = new Map();
+    _catalogLabOrder = new Map();
+    catalogDevices.forEach(function (device) {
+      (Array.isArray(device.labs) ? device.labs : []).forEach(function (lab, index) {
+        const labId = normalizeLabId(lab.lab_id);
+        const labName = String(lab.lab_name || '').trim();
+        if (labId && labName) _catalogLabNames.set(labId, labName);
+        if (labId) _catalogLabOrder.set(labId, index);
+      });
+    });
+    const moduleLabIds = new Set();
+    DEVICES.forEach(function (device) {
+      (device.categories || []).forEach(function (category) {
+        (category.lessons || []).forEach(function (lesson) {
+          const lessonId = normalizeLabId(lesson.id);
+          moduleLabIds.add(lessonId);
+          const catalogName = _catalogLabNames.get(lessonId);
+          if (catalogName) lesson.title = catalogName;
+        });
+      });
+    });
+    _catalogLabNames.forEach(function (_name, labId) {
+      if (!moduleLabIds.has(labId)) {
+        console.warn(`[Catalog] Bài lab ${labId} đang hoạt động nhưng chưa có module portal.`);
+      }
+    });
+    return _catalogLabNames;
+  }
+
+  function buildVisibleCatalogDevices(catalogDevices) {
+    const registry = new Map(DEVICES.map(function (device) {
+      return [normalizeDeviceId(device.id), device];
+    }));
+    const visibleDevices = [];
+
+    catalogDevices.forEach(function (catalogDevice) {
+      const catalogId = databaseDeviceToPortalId(catalogDevice);
+      const device = registry.get(catalogId);
+      if (!device) {
+        console.warn(`[Catalog] Thiết bị ${catalogDevice.device_id || catalogId} đang hoạt động nhưng chưa có module portal.`);
+        return;
+      }
+      const catalogName = String(catalogDevice.device_name || '').trim();
+      if (catalogName) device.name = catalogName;
+      visibleDevices.push(device);
+    });
+    return visibleDevices;
+  }
+
   function loadLearningCatalog() {
     return fetch('/api/index.php/learning/catalog', { credentials: 'include' })
       .then(function (response) {
@@ -137,12 +192,8 @@
       .then(function (data) {
         const catalogDevices = Array.isArray(data.devices) ? data.devices : [];
         _catalogDeviceIds = new Set(catalogDevices.map(databaseDeviceToPortalId));
-        _catalogLabIds = new Set(catalogDevices.flatMap(function (device) {
-          return Array.isArray(device.labs) ? device.labs.map(function (lab) { return normalizeLabId(lab.lab_id); }) : [];
-        }));
-        const visibleDevices = DEVICES.filter(function (device) {
-          return !_catalogDeviceIds || _catalogDeviceIds.has(normalizeDeviceId(device.id));
-        });
+        _catalogLabIds = new Set(synchronizePortalCatalog(catalogDevices).keys());
+        const visibleDevices = buildVisibleCatalogDevices(catalogDevices);
         populateDeviceDropdown(visibleDevices);
         const urlParams = new URLSearchParams(window.location.search);
         const reqDevice = urlParams.get('device');
@@ -917,81 +968,135 @@
    * Kết quả được cache vào _currentUser để dùng khi gửi Tracking API.
    * Nếu chưa đăng nhập, tự động chuyển hướng về trang login.
    */
-  function fetchCurrentUser() {
-    fetch('/api/index.php/auth/session', { credentials: 'include' })
-      .then(function (res) { return res.ok ? res.json() : null; })
-      .then(function (data) {
-        const u = data && data.user;
-        if (u) {
-          _currentUser = {
-            technician_id: u.user_id || u.id || 'UNKNOWN',
-            employee_id: u.employee_id || u.employeeId || '',
-            name: u.displayName || u.display_name || u.email || 'KTV',
-            email: u.email || '',
-            role: String(u.role || 'KTV').toUpperCase(),
-            role_name: u.roleName || u.role_name || '',
-            is_admin: Boolean(u.isAdmin ?? u.is_admin ?? u.permissions?.admin),
-            can_export_reports: Boolean(u.canExportReports ?? u.can_export_reports ?? u.permissions?.exportReports),
-            job_title: u.job_title || u.jobTitle || ''
-          };
-          renderUserProfile();
-          if (_currentUser && _currentUser.is_admin) {
-            const btnDashboard = document.getElementById('btn-dashboard');
-            if (btnDashboard) {
-              btnDashboard.style.display = '';
-              btnDashboard.onclick = function () {
-                window.location.href = '/dashboard-authen/';
-              };
-            }
-          }
-          loadLearningCatalog().catch(function (error) {
-            console.warn('[Catalog] Không thể tải danh sách bài luyện tập, chuyển sang chế độ offline:', error);
-            _catalogDeviceIds = null;
-            _catalogLabIds = null;
-            populateDeviceDropdown(DEVICES);
-            const urlParams = new URLSearchParams(window.location.search);
-            const reqDevice = urlParams.get('device');
-            const reqLab = urlParams.get('lab');
-            const reqMode = urlParams.get('mode');
-            let initialDev = null;
-            if (reqDevice) {
-              const normReq = normalizeDeviceId(reqDevice);
-              initialDev = DEVICES.find(function (d) {
-                return normalizeDeviceId(d.id) === normReq;
-              });
-            }
-            if (!initialDev && DEVICES.length > 0) {
-              initialDev = DEVICES[0];
-            }
-            if (initialDev) {
-              selectDevice(initialDev.id, reqLab, reqMode);
-            } else {
-              navList.innerHTML = '<div class="empty-state"><p>Không thể tải danh sách bài luyện tập.</p></div>';
-            }
-          });
-        } else {
-          _currentUser = null;
-          renderUserProfile();
-          redirectToLogin();
+  function applyCurrentUser(u) {
+    _currentUser = u ? {
+      technician_id: u.user_id || u.id || 'UNKNOWN',
+      employee_id: u.employee_id || u.employeeId || '',
+      name: u.displayName || u.display_name || u.email || 'KTV',
+      email: u.email || '',
+      role: String(u.role || 'KTV').toUpperCase(),
+      role_name: u.roleName || u.role_name || '',
+      is_admin: Boolean(u.isAdmin ?? u.is_admin ?? u.permissions?.admin),
+      can_export_reports: Boolean(u.canExportReports ?? u.can_export_reports ?? u.permissions?.exportReports),
+      job_title: u.job_title || u.jobTitle || ''
+    } : null;
+    renderUserProfile();
+    return _currentUser;
+  }
+
+  function requestCurrentUserSession() {
+    if (currentUserRequest) return currentUserRequest;
+    currentUserRequest = fetch('/api/index.php/auth/session', {
+      credentials: 'include',
+      cache: 'no-store'
+    })
+      .then(function (res) {
+        if (!res.ok) {
+          const error = new Error(`Không kiểm tra được phiên đăng nhập (HTTP ${res.status}).`);
+          error.status = res.status;
+          throw error;
         }
+        return res.json();
       })
-      .catch(function () {
-        console.warn('[Tracking] Không thể lấy thông tin user từ API.');
+      .then(function (data) {
+        return applyCurrentUser(data && data.user ? data.user : null);
+      })
+      .finally(function () {
+        currentUserRequest = null;
+      });
+    return currentUserRequest;
+  }
+
+  function refreshSessionHeartbeat() {
+    if (document.visibilityState === 'hidden' || !_currentUser) return;
+    requestCurrentUserSession().then(function (user) {
+      if (!user && sessionHeartbeatInterval) {
+        clearInterval(sessionHeartbeatInterval);
+        sessionHeartbeatInterval = null;
+      }
+    }).catch(function (error) {
+      console.warn('[Auth] Chưa thể gia hạn phiên đăng nhập:', error);
+    });
+  }
+
+  function startSessionHeartbeat() {
+    if (!sessionHeartbeatInterval) {
+      sessionHeartbeatInterval = setInterval(refreshSessionHeartbeat, SESSION_HEARTBEAT_INTERVAL_MS);
+    }
+    if (document.body.dataset.sessionHeartbeatBound !== 'true') {
+      document.body.dataset.sessionHeartbeatBound = 'true';
+      window.addEventListener('focus', refreshSessionHeartbeat);
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') refreshSessionHeartbeat();
+      });
+    }
+  }
+
+  function loadCatalogWithOfflineFallback() {
+    return loadLearningCatalog().catch(function (error) {
+      console.warn('[Catalog] Không thể tải danh sách bài luyện tập:', error);
+      _catalogDeviceIds = new Set();
+      _catalogLabIds = new Set();
+      _catalogLabNames = new Map();
+      _catalogLabOrder = new Map();
+      currentDeviceId = null;
+      populateDeviceDropdown([]);
+      const errorState = document.createElement('div');
+      errorState.className = 'empty-state';
+      const message = document.createElement('p');
+      message.textContent = 'Không thể tải danh sách bài luyện tập đang hoạt động.';
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'btn btn-secondary';
+      retry.textContent = 'Thử lại';
+      retry.addEventListener('click', function () {
+        retry.disabled = true;
+        retry.textContent = 'Đang tải...';
+        loadCatalogWithOfflineFallback();
+      });
+      errorState.append(message, retry);
+      navList.replaceChildren(errorState);
+      showHero();
+      setBreadcrumb(['Chưa tải được danh mục']);
+    });
+  }
+
+  function fetchCurrentUser() {
+    return requestCurrentUserSession()
+      .then(function (user) {
+        if (!user) {
+          redirectToLogin();
+          return null;
+        }
+        if (user.is_admin) {
+          const btnDashboard = document.getElementById('btn-dashboard');
+          if (btnDashboard) {
+            btnDashboard.style.display = '';
+            btnDashboard.onclick = function () {
+              window.location.href = '/dashboard-authen/';
+            };
+          }
+        }
+        startSessionHeartbeat();
+        return loadCatalogWithOfflineFallback().then(function () { return user; });
+      })
+      .catch(function (error) {
+        console.warn('[Tracking] Không thể lấy thông tin user từ API:', error);
         redirectToLogin();
+        return null;
       });
   }
 
   // ── Device Selection ─────────────────────────────────────────────
   function selectDevice(deviceId, targetLabId = null, autoMode = null) {
     const normDevId = normalizeDeviceId(deviceId);
-    if (_catalogDeviceIds && !_catalogDeviceIds.has(normDevId)) return;
+    if (!_catalogDeviceIds.has(normDevId)) return;
 
     const device = DEVICES.find(d => normalizeDeviceId(d.id) === normDevId);
     if (!device) return;
 
     currentDeviceId = device.id;
     currentLessonId = null;
-    resetDeviceSession(device.id);
 
     // Sync dropdown
     deviceSelect.value = device.id;
@@ -1002,10 +1107,11 @@
     // Automatically select requested or first lesson if available
     const allAllowedLessons = (device.categories?.flatMap(category => category.lessons || []) || [])
       .filter(lesson => {
-        if (!_catalogLabIds) return true;
         const normLab = normalizeLabId(lesson.id);
         return _catalogLabIds.has(normLab);
-      });
+      })
+      .sort((left, right) => (_catalogLabOrder.get(normalizeLabId(left.id)) ?? Number.MAX_SAFE_INTEGER)
+        - (_catalogLabOrder.get(normalizeLabId(right.id)) ?? Number.MAX_SAFE_INTEGER));
 
     let chosenLesson = null;
     if (targetLabId) {
@@ -1053,10 +1159,10 @@
 
     device.categories.forEach(cat => {
       const lessons = (cat.lessons || []).filter(lesson => {
-        if (!_catalogLabIds) return true;
         const normLab = normalizeLabId(lesson.id);
         return _catalogLabIds.has(normLab);
-      });
+      }).sort((left, right) => (_catalogLabOrder.get(normalizeLabId(left.id)) ?? Number.MAX_SAFE_INTEGER)
+        - (_catalogLabOrder.get(normalizeLabId(right.id)) ?? Number.MAX_SAFE_INTEGER));
       if (!lessons.length) return;
       // Category title
       const catTitle = document.createElement('div');
@@ -1255,7 +1361,7 @@
     }
     window._hasClickedSaveInGuide = false;
     window._hasSuccHintStored = false;
-    resetDeviceSession(currentDeviceId);
+    const resetPromise = resetDeviceSession(currentDeviceId);
 
     // Switch to practice screen
     showPractice();
@@ -1267,12 +1373,15 @@
     }
 
     // Load URL into iframe
-    setTimeout(() => {
-      // Force reload even if only hash changes
-      const urlObj = new URL(url, window.location.origin);
-      urlObj.searchParams.set('_t', Date.now());
-      deviceIframe.src = urlObj.toString();
-    }, 80);
+    Promise.resolve(resetPromise).finally(() => {
+      setTimeout(() => {
+        // Force reload even if only hash changes, after the current user's
+        // simulator state has been reset.
+        const urlObj = new URL(url, window.location.origin);
+        urlObj.searchParams.set('_t', Date.now());
+        deviceIframe.src = urlObj.toString();
+      }, 80);
+    });
   }
 
   // ── View Switchers ───────────────────────────────────────────────
@@ -1303,7 +1412,7 @@
     const targetDev = deviceId || currentDeviceId;
     window._hasSuccHintStored = false;
     window._hasClickedSaveInGuide = false;
-    if (!targetDev) return;
+    if (!targetDev) return Promise.resolve();
 
     let simFolder = '';
     if (typeof DEVICES !== 'undefined' && Array.isArray(DEVICES)) {
@@ -1315,14 +1424,6 @@
     }
 
     try {
-      fetch('/' + simFolder + '/api/reset', { method: 'POST', cache: 'no-store' })
-        .catch(() => {
-          return fetch('/' + simFolder + '/api/reset?_t=' + Date.now(), { cache: 'no-store' });
-        })
-        .catch(() => {});
-    } catch (e) { }
-
-    try {
       localStorage.removeItem('ftc_sim_wifi24');
       localStorage.removeItem('ftc_sim_wifi5g');
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPUsername');
@@ -1331,6 +1432,25 @@
       sessionStorage.removeItem('BE12000_loginToken');
       sessionStorage.removeItem('sid');
     } catch (e) { }
+
+    const resetUrl = '/' + simFolder + '/api/reset?_t=' + Date.now();
+    try {
+      return fetch(resetUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'X-FTC-Simulator-Reset': 'current-session' }
+      }).then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return true;
+      }).catch(error => {
+        console.warn(`[Simulator] Không thể đặt lại phiên ${simFolder}:`, error);
+        return false;
+      });
+    } catch (error) {
+      console.warn(`[Simulator] Không thể gửi yêu cầu đặt lại phiên ${simFolder}:`, error);
+      return Promise.resolve(false);
+    }
   }
 
   function confirmLeavePracticeSession() {
@@ -2212,7 +2332,7 @@
    * @param {object|null} evalResult - Kết quả chấm điểm
    * @param {number} durationSec - Thời gian làm bài (giây), lấy từ đồng hồ đã dừng
    */
-  function setTrackingSaveStatus(status, message, allowRetry) {
+  function setTrackingSaveStatus(status, message, recoveryAction) {
     if (!gmSaveStatus) return;
     gmSaveStatus.hidden = !message;
     gmSaveStatus.className = `gm-save-status${status ? ` is-${status}` : ''}`;
@@ -2222,12 +2342,18 @@
     const text = document.createElement('span');
     text.textContent = message;
     gmSaveStatus.appendChild(text);
-    if (allowRetry) {
+    if (recoveryAction) {
       const retry = document.createElement('button');
       retry.type = 'button';
       retry.className = 'gm-save-retry';
-      retry.textContent = 'Thử lưu lại';
-      retry.addEventListener('click', () => sendTrackingTimer(_lastEvalResult, _lastSubmitDurationSec, _lastTrackingPayload));
+      retry.textContent = recoveryAction === 'login' ? 'Đăng nhập lại' : 'Thử lưu lại';
+      retry.addEventListener('click', function () {
+        if (recoveryAction === 'login') {
+          redirectToLogin();
+          return;
+        }
+        sendTrackingTimer(_lastEvalResult, _lastSubmitDurationSec, _lastTrackingPayload);
+      });
       gmSaveStatus.appendChild(retry);
     }
   }
@@ -2238,17 +2364,33 @@
     });
   }
 
-  function sendTrackingTimer(evalResult, durationSec, retryPayload = null) {
+  function sendTrackingTimer(evalResult, durationSec, retryPayload = null, authenticationChecked = false) {
     if (!_trackingSession) return; // Chưa có phiên nào được bắt đầu
     const session = _trackingSession;
     if (session.startPromise && !session.startSettled) {
       return session.startPromise.then(function () {
-        return sendTrackingTimer(evalResult, durationSec, retryPayload);
+        return sendTrackingTimer(evalResult, durationSec, retryPayload, authenticationChecked);
       });
     }
     if (trackingSaveInFlight) return;
+    if (!authenticationChecked) {
+      setTrackingSaveStatus('saving', 'Đang kiểm tra phiên đăng nhập trước khi lưu kết quả...');
+      return requestCurrentUserSession()
+        .then(function (user) {
+          if (!user) {
+            setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
+            return false;
+          }
+          return sendTrackingTimer(evalResult, durationSec, retryPayload, true);
+        })
+        .catch(function (error) {
+          console.warn('[Tracking] Không thể kiểm tra phiên đăng nhập:', error);
+          setTrackingSaveStatus('error', 'Chưa thể kiểm tra phiên đăng nhập do lỗi kết nối.', 'retry');
+          return false;
+        });
+    }
     if (!_currentUser) {
-      setTrackingSaveStatus('error', 'Phiên đăng nhập không còn hợp lệ. Hãy đăng nhập lại trước khi nộp bài.');
+      setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
       return Promise.resolve(false);
     }
     trackingSaveInFlight = true;
@@ -2303,7 +2445,10 @@
             const message = err && err.error && err.error.message
               ? err.error.message
               : `Không lưu được kết quả (HTTP ${res.status}).`;
-            throw new Error(message);
+            const requestError = new Error(message);
+            requestError.status = res.status;
+            requestError.code = err && err.error ? err.error.code : '';
+            throw requestError;
           });
         }
         return res.json().then(function (data) {
@@ -2324,7 +2469,12 @@
       })
       .catch(function (err) {
         console.warn('[Tracking] Không thể gửi dữ liệu tracking:', err);
-        setTrackingSaveStatus('error', `Chưa lưu được kết quả: ${err.message || 'lỗi kết nối.'}`, true);
+        if (err.status === 401 || err.code === 'auth/unauthenticated') {
+          applyCurrentUser(null);
+          setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
+        } else {
+          setTrackingSaveStatus('error', `Chưa lưu được kết quả: ${err.message || 'lỗi kết nối.'}`, 'retry');
+        }
       })
       .finally(function () {
         trackingSaveInFlight = false;

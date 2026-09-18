@@ -28,6 +28,7 @@ const fmtDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, 
 const state = {
     currentUser: null,
     isAdmin: false,
+    isDeveloper: false,
     canExportReports: false,
     startDate: fmtDate(currentMonthFirst),
     endDate: fmtDate(now),
@@ -516,10 +517,11 @@ const MIN_DURATION_SAMPLE_COUNT = 30;
 const MIN_DURATION_COVERAGE_RATE = 10;
 
 function mapReportMetrics(metric) {
-    const practiceAttempts = Number(metric?.submitted_attempt_count ?? metric?.practice_attempts) || 0;
     const rateEligibleAttempts = Number(metric?.rate_eligible_attempt_count ?? metric?.graded_count) || 0;
     const passedEligibleAttempts = Number(metric?.passed_eligible_attempt_count ?? metric?.passed_count) || 0;
-    const legacyIncompleteAttempts = Number(metric?.legacy_incomplete_attempt_count) || 0;
+    const historicalPasses = Number(metric?.historical_pass_count) || 0;
+    const recordedPractices = Number(metric?.recorded_practice_count) || (rateEligibleAttempts + historicalPasses);
+    const historicalOnlyPassRate = rateEligibleAttempts === 0 && historicalPasses > 0;
     const durationKnown = Number(metric?.duration_known_count) || 0;
     const durationCoverage = metric?.duration_coverage_rate === null || metric?.duration_coverage_rate === undefined
         ? (rateEligibleAttempts ? Math.round((durationKnown / rateEligibleAttempts) * 1000) / 10 : null)
@@ -532,22 +534,23 @@ function mapReportMetrics(metric) {
         assigned: Number(metric?.assigned_count) || 0,
         graded: Number(metric?.graded_count) || 0,
         passed: Number(metric?.passed_count) || 0,
-        submittedAttempts: practiceAttempts,
         rateEligibleAttempts,
         passedEligibleAttempts,
-        legacyIncompleteAttempts,
-        activityCompleted: Number(metric?.activity_completed_count) || 0,
-        ungradedCompleted: Number(metric?.ungraded_completed_count) || 0,
-        totalSessions: rateEligibleAttempts,
+        historicalPasses,
+        recordedPractices,
+        totalSessions: recordedPractices,
         guideSessions: Number(metric?.guide_attempts) || 0,
         learners: Number(metric?.participating_technicians) || 0,
         completed: Number(metric?.completed_count) || 0,
         rate: metric?.completion_rate === null || metric?.completion_rate === undefined
             ? null
             : Number(metric.completion_rate),
-        passRate: metric?.pass_rate === null || metric?.pass_rate === undefined
-            ? null
-            : Number(metric.pass_rate),
+        passRate: historicalOnlyPassRate
+            ? 100
+            : (metric?.pass_rate === null || metric?.pass_rate === undefined
+                ? null
+                : Number(metric.pass_rate)),
+        historicalOnlyPassRate,
         firstTryRate: metric?.first_try_rate === null || metric?.first_try_rate === undefined
             ? null
             : Number(metric.first_try_rate),
@@ -611,7 +614,9 @@ function renderKpis() {
         const currentValue = currentMetrics[definition.key];
         const previousValue = previousMetrics[definition.key];
         const lifetimeValue = lifetimeMetrics[definition.key];
-        const comparable = currentValue !== null && previousValue !== null;
+        const usesHistoricalOnlyRate = definition.key === 'passRate'
+            && (currentMetrics.historicalOnlyPassRate || previousMetrics.historicalOnlyPassRate);
+        const comparable = currentValue !== null && previousValue !== null && !usesHistoricalOnlyRate;
         const difference = comparable ? Math.round((currentValue - previousValue) * 10) / 10 : null;
         const valueElement = document.getElementById(definition.valueId);
         const comparisonElement = document.getElementById(definition.comparisonId);
@@ -625,7 +630,7 @@ function renderKpis() {
             let arrow = '•';
 
             if (difference === null) {
-                changeText = 'Chưa đủ mẫu số';
+                changeText = usesHistoricalOnlyRate ? 'Không so sánh dữ liệu lịch sử' : 'Chưa đủ mẫu số';
             } else if (difference !== 0) {
                 comparisonClass = difference > 0 ? 'positive' : 'negative';
                 arrow = difference > 0 ? '↑' : '↓';
@@ -653,9 +658,19 @@ function renderKpis() {
 
         if (contextElement) {
             if (definition.key === 'passRate') {
-                contextElement.textContent = `${periods.currentLabel} • ${formatNumber.format(currentMetrics.passedEligibleAttempts)}/${formatNumber.format(currentMetrics.rateEligibleAttempts)} lượt đạt`;
+                contextElement.textContent = currentMetrics.historicalOnlyPassRate
+                    ? `${periods.currentLabel} • 100% trên ${formatNumber.format(currentMetrics.historicalPasses)} lượt đạt lịch sử*`
+                    : `${periods.currentLabel} • ${formatNumber.format(currentMetrics.passedEligibleAttempts)}/${formatNumber.format(currentMetrics.rateEligibleAttempts)} lượt đạt`;
+                const card = contextElement.closest('.kpi-card');
+                if (currentMetrics.historicalOnlyPassRate) {
+                    card?.setAttribute('title', 'Hệ thống cũ chỉ lưu kết quả đạt; tỷ lệ này không phản ánh các lần làm không đạt.');
+                } else {
+                    card?.removeAttribute('title');
+                }
             } else if (definition.key === 'totalSessions') {
-                contextElement.textContent = `${periods.currentLabel} • Chỉ tính lượt có đầy đủ kết quả và chuỗi lần làm`;
+                contextElement.textContent = currentMetrics.historicalPasses > 0
+                    ? `${periods.currentLabel} • Trong đó ${formatNumber.format(currentMetrics.historicalPasses)} lượt đạt lịch sử`
+                    : `${periods.currentLabel} • Dữ liệu hợp lệ`;
             } else {
                 contextElement.textContent = `${periods.currentLabel} • Lũy kế ${formatMetric(lifetimeValue, definition)}${definition.type === 'count' ? ` ${definition.unit}` : ''}`;
             }
@@ -668,12 +683,20 @@ function renderKpis() {
 function renderDashboardDataNotice(currentMetrics) {
     const notice = document.getElementById('dashboardDataNotice');
     if (!notice) return;
+    if (!state.isDeveloper) {
+        notice.hidden = true;
+        notice.replaceChildren();
+        return;
+    }
 
     const messages = [];
     if (state.dashboardReportStatus === 'stale') {
         messages.push('Báo cáo tổng hợp chưa cập nhật được; hệ thống đang giữ bản dữ liệu thành công gần nhất.');
     } else if (state.dashboardReportStatus === 'unavailable') {
         messages.push('Không tải được báo cáo tổng hợp; các chỉ số được để trống để tránh hiển thị sai nghiệp vụ.');
+    }
+    if (currentMetrics?.historicalOnlyPassRate) {
+        messages.push('Tỷ lệ đạt 100%* của kỳ này chỉ dựa trên các lượt đạt lịch sử; hệ thống cũ không lưu các lượt không đạt.');
     }
     const unassignedRegions = currentMetrics ? (dashboardReport?.matrix?.rows || []).filter(row => {
         const region = row?.region || {};
@@ -685,9 +708,6 @@ function renderDashboardDataNotice(currentMetrics) {
     );
     if (unassignedPopulationPairs > 0) {
         messages.push(`${formatNumber.format(unassignedPopulationPairs)} cặp KTV–bài chưa có khu vực đang được tạm gom vào “FTC”; khi KTV được cập nhật đơn vị, báo cáo sẽ tự chuyển sang khu vực tương ứng.`);
-    }
-    if (currentMetrics && currentMetrics.ungradedCompleted > 0) {
-        messages.push(`${formatNumber.format(currentMetrics.ungradedCompleted)} lượt thực hành đã hoàn thành thao tác nhưng chưa có kết quả đánh giá; các lượt này chưa được tính là đạt chuẩn.`);
     }
     notice.hidden = messages.length === 0;
     notice.replaceChildren();
@@ -940,21 +960,33 @@ function renderOverviewMonthlyTrend(rows) {
 
     const monthlySessions = new Map();
     const monthlyPassedSessions = new Map();
+    const monthlyEligibleSessions = new Map();
+    const monthlyHistoricalPasses = new Map();
     rows.forEach(session => {
         const date = parseDate(session.date);
         if (date.getTime() <= 0 || date.getFullYear() !== reportYear) return;
         if (session.mode !== 'Thực hành' && session.mode !== 'practice') return;
         if (effectiveRegion && getLearnerRegion(session.learner) !== effectiveRegion) return;
-        if (!isRateEligiblePracticeSession(session)) return;
+        if (!isRecordedPracticeSession(session)) return;
         const monthIndex = date.getMonth();
         monthlySessions.set(monthIndex, (monthlySessions.get(monthIndex) || 0) + 1);
-        if (isSuccessfulSession(session)) {
-            monthlyPassedSessions.set(monthIndex, (monthlyPassedSessions.get(monthIndex) || 0) + 1);
+        if (isRateEligiblePracticeSession(session)) {
+            monthlyEligibleSessions.set(monthIndex, (monthlyEligibleSessions.get(monthIndex) || 0) + 1);
+            if (isSuccessfulSession(session)) {
+                monthlyPassedSessions.set(monthIndex, (monthlyPassedSessions.get(monthIndex) || 0) + 1);
+            }
+        }
+        if (isHistoricalPassSession(session)) {
+            monthlyHistoricalPasses.set(monthIndex, (monthlyHistoricalPasses.get(monthIndex) || 0) + 1);
         }
     });
 
     const periods = Array.from({ length: 12 }, (_, index) => {
         const date = new Date(reportYear, index, 1);
+        const eligibleSessions = monthlyEligibleSessions.get(index) || 0;
+        const passedSessions = monthlyPassedSessions.get(index) || 0;
+        const historicalPasses = monthlyHistoricalPasses.get(index) || 0;
+        const historicalOnlyPassRate = eligibleSessions === 0 && historicalPasses > 0;
         return {
             date,
             key: `${date.getFullYear()}-${date.getMonth()}`,
@@ -962,13 +994,19 @@ function renderOverviewMonthlyTrend(rows) {
             shortLabel: `T${String(date.getMonth() + 1).padStart(2, '0')}`,
             isFuture: date > new Date(today.getFullYear(), today.getMonth(), 1),
             totalSessions: monthlySessions.get(index) || 0,
-            passedSessions: monthlyPassedSessions.get(index) || 0
+            eligibleSessions,
+            passedSessions,
+            historicalPasses,
+            passRate: historicalOnlyPassRate
+                ? 100
+                : (eligibleSessions > 0 ? Math.round((passedSessions / eligibleSessions) * 1000) / 10 : null),
+            historicalOnlyPassRate
         };
     });
 
     if (periods.every(period => period.totalSessions === 0)) {
         container.classList.add('is-empty');
-        container.innerHTML = `<div class="empty">Không có lượt thực hành của ${escapeHTML(effectiveRegion || 'toàn hệ thống')} trong năm ${reportYear}.</div>`;
+        container.innerHTML = `<div class="empty">Không có lượt thực hành ghi nhận của ${escapeHTML(effectiveRegion || 'toàn hệ thống')} trong năm ${reportYear}.</div>`;
         if (summary) summary.innerHTML = '';
         return;
     }
@@ -978,13 +1016,13 @@ function renderOverviewMonthlyTrend(rows) {
         const height = period.totalSessions ? Math.max(12, Math.round((period.totalSessions / maxSessions) * 100)) : 0;
         const isSelected = period.key === selectedKey;
         return `
-            <div class="ktv-month-column ${isSelected ? 'selected' : ''} ${period.isFuture ? 'future' : ''}" title="${period.label}: ${period.totalSessions} lượt thực hành, ${period.passedSessions} lượt đạt">
+            <div class="ktv-month-column ${isSelected ? 'selected' : ''} ${period.isFuture ? 'future' : ''}" title="${period.label}: ${period.totalSessions} lượt thực hành ghi nhận${period.historicalOnlyPassRate ? '; 100% trên dữ liệu đạt lịch sử — hệ thống cũ không lưu lượt không đạt' : `; ${period.passedSessions}/${period.eligibleSessions} lượt đạt${period.historicalPasses ? `; ${period.historicalPasses} lượt đạt lịch sử không tính vào tỷ lệ` : ''}`}.">
                 <strong>${period.totalSessions}</strong>
                 <div class="ktv-month-bar-track">
                     <div class="ktv-month-bar" style="height: ${height}%;"></div>
                 </div>
                 <span class="ktv-month-label">${period.shortLabel}</span>
-                <span class="ktv-month-rate">${period.passedSessions} đạt</span>
+                <span class="ktv-month-rate">${period.passRate === null ? '—' : `${period.passRate}%${period.historicalOnlyPassRate ? '*' : ''}`}</span>
             </div>
         `;
     }).join('');
@@ -1004,8 +1042,10 @@ function renderOverviewMonthlyTrend(rows) {
                 && (!effectiveRegion || getLearnerRegion(session.learner) === effectiveRegion);
         });
         previousPeriod = {
-            totalSessions: previousSessions.filter(isRateEligiblePracticeSession).length,
-            passedSessions: previousSessions.filter(session => isRateEligiblePracticeSession(session) && isSuccessfulSession(session)).length
+            totalSessions: previousSessions.filter(isRecordedPracticeSession).length,
+            eligibleSessions: previousSessions.filter(isRateEligiblePracticeSession).length,
+            passedSessions: previousSessions.filter(session => isRateEligiblePracticeSession(session) && isSuccessfulSession(session)).length,
+            historicalPasses: previousSessions.filter(isHistoricalPassSession).length
         };
     }
     const difference = currentPeriod.totalSessions - previousPeriod.totalSessions;
@@ -1015,7 +1055,9 @@ function renderOverviewMonthlyTrend(rows) {
         summary.className = `ktv-monthly-summary ${changeClass}`;
         summary.innerHTML = `
             <strong>${currentPeriod.label}</strong>
-            <span>${changeText} so với tháng trước · ${currentPeriod.passedSessions} lượt đạt</span>
+            <span>${currentPeriod.historicalOnlyPassRate
+                ? `${changeText} so với tháng trước · 100% trên dữ liệu đạt lịch sử*`
+                : `${changeText} so với tháng trước · ${currentPeriod.passedSessions}/${currentPeriod.eligibleSessions} lượt đạt${currentPeriod.historicalPasses > 0 ? ` · ${currentPeriod.historicalPasses} lượt đạt lịch sử không tính vào tỷ lệ` : ''}`}</span>
         `;
     }
 }
@@ -1561,7 +1603,15 @@ function detailReportCellKey(region, device, lab) {
 }
 
 function aggregateAuthoritativeMetrics(metrics = []) {
-    const result = { population_count: 0, attempted_count: 0, completed_count: 0, attempt_count: 0 };
+    const result = {
+        population_count: 0,
+        attempted_count: 0,
+        completed_count: 0,
+        attempt_count: 0,
+        rate_eligible_attempt_count: 0,
+        recorded_practice_count: 0,
+        historical_pass_count: 0
+    };
     metrics.forEach(metric => {
         Object.keys(result).forEach(key => { result[key] += Number(metric?.[key]) || 0; });
     });
@@ -1696,9 +1746,15 @@ function renderBranchReportDrilldown(reportMatrix, groups, columns, completionCe
     const passMetricCell = (cell = {}, extraClass = '') => {
         const passes = Number(cell.passed_eligible_attempt_count ?? cell.pass_count) || 0;
         const attempts = Number(cell.rate_eligible_attempt_count ?? cell.attempt_count) || 0;
+        const historicalPasses = Number(cell.historical_pass_count) || 0;
         const rate = attempts ? Math.round((passes / attempts) * 1000) / 10 : null;
-        const cssClass = rate === null ? 'report-cell-zero' : (rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${passes} lượt đạt / ${attempts} lượt thực hành`)}"><strong>${passes}/${attempts}</strong><span>${rate === null ? '—' : `${rate}%`}</span></td>`;
+        const cssClass = rate === null
+            ? (historicalPasses > 0 ? 'report-cell-high' : 'report-cell-zero')
+            : (rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
+        const detail = historicalPasses > 0
+            ? `${historicalPasses} lịch sử${rate === null ? '' : ` · ${rate}%`}`
+            : (rate === null ? '—' : `${rate}%`);
+        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${passes} lượt đạt / ${attempts} lượt thực hành${historicalPasses ? ` • ${historicalPasses} lượt đạt lịch sử` : ''}`)}"><strong>${passes}/${attempts}</strong><span>${detail}</span></td>`;
     };
     els.branchKtvMatrixCard.hidden = false;
     els.branchKtvMatrixTitle.textContent = `KTV thuộc chi nhánh ${selectedBranch.name || selectedBranch.unit_code}`;
@@ -1715,40 +1771,45 @@ function renderBranchReportDrilldown(reportMatrix, groups, columns, completionCe
     els.branchKtvMatrixBody.innerHTML = technicians.map((technician, index) => {
         const totalAttempts = Number(technician.total?.rate_eligible_attempt_count ?? technician.total?.attempt_count) || 0;
         const totalPasses = Number(technician.total?.passed_eligible_attempt_count ?? technician.total?.pass_count) || 0;
+        const totalHistoricalPasses = Number(technician.total?.historical_pass_count) || 0;
         const totalRate = totalAttempts ? Math.round((totalPasses / totalAttempts) * 1000) / 10 : null;
-        const totalClass = totalRate === null ? 'report-cell-zero' : (totalRate >= 80 ? 'report-cell-high' : (totalRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
+        const totalClass = totalRate === null
+            ? (totalHistoricalPasses > 0 ? 'report-cell-high' : 'report-cell-zero')
+            : (totalRate >= 80 ? 'report-cell-high' : (totalRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
         return `
         <tr>
             <td class="ktv-stt-cell">${index + 1}</td>
             <td class="ktv-code-cell">${escapeHTML(technician.employee_id || '—')}</td>
             <th class="ktv-info-cell" scope="row"><div class="ktv-info-wrap"><span class="ktv-info-name">${escapeHTML(technician.display_name || technician.email || 'Chưa có tên')}</span><div class="ktv-info-meta"><span>${escapeHTML(technician.email || '')}</span></div></div></th>
             ${columns.map(column => passMetricCell(technician.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}
-            <td class="ktv-total-cell ${totalClass}"><strong>${totalPasses}/${totalAttempts}</strong></td>
-            <td class="ktv-rate-cell ${totalClass}">${totalRate === null ? '—' : `${totalRate}%`}</td>
+            <td class="ktv-total-cell ${totalClass}" title="${totalHistoricalPasses ? `${totalHistoricalPasses} lượt đạt lịch sử` : ''}"><strong>${totalPasses}/${totalAttempts}</strong></td>
+            <td class="ktv-rate-cell ${totalClass}">${totalRate === null ? (totalHistoricalPasses > 0 ? `${totalHistoricalPasses} lịch sử` : '—') : `${totalRate}%`}</td>
         </tr>`;
     }).join('') || `<tr><td colspan="${columns.length + 5}" class="empty">Chi nhánh này chưa có KTV đang hoạt động.</td></tr>`;
-    const technicianTotals = Object.fromEntries(columns.map(column => [column.labId, { pass_count: 0, attempt_count: 0 }]));
-    const overall = { pass_count: 0, attempt_count: 0 };
+    const technicianTotals = Object.fromEntries(columns.map(column => [column.labId, { pass_count: 0, attempt_count: 0, historical_pass_count: 0 }]));
+    const overall = { pass_count: 0, attempt_count: 0, historical_pass_count: 0 };
     technicians.forEach(technician => {
         columns.forEach(column => {
             technicianTotals[column.labId].pass_count += Number(technician.cells?.[column.labId]?.pass_count) || 0;
             technicianTotals[column.labId].attempt_count += Number(technician.cells?.[column.labId]?.attempt_count) || 0;
+            technicianTotals[column.labId].historical_pass_count += Number(technician.cells?.[column.labId]?.historical_pass_count) || 0;
         });
         overall.pass_count += Number(technician.total?.pass_count) || 0;
         overall.attempt_count += Number(technician.total?.attempt_count) || 0;
+        overall.historical_pass_count += Number(technician.total?.historical_pass_count) || 0;
     });
     const overallRate = overall.attempt_count ? Math.round((overall.pass_count / overall.attempt_count) * 1000) / 10 : null;
-    els.branchKtvMatrixFoot.innerHTML = `<tr><td class="ktv-footer-stt" aria-hidden="true"></td><td class="ktv-footer-code" aria-hidden="true"></td><th class="ktv-footer-label" scope="row">Tổng chi nhánh</th>${columns.map(column => passMetricCell(technicianTotals[column.labId], column.isFirst ? 'group-start' : '')).join('')}<td class="ktv-footer-total"><strong>${overall.pass_count}/${overall.attempt_count}</strong></td><td class="ktv-footer-rate">${overallRate === null ? '—' : `${overallRate}%`}</td></tr>`;
+    els.branchKtvMatrixFoot.innerHTML = `<tr><td class="ktv-footer-stt" aria-hidden="true"></td><td class="ktv-footer-code" aria-hidden="true"></td><th class="ktv-footer-label" scope="row">Tổng chi nhánh</th>${columns.map(column => passMetricCell(technicianTotals[column.labId], column.isFirst ? 'group-start' : '')).join('')}<td class="ktv-footer-total"><strong>${overall.pass_count}/${overall.attempt_count}</strong></td><td class="ktv-footer-rate">${overallRate === null ? (overall.historical_pass_count > 0 ? `${overall.historical_pass_count} lịch sử` : '—') : `${overallRate}%`}</td></tr>`;
 }
 
 function renderAuthoritativeDetailedReport(reportMatrix) {
     if (!els.detailReportHead || !els.detailReportBody || !els.detailReportFoot) return;
     const groups = reportMatrix.device_groups || [];
     const qualityNote = document.getElementById('detailReportDataQuality');
-    if (qualityNote) {
-        qualityNote.hidden = false;
-        qualityNote.textContent = 'Phạm vi gồm toàn bộ KTV đang hoạt động × toàn bộ bài lab đang hoạt động theo khu vực/chi nhánh hiện tại; phiên thực hành không cần có assignment. Mọi chỉ số chỉ tính lượt có đầy đủ kết quả và chuỗi lần làm.';
-    }
+    setDeveloperDiagnosticNotice(
+        qualityNote,
+        'Toàn bộ KTV và bài lab đang hoạt động; lượt ghi nhận gồm dữ liệu hợp lệ và kết quả đạt lịch sử.'
+    );
     const columns = groups.flatMap((group, groupIndex) => (group.labs || []).map((lab, labIndex) => ({
         device: group.device?.name || group.device?.device_name || group.device_name || '',
         deviceId: group.device?.device_id || group.device_id || '',
@@ -1770,8 +1831,10 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
         const cssClass = rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low');
         const attempted = Number(cell.attempted_count) || 0;
         const eligibleAttempts = Number(cell.rate_eligible_attempt_count ?? cell.attempt_count) || 0;
+        const recordedPractices = Number(cell.recorded_practice_count) || eligibleAttempts;
+        const historicalPasses = Number(cell.historical_pass_count) || 0;
         const unit = aggregate ? 'cặp KTV–bài' : 'KTV';
-        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${completed}/${population} ${unit} đã đạt • ${attempted} ${unit} đã thực hành • ${eligibleAttempts} lượt thực hành`)}"><strong>${completed}/${population}</strong><span>${rate}%</span></td>`;
+        return `<td class="report-metric-cell ${cssClass} ${extraClass}" title="${escapeHTML(`${completed}/${population} ${unit} đã đạt • ${attempted} ${unit} đã thực hành • ${recordedPractices} lượt ghi nhận${historicalPasses ? `, gồm ${historicalPasses} lượt đạt lịch sử` : ''}`)}"><strong>${completed}/${population}</strong><span>${rate}%</span></td>`;
     };
     els.detailReportHead.innerHTML = reportMatrixHeader(groups, columns, 'Khu vực / CN', 'Tổng');
     const visibleRows = buildAuthoritativeRegionRows(reportMatrix.rows || [], columns);
@@ -1801,7 +1864,7 @@ function renderAuthoritativeDetailedReport(reportMatrix) {
     els.detailReportFoot.innerHTML = `<tr><th class="report-region-cell report-grand-label" scope="row">Tổng hệ thống</th>${columns.map(column => metricCell(grand.cells?.[column.labId], column.isFirst ? 'group-start' : '')).join('')}${metricCell(grand.total || grand, 'report-row-total report-grand-total', true)}</tr>`;
     const summaryValues = {
         detailReportPeriod: dashboardReport?.meta?.period?.label || getRangeLabel(),
-        detailReportSessions: formatNumber.format(Number(grand.total?.rate_eligible_attempt_count ?? grand.rate_eligible_attempt_count ?? grand.total?.attempt_count ?? grand.attempt_count) || 0),
+        detailReportSessions: formatNumber.format(Number(grand.total?.recorded_practice_count ?? grand.recorded_practice_count ?? grand.total?.rate_eligible_attempt_count ?? grand.rate_eligible_attempt_count) || 0),
         detailReportRegions: formatNumber.format(visibleRegionCount),
         detailReportLabs: formatNumber.format(columns.length),
         detailReportCompletion: grand.total?.completion_rate === null || grand.completion_rate === null
@@ -1944,9 +2007,11 @@ function renderDetailedReport(rows) {
     if (dashboardReport?.matrix && dashboardReportMatchesSelectedPeriod()) {
         renderAuthoritativeDetailedReport(dashboardReport.matrix);
         const qualityNote = document.getElementById('detailReportDataQuality');
-        if (qualityNote && state.dashboardReportStatus === 'stale') {
-            qualityNote.hidden = false;
-            qualityNote.textContent = 'Đang hiển thị bản báo cáo thành công gần nhất đúng với kỳ đã chọn; dữ liệu mới chưa đồng bộ được.';
+        if (state.dashboardReportStatus === 'stale') {
+            setDeveloperDiagnosticNotice(
+                qualityNote,
+                'Đang hiển thị bản báo cáo thành công gần nhất đúng với kỳ đã chọn; dữ liệu mới chưa đồng bộ được.'
+            );
         }
         return;
     }
@@ -1955,10 +2020,10 @@ function renderDetailedReport(rows) {
     els.detailReportFoot.innerHTML = '';
     els.detailReportBody.innerHTML = `<tr><td colspan="${columns + 2}" class="empty">Không tải được báo cáo KTV theo khu vực cho kỳ đã chọn.</td></tr>`;
     const qualityNote = document.getElementById('detailReportDataQuality');
-    if (qualityNote) {
-        qualityNote.hidden = false;
-        qualityNote.textContent = 'Không thể tải danh mục KTV đang hoạt động và phiên thực hành cho kỳ này; các chỉ số được để trống để tránh gây hiểu nhầm.';
-    }
+    setDeveloperDiagnosticNotice(
+        qualityNote,
+        'Không thể tải danh mục KTV đang hoạt động và phiên thực hành cho kỳ này; các chỉ số được để trống để tránh gây hiểu nhầm.'
+    );
     ['detailReportSessions', 'detailReportRegions', 'detailReportLabs', 'detailReportCompletion'].forEach(id => {
         const element = document.getElementById(id);
         if (element) element.textContent = '—';
@@ -2007,9 +2072,9 @@ function getRegionUsageSeries(year) {
         const learnerIdentity = String(session.learner || session.technicianId || '').trim().toLowerCase();
         if (!learnerIdentity) return;
 
-        if (!isRateEligiblePracticeSession(session)) return;
+        if (!isRecordedPracticeSession(session)) return;
         practiceSessionsByRegionMonth.set(bucketKey, (practiceSessionsByRegionMonth.get(bucketKey) || 0) + 1);
-        if (!isSuccessfulSession(session)) return;
+        if (!isCompletionEvidenceSession(session)) return;
         if (!passedLearnersByRegionMonth.has(bucketKey)) passedLearnersByRegionMonth.set(bucketKey, new Set());
         passedLearnersByRegionMonth.get(bucketKey).add(learnerIdentity);
     });
@@ -2372,6 +2437,8 @@ function normalizeTrainingAssignments(apiAssignments = []) {
         status: item.status || 'assigned',
         completed: item.status === 'passed' || Boolean(item.passed),
         completedAt: item.completed_at || item.completedAt || null,
+        historicalPassCount: Number(item.historical_pass_count ?? item.historicalPassCount) || 0,
+        recordedPracticeCount: Number(item.recorded_practice_count ?? item.recordedPracticeCount) || 0,
         firstPassAttemptNo: item.first_pass_attempt_no == null
             ? null
             : Number(item.first_pass_attempt_no)
@@ -2418,6 +2485,13 @@ function normalizeActionText(item) {
     return item?.latest_action?.message || item?.latest_action?.action || item?.last_action || 'N/A';
 }
 
+function normalizeSessionMode(mode) {
+    const value = String(mode || '').trim().toLocaleLowerCase('vi');
+    if (value === 'practice' || value === 'thực hành' || value === 'thuc hanh') return 'Thực hành';
+    if (value === 'guide' || value === 'hướng dẫn' || value === 'huong dan') return 'Hướng dẫn';
+    return mode || 'Thực hành';
+}
+
 function mapApiSessions(apiSessions = []) {
     return apiSessions
         .filter(item => item.status === 'completed' || item.status === 'failed')
@@ -2429,6 +2503,7 @@ function mapApiSessions(apiSessions = []) {
             ? null
             : item.is_passed === true || item.is_passed === 1
                 || ['1', 't', 'true', 'yes'].includes(String(item.is_passed).trim().toLowerCase());
+        const normalizedMode = normalizeSessionMode(item.mode);
         return {
             sessionId: item.session_id,
             technicianId: item.technician_id || item.technician?.technician_id,
@@ -2448,11 +2523,12 @@ function mapApiSessions(apiSessions = []) {
             branchName: technician?.branchName || item.branch_name || '',
             deviceId: item.device_id || item.device?.device_id || null,
             device: item.device?.device_name || item.device_name || item.device_id || 'N/A',
+            labId: item.lab_id || item.lab?.lab_id || null,
             lab: item.lab?.lab_name || item.lab_name || item.lab_id || 'N/A',
             skill: item.skill?.skill_name || item.skill?.skill_id || item.lab?.lab_name || item.lab_name || 'N/A',
-            mode: item.mode || 'Thực hành',
+            mode: normalizedMode,
             rawStatus: item.status,
-            status: getSessionDisplayStatus(item.status, item.mode || 'Thực hành', isPassed),
+            status: getSessionDisplayStatus(item.status, normalizedMode, isPassed),
             duration: item.duration_sec === null || item.duration_sec === undefined
                 ? null
                 : Number(item.duration_sec),
@@ -2468,6 +2544,13 @@ function mapApiSessions(apiSessions = []) {
                 ? true
                 : item.attempt_sequence_complete === true || item.attempt_sequence_complete === 1
                     || ['1', 't', 'true', 'yes'].includes(String(item.attempt_sequence_complete).trim().toLowerCase()),
+            seedBatch: item.seed_batch || '',
+            historicalPass: item.historical_pass === true
+                || (
+                    isPassed === true
+                    && item.attempt_sequence_complete === false
+                    && String(item.seed_batch || '').startsWith('firebase-v1-')
+                ),
             lastAction: normalizeActionText(item)
         };
         });
@@ -2654,8 +2737,13 @@ async function fetchDashboardData(versionHint = '') {
     technicianCatalog = technicians;
     technicianCatalogAuthoritative = techniciansAuthoritative;
     rebuildTechnicianIndex();
+    const activeLabIds = new Set((data.labs || []).map(item => String(item.lab_id || '')).filter(Boolean));
+    const mappedSessions = mapApiSessions(data.sessions || []).filter(item => (
+        activeLabIds.has(String(item.labId || ''))
+        && (!isPracticeSession(item) || isRecordedPracticeSession(item))
+    ));
     return {
-        sessions: mapApiSessions(data.sessions || []),
+        sessions: mappedSessions,
         deviceCatalog: (Array.isArray(data.devices) && Array.isArray(data.labs))
             ? buildDeviceCatalog(data.devices, data.labs)
             : [],
@@ -2673,7 +2761,7 @@ async function fetchDashboardData(versionHint = '') {
 }
 
 function applyDashboardData(data) {
-    sessions = (data.sessions || []).filter(item => !isPracticeSession(item) || isRateEligiblePracticeSession(item));
+    sessions = data.sessions || [];
     deviceCatalog = data.deviceCatalog;
     technicianCatalog = data.technicians || [];
     if (data.assignmentsRequested && data.assignmentsAvailable) {
@@ -2732,6 +2820,21 @@ function hasCompleteAttemptEvidence(item) {
 
 function isRateEligiblePracticeSession(item) {
     return hasCompleteAttemptEvidence(item) && item?.isPassed !== null && item?.isPassed !== undefined;
+}
+
+function isHistoricalPassSession(item) {
+    return isPracticeSession(item)
+        && item?.isPassed === true
+        && item?.attemptSequenceComplete === false
+        && (item?.historicalPass === true || String(item?.seedBatch || '').startsWith('firebase-v1-'));
+}
+
+function isRecordedPracticeSession(item) {
+    return isRateEligiblePracticeSession(item) || isHistoricalPassSession(item);
+}
+
+function isCompletionEvidenceSession(item) {
+    return isSuccessfulSession(item) && isRecordedPracticeSession(item);
 }
 
 function getCanonicalLabList() {
@@ -2926,6 +3029,7 @@ async function guardDashboardAdmin() {
     }
     state.currentUser = user;
     state.isAdmin = true;
+    state.isDeveloper = role === 'DEV';
     state.canExportReports = Boolean(
         user.canExportReports
         ?? user.can_export_reports
@@ -2934,7 +3038,24 @@ async function guardDashboardAdmin() {
         ?? role === 'DEV'
     );
     applyReportExportPermission();
+    applyDeveloperNoticeVisibility();
     return true;
+}
+
+function setDeveloperDiagnosticNotice(element, message = '') {
+    if (!element) return;
+    const visible = state.isDeveloper && Boolean(message);
+    element.hidden = !visible;
+    element.textContent = visible ? message : '';
+}
+
+function applyDeveloperNoticeVisibility() {
+    document.querySelectorAll('[data-dev-only-notice]').forEach(element => {
+        if (!state.isDeveloper) {
+            element.hidden = true;
+            element.replaceChildren();
+        }
+    });
 }
 
 function applyReportExportPermission() {
@@ -4209,15 +4330,17 @@ function enhanceSearchableFilterSelect(select) {
         search.dispatchEvent(new Event('input'));
     };
 
-    wrapper.querySelector('[data-select-command="all"]')?.addEventListener('click', () => selectAllVisible(true));
-    wrapper.querySelector('[data-select-command="none"]')?.addEventListener('click', () => selectAllVisible(false));
-    wrapper.querySelector('.searchable-select-clear')?.addEventListener('click', () => {
+    // Header filter popovers are reparented to document.body above, so their
+    // command/clear/apply buttons must be queried from the popover itself.
+    popover.querySelector('[data-select-command="all"]')?.addEventListener('click', () => selectAllVisible(true));
+    popover.querySelector('[data-select-command="none"]')?.addEventListener('click', () => selectAllVisible(false));
+    popover.querySelector('.searchable-select-clear')?.addEventListener('click', () => {
         draftValues = new Set(getAvailableOptions().map(option => option.value));
         search.value = '';
         renderMultipleOptions();
         search.dispatchEvent(new Event('input'));
     });
-    wrapper.querySelector('.searchable-select-apply')?.addEventListener('click', () => {
+    popover.querySelector('.searchable-select-apply')?.addEventListener('click', () => {
         select._selectedValues = [...draftValues];
         select.value = select._selectedValues[0] || '';
         select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -4313,6 +4436,13 @@ function getInstructorClassProgress(selectedClass, selectedGroups) {
     if (state.assignmentsLoaded) {
         const selectedMembers = new Set(selectedClass?.members || []);
         const assignmentByLearnerLab = new Map();
+        const eligiblePassedCells = new Set();
+        sessions.forEach(session => {
+            if (!isCompletionEvidenceSession(session)) return;
+            (session.assignmentClassCodes || []).forEach(classCode => {
+                eligiblePassedCells.add(`${classCode}\u001f${session.learner}\u001f${session.device}\u001f${session.lab}`);
+            });
+        });
         trainingAssignments
             .filter(item => item.classCode === selectedClass?.code && selectedMembers.has(item.learner))
             .forEach(item => assignmentByLearnerLab.set(`${item.learner}\u001f${item.device}\u001f${item.lab}`, item));
@@ -4320,7 +4450,8 @@ function getInstructorClassProgress(selectedClass, selectedGroups) {
             const deviceResults = selectedGroups.map(group => {
                 const labResults = group.labs.map(lab => {
                     const assignment = assignmentByLearnerLab.get(`${learner}\u001f${group.device}\u001f${lab}`);
-                    return { lab, assigned: Boolean(assignment), completed: Boolean(assignment?.completed) };
+                    const completionKey = `${selectedClass?.code}\u001f${learner}\u001f${group.device}\u001f${lab}`;
+                    return { lab, assigned: Boolean(assignment), completed: Boolean(assignment && (assignment.completed || eligiblePassedCells.has(completionKey))) };
                 });
                 const assignedResults = labResults.filter(item => item.assigned);
                 const completed = assignedResults.filter(item => item.completed).length;
@@ -4344,7 +4475,7 @@ function getInstructorClassProgress(selectedClass, selectedGroups) {
         const deviceResults = selectedGroups.map(group => {
             const completedLabs = new Set(
                 learnerSessions
-                    .filter(item => item.device === group.device && isSuccessfulSession(item))
+                    .filter(item => item.device === group.device && isCompletionEvidenceSession(item))
                     .map(item => item.lab)
             );
             const labResults = group.labs.map(lab => ({ lab, completed: completedLabs.has(lab) }));
@@ -4769,23 +4900,23 @@ function getClassMatrixData() {
         : mappedLearners.filter(learner => state.classMatrixSelectedKtvs.has(learner.email));
 
     const sessionsByCell = new Map();
-    const eligiblePassedAssignmentCells = new Set();
+    const completedAssignmentCells = new Set();
     sessions.forEach(s => {
         if (s.mode !== 'Thực hành' && s.mode !== 'practice') return;
         const learnerKey = String(s.learner || '').toLowerCase();
         const cellKey = `${learnerKey}\u001f${s.device}\u001f${s.lab}`;
         if (!sessionsByCell.has(cellKey)) sessionsByCell.set(cellKey, []);
         sessionsByCell.get(cellKey).push(s);
-        if (isRateEligiblePracticeSession(s) && s.isPassed === true) {
+        if (isCompletionEvidenceSession(s)) {
             (s.assignmentClassCodes || []).forEach(classCode => {
-                eligiblePassedAssignmentCells.add(`${classCode}\u001f${cellKey}`);
+                completedAssignmentCells.add(`${classCode}\u001f${cellKey}`);
             });
         }
     });
     const classSessionsForCell = (classCode, learner, device, lab) => (
         sessionsByCell.get(`${String(learner).toLowerCase()}\u001f${device}\u001f${lab}`) || []
     ).filter(session => session.assignmentClassCodes.includes(classCode));
-    const assignmentHasEligiblePass = assignment => eligiblePassedAssignmentCells.has(
+    const assignmentHasCompletionEvidence = assignment => Boolean(assignment?.completed) || completedAssignmentCells.has(
         `${assignment.classCode}\u001f${String(assignment.learner).toLowerCase()}\u001f${assignment.device}\u001f${assignment.lab}`
     );
 
@@ -4827,10 +4958,12 @@ function getClassMatrixData() {
                 ? assignmentByCell.get(`${selectedClass.code}\u001f${learnerKey}\u001f${col.device}\u001f${col.lab}`)
                 : null;
             const isAssigned = Boolean(assignment);
-            const assignmentCompleted = Boolean(assignment && assignmentHasEligiblePass(assignment));
+            const historicalPassCount = Number(assignment?.historicalPassCount) || 0;
+            const recordedAttempts = attempts + historicalPassCount;
+            const assignmentCompleted = Boolean(assignment && assignmentHasCompletionEvidence(assignment));
             if (isAssigned) ktvAssigned += 1;
             if (assignmentCompleted) ktvCompleted += 1;
-            ktvAttempts += attempts;
+            ktvAttempts += recordedAttempts;
 
             return {
                 device: col.device,
@@ -4839,6 +4972,8 @@ function getClassMatrixData() {
                 completed: assignmentCompleted,
                 attempts,
                 passCount,
+                historicalPassCount,
+                recordedAttempts,
                 lastSession: labSessions[labSessions.length - 1] || null
             };
         });
@@ -4846,7 +4981,7 @@ function getClassMatrixData() {
         const rate = ktvAssigned > 0 ? Math.round((ktvCompleted / ktvAssigned) * 100) : null;
         const allAssignments = [...(selectedAssignmentsByLearner.get(learnerKey)?.values() || [])];
         const allAssignedCount = allAssignments.length;
-        const allCompletedCount = allAssignments.filter(assignmentHasEligiblePass).length;
+        const allCompletedCount = allAssignments.filter(assignmentHasCompletionEvidence).length;
 
         return {
             ...l,
@@ -4897,7 +5032,7 @@ function getClassMatrixData() {
 
     const labStats = new Map(columns.map(col => [
         `${col.device}\u001f${col.lab}`,
-        { assigned: 0, completed: 0, passes: 0, attempts: 0 }
+        { assigned: 0, completed: 0, passes: 0, attempts: 0, historicalPasses: 0, recordedAttempts: 0 }
     ]));
     rows.forEach(row => row.cells.forEach(cell => {
         const stat = labStats.get(`${cell.device}\u001f${cell.lab}`);
@@ -4906,6 +5041,8 @@ function getClassMatrixData() {
         if (cell.completed) stat.completed += 1;
         stat.passes += cell.passCount;
         stat.attempts += cell.attempts;
+        stat.historicalPasses += cell.historicalPassCount;
+        stat.recordedAttempts += cell.recordedAttempts;
     }));
 
     const totalClassAttempts = rows.reduce((sum, row) => sum + row.attempts, 0);
@@ -4936,13 +5073,15 @@ function getClassMatrixData() {
             });
             const fullyCompletedCount = [...progressByMember.values()].filter(progress => {
                 const assignments = [...progress.values()];
-                return assignments.length > 0 && assignments.every(assignmentHasEligiblePass);
+                return assignments.length > 0 && assignments.every(assignmentHasCompletionEvidence);
             }).length;
             const assignedDevices = new Set(classAssignments.map(assignment => assignment.device));
             const classLabSessions = members.flatMap(email => overviewColumns.flatMap(column =>
                 classSessionsForCell(item.code, email, column.device, column.lab)
             ));
-            const attempts = classLabSessions.filter(isRateEligiblePracticeSession).length;
+            const eligibleAttempts = classLabSessions.filter(isRateEligiblePracticeSession).length;
+            const historicalPasses = classAssignments.reduce((sum, assignment) => sum + assignment.historicalPassCount, 0);
+            const attempts = eligibleAttempts + historicalPasses;
             return {
                 ...item,
                 memberCount: members.length,
@@ -4977,7 +5116,7 @@ function getClassMatrixData() {
             if (learnerAssignments) learnerAssignments.push(assignment);
         });
         const completedPeople = [...progressByMember.values()].filter(assignments =>
-            assignments.length > 0 && assignments.every(assignmentHasEligiblePass)
+            assignments.length > 0 && assignments.every(assignmentHasCompletionEvidence)
         ).length;
         return {
             device: group.device,
@@ -5106,7 +5245,7 @@ function renderClassOverview(data) {
         </th>
         <th scope="col">${sortHeader('Số KTV', 'memberCount')}</th>
         <th scope="col">${sortHeader('Thiết bị đã giao', 'deviceCount')}</th>
-        <th scope="col">${sortHeader('Lượt thực hành', 'attempts')}</th>
+        <th scope="col">${sortHeader('Lượt thực hành ghi nhận', 'attempts')}</th>
         <th scope="col">${sortHeader('KTV hoàn thành', 'fullyCompletedCount')}</th>
         <th scope="col">${sortHeader('Tỷ lệ hoàn thành', 'rate')}</th>
         <th scope="col"><span class="sr-only">Thao tác</span></th>
@@ -5593,9 +5732,11 @@ function renderClassMatrixReport() {
                 </th>
                 ${row.cells.map(cell => {
                     const passRate = cell.attempts ? Math.round((cell.passCount / cell.attempts) * 100) : null;
-                    const cellClass = passRate === null ? 'report-cell-zero' : (passRate >= 80 ? 'report-cell-high' : (passRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: ${cell.passCount}/${cell.attempts} lượt thực hành đạt`;
-                    return `<td class="report-metric-cell ${cellClass}" title="${escapeHTML(tooltip)}"><strong>${cell.passCount}/${cell.attempts}</strong></td>`;
+                    const cellClass = passRate === null
+                        ? (cell.historicalPassCount > 0 ? 'report-cell-high' : 'report-cell-zero')
+                        : (passRate >= 80 ? 'report-cell-high' : (passRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
+                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: ${cell.passCount}/${cell.attempts} lượt đạt${cell.historicalPassCount ? ` • ${cell.historicalPassCount} lượt đạt lịch sử` : ''}`;
+                    return `<td class="report-metric-cell ${cellClass}" title="${escapeHTML(tooltip)}"><strong>${cell.passCount}/${cell.attempts}</strong>${cell.historicalPassCount ? `<span>${cell.historicalPassCount} lịch sử</span>` : ''}</td>`;
                 }).join('')}
                 <td class="ktv-total-cell ${rateClass}">
                     <strong>${row.completed}/${row.assigned}</strong>
@@ -5615,10 +5756,10 @@ function renderClassMatrixReport() {
             <th class="ktv-footer-label" scope="row">Tổng</th>
             ${data.columns.map(col => {
                 const colKey = `${col.device}\u001f${col.lab}`;
-                const stat = data.labStats.get(colKey) || { assigned: 0, completed: 0, attempts: 0 };
+                const stat = data.labStats.get(colKey) || { assigned: 0, completed: 0, attempts: 0, recordedAttempts: 0, historicalPasses: 0 };
                 const rate = stat.assigned > 0 ? Math.round((stat.completed / stat.assigned) * 100) : null;
                 const cellClass = rate === null ? 'report-cell-zero' : (rate >= 80 ? 'report-cell-high' : (rate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-                const tooltip = `${stat.completed}/${stat.assigned} KTV được giao đã hoàn thành • ${stat.attempts} lượt thực hành`;
+                const tooltip = `${stat.completed}/${stat.assigned} KTV được giao đã hoàn thành • ${stat.recordedAttempts} lượt thực hành ghi nhận${stat.historicalPasses ? `, gồm ${stat.historicalPasses} lượt đạt lịch sử` : ''}`;
                 return `
                     <td class="report-metric-cell ${cellClass} ${col.isFirst ? 'group-start' : ''}" title="${escapeHTML(tooltip)}">
                         <strong>${stat.completed}/${stat.assigned}</strong>
@@ -6196,7 +6337,7 @@ function buildReportExportPayload(type, descriptor) {
         return {
             ...base,
             filters: {
-                status: state.rosterStatusFilter,
+                status: getRosterStatusRequestValues(),
                 ...state.rosterColumnFilters
             }
         };
@@ -6327,10 +6468,12 @@ function formatAuthoritativeRegionMetric(cell = {}) {
     if (!population) return '—';
     const completed = Number(cell.completed_count) || 0;
     const eligibleAttempts = Number(cell.rate_eligible_attempt_count ?? cell.attempt_count) || 0;
+    const recordedPractices = Number(cell.recorded_practice_count) || eligibleAttempts;
+    const historicalPasses = Number(cell.historical_pass_count) || 0;
     const rate = cell.completion_rate === null || cell.completion_rate === undefined
         ? Math.round((completed / population) * 100)
         : Number(cell.completion_rate);
-    return `${completed}/${population} (${rate}%) · ${eligibleAttempts} lượt thực hành`;
+    return `${completed}/${population} (${rate}%) · ${recordedPractices} lượt ghi nhận${historicalPasses ? ` (${historicalPasses} lịch sử)` : ''}`;
 }
 
 function buildAuthoritativeRegionReportDescriptor(matrix) {
@@ -6361,7 +6504,7 @@ function buildAuthoritativeRegionReportDescriptor(matrix) {
         available: rows.length > 0 && columns.length > 0,
         metadata: [
             ['Phạm vi', 'Toàn bộ KTV đang hoạt động theo khu vực hiện tại; không yêu cầu assignment'],
-            ['Quy ước ô dữ liệu', 'KTV đã đạt/tổng KTV khu vực (tỷ lệ) · lượt thực hành có đầy đủ kết quả và chuỗi lần làm']
+            ['Quy ước ô dữ liệu', 'KTV đạt/tổng KTV (tỷ lệ) · lượt ghi nhận; lịch sử không tính vào tỷ lệ đạt']
         ],
         headers: ['STT', 'Khu vực / Chi nhánh', ...columns.map(column => `${column.device} - ${column.lab}`), 'Tổng khu vực'],
         columnTypes: ['integer', 'text', ...columns.map(() => 'text'), 'text'],
@@ -6414,7 +6557,7 @@ function buildClassMatrixReportDescriptor() {
                 ['KTV hoàn thành', 'KTV hoàn thành tất cả bài lab được giao'],
                 ['Tỷ lệ hoàn thành', 'KTV hoàn thành tất cả bài được giao / Tổng KTV của lớp']
             ],
-            headers: ['STT', 'Mã lớp', 'Tên lớp', 'Số KTV', 'Thiết bị đã giao', 'Lượt thực hành', 'KTV hoàn thành', 'Tỷ lệ hoàn thành'],
+            headers: ['STT', 'Mã lớp', 'Tên lớp', 'Số KTV', 'Thiết bị đã giao', 'Lượt thực hành ghi nhận', 'KTV hoàn thành', 'Tỷ lệ hoàn thành'],
             columnTypes: ['integer', 'text', 'text', 'integer', 'integer', 'integer', 'text', 'percent'],
             rows: data.summaryRows.map((row, index) => [
                 index + 1,
@@ -6440,13 +6583,13 @@ function buildClassMatrixReportDescriptor() {
             ['Lớp học', classLabel],
             ['Thiết bị', deviceLabel],
             ['Tiến độ tổng', `${data.totalCompletedAll}/${data.totalAssignedAll} (${data.assignmentCompletionRate}%)`],
-            ['Tổng lượt thực hành', data.totalSessions],
-            ['Quy ước ô dữ liệu', 'Số lượt đạt / số lượt thực hành có đầy đủ kết quả và chuỗi lần làm']
+            ['Tổng lượt thực hành ghi nhận', data.totalSessions],
+            ['Quy ước ô dữ liệu', 'Lượt đạt / lượt thực hành; kết quả lịch sử hiển thị riêng']
         ],
         headers: [
             'STT', 'Mã NV', 'Họ và tên', 'Email', 'Khu vực / Chi nhánh', 'Lớp học',
             ...data.columns.map(column => `${column.device} - ${column.lab}`),
-            'Bài đã đạt', 'Bài trong phạm vi', 'Tỷ lệ hoàn thành (%)', 'Lượt thực hành'
+            'Bài đã đạt', 'Bài trong phạm vi', 'Tỷ lệ hoàn thành (%)', 'Lượt thực hành ghi nhận'
         ],
         columnTypes: [
             'integer', 'text', 'text', 'text', 'text', 'text',
@@ -6460,7 +6603,7 @@ function buildClassMatrixReportDescriptor() {
             row.email || '',
             row.region || '',
             row.className || row.classCode || classLabel,
-            ...row.cells.map(cell => `${cell.passCount}/${cell.attempts}`),
+            ...row.cells.map(cell => `${cell.passCount}/${cell.attempts}${cell.historicalPassCount ? ` (+${cell.historicalPassCount} lịch sử)` : ''}`),
             row.completed,
             row.assigned,
             row.rate === null || row.rate === undefined ? '' : row.rate / 100,
@@ -6682,8 +6825,9 @@ function renderDeviceDonutChart(rows) {
     const legendContainer = document.getElementById('learnerDeviceLegend');
     if (!donutContainer || !legendContainer) return;
 
-    const items = aggregateBy(rows, 'device').sort((a, b) => b.sessions - a.sessions);
-    const totalSessions = rows.length;
+    const practiceRows = rows.filter(isRecordedPracticeSession);
+    const items = aggregateBy(practiceRows, 'device').sort((a, b) => b.sessions - a.sessions);
+    const totalSessions = practiceRows.length;
 
     if (!items.length || !totalSessions) {
         donutContainer.innerHTML = '<div class="empty">Không có dữ liệu.</div>';
@@ -6761,13 +6905,13 @@ function renderDeviceDonutChart(rows) {
         seg.addEventListener('mouseleave', hideTooltip);
         seg.addEventListener('click', () => {
             hideTooltip();
-            openDeviceSubModal(device, rows);
+            openDeviceSubModal(device, practiceRows);
         });
     });
 
     legendContainer.querySelectorAll('.legend-item').forEach(item => {
         const device = item.dataset.device;
-        item.addEventListener('click', () => openDeviceSubModal(device, rows));
+        item.addEventListener('click', () => openDeviceSubModal(device, practiceRows));
     });
 }
 
@@ -7145,37 +7289,37 @@ const DASHBOARD_VIEWS = {
     overview: {
         eyebrow: 'Tổng quan',
         title: 'Tổng quan thực hành KTV',
-        subtitle: 'Hoạt động và kết quả thực hành trong tháng'
+        subtitle: 'Trong kỳ báo cáo đã chọn'
     },
     instructors: {
         eyebrow: 'Đào tạo',
         title: 'Theo dõi lớp học',
-        subtitle: 'Tiến độ lớp và các bài nộp gần đây'
+        subtitle: 'Tiến độ lũy kế; bài nộp trong kỳ báo cáo'
     },
     analytics: {
         eyebrow: 'Báo cáo vận hành',
         title: 'Báo cáo theo khu vực',
-        subtitle: 'Kết quả thực hành theo khu vực, chi nhánh và bài lab'
+        subtitle: 'Phát sinh trong kỳ; hoàn thành lũy kế đến cuối kỳ'
     },
     class_matrix: {
         eyebrow: 'Báo cáo đào tạo',
         title: 'Báo cáo KTV theo lớp',
-        subtitle: 'Tiến độ thực hành của từng KTV trong lớp'
+        subtitle: 'Tiến độ lũy kế của từng KTV trong lớp'
     },
     technicians: {
         eyebrow: 'Tra cứu',
         title: 'Tra cứu KTV',
-        subtitle: 'Lịch sử, thiết bị và kết quả thực hành của từng KTV'
+        subtitle: 'Toàn bộ lịch sử, thiết bị và kết quả của từng KTV'
     },
     roster: {
         eyebrow: 'Quản trị nhân sự',
         title: 'Quản lý KTV',
-        subtitle: 'Quản lý hồ sơ và cập nhật danh sách từ Excel'
+        subtitle: 'Dữ liệu hồ sơ hiện tại; cập nhật danh sách từ Excel'
     },
     classes: {
         eyebrow: 'Quản trị đào tạo',
         title: 'Quản lý lớp',
-        subtitle: 'Tạo lớp, chọn KTV và giao thiết bị thực hành'
+        subtitle: 'Dữ liệu lớp hiện tại; chọn KTV và giao thiết bị'
     },
 };
 
@@ -7485,6 +7629,14 @@ function renderRosterFilterFacets() {
 }
 
 const EMPTY_FILTER_SENTINEL = '__FTC_NONE_SELECTED__';
+const ROSTER_STATUS_VALUES = ['active', 'terminated'];
+
+// `getAdminFilterSelection` returns null when every status is selected. An empty
+// status param makes the API fall back to its 'active' default, so "Tất cả trạng
+// thái" must be sent as the explicit list of statuses instead.
+function getRosterStatusRequestValues() {
+    return Array.isArray(state.rosterStatusFilter) ? state.rosterStatusFilter : ROSTER_STATUS_VALUES;
+}
 
 function appendFilterSelection(params, key, selection) {
     if (!Array.isArray(selection)) return;
@@ -7493,7 +7645,7 @@ function appendFilterSelection(params, key, selection) {
 }
 
 function appendRosterFilters(params) {
-    appendFilterSelection(params, 'status', state.rosterStatusFilter);
+    appendFilterSelection(params, 'status', getRosterStatusRequestValues());
     Object.entries(state.rosterColumnFilters).forEach(([key, value]) => {
         appendFilterSelection(params, key, value);
     });

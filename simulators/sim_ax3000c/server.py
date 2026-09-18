@@ -315,14 +315,10 @@ class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
         path_clean = self.path.split("?")[0].rstrip("/")
         if path_clean in ("/sim-reset-session", "/api/reset", "/resetsession"):
+            key = self._client_session_key()
             with _SESSION_LOCK:
-                ACTIVE_SESSIONS.clear()
-            USER_STATES.clear()
-            try:
-                with open(STATE_FILE, "w", encoding="utf-8") as f:
-                    json.dump({}, f, indent=1)
-            except Exception:
-                pass
+                USER_STATES.pop(key, None)
+            reset_sid()
             return self._send_json({"status": "ok", "message": "AX3000C state reset"})
         if self.path.split("?")[0].rstrip("/") == "/sim-state":
             ln = int(self.headers.get("Content-Length", 0))
@@ -371,19 +367,10 @@ class Handler(SimpleHTTPRequestHandler):
         # reset session / API reset -> xoa sach state
         path_clean = self.path.split("?")[0].rstrip("/")
         if path_clean in ("/sim-reset-session", "/api/reset", "/resetsession"):
-            q = parse_qs(urlparse(self.path).query)
-            target_sid = q.get("sid", [""])[0] or None
-            if target_sid:
-                reset_sid(target_sid)
-            else:
-                with _SESSION_LOCK:
-                    ACTIVE_SESSIONS.clear()
-            USER_STATES.clear()
-            try:
-                with open(STATE_FILE, "w", encoding="utf-8") as f:
-                    json.dump({}, f, indent=1)
-            except Exception:
-                pass
+            key = self._client_session_key()
+            with _SESSION_LOCK:
+                USER_STATES.pop(key, None)
+            reset_sid()
             return self._send_json({"status": "ok", "message": "AX3000C state reset"})
         # trang chu -> oui.html (SPA shell)
         if path_clean in ("", "/", "/index.html"):

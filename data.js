@@ -3,24 +3,9 @@
  * Tất cả dữ liệu thiết bị và chấm thao tác chi tiết hiện được quản lý theo mô-đun trong thư mục devices/
  */
 
-if (!window.DEVICES || window.DEVICES.length === 0) {
-  if (typeof window.DEVICES === 'undefined') {
-    window.DEVICES = [
-      window.DEVICE_AC1000F,
-      window.DEVICE_AC1000HI,
-      window.DEVICE_AX3000C,
-      window.DEVICE_AX3000GZ,
-      window.DEVICE_AX3000HV2,
-      window.DEVICE_AX3000S,
-      window.DEVICE_BE12000,
-      window.DEVICE_BE15000,
-      window.DEVICE_VIGOR2927,
-      window.DEVICE_BE6500C,
-      window.DEVICE_ONT_BE6500C,
-      window.DEVICE_MIKROTIK_HEXS,
-    ].filter(Boolean);
-  }
-}
+// devices/index.js là registry module duy nhất. Catalog từ API mới quyết định
+// thiết bị/bài lab nào được hiển thị; không tự mở lại danh sách tĩnh khi lỗi.
+if (!Array.isArray(window.DEVICES)) window.DEVICES = [];
 
 if (!window.DEVICE_CONFLICT_PORTS) {
   window.DEVICE_CONFLICT_PORTS = {

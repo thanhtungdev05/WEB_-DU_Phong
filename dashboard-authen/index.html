@@ -190,7 +190,7 @@
                         <div class="section-title">
                             <div>
                                 <h2>Tổng quan thực hành KTV</h2>
-                                <span>Theo dõi hoạt động và kết quả thực hành trong tháng trên toàn hệ thống.</span>
+                                <span>Hoạt động và kết quả trong kỳ báo cáo đang chọn.</span>
                             </div>
                             <div class="date-range-picker overview-month-picker" id="dateRangePicker">
                                 <div class="overview-month-field">
@@ -269,7 +269,7 @@
                             <button type="button" class="kpi-card kpi-card-action" id="overviewSessionsDrilldown"
                                 aria-controls="overviewMonthlyCard" aria-expanded="false"
                                 title="Xem biểu đồ lượt thực hành theo từng tháng">
-                                <span class="kpi-label">Lượt thực hành</span>
+                                <span class="kpi-label">Lượt thực hành ghi nhận</span>
                                 <span class="kpi-value blue" id="kpiSessions">0</span>
                                 <span class="kpi-comparison" id="kpiSessionsComparison"></span>
                                 <span class="kpi-note" id="kpiSessionsContext">Đang tính dữ liệu so sánh</span>
@@ -296,7 +296,7 @@
                             </div>
                         </section>
 
-                        <div class="dashboard-data-notice" id="dashboardDataNotice" role="status" aria-live="polite"
+                        <div class="dashboard-data-notice" id="dashboardDataNotice" data-dev-only-notice role="status" aria-live="polite"
                             hidden></div>
 
                         <div class="overview-analysis-grid">
@@ -339,8 +339,8 @@
                             <div class="detail-section-header ktv-monthly-header">
                                 <div>
                                     <span class="detail-report-eyebrow">Xu hướng hoạt động</span>
-                                    <h4>Lượt thực hành theo tháng — <span id="overviewMonthlyScope">Tất cả khu vực</span></h4>
-                                    <span>Lượt thực hành phát sinh theo từng tháng trong năm.</span>
+                                    <h4>Lượt thực hành ghi nhận theo tháng — <span id="overviewMonthlyScope">Tất cả khu vực</span></h4>
+                                    <span>Gồm lượt hợp lệ và lượt đạt lịch sử. 100%* là kỳ chỉ có dữ liệu đạt lịch sử.</span>
                                 </div>
                                 <div class="overview-monthly-actions">
                                     <div class="ktv-monthly-summary" id="overviewMonthlySummary"></div>
@@ -389,7 +389,7 @@
                                     <div class="instructor-progress-title-row">
                                         <h2>Tiến độ thực hành theo lớp</h2>
                                     </div>
-                                    <p>Xem kết quả từng KTV theo thiết bị và bài lab.</p>
+                                    <p>Tiến độ lũy kế của từng KTV theo thiết bị và bài lab.</p>
                                     <div class="detail-report-legend instructor-progress-legend"
                                         aria-label="Chú thích màu trạng thái bài lab">
                                         <span><i class="legend-high"></i> Đã đạt</span>
@@ -601,7 +601,7 @@
                                 <div>
                                     <span class="detail-report-eyebrow">Báo cáo quản lý đào tạo</span>
                                     <h2>Kết quả thực hành theo khu vực</h2>
-                                    <p>Lượt thực hành trong kỳ chỉ tính phiên có đầy đủ kết quả và chuỗi lần làm; hoàn thành là kết quả lũy kế đến ngày cuối kỳ theo cơ cấu KTV hiện tại.</p>
+                                    <p>Lượt thực hành trong kỳ; kết quả hoàn thành tính lũy kế.</p>
                                 </div>
                                 <div class="detail-report-period">
                                     <span>Thời gian báo cáo</span>
@@ -610,11 +610,11 @@
                                 </div>
                             </div>
 
-                            <p id="detailReportDataQuality" class="detail-report-quality-note" role="status" hidden></p>
+                            <p id="detailReportDataQuality" class="detail-report-quality-note" data-dev-only-notice role="status" hidden></p>
 
                             <div class="detail-report-summary" aria-label="Tóm tắt báo cáo chi tiết">
                                 <div class="detail-report-stat report-stat-blue">
-                                    <span>Lượt thực hành</span>
+                                    <span>Lượt thực hành ghi nhận</span>
                                     <strong id="detailReportSessions">0</strong>
                                 </div>
                                 <div class="detail-report-stat report-stat-purple">
@@ -686,7 +686,7 @@
                                 <div>
                                     <span class="detail-report-eyebrow">Báo cáo đào tạo</span>
                                     <h2>Tiến độ thực hành theo lớp</h2>
-                                    <p>Theo dõi kết quả từng KTV và từng bài lab trong lớp.</p>
+                                    <p>Tiến độ lũy kế của từng KTV và từng bài lab trong lớp.</p>
                                 </div>
                             </div>
 
@@ -713,7 +713,7 @@
                                 <div class="detail-report-table-header">
                                     <div>
                                         <h3 id="classMatrixTableTitle" tabindex="-1">Chi tiết lớp</h3>
-                                        <span>Mỗi ô là số phiên Đạt trên tổng số phiên thực hiện bài lab của KTV.</span>
+                                        <span>Mỗi ô hiển thị lượt đạt / lượt thực hành.</span>
                                     </div>
                                     <button type="button" class="class-overview-back class-overview-close" id="classOverviewBack"
                                         aria-label="Đóng chi tiết" title="Đóng chi tiết">&times;</button>
@@ -790,7 +790,7 @@
                         <div class="panel-header">
                             <div>
                                 <h3>Lịch sử thực hành theo KTV</h3>
-                                <span class="panel-subtitle">Tra cứu thiết bị, bài lab và hoạt động gần nhất của từng KTV.</span>
+                                <span class="panel-subtitle">Toàn bộ lịch sử thiết bị, bài lab và hoạt động của từng KTV.</span>
                             </div>
                             <div class="panel-tools">
                                 <span class="status-pill status-running" id="sessionCountBadge">0 phiên</span>
@@ -1562,7 +1562,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=20260917-roster-fast-pagination-v35"></script>
+    <script src="js/app.js?v=20260918-dev-notices-v41"></script>
 </body>
 
 </html>

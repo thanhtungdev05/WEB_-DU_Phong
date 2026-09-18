@@ -606,14 +606,10 @@ def phien_hop_le(session_id):
 def dong_phien(session_id=None):
     with _khoa:
         s = session_id or lay_phien_hien_tai()
-        if s:
-            ACTIVE_SESSIONS.pop(s, None)
-            USER_STATES.pop(s, None)
-            if _state and _state.get("session", {}).get("id_hien_tai") == s:
-                _state["session"]["id_hien_tai"] = None
-        else:
-            ACTIVE_SESSIONS.clear()
-            USER_STATES.clear()
-            if _state and "session" in _state:
-                _state["session"]["id_hien_tai"] = None
+        if not s:
+            return
+        ACTIVE_SESSIONS.pop(s, None)
+        USER_STATES.pop(s, None)
+        if _state and _state.get("session", {}).get("id_hien_tai") == s:
+            _state["session"]["id_hien_tai"] = None
 

@@ -17,21 +17,44 @@ class PortalCatalogNameSyncContractTests(unittest.TestCase):
 
     def test_portal_uses_catalog_lab_name_for_every_matching_lesson(self):
         for contract in (
-            "function synchronizePortalLessonNames(catalogDevices)",
+            "function synchronizePortalCatalog(catalogDevices)",
             "const labName = String(lab.lab_name || '').trim()",
             "_catalogLabNames.set(labId, labName)",
             "lesson.title = catalogName",
-            "new Set(synchronizePortalLessonNames(catalogDevices).keys())",
+            "new Set(synchronizePortalCatalog(catalogDevices).keys())",
         ):
             self.assertIn(contract, self.portal_js)
 
     def test_portal_and_report_share_the_database_catalog_contract(self):
         self.assertIn("lab.lab_id, lab.lab_name", self.catalog_api)
         self.assertIn("lab.lab_id, lab.lab_name", self.dashboard_report)
-        self.assertIn("app.js?v=20260916-practice-submit-fix", self.portal)
+        self.assertIn("app.js?v=20260918160000", self.portal)
 
-    def test_offline_fallback_does_not_reuse_stale_catalog_names(self):
-        self.assertIn("_catalogLabNames = null", self.portal_js)
+    def test_catalog_failure_is_closed_and_retryable(self):
+        self.assertIn("_catalogDeviceIds = new Set()", self.portal_js)
+        self.assertIn("populateDeviceDropdown([])", self.portal_js)
+        self.assertIn("retry.textContent = 'Thử lại'", self.portal_js)
+        self.assertNotIn("populateDeviceDropdown(DEVICES)", self.portal_js)
+
+    def test_database_catalog_controls_device_names_and_order(self):
+        self.assertIn("catalogDevices.forEach(function (catalogDevice)", self.portal_js)
+        self.assertIn("device.name = catalogName", self.portal_js)
+        self.assertIn("visibleDevices.push(device)", self.portal_js)
+        self.assertIn("_catalogLabOrder", self.portal_js)
+
+    def test_portal_loads_module_for_every_active_catalog_device(self):
+        active_devices = re.findall(
+            r"^\s*\('(DEV_[^']+)',\s*'[^']+',\s*'[^']+',\s*\d+,\s*TRUE\)",
+            self.catalog_migration,
+            re.MULTILINE,
+        )
+        self.assertEqual(len(active_devices), 10)
+        for device_id in active_devices:
+            folder = device_id.replace("DEV_", "").lower()
+            folder = folder.replace("ax3000cv2", "ax3000c")
+            folder = folder.replace("ac1000hi", "ac1000HI")
+            folder = folder.replace("ont_be6500c", "ONT_be6500c")
+            self.assertIn(f'<script src="devices/{folder}/data.js', self.portal)
 
     def test_catalog_migration_preserves_history_and_activates_only_portal_labs(self):
         active_lab_ids = re.findall(r"^\s*\('([^']+)',\s*'DEV_[^']+',\s*'[^']+',\s*\d+,\s*TRUE\)", self.catalog_migration, re.MULTILINE)

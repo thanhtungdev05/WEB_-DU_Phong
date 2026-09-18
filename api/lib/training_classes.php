@@ -1294,8 +1294,13 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                progress.due_at,
                progress.completed_at,
                progress.passed_at,
-               progress.first_pass_attempt_no,
-               progress.first_try_success,
+               official.official_attempt_count,
+               official.has_completion_pass,
+               official.historical_pass_count,
+               official.first_pass_attempt_no,
+               official.passed_at AS official_passed_at,
+               CASE WHEN official.first_pass_attempt_no IS NOT NULL
+                    THEN official.first_pass_attempt_no = 1 ELSE NULL END AS first_try_success,
                device.model,
                device.sort_order AS device_sort_order,
                lab.sort_order AS lab_sort_order
@@ -1305,6 +1310,39 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
           JOIN training_classes training ON training.class_id = progress.class_id
           JOIN device_catalog device ON device.device_id = progress.device_id
           JOIN lab_catalog lab ON lab.lab_id = progress.lab_id
+          LEFT JOIN LATERAL (
+              SELECT COUNT(*) AS official_attempt_count,
+                     BOOL_OR(s.is_passed IS TRUE) AS has_completion_pass,
+                     COUNT(*) FILTER (
+                         WHERE s.is_passed IS TRUE
+                           AND s.attempt_sequence_complete IS FALSE
+                           AND s.seed_batch LIKE 'firebase-v1-%'
+                     ) AS historical_pass_count,
+                     MIN(s.practice_attempt_no) FILTER (
+                         WHERE s.is_passed IS TRUE
+                           AND s.attempt_sequence_complete IS TRUE
+                     ) AS first_pass_attempt_no,
+                     MIN(COALESCE(s.finished_at, s.started_at, s.created_at)) FILTER (WHERE s.is_passed IS TRUE) AS passed_at
+                FROM timer_sessions s
+               WHERE s.lab_id = progress.lab_id
+                 AND (
+                     s.user_id = progress.user_id
+                     OR (s.user_id IS NULL AND NULLIF(:email, '') IS NOT NULL AND LOWER(s.email) = LOWER(:email))
+                     OR (s.user_id IS NULL AND NULLIF(s.email, '') IS NULL AND NULLIF(:employee_id, '') IS NOT NULL AND s.technician_id = :employee_id)
+                 )
+                 AND s.mode IN ('Thực hành', 'practice')
+                 AND (
+                     (s.is_passed IS NOT NULL AND s.attempt_sequence_complete IS TRUE)
+                     OR (
+                         s.is_passed IS TRUE
+                         AND s.attempt_sequence_complete IS FALSE
+                         AND s.seed_batch LIKE 'firebase-v1-%'
+                     )
+                 )
+                 AND s.status IN ('completed', 'failed')
+                 AND NOT COALESCE(s.is_mock, FALSE)
+                 AND COALESCE(s.started_at, s.finished_at, s.created_at) >= progress.assigned_at
+          ) official ON TRUE
          WHERE progress.user_id = CAST(:user_id AS uuid)
            AND progress.assignment_status <> 'waived'
            AND enrollment.status = 'active'
@@ -1315,7 +1353,11 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
          ORDER BY device.sort_order, progress.device_name, lab.sort_order, progress.lab_name
         SQL
     );
-    $assignmentsQuery->execute(['user_id' => $userId]);
+    $assignmentsQuery->execute([
+        'user_id' => $userId,
+        'email' => $userInfo['email'] ?? ($user['email'] ?? ''),
+        'employee_id' => $userInfo['employee_id'] ?? ($user['employee_id'] ?? ''),
+    ]);
     $rawAssignments = $assignmentsQuery->fetchAll(PDO::FETCH_ASSOC);
 
     // 4. Group by device
@@ -1343,7 +1385,9 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             ];
         }
         $deviceProgressMap[$devId]['total_labs']++;
-        $status = (string)$row['status'];
+        $hasEligiblePass = database_boolean($row['has_completion_pass'] ?? false);
+        $officialAttemptCount = (int)($row['official_attempt_count'] ?? 0);
+        $status = $hasEligiblePass ? 'passed' : ($officialAttemptCount > 0 ? 'in_progress' : 'assigned');
         if ($status === 'passed') {
             $deviceProgressMap[$devId]['passed_labs']++;
             $passedLabsCount++;
@@ -1371,9 +1415,10 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'status' => $status,
             'assigned_at' => safe_datetime($row['assigned_at']),
             'due_at' => safe_datetime($row['due_at']),
-            'completed_at' => safe_datetime($row['completed_at'] ?? $row['passed_at']),
+            'completed_at' => $hasEligiblePass ? safe_datetime($row['official_passed_at']) : null,
             'first_pass_attempt_no' => $row['first_pass_attempt_no'] !== null ? (int)$row['first_pass_attempt_no'] : null,
             'first_try_success' => $row['first_try_success'] !== null ? (bool)$row['first_try_success'] : null,
+            'historical_pass_count' => (int)($row['historical_pass_count'] ?? 0),
         ];
         $deviceProgressMap[$devId]['labs'][] = $assignmentItem;
         $assignments[] = $assignmentItem;
@@ -1392,7 +1437,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         <<<'SQL'
         SELECT s.id,
                s.lab_id,
-               s.lab_name,
+               l.lab_name,
                s.device AS device_name_snapshot,
                s.device_id,
                COALESCE(d.device_name, s.device) AS device_name,
@@ -1405,9 +1450,11 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                s.finished_at,
                s.practice_attempt_no,
                s.attempt_sequence_complete,
+               s.seed_batch,
                s.last_action
           FROM timer_sessions s
-          LEFT JOIN device_catalog d ON d.device_id = s.device_id
+          JOIN lab_catalog l ON l.lab_id = s.lab_id AND l.is_active = TRUE
+          JOIN device_catalog d ON d.device_id = l.device_id AND d.is_active = TRUE
          WHERE (
                s.user_id = CAST(:user_id AS uuid)
             OR (NULLIF(:email, '') IS NOT NULL AND LOWER(s.email) = LOWER(:email))
@@ -1415,6 +1462,19 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
          )
            AND s.status IN ('completed', 'failed')
            AND NOT COALESCE(s.is_mock, FALSE)
+           AND (
+               COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide')
+               OR s.session_type = 'guide'
+               OR (
+                   s.is_passed IS NOT NULL
+                   AND s.attempt_sequence_complete IS TRUE
+               )
+               OR (
+                   s.is_passed IS TRUE
+                   AND s.attempt_sequence_complete IS FALSE
+                   AND s.seed_batch LIKE 'firebase-v1-%'
+               )
+           )
          ORDER BY s.finished_at DESC NULLS LAST, s.id DESC
          LIMIT 500
         SQL
@@ -1432,7 +1492,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
     $guideCount = 0;
     $gradedPracticeSessionsCount = 0;
     $passedPracticeSessionsCount = 0;
-    $legacyIncompletePracticeSessionsCount = 0;
+    $historicalPassedSessionsCount = 0;
     $durationKnownPracticeSessionsCount = 0;
     $trendDaysMap = [];
 
@@ -1447,24 +1507,27 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         $startedAt = safe_datetime($sess['started_at']);
         $isPractice = !($mode === 'Hướng dẫn' || $sessionType === 'guide');
         $attemptSequenceComplete = database_boolean($sess['attempt_sequence_complete'] ?? false);
+        $isHistoricalPass = $isPractice
+            && $isPassed === true
+            && !$attemptSequenceComplete
+            && str_starts_with((string)($sess['seed_batch'] ?? ''), 'firebase-v1-');
         $labId = (string)($sess['lab_id'] ?? '');
 
         if (!$isPractice) {
             $guideCount++;
         } else {
             $practiceCount++;
-            $totalDurationSec += $duration;
-            if ($duration > 0) {
-                $durationKnownPracticeSessionsCount++;
-            }
-            if (!$attemptSequenceComplete) {
-                $legacyIncompletePracticeSessionsCount++;
-            }
             if ($isPassed !== null && $attemptSequenceComplete) {
                 $gradedPracticeSessionsCount++;
+                $totalDurationSec += $duration;
+                if ($duration > 0) {
+                    $durationKnownPracticeSessionsCount++;
+                }
                 if ($isPassed) {
                     $passedPracticeSessionsCount++;
                 }
+            } elseif ($isHistoricalPass) {
+                $historicalPassedSessionsCount++;
             }
 
         }
@@ -1479,7 +1542,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                     'guide_count' => 0,
                     'graded_count' => 0,
                     'passed_count' => 0,
-                    'legacy_incomplete_count' => 0,
+                    'historical_pass_count' => 0,
                     'duration_sec' => 0,
                 ];
             }
@@ -1487,16 +1550,17 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                 $trendDaysMap[$dateKey]['guide_count']++;
             } else {
                 $trendDaysMap[$dateKey]['practice_count']++;
-                if (!$attemptSequenceComplete) {
-                    $trendDaysMap[$dateKey]['legacy_incomplete_count']++;
-                }
                 if ($isPassed !== null && $attemptSequenceComplete) {
                     $trendDaysMap[$dateKey]['graded_count']++;
                     if ($isPassed) {
                         $trendDaysMap[$dateKey]['passed_count']++;
                     }
+                } elseif ($isHistoricalPass) {
+                    $trendDaysMap[$dateKey]['historical_pass_count']++;
                 }
-                $trendDaysMap[$dateKey]['duration_sec'] += $duration;
+                if ($attemptSequenceComplete) {
+                    $trendDaysMap[$dateKey]['duration_sec'] += $duration;
+                }
             }
         }
 
@@ -1515,6 +1579,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'finished_at' => $finishedAt,
             'practice_attempt_no' => $sess['practice_attempt_no'] !== null ? (int)$sess['practice_attempt_no'] : null,
             'attempt_sequence_complete' => $attemptSequenceComplete,
+            'historical_pass' => $isHistoricalPass,
             'last_action' => (string)($sess['last_action'] ?? ''),
         ];
     }
@@ -1532,7 +1597,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'guide_count' => $data['guide_count'],
             'graded_count' => $data['graded_count'],
             'passed_count' => $data['passed_count'],
-            'legacy_incomplete_count' => $data['legacy_incomplete_count'],
+            'historical_pass_count' => $data['historical_pass_count'],
             'pass_rate_percent' => $dailyPassRate,
             'duration_sec' => $data['duration_sec'],
         ];
@@ -1561,12 +1626,24 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                ) AS legacy_incomplete_count,
                COUNT(*) FILTER (
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND s.is_passed IS TRUE
+                     AND s.attempt_sequence_complete IS FALSE
+                     AND s.seed_batch LIKE 'firebase-v1-%'
+               ) AS historical_pass_count,
+               COUNT(*) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND s.is_passed IS NOT NULL
+                     AND s.attempt_sequence_complete IS TRUE
                      AND COALESCE(s.duration_sec, 0) > 0
                ) AS duration_known_count,
                COALESCE(SUM(COALESCE(s.duration_sec, 0)) FILTER (
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND s.is_passed IS NOT NULL
+                     AND s.attempt_sequence_complete IS TRUE
                ), 0) AS practice_duration_sec
           FROM timer_sessions s
+          JOIN lab_catalog l ON l.lab_id = s.lab_id AND l.is_active = TRUE
+          JOIN device_catalog d ON d.device_id = l.device_id AND d.is_active = TRUE
          WHERE (
                s.user_id = CAST(:user_id AS uuid)
             OR (NULLIF(:email, '') IS NOT NULL AND LOWER(s.email) = LOWER(:email))
@@ -1574,6 +1651,19 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
          )
            AND s.status IN ('completed', 'failed')
            AND NOT COALESCE(s.is_mock, FALSE)
+           AND (
+               COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide')
+               OR s.session_type = 'guide'
+               OR (
+                   s.is_passed IS NOT NULL
+                   AND s.attempt_sequence_complete IS TRUE
+               )
+               OR (
+                   s.is_passed IS TRUE
+                   AND s.attempt_sequence_complete IS FALSE
+                   AND s.seed_batch LIKE 'firebase-v1-%'
+               )
+           )
         SQL
     );
     $sessionStatsQuery->execute([
@@ -1586,7 +1676,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
     $guideCount = (int)($allSessionStats['guide_count'] ?? 0);
     $gradedPracticeSessionsCount = (int)($allSessionStats['graded_count'] ?? 0);
     $passedPracticeSessionsCount = (int)($allSessionStats['passed_count'] ?? 0);
-    $legacyIncompletePracticeSessionsCount = (int)($allSessionStats['legacy_incomplete_count'] ?? 0);
+    $historicalPassedSessionsCount = (int)($allSessionStats['historical_pass_count'] ?? 0);
     $durationKnownPracticeSessionsCount = (int)($allSessionStats['duration_known_count'] ?? 0);
     $totalDurationSec = (int)($allSessionStats['practice_duration_sec'] ?? 0);
     $allSessionsCount = (int)($allSessionStats['total_sessions_count'] ?? 0);
@@ -1610,10 +1700,20 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
                      AND NOT COALESCE(s.attempt_sequence_complete, FALSE)
                ) AS legacy_incomplete_count,
+               COUNT(*) FILTER (
+                   WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND s.is_passed IS TRUE
+                     AND s.attempt_sequence_complete IS FALSE
+                     AND s.seed_batch LIKE 'firebase-v1-%'
+               ) AS historical_pass_count,
                COALESCE(SUM(COALESCE(s.duration_sec, 0)) FILTER (
                    WHERE NOT (COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide') OR s.session_type = 'guide')
+                     AND s.is_passed IS NOT NULL
+                     AND s.attempt_sequence_complete IS TRUE
                ), 0) AS duration_sec
           FROM timer_sessions s
+          JOIN lab_catalog l ON l.lab_id = s.lab_id AND l.is_active = TRUE
+          JOIN device_catalog d ON d.device_id = l.device_id AND d.is_active = TRUE
          WHERE (
                s.user_id = CAST(:user_id AS uuid)
             OR (NULLIF(:email, '') IS NOT NULL AND LOWER(s.email) = LOWER(:email))
@@ -1621,6 +1721,19 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
          )
            AND s.status IN ('completed', 'failed')
            AND NOT COALESCE(s.is_mock, FALSE)
+           AND (
+               COALESCE(s.mode, 'Thực hành') IN ('Hướng dẫn', 'guide')
+               OR s.session_type = 'guide'
+               OR (
+                   s.is_passed IS NOT NULL
+                   AND s.attempt_sequence_complete IS TRUE
+               )
+               OR (
+                   s.is_passed IS TRUE
+                   AND s.attempt_sequence_complete IS FALSE
+                   AND s.seed_batch LIKE 'firebase-v1-%'
+               )
+           )
            AND COALESCE(s.finished_at, s.started_at) IS NOT NULL
          GROUP BY activity_date
          ORDER BY activity_date
@@ -1636,6 +1749,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
         $passed = (int)$row['passed_count'];
         $practice = (int)$row['practice_count'];
         $guide = (int)$row['guide_count'];
+        $historical = (int)$row['historical_pass_count'];
         return [
             'date' => (string)$row['activity_date'],
             'total_sessions' => $practice + $guide,
@@ -1643,7 +1757,7 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'guide_count' => $guide,
             'graded_count' => $graded,
             'passed_count' => $passed,
-            'legacy_incomplete_count' => (int)$row['legacy_incomplete_count'],
+            'historical_pass_count' => $historical,
             'pass_rate_percent' => $graded > 0 ? round(100 * $passed / $graded, 1) : null,
             'duration_sec' => (int)$row['duration_sec'],
         ];
@@ -1685,12 +1799,14 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
             'rate_eligible_practice_sessions_count' => $gradedPracticeSessionsCount,
             'passed_practice_sessions_count' => $passedPracticeSessionsCount,
             'passed_eligible_practice_sessions_count' => $passedPracticeSessionsCount,
-            'legacy_incomplete_practice_sessions_count' => $legacyIncompletePracticeSessionsCount,
+            'historical_passed_sessions_count' => $historicalPassedSessionsCount,
+            'recorded_practice_sessions_count' => $gradedPracticeSessionsCount + $historicalPassedSessionsCount,
+            'legacy_incomplete_practice_sessions_count' => $historicalPassedSessionsCount,
             'practice_pass_rate_percent' => $practicePassRate,
             'total_practice_duration_sec'=> $totalDurationSec,
             'practice_duration_known_count' => $durationKnownPracticeSessionsCount,
-            'practice_duration_coverage_percent' => $practiceCount > 0
-                ? round(100 * $durationKnownPracticeSessionsCount / $practiceCount, 1)
+            'practice_duration_coverage_percent' => $gradedPracticeSessionsCount > 0
+                ? round(100 * $durationKnownPracticeSessionsCount / $gradedPracticeSessionsCount, 1)
                 : null,
         ],
         'device_progress' => $deviceProgressList,

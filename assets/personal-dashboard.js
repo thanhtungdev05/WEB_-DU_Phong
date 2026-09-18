@@ -247,12 +247,13 @@
     if (elMetricFirstTryBar) elMetricFirstTryBar.style.width = `${Math.min(100, firstTryPct || 0)}%`;
 
     const passRate = stats.practice_pass_rate_percent ?? null;
-    const submittedSessions = stats.submitted_practice_sessions_count ?? stats.practice_sessions_count ?? 0;
     const passedSessions = stats.passed_eligible_practice_sessions_count ?? stats.passed_practice_sessions_count ?? 0;
     const gradedSessions = stats.rate_eligible_practice_sessions_count ?? stats.graded_practice_sessions_count ?? 0;
-    const incompleteSessions = stats.legacy_incomplete_practice_sessions_count ?? 0;
+    const historicalPassedSessions = stats.historical_passed_sessions_count ?? 0;
     if (elMetricPassRateVal) elMetricPassRateVal.textContent = passRate === null ? '—' : `${passRate}%`;
-    if (elMetricPassRateSub) elMetricPassRateSub.textContent = `${passedSessions}/${gradedSessions} lượt đủ dữ liệu đạt · ${submittedSessions} phát sinh · ${incompleteSessions} thiếu lịch sử`;
+    if (elMetricPassRateSub) {
+      elMetricPassRateSub.textContent = `${passedSessions}/${gradedSessions} lượt đạt${historicalPassedSessions > 0 ? ` · ${historicalPassedSessions} lịch sử` : ''}`;
+    }
     if (elMetricPassRateBar) elMetricPassRateBar.style.width = `${Math.min(100, passRate || 0)}%`;
 
     const durationSec = stats.total_practice_duration_sec || 0;
@@ -260,7 +261,7 @@
     if (elMetricTimeVal) elMetricTimeVal.textContent = durFormatted.primary;
     const durationKnownCount = stats.practice_duration_known_count || 0;
     const durationCoverage = stats.practice_duration_coverage_percent ?? null;
-    if (elMetricTimeSub) elMetricTimeSub.textContent = `${durFormatted.secondary} · ${durationKnownCount}/${submittedSessions} lượt có thời lượng`;
+    if (elMetricTimeSub) elMetricTimeSub.textContent = `${durFormatted.secondary} · ${durationKnownCount}/${gradedSessions} lượt có thời lượng`;
     if (elMetricTimeBar) elMetricTimeBar.style.width = `${Math.min(100, durationCoverage || 0)}%`;
 
     // 3. Donut Progress
@@ -358,7 +359,8 @@
       practice: 0,
       guide: 0,
       passed: 0,
-      duration_sec: 0
+      duration_sec: 0,
+      historical: 0
     }));
 
     // Daily aggregates come from the complete server-side history, not the
@@ -376,6 +378,7 @@
           const pointTotal = Number(point.total_sessions);
           item.total += Number.isFinite(pointTotal) ? pointTotal : (Number(point.practice_count) || 0) + (Number(point.guide_count) || 0);
           item.passed += Number(point.passed_count) || 0;
+          item.historical += Number(point.historical_pass_count) || 0;
           item.duration_sec += Number(point.duration_sec) || 0;
         }
       }
@@ -385,6 +388,7 @@
     const totalMonthPractice = daysData.reduce((sum, d) => sum + d.practice, 0);
     const totalMonthGuide = daysData.reduce((sum, d) => sum + d.guide, 0);
     const totalMonthPassed = daysData.reduce((sum, d) => sum + d.passed, 0);
+    const totalMonthHistorical = daysData.reduce((sum, d) => sum + d.historical, 0);
 
     const width = elTrendChartContainer.clientWidth || 680;
     const height = 220;
@@ -459,7 +463,7 @@
         <div class="chart-summary-chip">
           <span>📊 Tổng tháng ${String(month).padStart(2, '0')}/${year}:</span>
           <strong>${totalMonthSessions} lượt thực hiện</strong>
-          <span>(${totalMonthPractice} thực hành, ${totalMonthGuide} hướng dẫn • ${totalMonthPassed} bài đạt)</span>
+          <span>(${totalMonthPractice} thực hành, ${totalMonthGuide} hướng dẫn • ${totalMonthPassed} lượt đạt${totalMonthHistorical > 0 ? ` • ${totalMonthHistorical} lịch sử` : ''})</span>
         </div>
         <div style="font-size: 11.5px; color: var(--text-muted);">
           Trục ngang: ngày 1 đến ${totalDays} trong tháng ${String(month).padStart(2, '0')}/${year}

@@ -2714,6 +2714,7 @@ function handle_dashboard(array $segments, string $method): void
                     timer.last_action,
                     timer.practice_attempt_no,
                     timer.attempt_sequence_complete,
+                    timer.seed_batch,
                     COALESCE(attribution.class_codes, \'[]\'::jsonb) AS assignment_class_codes
                  FROM timer_sessions timer
                  JOIN lab_catalog active_lab ON active_lab.lab_id = timer.lab_id
@@ -2946,12 +2947,14 @@ function handle_dashboard(array $segments, string $method): void
             'mode' => (string)($row['mode'] ?? 'Thực hành'),
             'device_id' => (string)($row['device_id'] ?? ''),
             'device_name' => $device,
+            'lab_id' => $labKey,
             'lab_name' => isset($labMap[$labKey]) ? $labMap[$labKey]['lab_name'] : (string)($row['lab_name'] ?? ''),
             'is_passed' => isset($row['is_passed']) ? (bool)$row['is_passed'] : null,
             'status' => (string)($row['status'] ?? ((isset($row['is_passed']) && $row['is_passed'] === false) ? 'failed' : 'completed')),
             'completed_first_try' => database_nullable_boolean($row['completed_first_try'] ?? null),
             'practice_attempt_no' => $row['practice_attempt_no'] !== null ? (int)$row['practice_attempt_no'] : null,
             'attempt_sequence_complete' => database_boolean($row['attempt_sequence_complete'] ?? true),
+            'seed_batch' => (string)($row['seed_batch'] ?? ''),
             'last_action' => (string)($row['last_action'] ?? ''),
             'assignment_class_codes' => $assignmentClassCodes,
         ];
@@ -2992,9 +2995,12 @@ function handle_dashboard(array $segments, string $method): void
                        progress.class_name,
                        progress.device_name,
                        progress.lab_name,
-                       progress.assignment_status AS status,
-                       progress.completed_at,
-                       progress.first_pass_attempt_no
+                       CASE WHEN evidence.has_completion_pass
+                            THEN 'passed' ELSE progress.assignment_status END AS status,
+                       COALESCE(evidence.passed_at, progress.completed_at) AS completed_at,
+                       evidence.first_pass_attempt_no,
+                       COALESCE(evidence.historical_pass_count, 0) AS historical_pass_count,
+                       COALESCE(evidence.recorded_practice_count, 0) AS recorded_practice_count
                   FROM v_lab_assignment_progress progress
                   JOIN users roster ON roster.user_id = progress.user_id
                    JOIN training_classes training ON training.class_id = progress.class_id
@@ -3002,6 +3008,59 @@ function handle_dashboard(array $segments, string $method): void
                    JOIN class_enrollments enrollment ON enrollment.enrollment_id = assignment.enrollment_id
                   LEFT JOIN class_lab_assignments class_assignment
                     ON class_assignment.class_lab_assignment_id = assignment.class_lab_assignment_id
+                  LEFT JOIN LATERAL (
+                      SELECT BOOL_OR(
+                                 session.is_passed IS TRUE
+                                 AND (
+                                     session.attempt_sequence_complete IS TRUE
+                                     OR (
+                                         session.attempt_sequence_complete IS FALSE
+                                         AND session.seed_batch LIKE 'firebase-v1-%'
+                                     )
+                                 )
+                             ) AS has_completion_pass,
+                             MIN(session.practice_attempt_no) FILTER (
+                                 WHERE session.is_passed IS TRUE
+                                   AND session.attempt_sequence_complete IS TRUE
+                             ) AS first_pass_attempt_no,
+                             MIN(COALESCE(session.finished_at, session.started_at, session.created_at)) FILTER (
+                                 WHERE session.is_passed IS TRUE
+                                   AND (
+                                       session.attempt_sequence_complete IS TRUE
+                                       OR (
+                                           session.attempt_sequence_complete IS FALSE
+                                           AND session.seed_batch LIKE 'firebase-v1-%'
+                                       )
+                                   )
+                             ) AS passed_at,
+                             COUNT(*) FILTER (
+                                 WHERE session.is_passed IS TRUE
+                                   AND session.attempt_sequence_complete IS FALSE
+                                   AND session.seed_batch LIKE 'firebase-v1-%'
+                             ) AS historical_pass_count,
+                             COUNT(*) FILTER (
+                                 WHERE (
+                                     session.is_passed IS NOT NULL
+                                     AND session.attempt_sequence_complete IS TRUE
+                                 )
+                                 OR (
+                                     session.is_passed IS TRUE
+                                     AND session.attempt_sequence_complete IS FALSE
+                                     AND session.seed_batch LIKE 'firebase-v1-%'
+                                 )
+                             ) AS recorded_practice_count
+                        FROM timer_sessions session
+                       WHERE session.lab_id = progress.lab_id
+                         AND (
+                             session.user_id = progress.user_id
+                             OR (session.user_id IS NULL AND NULLIF(progress.email, '') IS NOT NULL AND LOWER(session.email) = LOWER(progress.email))
+                             OR (session.user_id IS NULL AND NULLIF(session.email, '') IS NULL AND NULLIF(progress.employee_code, '') IS NOT NULL AND session.technician_id = progress.employee_code)
+                         )
+                         AND session.mode IN ('Thực hành', 'practice')
+                         AND session.status IN ('completed', 'failed')
+                         AND NOT COALESCE(session.is_mock, FALSE)
+                         AND COALESCE(session.started_at, session.finished_at, session.created_at) >= progress.assigned_at
+                  ) evidence ON TRUE
                   WHERE roster.is_terminated = FALSE
                     AND enrollment.status = 'active'
                    AND training.is_mock = FALSE
@@ -3027,6 +3086,8 @@ function handle_dashboard(array $segments, string $method): void
                     'first_pass_attempt_no' => $row['first_pass_attempt_no'] !== null
                         ? (int)$row['first_pass_attempt_no']
                         : null,
+                    'historical_pass_count' => (int)($row['historical_pass_count'] ?? 0),
+                    'recorded_practice_count' => (int)($row['recorded_practice_count'] ?? 0),
                 ];
             }
         } catch (Throwable $e) {

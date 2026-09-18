@@ -204,8 +204,9 @@ class H(SimpleHTTPRequestHandler):
         # 1) Duong dan quan tri CHI CO o ban gia lap (khong ton tai tren thiet
         #    bi that) — dat tien to __sim/ de khong bao gio lan voi duong that.
         if p in ("/__sim/dat_lai", "/api/reset", "/resetsession"):
-            kho.dat_lai_factory()
-            kho.dong_phien()
+            if sid:
+                kho.dat_lai_factory(sid)
+                kho.dong_phien(sid)
             return self._tra_json({"status": "ok", "message": "AC1000HI factory reset"})
         if p == "/__sim/kho":
             return self._tra_json(kho.tat_ca())
@@ -279,8 +280,9 @@ class H(SimpleHTTPRequestHandler):
         p = urlparse(self.path).path
 
         if p in ("/__sim/dat_lai", "/api/reset", "/resetsession"):
-            kho.dat_lai_factory()
-            kho.dong_phien()
+            if sid:
+                kho.dat_lai_factory(sid)
+                kho.dong_phien(sid)
             return self._tra_json({"status": "ok", "message": "AC1000HI factory reset"})
 
         # ------------------------------------------------------------------

@@ -87,14 +87,6 @@ def _luu():
         json.dump(_cache, f, ensure_ascii=False, indent=1)
 
 
-def dat_lai_factory():
-    global _cache
-    with _lock:
-        _cache = _seed()
-        _USER_CACHES.clear()
-        _luu()
-
-
 def co(resource):
     """Resource nay co bang chung that khong?"""
     with _lock:
@@ -248,7 +240,7 @@ def dat_lai_factory():
     user_key = lay_nguoi_dung_hien_tai()
     with _lock:
         if user_key and user_key in _USER_CACHES:
-            _USER_CACHES[user_key] = copy.deepcopy(_cache or _seed())
+            _USER_CACHES[user_key] = copy.deepcopy(_seed())
             return _USER_CACHES[user_key]
         _cache = _seed()
         _luu()

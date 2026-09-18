@@ -94,7 +94,11 @@ class FirebaseV1ImportContractTests(unittest.TestCase):
         self.assertIn("graded practice attempts with complete attempt evidence", self.report)
         self.assertIn("AS incomplete_attempt_count", self.report)
         self.assertIn("session.attempt_sequence_complete IS TRUE", self.report)
-        self.assertIn("incomplete_attempt_count", self.dashboard)
+        self.assertNotIn("incomplete_attempt_count", self.dashboard)
+        self.assertIn("recorded_practice_count", self.report)
+        self.assertIn("historical_pass_count", self.report)
+        self.assertIn("totalSessions: recordedPractices", self.dashboard)
+        self.assertIn("function isHistoricalPassSession", self.dashboard)
 
     def test_dashboard_version_tracks_in_place_session_and_legacy_corrections(self):
         self.assertIn("ADD COLUMN IF NOT EXISTS updated_at", self.sync_migration)
@@ -102,10 +106,12 @@ class FirebaseV1ImportContractTests(unittest.TestCase):
         self.assertIn("MAX(updated_at) FROM timer_sessions", self.api)
         self.assertIn("MAX(updated_at) FROM firebase_legacy_import_events", self.api)
 
-    def test_overview_attempt_metrics_include_historical_catalog(self):
+    def test_overview_attempt_metrics_require_active_v2_catalog_mapping(self):
         self.assertIn("all_valid_sessions AS", self.report)
-        self.assertIn("FROM all_valid_sessions session", self.report)
-        self.assertIn("FROM all_valid_sessions numbered", self.report)
+        self.assertIn("catalog_sessions AS", self.report)
+        self.assertIn("JOIN active_labs lab ON lab.lab_id = session.lab_id", self.report)
+        self.assertIn("FROM catalog_sessions session", self.report)
+        self.assertIn("FROM catalog_sessions numbered", self.report)
 
 
 if __name__ == "__main__":

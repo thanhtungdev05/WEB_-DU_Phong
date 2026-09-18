@@ -68,7 +68,7 @@ def get_client_state(key):
         return SIM_STATE
     with _STATE_LOCK:
         if key not in USER_STATES:
-            USER_STATES[key] = dict(SIM_STATE)
+            USER_STATES[key] = {}
         return USER_STATES[key]
 
 def apply_sim_state_to_html(html_str, show_success=False, page_path="", state=None):
@@ -238,8 +238,7 @@ class H(BaseHTTPRequestHandler):
 
         if p in ("/api/reset", "/resetsession") or "resetsession" in self.path.lower():
             with _STATE_LOCK:
-                SIM_STATE.clear()
-                USER_STATES.clear()
+                USER_STATES.pop(client_key, None)
             resp = b'{"status":"ok","message":"AX3000Hv2 state reset"}'
             return self._send(resp, "application/json; charset=utf-8")
 
@@ -380,14 +379,13 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         p = unquote(parsed.path)
+        client_key = self._client_key()
         if p in ("/api/reset", "/resetsession") or "resetsession" in self.path.lower():
             with _STATE_LOCK:
-                SIM_STATE.clear()
-                USER_STATES.clear()
+                USER_STATES.pop(client_key, None)
             resp = b'{"status":"ok","message":"AX3000Hv2 state reset"}'
             return self._send(resp, "application/json; charset=utf-8")
 
-        client_key = self._client_key()
         client_state = get_client_state(client_key)
         try:
             length = int(self.headers.get("Content-Length", 0) or 0)
@@ -398,19 +396,14 @@ class H(BaseHTTPRequestHandler):
                 for k, v in params.items():
                     if v:
                         client_state[k] = v[0]
-                        SIM_STATE[k] = v[0]
                         if k == "Username":
                             client_state["pppUserName"] = v[0]
-                            SIM_STATE["pppUserName"] = v[0]
                         elif k == "Password":
                             client_state["pppPassword"] = v[0]
-                            SIM_STATE["pppPassword"] = v[0]
                         elif k == "PreSharedKey":
                             client_state["PreSharedKey1"] = v[0]
-                            SIM_STATE["PreSharedKey1"] = v[0]
                         elif k == "PreSharedKey1":
                             client_state["PreSharedKey"] = v[0]
-                            SIM_STATE["PreSharedKey"] = v[0]
                 dns_keys = {k: client_state[k] for k in ['dnsTypeRadio', 'PrimaryDns', 'SecondDns'] if k in client_state}
                 print(f"[AX3000HV2 POST] DNS state after save: {dns_keys}")
         except Exception as e:

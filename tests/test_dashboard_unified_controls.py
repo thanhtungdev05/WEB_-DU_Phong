@@ -167,6 +167,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
     def test_report_year_follows_the_selected_month(self):
         self.assertIn("state.regionUsageYear = bounds.year", self.javascript)
         self.assertIn("Khác kỳ báo cáo đang chọn", self.javascript)
+        self.assertIn("100%* là kỳ chỉ có dữ liệu đạt lịch sử", self.html)
 
     def test_class_report_uses_compact_master_detail_overview(self):
         overview = self.html.index('id="classOverviewCard"')
@@ -175,9 +176,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         for heading in (
             "Số KTV",
             "Thiết bị đã giao",
-            "Lượt phát sinh",
-            "Lượt đủ dữ liệu",
-            "Thiếu dữ liệu lịch sử",
+            "Lượt thực hành",
             "KTV hoàn thành",
             "Tỷ lệ hoàn thành",
         ):
@@ -243,7 +242,31 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
     def test_asset_version_prevents_stale_control_styles(self):
         self.assertIn("css/styles.css?v=20260916-theme-system-v27", self.html)
         self.assertIn("css/dashboard-professional.css?v=20260917-roster-loading-v31", self.html)
-        self.assertEqual(self.html.count("20260917-roster-fast-pagination-v35"), 1)
+        self.assertEqual(self.html.count("20260918-dev-notices-v41"), 1)
+
+    def test_yellow_data_notices_are_visible_only_to_dev_role(self):
+        self.assertEqual(self.html.count("data-dev-only-notice"), 2)
+        self.assertIn("isDeveloper: false", self.javascript)
+        self.assertIn("state.isDeveloper = role === 'DEV'", self.javascript)
+        self.assertIn("function setDeveloperDiagnosticNotice", self.javascript)
+        self.assertIn("if (!state.isDeveloper)", self.javascript)
+
+    def test_each_dashboard_view_explains_its_data_scope(self):
+        for copy in (
+            "Trong kỳ báo cáo đã chọn",
+            "Tiến độ lũy kế; bài nộp trong kỳ báo cáo",
+            "Phát sinh trong kỳ; hoàn thành lũy kế đến cuối kỳ",
+            "Tiến độ lũy kế của từng KTV trong lớp",
+            "Toàn bộ lịch sử, thiết bị và kết quả của từng KTV",
+            "Dữ liệu hồ sơ hiện tại; cập nhật danh sách từ Excel",
+            "Dữ liệu lớp hiện tại; chọn KTV và giao thiết bị",
+        ):
+            self.assertIn(copy, self.javascript)
+
+    def test_session_modes_are_normalized_before_filters_run(self):
+        self.assertIn("function normalizeSessionMode(mode)", self.javascript)
+        self.assertIn("const normalizedMode = normalizeSessionMode(item.mode)", self.javascript)
+        self.assertIn("mode: normalizedMode", self.javascript)
 
     def test_wrapped_desktop_topbar_actions_stay_right_aligned(self):
         breakpoint_start = self.professional_css.index("@media (max-width: 1180px) and (min-width: 961px)")
@@ -278,6 +301,11 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
             self.assertNotIn(old_label, self.html)
         self.assertIn("Nhập danh sách KTV", self.javascript)
         self.assertNotIn("Import danh sách KTV", self.javascript)
+        self.assertIn("Lượt thực hành ghi nhận", self.html)
+        self.assertIn("Gồm lượt hợp lệ và lượt đạt lịch sử.", self.html)
+        self.assertIn("Lượt thực hành trong kỳ; kết quả hoàn thành tính lũy kế.", self.html)
+        self.assertIn("Mỗi ô hiển thị lượt đạt / lượt thực hành.", self.html)
+        self.assertNotIn("có đầy đủ kết quả và chuỗi lần làm", self.html)
 
     def test_all_views_share_a_compact_information_hierarchy(self):
         self.assertIn("Compact information hierarchy shared by every dashboard view", self.professional_css)

@@ -66,7 +66,7 @@ def get_client_state(key):
         return SIM_STATE
     with _STATE_LOCK:
         if key not in USER_STATES:
-            USER_STATES[key] = dict(SIM_STATE)
+            USER_STATES[key] = {}
         return USER_STATES[key]
 
 def apply_sim_state_to_html(html_str, p_path, state=None):
@@ -174,8 +174,7 @@ class H(BaseHTTPRequestHandler):
         # Reset session / API reset -> xoa state
         if p in ("/api/reset", "/resetsession") or "resetsession" in self.path.lower():
             with _STATE_LOCK:
-                SIM_STATE.clear()
-                USER_STATES.clear()
+                USER_STATES.pop(client_key, None)
             resp = b'{"status":"ok","message":"AC1000F state reset"}'
             return self._send(resp, "application/json; charset=utf-8")
 
@@ -317,14 +316,13 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         p = unquote(parsed.path)
+        client_key = self._client_key()
         if p in ("/api/reset", "/resetsession") or "resetsession" in self.path.lower():
             with _STATE_LOCK:
-                SIM_STATE.clear()
-                USER_STATES.clear()
+                USER_STATES.pop(client_key, None)
             resp = b'{"status":"ok","message":"AC1000F state reset"}'
             return self._send(resp, "application/json; charset=utf-8")
 
-        client_key = self._client_key()
         client_state = get_client_state(client_key)
         try:
             length = int(self.headers.get("Content-Length", 0) or 0)
@@ -336,7 +334,6 @@ class H(BaseHTTPRequestHandler):
                     for k, v in params.items():
                         if v:
                             client_state[k] = v[0]
-                            SIM_STATE[k] = v[0]
         except Exception as e:
             pass
 
