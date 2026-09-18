@@ -342,6 +342,9 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn("function renderBranchReportDrilldown", self.javascript)
         self.assertIn("els.branchMatrixCard.hidden = false", self.javascript)
         self.assertIn("els.branchKtvMatrixCard.hidden = false", self.javascript)
+        analytics_section = self.html[self.html.index('id="analytics"'):self.html.index('id="classMatrix"')]
+        self.assertIn("tổng số KTV đang hoạt động", analytics_section)
+        self.assertNotIn("số KTV được giao", analytics_section)
 
     def test_matrix_reports_do_not_render_a_duplicate_page_surface(self):
         for selector in (
