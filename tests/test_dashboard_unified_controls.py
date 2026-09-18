@@ -345,6 +345,10 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         analytics_section = self.html[self.html.index('id="analytics"'):self.html.index('id="classMatrix"')]
         self.assertIn("tổng số KTV đang hoạt động", analytics_section)
         self.assertNotIn("số KTV được giao", analytics_section)
+        ktv_matrix_start = analytics_section.index('id="branchKtvMatrixBody"')
+        ktv_table = analytics_section[:analytics_section.index('</table>', ktv_matrix_start)]
+        self.assertIn('class="detail-report-table class-matrix-table"', ktv_table)
+        self.assertIn('class="detail-report-scroll class-matrix-scroll"', analytics_section)
 
     def test_matrix_reports_do_not_render_a_duplicate_page_surface(self):
         for selector in (
