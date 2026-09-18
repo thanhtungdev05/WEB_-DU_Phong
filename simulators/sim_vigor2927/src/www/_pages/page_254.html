@@ -1,0 +1,25 @@
+<!DOCTYPE html><html ng-app=myApp ng-controller=TranslateCtrl><head><script src="/js/gettext.min.js?094907"></script><meta / charset=UTF-8><link href="/style.min.css?094907" rel=stylesheet type=text/css><script src="/js/webchange.js?094907"></script></head><style>
+body{width:800px;margin:5px auto;border:0px;}
+div{font-family:Arial, Helvetica, sans-serif; font-size:10pt;}
+
+p{margin:3px 0px;padding:3px 0px;font-size:10pt;}
+
+input[type=button] ,input[type=text]{
+ 	height: 25px;
+	color:#000;
+}
+button { height: 25px;color:#000;}
+a {font-weight:bold;}	
+	
+select {color:#000;}
+#header{margin-top:20px;}
+#dsen,#path,#usage {font-size:11pt;font-family:Arial, Helvetica, sans-serif;}
+#notiact {margin-top:30px;width:600px;}
+#notititle {font-size:12pt;font-weight:bold;color:#000;}
+.left {float:left;height:150px;width:100px;color:#000;font-size:11pt;}
+.right {float:left;height:150px;color:#000;font-size:11pt;}
+</style><body class=ng-cloak><textarea id=swmaltlog4init style="display: none;">
+	var aryDate = [0,0,0,0,0,0,0,285277185];
+	var aryMailProfile = ["","","","","","","","","",""];
+	var arySMSProfile = ["","","","","","","","","Custom 1","Custom 2"];
+</textarea><tr><td><b parent="Switch" sub-title translate>Database Setup</b><hr><form action=/cgi-bin/cgiswm.cgi method=post name=frm1><p id=dsen><input name=iDatabsEn onclick=dbEnable() type=checkbox value=1>Enable Database to Record alert logs and traffic history</p><p id=path>File Path : <span id="sFilePth"></span></p><p id=usage>Database Usage : <span id=sUsage></span></p><div id=notiact><p id=notititle translate>Notification and Action when Storage Exceeded</p><hr / style="border:none;border-top:2px solid #000;"><div class=left><p translate>Notification</p></div><div class=right><p><input name=iNotiType type=radio value=0>Don't send notification</p><p><input name=iNotiType type=radio value=1>Send notification</p><p> <a href="/cgi-bin/sms.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&sProfileAct=mailshowpage" style=margin-left:25px; translate>Email Notification Object</a>&nbsp;&nbsp; <select name=iEmailObj></select></p><p> <a href="/cgi-bin/sms.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&sProfileAct=showpage" style=margin-left:25px; translate>SMS Notification Object</a>&nbsp;&nbsp;&nbsp; <select name=iSMSObj></select></p></div><div style=clear:both></div><div class=left><p translate>Action</p></div><div class=right><p><input name=iDBBackup type=radio value=0>Stop recording alert logs and traffic history</p><p><input name=iDBBackup type=radio value=1>Backup and clean up all alert logs and traffic history, and start a new record</p></div></div><div style=clear:both></div><p align=center><input class=btnw onclick=onClkOK() type=button value="OK"></p><input name=webchange type=hidden value=0><input name=sAct type=hidden value=save><input name=sFormAuthStr type=hidden value="ZChZ65B1x7oWVPs"><input name=fid type=hidden value=37><div><b translate>Note</b>: <ol><li translate>In order to prevent data loss, we will start a new record at 45MB.</li></ol></div></form><script> top.iFwUpgradeState='0';top.act_sta.damage_alert();var bg=parent;var f=document.frm1;var appeinitScript=document.createElement('script');appeinitScript.text=document.getElementById("swmaltlog4init").value;document.head.appendChild(appeinitScript);angular.element(document).ready(function(){initParamter();});initWebChange();function initParamter(){for(i=0;i<aryMailProfile.length;i++){if(aryMailProfile[i]!="")f.iEmailObj.options[i]=new Option((i+1)+" - "+aryMailProfile[i],(i+1));else f.iEmailObj.options[i]=new Option((i+1)+" - ???",(i+1));}for(i=0;i<arySMSProfile.length;i++){if(arySMSProfile[i]!="")f.iSMSObj.options[i]=new Option((i+1)+" - "+arySMSProfile[i],(i+1));else f.iSMSObj.options[i]=new Option((i+1)+" - ???",(i+1));}bg.setVle2Elmt(f.iDatabsEn,aryDate[0],0);if(aryDate[1]==0){document.getElementById("sFilePth").innerText=gettext("No USB Disk Detected");document.getElementById("sFilePth").style.color="red";document.getElementById("sUsage").innerText=gettext("N/A");}else{document.getElementById("sFilePth").innerText=gettext("/db");var usage=eval(aryDate[2]/1024);var aaa=usage.toString();var num=aaa.indexOf(".");if(num==-1)var usage1=usage.toFixed(1);else var usage1=aaa.substring(0,num+2);var limit=50;document.getElementById("sUsage").innerText=usage1+gettext("MB")+" / "+limit+gettext("MB");document.getElementById("sUsage").style.color="green";}dbEnable();bg.setVle2Elmt(f.iNotiType[0],aryDate[3],0);bg.setVle2Elmt(f.iEmailObj,aryDate[4],0);bg.setVle2Elmt(f.iSMSObj,aryDate[5],0);bg.setVle2Elmt(f.iDBBackup[0],aryDate[6],0);}function dbEnable(){bg.cpntCtrl(f.iDatabsEn,f,f.iNotiType[0],6);if(0&&aryDate[1]==0)bg.cpntCtrl(0,f,f.iNotiType[0],6);}function onClkOK(){if(checkWebChange()){f.webchange.value='1';}bg.cpntCtrl(1,f,f.iNotiType[0],6);f.submit();}</script></body></html>

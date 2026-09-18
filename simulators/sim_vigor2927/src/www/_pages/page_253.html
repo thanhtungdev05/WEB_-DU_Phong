@@ -1,0 +1,94 @@
+<!DOCTYPE html><html ng-app=myApp ng-controller=TranslateCtrl><head><script src="/js/gettext.min.js?094907"></script><meta / charset=UTF-8><link href="/style.min.css?094907" rel=stylesheet type=text/css><script src="/js/dhtml.min.js?094907"></script><script src="/js/webchange.js?094907"></script><style>
+.color-dropdown {
+    position: relative;
+    width: 100px;
+}
+.selected-button {
+	width: 100%;
+	display: block;
+	padding: 5px 0;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	background: linear-gradient(90deg, #dddddd 0%, #fff 100%);
+    background: -moz-linear-gradient(90deg, #dddddd 0%, #fff 100%);
+    background: -webkit-linear-gradient(90deg, #dddddd 0%, #fff 100%);
+}
+.dropdown-container li {
+	width: 100%;
+	display: block;
+	padding: 5px 0;
+	background: linear-gradient(90deg, #dddddd 0%, #fff 100%);
+    background: -moz-linear-gradient(90deg, #dddddd 0%, #fff 100%);
+    background: -webkit-linear-gradient(90deg, #dddddd 0%, #fff 100%);
+}
+.selected-button span, .dropdown-content {
+	padding: 0 20px;
+	margin-right: 10px;
+}
+.selected-button:after {
+    content: "";
+    width: 0;
+    height: 0;
+    position: absolute;
+    right: 16px;
+    top: calc(50% + 4px);
+    margin-top: -6px;
+	border-width: 6px 6px 0 6px;
+    border-style: solid;
+	border-color: #2e2e2e transparent;
+}
+:hover::after {
+    border-color: #10ba14 transparent;
+}
+:disabled::after {
+	border-color: rgba(170, 170, 170, 0.9) transparent;
+}
+.dropdown-container {
+    position: absolute;
+	z-index: 10;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #e2e2e4;
+    font-weight: normal;
+	list-style-type: none;
+	padding-left: 0;
+	margin: 0;
+	border: 1px solid #ccc;
+	border-top: 0;
+	border-radius: 0 0 3px 3px;
+}
+.dropdown-container li:hover {
+    background: #eee;
+}
+.level-container {
+	position: relative;
+}
+.level-content {
+	position: absolute;
+	width: 100%;
+}
+.service-dropdown {
+	margin:7px 0;
+}
+button:disabled {
+	background: rgba(170, 170, 170, 0.1);
+    border-color: rgba(118, 118, 118, 0.3);
+}
+select {
+	width: 80%;
+	height: 25px;
+	text-align: center;
+}
+option {
+	text-align: center;
+}
+input[type=text] {
+	width:210px
+}
+</style></head><body class=ng-cloak><textarea id=swmaltlog1init style="display: none;">
+var arySmsProf = ["","","","","","","","","",""];
+var aryMailProf = ["","","","","","","","","",""];
+var alerttbl = [[1,1,"No Alert",0,0,0,0,0,0,0],[2,1,"Minor Alert",0,1,0,0,0,0,0],[3,1,"Moderate Alert",1,1,0,0,0,0,0],[4,1,"Major Alert",2,1,0,0,0,0,0],[5,0,"",0,0,0,0,0,0,0],[6,0,"",0,0,0,0,0,0,0],[7,0,"",0,0,0,0,0,0,0],[8,0,"",0,0,0,0,0,0,0]];
+var isAlertLogEn = 0 == 1;
+</textarea><table align=center border=0 cellpadding=0 cellspacing=0 width=1000><tr><td><b parent="Switch" sub-title translate>Alert and Log</b><hr><form action=/cgi-bin/cgiswm.cgi method=post name=frm1><table align=center border=0 cellpadding=2 cellspacing=0 width=100%><tr><th class=ontab id=tab1 onClick=gotolog(1) translate width=20%>Alert Setup</th><th class=offtab id=tab2 onClick=gotolog(2) translate width=20%>Switch and Port Setup</th><th class=offtab id=tab3 onClick=gotolog(3) translate width=20%>Alert Logs</th><th width=20%></th><td></td></tr></table><hr><table align=center border=0 cellpadding=2 cellspacing=0 width=100%><tr><td align=left><input name=enablealtlog ng-model=isAlertLogEn type=checkbox value=1>&nbsp;Alert and Log</td></tr><tr><td></td></tr><tr><td></td></tr><tr><td><table align=center border=0 cellpadding=2 cellspacing=0 width=100%><tr><th align=left translate>Alert Levels and Action</th><td align=right class=red>| <a class=DenyLink href=javascript:settodef(); translate>Set to Factory Default</a>|</td></tr><tr><td colspan=2><table align=center border=0 cellpadding=2 cellspacing=0 width=100%><tr height=30 style=background-color:#DDDDDD><th translate width=5%>Index</th><th translate width=7%>Enable</th><th translate>Level Name</th><th translate width=16%>Color</th><th translate width=10%>Create Log</th><th translate width=18%>Send Notification</th><th width=35%> <a href="/cgi-bin/sms.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&sProfileAct=servshowpage" translate>SMS/Email Service object</a></th></tr><tr class=row{{(iParent+1)%2}} ng-init="iParent = $index" ng-repeat="item in alertList track by $index" ng-style="(iParent < 2)?{'height': '109px'}:{'height': '162px'}"><td align=center>{{ iParent + 1 }}</td><td align=center><input name=altenbl{{iParent}} ng-checked=item.checked ng-disabled=!isAlertLogEn type=checkbox value=1></td><td align=center><div class=level-container><input maxlength=15 name=altlevlname{{iParent}} ng-disabled=!isAlertLogEn ng-value=item.levelName size=24 type=text><br><div class=level-content translate>max. 15 characters</div></div></td><td align=center><div ng-if="iParent == 0" translate>No Color</div><div ng-if="iParent != 0"><div class=color-dropdown><button class="selected-button" type="button" ng-click="toggleDropdown(iParent)" ng-disabled="!isAlertLogEn"><span ng-style="(isAlertLogEn)?{'background-color': item.sltColor}:{'background-color': item.sltColor, 'opacity': 0.8}"></span></button><ul class=dropdown-container ng-show=item.isVisible><li ng-click="setColor(iParent, iChild)" ng-init="iChild = $index" ng-repeat="color in colorList" ng-value=iChild><span class="dropdown-content" ng-style="{'background-color': color}"></span></li></ul><input name=tech{{iParent}} ng-value=item.sltColorVal type=hidden></div></div></td><td align=center ng-if="iParent < 2">{{ item.log.value }}</td><td align=center ng-if="iParent < 2">{{ item.note.value }}</td><td align=center ng-if="iParent > 1"><input name=creatlog{{iParent}} ng-checked=item.log.checked ng-disabled=!isAlertLogEn type=checkbox value=1></td><td align=center ng-if="iParent > 1"><input name=sendnotifi{{iParent}} ng-checked=item.note.checked ng-disabled=!isAlertLogEn type=checkbox value=1></td><td ng-if="iParent < 2">&nbsp;</td><td align=center ng-if="iParent > 1" valign=middle width=40%><div class=service-dropdown ng-init="iChild = $index" ng-repeat="choice in srvChoices[iParent-2]"><select id=sms{{iChild+1}}{{iParent}} name=sms{{iChild+1}}{{iParent}} ng-disabled=!isAlertLogEn ng-model=choice.selected ng-options="choice.name for choice in choice.options track by choice.index"></select></div></td></tr></table></td></tr></table></td></tr></table><br><br><table align=center><tr><td><input class=btnw name=btnOk onclick=onClkBtnOk() type=button value="OK"> &nbsp;<input class=btnw name=btnclek onclick=clkCl() type=button value="Cancel"></td></tr></table><input name=sFormAuthStr type=hidden value="ZChZ65B1x7oWVPs"><input name=fid type=hidden><input name=webchange type=hidden value=0></form></td></tr></table><script> top.iFwUpgradeState='0';top.act_sta.damage_alert();var appeinitScript=document.createElement('script');appeinitScript.text=document.getElementById("swmaltlog1init").value;document.head.appendChild(appeinitScript);var bg=parent;var f=document.frm1;angular.element(document).ready(function(){initPage();initWebChange();});function initPage(){var iAlertnum='8';var i,j,options=[];const colors=["#ffffff","#ff7c24","#f01c24"];const MAX_SMS_PROF=10,MAX_MAIL_PROF=10,MAX_DROPDOWN_NUM=4;$scope.isAlertLogEn=isAlertLogEn;$scope.alertList=[];$scope.srvChoices=[];$scope.colorList=colors;for(j=0;j<MAX_SMS_PROF;j++){options.push({index:j+1,name:(arySmsProf[j]!='')?"sms alert "+(j+1)+" - "+arySmsProf[j]:"sms alert "+(j+1)+" - "});}for(j=0;j<MAX_MAIL_PROF;j++){options.push({index:j+11,name:(aryMailProf[j]!='')?"mail alert "+(j+1)+" - "+aryMailProf[j]:"mail alert "+(j+1)+" - "});}for(i=0;i<iAlertnum;i++){$scope.alertList.push({checked:alerttbl[i][1]==1,levelName:alerttbl[i][2],isVisible:0,sltColor:colors[alerttbl[i][3]],sltColorVal:alerttbl[i][3],log:{},note:{}});if(i>1){$scope.alertList[i].log.checked=alerttbl[i][4]==1;$scope.alertList[i].note.checked=alerttbl[i][5]==1;$scope.srvChoices.push([{options:options,selected:options[(alerttbl[i][6]>0)?alerttbl[i][6]-1:0]},{options:options,selected:options[(alerttbl[i][7]>0)?alerttbl[i][7]-1:0]},{options:options,selected:options[(alerttbl[i][8]>0)?alerttbl[i][8]-1:0]},{options:options,selected:options[(alerttbl[i][9]>0)?alerttbl[i][9]-1:0]}]);}else{$scope.alertList[i].log.value=(i==0)?gettext("No Log"):gettext("Enable");$scope.alertList[i].note.value=gettext("No Notification");}}$scope.toggleDropdown=function(idx){$scope.alertList[idx].isVisible=!$scope.alertList[idx].isVisible;};$scope.setColor=function(pIdx,idx){$scope.alertList[pIdx].sltColorVal=idx;$scope.alertList[pIdx].sltColor=colors[idx];$scope.alertList[pIdx].isVisible=0;};$scope.$apply();}function clkCl(){document.location.href="/cgi-bin/cgiswm.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=30";}function onClkBtnOk(){if(checkWebChange()){f.webchange.value='1';}f.fid.value=31;f.submit();}function gotolog(idx){if(typeof(bg.per_page)=="undefined")bg.per_page=10;if(idx==1)document.location.href="/cgi-bin/cgiswm.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=30";else if(idx==2)document.location.href="/cgi-bin/cgiswm.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=33";else if(idx==3)document.location.href="/cgi-bin/cgiswm.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=35&per_page="+bg.per_page;}function settodef(){if(confirm(gettext("Do you want to set to factory default?")))document.location.href="/cgi-bin/cgiswm.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=32";}</script></body></html>

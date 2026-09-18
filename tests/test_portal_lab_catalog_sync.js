@@ -17,10 +17,10 @@ const expected = {
   be6500c: 'be6500c-bai',
   ONT_be6500c: 'ONT_be6500c-bai'
 };
-const hidden = ['vigor2927', 'mikrotik_hexs'];
+const hidden = ['mikrotik_hexs'];
 const supportedPortalDevices = [
   'ac1000f', 'ax3000c', 'ax3000gz', 'ax3000hv2', 'ax3000s',
-  'ac1000HI', 'be12000', 'be15000', 'be6500c', 'ONT_be6500c'
+  'ac1000HI', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c'
 ];
 const simulatorPrefixes = {
   ac1000f: '/sim_ac1000f/',

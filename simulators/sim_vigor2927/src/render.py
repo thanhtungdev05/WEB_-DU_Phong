@@ -25,6 +25,109 @@ SOURCE = os.path.normpath(os.path.join(BASE, "..", "reference", "source"))
 import vg_config_store as config_store
 
 
+# ------------------------------------------------------ tuong thich khung iframe
+# KHONG PHAI thay GIA TRI (nguyen tac 2.2 o tren khong ap dung o day): day la loi
+# moi trong scaffolding frame cua CHINH DU AN, khong phai loi cua thiet bi that.
+#
+# Tren router that, index.htm (frameset chua header/menu/act_sta/main) LUON LA
+# cua so top cung cua trinh duyet, nen firmware viet `top.xxx` de "voi" toi cac
+# bien toan cuc no khai bao (webcfg, act_sta, ACTION_STATUS...) — dung tren may
+# that vi o do top === index.htm. O day, index.htm lai bi nhung THEM 1 lop
+# <iframe> trong portal.html, nen `top` khong con la index.htm nua ma la
+# portal.html (khong co cac bien nay) -> moi trang goi top.act_sta.damage_alert()
+# deu nem TypeError ngay dong dau, lam crash toan bo script phia sau (bao gom ca
+# doan hien cac khoi UI an cho JS, vd tab IPv4 cua Bandwidth Limit).
+#
+# Sua bang cach doi `top.` thanh `parent.` CHI cho dung tap ten bien nay — day
+# la nhung ten CHAC CHAN thuoc ve index.htm (frame cha, luon dung du co bi nhung
+# them iframe hay khong), khong phai gia tri cau hinh cua thiet bi nen khong vi
+# pham nguyen tac "khong bia dat gia tri". Xem ISSUES.md muc [2026-xx-xx].
+_TOP_VE_PARENT = re.compile(
+    r'\btop\.(act_sta|webcfg|ACTION_STATUS|iActionStatusFlag|iFwUpgradeState|'
+    r'gettext|angular|myApp|locale)\b')
+
+
+def sua_top_thanh_parent(s):
+    """Doi top.X -> parent.X cho danh sach bien scaffolding frame o tren."""
+    return _TOP_VE_PARENT.sub(r'parent.\1', s)
+
+
+# ------------------------------------------------------ bat tab IPv6 (Vigor2927)
+# KHONG PHAI bia dat: phan HTML/JS cho tab IPv6 (Enable/Disable, Default Limit,
+# Limitation List... rieng cho IPv6) da CO SAN nguyen ven trong chinh trang goc
+# (vd doc/ipbandw.htm co du <div id=page2> cho IPv6), chi bi an boi co `ng-show`
+# doc theo bien `bDrayIpv6`. Bien nay do CGI that dien "0"/"1" tuy tinh trang
+# IPv6 tren WAN LUC CHUP — toan bo 12 file HAR (moi buoi crawl) deu ghi nhan la
+# "0" (thiet bi that dung de crawl chua bao gio bat IPv6 luc thu thap), NHUNG
+# ban DOM cu hon (_pages/page_081.html, cung chinh trang Bandwidth Limit nay)
+# lai co "1" — tuc la CHINH thiet bi that nay, o mot lan bat IPv6, da tung tra
+# ve tab IPv6 hoat dong that. Theo yeu cau anh Huynn (2026-xx-xx): bat cung
+# "1" de hien tab IPv6 cho muc dich dao tao, khong doi cau truc/HTML nao ca.
+_BAT_TAB_IPV6 = re.compile(r"\bbDrayIpv6\s*=\s*parseInt\('0'\)")
+
+
+def bat_tab_ipv6(s):
+    """Doi bDrayIpv6=parseInt('0') -> parseInt('1') de luon hien tab IPv6."""
+    return _BAT_TAB_IPV6.sub("bDrayIpv6=parseInt('1')", s)
+
+
+def sua_ipbandw_add(s):
+    """Trong doc/ipbandw.htm: dam bao khi click nut Add, neu o TX/RX bi trong
+    thi tu dong bu gia tri DefTx/DefRx de checkInput khong bi loi NaN va them thanh cong vao bang.
+    """
+    old = "var bw_tx=parseInt(f.sIpBandwTx.value)+parseInt((bg.getVleFromElmt(f.iProfTx,0)==0)?0:0x8000);"
+    new = (
+        "if(typeCode==0){"
+        "if(!f.sIpBandwTx.value||isNaN(parseInt(f.sIpBandwTx.value))){f.sIpBandwTx.value=(f.sIpBandwDefTx&&f.sIpBandwDefTx.value)?f.sIpBandwDefTx.value:'20';}"
+        "if(!f.sIpBandwRx.value||isNaN(parseInt(f.sIpBandwRx.value))){f.sIpBandwRx.value=(f.sIpBandwDefRx&&f.sIpBandwDefRx.value)?f.sIpBandwDefRx.value:'25';}"
+        "}"
+        "var bw_tx=parseInt(f.sIpBandwTx.value)+parseInt((bg.getVleFromElmt(f.iProfTx,0)==0)?0:0x8000);"
+    )
+    if old in s:
+        s = s.replace(old, new, 1)
+    return s
+
+
+def sua_ipbmac_add(s):
+    """Trong doc/ipbmac.htm: cho phep o IP Address nhan BAT KY dia chi IPv4
+    DUNG DINH DANG khi bam Add/Update, khong con bi checkInput() goc chan boi
+    3 dieu kien rang buoc theo LAN that: "khong thuoc Subnet LAN dang bat",
+    "trung IP cua LAN" va "la dia chi Subnet/Broadcast". Muc dich dao tao: hoc
+    vien co the nhap SAI IP roi van bam Add/OK duoc (se bi cham diem sai o buoc
+    so sanh dap an, TACH BACH voi buoc nhap lieu nay), thay vi bi native alert
+    chan ngay khong cho luu duoc vao IP Bind List. Van giu nguyen 2 kiem tra
+    con lai cua checkInput(): dung dinh dang IPv4 (bg.isStrIp) va MAC bat buoc
+    hop le (bg.isValidMac) — chi bo phan rang buoc theo dai LAN.
+    """
+    old = ("function checkInput(ip1,mac1){if(!bg.isStrIp(ip1)){alert(errMSG[0]);return false;}"
+           "for(var k=0;k<aryLanAlsEn.length;k++){if(aryLanAlsEn[k]==1&&bg.isEqualLan(aryLanAlsIp[k],aryLanAlsMsk[k],ip1))break;}"
+           "if(k==aryLanAlsEn.length){alert(errMSG[1]);return false;}"
+           "if(ip1==aryLanAlsIp[k]){alert(errMSG[2]);return false;}"
+           "if(isSubnetOrBroadcastIp(aryLanAlsIp[k],aryLanAlsMsk[k],ip1)){alert(errMSG[3]);return false;}"
+           "if(mac1==''){alert(errMSG[4]);return false;}"
+           "if(!bg.isValidMac(mac1))return false;return true;}")
+    new = ("function checkInput(ip1,mac1){if(!bg.isStrIp(ip1)){alert(errMSG[0]);return false;}"
+           "if(mac1==''){alert(errMSG[4]);return false;}"
+           "if(!bg.isValidMac(mac1))return false;return true;}")
+    if old in s:
+        s = s.replace(old, new, 1)
+    return s
+
+
+def sua_policyrt_detail(s, iPRIdx):
+    """Trong _pages/p2_188.html (trang chi tiet 1 rule Load-Balance/Route Policy,
+    fid=4041/gotoDetailSet): day la ban chup TINH cu, luon hien cung "Index: 0"
+    va gia tri an iPRIdx=0 bat ke hoc vien bam vao rule so may. Thay bang so
+    that lay tu tham so POST iPRIdx de hoc vien thay dung so rule dang sua."""
+    if not iPRIdx:
+        return s
+    s = s.replace("<b>Index:&nbsp;0</b>", "<b>Index:&nbsp;" + str(iPRIdx) + "</b>", 1)
+    s = s.replace('name=iPRIdx type=hidden value="0"',
+                   'name=iPRIdx type=hidden value="' + str(iPRIdx) + '"', 1)
+    return s
+
+
+
 # ------------------------------------------------------------ tien ich
 
 def _js(v):
@@ -308,6 +411,12 @@ def render(duong_dan_goc):
     cfg = config_store.trang(duong_dan_goc)
     s2, n_var = _thay_bien(s, cfg.get("vars", {}))
     s2, n_inp = _thay_input(s2, cfg.get("inputs", {}))
+    s2 = sua_top_thanh_parent(s2)
+    s2 = bat_tab_ipv6(s2)
+    if "ipbandw.htm" in duong_dan_goc:
+        s2 = sua_ipbandw_add(s2)
+    if "ipbmac.htm" in duong_dan_goc:
+        s2 = sua_ipbmac_add(s2)
     return s2.encode(enc, "replace"), {"bien": n_var, "input": n_inp,
                                        "goc_bytes": len(raw), "ra_bytes": len(s2)}
 

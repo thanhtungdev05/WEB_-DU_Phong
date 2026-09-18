@@ -6,18 +6,13 @@ if (!window.TOOLTIPS_VIGOR2927) window.TOOLTIPS_VIGOR2927 = {};
 
 window.TOOLTIPS_VIGOR2927._common_login = [
   {
-    selector: 'input.userpwd:not([type="password"])',
+    selector: 'input[name="aa"], input#username, input[name="username"], input.userpwd:not([type="password"])',
     text: 'Nhập admin',
     position: 'right'
   },
   {
-    selector: 'input.userpwd[type="password"]',
+    selector: 'input[name="ab"], input#password, input[name="password"], input.userpwd[type="password"]',
     text: 'Nhập admin',
     position: 'right'
-  },
-  {
-    selector: 'input.login',
-    text: 'Bấm Đăng Nhập',
-    position: 'bottom'
   }
 ];

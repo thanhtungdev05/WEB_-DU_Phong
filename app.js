@@ -119,7 +119,8 @@
     if (!deviceId) return false;
     const id = String(deviceId).trim().toLowerCase();
     return id === 'ax3000c' || id === 'ax3000hv2' || id === 'ax3000s' ||
-           id === 'ont_be6500c' || id === 'be6500c' || id === 'be12000';
+           id === 'ont_be6500c' || id === 'be6500c' || id === 'be12000' ||
+           id === 'vigor2927';
   }
 
   function populateDeviceDropdown(devices) {
@@ -581,6 +582,7 @@
                         btnVal.includes('apply') || 
                         btnVal.includes('submit') || 
                         btnVal.includes('lưu') || 
+                        ((currentDeviceId === 'vigor2927') && (btnVal === 'ok' || el.name === 'submit')) ||
                         ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
                         (el.type === 'submit' && el.tagName === 'INPUT');
                       if (isSaveOrApply) {
@@ -619,11 +621,30 @@
                         (btnVal === 'add' && !isOntBai6 && currentLessonId !== 'LAB_AC1000F_06') ||
                         btnVal === 'delete' || btnVal === 'undo' || btnVal === 'cancel' || btnVal === 'reset';
 
+                      // Nút chuyển trang chi tiết Vigor2927: TUYỆT ĐỐI KHÔNG kích hoạt lưu cấu hình hay chấm điểm
+                      if (currentDeviceId === 'vigor2927') {
+                        const href = (el.getAttribute && el.getAttribute('href') || '').toLowerCase();
+                        const onclick = (el.getAttribute && el.getAttribute('onclick') || '').toLowerCase();
+                        const btnText = (el.value || el.textContent || '').trim().toLowerCase();
+                        if (btnText.includes('details page') || (el.name && el.name.toLowerCase().startsWith('btndtpage')) ||
+                            href.includes('gotodetailset') || onclick.includes('gotodetailset') ||
+                            href.includes('fid=2117') || onclick.includes('fid=2117') ||
+                            href.includes('fid=4041') || onclick.includes('fid=4041')) {
+                          doc._ftcIsClickingDetailsPage = true;
+                          doc._ftcIsSaved = false;
+                          window._hasClickedSaveInGuide = false;
+                          return;
+                        }
+                      }
+
                       if (!isExcludedAction) {
+                        const isVigorOk = (currentDeviceId === 'vigor2927') &&
+                          (btnVal === 'ok' || el.id === 'btn-pppoe-ok' || el.id === 'btn-ipbmac-ok' || (el.name && el.name.toLowerCase() === 'btnok') || el.name === 'submit');
                         const isSaveOrApply = btnVal.includes('save') || 
                           btnVal.includes('apply') || 
                           btnVal.includes('submit') || 
                           btnVal.includes('lưu') || 
+                          isVigorOk ||
                           (isOntBai6 && (el.classList.contains('dlg-luu') || el.closest('.MuiDialogActions-root') || btnVal === 'add')) ||
                           ((currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
                           (el.type === 'submit' && el.tagName === 'INPUT');
@@ -649,6 +670,18 @@
                           } catch (err) { }
                           triggerSaveFlashEffect(doc, el);
 
+                          if (currentDeviceId === 'vigor2927') {
+                            let statusMsg = doc.getElementById('ftc-save-status');
+                            if (!statusMsg) {
+                              statusMsg = doc.createElement('span');
+                              statusMsg.id = 'ftc-save-status';
+                              statusMsg.style.cssText = 'color:#15803d; font-weight:bold; font-size:13px; margin-left:12px; vertical-align:middle;';
+                              el.parentNode.insertBefore(statusMsg, el.nextSibling);
+                            }
+                            statusMsg.textContent = ' Đã lưu cấu hình thành công!';
+                            setTimeout(() => { if (statusMsg) statusMsg.textContent = ''; }, 3000);
+                          }
+
                           if (!isAx3000sBai2_2g) {
                             window._hasClickedSaveInGuide = true;
                             setTimeout(function () {
@@ -661,6 +694,45 @@
                     el = el.parentNode;
                   }
                 }, true);
+
+                // Xử lý riêng cho DrayTek Vigor2927: vô hiệu hóa confirm dialog và chặn form reload cho trang cấu hình (KHÔNG chặn form login)
+                if (currentDeviceId === 'vigor2927') {
+                  try {
+                    const win = doc.defaultView || doc.parentWindow;
+                    if (win) {
+                      win.confirm = () => true;
+                      win.alert = (m) => console.log('[Vigor Alert]', m);
+                    }
+                  } catch (e) { }
+
+                  const isLogin = doc.location && (doc.location.href.includes('weblogin') || doc.location.href.includes('login'));
+                  if (!isLogin && !doc._ftcVigorSubmitAttached) {
+                    doc.addEventListener('submit', function (ev) {
+                      const form = ev.target;
+                      const action = (form && form.action) ? form.action.toLowerCase() : '';
+                      if (action.includes('wlogin') || action.includes('login')) return; // Bỏ qua login form
+
+                      const fidVal = form && form.elements && form.elements.fid ? String(form.elements.fid.value) : '';
+                      const iActVal = form && form.elements && form.elements.iAct ? String(form.elements.iAct.value) : '';
+                      if (doc._ftcIsClickingDetailsPage || (fidVal === '2117' && iActVal === '0') || fidVal === '102' || (fidVal === '2087' && iActVal === '0') || fidVal === '4041') {
+                        doc._ftcIsClickingDetailsPage = false;
+                        doc._ftcIsSaved = false;
+                        window._hasClickedSaveInGuide = false;
+                        if (form.action && !form.action.includes('/sim_vigor2927/') && form.action.includes('/cgi-bin/')) {
+                          form.action = form.action.replace('/cgi-bin/', '/sim_vigor2927/cgi-bin/');
+                        }
+                        return; // Cho phép submit bình thường, không preventDefault
+                      }
+
+                      ev.preventDefault();
+                      window._hasClickedSaveInGuide = true;
+                      doc._ftcIsSaved = true;
+                      try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch (ex) { }
+                      return false;
+                    }, true);
+                    doc._ftcVigorSubmitAttached = true;
+                  }
+                }
 
                 // Đánh dấu người dùng đã chạm vào ô nhập liệu để tránh bị clear tự động
                 // Đồng thời hủy bỏ trạng thái "Đã Save" nếu người dùng sửa lại dữ liệu

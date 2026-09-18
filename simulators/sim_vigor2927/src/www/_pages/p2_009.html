@@ -1,0 +1,129 @@
+<!DOCTYPE html><html ng-app=myApp ng-controller=TranslateCtrl><head><script src="/js/gettext.min.js?094907"></script><meta / charset=UTF-8><meta content="30; URL=/cgi-bin/V2X00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=2015" http-equiv=Refresh><link href="/style.min.css?094907" rel=stylesheet type=text/css></head><body class=ng-cloak><table align=center border=0 cellpadding=0 cellspacing=0 class=tblbg width=700><tr><td width=15>&nbsp;</td><td><table align=center border=0 cellpadding=0 cellspacing=0 width=100%><tr><td valign=top><b parent="System Maintenance" sub-title translate>System Status</b><hr><table align=center border=0 cellpadding=0 cellspacing=0 width=100%><tr><td align=left valign=top width=50%><table align=left border=0 cellpadding=0 cellspacing=0 width=100%><tr><td class=arial translate width=50%>Model Name</td><td class=arial width=50%>&nbsp;:&nbsp;Vigor2927</td></tr><tr><td class=arial translate>Firmware Version</td><td class=arial>&nbsp;:&nbsp;4.4.5.7</td></tr><tr><td class=arial translate>Build Date/Time</td><td class=arial>&nbsp;:&nbsp;Oct 23 2024 09:49:07</td></tr><tr ng-if=bAV><td class=arial translate>Signature Version</td><td class=arial>&nbsp;:&nbsp;<font color=red>(nil)</font></td></tr><tr ng-if=bAV><td class=arial translate>Signature Build Date</td><td class=arial>&nbsp;:&nbsp;<font color=red>(nil)</font></td></tr></table></td><td align=left valign=top width=50%><table align=left border=0 cellpadding=0 cellspacing=0 ng-if=sysInfo width=100%><tr><th translate>System</th></tr><tr><td><table align=center border=0 cellpadding=0 cellspacing=0 width=90%><tr><td translate width=50%>CPU Usage</td><td width=50%>&nbsp;:&nbsp;</td></tr><tr><td translate>Total Memory</td><td>&nbsp;: <script> var Memory='';Memory=Memory.replace(/\)/,"");Memory=Memory.split("/")[1];document.write(Memory);</script></td></tr><tr><td translate>Memory Usage</td><td>&nbsp;: <script>var usage='';usage=usage.split("(")[0];document.write(usage);</script></td></tr></table></td></tr></table></td></tr></table><br><table align=center border=1 cellpadding=0 cellspacing=0 width=100%><tr><th translate>LAN</th></tr><tr><td><table align=center border=0 cellpadding=0 cellspacing=0 width=98%><tr><td>&nbsp;</td><td translate>MAC Address</td><td><span ng-if="first">1st&nbsp;</span>IP Address</td><td><span ng-if="first">1st&nbsp;</span>Subnet Mask</td><td translate>DHCP Server</td><td translate>DNS</td></tr><tr ng-if=item.showLan ng-repeat="item in lanInfo"><td>{{item.name}}</td><td>{{item.mac}}</td><td>{{item.ip}}</td><td>{{item.mask}}</td><td>{{item.dhcp}}</td><td>{{item.prim}}</td></tr></table></td></tr></table><br><table align=center border=1 cellpadding=0 cellspacing=0 ng-if=!bWless width=100%><tr><th ng-if=bDualWless5G translate>Wireless LAN</th><th ng-if=!bDualWless5G translate>Wireless LAN(2.4GHz)</th></tr><tr><td><table align=center border=0 cellpadding=0 cellspacing=0 width=90%><tr><td translate width=30%>MAC Address</td><td translate width=30%>Frequency Domain</td><td translate width=30%>Firmware Version</td><td translate width=10%>SSID</td></tr><tr><td>{{sWlessMac}}</td><td>{{domainCodes}}</td><td></td><td nowrap>DrayTek-884338</td></tr></table></td></tr></table><span ng-if="bWless"><br></span><table align=center border=1 cellpadding=0 cellspacing=0 ng-if=!bDualWless5G width=100%><tr><th translate>Wireless LAN(5GHz)</th></tr><tr><td><table align=center border=0 cellpadding=0 cellspacing=0 width=90%><tr><td translate width=30%>MAC Address</td><td translate width=30%>Frequency Domain</td><td translate width=30%>Firmware Version</td><td translate width=10%>SSID</td></tr><tr><td>{{sWlessDualMacAddr}}</td><td>{{domainCodes}}</td><td></td><td nowrap>DrayTek5G-884338</td></tr></table></td></tr></table><span ng-if="bDualWless5G"><br></span><table align=center border=1 cellpadding=0 cellspacing=0 ng-show=adminauth width=100%><tr><th translate>WAN</th></tr><tr><td><table align=center border=0 cellpadding=0 cellspacing=0 class=table-striped width=100%><thead><tr><td>&nbsp;</td><td translate>Link Status</td><td translate>MAC Address</td><td translate>Connection</td><td translate>IP Address</td><td translate>Default Gateway</td></tr></thead><tbody><tr ng-repeat="item in wanInfo track by $index" ng-style="{'color': item.color}"><td align=center>{{item.name}}</td><td>{{item.status}}</td><td>{{item.mac}}</td><td>{{item.connMode}}</td><td>{{item.bandIp}}</td><td>{{item.gateIp}}</td></tr></tbody></table></td></tr></table><br ng-show=adminauth><table align=center border=1 cellpadding=0 cellspacing=0 ng-if=ipv6Info.hasIpv6 width=100%><tr><th translate>IPv6</th></tr><tr><td><table align=center border=0 cellpadding=0 cellspacing=0 class=table-striped width=98%><thead><tr><td>&nbsp;</td><td translate>Address</td><td translate>Scope</td><td translate>Internet Access Mode</td></tr></thead><tbody><tr ng-repeat="item in ipv6Info track by $index" ng-style="{'color': item.color}"><td>{{item.name}}</td><td>{{item.addr}}</td><td>{{item.scope}}</td><td>{{item.accMode}}</td></tr></tbody></table></td></tr></table><br><table align=center border=1 cellpadding=0 cellspacing=0 ng-if=voipInfo.hasVoip width=100%><tr><th translate>VoIP</th></tr><tr><td><table align=center border=0 cellpadding=0 cellspacing=0 width=98%><tr><td translate>Port</td><td translate>Profile</td><td translate>Reg.</td><td translate>In/Out</td></tr><tr ng-if=item.showPhone ng-repeat="item in voipInfo"><td>{{item.port}}</td><td>{{item.account}}</td><td>{{item.status}}</td><td>{{item.call}}</td></tr></table></td></tr></table><div ng-if="!(SHOW_SYS_ADMIN && (sWuiLevelNum == 2 || sWuiLevelNum == 3))"></div><div ng-if="SHOW_SYS_ADMIN && (sWuiLevelNum == 2 || sWuiLevelNum == 3)"><br><hr><span id="usermodemsg"><b>User Mode</b> is <font>ON</font> now.<b>User Mode</b> is <font>OFF</font> now.<b>User Mode 2</b> is <font>ON</font> now.<b>User Mode 2</b> is <font>OFF</font> now.</span></div></td></tr></table></td></tr></table><textarea id=statusinit style="display: none;">
+var sActPriDns = '8.8.8.8';
+var DmzSubnetList = ['DMZ PORT', '192.168.254.1', '255.255.255.0', 1,'0.0.0.0'];
+var IPRoutedList = ['IP Routed Subnet', '192.168.0.1', '255.255.255.0', 1, sActPriDns];
+if(webcfg.adminauth)
+	var arySubnetListTmp = [['LAN2','192.168.2.1','255.255.255.0',1,'0.0.0.0'],['LAN3','192.168.3.1','255.255.255.0',1,'0.0.0.0'],['LAN4','192.168.4.1','255.255.255.0',1,'0.0.0.0'],['LAN5','192.168.5.1','255.255.255.0',1,'0.0.0.0'],['LAN6','192.168.6.1','255.255.255.0',1,'0.0.0.0'],['LAN7','192.168.7.1','255.255.255.0',1,'0.0.0.0'],['LAN8','192.168.8.1','255.255.255.0',1,'0.0.0.0'],['LAN9','192.168.9.1','255.255.255.0',1,'0.0.0.0'],['LAN10','192.168.10.1','255.255.255.0',1,'0.0.0.0'],['LAN11','192.168.11.1','255.255.255.0',1,'0.0.0.0'],['LAN12','192.168.12.1','255.255.255.0',1,'0.0.0.0'],['LAN13','192.168.13.1','255.255.255.0',1,'0.0.0.0'],['LAN14','192.168.14.1','255.255.255.0',1,'0.0.0.0'],['LAN15','192.168.15.1','255.255.255.0',1,'0.0.0.0'],['LAN16','192.168.16.1','255.255.255.0',1,'0.0.0.0'], DmzSubnetList, IPRoutedList];
+else
+	var arySubnetListTmp = [['LAN2','192.168.2.1','255.255.255.0',1,'0.0.0.0'],['LAN3','192.168.3.1','255.255.255.0',1,'0.0.0.0'],['LAN4','192.168.4.1','255.255.255.0',1,'0.0.0.0'],['LAN5','192.168.5.1','255.255.255.0',1,'0.0.0.0'],['LAN6','192.168.6.1','255.255.255.0',1,'0.0.0.0'],['LAN7','192.168.7.1','255.255.255.0',1,'0.0.0.0'],['LAN8','192.168.8.1','255.255.255.0',1,'0.0.0.0'],['LAN9','192.168.9.1','255.255.255.0',1,'0.0.0.0'],['LAN10','192.168.10.1','255.255.255.0',1,'0.0.0.0'],['LAN11','192.168.11.1','255.255.255.0',1,'0.0.0.0'],['LAN12','192.168.12.1','255.255.255.0',1,'0.0.0.0'],['LAN13','192.168.13.1','255.255.255.0',1,'0.0.0.0'],['LAN14','192.168.14.1','255.255.255.0',1,'0.0.0.0'],['LAN15','192.168.15.1','255.255.255.0',1,'0.0.0.0'],['LAN16','192.168.16.1','255.255.255.0',1,'0.0.0.0'], DmzSubnetList];
+var aryWanName = ["","","","","",""];
+var v6conn_type = ['0','0','0','0','0','0'];//1:PPP 2:TSPC
+var v6color_val = ['0','0','0','0','0','0'];//1: green 0:red
+var sWlessMac = '62-c6-3b-98-64-55'.toUpperCase();
+var sWlessDualMacAddr = '62-c6-3b-98-64-55'.toUpperCase();
+var iBw1WanEnable = parseInt("1");
+var bVoIP = parseInt('0');
+var iPhoneEpType2 = '4';
+var iPhoneEpType3 = '(nil)';
+var bIsdn = !parseInt('0');
+var bDECT = !parseInt('0');
+var sWuiLevelNum = '2';
+var iDHCPType = parseInt("1");
+var sDHCPPri = '';
+
+var bNewWLWAN = parseInt('1');
+var bWless = !parseInt('0');
+var bDrayIpv6 = parseInt('1');
+var bDualWless5G = !parseInt('0');
+var sMLSubnet = 1;
+var iActSubnum = parseInt("8");
+var iSubnetNum = parseInt("16");
+var iDmzPrest = parseInt("1");
+var IntUK_2760End = '0';
+var wannum = parseInt("6");  //BWAN_NUM
+var iFixWanNum = parseInt("4");
+var iUSBNum = parseInt("2");
+var iSecUsbNum = parseInt("1");
+var DualDslEnable = parseInt("0") != 1;
+var bDualDSL = parseInt('0');
+var sLTEmodulename = 'LTE';
+var extra_vdsl_idx = iFixWanNum + iUSBNum;
+var idx_2nd_usb = iFixWanNum + iUSBNum - iSecUsbNum;
+var sPresetModel = '2927';
+var aryWanColor = [	'red',
+					'red',
+					'red',
+					'red',
+					'red',
+					'red'];
+
+var aryWanMode = [	'DHCP Client',
+					'DHCP Client',
+					'---',
+					'---',
+					'---',
+					'---'];
+
+var aryWanMac = [
+['14', '49', 'BC', '88', '43', '39'],
+['14', '49', 'BC', '88', '43', '3A'],
+['14', '49', 'BC', '88', '43', '3B'],
+['14', '49', 'BC', '88', '43', '3C'],
+['14', '49', 'BC', '88', '43', '3D'],
+['14', '49', 'BC', '88', '43', '3E']];
+
+var aryWanBandIp = ['---',
+					'---',
+					'---',
+					'---',
+					'---',
+					'---'];
+
+var aryWanGWIp = [	'---',
+					'---',
+					'---',
+					'---',
+					'---',
+					'---'];
+var bWAN2DISABLE = !parseInt('1');
+var iLTEIndexNum = '3';
+var bQLTE = parseInt('0');
+var multiip6 = '1';
+var Ipv6LanInfo = '##LAN1##Unicast Address:## FE80::1649:BCFF:FE88:4338/64 (Link)';
+if(multiip6 == 0){
+var aryIPv6WAN = ['##WAN1'.replace("##WAN1", ""), '##WAN2'.replace("##WAN2", ""),
+					'##%	Invalid interface:5 !##% Usage:##% ip6 addr -s <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-s: add an address##% ip6 addr -d <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-d: delete an address##% ip6 addr -a [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64]##%		-a: show addresses status##%		-u: show only unicast addresses. Ex: ip6 addr -a LAN1 -u##% ip6 addr -v [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2]##%		-v: show prefix list status##% ip6 addr -t <old-prefix> <old-prefix-length> <new-prefix> <new-prefix-length>##%              <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2>##% ip6 addr -o 1 : show old prefix list##%             2 : send old prefix option by RA##%             3 : <prefix> <prefix-length> <WAN1|...|WAN4|USB1|USB2>##%               : set old prefix eg. ip6 addr -o 3 2001:: 64 WAN2##% ip6 addr -l <prefix> <prefix-length> [LAN1|LAN2|...|LAN8|DMZ]##%		-l: add a ULA##% ip6 addr -[p|b] <prefix> <prefix-length> [WAN1|...|WAN4|USB1|USB2]##%		-p: [DBG]add an prefix to prefix list##%		-b: [DBG]delete an prefix from prefix list##% ip6 addr -x [LAN1|LAN2|...|LAN8|DMZ]##%		-x: automatic generate ULA##% ip6 addr -c [LAN1|LAN2|...|LAN8|DMZ]##%		-c: delete a ULA##% ip6 addr -e <type> <LAN1|LAN2|...|LAN8|DMZ>##%		-e: set ULA type; 0:disable; 1:static; 2:auto'.replace("##IF#5", ""), '##%	Invalid interface:6 !##% Usage:##% ip6 addr -s <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-s: add an address##% ip6 addr -d <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-d: delete an address##% ip6 addr -a [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64]##%		-a: show addresses status##%		-u: show only unicast addresses. Ex: ip6 addr -a LAN1 -u##% ip6 addr -v [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2]##%		-v: show prefix list status##% ip6 addr -t <old-prefix> <old-prefix-length> <new-prefix> <new-prefix-length>##%              <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2>##% ip6 addr -o 1 : show old prefix list##%             2 : send old prefix option by RA##%             3 : <prefix> <prefix-length> <WAN1|...|WAN4|USB1|USB2>##%               : set old prefix eg. ip6 addr -o 3 2001:: 64 WAN2##% ip6 addr -l <prefix> <prefix-length> [LAN1|LAN2|...|LAN8|DMZ]##%		-l: add a ULA##% ip6 addr -[p|b] <prefix> <prefix-length> [WAN1|...|WAN4|USB1|USB2]##%		-p: [DBG]add an prefix to prefix list##%		-b: [DBG]delete an prefix from prefix list##% ip6 addr -x [LAN1|LAN2|...|LAN8|DMZ]##%		-x: automatic generate ULA##% ip6 addr -c [LAN1|LAN2|...|LAN8|DMZ]##%		-c: delete a ULA##% ip6 addr -e <type> <LAN1|LAN2|...|LAN8|DMZ>##%		-e: set ULA type; 0:disable; 1:static; 2:auto'.replace("##IF#6", ""),
+					'##%	Invalid interface:7 !##% Usage:##% ip6 addr -s <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-s: add an address##% ip6 addr -d <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-d: delete an address##% ip6 addr -a [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64]##%		-a: show addresses status##%		-u: show only unicast addresses. Ex: ip6 addr -a LAN1 -u##% ip6 addr -v [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2]##%		-v: show prefix list status##% ip6 addr -t <old-prefix> <old-prefix-length> <new-prefix> <new-prefix-length>##%              <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2>##% ip6 addr -o 1 : show old prefix list##%             2 : send old prefix option by RA##%             3 : <prefix> <prefix-length> <WAN1|...|WAN4|USB1|USB2>##%               : set old prefix eg. ip6 addr -o 3 2001:: 64 WAN2##% ip6 addr -l <prefix> <prefix-length> [LAN1|LAN2|...|LAN8|DMZ]##%		-l: add a ULA##% ip6 addr -[p|b] <prefix> <prefix-length> [WAN1|...|WAN4|USB1|USB2]##%		-p: [DBG]add an prefix to prefix list##%		-b: [DBG]delete an prefix from prefix list##% ip6 addr -x [LAN1|LAN2|...|LAN8|DMZ]##%		-x: automatic generate ULA##% ip6 addr -c [LAN1|LAN2|...|LAN8|DMZ]##%		-c: delete a ULA##% ip6 addr -e <type> <LAN1|LAN2|...|LAN8|DMZ>##%		-e: set ULA type; 0:disable; 1:static; 2:auto'.replace("##IF#7", ""), '##%	Invalid interface:8 !##% Usage:##% ip6 addr -s <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-s: add an address##% ip6 addr -d <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-d: delete an address##% ip6 addr -a [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64]##%		-a: show addresses status##%		-u: show only unicast addresses. Ex: ip6 addr -a LAN1 -u##% ip6 addr -v [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2]##%		-v: show prefix list status##% ip6 addr -t <old-prefix> <old-prefix-length> <new-prefix> <new-prefix-length>##%              <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2>##% ip6 addr -o 1 : show old prefix list##%             2 : send old prefix option by RA##%             3 : <prefix> <prefix-length> <WAN1|...|WAN4|USB1|USB2>##%               : set old prefix eg. ip6 addr -o 3 2001:: 64 WAN2##% ip6 addr -l <prefix> <prefix-length> [LAN1|LAN2|...|LAN8|DMZ]##%		-l: add a ULA##% ip6 addr -[p|b] <prefix> <prefix-length> [WAN1|...|WAN4|USB1|USB2]##%		-p: [DBG]add an prefix to prefix list##%		-b: [DBG]delete an prefix from prefix list##% ip6 addr -x [LAN1|LAN2|...|LAN8|DMZ]##%		-x: automatic generate ULA##% ip6 addr -c [LAN1|LAN2|...|LAN8|DMZ]##%		-c: delete a ULA##% ip6 addr -e <type> <LAN1|LAN2|...|LAN8|DMZ>##%		-e: set ULA type; 0:disable; 1:static; 2:auto'];
+}else{
+var aryIPv6WAN = ['##WAN1'.replace("##WAN1", ""), '##WAN2'.replace("##WAN2", ""),
+					'##IF#7'.replace("##IF#5", ""), '##IF#8'.replace("##IF#6", ""),
+					'##%	Invalid interface:WAN5 !##% Usage:##% ip6 addr -s <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-s: add an address##% ip6 addr -d <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-d: delete an address##% ip6 addr -a [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64]##%		-a: show addresses status##%		-u: show only unicast addresses. Ex: ip6 addr -a LAN1 -u##% ip6 addr -v [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2]##%		-v: show prefix list status##% ip6 addr -t <old-prefix> <old-prefix-length> <new-prefix> <new-prefix-length>##%              <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2>##% ip6 addr -o 1 : show old prefix list##%             2 : send old prefix option by RA##%             3 : <prefix> <prefix-length> <WAN1|...|WAN4|USB1|USB2>##%               : set old prefix eg. ip6 addr -o 3 2001:: 64 WAN2##% ip6 addr -l <prefix> <prefix-length> [LAN1|LAN2|...|LAN8|DMZ]##%		-l: add a ULA##% ip6 addr -[p|b] <prefix> <prefix-length> [WAN1|...|WAN4|USB1|USB2]##%		-p: [DBG]add an prefix to prefix list##%		-b: [DBG]delete an prefix from prefix list##% ip6 addr -x [LAN1|LAN2|...|LAN8|DMZ]##%		-x: automatic generate ULA##% ip6 addr -c [LAN1|LAN2|...|LAN8|DMZ]##%		-c: delete a ULA##% ip6 addr -e <type> <LAN1|LAN2|...|LAN8|DMZ>##%		-e: set ULA type; 0:disable; 1:static; 2:auto'.replace("##IF#7", ""), '##%	Invalid interface:WAN6 !##% Usage:##% ip6 addr -s <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-s: add an address##% ip6 addr -d <prefix> <prefix-length> <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64>##%		-d: delete an address##% ip6 addr -a [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2|VPN1|...|VPN64]##%		-a: show addresses status##%		-u: show only unicast addresses. Ex: ip6 addr -a LAN1 -u##% ip6 addr -v [LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2]##%		-v: show prefix list status##% ip6 addr -t <old-prefix> <old-prefix-length> <new-prefix> <new-prefix-length>##%              <LAN1|LAN2|...|LAN8|DMZ|WAN1|...|WAN4|USB1|USB2>##% ip6 addr -o 1 : show old prefix list##%             2 : send old prefix option by RA##%             3 : <prefix> <prefix-length> <WAN1|...|WAN4|USB1|USB2>##%               : set old prefix eg. ip6 addr -o 3 2001:: 64 WAN2##% ip6 addr -l <prefix> <prefix-length> [LAN1|LAN2|...|LAN8|DMZ]##%		-l: add a ULA##% ip6 addr -[p|b] <prefix> <prefix-length> [WAN1|...|WAN4|USB1|USB2]##%		-p: [DBG]add an prefix to prefix list##%		-b: [DBG]delete an prefix from prefix list##% ip6 addr -x [LAN1|LAN2|...|LAN8|DMZ]##%		-x: automatic generate ULA##% ip6 addr -c [LAN1|LAN2|...|LAN8|DMZ]##%		-c: delete a ULA##% ip6 addr -e <type> <LAN1|LAN2|...|LAN8|DMZ>##%		-e: set ULA type; 0:disable; 1:static; 2:auto'];
+}
+if(bVoIP) {
+	var arySipAccnt = [
+		"", "",
+		"", "",
+		"", ""];
+	if('12' == 12)
+		arySipAccnt.concat([
+		"", "",
+		"", "",
+		"", ""]);
+} else {
+	var arySipAccnt = [];
+}
+var arySipStatus = [
+	'-', '-',
+	'-', '-',
+	'-', '-',
+	'-', '-',
+	'-', '-',
+	'-', '-' ];
+var aryDefSIPAccnt = [
+	'0', '0',
+	'0', '(nil)'];
+var aryVoIPInCall = [
+	'0', '0',
+	parseInt('0') + parseInt('0'),
+	parseInt('(nil)') + parseInt('(nil)'),
+	];
+var aryVoIPOutCall = [
+	'0', '0',
+	parseInt('0') + parseInt('0'),
+	parseInt('(nil)') + parseInt('(nil)'),
+	];
+var iUserMode1On = '0' == 1;
+var iUserMode2On = '0' == 1;
+var iWlessZone = parseInt("48");
+var ISDN_XHFC1SU_EXIST = '0' != 1;
+</textarea><script>var appeinitScript=document.createElement('script');appeinitScript.text=document.getElementById("statusinit").value;document.head.appendChild(appeinitScript);var bg=top;angular.element(document).ready(function(){initPage();});function initPage(){$scope.adminauth=webcfg.adminauth;$scope.SHOW_SYS_ADMIN=bg.SHOW_SYS_ADMIN;$scope.sWuiLevelNum=sWuiLevelNum;$scope.iUserMode1On=iUserMode1On;$scope.iUserMode2On=iUserMode2On;$scope.sWlessMac=sWlessMac;$scope.sWlessDualMacAddr=sWlessDualMacAddr;$scope.bDualWless5G=bDualWless5G;$scope.sysInfo=bg.SHOW_SYS_STATUS_SYSINFO&&bg.SHOW_SYS;$scope.first=!sMLSubnet;$scope.bAV=parseInt('0');$scope.bWless=bWless;const domainCodes={0x10:gettext("FCC"),0x20:gettext("Canada"),0x30:gettext("Europe"),0x31:gettext("Spain"),0x32:gettext("France"),0x40:gettext("Japan"),0x41:gettext("Japan(all)")};$scope.domainCodes=domainCodes[iWlessZone];$scope.lanInfo=new Array();$scope.lanInfo[0]={'showLan':1,'name':gettext('LAN')+(sMLSubnet?'1':''),'mac':'14-49-BC-88-43-38','ip':'192.168.1.1','mask':'255.255.255.0','dhcp':(iDHCPType==0)?gettext('OFF'):gettext('ON'),'prim':(sDHCPPri=='')?sActPriDns:sDHCPPri};if(sMLSubnet&&parent.SHOW_SYS_ADMIN){angular.forEach(arySubnetListTmp,function(lan,i){if(iDmzPrest!=1&&i==(iSubnetNum-1)||IntUK_2760End==1&&i==(iSubnetNum))return;$scope.lanInfo[i+1]={'showLan':!(iActSubnum<iSubnetNum&&(i+1)>=iActSubnum&&(i+1)<iSubnetNum),'name':(lan[0].indexOf('LAN')!=-1)?gettext('LAN')+(i+2):gettext(lan[0]),'mac':'14-49-BC-88-43-38','ip':lan[1],'mask':lan[2],'dhcp':(lan[3]==0)?gettext('OFF'):gettext('ON'),'prim':(lan[4]=='0.0.0.0')?sActPriDns:lan[4]};});}$scope.wanInfo=new Array();for(var i=0;i<wannum;i++){if(top.notSupportWAN.indexOf(i)!=-1)continue;if((bDualDSL&&extra_vdsl_idx==i&&DualDslEnable)||(iUSBNum==2&&iSecUsbNum==0&&idx_2nd_usb==(i+1)))continue;if(bNewWLWAN&&(i==2||i==3)&&bWless&&bDualWless5G)continue;else if(bNewWLWAN&&i==3&&bDualWless5G)continue;if(bWAN2DISABLE&&i==1)continue;$scope.wanInfo[i]={'color':aryWanColor[i],'name':(((i+1)==iLTEIndexNum)&&bQLTE)?gettext(sLTEmodulename):gettext("WAN")+(i+1)+(aryWanName[i]!=""?"("+aryWanName[i]+")":""),'status':gettext((aryWanColor[i]=="red")?"Disconnected":"Connected"),'mac':aryWanMac[i][0]+'-'+aryWanMac[i][1]+'-'+aryWanMac[i][2]+'-'+aryWanMac[i][3]+'-'+aryWanMac[i][4]+'-'+aryWanMac[i][5],'connMode':((sPresetModel=='2920'&&i==2)||(sPresetModel=='3200'&&i==4))?gettext("USB"):gettext(aryWanMode[i]),'bandIp':aryWanBandIp[i],'gateIp':aryWanGWIp[i]};}const v6conn_str=[gettext("Offline"),gettext("PPP"),gettext("TSPC"),gettext("AICCU"),gettext("DHCPv6 Client"),gettext("Static IPv6"),gettext("6in4 Static Tunnel"),gettext("6rd")];$scope.ipv6Info=new Array();if(Ipv6LanInfo!=""&&(Ipv6LanInfo.search(/##LAN1/)!=-1)){Ipv6LanInfo=Ipv6LanInfo.replace("##LAN1","").replace("##Unicast Address:## ","").replace(/\(|\)/g,"").split("## ");var ary_tmp=[];angular.forEach(Ipv6LanInfo,function(item,i){item=item.replace("##","");if(item!="")ary_tmp=item.split(" ");else ary_tmp[0]=ary_tmp[1]="---";$scope.ipv6Info[i]=new Object();if(i==0){$scope.ipv6Info[i]['name']=gettext("LAN");$scope.ipv6Info[i]['accMode']="---";}$scope.ipv6Info[i]['addr']=ary_tmp[0];$scope.ipv6Info[i]['scope']=ary_tmp[1];});}if(webcfg.adminauth){angular.forEach(aryIPv6WAN,function(str,i){if(i<v6conn_type.length&&v6conn_type[i]!=0){const base_wan=Ipv6LanInfo.length+i;$scope.ipv6Info[base_wan]=new Object();$scope.ipv6Info[base_wan]['color']=v6color_val[i]==0?"red":"green";if(str!=""){str=str.replace("##Unicast Address:## ","").replace(/\(|\)/g,"").split("## ");angular.forEach(str,function(wan){wan=wan.replace("##","").split(" ");if(wan[0]!=""&&wan[0].indexOf("Invalid")==-1){$scope.ipv6Info[base_wan]['addr']=wan[0];$scope.ipv6Info[base_wan]['scope']=wan[1];}else{$scope.ipv6Info[base_wan]['addr']="---";$scope.ipv6Info[base_wan]['scope']="---";}$scope.ipv6Info[base_wan]['name']=(((i+1)==iLTEIndexNum)&&bQLTE)?gettext(sLTEmodulename):gettext("WAN")+(i+1);$scope.ipv6Info[base_wan]['accMode']=v6conn_str[v6conn_type[i]];});}else{$scope.ipv6Info[base_wan]['addr']="---";$scope.ipv6Info[base_wan]['scope']="---";$scope.ipv6Info[base_wan]['name']=(((i+1)==iLTEIndexNum)&&bQLTE)?gettext(sLTEmodulename):gettext("WAN")+(i+1);$scope.ipv6Info[base_wan]['accMode']=v6conn_str[v6conn_type[i]];}}});}$scope.ipv6Info['hasIpv6']=bDrayIpv6;const aryPort=[gettext("Phone")+((bIsdn&&bDECT||!ISDN_XHFC1SU_EXIST)?"1":""),gettext("Phone")+2,gettext("ISDN"), gettext("ISDN2-TE")];$scope.voipInfo=new Array();angular.forEach(aryPort,function(item,i){$scope.voipInfo[i]={'port':(i<2)?item:"",'account':arySipAccnt[aryDefSIPAccnt[i]],'status':arySipStatus[aryDefSIPAccnt[i]]=="R"?gettext("Yes"):gettext("No"),'call':aryVoIPInCall[i]+"/"+aryVoIPOutCall[i]};});if(bVoIP&&bg.SHOW_VOIP){$scope.voipInfo['hasVoip']=1;$scope.voipInfo[0]['showPhone']=1;$scope.voipInfo[1]['showPhone']=bIsdn;if(bg.SHOW_VOIP_ISDN_ONOFFNET){if(bg.SHOW_VOIP_ISDNS0){$scope.voipInfo[2]['showPhone']=1;if(iPhoneEpType2==3)$scope.voipInfo[2]['port']=ISDN_XHFC1SU_EXIST?gettext("ISDN1-TE"):gettext("ISDN");else if(iPhoneEpType2==4)$scope.voipInfo[2]['port']=gettext("ISDN1-S0");$scope.voipInfo[3]['showPhone']=ISDN_XHFC1SU_EXIST;if(iPhoneEpType3==3)$scope.voipInfo[3]['port']=ISDN_XHFC1SU_EXIST?gettext("ISDN2-TE"):"";else if(iPhoneEpType3==4)$scope.voipInfo[3]['port']=gettext("ISDN2-S0");}else{$scope.voipInfo[2]['showPhone']=1;$scope.voipInfo[2]['port']=gettext("ISDN");}}}if(!ISDN_XHFC1SU_EXIST){$scope.voipInfo[0]['showPhone']=1;$scope.voipInfo[1]['showPhone']=1;$scope.voipInfo[2]['showPhone']=1;$scope.voipInfo[2]['port']=gettext("ISDN");}$scope.$apply();angular.element(document.querySelector("#usermodemsg translate font")).attr("color","red");}</script></body></html>
