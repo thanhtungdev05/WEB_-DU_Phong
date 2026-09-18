@@ -13,6 +13,7 @@ var lessonObj = {
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình một mạng Wi-Fi riêng biệt dành riêng cho các thiết bị IoT (Smart Home, Camera, v.v.). Cấu hình các thông số mạng Wi-Fi IoT trên băng tần 2.4G theo đúng yêu cầu dưới đây:',
+    '- Chọn cấu hình dòng: <span class="val">SSID2(2.4G)</span>',
     '- SSID Name: <span class="val">FPT IoT</span>',
     '- WPA Key: <span class="val">fptiot123</span>',
   ],
@@ -21,13 +22,35 @@ var lessonObj = {
     '[id="modal_field_SSID"]',
     '[id="modal_field_KeyPassphrase"] input'
   ],
+  onSimLoad: function (iframeWindow) {
+    try {
+      if (iframeWindow && iframeWindow.document) {
+        var doc = iframeWindow.document;
+        doc.querySelectorAll('.saved-ssid-index, .saved-ssid-val, .saved-key-val').forEach(function (el) { el.remove(); });
+        doc.querySelectorAll('[data-saved-ssid], [data-saved-key], [data-ssid-index]').forEach(function (el) {
+          delete el.dataset.savedSsid;
+          delete el.dataset.savedKey;
+          delete el.dataset.ssidIndex;
+        });
+      }
+    } catch (e) { }
+  },
   grading: {
-    description: 'Kiểm tra SSID và WPA Key (IoT) trên AX3000GZ',
+    description: 'Kiểm tra lựa chọn SSID2(2.4G), SSID Name và Mật khẩu (IoT) trên AX3000GZ',
     rules: [
+      {
+        id: 'wlan_ssid_index',
+        name: 'Chọn cấu hình dòng SSID2(2.4G)',
+        selector: '#cbi-json-WLANSSID1 .saved-ssid-index, #cbi-json-WLANSSID0 .saved-ssid-index, [id="modal_field_ssid_index"]',
+        expected: '2',
+        type: 'text_exact',
+        trim: true,
+        required: true
+      },
       {
         id: 'wlan_ssid_iot',
         name: 'Tên Wi-Fi IoT (SSID)',
-        selector: '[id="modal_field_SSID"]',
+        selector: '#cbi-json-WLANSSID1 .saved-ssid-val, #modal_overlay .modal[data-ssid-index="2"] [id="modal_field_SSID"]',
         expected: 'FPT IoT',
         type: 'text_exact',
         trim: true,
@@ -36,7 +59,7 @@ var lessonObj = {
       {
         id: 'wlan_key_iot',
         name: 'Mật khẩu Wi-Fi IoT (WPA Key)',
-        selector: '[id="modal_field_KeyPassphrase"] input',
+        selector: '#cbi-json-WLANSSID1 .saved-key-val, #modal_overlay .modal[data-ssid-index="2"] [id="modal_field_KeyPassphrase"] input',
         expected: 'fptiot123',
         type: 'text_exact',
         trim: true,
@@ -101,3 +124,6 @@ if (idx !== -1) {
 } else {
   window.DEVICE_AX3000GZ_LESSONS.push(lessonObj);
 }
+
+window.TOOLTIPS_AX3000GZ = window.TOOLTIPS_AX3000GZ || {};
+window.TOOLTIPS_AX3000GZ['LAB_AX3000GZ_03'] = lessonObj.guidePopups;

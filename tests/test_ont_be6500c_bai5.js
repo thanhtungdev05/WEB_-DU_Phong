@@ -18,17 +18,19 @@ assert.ok(Array.isArray(ontLessons), 'DEVICE_ONT_BE6500C_LESSONS must be an arra
 const ontBai5 = ontLessons.find(l => l.id === 'ONT_be6500c-bai5');
 assert.ok(ontBai5, 'ONT_be6500c-bai5 must exist');
 
-// guidePopups must NOT contain input[name="ipv4Settings.ipAddress"]
+// guidePopups must contain input[name="ipv4Settings.ipAddress"]
 const ipPopup = ontBai5.guidePopups.find(p => p.selector && p.selector.includes('ipv4Settings.ipAddress'));
-assert.strictEqual(ipPopup, undefined, 'guidePopups must NOT contain ipv4Settings.ipAddress tooltip');
+assert.ok(ipPopup, 'guidePopups must contain ipv4Settings.ipAddress tooltip');
+assert.strictEqual(ipPopup.expected, '192.168.1.1', 'ipPopup expected value must be 192.168.1.1');
 
-// clearFields must NOT clear ipv4Settings.ipAddress
-assert.ok(!ontBai5.clearFields.includes('input[name="ipv4Settings.ipAddress"]'), 'clearFields must not wipe ipv4Settings.ipAddress');
+// clearFields must clear ipv4Settings.ipAddress
+assert.ok(ontBai5.clearFields.includes('input[name="ipv4Settings.ipAddress"]'), 'clearFields must include ipv4Settings.ipAddress');
 
 // Verify remaining guidePopups
 const expectedPopups = [
   'Advanced',
   'LAN',
+  'IP Address (Gateway)',
   'Subnet Mask',
   'DHCP Server',
   'Start IP Address',
@@ -44,7 +46,7 @@ expectedPopups.forEach(text => {
 
 // 2. Verify portal.html cachebuster for bai5.js
 const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(/devices\/ONT_be6500c\/lessons\/bai5\.js\?v=20260916\d+/.test(portalContent),
+assert.ok(/devices\/ONT_be6500c\/lessons\/bai5\.js\?v=202609\d+/.test(portalContent),
   'portal.html must have updated cachebuster for ONT BE6500C bai5.js');
 
 console.log('ALL ONT BE6500C BAI 5 TESTS PASSED SUCCESSFULLY!');

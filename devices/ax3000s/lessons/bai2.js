@@ -5,7 +5,7 @@
 
 window.DEVICE_AX3000S_LESSONS = window.DEVICE_AX3000S_LESSONS || [];
 
-window.DEVICE_AX3000S_LESSONS.push({
+var lessonObj = {
   id: 'LAB_AX3000S_02',
   title: 'Cấu hình wifi',
   subtitle: 'Cấu hình wifi',
@@ -14,7 +14,6 @@ window.DEVICE_AX3000S_LESSONS.push({
     'Thực hiện cấu hình các thông số mạng Wi-Fi theo đúng yêu cầu dưới đây:',
     '- SSID Name: <span class="val">FPT Telecom</span>',
     '- WPA Key: <span class="val">19006600</span>',
-    '- Bandwidth (2.4G): <span class="val">20Mhz</span>',
   ],
   practiceUrl: '/sim_ax3000s/app.html#wlanBasicSetting2g',
   clearFields: [
@@ -23,8 +22,6 @@ window.DEVICE_AX3000S_LESSONS.push({
   ],
   grading: {
     description: 'Kiểm tra WLAN Basic Setting 2.4G/5G trên AX3000S',
-    
-    
     customGrading: function(allDocs) {
       let doc5g = null;
       let appWin = null;
@@ -43,7 +40,7 @@ window.DEVICE_AX3000S_LESSONS.push({
           passed: false,
           score: 0,
           passedCount: 0,
-          totalRules: 4,
+          totalRules: 3,
           details: [
             {
               id: 'wifi_5g_saved',
@@ -63,25 +60,19 @@ window.DEVICE_AX3000S_LESSONS.push({
       const ssidVal = ssidEl ? ssidEl.value.trim() : '';
       const pwdVal = pwdEl ? pwdEl.value.trim() : '';
       
-      let bwVal2g = '';
-      if (appWin && appWin.SIM && appWin.SIM.RADIOS && appWin.SIM.RADIOS[0]) {
-        bwVal2g = appWin.SIM.RADIOS[0].bandwidth;
-      }
-
       const isSaved = !!doc5g._ftcIsSaved;
 
       const ssidPassed = ssidVal === 'FPT Telecom';
       const pwdPassed = pwdVal === '19006600';
-      const bwPassed2g = bwVal2g === '20Mhz' || bwVal2g === '20'; // allow 20 or 20Mhz
       const savedPassed = isSaved;
 
-      const passed = ssidPassed && pwdPassed && bwPassed2g && savedPassed;
-      const score = (ssidPassed ? 20 : 0) + (pwdPassed ? 30 : 0) + (bwPassed2g ? 20 : 0) + (savedPassed ? 30 : 0);
+      const passed = ssidPassed && pwdPassed && savedPassed;
+      const score = (ssidPassed ? 35 : 0) + (pwdPassed ? 35 : 0) + (savedPassed ? 30 : 0);
 
       const details = [
         {
           id: 'wifi_ssid_5g',
-          name: 'Tên Wi-Fi (SSID) 5G',
+          name: 'Tên Wi-Fi (SSID)',
           expected: 'FPT Telecom',
           actual: ssidVal || '(Trống)',
           passed: ssidPassed,
@@ -89,23 +80,15 @@ window.DEVICE_AX3000S_LESSONS.push({
         },
         {
           id: 'wifi_key_5g',
-          name: 'Mật khẩu Wi-Fi (WPA Key) 5G',
+          name: 'Mật khẩu Wi-Fi (WPA Key)',
           expected: '19006600',
           actual: pwdVal || '(Trống)',
           passed: pwdPassed,
           message: pwdPassed ? 'Chính xác' : `Mong muốn: "19006600", Thực tế: "${pwdVal || 'Trống'}"`
         },
         {
-          id: 'wifi_bw_2g',
-          name: 'Bandwidth (2.4G)',
-          expected: '20Mhz',
-          actual: bwVal2g || '(Trống)',
-          passed: bwPassed2g,
-          message: bwPassed2g ? 'Chính xác' : `Mong muốn: "20Mhz", Thực tế: "${bwVal2g || 'Trống'}"`
-        },
-        {
           id: 'wifi_saved_5g',
-          name: 'Bấm Save để lưu cấu hình 5G',
+          name: 'Bấm Save để lưu cấu hình',
           expected: 'Đã bấm Save',
           actual: isSaved ? 'Đã bấm Save' : 'Chưa bấm Save',
           passed: savedPassed,
@@ -116,17 +99,23 @@ window.DEVICE_AX3000S_LESSONS.push({
       let passedCount = 0;
       if (ssidPassed) passedCount++;
       if (pwdPassed) passedCount++;
-      if (bwPassed2g) passedCount++;
       if (savedPassed) passedCount++;
 
       return {
         passed: passed,
         score: score,
         passedCount: passedCount,
-        totalRules: 4,
+        totalRules: 3,
         details: details
       };
     }
   },
-  guidePopups: []
-});
+  guidePopups: (window.TOOLTIPS_AX3000S && window.TOOLTIPS_AX3000S['LAB_AX3000S_02']) || []
+};
+
+var idx = window.DEVICE_AX3000S_LESSONS.findIndex(function (l) { return l.id === 'LAB_AX3000S_02'; });
+if (idx >= 0) {
+  window.DEVICE_AX3000S_LESSONS[idx] = lessonObj;
+} else {
+  window.DEVICE_AX3000S_LESSONS.push(lessonObj);
+}

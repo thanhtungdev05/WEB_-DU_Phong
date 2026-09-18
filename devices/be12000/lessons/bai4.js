@@ -37,81 +37,7 @@ var lessonData = {
     'input[name="sub_SerIPAddress20"]', 'input[name="sub_SerIPAddress21"]', 'input[name="sub_SerIPAddress22"]', 'input[name="sub_SerIPAddress23"]'
   ],
   grading: {
-    description: 'Kiểm tra cấu hình 4 octet của IPv4 DNS Server 1 & DNS Server 2 trên BE12000',
-    rules: [
-      {
-        id: 'dns1_octet0',
-        name: 'DNS 1 - Octet 1',
-        selector: '#sub_SerIPAddress10, input[name="sub_SerIPAddress10"]',
-        expected: ['210', '8', '1'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'dns1_octet1',
-        name: 'DNS 1 - Octet 2',
-        selector: '#sub_SerIPAddress11, input[name="sub_SerIPAddress11"]',
-        expected: ['245', '8', '1'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'dns1_octet2',
-        name: 'DNS 1 - Octet 3',
-        selector: '#sub_SerIPAddress12, input[name="sub_SerIPAddress12"]',
-        expected: ['31', '8', '1'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'dns1_octet3',
-        name: 'DNS 1 - Octet 4',
-        selector: '#sub_SerIPAddress13, input[name="sub_SerIPAddress13"]',
-        expected: ['220', '221', '8', '1'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'dns2_octet0',
-        name: 'DNS 2 - Octet 1',
-        selector: '#sub_SerIPAddress20, input[name="sub_SerIPAddress20"]',
-        expected: ['8', '1', '210'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'dns2_octet1',
-        name: 'DNS 2 - Octet 2',
-        selector: '#sub_SerIPAddress21, input[name="sub_SerIPAddress21"]',
-        expected: ['8', '1', '245'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'dns2_octet2',
-        name: 'DNS 2 - Octet 3',
-        selector: '#sub_SerIPAddress22, input[name="sub_SerIPAddress22"]',
-        expected: ['8', '4', '1', '31'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'dns2_octet3',
-        name: 'DNS 2 - Octet 4',
-        selector: '#sub_SerIPAddress23, input[name="sub_SerIPAddress23"]',
-        expected: ['8', '4', '1', '221', '220'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      }
-    ],
+    description: 'Kiểm tra cấu hình máy chủ IPv4 DNS Server 1 & DNS Server 2 (ghép đủ 4 octet) trên BE12000',
     customGrading: function (allDocs) {
       var doc = null;
       for (var i = 0; i < allDocs.length; i++) {
@@ -155,34 +81,48 @@ var lessonData = {
       var validDns1 = ['210.245.31.220', '210.245.31.221', '8.8.8.8', '1.1.1.1'];
       var validDns2 = ['8.8.8.8', '8.8.4.4', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
 
+      var isSaved = Boolean(
+        doc._ftcIsSaved ||
+        (doc.location && doc.location.search && doc.location.search.includes('save_success=1')) ||
+        (window.top && window.top._hasSuccHintStored) ||
+        window._hasSuccHintStored
+      );
+
       var dns1Passed = validDns1.indexOf(dns1) !== -1;
       var dns2Passed = validDns2.indexOf(dns2) !== -1;
 
       var passedCount = (dns1Passed ? 1 : 0) + (dns2Passed ? 1 : 0);
-      var passed = dns1Passed && dns2Passed;
-      var score = passedCount * 50;
+      var passed = dns1Passed && dns2Passed && isSaved;
+      var score = passed ? 100 : (isSaved ? passedCount * 50 : 0);
+
+      var d1Msg = dns1Passed
+        ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DNS')
+        : ('Mong muốn: "210.245.31.220" hoặc "8.8.8.8", Thực tế: "' + (dns1 || 'Trống') + '"');
+      var d2Msg = dns2Passed
+        ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DNS')
+        : ('Mong muốn: "8.8.8.8" hoặc "8.8.4.4", Thực tế: "' + (dns2 || 'Trống') + '"');
 
       return {
         passed: passed,
         score: score,
-        passedCount: passedCount,
+        passedCount: isSaved ? passedCount : 0,
         totalRules: 2,
         details: [
           {
             id: 'dns_server_1',
-            name: 'IPv4 DNS Server 1 (4 octet)',
+            name: 'IPv4 DNS Server 1 (IP hoàn chỉnh)',
             expected: '210.245.31.220 (hoặc 8.8.8.8)',
-            actual: dns1 || '(Trống)',
-            passed: dns1Passed,
-            message: dns1Passed ? 'Chính xác' : ('Mong muốn: "210.245.31.220", Thực tế: "' + (dns1 || 'Trống') + '"')
+            actual: (dns1 || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: dns1Passed && isSaved,
+            message: d1Msg
           },
           {
             id: 'dns_server_2',
-            name: 'IPv4 DNS Server 2 (4 octet)',
+            name: 'IPv4 DNS Server 2 (IP hoàn chỉnh)',
             expected: '8.8.8.8 (hoặc 8.8.4.4)',
-            actual: dns2 || '(Trống)',
-            passed: dns2Passed,
-            message: dns2Passed ? 'Chính xác' : ('Mong muốn: "8.8.8.8", Thực tế: "' + (dns2 || 'Trống') + '"')
+            actual: (dns2 || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: dns2Passed && isSaved,
+            message: d2Msg
           }
         ]
       };
@@ -205,20 +145,56 @@ var lessonData = {
       position: 'top'
     },
     {
+      selector: '#sub_SerIPAddress10:not(:disabled), input[id="sub_SerIPAddress10"]:not(:disabled)',
+      text: 'Bước 1: Nhập DNS Server 1 (Octet 1): 210',
+      position: 'right',
+      expected: '210'
+    },
+    {
+      selector: '#sub_SerIPAddress11:not(:disabled), input[id="sub_SerIPAddress11"]:not(:disabled)',
+      text: 'Bước 2: Nhập DNS Server 1 (Octet 2): 245',
+      position: 'right',
+      expected: '245'
+    },
+    {
+      selector: '#sub_SerIPAddress12:not(:disabled), input[id="sub_SerIPAddress12"]:not(:disabled)',
+      text: 'Bước 3: Nhập DNS Server 1 (Octet 3): 31',
+      position: 'right',
+      expected: '31'
+    },
+    {
       selector: '#sub_SerIPAddress13:not(:disabled), input[id="sub_SerIPAddress13"]:not(:disabled)',
-      text: 'Bước 1: Nhập IPv4 DNS Server 1: 210.245.31.220',
+      text: 'Bước 4: Nhập DNS Server 1 (Octet 4): 220',
       position: 'right',
       expected: '220'
     },
     {
+      selector: '#sub_SerIPAddress20:not(:disabled), input[id="sub_SerIPAddress20"]:not(:disabled)',
+      text: 'Bước 5: Nhập DNS Server 2 (Octet 1): 8',
+      position: 'right',
+      expected: '8'
+    },
+    {
+      selector: '#sub_SerIPAddress21:not(:disabled), input[id="sub_SerIPAddress21"]:not(:disabled)',
+      text: 'Bước 6: Nhập DNS Server 2 (Octet 2): 8',
+      position: 'right',
+      expected: '8'
+    },
+    {
+      selector: '#sub_SerIPAddress22:not(:disabled), input[id="sub_SerIPAddress22"]:not(:disabled)',
+      text: 'Bước 7: Nhập DNS Server 2 (Octet 3): 8',
+      position: 'right',
+      expected: '8'
+    },
+    {
       selector: '#sub_SerIPAddress23:not(:disabled), input[id="sub_SerIPAddress23"]:not(:disabled)',
-      text: 'Bước 2: Nhập IPv4 DNS Server 2: 8.8.8.8',
+      text: 'Bước 8: Nhập DNS Server 2 (Octet 4): 8',
       position: 'right',
       expected: '8'
     },
     {
       selector: '#Btn_apply_LocalDnsServer:not(.disableBtn), [id="Btn_apply_LocalDnsServer"]:not(.disableBtn)',
-      text: 'Bước 3: Nhấn Apply để lưu cấu hình DNS',
+      text: 'Bước 9: Nhấn Apply để lưu cấu hình DNS',
       position: 'top'
     }
   ]

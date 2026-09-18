@@ -110,6 +110,13 @@
     return false;
   }
 
+  function isSaveRequiredDevice(deviceId) {
+    if (!deviceId) return false;
+    const id = String(deviceId).trim().toLowerCase();
+    return id === 'ax3000c' || id === 'ax3000hv2' || id === 'ax3000s' ||
+           id === 'ont_be6500c' || id === 'be6500c' || id === 'be12000';
+  }
+
   function populateDeviceDropdown(devices) {
     deviceSelect.replaceChildren();
     devices.forEach(device => {
@@ -527,6 +534,16 @@
                         (el.type === 'submit' && el.tagName === 'INPUT');
                       if (isSaveOrApply) {
                         doc._ftcLastSaveInteraction = Date.now();
+                        // Lưu giữ giá trị password thực tế trước khi router (như ZTE BE12000) mask thành tabs
+                        try {
+                          doc.querySelectorAll('input[type="password"], .SpecialPassword, #Password, input[id*="Password"], input[id*="Passwd"]').forEach(function (inp) {
+                            const v = inp.value;
+                            if (typeof v === 'string' && v.replace(/[\t\s]/g, '') !== '') {
+                              inp._ftcRealValue = v;
+                              inp.dataset.ftcRealValue = v;
+                            }
+                          });
+                        } catch (err) { }
                         break;
                       }
                     }
@@ -561,13 +578,32 @@
                           (el.type === 'submit' && el.tagName === 'INPUT');
 
                         if (isSaveOrApply) {
+                          const isAx3000sBai2_2g = (currentLessonId === 'LAB_AX3000S_02') && 
+                            (doc.location && ((doc.location.href && doc.location.href.toLowerCase().includes('wlanbasicsetting2g')) || (doc.location.hash && doc.location.hash.toLowerCase().includes('wlanbasicsetting2g'))));
+
                           doc._ftcLastSaveInteraction = Date.now();
-                          window._hasClickedSaveInGuide = true;
                           doc._ftcIsSaved = true;
+                          if (isAx3000sBai2_2g) {
+                            doc._ftc2gSaved = true;
+                          }
+                          // Lưu giữ giá trị password thực tế trước khi router (như ZTE BE12000) mask thành tabs
+                          try {
+                            doc.querySelectorAll('input[type="password"], .SpecialPassword, #Password, input[id*="Password"], input[id*="Passwd"]').forEach(function (inp) {
+                              const v = inp.value;
+                              if (typeof v === 'string' && v.replace(/[\t\s]/g, '') !== '') {
+                                inp._ftcRealValue = v;
+                                inp.dataset.ftcRealValue = v;
+                              }
+                            });
+                          } catch (err) { }
                           triggerSaveFlashEffect(doc, el);
-                          setTimeout(function () {
-                            try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
-                          }, isOntBai6 ? 350 : 50);
+
+                          if (!isAx3000sBai2_2g) {
+                            window._hasClickedSaveInGuide = true;
+                            setTimeout(function () {
+                              try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
+                            }, isOntBai6 ? 350 : 50);
+                          }
                         }
                       }
                     }
@@ -581,31 +617,51 @@
                   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
                     e.target._ftcUserModified = true;
                   }
-                  if (e.isTrusted && !window._hasSuccHintStored) {
+                  if (e.isTrusted) {
+                    window._hasSuccHintStored = false;
                     window._hasClickedSaveInGuide = false;
                     doc._ftcIsSaved = false;
+                    doc._ftc2gSaved = false;
                   }
                 }, true);
                 doc.addEventListener('input', function (e) {
                   if (e.target) {
                     e.target._ftcUserModified = true;
+                    if (e.isTrusted && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+                      const val = e.target.value;
+                      if (typeof val === 'string' && val.replace(/[\t\s]/g, '') !== '') {
+                        e.target._ftcRealValue = val;
+                        e.target.dataset.ftcRealValue = val;
+                      }
+                    }
                   }
-                  if (e.isTrusted && !window._hasSuccHintStored) {
+                  if (e.isTrusted) {
+                    window._hasSuccHintStored = false;
                     window._hasClickedSaveInGuide = false;
                     doc._ftcIsSaved = false;
+                    doc._ftc2gSaved = false;
                   }
                 }, true);
                 doc.addEventListener('change', function (e) {
                   if (e.target) {
                     e.target._ftcUserModified = true;
+                    if (e.isTrusted && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+                      const val = e.target.value;
+                      if (typeof val === 'string' && val.replace(/[\t\s]/g, '') !== '') {
+                        e.target._ftcRealValue = val;
+                        e.target.dataset.ftcRealValue = val;
+                      }
+                    }
                   }
-                  if (e.isTrusted && !window._hasSuccHintStored) {
+                  if (e.isTrusted) {
                     // Nếu sự kiện change phát sinh do người dùng vừa click nút Save/Apply (blur khỏi input trong vòng 1.5s), không hủy cờ Save
                     if (doc._ftcLastSaveInteraction && (Date.now() - doc._ftcLastSaveInteraction < 1500)) {
                       return;
                     }
+                    window._hasSuccHintStored = false;
                     window._hasClickedSaveInGuide = false;
                     doc._ftcIsSaved = false;
+                    doc._ftc2gSaved = false;
                   }
                 }, true);
 
@@ -739,7 +795,7 @@
             } else {
               // 💡 CHẾ ĐỘ HƯỚNG DẪN:
               // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT:
-              if (noConfig || (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed)))) {
+              if (noConfig || (window._hasClickedSaveInGuide && evalResult && evalResult.passed)) {
                 // Nút Nộp bài SÁNG LÊN
                 if (btnSubmitLab) {
                   btnSubmitLab.disabled = false;
@@ -754,7 +810,15 @@
               } else {
                 // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
                 if (btnGuideErrors) {
-                  if (window._hasClickedSaveInGuide && evalResult && !evalResult.passed && !hasSuccHint) {
+                  if (window._hasClickedSaveInGuide && evalResult && !evalResult.passed) {
+                    if (currentLessonId === 'LAB_AX3000S_02') {
+                      const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+                      const hasSaved5g = allDocs.some(d => d.location && d.location.href.toLowerCase().includes('wlanbasicsetting5g') && d._ftcIsSaved);
+                      if (!hasSaved5g) {
+                        btnGuideErrors.style.display = 'none';
+                        return;
+                      }
+                    }
                     // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN để trợ giúp học tập
                     btnGuideErrors.style.display = 'flex';
                     btnGuideErrors.disabled = false;
@@ -1320,6 +1384,9 @@
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       const isAnyDocSaved = allDocs.some(d => {
         try {
+          if (currentLessonId === 'LAB_AX3000S_02' && d.location && d.location.href.toLowerCase().includes('wlanbasicsetting2g')) {
+            return false;
+          }
           return Boolean(d._ftcLastSaveInteraction && (d._ftcIsSaved === true || (d.location && d.location.search && d.location.search.includes('save_success=1'))));
         } catch (e) { return false; }
       });
@@ -1503,7 +1570,21 @@
               if (candEl.type === 'checkbox' || candEl.type === 'radio') {
                 candVal = candEl.checked ? (candEl.value || 'true') : 'false';
               } else {
-                candVal = (candEl.value !== undefined ? candEl.value : candEl.textContent || '').trim();
+                let rawVal = candEl.value !== undefined ? candEl.value : (candEl.textContent || '');
+                // Xử lý đặc biệt cho các ô password bị router (như ZTE BE12000) mask thành chuỗi toàn khoảng trắng/tabs "\t\t\t\t\t\t"
+                if (candEl.type === 'password' || (candEl.classList && candEl.classList.contains('SpecialPassword')) || (candEl.id && candEl.id.toLowerCase().includes('password'))) {
+                  const isMaskedOnly = (typeof rawVal === 'string') && (rawVal.replace(/[\t\s]/g, '') === '');
+                  if (isMaskedOnly) {
+                    if (candEl._ftcRealValue) {
+                      rawVal = candEl._ftcRealValue;
+                    } else if (candEl.dataset && candEl.dataset.ftcRealValue) {
+                      rawVal = candEl.dataset.ftcRealValue;
+                    } else if (candEl.getAttribute && candEl.getAttribute('data-ftc-real-value')) {
+                      rawVal = candEl.getAttribute('data-ftc-real-value');
+                    }
+                  }
+                }
+                candVal = (rule.trim !== false) ? String(rawVal).trim() : String(rawVal);
               }
               const compVal = (rule.trim !== false) ? String(candVal).trim() : String(candVal);
 
@@ -1536,13 +1617,32 @@
             if (!isMatch) {
               // Nếu chưa khớp, ưu tiên lấy radio/checkbox đang được chọn (checked), hoặc phần tử đã được nhập liệu (khác rỗng), hoặc phần tử cuối
               const activeRadio = els.find(e => (e.type === 'checkbox' || e.type === 'radio') && e.checked);
-              const nonEmptyEl = activeRadio || els.find(e => (e.value || '').trim() !== '') || els[els.length - 1];
+              const nonEmptyEl = activeRadio || els.find(e => {
+                let v = (e.value || '').trim();
+                if (v === '' && (e._ftcRealValue || (e.dataset && e.dataset.ftcRealValue))) {
+                  v = (e._ftcRealValue || e.dataset.ftcRealValue).trim();
+                }
+                return v !== '';
+              }) || els[els.length - 1];
               if (nonEmptyEl) {
                 chosenEl = nonEmptyEl;
                 if (chosenEl.type === 'checkbox' || chosenEl.type === 'radio') {
                   actualValue = chosenEl.checked ? (chosenEl.value || 'true') : 'false';
                 } else {
-                  actualValue = (chosenEl.value !== undefined ? chosenEl.value : chosenEl.textContent || '').trim();
+                  let rawVal = chosenEl.value !== undefined ? chosenEl.value : (chosenEl.textContent || '');
+                  if (chosenEl.type === 'password' || (chosenEl.classList && chosenEl.classList.contains('SpecialPassword')) || (chosenEl.id && chosenEl.id.toLowerCase().includes('password'))) {
+                    const isMaskedOnly = (typeof rawVal === 'string') && (rawVal.replace(/[\t\s]/g, '') === '');
+                    if (isMaskedOnly) {
+                      if (chosenEl._ftcRealValue) {
+                        rawVal = chosenEl._ftcRealValue;
+                      } else if (chosenEl.dataset && chosenEl.dataset.ftcRealValue) {
+                        rawVal = chosenEl.dataset.ftcRealValue;
+                      } else if (chosenEl.getAttribute && chosenEl.getAttribute('data-ftc-real-value')) {
+                        rawVal = chosenEl.getAttribute('data-ftc-real-value');
+                      }
+                    }
+                  }
+                  actualValue = (rule.trim !== false) ? String(rawVal).trim() : String(rawVal);
                 }
               }
             }
@@ -1564,17 +1664,15 @@
         }
       }
 
-      // Nếu đã có thông báo "Your data have been stored!", đối với BE12000 hoặc khi thiết bị đã xác nhận lưu thành công
+      // Nếu thiết bị có thông báo "Your data have been stored!" (BE12000), ghi nhận trạng thái đã lưu
       if (hasStoredNotification) {
-        isMatch = true;
-        if (!actualValue || actualValue === '(Chưa nhập / Chưa tìm thấy)') {
-          actualValue = expectedVal;
-        }
+        isSaved = true;
       }
 
+      const effectiveDeviceId = (device && device.id) ? device.id : currentDeviceId;
       if (isMatch) {
-        // Đối với thiết bị AX3000C, AX3000H v2 và AX3000S, bắt buộc trang chứa phần tử phải được bấm Save/Apply thành công
-        if ((currentDeviceId === 'ax3000c' || currentDeviceId === 'ax3000hv2' || currentDeviceId === 'ax3000s') && !isSaved) {
+        // Bắt buộc trang chứa phần tử phải được bấm Save/Apply thành công
+        if (isSaveRequiredDevice(effectiveDeviceId) && !isSaved) {
           isMatch = false;
         }
       }
@@ -1617,7 +1715,7 @@
       if (isMatch) {
         msg = 'Chính xác';
       } else {
-        if ((currentDeviceId === 'ax3000c' || currentDeviceId === 'ax3000hv2' || currentDeviceId === 'ax3000s') && elementFound && !isSaved) {
+        if (isSaveRequiredDevice(effectiveDeviceId) && elementFound && !isSaved) {
           msg = 'Chưa bấm Save để lưu cấu hình';
         } else {
           msg = `Mong muốn: "${expectedVal}", Thực tế: "${actualValue || 'Trống'}"`;
@@ -1636,7 +1734,7 @@
         id: rule.id,
         name: rule.name,
         expected: displayExpected,
-        actual: ((currentDeviceId === 'ax3000c' || currentDeviceId === 'ax3000hv2' || currentDeviceId === 'ax3000s') && elementFound && !isSaved) ? `${displayActual} (Chưa lưu)` : (displayActual || '(Chưa nhập / Chưa tìm thấy)'),
+        actual: (isSaveRequiredDevice(effectiveDeviceId) && elementFound && !isSaved) ? `${displayActual} (Chưa lưu)` : (displayActual || '(Chưa nhập / Chưa tìm thấy)'),
         passed: isMatch,
         message: msg
       });
@@ -1682,118 +1780,115 @@
     // === BỘ LỌC AUTO-BASELINE (TÌM THAO TÁC THỪA) ===
     let unexpectedErrors = [];
 
-    // Nếu đã có thông báo "Your data have been stored!", không kiểm tra lỗi thao tác thừa
-    if (!hasStoredNotification) {
-      allDocs.forEach(doc => {
-        if (doc._ftcOriginalValues) {
-          Object.keys(doc._ftcOriginalValues).forEach(uid => {
-            const originalValue = doc._ftcOriginalValues[uid];
-            const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
-            if (el) {
-              // Bỏ qua các trường thuộc trang hoặc form đăng nhập router
-              const isLoginField = (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
-                el.id === 'username' || el.id === 'password' ||
-                (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
-                (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password'))) ||
-                (el.value === 'admin' && (originalValue === '' || originalValue === null || originalValue === undefined));
-              if (isLoginField) return;
+    allDocs.forEach(doc => {
+      if (doc._ftcOriginalValues) {
+        Object.keys(doc._ftcOriginalValues).forEach(uid => {
+          const originalValue = doc._ftcOriginalValues[uid];
+          const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
+          if (el) {
+            // Bỏ qua các trường thuộc trang hoặc form đăng nhập router
+            const isLoginField = (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
+              el.id === 'username' || el.id === 'password' ||
+              (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
+              (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password'))) ||
+              (el.value === 'admin' && (originalValue === '' || originalValue === null || originalValue === undefined));
+            if (isLoginField) return;
 
-              // Bỏ qua các trường được cho phép hoặc nằm trong guidePopups (hướng dẫn từng bước của bài học)
-              const effectiveLesson = lesson || _currentLesson;
-              const guideList = (effectiveLesson && Array.isArray(effectiveLesson.guidePopups)) ? effectiveLesson.guidePopups : [];
-              const allowedSelectors = [
-                ...(effectiveLesson && Array.isArray(effectiveLesson.allowedSelectors) ? effectiveLesson.allowedSelectors : []),
-                ...(effectiveLesson && effectiveLesson.grading && Array.isArray(effectiveLesson.grading.allowedSelectors) ? effectiveLesson.grading.allowedSelectors : []),
-                ...guideList.map(g => g.selector).filter(Boolean)
-              ];
-              const isAllowedByLesson = allowedSelectors.some(sel => {
-                try {
-                  const matchedList = Array.from(doc.querySelectorAll(sel));
-                  if (matchedList.includes(el)) return true;
-                  // Tự động cho phép input đi kèm với component dropdown/select (ví dụ MUI Select)
-                  return matchedList.some(m => {
-                    if (m.contains && m.contains(el)) return true;
-                    if (el.name && m.id && m.id.includes(el.name)) return true;
-                    if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
-                    const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
-                    return mParent && mParent.contains(el);
-                  });
-                } catch (e) { return false; }
-              });
-              if (isAllowedByLesson) return;
+            // Bỏ qua các trường được cho phép hoặc nằm trong guidePopups (hướng dẫn từng bước của bài học)
+            const effectiveLesson = lesson || _currentLesson;
+            const guideList = (effectiveLesson && Array.isArray(effectiveLesson.guidePopups)) ? effectiveLesson.guidePopups : [];
+            const allowedSelectors = [
+              ...(effectiveLesson && Array.isArray(effectiveLesson.allowedSelectors) ? effectiveLesson.allowedSelectors : []),
+              ...(effectiveLesson && effectiveLesson.grading && Array.isArray(effectiveLesson.grading.allowedSelectors) ? effectiveLesson.grading.allowedSelectors : []),
+              ...guideList.map(g => g.selector).filter(Boolean)
+            ];
+            const isAllowedByLesson = allowedSelectors.some(sel => {
+              try {
+                const matchedList = Array.from(doc.querySelectorAll(sel));
+                if (matchedList.includes(el)) return true;
+                // Tự động cho phép input đi kèm với component dropdown/select (ví dụ MUI Select)
+                return matchedList.some(m => {
+                  if (m.contains && m.contains(el)) return true;
+                  if (el.name && m.id && m.id.includes(el.name)) return true;
+                  if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
+                  const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
+                  return mParent && mParent.contains(el);
+                });
+              } catch (e) { return false; }
+            });
+            if (isAllowedByLesson) return;
 
-              // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, DHCP, Wi-Fi IoT / WiFi5 enable, SSID broadcast
-              const isAuxToggle = (el.name && (
-                el.name.toLowerCase() === 'dnstyperadio' ||
-                el.name.toLowerCase() === 'dhcptyperadio' ||
-                el.name.toLowerCase().includes('enable_wifi') ||
-                el.name.toLowerCase().includes('wifi5') ||
-                el.name.toLowerCase().includes('essid_hide')
-              )) ||
-              (el.id && (
-                el.id.toLowerCase().includes('dnsrelay') ||
-                el.id.toLowerCase().includes('dhcp') ||
-                el.id.toLowerCase().includes('wifi5_enable') ||
-                el.id.toLowerCase().includes('enable_wifi')
-              ));
-              if (isAuxToggle) return;
+            // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, DHCP, Wi-Fi IoT / WiFi5 enable, SSID broadcast
+            const isAuxToggle = (el.name && (
+              el.name.toLowerCase() === 'dnstyperadio' ||
+              el.name.toLowerCase() === 'dhcptyperadio' ||
+              el.name.toLowerCase().includes('enable_wifi') ||
+              el.name.toLowerCase().includes('wifi5') ||
+              el.name.toLowerCase().includes('essid_hide')
+            )) ||
+            (el.id && (
+              el.id.toLowerCase().includes('dnsrelay') ||
+              el.id.toLowerCase().includes('dhcp') ||
+              el.id.toLowerCase().includes('wifi5_enable') ||
+              el.id.toLowerCase().includes('enable_wifi')
+            ));
+            if (isAuxToggle) return;
 
-              // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
-              const isExpected = rules.some(r => {
-                try {
-                  const matchedList = Array.from(doc.querySelectorAll(r.selector));
-                  if (matchedList.includes(el)) return true;
-                  return matchedList.some(m => {
-                    if (m.contains && m.contains(el)) return true;
-                    if (el.name && m.id && m.id.includes(el.name)) return true;
-                    if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
-                    const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
-                    return mParent && mParent.contains(el);
-                  });
-                } catch (e) { return false; }
-              });
+            // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
+            const isExpected = rules.some(r => {
+              try {
+                const matchedList = Array.from(doc.querySelectorAll(r.selector));
+                if (matchedList.includes(el)) return true;
+                return matchedList.some(m => {
+                  if (m.contains && m.contains(el)) return true;
+                  if (el.name && m.id && m.id.includes(el.name)) return true;
+                  if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
+                  const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
+                  return mParent && mParent.contains(el);
+                });
+              } catch (e) { return false; }
+            });
 
-              // Nếu KHÔNG nằm trong rule, nhưng lại bị sửa giá trị khác gốc
-              if (!isExpected) {
-                const currentValue = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
-                if (String(currentValue) !== String(originalValue)) {
-                  // Bỏ qua đánh giá radio bị tắt để tránh 1 lần click sinh 2 lỗi trùng lặp
-                  if (el.type === 'radio' && !el.checked) return;
+            // Nếu KHÔNG nằm trong rule, nhưng lại bị sửa giá trị khác gốc
+            if (!isExpected) {
+              const currentValue = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+              if (String(currentValue) !== String(originalValue)) {
+                // Bỏ qua đánh giá radio bị tắt để tránh 1 lần click sinh 2 lỗi trùng lặp
+                if (el.type === 'radio' && !el.checked) return;
 
-                  let labelText = getLabelForElement(el, doc);
-                  let formattedOriginal = '';
-                  let formattedCurrent = '';
+                let labelText = getLabelForElement(el, doc);
+                let formattedOriginal = '';
+                let formattedCurrent = '';
 
-                  if (el.type === 'checkbox' || el.type === 'radio') {
-                    formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
-                    formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
-                  } else if (el.tagName === 'SELECT') {
-                    try {
-                      let optOrig = el.querySelector(`option[value="${originalValue}"]`);
-                      let optCurr = el.querySelector(`option[value="${currentValue}"]`);
-                      formattedOriginal = optOrig ? optOrig.textContent.trim() : originalValue;
-                      formattedCurrent = optCurr ? optCurr.textContent.trim() : currentValue;
-                    } catch (e) {
-                      formattedOriginal = originalValue;
-                      formattedCurrent = currentValue;
-                    }
-                  } else {
-                    formattedOriginal = originalValue || 'Trống';
-                    formattedCurrent = currentValue || 'Trống';
+                if (el.type === 'checkbox' || el.type === 'radio') {
+                  formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
+                  formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
+                } else if (el.tagName === 'SELECT') {
+                  try {
+                    let optOrig = el.querySelector(`option[value="${originalValue}"]`);
+                    let optCurr = el.querySelector(`option[value="${currentValue}"]`);
+                    formattedOriginal = optOrig ? optOrig.textContent.trim() : originalValue;
+                    formattedCurrent = optCurr ? optCurr.textContent.trim() : currentValue;
+                  } catch (e) {
+                    formattedOriginal = originalValue;
+                    formattedCurrent = currentValue;
                   }
-
-                  unexpectedErrors.push({
-                    label: labelText,
-                    expected: formattedOriginal,
-                    actual: formattedCurrent
-                  });
+                } else {
+                  formattedOriginal = originalValue || 'Trống';
+                  formattedCurrent = currentValue || 'Trống';
                 }
+
+                unexpectedErrors.push({
+                  label: labelText,
+                  expected: formattedOriginal,
+                  actual: formattedCurrent
+                });
               }
             }
-          });
-        }
-      });
-    }
+          }
+        });
+      }
+    });
 
     // Đồng bộ lỗi thao tác thừa theo phiên nếu có (giữ nguyên lỗi nếu học viên chuyển sang trang khác)
     if (_trackingSession) {
@@ -1837,10 +1932,10 @@
       return true;
     });
 
-    // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa (hoặc có hasStoredNotification)
+    // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa
     const criteria = rules;
     const hasUnexpected = unexpectedErrors.length > 0;
-    const passed = hasStoredNotification || ((passedCount === criteria.length) && !hasUnexpected);
+    const passed = (passedCount === criteria.length) && !hasUnexpected;
 
     let finalTotalRules = rules.length + unexpectedErrors.length;
 
@@ -2664,6 +2759,30 @@
         }
       }
 
+      // Filter by requireSaved (chỉ hiện sau khi đã hoàn thành bấm Lưu / Save)
+      if (pop.requireSaved) {
+        const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+        const isSaved = Boolean(doc._ftcIsSaved || doc._ftc2gSaved) || 
+          allDocs.some(d => Boolean(d._ftcIsSaved || d._ftc2gSaved || (d.location && d.location.search && d.location.search.includes('save_success=1'))));
+        if (!isSaved) {
+          const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
+          if (oldBubble) oldBubble.remove();
+          return;
+        }
+      }
+
+      // Filter by hideWhenSaved (ẩn đi sau khi đã bấm Lưu / Save)
+      if (pop.hideWhenSaved) {
+        const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+        const isSaved = Boolean(doc._ftcIsSaved || doc._ftc2gSaved) || 
+          allDocs.some(d => Boolean(d._ftcIsSaved || d._ftc2gSaved || (d.location && d.location.search && d.location.search.includes('save_success=1'))));
+        if (isSaved) {
+          const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
+          if (oldBubble) oldBubble.remove();
+          return;
+        }
+      }
+
       let target = null;
       try {
         const elements = findGuideElements(doc, pop.selector);
@@ -2792,6 +2911,12 @@
         return;
       }
     }
+    if (_currentLesson && _currentLesson.id === 'LAB_AX3000S_02') {
+      const href = (simWin && simWin.location && simWin.location.href) ? simWin.location.href.toLowerCase() : '';
+      if (href.includes('wlanbasicsetting2g')) {
+        return;
+      }
+    }
 
     triggerSaveFlashEffect(simWin ? simWin.document : null, null);
     window._hasClickedSaveInGuide = true;
@@ -2823,8 +2948,8 @@
         }
       } else {
         // 💡 Chế độ Hướng dẫn:
-        if (noConfigSaved || window._hasSuccHintStored || (evalResult && evalResult.passed)) {
-          // Cấu hình ĐÚNG hoặc ĐÃ CÓ "Your data have been stored!" hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
+        if (noConfigSaved || (evalResult && evalResult.passed)) {
+          // Cấu hình ĐÚNG hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
           if (btnSubmitLab) {
             btnSubmitLab.disabled = false;
             btnSubmitLab.style.opacity = '1';

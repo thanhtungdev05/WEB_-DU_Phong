@@ -182,7 +182,7 @@
     return ds[chiSo];
   }
 
-  function moModal(dn, gt) {
+  function moModal(dn, gt, rowIdx, b) {
     gt = gt || {};
     var ov = document.getElementById('modal_overlay');
     if (!ov) return;
@@ -192,6 +192,34 @@
     hop.className = 'modal cbi-modal';
     hop.innerHTML = '';
     hop.appendChild(el('h4', '', dn.tieuDe || dn.muc || ''));
+
+    var ssidIndex = null;
+    if (rowIdx !== null && rowIdx !== undefined) {
+      ssidIndex = rowIdx + 1;
+    } else if (b) {
+      var trEl = b.closest('tr, .tr');
+      if (trEl && trEl.id) {
+        var m = trEl.id.match(/WLANSSID(\d+)/i);
+        if (m) ssidIndex = parseInt(m[1], 10) + 1;
+      }
+    }
+
+    if (ssidIndex !== null) {
+      hop.dataset.ssidIndex = String(ssidIndex);
+      ov.dataset.ssidIndex = String(ssidIndex);
+      var wWin = window.parent || window;
+      wWin.__currentEditingSSIDIndex = ssidIndex;
+
+      var hiddenIndexInput = el('input');
+      hiddenIndexInput.type = 'hidden';
+      hiddenIndexInput.id = 'modal_field_ssid_index';
+      hiddenIndexInput.name = 'modal_field_ssid_index';
+      hiddenIndexInput.value = String(ssidIndex);
+      hop.appendChild(hiddenIndexInput);
+    } else {
+      delete hop.dataset.ssidIndex;
+      delete ov.dataset.ssidIndex;
+    }
 
     var tabs = dn.tabs || [];
     var than = el('div', 'cbi-section');
@@ -252,11 +280,53 @@
       msg.style.verticalAlign = 'middle';
       msg.innerHTML = '✔ Saved successfully!';
       ap.parentNode.insertBefore(msg, ap.nextSibling);
+
+      var ssidVal = (document.getElementById('modal_field_SSID') || {}).value || '';
+      var keyInput = document.getElementById('modal_field_KeyPassphrase');
+      var keyVal = (keyInput && keyInput.querySelector) ? (keyInput.querySelector('input') || {}).value || '' : '';
+
+      // Lưu trữ trạng thái vào đúng dòng tr trong table (để phân biệt chính xác SSID1 vs SSID2 kể cả sau khi đóng modal)
+      var tr = b ? b.closest('tr, .tr') : null;
+      if (!tr && ssidIndex !== null) {
+        tr = document.getElementById('cbi-json-WLANSSID' + (ssidIndex - 1));
+      }
+      if (tr) {
+        tr.dataset.savedSsid = ssidVal;
+        tr.dataset.savedKey = keyVal;
+        if (ssidIndex !== null) tr.dataset.ssidIndex = String(ssidIndex);
+
+        var hIndex = tr.querySelector('.saved-ssid-index');
+        if (!hIndex) {
+          hIndex = el('input');
+          hIndex.type = 'hidden';
+          hIndex.className = 'saved-ssid-index';
+          tr.appendChild(hIndex);
+        }
+        hIndex.value = ssidIndex !== null ? String(ssidIndex) : '';
+
+        var hSsid = tr.querySelector('.saved-ssid-val');
+        if (!hSsid) {
+          hSsid = el('input');
+          hSsid.type = 'hidden';
+          hSsid.className = 'saved-ssid-val';
+          tr.appendChild(hSsid);
+        }
+        hSsid.value = ssidVal;
+
+        var hKey = tr.querySelector('.saved-key-val');
+        if (!hKey) {
+          hKey = el('input');
+          hKey.type = 'hidden';
+          hKey.className = 'saved-key-val';
+          tr.appendChild(hKey);
+        }
+        hKey.value = keyVal;
+      }
       
       var w = window.parent || window;
       if (w.onSimulatorSave) {
         try {
-          w.onSimulatorSave(window, dn.tieuDe);
+          w.onSimulatorSave(window, dn.tieuDe, ssidIndex);
         } catch (e) {}
       }
       
@@ -356,8 +426,9 @@
           }
         }
         // Add = tao moi (khong co gia tri); Edit = sua dong dang co
-        var gt = /^(Edit|Modify)$/i.test(t) ? giaTriDong(kt, dn, chiSoDong(b)) : {};
-        moModal(dn, gt);
+        var rowIdx = chiSoDong(b);
+        var gt = /^(Edit|Modify)$/i.test(t) ? giaTriDong(kt, dn, rowIdx) : {};
+        moModal(dn, gt, rowIdx, b);
       });
       n++;
     });

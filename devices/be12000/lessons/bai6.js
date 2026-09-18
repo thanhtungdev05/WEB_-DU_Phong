@@ -70,8 +70,8 @@ var lessonData = {
         id: 'lan_host',
         name: '3. LAN Host IP',
         selector: 'div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="InternalClient"], [id="InternalClient:0"]',
-        expected: ['192.168.1.100', '192.168.1.10', '192.168.1.50', '192.168.1.200'],
-        type: 'any_of',
+        expected: '192.168.1.100',
+        type: 'text_exact',
         trim: true,
         required: true
       },
@@ -79,8 +79,8 @@ var lessonData = {
         id: 'wan_port',
         name: '4. WAN Port',
         selector: 'div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="ExternalPort"], [id="ExternalPort:0"], [id="ExternalPortEndRange:0"]',
-        expected: ['8080', '80', '443', '8000'],
-        type: 'any_of',
+        expected: '8080',
+        type: 'text_exact',
         trim: true,
         required: true
       },
@@ -88,8 +88,8 @@ var lessonData = {
         id: 'lan_port',
         name: '5. LAN Host Port',
         selector: 'div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="InternalPort"], [id="InternalPort:0"], [id="InternalPortEndRange:0"]',
-        expected: ['8080', '80', '443', '8000'],
-        type: 'any_of',
+        expected: '8080',
+        type: 'text_exact',
         trim: true,
         required: true
       }
@@ -155,6 +155,13 @@ var lessonData = {
       var wanPort = getVal('ExternalPort') || getVal('ExternalPortEndRange');
       var lanPort = getVal('InternalPort') || getVal('InternalPortEndRange');
 
+      var isSaved = Boolean(
+        doc._ftcIsSaved ||
+        (doc.location && doc.location.search && doc.location.search.includes('save_success=1')) ||
+        (window.top && window.top._hasSuccHintStored) ||
+        window._hasSuccHintStored
+      );
+
       // 1. Name
       var namePassed = name.length > 0 && (name === 'NAT FPT' || name.toLowerCase().indexOf('nat') !== -1 || name.toLowerCase().indexOf('camera') !== -1 || name.toLowerCase().indexOf('web') !== -1);
 
@@ -162,64 +169,64 @@ var lessonData = {
       var validProtocols = ['TCP', 'UDP', 'BOTH', 'TCP&UDP', 'TCP+UDP', 'TCP AND UDP'];
       var protocolPassed = validProtocols.indexOf(protocol.toUpperCase()) !== -1;
 
-      // 3. LAN Host
-      var lanHostPassed = (lanHost === '192.168.1.100') || (lanHost.startsWith('192.168.1.') && lanHost.split('.').length === 4);
+      // 3. LAN Host: siết chặt chỉ chấp nhận đúng IP máy chủ LAN 192.168.1.100 (không cho phép nhập bừa hoặc trùng IP router 192.168.1.1)
+      var lanHostPassed = (lanHost === '192.168.1.100');
 
-      // 4. WAN Port
-      var wanPortPassed = (wanPort === '8080' || wanPort === '80' || wanPort === '443' || wanPort === '8000');
+      // 4. WAN Port: siết chặt chỉ chấp nhận đúng cổng 8080 theo yêu cầu bài thực hành
+      var wanPortPassed = (wanPort === '8080');
 
-      // 5. LAN Host Port
-      var lanPortPassed = (lanPort === '8080' || lanPort === '80' || lanPort === '443' || lanPort === '8000');
+      // 5. LAN Host Port: siết chặt chỉ chấp nhận đúng cổng 8080 theo yêu cầu bài thực hành
+      var lanPortPassed = (lanPort === '8080');
 
       var passedCount = (namePassed ? 1 : 0) + (protocolPassed ? 1 : 0) + (lanHostPassed ? 1 : 0) + (wanPortPassed ? 1 : 0) + (lanPortPassed ? 1 : 0);
-      var passed = (passedCount === 5);
-      var score = passedCount * 20;
+      var passed = (passedCount === 5) && isSaved;
+      var score = passed ? 100 : (isSaved ? passedCount * 20 : 0);
 
       return {
         passed: passed,
         score: score,
-        passedCount: passedCount,
+        passedCount: isSaved ? passedCount : 0,
         totalRules: 5,
         details: [
           {
             id: 'rule_name',
             name: '1. Name (Tên rule)',
             expected: 'NAT FPT (hoặc Camera, Web Server)',
-            actual: name || '(Trống)',
-            passed: namePassed,
-            message: namePassed ? 'Chính xác' : 'Cần nhập tên rule (ví dụ: NAT FPT)'
+            actual: (name || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: namePassed && isSaved,
+            message: namePassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : 'Cần nhập tên rule (ví dụ: NAT FPT)'
           },
           {
             id: 'protocol',
             name: '2. Protocol (Giao thức)',
             expected: 'TCP (hoặc UDP, TCP And UDP)',
-            actual: protocol || '(Trống)',
-            passed: protocolPassed,
-            message: protocolPassed ? 'Chính xác' : 'Cần chọn giao thức TCP, UDP hoặc TCP And UDP'
+            actual: (protocol || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: protocolPassed && isSaved,
+            message: protocolPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : 'Cần chọn giao thức TCP, UDP hoặc TCP And UDP'
           },
           {
             id: 'lan_host',
             name: '3. LAN Host (Địa chỉ IP máy trong)',
             expected: '192.168.1.100',
-            actual: lanHost || '(Trống)',
-            passed: lanHostPassed,
-            message: lanHostPassed ? 'Chính xác' : ('Mong muốn: "192.168.1.100", Thực tế: "' + (lanHost || 'Trống') + '"')
+            actual: (lanHost || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: lanHostPassed && isSaved,
+            message: lanHostPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : ('Mong muốn: "192.168.1.100", Thực tế: "' + (lanHost || 'Trống') + '"')
           },
           {
             id: 'wan_port',
             name: '4. WAN Port (Cổng ngoài)',
             expected: '8080',
-            actual: wanPort || '(Trống)',
-            passed: wanPortPassed,
-            message: wanPortPassed ? 'Chính xác' : ('Mong muốn: "8080", Thực tế: "' + (wanPort || 'Trống') + '"')
+            actual: (wanPort || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: wanPortPassed && isSaved,
+            message: wanPortPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : ('Mong muốn: "8080", Thực tế: "' + (wanPort || 'Trống') + '"')
           },
           {
             id: 'lan_port',
             name: '5. LAN Host Port (Cổng trong)',
             expected: '8080',
-            actual: lanPort || '(Trống)',
-            passed: lanPortPassed,
-            message: lanPortPassed ? 'Chính xác' : ('Mong muốn: "8080", Thực tế: "' + (lanPort || 'Trống') + '"')
+            actual: (lanPort || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: lanPortPassed && isSaved,
+            message: lanPortPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : ('Mong muốn: "8080", Thực tế: "' + (lanPort || 'Trống') + '"')
           }
         ]
       };
@@ -254,32 +261,26 @@ var lessonData = {
       expected: ['TCP', 'UDP', 'BOTH', 'TCP&UDP', 'TCP+UDP']
     },
     {
-      selector: '[id="sub_RemoteHostEndRange3:0"]:not(:disabled), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="sub_RemoteHostEndRange3"]:not(:disabled)',
-      text: 'Bước 3: Nhập WAN Host IP Address: 192.168.1.1',
-      position: 'right',
-      expected: '1'
-    },
-    {
       selector: '[id="InternalClient:0"]:not(:disabled), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="InternalClient"]:not(:disabled)',
-      text: 'Bước 4: Nhập LAN Host: 192.168.1.100',
+      text: 'Bước 3: Nhập LAN Host: 192.168.1.100',
       position: 'right',
       expected: '192.168.1.100'
     },
     {
       selector: '[id="ExternalPortEndRange:0"]:not(:disabled), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="ExternalPortEndRange"]:not(:disabled)',
-      text: 'Bước 5: Nhập WAN Port: 8080 (chỉ vào ô cuối cùng)',
+      text: 'Bước 4: Nhập WAN Port: 8080 (chỉ vào ô cuối cùng)',
       position: 'right',
       expected: '8080'
     },
     {
       selector: '[id="InternalPortEndRange:0"]:not(:disabled), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="InternalPortEndRange"]:not(:disabled)',
-      text: 'Bước 6: Nhập LAN Host Port: 8080 (chỉ vào ô cuối cùng)',
+      text: 'Bước 5: Nhập LAN Host Port: 8080 (chỉ vào ô cuối cùng)',
       position: 'right',
       expected: '8080'
     },
     {
       selector: '[id="Btn_apply_PortForwarding:0"]:not(.disableBtn), div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="Btn_apply_PortForwarding"]:not(.disableBtn)',
-      text: 'Bước 7: Nhấn Apply để lưu cấu hình',
+      text: 'Bước 6: Nhấn Apply để lưu cấu hình',
       position: 'top'
     }
   ]

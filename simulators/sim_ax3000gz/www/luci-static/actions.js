@@ -112,7 +112,36 @@
     return n;
   }
 
-  function chay() { var n = gan(); if (n) console.log('[actions] da gan ' + n + ' nut'); }
+  function khoiTaoDhcpAutoUpdate() {
+    var ipInput = document.getElementById('widget.cbid.network.lan.ipaddr') || document.querySelector('input[name="cbid.network.lan.ipaddr"]');
+    var startInput = document.getElementById('widget.cbid.network.lan.start') || document.querySelector('input[name="cbid.network.lan.start"]');
+    var endInput = document.getElementById('widget.cbid.network.lan.end') || document.querySelector('input[name="cbid.network.lan.end"]');
+
+    if (!ipInput || !startInput || !endInput) return;
+
+    function capNhatDhcp() {
+      var val = (ipInput.value || '').trim();
+      var m = val.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d{1,3})$/);
+      if (m) {
+        var prefix = m[1];
+        startInput.value = prefix + '.2';
+        endInput.value = prefix + '.254';
+        startInput.dispatchEvent(new Event('input', { bubbles: true }));
+        startInput.dispatchEvent(new Event('change', { bubbles: true }));
+        endInput.dispatchEvent(new Event('input', { bubbles: true }));
+        endInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    ipInput.addEventListener('input', capNhatDhcp);
+    ipInput.addEventListener('change', capNhatDhcp);
+  }
+
+  function chay() {
+    var n = gan();
+    if (n) console.log('[actions] da gan ' + n + ' nut');
+    khoiTaoDhcpAutoUpdate();
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', chay);
   else chay();
 })();

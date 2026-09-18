@@ -23,7 +23,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       {
         "id": "pf_name",
         "name": "Name",
-        "selector": "tbody tr td:nth-child(3), .MuiDialog-root input[name=\"name\"]",
+        "selector": "tbody tr td:nth-child(3)",
         "expected": "Camera",
         "type": "case_insensitive",
         "trim": true,
@@ -32,7 +32,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       {
         "id": "pf_protocol",
         "name": "Protocol",
-        "selector": "tbody tr td:nth-child(4), .MuiDialog-root [name=\"protocol\"], #mui-component-select-protocol",
+        "selector": "tbody tr td:nth-child(4)",
         "expected": ["TCP_UDP", "TCP + UDP"],
         "type": "any_of",
         "trim": true,
@@ -41,7 +41,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       {
         "id": "pf_ext_port",
         "name": "External Port",
-        "selector": "tbody tr td:nth-child(5), .MuiDialog-root input[name=\"source.portRange\"]",
+        "selector": "tbody tr td:nth-child(5)",
         "expected": "8080",
         "type": "text_exact",
         "trim": true,
@@ -50,7 +50,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       {
         "id": "pf_ip",
         "name": "Internal IP",
-        "selector": "tbody tr td:nth-child(6), tbody tr td:nth-child(6) span, .MuiDialog-root .MuiAutocomplete-input",
+        "selector": "tbody tr td:nth-child(6), tbody tr td:nth-child(6) span",
         "expected": "192.168.1.20",
         "type": "contains",
         "trim": true,
@@ -59,7 +59,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       {
         "id": "pf_int_port",
         "name": "Internal Port",
-        "selector": "tbody tr td:nth-child(7), .MuiDialog-root input[name=\"destination.portRange\"]",
+        "selector": "tbody tr td:nth-child(7)",
         "expected": "80",
         "type": "text_exact",
         "trim": true,
@@ -85,28 +85,33 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
     },
     {
       "selector": "input[name=\"name\"]",
-      "text": "Nhập tên rule",
-      "position": "right"
+      "text": "Nhập tên rule (VD: Camera)",
+      "position": "right",
+      "expected": "Camera"
     },
     {
       "selector": "#mui-component-select-protocol",
-      "text": "Chọn Protocol",
-      "position": "left"
+      "text": "Chọn Protocol (VD: TCP_UDP)",
+      "position": "left",
+      "expected": ["TCP_UDP", "TCP + UDP"]
     },
     {
       "selector": "input[name=\"source.portRange\"]",
-      "text": "Nhập External Port",
-      "position": "right"
+      "text": "Nhập External Port (VD: 8080)",
+      "position": "right",
+      "expected": "8080"
     },
     {
       "selector": ".MuiAutocomplete-input",
-      "text": "Nhập Internal IP",
-      "position": "left"
+      "text": "Nhập Internal IP (VD: 192.168.1.20)",
+      "position": "left",
+      "expected": "192.168.1.20"
     },
     {
       "selector": "input[name=\"destination.portRange\"]",
-      "text": "Nhập Internal Port",
-      "position": "right"
+      "text": "Nhập Internal Port (VD: 80)",
+      "position": "right",
+      "expected": "80"
     },
     {
       "selector": "button.dlg-luu",

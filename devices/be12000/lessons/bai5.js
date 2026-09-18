@@ -148,47 +148,54 @@ var lessonData = {
       var endOctet3 = parseInt(endParts[3], 10);
       var dhcpEndPassed = (dhcpEnd === '192.168.1.254' || dhcpEnd === '192.168.1.249' || dhcpEnd === '192.168.1.250') || (endParts.length === 4 && endParts[0] === '192' && endParts[1] === '168' && endParts[2] === '1' && !isNaN(endOctet3) && endOctet3 > startOctet3 && endOctet3 <= 254);
 
+      var isSaved = Boolean(
+        doc._ftcIsSaved ||
+        (doc.location && doc.location.search && doc.location.search.includes('save_success=1')) ||
+        (window.top && window.top._hasSuccHintStored) ||
+        window._hasSuccHintStored
+      );
+
       var passedCount = (serverEnablePassed ? 1 : 0) + (lanPassed ? 1 : 0) + (dhcpStartPassed ? 1 : 0) + (dhcpEndPassed ? 1 : 0);
-      var passed = serverEnablePassed && lanPassed && dhcpStartPassed && dhcpEndPassed;
-      var score = passedCount * 25;
+      var passed = serverEnablePassed && lanPassed && dhcpStartPassed && dhcpEndPassed && isSaved;
+      var score = passed ? 100 : (isSaved ? passedCount * 25 : 0);
 
       return {
         passed: passed,
         score: score,
-        passedCount: passedCount,
+        passedCount: isSaved ? passedCount : 0,
         totalRules: 4,
         details: [
           {
             id: 'dhcp_server_enable',
             name: 'DHCP Server Enable',
             expected: 'On',
-            actual: serverEnablePassed ? 'On' : 'Off',
-            passed: serverEnablePassed,
-            message: serverEnablePassed ? 'Chính xác' : 'Cần chọn "On" tại mục DHCP Server'
+            actual: (serverEnablePassed ? 'On' : 'Off') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: serverEnablePassed && isSaved,
+            message: serverEnablePassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : 'Cần chọn "On" tại mục DHCP Server'
           },
           {
             id: 'lan_ip_subnet',
             name: 'LAN IP Address & Subnet Mask',
             expected: '192.168.1.1 / 255.255.255.0',
-            actual: (lanIP || 'Trống') + ' / ' + (subnetMask || 'Trống'),
-            passed: lanPassed,
-            message: lanPassed ? 'Chính xác' : 'Mong muốn: IP 192.168.1.1, Subnet Mask 255.255.255.0'
+            actual: ((lanIP || 'Trống') + ' / ' + (subnetMask || 'Trống')) + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: lanPassed && isSaved,
+            message: lanPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : 'Mong muốn: IP 192.168.1.1, Subnet Mask 255.255.255.0'
           },
           {
             id: 'dhcp_start_ip',
             name: 'DHCP Start IP Address',
             expected: '192.168.1.2',
-            actual: dhcpStart || 'Trống',
-            passed: dhcpStartPassed,
-            message: dhcpStartPassed ? 'Chính xác' : 'Mong muốn: "192.168.1.2", Thực tế: "' + (dhcpStart || 'Trống') + '"'
+            actual: (dhcpStart || 'Trống') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: dhcpStartPassed && isSaved,
+            message: dhcpStartPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : ('Mong muốn: "192.168.1.2", Thực tế: "' + (dhcpStart || 'Trống') + '"')
           },
           {
             id: 'dhcp_end_ip',
             name: 'DHCP End IP Address',
             expected: '192.168.1.254',
-            actual: dhcpEnd || 'Trống',
-            passed: dhcpEndPassed,
-            message: dhcpEndPassed ? 'Chính xác' : 'Mong muốn: "192.168.1.254", Thực tế: "' + (dhcpEnd || 'Trống') + '"'
+            actual: (dhcpEnd || 'Trống') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: dhcpEndPassed && isSaved,
+            message: dhcpEndPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : ('Mong muốn: "192.168.1.254", Thực tế: "' + (dhcpEnd || 'Trống') + '"')
           }
         ]
       };
