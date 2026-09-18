@@ -315,6 +315,34 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn(".instructor-class-manager {", self.professional_css)
         self.assertIn(".roster-panel {", self.professional_css)
 
+    def test_region_matrix_rows_open_branch_and_ktv_drilldowns(self):
+        for element_id in (
+            "branchMatrixCard",
+            "branchMatrixTitle",
+            "branchMatrixHead",
+            "branchMatrixBody",
+            "branchMatrixFoot",
+            "branchMatrixClose",
+            "branchKtvMatrixCard",
+            "branchKtvMatrixTitle",
+            "branchKtvMatrixHead",
+            "branchKtvMatrixBody",
+            "branchKtvMatrixFoot",
+            "branchKtvMatrixClose",
+        ):
+            self.assertEqual(self.html.count(f'id="{element_id}"'), 1)
+        analytics_start = self.html.index('id="analytics"')
+        self.assertIn('id="branchMatrixCard"', self.html)
+        self.assertLess(self.html.index('id="branchMatrixCard"'), self.html.index('id="classMatrix"'))
+        self.assertGreater(self.html.index('id="branchMatrixCard"'), analytics_start)
+        self.assertLess(self.html.index('id="branchKtvMatrixCard"'), self.html.index('id="classMatrix"'))
+        self.assertIn("branchMatrixRegionCode", self.javascript)
+        self.assertIn("data-branch-region-code", self.javascript)
+        self.assertIn("data-branch-unit-code", self.javascript)
+        self.assertIn("function renderBranchReportDrilldown", self.javascript)
+        self.assertIn("els.branchMatrixCard.hidden = false", self.javascript)
+        self.assertIn("els.branchKtvMatrixCard.hidden = false", self.javascript)
+
     def test_matrix_reports_do_not_render_a_duplicate_page_surface(self):
         for selector in (
             "#analytics.detail-report-page > .detail-report-shell",
