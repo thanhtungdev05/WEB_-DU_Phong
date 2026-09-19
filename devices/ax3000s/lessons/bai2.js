@@ -22,10 +22,10 @@ var lessonObj = {
   ],
   grading: {
     description: 'Kiểm tra WLAN Basic Setting 2.4G/5G trên AX3000S',
-    customGrading: function(allDocs) {
+    customGrading: function (allDocs) {
       let doc5g = null;
       let appWin = null;
-      
+
       for (const d of allDocs) {
         if (d.location && d.location.href.toLowerCase().includes('wlanbasicsetting5g')) {
           doc5g = d;
@@ -34,7 +34,7 @@ var lessonObj = {
           appWin = d.defaultView;
         }
       }
-      
+
       if (!doc5g) {
         return {
           passed: false,
@@ -56,10 +56,10 @@ var lessonObj = {
 
       const ssidEl = doc5g.querySelector('#Txt_SSID');
       const pwdEl = doc5g.querySelector('#Pwd_WpaPsk');
-      
+
       const ssidVal = ssidEl ? ssidEl.value.trim() : '';
       const pwdVal = pwdEl ? pwdEl.value.trim() : '';
-      
+
       const isSaved = !!doc5g._ftcIsSaved;
 
       const ssidPassed = ssidVal === 'FPT Telecom';
