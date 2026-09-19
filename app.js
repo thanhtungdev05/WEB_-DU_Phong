@@ -1097,6 +1097,11 @@
 
     currentDeviceId = device.id;
     currentLessonId = null;
+    window._sessionRuleCache = {};
+    window._sessionRuleCacheScope = null;
+    window._hasClickedSaveInGuide = false;
+    window._hasSuccHintStored = false;
+    resetDeviceSession(device.id);
 
     // Sync dropdown
     deviceSelect.value = device.id;
@@ -1200,6 +1205,11 @@
   // ── Lesson Selection ─────────────────────────────────────────────
   function selectLesson(device, lesson, itemEl) {
     currentLessonId = lesson.id;
+    window._sessionRuleCache = {};
+    window._sessionRuleCacheScope = null;
+    window._hasClickedSaveInGuide = false;
+    window._hasSuccHintStored = false;
+    resetDeviceSession(device.id);
 
     // Update nav active state
     navList.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -1293,19 +1303,21 @@
       localStorage.removeItem('ftc_guide_popups');
     }
 
-    // Reset session storage của thiết bị
+    // Reset session storage & local storage chống lưu cache các phiên trước cho 3 thiết bị mới và thiết bị cũ
     try {
+      localStorage.removeItem('BE12000_state');
+      localStorage.removeItem('labStartTime');
+      localStorage.removeItem('labStartSession');
+      sessionStorage.removeItem('BE12000_session');
+      sessionStorage.removeItem('BE12000_loginToken');
+      sessionStorage.removeItem('sid');
+      sessionStorage.removeItem('be6500c_sid');
+      sessionStorage.removeItem('tech_support_sid');
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPUsername');
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPPassword');
+      localStorage.removeItem('ftc_sim_wifi24');
+      localStorage.removeItem('ftc_sim_wifi5g');
     } catch (e) { }
-
-    // Reset wifi storage cho bài 2
-    if (lesson && lesson.id === 'ac1-bai2') {
-      try {
-        localStorage.removeItem('ftc_sim_wifi24');
-        localStorage.removeItem('ftc_sim_wifi5g');
-      } catch (e) { }
-    }
 
     // Lưu lesson hiện tại để dùng cho clearFields
     _currentLesson = lesson;
@@ -1313,9 +1325,13 @@
 
     // Reset cờ theo dõi click Save cho phiên hướng dẫn mới
     window._hasClickedSaveInGuide = false;
+    window._hasSuccHintStored = false;
 
     // ── Ghi nhận thời điểm BẮT ĐẦU phiên thực hành (Tracking) ──
+    const targetDevId = (device && device.id) ? device.id : currentDeviceId;
+    const targetLabId = (lesson && lesson.id) ? lesson.id : currentLessonId;
     window._sessionRuleCache = {};
+    window._sessionRuleCacheScope = `${targetDevId}:${targetLabId}`;
     _trackingSession = {
       device: device,
       lesson: lesson,
@@ -1412,7 +1428,9 @@
     const targetDev = deviceId || currentDeviceId;
     window._hasSuccHintStored = false;
     window._hasClickedSaveInGuide = false;
-    if (!targetDev) return Promise.resolve();
+    window._sessionRuleCache = {};
+    window._sessionRuleCacheScope = null;
+    if (!targetDev) return;
 
     let simFolder = '';
     if (typeof DEVICES !== 'undefined' && Array.isArray(DEVICES)) {
@@ -1423,34 +1441,39 @@
       simFolder = 'sim_' + targetDev;
     }
 
+const resetEndpoints = ['/' + simFolder + '/api/reset'];
+    if (targetDev === 'ONT_be6500c' || targetDev === 'ont_be6500c') {
+      resetEndpoints.push('/sim_ONT_be6500c/api/reset', '/ont_be6500c/api/reset');
+    } else if (targetDev === 'be6500c') {
+      resetEndpoints.push('/sim_be6500c/api/reset');
+    } else if (targetDev === 'be12000') {
+      resetEndpoints.push('/sim_be12000/api/reset');
+    }
+
+    resetEndpoints.forEach(ep => {
+      try {
+        fetch(ep, { method: 'POST', cache: 'no-store' })
+          .catch(() => {
+            return fetch(ep + '?_t=' + Date.now(), { cache: 'no-store' });
+          })
+          .catch(() => {});
+      } catch (e) { }
+    });
+
     try {
-      localStorage.removeItem('ftc_sim_wifi24');
-      localStorage.removeItem('ftc_sim_wifi5g');
-      sessionStorage.removeItem('ftc_ac1000f_wan_PPPUsername');
-      sessionStorage.removeItem('ftc_ac1000f_wan_PPPPassword');
+      localStorage.removeItem('BE12000_state');
+      localStorage.removeItem('labStartTime');
+      localStorage.removeItem('labStartSession');
       sessionStorage.removeItem('BE12000_session');
       sessionStorage.removeItem('BE12000_loginToken');
       sessionStorage.removeItem('sid');
+      sessionStorage.removeItem('be6500c_sid');
+      sessionStorage.removeItem('tech_support_sid');
+      sessionStorage.removeItem('ftc_ac1000f_wan_PPPUsername');
+      sessionStorage.removeItem('ftc_ac1000f_wan_PPPPassword');
+      localStorage.removeItem('ftc_sim_wifi24');
+      localStorage.removeItem('ftc_sim_wifi5g');
     } catch (e) { }
-
-    const resetUrl = '/' + simFolder + '/api/reset?_t=' + Date.now();
-    try {
-      return fetch(resetUrl, {
-        method: 'POST',
-        credentials: 'same-origin',
-        cache: 'no-store',
-        headers: { 'X-FTC-Simulator-Reset': 'current-session' }
-      }).then(response => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return true;
-      }).catch(error => {
-        console.warn(`[Simulator] Không thể đặt lại phiên ${simFolder}:`, error);
-        return false;
-      });
-    } catch (error) {
-      console.warn(`[Simulator] Không thể gửi yêu cầu đặt lại phiên ${simFolder}:`, error);
-      return Promise.resolve(false);
-    }
   }
 
   function confirmLeavePracticeSession() {
@@ -1479,6 +1502,7 @@
     window._hasClickedSaveInGuide = false;
     window._hasSuccHintStored = false;
     window._sessionRuleCache = null;
+    window._sessionRuleCacheScope = null;
 
     deviceIframe.src = '';
     currentIframeUrl = '';
@@ -1771,11 +1795,17 @@
         } catch (e) { }
       }
 
+      const effectiveDeviceId = (device && device.id) ? device.id : currentDeviceId;
+      const currentLessonKey = `${effectiveDeviceId}:${(lesson && lesson.id) || currentLessonId}`;
+
       // Nếu không tìm thấy element trong các frame hiện hành (do học viên đã chuyển trang khác như LAN, Wi-Fi...)
       // thì kiểm tra xem rule này đã từng được nhập và lưu thành công trong phiên làm việc hiện tại hay chưa (Session Cache)
       if (!elementFound) {
-        const cached = (_trackingSession && _trackingSession.ruleCache && _trackingSession.ruleCache[rule.id]) ||
-                       (window._sessionRuleCache && window._sessionRuleCache[rule.id]);
+        const isScopeValid = (window._sessionRuleCacheScope === currentLessonKey);
+        const cached = isScopeValid && (
+          (_trackingSession && _trackingSession.ruleCache && _trackingSession.ruleCache[rule.id]) ||
+          (window._sessionRuleCache && window._sessionRuleCache[rule.id])
+        );
         if (cached) {
           elementFound = true;
           actualValue = cached.actualValue;
@@ -1789,7 +1819,6 @@
         isSaved = true;
       }
 
-      const effectiveDeviceId = (device && device.id) ? device.id : currentDeviceId;
       if (isMatch) {
         // Bắt buộc trang chứa phần tử phải được bấm Save/Apply thành công
         if (isSaveRequiredDevice(effectiveDeviceId) && !isSaved) {
@@ -1802,7 +1831,10 @@
       // - Nếu phần tử tìm thấy trên trang đang mở nhưng chưa được lưu (bị sửa đổi): xóa khỏi cache để tránh dùng lại giá trị cũ
       if (elementFound) {
         if (isSaved) {
-          if (!window._sessionRuleCache) window._sessionRuleCache = {};
+          if (!window._sessionRuleCache || window._sessionRuleCacheScope !== currentLessonKey) {
+            window._sessionRuleCache = {};
+            window._sessionRuleCacheScope = currentLessonKey;
+          }
           window._sessionRuleCache[rule.id] = {
             actualValue: actualValue,
             isSaved: isSaved,
@@ -1821,7 +1853,9 @@
             try { return d.querySelector(rule.selector) !== null; } catch (e) { return false; }
           });
           if (isActuallyInDom) {
-            if (window._sessionRuleCache) delete window._sessionRuleCache[rule.id];
+            if (window._sessionRuleCache && window._sessionRuleCacheScope === currentLessonKey) {
+              delete window._sessionRuleCache[rule.id];
+            }
             if (_trackingSession && _trackingSession.ruleCache) delete _trackingSession.ruleCache[rule.id];
           }
         }
