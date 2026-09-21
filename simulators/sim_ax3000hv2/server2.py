@@ -8,7 +8,7 @@ text/html de trinh duyet render (khong tai xuong).
 
 Chay: python server2.py [port]   (mac dinh 8092)
 """
-import os, sys, socket, re
+import os, sys, socket, re, hmac, json, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, unquote, parse_qs
 
@@ -63,10 +63,37 @@ _STATE_LOCK = threading.Lock()
 SIM_STATE = {}
 USER_STATES = {}
 
+# ---- B3: tai lap hang loat cho load test + thu hoi phien het han ----------
+# Chi co the kich hoat khi dat bien moi truong FTC_SIM_ADMIN_TOKEN; khong dat
+# thi /internal/reset luon tra 403 (mac dinh an toan).
+_ADMIN_TOKEN = os.environ.get("FTC_SIM_ADMIN_TOKEN", "")
+_SESSION_TTL = float(os.environ.get("FTC_SIM_SESSION_TTL", "1800") or 1800)
+_LAST_SEEN = {}
+
+
+def _gc_sessions_unlocked(now):
+    het_han = [k for k, t in list(_LAST_SEEN.items()) if now - t > _SESSION_TTL]
+    for k in het_han:
+        USER_STATES.pop(k, None)
+        _LAST_SEEN.pop(k, None)
+    return len(het_han)
+
+
+def _gc_loop():
+    while True:
+        time.sleep(max(30.0, _SESSION_TTL / 2.0))
+        with _STATE_LOCK:
+            _gc_sessions_unlocked(time.time())
+
+
+def _khoi_dong_gc():
+    threading.Thread(target=_gc_loop, daemon=True).start()
+
 def get_client_state(key):
     if not key:
         return SIM_STATE
     with _STATE_LOCK:
+        _LAST_SEEN[key] = time.time()
         if key not in USER_STATES:
             USER_STATES[key] = {}
         return USER_STATES[key]
@@ -224,11 +251,36 @@ class H(BaseHTTPRequestHandler):
         addr = getattr(self, "client_address", None)
         return str(addr[0]) if addr else "default"
 
+    def _admin_ok(self):
+        if not _ADMIN_TOKEN:
+            return False
+        header = self.headers.get("X-Admin-Token", "")
+        return bool(header) and hmac.compare_digest(header.encode("utf-8"), _ADMIN_TOKEN.encode("utf-8"))
+
+    def _xu_ly_internal(self, p):
+        # Tien to /internal/ chi co o ban gia lap, khong ton tai tren thiet bi that.
+        if p != "/internal/reset":
+            return False
+        if not self._admin_ok():
+            self._send(b'{"status":"forbidden"}', "application/json; charset=utf-8", 403)
+            return True
+        with _STATE_LOCK:
+            cleared = len(USER_STATES)
+            USER_STATES.clear()
+            SIM_STATE.clear()
+            _LAST_SEEN.clear()
+        resp = json.dumps({"status": "ok", "message": "AX3000HV2 state reset (load test)", "cleared_sessions": cleared})
+        self._send(resp.encode("utf-8"), "application/json; charset=utf-8")
+        return True
+
     def do_GET(self):
         client_key = self._client_key()
         client_state = get_client_state(client_key)
         parsed = urlparse(self.path)
         p = unquote(parsed.path)
+
+        if p.startswith("/internal/"):
+            return self._send(b'{"status":"method_not_allowed"}', "application/json; charset=utf-8", 405)
 
         if p in ("/", "/index.html", "/cgi-bin/login.html"):
             return self._redirect("/cgi-bin/login.asp")
@@ -379,6 +431,8 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         p = unquote(parsed.path)
+        if self._xu_ly_internal(p):
+            return
         client_key = self._client_key()
         if p in ("/api/reset", "/resetsession") or "resetsession" in self.path.lower():
             with _STATE_LOCK:
@@ -441,6 +495,7 @@ class DualStack(ThreadingHTTPServer):
 def make(port):
     s = ThreadingHTTPServer(("0.0.0.0", port), H)
     s.daemon_threads = True
+    _khoi_dong_gc()
     return s
 
 

@@ -15,12 +15,13 @@ const expected = {
   ax3000s: 'LAB_AX3000S_',
   ac1000HI: 'LAB_AC1000HI_',
   be6500c: 'be6500c-bai',
-  ONT_be6500c: 'ONT_be6500c-bai'
+  ONT_be6500c: 'ONT_be6500c-bai',
+  vigor2927: 'vg2927-bai'
 };
-const hidden = ['vigor2927', 'mikrotik_hexs'];
+const hidden = ['mikrotik_hexs'];
 const supportedPortalDevices = [
   'ac1000f', 'ax3000c', 'ax3000gz', 'ax3000hv2', 'ax3000s',
-  'ac1000HI', 'be12000', 'be15000', 'be6500c', 'ONT_be6500c'
+  'ac1000HI', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c'
 ];
 const simulatorPrefixes = {
   ac1000f: '/sim_ac1000f/',
@@ -30,7 +31,8 @@ const simulatorPrefixes = {
   ax3000s: '/sim_ax3000s/',
   ac1000HI: '/sim_ac1000HI/',
   be6500c: '/sim_be6500c/',
-  ONT_be6500c: '/sim_ONT_be6500c/'
+  ONT_be6500c: '/sim_ONT_be6500c/',
+  vigor2927: '/sim_vigor2927/'
 };
 const expectedTitles = [
   'Cấu hình PPPoE',
@@ -47,6 +49,15 @@ const be6500cTitles = [
   'Cấu hình DNS',
   'Cấu hình mạng LAN',
   'Cấu hình Port Forwarding'
+];
+const vigor2927Titles = [
+  'Cấu hình PPPoE',
+  'Cấu hình giới hạn băng thông',
+  'Cấu hình Bind IP to MAC',
+  'Cấu hình DHCP',
+  'Cấu hình DNS',
+  'Cấu hình định tuyến Failover và Load Balancing',
+  'Cấu hình Policy Routing'
 ];
 
 function normalizeTitle(value) {
@@ -89,12 +100,14 @@ assert.deepEqual(
 
 const migrations = [
   '030_enforce_approved_dashboard_catalog.sql',
-  '036_activate_be6500c_catalog.sql'
+  '036_activate_be6500c_catalog.sql',
+  '046_activate_vigor2927_catalog.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
-  assert.equal(lessons.length, 6, `${device.id} must expose exactly six labs`);
-  assert.equal(new Set(lessons.map((lesson) => lesson.id)).size, 6, `${device.id} lab IDs must be unique`);
+  const expectedLessonCount = device.id === 'vigor2927' ? 7 : 6;
+  assert.equal(lessons.length, expectedLessonCount, `${device.id} must expose exactly ${expectedLessonCount} labs`);
+  assert.equal(new Set(lessons.map((lesson) => lesson.id)).size, expectedLessonCount, `${device.id} lab IDs must be unique`);
 
   lessons.forEach((lesson, index) => {
     assert.match(
@@ -114,9 +127,11 @@ for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, it
     const expectedId = expected[device.id].startsWith('LAB_')
       ? `${expected[device.id]}${String(index + 1).padStart(2, '0')}`
       : `${expected[device.id]}${index + 1}`;
-    const expectedTitle = device.id === 'be6500c' || device.id === 'ONT_be6500c'
-      ? be6500cTitles[index]
-      : expectedTitles[index];
+    const expectedTitle = device.id === 'vigor2927'
+      ? vigor2927Titles[index]
+      : device.id === 'be6500c' || device.id === 'ONT_be6500c'
+        ? be6500cTitles[index]
+        : expectedTitles[index];
     assert.equal(lesson.id, expectedId, `${device.id} lab ${index + 1} uses an unexpected ID`);
     assert.equal(
       normalizeTitle(lesson.title),
@@ -194,4 +209,4 @@ const ax3000cWifiPage = fs.readFileSync(
 );
 assert.match(ax3000cWifiPage, /class="tabs" style="margin-top: 40px;"/);
 
-console.log('Portal/catalog audit passed: 10 supported devices, 55 active catalog labs.');
+console.log('Portal/catalog audit passed: 11 supported devices, 55 active catalog labs.');

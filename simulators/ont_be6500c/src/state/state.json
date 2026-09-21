@@ -490,14 +490,14 @@
   },
   {
    "ipv4Settings": {
-    "gateway": "",
-    "ipAddress": "",
-    "mask": "",
+    "gateway": "192.168.1.254",
+    "ipAddress": "192.168.1.1",
+    "mask": "255.255.255.0",
     "pppoe": {
-     "username": "hnfdl-123456-789",
-     "password": "d123456"
+     "username": "",
+     "password": ""
     },
-    "protocol": "pppoe"
+    "protocol": "static"
    },
    "id": "wan",
    "devices": [
@@ -506,8 +506,7 @@
    "name": "wan",
    "mtu": 1500,
    "dnsServers": [
-    "8.8.8.8",
-    "8.8.4.4"
+    "8.8.8.8"
    ],
    "usage": "Internet",
    "vlan": {
@@ -540,12 +539,7 @@
     "slaacEnabled": true
    },
    "autoDnsEnabled": false,
-   "usage": "Internet",
-   "vlan": {
-    "enabled": false,
-    "autoDetectionEnabled": false,
-    "id": 0
-   }
+   "usage": "Internet"
   },
   {
    "ipv4Settings": {
@@ -725,9 +719,9 @@
     "WPA2-Personal",
     "WPA3-Personal-Transition"
    ],
-   "passphrase": "fpt12345",
+   "passphrase": "12345678",
    "status": "Up",
-   "name": "FPT Telecom",
+   "name": "FPT Telecom-C151",
    "radio": "2.4G",
    "securityMode": "WPA3-Personal-Transition",
    "enabled": true,
@@ -740,9 +734,9 @@
     "WPA2-Personal",
     "WPA3-Personal-Transition"
    ],
-   "passphrase": "fpt12345",
+   "passphrase": "12345678",
    "status": "Up",
-   "name": "FPT Telecom",
+   "name": "FPT Telecom-C151",
    "radio": "5G",
    "securityMode": "WPA3-Personal-Transition",
    "enabled": true,
@@ -785,9 +779,9 @@
     "WPA2-Personal",
     "WPA3-Personal-Transition"
    ],
-   "passphrase": "d123456",
+   "passphrase": "12345678",
    "status": "Up",
-   "name": "FPT IoT",
+   "name": "FPT Telecom-C151 IoT 2.4G",
    "radio": "2.4G",
    "securityMode": "WPA3-Personal-Transition",
    "enabled": true,
@@ -800,9 +794,9 @@
     "WPA2-Personal",
     "WPA3-Personal-Transition"
    ],
-   "passphrase": "",
+   "passphrase": "119424b42f",
    "status": "Down",
-   "name": "",
+   "name": "FPT Telecom-C151 IoT 5G",
    "radio": "5G",
    "securityMode": "WPA3-Personal-Transition",
    "enabled": false,
@@ -1903,8 +1897,5 @@
    "username": "admin",
    "password": "changeme123"
   }
- ],
- "portForwarding": {
-  "policies": []
- }
+ ]
 }

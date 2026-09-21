@@ -1,5 +1,7 @@
 import importlib.util
+import os
 import sys
+import time
 import unittest
 from pathlib import Path
 
@@ -18,6 +20,14 @@ def load_server(relative_path: str, module_name: str):
         return module
     finally:
         sys.argv = original_argv
+
+
+def make_handler(module, headers):
+    handler = module.H.__new__(module.H)
+    handler.headers = headers
+    sent = {}
+    handler._send = lambda data, ctype, code=200: sent.update(data=data, ctype=ctype, code=code)
+    return handler, sent
 
 
 class SimulatorSessionIsolationTests(unittest.TestCase):
@@ -49,7 +59,11 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
     def test_reset_endpoints_remove_only_current_client(self):
         for source in (self.ac_source, self.hv2_source, self.axc_source):
             self.assertIn("USER_STATES.pop(", source)
-            self.assertNotIn("USER_STATES.clear()", source)
+        # Toan cuc clear chi duoc phep ton tai trong /internal/reset co token
+        # quan tri (B3) -- khong bao gio o cac endpoint reset quen thuoc cua trinh duyet.
+        for source in (self.ac_source, self.hv2_source):
+            self.assertEqual(source.count("USER_STATES.clear()"), 1)
+            self.assertIn("if not self._admin_ok():", source)
         self.assertNotIn("ACTIVE_SESSIONS.clear()", self.axc_source)
 
     def test_active_simulators_never_clear_every_users_state_from_reset(self):
@@ -63,11 +77,76 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         self.assertNotIn("ACTIVE_SESSIONS.clear()", self.achi_store_source)
         self.assertIn("if sid:\n                kho.dat_lai_factory(sid)", self.achi_server_source)
 
-    def test_portal_waits_for_reset_before_loading_iframe(self):
+    def test_portal_reset_device_session_is_fire_and_forget(self):
         self.assertIn("const resetPromise = resetDeviceSession(currentDeviceId)", self.portal_js)
         self.assertIn("Promise.resolve(resetPromise).finally", self.portal_js)
-        self.assertIn("credentials: 'same-origin'", self.portal_js)
-        self.assertNotIn("currentLessonId = null;\n    resetDeviceSession(device.id);", self.portal_js)
+        self.assertIn("resetEndpoints.forEach(ep => {", self.portal_js)
+        self.assertIn("fetch(ep, { method: 'POST', cache: 'no-store' })", self.portal_js)
+        self.assertIn("window._sessionRuleCacheScope", self.portal_js)
+
+    def test_select_device_and_lesson_scope_the_session_rule_cache(self):
+        self.assertEqual(self.portal_js.count("resetDeviceSession(device.id);"), 2)
+        self.assertIn("currentLessonKey", self.portal_js)
+        for source in (self.ac_source, self.hv2_source):
+            self.assertIn("_LAST_SEEN[key] = time.time()", source)
+            self.assertIn("_gc_sessions_unlocked(", source)
+
+    def test_internal_reset_requires_admin_token_and_is_opt_in(self):
+        module = load_server("simulators/sim_ac1000f/server2.py", "b3_test_ac_no_token")
+        self.assertEqual(module._ADMIN_TOKEN, "", "must default to UN-set token (safe)")
+        handler, sent = make_handler(module, headers={})
+        handled = handler._xu_ly_internal("/internal/reset")
+        self.assertTrue(handled)
+        self.assertEqual(sent["code"], 403)
+        self.assertIn("forbidden", sent["data"].decode())
+
+    def test_internal_reset_with_valid_token_clears_all_sessions(self):
+        old = os.environ.get("FTC_SIM_ADMIN_TOKEN")
+        try:
+            os.environ["FTC_SIM_ADMIN_TOKEN"] = "sekret-token-xyz"
+            module = load_server("simulators/sim_ax3000hv2/server2.py", "b3_test_hv2_token")
+        finally:
+            if old is None:
+                os.environ.pop("FTC_SIM_ADMIN_TOKEN", None)
+            else:
+                os.environ["FTC_SIM_ADMIN_TOKEN"] = old
+        module.get_client_state("u1")["x"] = 1
+        module.get_client_state("u2")["y"] = 2
+        handler, sent = make_handler(module, headers={"X-Admin-Token": "sekret-token-xyz"})
+        self.assertTrue(handler._admin_ok())
+        self.assertTrue(handler._xu_ly_internal("/internal/reset"))
+        self.assertEqual(sent["code"], 200)
+        self.assertEqual(len(module.USER_STATES), 0)
+        self.assertEqual(len(module._LAST_SEEN), 0)
+
+    def test_internal_reset_rejects_bad_token(self):
+        old = os.environ.get("FTC_SIM_ADMIN_TOKEN")
+        try:
+            os.environ["FTC_SIM_ADMIN_TOKEN"] = "sekret-token-xyz"
+            module = load_server("simulators/sim_ac1000f/server2.py", "b3_test_ac_bad_token")
+        finally:
+            if old is None:
+                os.environ.pop("FTC_SIM_ADMIN_TOKEN", None)
+            else:
+                os.environ["FTC_SIM_ADMIN_TOKEN"] = old
+        module.get_client_state("u1")["x"] = 1
+        handler, sent = make_handler(module, headers={"X-Admin-Token": "wrong-token"})
+        self.assertFalse(handler._admin_ok())
+        self.assertTrue(handler._xu_ly_internal("/internal/reset"))
+        self.assertEqual(sent["code"], 403)
+        self.assertEqual(len(module.USER_STATES), 1)
+
+    def test_gc_prunes_stale_sessions_but_keeps_live_ones(self):
+        module = load_server("simulators/sim_ac1000f/server2.py", "b3_test_gc")
+        now = time.time()
+        module.get_client_state("live")["v"] = 1
+        module.get_client_state("stale")["v"] = 1
+        module._LAST_SEEN["live"] = now
+        module._LAST_SEEN["stale"] = now - 100000
+        removed = module._gc_sessions_unlocked(now)
+        self.assertGreaterEqual(removed, 1)
+        self.assertIn("live", module.USER_STATES)
+        self.assertNotIn("stale", module.USER_STATES)
 
 
 if __name__ == "__main__":
