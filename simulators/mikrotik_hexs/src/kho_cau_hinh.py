@@ -145,7 +145,7 @@ class KhoCauHinh:
             self.thu_tu.setdefault(dd, []).append(ma_moi)
         return ma_moi
 
-    def doi_cho(self, duong_dan, ma_dong, ma_dung_sau):
+    def doi_cho(self, duong_dan, ma_dong, ma_dung_sau, ids_goc=None):
         """
         0xfe0007 — doi thu tu dong. DO THAT tren [14,3] ngay 2026-08-25:
 
@@ -155,10 +155,26 @@ class KhoCauHinh:
 
         Doi chieu ma goc `ObjectMap.moveObjectAfter`: `req.ufe0005 = next.ufe0001`
         voi `next` la dong ke sau vi tri dich. Khop.
+
+        `ids_goc` = danh sach id cua cac dong GOC (tu khung that) theo dung thu
+        tu. Lan dau doi cho o mot bang thi `thu_tu` duoc "vat chat hoa" thanh
+        THU TU DAY DU (goc + moi) de keo duoc CA DONG GOC — truoc day chi keo
+        duoc dong hoc vien them, keo dong goc la bao "khong co doi tuong".
         """
         dd = tuple(duong_dan)
         with self.khoa:
             tt = self.thu_tu.get(dd)
+            if ids_goc:
+                da_xoa = self.da_xoa.get(dd, set())
+                goc = [g for g in ids_goc if g not in da_xoa]
+                if tt is None:
+                    tt = goc
+                elif any(g not in tt for g in goc):
+                    # thu_tu kieu cu (chi chua dong moi): dong goc dung TRUOC,
+                    # dong moi giu nguyen thu tu cua no o SAU — khop dung cach
+                    # `_ap_bang` dang sap xep, nen khong doi vi tri hien thi.
+                    tt = goc + [x for x in tt if x not in goc]
+                self.thu_tu[dd] = tt
             if tt is None or ma_dong not in tt:
                 return False
             tt.remove(ma_dong)
@@ -240,8 +256,30 @@ def _json_an_toan(o):
     raise TypeError(type(o))
 
 
+def _giai_gt(gt):
+    """
+    Khoi phuc byte o MOI CAP khi nap tu JSON.
+
+    LOI DA TRA GIA (2026-09-19, anh Huynn bao trang IP > DNS tra HTTP 500):
+    luc GHI, `json.dump(default=_json_an_toan)` doi MOI gia tri byte thanh
+    {"__byte__": ...} — ke ca byte nam SAU trong khung long nhau (kieu 0x28/
+    0x29/0xa8, vd danh sach "Servers" cua trang DNS [14,2] chua dia chi IPv6
+    16 byte). Nhung luc NAP thi ban cu chi doi NGUOC o CAP NGOAI CUNG, nen
+    cac byte cap trong van la dict -> khi dung khung tra loi, `bytes(dict)`
+    duyet qua KHOA cua dict (chuoi) va nem
+    "TypeError: 'str' object cannot be interpreted as an integer"
+    -> may chu tra 500 -> khung iframe bi da ve trang dang nhap cua portal.
+    Ghi va nap PHAI doi xung: da de quy khi ghi thi cung phai de quy khi nap.
+    """
+    if isinstance(gt, dict):
+        if "__byte__" in gt:
+            return gt["__byte__"].encode("latin-1")
+        return {k: _giai_gt(v) for k, v in gt.items()}
+    if isinstance(gt, list):
+        return [_giai_gt(x) for x in gt]
+    return gt
+
+
 def _giai_json(v):
     kieu, gt = v
-    if isinstance(gt, dict) and "__byte__" in gt:
-        gt = gt["__byte__"].encode("latin-1")
-    return (kieu, gt)
+    return (kieu, _giai_gt(gt))

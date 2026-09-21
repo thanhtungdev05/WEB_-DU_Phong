@@ -120,7 +120,7 @@
     const id = String(deviceId).trim().toLowerCase();
     return id === 'ax3000c' || id === 'ax3000hv2' || id === 'ax3000s' ||
            id === 'ont_be6500c' || id === 'be6500c' || id === 'be12000' ||
-           id === 'vigor2927';
+           id === 'vigor2927' || id === 'mikrotik_hexs';
   }
 
   function populateDeviceDropdown(devices) {
@@ -576,9 +576,19 @@
                 const markSaveInteraction = function (e) {
                   let el = e.target;
                   while (el && el !== doc) {
-                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || (el.getAttribute && el.getAttribute('role') === 'button')) {
+                    const laNutLuuMikrotik = (currentDeviceId === 'mikrotik_hexs') && (function () {
+                      try {
+                        const a = (el.tagName === 'A') ? el : (el.closest ? el.closest('a') : null);
+                        if (!a) return false;
+                        const chu = (a.textContent || '').trim().toLowerCase();
+                        return chu === 'ok' || chu === 'apply';
+                      } catch (e) { return false; }
+                    })();
+
+                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || (el.getAttribute && el.getAttribute('role') === 'button') || laNutLuuMikrotik) {
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
-                      const isSaveOrApply = btnVal.includes('save') || 
+                      const isSaveOrApply = laNutLuuMikrotik ||
+                        btnVal.includes('save') || 
                         btnVal.includes('apply') || 
                         btnVal.includes('submit') || 
                         btnVal.includes('lưu') || 
@@ -610,7 +620,16 @@
                 doc.addEventListener('click', function (e) {
                   let el = e.target;
                   while (el && el !== doc) {
-                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+                    const laNutLuuMikrotik = (currentDeviceId === 'mikrotik_hexs') && (function () {
+                      try {
+                        const a = (el.tagName === 'A') ? el : (el.closest ? el.closest('a') : null);
+                        if (!a) return false;
+                        const chu = (a.textContent || '').trim().toLowerCase();
+                        return chu === 'ok' || chu === 'apply';
+                      } catch (e) { return false; }
+                    })();
+
+                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || laNutLuuMikrotik) {
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
                       const isOntBai6 = (currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6');
 
@@ -640,7 +659,8 @@
                       if (!isExcludedAction) {
                         const isVigorOk = (currentDeviceId === 'vigor2927') &&
                           (btnVal === 'ok' || el.id === 'btn-pppoe-ok' || el.id === 'btn-ipbmac-ok' || (el.name && el.name.toLowerCase() === 'btnok') || el.name === 'submit');
-                        const isSaveOrApply = btnVal.includes('save') || 
+                        const isSaveOrApply = laNutLuuMikrotik ||
+                          btnVal.includes('save') || 
                           btnVal.includes('apply') || 
                           btnVal.includes('submit') || 
                           btnVal.includes('lưu') || 
@@ -655,6 +675,11 @@
 
                           doc._ftcLastSaveInteraction = Date.now();
                           doc._ftcIsSaved = true;
+                          window._hasClickedSaveInGuide = true;
+                          if (currentDeviceId === 'mikrotik_hexs') {
+                            window._ftcMkChanTooltip = true;
+                            setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
+                          }
                           if (isAx3000sBai2_2g) {
                             doc._ftc2gSaved = true;
                           }
@@ -1433,6 +1458,11 @@
     }
     window._hasClickedSaveInGuide = false;
     window._hasSuccHintStored = false;
+    window._ftcMkChanTooltip = false;
+    const targetDevId = (device && device.id) ? device.id : currentDeviceId;
+    const targetLabId = (lesson && lesson.id) ? lesson.id : currentLessonId;
+    window._sessionRuleCache = {};
+    window._sessionRuleCacheScope = `${targetDevId}:${targetLabId}`;
     const resetPromise = resetDeviceSession(currentDeviceId);
 
     // Switch to practice screen
@@ -1484,6 +1514,29 @@
     const targetDev = deviceId || currentDeviceId;
     window._hasSuccHintStored = false;
     window._hasClickedSaveInGuide = false;
+    window._ftcMkChanTooltip = false;
+    window._FTC_MK_BAI1 = null;
+    window._sessionRuleCache = {};
+    window._sessionRuleCacheScope = null;
+
+    // Reset toàn bộ biến toàn cục trạng thái phiên (Vigor2927, multi-page labs)
+    if (typeof window.vg2927Bai6Reset === 'function') {
+      try { window.vg2927Bai6Reset(); } catch (e) { }
+    }
+    window._FTC_VG2927_BAI6 = null;
+    window._FTC_VG2927_BAI6_LASTPAGE = null;
+    window._FTC_VG2927_BAI6_SCOPE = null;
+    window._ftcHasClickedAdd = false;
+    window._ftcLastAddFrom = null;
+    window._ftcLastAddTo = null;
+    window._ftcLastAddMode = null;
+    window._ftcLastAddTx = null;
+    window._ftcLastAddTxUnit = null;
+    window._ftcLastAddRx = null;
+    window._ftcLastAddRxUnit = null;
+    window._ftcLastAddIp = null;
+    window._ftcLastAddMac = null;
+
     if (!targetDev) return Promise.resolve();
 
     let simFolder = '';
@@ -1498,31 +1551,67 @@
     try {
       localStorage.removeItem('ftc_sim_wifi24');
       localStorage.removeItem('ftc_sim_wifi5g');
+      localStorage.removeItem('BE12000_state');
+      localStorage.removeItem('labStartTime');
+      localStorage.removeItem('labStartSession');
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPUsername');
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPPassword');
       sessionStorage.removeItem('BE12000_session');
       sessionStorage.removeItem('BE12000_loginToken');
       sessionStorage.removeItem('sid');
+      sessionStorage.removeItem('be6500c_sid');
+      sessionStorage.removeItem('tech_support_sid');
+      sessionStorage.removeItem('vg_session');
+      sessionStorage.removeItem('vg2927_sid');
     } catch (e) { }
 
-    const resetUrl = '/' + simFolder + '/api/reset?_t=' + Date.now();
-    try {
-      return fetch(resetUrl, {
-        method: 'POST',
-        credentials: 'same-origin',
-        cache: 'no-store',
-        headers: { 'X-FTC-Simulator-Reset': 'current-session' }
-      }).then(response => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return true;
-      }).catch(error => {
-        console.warn(`[Simulator] Không thể đặt lại phiên ${simFolder}:`, error);
-        return false;
-      });
-    } catch (error) {
-      console.warn(`[Simulator] Không thể gửi yêu cầu đặt lại phiên ${simFolder}:`, error);
-      return Promise.resolve(false);
+    const normDev = normalizeDeviceId(targetDev);
+    const resetEndpoints = new Set();
+    if (simFolder) {
+      resetEndpoints.add('/' + simFolder + '/api/reset');
     }
+    if (normDev === 'ont_be6500c') {
+      resetEndpoints.add('/sim_ONT_be6500c/api/reset');
+      resetEndpoints.add('/ont_be6500c/api/reset');
+    } else if (normDev === 'be6500c') {
+      resetEndpoints.add('/sim_be6500c/api/reset');
+      resetEndpoints.add('/sim_ONT_be6500c/api/reset');
+    } else if (normDev === 'be12000') {
+      resetEndpoints.add('/sim_be12000/api/reset');
+    } else if (normDev === 'be15000') {
+      resetEndpoints.add('/sim_be15000/api/reset');
+    } else if (normDev === 'vigor2927') {
+      resetEndpoints.add('/sim_vigor2927/api/reset');
+    } else if (normDev === 'mikrotik_hexs') {
+      resetEndpoints.add('/sim_mikrotik_hexs/api/reset');
+      resetEndpoints.add('/sim_mikrotik_hexs/ftc_dat_lai');
+    }
+
+    const resetPromises = Array.from(resetEndpoints).map(ep => {
+      const resetUrl = ep + '?_t=' + Date.now();
+      try {
+        return fetch(resetUrl, {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { 'X-FTC-Simulator-Reset': 'current-session' }
+        }).then(response => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return true;
+        }).catch(() => {
+          return fetch(resetUrl, {
+            method: 'GET',
+            credentials: 'same-origin',
+            cache: 'no-store'
+          }).then(r => r.ok).catch(() => false);
+        });
+      } catch (error) {
+        console.warn(`[Simulator] Không thể gửi yêu cầu đặt lại phiên ${ep}:`, error);
+        return Promise.resolve(false);
+      }
+    });
+
+    return Promise.allSettled(resetPromises).then(() => true);
   }
 
   function confirmLeavePracticeSession() {
@@ -1551,6 +1640,7 @@
     window._hasClickedSaveInGuide = false;
     window._hasSuccHintStored = false;
     window._sessionRuleCache = null;
+    window._sessionRuleCacheScope = null;
 
     deviceIframe.src = '';
     currentIframeUrl = '';
@@ -1631,6 +1721,8 @@
 
 
   // ── Grading & Evaluation Engine ──────────────────────────────────
+  window.ftcLayCheDo = function () { return currentMode; };
+
   function evaluateLesson(device, lesson) {
     if (!lesson) return null;
 
@@ -1843,11 +1935,17 @@
         } catch (e) { }
       }
 
+      const effectiveDeviceId = (device && device.id) ? device.id : currentDeviceId;
+      const currentLessonKey = `${effectiveDeviceId}:${(lesson && lesson.id) || currentLessonId}`;
+
       // Nếu không tìm thấy element trong các frame hiện hành (do học viên đã chuyển trang khác như LAN, Wi-Fi...)
       // thì kiểm tra xem rule này đã từng được nhập và lưu thành công trong phiên làm việc hiện tại hay chưa (Session Cache)
       if (!elementFound) {
-        const cached = (_trackingSession && _trackingSession.ruleCache && _trackingSession.ruleCache[rule.id]) ||
-                       (window._sessionRuleCache && window._sessionRuleCache[rule.id]);
+        const isScopeValid = (window._sessionRuleCacheScope === currentLessonKey);
+        const cached = isScopeValid && (
+          (_trackingSession && _trackingSession.ruleCache && _trackingSession.ruleCache[rule.id]) ||
+          (window._sessionRuleCache && window._sessionRuleCache[rule.id])
+        );
         if (cached) {
           elementFound = true;
           actualValue = cached.actualValue;
@@ -1861,7 +1959,6 @@
         isSaved = true;
       }
 
-      const effectiveDeviceId = (device && device.id) ? device.id : currentDeviceId;
       if (isMatch) {
         // Bắt buộc trang chứa phần tử phải được bấm Save/Apply thành công
         if (isSaveRequiredDevice(effectiveDeviceId) && !isSaved) {
@@ -1874,7 +1971,10 @@
       // - Nếu phần tử tìm thấy trên trang đang mở nhưng chưa được lưu (bị sửa đổi): xóa khỏi cache để tránh dùng lại giá trị cũ
       if (elementFound) {
         if (isSaved) {
-          if (!window._sessionRuleCache) window._sessionRuleCache = {};
+          if (!window._sessionRuleCache || window._sessionRuleCacheScope !== currentLessonKey) {
+            window._sessionRuleCache = {};
+            window._sessionRuleCacheScope = currentLessonKey;
+          }
           window._sessionRuleCache[rule.id] = {
             actualValue: actualValue,
             isSaved: isSaved,
@@ -1893,7 +1993,9 @@
             try { return d.querySelector(rule.selector) !== null; } catch (e) { return false; }
           });
           if (isActuallyInDom) {
-            if (window._sessionRuleCache) delete window._sessionRuleCache[rule.id];
+            if (window._sessionRuleCache && window._sessionRuleCacheScope === currentLessonKey) {
+              delete window._sessionRuleCache[rule.id];
+            }
             if (_trackingSession && _trackingSession.ruleCache) delete _trackingSession.ruleCache[rule.id];
           }
         }
@@ -2750,7 +2852,10 @@
   }
 
   function applyGuidePopups() {
-    if (currentMode !== 'guide') {
+    const dangChanTooltip = (currentDeviceId === 'mikrotik_hexs')
+      ? window._ftcMkChanTooltip
+      : false;
+    if (currentMode !== 'guide' || dangChanTooltip) {
       clearGuidePopups();
       return;
     }
@@ -2882,6 +2987,41 @@
       const results = [];
       for (const sel of parts) {
         try {
+          if (sel.startsWith('text:')) {
+            const textToFind = sel.slice(5).trim();
+            let marker = doc.querySelector(`.ftc-text-marker[data-text="${textToFind}"]`);
+            if (marker && marker.offsetParent !== null) {
+              results.push(marker);
+              continue;
+            }
+            const walker = doc.createTreeWalker(doc.body || doc, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            while (node = walker.nextNode()) {
+              const idx = node.nodeValue.indexOf(textToFind);
+              if (idx !== -1 && node.parentElement && node.parentElement.offsetParent !== null
+                  && !node.parentElement.closest('.ftc-guide-bubble')) {
+                const range = doc.createRange();
+                range.setStart(node, idx);
+                range.setEnd(node, idx + textToFind.length);
+                marker = doc.createElement('span');
+                marker.className = 'ftc-text-marker';
+                marker.dataset.text = textToFind;
+                marker.style.display = 'inline';
+                marker.style.padding = '0';
+                marker.style.margin = '0';
+                marker.style.border = 'none';
+                try {
+                  range.surroundContents(marker);
+                  results.push(marker);
+                } catch(e) {
+                  results.push(node.parentElement);
+                }
+                break;
+              }
+            }
+            continue;
+          }
+
           if (!sel.includes(':contains(')) {
             const els = doc.querySelectorAll(sel);
             els.forEach(el => results.push(el));

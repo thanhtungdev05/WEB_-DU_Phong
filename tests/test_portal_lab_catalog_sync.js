@@ -17,10 +17,10 @@ const expected = {
   be6500c: 'be6500c-bai',
   ONT_be6500c: 'ONT_be6500c-bai'
 };
-const hidden = ['mikrotik_hexs'];
+const hidden = [];
 const supportedPortalDevices = [
   'ac1000f', 'ax3000c', 'ax3000gz', 'ax3000hv2', 'ax3000s',
-  'ac1000HI', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c'
+  'ac1000HI', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c', 'mikrotik_hexs'
 ];
 const simulatorPrefixes = {
   ac1000f: '/sim_ac1000f/',
@@ -30,7 +30,9 @@ const simulatorPrefixes = {
   ax3000s: '/sim_ax3000s/',
   ac1000HI: '/sim_ac1000HI/',
   be6500c: '/sim_be6500c/',
-  ONT_be6500c: '/sim_ONT_be6500c/'
+  ONT_be6500c: '/sim_ONT_be6500c/',
+  vigor2927: '/sim_vigor2927/',
+  mikrotik_hexs: '/sim_mikrotik_hexs/'
 };
 const expectedTitles = [
   'Cấu hình PPPoE',
