@@ -60,6 +60,18 @@ class DispatcherSecurityTests(unittest.TestCase):
                 status, _, _ = self.request(path)
                 self.assertEqual(status, 200)
 
+    def test_liveness_endpoint_does_not_depend_on_database_or_internal_api(self):
+        status, headers, body = self.request('/healthz')
+        normalized_headers = {key.lower(): value for key, value in headers.items()}
+
+        self.assertEqual(status, 200)
+        self.assertEqual(normalized_headers.get('content-type'), 'application/json; charset=utf-8')
+        self.assertEqual(body, b'{"ok":true,"service":"dispatcher"}')
+
+        status, _, body = self.request('/healthz', method='HEAD')
+        self.assertEqual(status, 200)
+        self.assertEqual(body, b'')
+
     def test_every_active_device_has_a_non_empty_dispatcher_entry_page(self):
         paths = (
             '/sim_ac1000f/cgi-bin/index.asp?page=home_wan.asp',

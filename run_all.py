@@ -498,6 +498,16 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         # Chuyen tiep /api/* -> PHP noi bo (browser chi can 1 cong 8080)
         # Ngoai tru /api/v1/data/* thuoc ve simulator ONT BE6500C
         path_only = self.path.split('?')[0]
+        if method in ('GET', 'HEAD') and path_only == '/healthz':
+            body = b'{"ok":true,"service":"dispatcher"}'
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            if method != 'HEAD':
+                self.wfile.write(body)
+            return
+
         if is_sensitive_path(path_only):
             self.send_error(404, 'Not Found')
             return
