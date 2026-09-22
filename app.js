@@ -1542,7 +1542,7 @@
       simFolder = 'sim_' + targetDev;
     }
 
-const resetEndpoints = ['/' + simFolder + '/api/reset'];
+    const resetEndpoints = ['/' + simFolder + '/api/reset'];
     if (targetDev === 'ONT_be6500c' || targetDev === 'ont_be6500c') {
       resetEndpoints.push('/sim_ONT_be6500c/api/reset', '/ont_be6500c/api/reset');
     } else if (targetDev === 'be6500c') {
