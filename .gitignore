@@ -23,7 +23,7 @@ ENV/
 .mypy_cache/
 coverage.xml
 temp/
-
+tests/
 # ── Dependencies & Runtime Scratch ────────────────────────────
 vendor/
 node_modules/

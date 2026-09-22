@@ -21,6 +21,8 @@
   let _catalogLabIds = new Set();
   let _catalogLabNames = new Map();
   let _catalogLabOrder = new Map();
+  let _guestGuideMode = false;
+  let databaseAvailabilityRequest = null;
 
   function escapeHTML(str) {
     if (!str) return '';
@@ -183,6 +185,56 @@
     return visibleDevices;
   }
 
+  function selectInitialCatalogDevice(visibleDevices) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const reqDevice = urlParams.get('device');
+    const reqLab = urlParams.get('lab');
+    const reqMode = urlParams.get('mode');
+    let initialDev = null;
+    if (reqDevice) {
+      const normReq = normalizeDeviceId(reqDevice);
+      initialDev = visibleDevices.find(function (device) {
+        return normalizeDeviceId(device.id) === normReq;
+      });
+    }
+    if (!initialDev && visibleDevices.length > 0) {
+      initialDev = visibleDevices[0];
+    }
+    if (initialDev) {
+      selectDevice(initialDev.id, reqLab, reqMode);
+      return;
+    }
+    currentDeviceId = null;
+    navList.innerHTML = '<div class="empty-state"><p>Chưa có thiết bị luyện tập đang hoạt động.</p></div>';
+    showHero();
+    setBreadcrumb(['Chưa có bài luyện tập']);
+  }
+
+  function loadStaticGuestGuideCatalog() {
+    _catalogDeviceIds = new Set();
+    _catalogLabIds = new Set();
+    _catalogLabNames = new Map();
+    _catalogLabOrder = new Map();
+
+    DEVICES.forEach(function (device) {
+      _catalogDeviceIds.add(normalizeDeviceId(device.id));
+      let deviceLabOrder = 0;
+      (device.categories || []).forEach(function (category) {
+        (category.lessons || []).forEach(function (lesson) {
+          const labId = normalizeLabId(lesson.id);
+          if (!labId) return;
+          _catalogLabIds.add(labId);
+          _catalogLabNames.set(labId, String(lesson.title || lesson.id || ''));
+          _catalogLabOrder.set(labId, deviceLabOrder++);
+        });
+      });
+    });
+
+    const visibleDevices = DEVICES.slice();
+    populateDeviceDropdown(visibleDevices);
+    selectInitialCatalogDevice(visibleDevices);
+  }
+
   function loadLearningCatalog() {
     return fetch('/api/index.php/learning/catalog', { credentials: 'include' })
       .then(function (response) {
@@ -195,28 +247,7 @@
         _catalogLabIds = new Set(synchronizePortalCatalog(catalogDevices).keys());
         const visibleDevices = buildVisibleCatalogDevices(catalogDevices);
         populateDeviceDropdown(visibleDevices);
-        const urlParams = new URLSearchParams(window.location.search);
-        const reqDevice = urlParams.get('device');
-        const reqLab = urlParams.get('lab');
-        const reqMode = urlParams.get('mode');
-        let initialDev = null;
-        if (reqDevice) {
-          const normReq = normalizeDeviceId(reqDevice);
-          initialDev = visibleDevices.find(function (d) {
-            return normalizeDeviceId(d.id) === normReq;
-          });
-        }
-        if (!initialDev && visibleDevices.length > 0) {
-          initialDev = visibleDevices[0];
-        }
-        if (initialDev) {
-          selectDevice(initialDev.id, reqLab, reqMode);
-        } else {
-          currentDeviceId = null;
-          navList.innerHTML = '<div class="empty-state"><p>Chưa có thiết bị luyện tập đang hoạt động.</p></div>';
-          showHero();
-          setBreadcrumb(['Chưa có bài luyện tập']);
-        }
+        selectInitialCatalogDevice(visibleDevices);
       });
   }
 
@@ -900,7 +931,11 @@
 
     // Show system ready after short delay
     setTimeout(() => {
-      if (statusText) statusText.textContent = 'System Ready';
+      if (statusText) {
+        statusText.textContent = _guestGuideMode
+          ? 'Guest Guide Mode · Không lưu tiến độ'
+          : 'System Ready';
+      }
     }, 1200);
 
     // Tải thông tin người dùng hiện tại từ API để dùng cho Tracking
@@ -920,7 +955,19 @@
     const section = document.getElementById('user-profile-section');
     if (!section) return;
 
-    if (_currentUser) {
+    if (_guestGuideMode) {
+      section.innerHTML = `
+        <div class="auth-container">
+          <div class="auth-user-info">
+            <div class="auth-avatar">G</div>
+            <div class="auth-details">
+              <span class="auth-name">Khách</span>
+              <span class="auth-role">Hướng dẫn ngoại tuyến · không lưu tiến độ</span>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (_currentUser) {
       const initials = (_currentUser.name || 'K').substring(0, 2).toUpperCase();
       const roleLabel = _currentUser.role_name
         || ({ KTV: 'Kỹ thuật viên', ADMIN: 'Quản trị viên', DEV: 'Nhà phát triển' }[_currentUser.role])
@@ -991,12 +1038,13 @@
       cache: 'no-store'
     })
       .then(function (res) {
-        if (!res.ok) {
+        if (res.ok) return res.json();
+        return res.json().catch(function () { return {}; }).then(function (payload) {
           const error = new Error(`Không kiểm tra được phiên đăng nhập (HTTP ${res.status}).`);
           error.status = res.status;
+          error.code = payload && payload.error ? payload.error.code : '';
           throw error;
-        }
-        return res.json();
+        });
       })
       .then(function (data) {
         return applyCurrentUser(data && data.user ? data.user : null);
@@ -1005,6 +1053,53 @@
         currentUserRequest = null;
       });
     return currentUserRequest;
+  }
+
+  function isDatabaseUnavailableForGuestMode(error) {
+    if (error && error.code === 'db-connect-error') return Promise.resolve(true);
+    if (databaseAvailabilityRequest) return databaseAvailabilityRequest;
+
+    databaseAvailabilityRequest = fetch('/api/index.php/health', {
+      credentials: 'omit',
+      cache: 'no-store'
+    })
+      .then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (payload) {
+          return Boolean(payload && payload.error && payload.error.code === 'db-connect-error');
+        });
+      })
+      .catch(function () {
+        // A generic API/network failure must not silently become an auth bypass.
+        return false;
+      })
+      .finally(function () {
+        databaseAvailabilityRequest = null;
+      });
+    return databaseAvailabilityRequest;
+  }
+
+  function activateGuestGuideMode() {
+    if (_guestGuideMode) return;
+    _guestGuideMode = true;
+    _currentUser = null;
+    if (sessionHeartbeatInterval) {
+      clearInterval(sessionHeartbeatInterval);
+      sessionHeartbeatInterval = null;
+    }
+    renderUserProfile();
+    if (statusText) statusText.textContent = 'Guest Guide Mode · Không lưu tiến độ';
+    loadStaticGuestGuideCatalog();
+  }
+
+  function enterGuestModeOrRedirect(error) {
+    return isDatabaseUnavailableForGuestMode(error).then(function (databaseUnavailable) {
+      if (databaseUnavailable) {
+        activateGuestGuideMode();
+        return null;
+      }
+      redirectToLogin();
+      return null;
+    });
   }
 
   function refreshSessionHeartbeat() {
@@ -1035,29 +1130,35 @@
   function loadCatalogWithOfflineFallback() {
     return loadLearningCatalog().catch(function (error) {
       console.warn('[Catalog] Không thể tải danh sách bài luyện tập:', error);
-      _catalogDeviceIds = new Set();
-      _catalogLabIds = new Set();
-      _catalogLabNames = new Map();
-      _catalogLabOrder = new Map();
-      currentDeviceId = null;
-      populateDeviceDropdown([]);
-      const errorState = document.createElement('div');
-      errorState.className = 'empty-state';
-      const message = document.createElement('p');
-      message.textContent = 'Không thể tải danh sách bài luyện tập đang hoạt động.';
-      const retry = document.createElement('button');
-      retry.type = 'button';
-      retry.className = 'btn btn-secondary';
-      retry.textContent = 'Thử lại';
-      retry.addEventListener('click', function () {
-        retry.disabled = true;
-        retry.textContent = 'Đang tải...';
-        loadCatalogWithOfflineFallback();
+      return isDatabaseUnavailableForGuestMode(error).then(function (databaseUnavailable) {
+        if (databaseUnavailable) {
+          activateGuestGuideMode();
+          return;
+        }
+        _catalogDeviceIds = new Set();
+        _catalogLabIds = new Set();
+        _catalogLabNames = new Map();
+        _catalogLabOrder = new Map();
+        currentDeviceId = null;
+        populateDeviceDropdown([]);
+        const errorState = document.createElement('div');
+        errorState.className = 'empty-state';
+        const message = document.createElement('p');
+        message.textContent = 'Không thể tải danh sách bài luyện tập đang hoạt động.';
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'btn btn-secondary';
+        retry.textContent = 'Thử lại';
+        retry.addEventListener('click', function () {
+          retry.disabled = true;
+          retry.textContent = 'Đang tải...';
+          loadCatalogWithOfflineFallback();
+        });
+        errorState.append(message, retry);
+        navList.replaceChildren(errorState);
+        showHero();
+        setBreadcrumb(['Chưa tải được danh mục']);
       });
-      errorState.append(message, retry);
-      navList.replaceChildren(errorState);
-      showHero();
-      setBreadcrumb(['Chưa tải được danh mục']);
     });
   }
 
@@ -1065,8 +1166,7 @@
     return requestCurrentUserSession()
       .then(function (user) {
         if (!user) {
-          redirectToLogin();
-          return null;
+          return enterGuestModeOrRedirect();
         }
         if (user.is_admin) {
           const btnDashboard = document.getElementById('btn-dashboard');
@@ -1078,12 +1178,13 @@
           }
         }
         startSessionHeartbeat();
-        return loadCatalogWithOfflineFallback().then(function () { return user; });
+        return loadCatalogWithOfflineFallback().then(function () {
+          return _guestGuideMode ? null : user;
+        });
       })
       .catch(function (error) {
         console.warn('[Tracking] Không thể lấy thông tin user từ API:', error);
-        redirectToLogin();
-        return null;
+        return enterGuestModeOrRedirect(error);
       });
   }
 
@@ -1248,7 +1349,7 @@
     // 💡 Hướng dẫn — mở giao diện thiết bị và BẬT POPUP HƯỚNG DẪN TỪNG BƯỚC
     const device = DEVICES.find(d => d.id === currentDeviceId);
     btnGuide.onclick = () => {
-      if (!_currentUser) {
+      if (!_currentUser && !_guestGuideMode) {
         redirectToLogin();
         return;
       }
@@ -1259,7 +1360,7 @@
 
     // ⚡ Thực hành — mở trang login của thiết bị và TẮT POPUP (bắt buộc học viên login vào)
     btnPrac.onclick = () => {
-      if (!_currentUser) {
+      if (!_currentUser && !_guestGuideMode) {
         redirectToLogin();
         return;
       }
@@ -2144,6 +2245,11 @@ const resetEndpoints = ['/' + simFolder + '/api/reset'];
     //   + Chế độ Thực hành (practice): LUÔN gửi log (Cả PASS và FAIL) ngay lúc bấm.
     // =========================================================================
     setTrackingSaveStatus('', '');
+    if (_guestGuideMode) {
+      setTrackingSaveStatus('warning', 'Chế độ khách chỉ chấm tại trình duyệt; kết quả và tiến độ không được lưu.');
+      showGradingModal(evalResult, device, lesson, currentMode, durationSec);
+      return;
+    }
     if (currentMode === 'practice' || (currentMode === 'guide' && evalResult.passed)) {
       const savePromise = sendTrackingTimer(evalResult, durationSec);
       Promise.resolve(savePromise).finally(function () {
@@ -2399,6 +2505,7 @@ const resetEndpoints = ['/' + simFolder + '/api/reset'];
   }
 
   function sendTrackingTimer(evalResult, durationSec, retryPayload = null, authenticationChecked = false) {
+    if (_guestGuideMode) return Promise.resolve(false);
     if (!_trackingSession) return; // Chưa có phiên nào được bắt đầu
     const session = _trackingSession;
     if (session.startPromise && !session.startSettled) {
