@@ -129,38 +129,126 @@
 
       var tbody = layTbody(ds.length > 0);
       hienKhoiTrong(ds.length === 0);
-      // Setup Add New modal
-      var modal = document.getElementById('pf-modal');
-      if (modal && !modal.dataset.bound) {
-        modal.dataset.bound = 'true';
-        var addBtn = Array.prototype.slice.call(document.querySelectorAll('button')).find(function(b) { return b.textContent.indexOf('Add New') >= 0; });
-        if (addBtn) {
-          addBtn.addEventListener('click', function() { modal.style.display = 'flex'; });
+
+      function moModalPortforward() {
+        if (typeof window.__moHopThoaiBieuMau !== 'function') {
+          console.warn('[portforward_binding] __moHopThoaiBieuMau khong ton tai');
+          return;
         }
-        var btnHuy = modal.querySelector('.dlg-huy');
-        if (btnHuy) {
-          btnHuy.addEventListener('click', function() { modal.style.display = 'none'; });
+        var h = window.__moHopThoaiBieuMau('dialog_portforward_add');
+        if (!h) return;
+        var goc = h.goc;
+
+        // Setup Protocol select dropdown
+        var oProtocolInput = goc.querySelector('input[name="protocol"]');
+        var hopChon = goc.querySelector('#mui-component-select-protocol');
+        if (hopChon && oProtocolInput) {
+          var oChu = hopChon.querySelector('span') || hopChon;
+          if (oProtocolInput.value) oChu.textContent = oProtocolInput.value;
+          if (typeof window.__noiOChon === 'function') {
+            window.__noiOChon(hopChon, oProtocolInput, [
+              { gt: 'TCP + UDP', chu: 'TCP + UDP' },
+              { gt: 'TCP', chu: 'TCP' },
+              { gt: 'UDP', chu: 'UDP' }
+            ], function (gt) {
+              var s = hopChon.querySelector('span');
+              if (s) s.textContent = gt; else hopChon.textContent = gt;
+            });
+          }
         }
-        var btnLuu = modal.querySelector('.dlg-luu');
+
+        // Setup Device / IP Autocomplete
+        var oIp = goc.querySelector('.MuiAutocomplete-input');
+        if (oIp) {
+          var dsIP = (thietBi && thietBi.length > 0) ? thietBi.map(function(d) {
+            return { gt: d.ip4Address, chu: (d.hostname || 'Unknown') + ' (' + d.ip4Address + ')' };
+          }) : [
+            { gt: '192.168.1.20', chu: 'Camera (192.168.1.20)' },
+            { gt: '192.168.1.100', chu: 'PC-Office (192.168.1.100)' }
+          ];
+          var nhanO = oIp.closest('.MuiFormControl-root') ? oIp.closest('.MuiFormControl-root').querySelector('.MuiInputLabel-root') : null;
+
+          if (typeof window.__moPopupAutocomplete === 'function') {
+            var btnDropdown = oIp.closest('.MuiAutocomplete-root') ? oIp.closest('.MuiAutocomplete-root').querySelector('.MuiAutocomplete-popupIndicator') : null;
+            function moAuto() {
+              window.__moPopupAutocomplete(oIp, dsIP, oIp.dataset.simIp || oIp.value || '', function(gt, chu) {
+                if (gt) {
+                  oIp.value = gt;
+                  oIp.dataset.simIp = gt;
+                  if (nhanO && window.__dongBoNhanChonThuc) window.__dongBoNhanChonThuc(nhanO, true);
+                }
+              });
+            }
+            oIp.addEventListener('click', moAuto);
+            if (btnDropdown) btnDropdown.addEventListener('click', moAuto);
+          }
+        }
+
+        // Wire Save button (.dlg-luu)
+        var btnLuu = goc.querySelector('.dlg-luu');
         if (btnLuu) {
           btnLuu.addEventListener('click', function() {
+            var nameInput = goc.querySelector('input[name="name"]');
+            var nameVal = (nameInput ? nameInput.value : '').trim();
+            var protoVal = (oProtocolInput ? oProtocolInput.value : '') || (hopChon ? hopChon.textContent.trim() : 'TCP + UDP');
+            if (protoVal === 'TCP_UDP') protoVal = 'TCP + UDP';
+            var srcInput = goc.querySelector('input[name="source.portRange"]');
+            var srcPort = (srcInput ? srcInput.value : '').trim();
+            var ipVal = (oIp ? (oIp.dataset.simIp || oIp.value) : '').trim();
+            var ipMatch = ipVal.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/);
+            var cleanIp = ipMatch ? ipMatch[0] : ipVal;
+            var dstInput = goc.querySelector('input[name="destination.portRange"]');
+            var dstPort = (dstInput ? dstInput.value : '').trim();
+            var oEnabled = goc.querySelector('input[name="enabled"]');
+            var isEnabled = oEnabled ? oEnabled.checked : true;
+
             var r = {
-              name: modal.querySelector('input[name="name"]').value,
-              protocol: modal.querySelector('#mui-component-select-protocol').value,
-              source: { portRange: modal.querySelector('input[name="source.portRange"]').value },
-              destination: { 
-                ipAddress: modal.querySelector('.MuiAutocomplete-input').value,
-                portRange: modal.querySelector('input[name="destination.portRange"]').value 
+              name: nameVal,
+              protocol: protoVal,
+              source: { portRange: srcPort },
+              destination: {
+                ipAddress: cleanIp,
+                portRange: dstPort
               },
-              enabled: true
+              enabled: isEnabled
             };
+
             var tb = layTbody(true);
             hienKhoiTrong(false);
             tb.appendChild(dungHang(mau, r, tenThietBi));
-            modal.style.display = 'none';
+
+            // Persist to backend API
+            fetch('/api/v1/data/portForwarding/policies', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify([r])
+            }).catch(function() {});
+
+            h.dong();
+
+            // Notify parent / test runner
+            if (window.parent && typeof window.parent.onSimulatorSave === 'function') {
+              try { window.parent.onSimulatorSave(window); } catch (e) {}
+            }
+            if (window.top && typeof window.top.onSimulatorSave === 'function') {
+              try { window.top.onSimulatorSave(window); } catch (e) {}
+            }
           });
         }
       }
+
+      function wireAddButton() {
+        var addBtn = Array.prototype.slice.call(document.querySelectorAll('button')).find(function(b) {
+          return b.textContent.indexOf('Add New') >= 0;
+        });
+        if (addBtn && !addBtn.dataset.wired) {
+          addBtn.dataset.wired = 'true';
+          addBtn.addEventListener('click', moModalPortforward);
+        }
+      }
+
+      wireAddButton();
+
       if (!ds.length) {
         if (tbody && tbody.parentNode) tbody.parentNode.removeChild(tbody);
         console.log('[portforward_binding] kho rong -> khong render tbody (giong that)');
@@ -169,38 +257,6 @@
       tbody.innerHTML = '';
       ds.forEach(function (r) { tbody.appendChild(dungHang(mau, r, tenThietBi)); });
       console.log('[portforward_binding] hien ' + ds.length + ' rule tu kho');
-
-      // Setup Add New modal
-      var modal = document.getElementById('pf-modal');
-      if (modal) {
-        var addBtn = Array.prototype.slice.call(document.querySelectorAll('button')).find(function(b) { return b.textContent.indexOf('Add New') >= 0; });
-        if (addBtn) {
-          addBtn.addEventListener('click', function() { modal.style.display = 'flex'; });
-        }
-        var btnHuy = modal.querySelector('.dlg-huy');
-        if (btnHuy) {
-          btnHuy.addEventListener('click', function() { modal.style.display = 'none'; });
-        }
-        var btnLuu = modal.querySelector('.dlg-luu');
-        if (btnLuu) {
-          btnLuu.addEventListener('click', function() {
-            var r = {
-              name: modal.querySelector('input[name="name"]').value,
-              protocol: modal.querySelector('#mui-component-select-protocol').value,
-              source: { portRange: modal.querySelector('input[name="source.portRange"]').value },
-              destination: { 
-                ipAddress: modal.querySelector('.MuiAutocomplete-input').value,
-                portRange: modal.querySelector('input[name="destination.portRange"]').value 
-              },
-              enabled: true
-            };
-            var tb = layTbody(true);
-            hienKhoiTrong(false);
-            tb.appendChild(dungHang(mau, r, tenThietBi));
-            modal.style.display = 'none';
-          });
-        }
-      }
     }).catch(function () {});
   }
 

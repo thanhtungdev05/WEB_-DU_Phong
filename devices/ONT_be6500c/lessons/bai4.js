@@ -75,8 +75,8 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
     },
     {
       "selector": "body:has(input[name=\"ipv4Settings.dns.dnsServers.primary\"]) button.alternative-layout--submit, button:contains(\"Save\")",
-      "text": "Bước 5: Chọn Save để lưu cấu hình (Nút Save chiếu vào Nút nộp bài hoặc nút Xem lỗi sai)",
-      "position": "right"
+      "text": "Bước 5: Chọn Save để lưu cấu hình",
+      "position": "bottom"
     }
   ]
 });

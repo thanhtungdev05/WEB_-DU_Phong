@@ -83,13 +83,16 @@ function mkBai5CaiTheoDoi(doc) {
       const lb = tr.querySelector('td.label');
       if (!lb || lb.textContent.trim() !== 'Servers') continue;
       const os = Array.from(tr.querySelectorAll('input'));
-      const upBtns = Array.from(tr.querySelectorAll('a.sbtn img[src*="up"]'))
-        .map(img => img.closest('a.sbtn'));
+      const upBtns = Array.from(tr.querySelectorAll('a.sbtn img[src*="up"], a.sbtn img[src*="up-gray"]'))
+        .map(img => img.closest('a.sbtn')).filter(Boolean);
       for (let i = 0; i < os.length && i < upBtns.length; i++) {
         if (MK_BAI5_CAN_XOA.indexOf((os[i].value || '').trim()) !== -1) {
           dich = upBtns[i];
           break;
         }
+      }
+      if (!dich && upBtns.length > 2) {
+        dich = upBtns[2];
       }
       break;
     }
@@ -148,7 +151,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
 
   // ── Bước 3: chọn bỏ 1.1.1.1 và 1.0.0.1... (Hình 3) ────────────────
   {
-    selector: '#ftc-mk5-triangle-3, tr:has(td.label:has-text("Servers")) a.sbtn:has(img[src*="up"]):nth-of-type(3)',
+    selector: '#ftc-mk5-triangle-3, a.sbtn img[src*="up"], a.sbtn',
     text: 'Bước 3: chọn bỏ<br>- 1.1.1.1<br>- 1.0.0.1<br>- 2606:4700:4700::1111<br>- 2606:4700:4700::1001',
     position: 'right',
     condition: function (doc) {

@@ -49,9 +49,27 @@ function mkBai1OTrangDanhSachPPP(doc) {
   return mkBai1Hash(doc) === '#PPP';
 }
 
+/** Tự động gắn ID cho 2 ô User/Password ngay khi mở Dial Out */
+function mkBai1CaiTheoDoi(doc) {
+  try {
+    for (const tr of doc.querySelectorAll('tr')) {
+      const lb = tr.querySelector('td.label');
+      const text = lb ? lb.textContent.trim() : '';
+      if (text === 'User') {
+        const inp = tr.querySelector('input');
+        if (inp && !inp.id) inp.id = 'ftc-mk-user';
+      } else if (text === 'Password') {
+        const inp = tr.querySelector('input');
+        if (inp && !inp.id) inp.id = 'ftc-mk-pass';
+      }
+    }
+  } catch (e) { }
+}
+
 /** Mục "Dial Out" đã mở rộng chưa? (mở rồi mới có hàng nhãn "User") */
 function mkBai1DialOutDaMo(doc) {
   try {
+    mkBai1CaiTheoDoi(doc);
     for (const tr of doc.querySelectorAll('tr')) {
       const lb = tr.querySelector('td.label');
       if (lb && lb.textContent.trim() === 'User') {
@@ -104,13 +122,13 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai1'] = [
     }
   },
   {
-    selector: '#ftc-mk-user',
+    selector: '#ftc-mk-user, tr:has-text("User") input',
     text: 'Bước 4: nhập hnftc-hlkt-234',
     position: 'right',
     condition: function (doc) { return mkBai1DialOutDaMo(doc); }
   },
   {
-    selector: '#ftc-mk-pass',
+    selector: '#ftc-mk-pass, tr:has-text("Password") input',
     text: 'Bước 5: nhập ftc1234',
     position: 'right',
     condition: function (doc) { return mkBai1DialOutDaMo(doc); }

@@ -2,7 +2,7 @@
  * devices/ONT_be6500c/lessons/bai6.js
  */
 window.DEVICE_BE6500C_LESSONS = window.DEVICE_BE6500C_LESSONS || [];
-window.DEVICE_BE6500C_LESSONS.push({
+var bai6 = {
   id: 'be6500c-bai6',
   title: 'Cấu hình Port Forwarding',
   subtitle: 'Cấu hình Port Forwarding',
@@ -116,7 +116,14 @@ window.DEVICE_BE6500C_LESSONS.push({
     {
       "selector": "button.dlg-luu",
       "text": "Lưu cấu hình",
-      "position": "right"
+      "position": "bottom"
     }
   ]
-});
+};
+
+var existingIndex = window.DEVICE_BE6500C_LESSONS.findIndex(function (l) { return l.id === 'be6500c-bai6'; });
+if (existingIndex >= 0) {
+  window.DEVICE_BE6500C_LESSONS[existingIndex] = bai6;
+} else {
+  window.DEVICE_BE6500C_LESSONS.push(bai6);
+}

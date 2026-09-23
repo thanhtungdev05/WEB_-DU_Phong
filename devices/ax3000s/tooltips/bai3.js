@@ -14,9 +14,10 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_03'] = [
   },
   // Chọn Advance
   {
-    selector: "a[href*='/advance'], #layer2-leaf-advance .dt, #layer2-leaf-advance",
+    selector: "#layer2-leaf-advance .dt, #layer2-leaf-advance",
     text: 'Bước 2: Chọn Advance',
     position: 'right',
+    page: 'wlan',
     hideOnPage: 'wlanMapSettingAll'
   },
   // Chọn Multiple SSID (ID generated from title "Multiple SSID" -> "Sky_Multiple_SSID")
@@ -24,6 +25,7 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_03'] = [
     selector: '#layer2-leaf-advance #Sky_Multiple_SSID, #Sky_Multiple_SSID',
     text: 'Bước 3: Chọn Multiple SSID',
     position: 'right',
+    page: 'wlan',
     hideOnPage: 'wlanMapSettingAll'
   },
   // Bước 1: Wi-Fi Network_3 (IOT WiFi)
@@ -66,34 +68,10 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_03'] = [
     page: 'wlanMapSettingAll',
     expected: '19006600'
   },
-  // Bước 5: Tick chọn Enable (Bật 5GHz)
-  {
-    selector: 'div.collapsible:nth-of-type(2) .active + .collapsible-content label[for="Chk_SsidEnable_5G_3"]',
-    text: 'Bước 9: Tick chọn Enable (Bật 5GHz)',
-    position: 'right',
-    page: 'wlanMapSettingAll',
-    expected: 'on'
-  },
-  // Bước 6: Đặt tên Wi-Fi IOT (5G) FPT Telecom-IoT
-  {
-    selector: 'div.collapsible:nth-of-type(2) .active + .collapsible-content #Txt_SSID_5G_3',
-    text: 'Bước 10: Đặt tên Wi-Fi IOT (5G) FPT Telecom-IoT',
-    position: 'right',
-    page: 'wlanMapSettingAll',
-    expected: 'FPT Telecom-IoT'
-  },
-  // Bước 7: Đặt mật khẩu IOT (5G) 19006600
-  {
-    selector: 'div.collapsible:nth-of-type(2) .active + .collapsible-content #Pwd_WpaPsk_5G_3',
-    text: 'Bước 11: Đặt mật khẩu IOT (5G) 19006600',
-    position: 'right',
-    page: 'wlanMapSettingAll',
-    expected: '19006600'
-  },
   // Bước 8: Lưu cấu hình IOT
   {
     selector: 'div.collapsible:nth-of-type(2) .active + .collapsible-content button[onclick="BntClick_Apply(2)"]',
-    text: 'Bước 12: Lưu cấu hình IOT',
+    text: 'Bước 9: Lưu cấu hình IOT',
     position: 'top',
     page: 'wlanMapSettingAll'
   }

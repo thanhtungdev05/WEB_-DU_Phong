@@ -107,6 +107,57 @@ function mkBai4NetworksDaDung() {
   } catch (e) { return false; }
 }
 
+/** Tìm ô nhập theo nhãn trong cùng hàng <tr> */
+function mkBai4OTheoNhan(doc, nhan) {
+  try {
+    for (const tr of doc.querySelectorAll('tr')) {
+      const lb = tr.querySelector('td.label');
+      if (lb && lb.textContent.trim() === nhan) {
+        return tr.querySelector('td.value input, td.value select');
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+/** Tìm ô Address trong bảng danh sách Networks */
+function mkBai4TimO_AddressDanhSachNetworks(doc) {
+  try {
+    for (const tbl of doc.querySelectorAll('table')) {
+      const rows = tbl.querySelectorAll('tr');
+      if (rows.length >= 2) {
+        const oTieuDe = rows[0].querySelectorAll('td, th');
+        let chiSo = -1;
+        oTieuDe.forEach(function (o, i) { if (o.textContent.trim() === 'Address') chiSo = i; });
+        if (chiSo !== -1 && rows[1]) {
+          const oDuLieu = rows[1].querySelectorAll('td');
+          if (oDuLieu[chiSo]) return oDuLieu[chiSo];
+        }
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function mkBai4CaiTheoDoi(doc) {
+  try {
+    if (mkBai4OChiTietNetworks(doc)) {
+      const oA = mkBai4OTheoNhan(doc, 'Address');
+      const oG = mkBai4OTheoNhan(doc, 'Gateway');
+      if (oA && !oA.id) oA.id = 'ftc-mk4-net-address';
+      if (oG && !oG.id) oG.id = 'ftc-mk4-net-gateway';
+    } else if (mkBai4OChiTietAddresses(doc)) {
+      const oA = mkBai4OTheoNhan(doc, 'Address');
+      const oN = mkBai4OTheoNhan(doc, 'Network');
+      if (oA && !oA.id) oA.id = 'ftc-mk4-addr-address';
+      if (oN && !oN.id) oN.id = 'ftc-mk4-addr-network';
+    } else if (mkBai4OTabNetworks(doc)) {
+      const oDiaChi = mkBai4TimO_AddressDanhSachNetworks(doc);
+      if (oDiaChi && !oDiaChi.id) oDiaChi.id = 'ftc-mk4-net-row';
+    }
+  } catch (e) {}
+}
+
 window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
   // ── Màn hình đăng nhập ─────────────────────────────────────────────
   {
@@ -124,9 +175,6 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
 
   // ── Phần 1: DHCP Server > Networks ─────────────────────────────────
   {
-    // Menu con "IP" mặc định đóng khi vào WebFig (trang mặc định là
-    // Interfaces > Interface List) nên phải hướng dẫn mở "IP" trước,
-    // trước khi trỏ vào "DHCP Server" (nằm bên trong menu con đó).
     selector: 'text:IP',
     text: 'Bước 1: chọn IP',
     position: 'right',
@@ -153,29 +201,31 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     condition: function (doc) { return mkBai4OTabDHCPMacDinh(doc); }
   },
   {
-    // Chọn theo id gắn động (#ftc-mk4-net-row, gắn ở lessons/bai4.js), KHÔNG
-    // chọn theo text:192.168.1.0/24 như trước — chữ đó chỉ đúng lúc đề bài
-    // còn mặc định; ngay khi anh đã Apply (dù đúng hay SAI), dòng này hiển
-    // thị giá trị vừa nhập nên chọn theo text cũ sẽ không còn khớp được nữa,
-    // và tooltip nhắc "sửa lại" cũng cần hiện được cả khi đã lưu SAI.
-    selector: '#ftc-mk4-net-row',
+    selector: '#ftc-mk4-net-row, tr:has-text("192.168.") td, tr:has-text("bridge-LAN") td, text:192.168.1.0/24',
     text: 'Bước 4: nhấn đúp vào rule đầu tiên',
     position: 'right',
     condition: function (doc) {
+      mkBai4CaiTheoDoi(doc);
       return mkBai4OTabNetworks(doc) && !mkBai4NetworksDaDung();
     }
   },
   {
-    selector: '#ftc-mk4-net-address',
+    selector: '#ftc-mk4-net-address, tr:has-text("Address") input',
     text: 'Bước 5: nhập 192.168.10.0/24',
     position: 'right',
-    condition: function (doc) { return mkBai4OChiTietNetworks(doc); }
+    condition: function (doc) {
+      mkBai4CaiTheoDoi(doc);
+      return mkBai4OChiTietNetworks(doc);
+    }
   },
   {
-    selector: '#ftc-mk4-net-gateway',
+    selector: '#ftc-mk4-net-gateway, tr:has-text("Gateway") input',
     text: 'Bước 6: nhập 192.168.10.1',
     position: 'right',
-    condition: function (doc) { return mkBai4OChiTietNetworks(doc); }
+    condition: function (doc) {
+      mkBai4CaiTheoDoi(doc);
+      return mkBai4OChiTietNetworks(doc);
+    }
   },
   {
     selector: 'text:OK',
@@ -187,8 +237,6 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
 
   // ── Phần 2: IP > Addresses ──────────────────────────────────────────
   {
-    // Chỉ cho qua Addresses khi Networks đã lưu ĐÚNG đáp án (không chỉ "đã
-    // lưu") — xem chú thích `mkBai4NetworksDaDung`.
     selector: 'text:Addresses',
     text: 'Bước 8: chọn Addresses',
     position: 'right',
@@ -203,16 +251,22 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     condition: function (doc) { return mkBai4OTrangDanhSachAddresses(doc); }
   },
   {
-    selector: '#ftc-mk4-addr-address',
+    selector: '#ftc-mk4-addr-address, tr:has-text("Address") input',
     text: 'Bước 10: nhập 192.168.10.1/24',
     position: 'right',
-    condition: function (doc) { return mkBai4OChiTietAddresses(doc); }
+    condition: function (doc) {
+      mkBai4CaiTheoDoi(doc);
+      return mkBai4OChiTietAddresses(doc);
+    }
   },
   {
-    selector: '#ftc-mk4-addr-network',
+    selector: '#ftc-mk4-addr-network, tr:has-text("Network") input',
     text: 'Bước 11: nhập 192.168.10.0',
     position: 'right',
-    condition: function (doc) { return mkBai4OChiTietAddresses(doc); }
+    condition: function (doc) {
+      mkBai4CaiTheoDoi(doc);
+      return mkBai4OChiTietAddresses(doc);
+    }
   },
   {
     selector: 'text:OK',

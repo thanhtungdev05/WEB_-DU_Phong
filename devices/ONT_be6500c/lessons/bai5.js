@@ -144,7 +144,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
     {
       "selector": "button:contains(\"Save\")",
       "text": "Chọn Save",
-      "position": "right"
+      "position": "bottom"
     }
   ]
 });

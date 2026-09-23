@@ -23,7 +23,7 @@ sys.path.insert(0, THU_MUC)
 
 from config_store import ConfigStore            # noqa: E402
 from dispatch import Dispatcher, nap_ban_do_ngu_canh  # noqa: E402
-from session import Session                     # noqa: E402
+from session import Session, _chuoi_ngau_nhien, DAI_SESS_TOKEN  # noqa: E402
 
 MAC_DINH_CONG = 8098
 ROOT = THU_MUC
@@ -133,6 +133,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if duong_dan in ("/api/reset", "/reset_lab") or ts.get("reset") == "1":
             sim["store"].khoi_phuc_xuat_xuong()
+            if "session" in sim and sim["session"]:
+                sim["session"].da_dang_nhap = False
+                sim["session"].view_hien_tai = None
+                sim["session"].sess_token = _chuoi_ngau_nhien(DAI_SESS_TOKEN)
             return self._gui(json.dumps({"status": "ok", "message": "Reset to factory"}), "application/json; charset=utf-8")
 
         if loai == "loginData":
@@ -194,6 +198,10 @@ class Handler(BaseHTTPRequestHandler):
         ts = self._tham_so_url()
         if duong_dan in ("/api/reset", "/reset_lab") or ts.get("reset") == "1":
             sim["store"].khoi_phuc_xuat_xuong()
+            if "session" in sim and sim["session"]:
+                sim["session"].da_dang_nhap = False
+                sim["session"].view_hien_tai = None
+                sim["session"].sess_token = _chuoi_ngau_nhien(DAI_SESS_TOKEN)
             return self._gui(json.dumps({"status": "ok", "message": "Reset to factory"}), "application/json; charset=utf-8")
         loai, tag = ts.get("_type"), ts.get("_tag")
         than = self._than_post()

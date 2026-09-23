@@ -74,7 +74,10 @@ function mkBai3DongPC1LaDynamic(doc) {
     for (const tr of rows) {
       if (tr.textContent.includes('192.168.1.249') || tr.textContent.includes('PC1')) {
         const tds = tr.querySelectorAll('td');
-        if (tds.length > 1 && tds[1].textContent.trim() === 'D') return true;
+        if (tds.length > 1) {
+          const flag = (tds[1].textContent || '').trim();
+          if (flag.includes('D')) return true;
+        }
       }
     }
   } catch (e) { }
@@ -209,7 +212,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai3'] = [
 
   // ── Bước 7: chọn ô texbox này (Hình 4) ───────────────────────────
   {
-    selector: '#ftc-mk3-comment-cell, tr:has-text("192.168.1.249") td.comment, td.comment',
+    selector: '#ftc-mk3-comment-cell, tr:has-text("192.168.1.249") td:nth-child(3), tr:has-text("PC1") td:nth-child(3), text:Server 1',
     text: 'Bước 7: chọn ô texbox này',
     position: 'bottom',
     condition: function (doc) {
@@ -220,7 +223,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai3'] = [
 
   // ── Bước 8: nhập Server 1 (Hình 5) ────────────────────────────────
   {
-    selector: '#ftc-mk3-comment-input, tr:has(td.label:has-text("Comment")) textarea, textarea',
+    selector: '#ftc-mk3-comment-input, td.value textarea, td.value input[type="text"], textarea',
     text: 'Bước 8: nhập Server 1',
     position: 'bottom',
     condition: function (doc) {

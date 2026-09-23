@@ -152,15 +152,37 @@
     if (thanhSave) return;
     var form = document.querySelector('form');
     if (!form) return;
-    var w = document.createElement('div');
-    w.className = 'MuiStack-root alternative-layout css-den97n';
-    w.innerHTML =
-      '<button class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary formActionButton submit alternative-layout alternative-layout--submit css-g28vy7" tabindex="0" type="button"><span class="MuiBox-root css-rrm59m">Save</span><span class="MuiTouchRipple-root css-w0pj6f"></span></button>' +
-      '<button class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary formActionButton cancel alternative-layout css-1acoyi9" tabindex="0" type="button">cancel<span class="MuiTouchRipple-root css-w0pj6f"></span></button>';
-    form.appendChild(w);
+    var w = form.querySelector('[data-sim-save="1"]');
+    if (!w) {
+      w = document.createElement('div');
+      w.className = 'MuiStack-root alternative-layout css-den97n';
+      w.setAttribute('data-sim-save', '1');
+      w.innerHTML =
+        '<button class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary formActionButton submit alternative-layout alternative-layout--submit css-g28vy7" tabindex="0" type="button"><span class="MuiBox-root css-rrm59m">Save</span><span class="MuiTouchRipple-root css-w0pj6f"></span></button>' +
+        '<button class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary formActionButton cancel alternative-layout css-1acoyi9" tabindex="0" type="button">cancel<span class="MuiTouchRipple-root css-w0pj6f"></span></button>';
+      form.appendChild(w);
+    }
     thanhSave = w;
-    w.querySelector('.submit').addEventListener('click', function () { luu(BANG); });
-    w.querySelector('.cancel').addEventListener('click', function () { goThanhSave(); nap(); });
+    var btnSubmit = w.querySelector('.submit');
+    if (btnSubmit && !btnSubmit.__boundApiSave) {
+      btnSubmit.__boundApiSave = true;
+      btnSubmit.addEventListener('click', function () {
+        try {
+          if (window.top && window.top !== window) {
+            window.top._hasClickedSaveInGuide = true;
+          }
+          if (window.parent && typeof window.parent.onSimulatorSave === 'function') {
+            window.parent.onSimulatorSave(window);
+          }
+        } catch (e) { }
+        luu(BANG);
+      });
+    }
+    var btnCancel = w.querySelector('.cancel');
+    if (btnCancel && !btnCancel.__boundApiCancel) {
+      btnCancel.__boundApiCancel = true;
+      btnCancel.addEventListener('click', function () { goThanhSave(); nap(); });
+    }
   }
 
   function luu(BANG) {
@@ -173,6 +195,22 @@
       (theoResource[rg] = theoResource[rg] || [])
         .push({ duong_dan: b.duong_dan, gt: docO(el), resource_doc: b.resource });
     });
+
+    // Bo sung dac biet cho o Subnet Mask tren trang advanced__lan
+    var maskEl = document.querySelector('input[name="ipv4Settings.mask"], .MuiAutocomplete-input');
+    if (maskEl && location.pathname.indexOf('advanced__lan') >= 0) {
+      var rg = 'interfaces/configurations';
+      var foundMask = (theoResource[rg] || []).some(function (item) {
+        return item.duong_dan === '[0].ipv4Settings.mask';
+      });
+      if (!foundMask) {
+        (theoResource[rg] = theoResource[rg] || []).push({
+          duong_dan: '[0].ipv4Settings.mask',
+          gt: maskEl.value || '255.255.255.0',
+          resource_doc: rg
+        });
+      }
+    }
 
     var viec = Object.keys(theoResource).map(function (r) {
       var r_doc = theoResource[r][0].resource_doc || r;

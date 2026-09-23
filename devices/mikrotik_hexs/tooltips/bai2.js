@@ -54,8 +54,13 @@ function mkBai2CaiTheoDoi(doc) {
         const inp = tr.querySelector('input');
         if (inp && !inp.id) inp.id = 'ftc-mk2-name';
       } else if (text === 'Target') {
+        if (!lb.id) lb.id = 'ftc-mk2-target-lbl';
         const span = lb.querySelector('span');
         if (span && !span.id) span.id = 'ftc-mk2-target';
+        const inp = tr.querySelector('input[type="text"], input:not([type="button"]):not([type="submit"])');
+        if (inp && !inp.id) inp.id = 'ftc-mk2-target-inp';
+        const btn = tr.querySelector('a.sbtn');
+        if (btn && !btn.id) btn.id = 'ftc-mk2-target-btn';
       } else if (text === 'Max Limit') {
         const inps = tr.querySelectorAll('input');
         if (inps.length >= 1 && inps[0].id !== 'ftc-mk2-upload-limit') {
@@ -106,7 +111,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
 
   // ── Bước 3: nhập under_5M (Hình 5) ────────────────────────────────
   {
-    selector: '#ftc-mk2-name',
+    selector: '#ftc-mk2-name, tr:has-text("Name") input',
     text: 'Bước 3: nhập under_5M',
     position: 'right',
     condition: function (doc) {
@@ -117,7 +122,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
 
   // ── Bước 4: chọn Target<br>nhập 192.168.1.0/24 (Hình 5) ─────────
   {
-    selector: '#ftc-mk2-target, text:Target',
+    selector: '#ftc-mk2-target-inp, #ftc-mk2-target-btn, #ftc-mk2-target-lbl, #ftc-mk2-target, text:Target',
     text: 'Bước 4: chọn Target<br>nhập 192.168.1.0/24',
     position: 'left',
     condition: function (doc) {
@@ -128,7 +133,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
 
   // ── Bước 5: nhập 2M (Hình 5) ──────────────────────────────────────
   {
-    selector: '#ftc-mk2-upload-limit',
+    selector: '#ftc-mk2-upload-limit, tr:has-text("Max Limit") td.tvalue input, tr:has-text("Max Limit") input',
     text: 'Bước 5: nhập 2M',
     position: 'bottom',
     condition: function (doc) {
@@ -139,7 +144,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
 
   // ── Bước 6: nhập 5M (Hình 5) ──────────────────────────────────────
   {
-    selector: '#ftc-mk2-download-limit',
+    selector: '#ftc-mk2-download-limit, tr:has-text("Max Limit") td.value input',
     text: 'Bước 6: nhập 5M',
     position: 'bottom',
     condition: function (doc) {

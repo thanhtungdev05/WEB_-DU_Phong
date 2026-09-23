@@ -125,12 +125,18 @@ WSGI_APPLICATION = 'admin_site.wsgi.application'
 # ===========================================================
 _db_url = os.environ.get('DATABASE_URL', '')
 if _db_url:
+    _ssl_require = (
+        'sslmode=disable' not in _db_url
+        and '127.0.0.1' not in _db_url
+        and 'localhost' not in _db_url
+        and os.environ.get('PGSSLMODE', '').lower() != 'disable'
+    )
     DATABASES = {
         'default': dj_database_url.parse(
             _db_url,
             conn_max_age=60,
             conn_health_checks=True,
-            ssl_require=True,
+            ssl_require=_ssl_require,
         )
     }
 else:

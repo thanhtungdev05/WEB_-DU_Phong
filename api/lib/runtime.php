@@ -8,8 +8,30 @@ function load_app_environment(string $root): void
         require_once $autoload;
     }
 
-    if (class_exists(Dotenv\Dotenv::class) && is_file($root . DIRECTORY_SEPARATOR . '.env')) {
+    $envPath = $root . DIRECTORY_SEPARATOR . '.env';
+    if (class_exists(Dotenv\Dotenv::class) && is_file($envPath)) {
         Dotenv\Dotenv::createImmutable($root)->safeLoad();
+    } elseif (is_file($envPath)) {
+        $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (is_array($lines)) {
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line === '' || str_starts_with($line, '#')) {
+                    continue;
+                }
+                if (str_contains($line, '=')) {
+                    [$key, $val] = explode('=', $line, 2);
+                    $key = trim($key);
+                    $val = trim($val);
+                    if ($key !== '' && !isset($_ENV[$key]) && !isset($_SERVER[$key])) {
+                        $val = trim($val, "'\"");
+                        $_ENV[$key] = $val;
+                        $_SERVER[$key] = $val;
+                        putenv("{$key}={$val}");
+                    }
+                }
+            }
+        }
     }
 }
 

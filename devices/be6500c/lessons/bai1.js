@@ -3,7 +3,7 @@
  */
 window.DEVICE_BE6500C_LESSONS = window.DEVICE_BE6500C_LESSONS || [];
 
-window.DEVICE_BE6500C_LESSONS.push({
+var bai1 = {
   id: 'be6500c-bai1',
   title: 'Cấu hình PPPoE',
   subtitle: 'Cấu hình PPPoE',
@@ -79,8 +79,15 @@ window.DEVICE_BE6500C_LESSONS.push({
     },
     {
       "selector": "button.alternative-layout--submit, .formActionButton.submit, body:has(input[name=\"ipv4Settings.pppoe.username\"]) button.alternative-layout--submit",
-      "text": "Bước 3 chọn Save để lưu cấu hình nút Save chiếu vào Nút nộp bài hoặc nút Xem lỗi sai",
-      "position": "right"
+      "text": "Bước 3 chọn Save để lưu cấu hình",
+      "position": "bottom"
     }
   ]
-});
+};
+
+var existingIndex = window.DEVICE_BE6500C_LESSONS.findIndex(function (l) { return l.id === 'be6500c-bai1'; });
+if (existingIndex >= 0) {
+  window.DEVICE_BE6500C_LESSONS[existingIndex] = bai1;
+} else {
+  window.DEVICE_BE6500C_LESSONS.push(bai1);
+}

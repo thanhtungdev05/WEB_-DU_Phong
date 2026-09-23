@@ -942,8 +942,13 @@
               }
             } else {
               // 💡 CHẾ ĐỘ HƯỚNG DẪN:
+              const trangDangLamSach = evalResult
+                ? ((typeof evalResult.trangHienTaiDat === 'boolean')
+                  ? evalResult.trangHienTaiDat : evalResult.passed)
+                : false;
+
               // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT:
-              if (noConfig || (window._hasClickedSaveInGuide && evalResult && evalResult.passed)) {
+              if (noConfig || (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed)))) {
                 // Nút Nộp bài SÁNG LÊN
                 if (btnSubmitLab) {
                   btnSubmitLab.disabled = false;
@@ -958,7 +963,8 @@
               } else {
                 // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
                 if (btnGuideErrors) {
-                  if (window._hasClickedSaveInGuide && evalResult && !evalResult.passed) {
+                  const hasMissingSteps = !trangDangLamSach;
+                  if (window._hasClickedSaveInGuide && evalResult && hasMissingSteps) {
                     if (currentLessonId === 'LAB_AX3000S_02') {
                       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
                       const hasSaved5g = allDocs.some(d => d.location && d.location.href.toLowerCase().includes('wlanbasicsetting5g') && d._ftcIsSaved);
@@ -1695,7 +1701,8 @@
               }
 
               // Bỏ qua việc xóa trường SSID/Mật khẩu trên trang 5G để KTV có thể nhìn thấy dữ liệu phản chiếu từ 2.4G
-              const is5GPage = doc.defaultView && doc.defaultView.location.hash.includes('wlanBasicSetting5g');
+              const _loc = doc.defaultView ? doc.defaultView.location : null;
+              const is5GPage = _loc && ((_loc.hash && _loc.hash.toLowerCase().includes('wlanbasicsetting5g')) || (_loc.href && _loc.href.toLowerCase().includes('wlanbasicsetting5g')));
               if (is5GPage && (selector.includes('Txt_SSID') || selector.includes('Pwd_WpaPsk'))) {
                 return;
               }
@@ -2832,7 +2839,7 @@
     try {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       allDocs.forEach(doc => {
-        doc.querySelectorAll('.ftc-guide-bubble, .guide-tooltip-bubble').forEach(el => el.remove());
+        doc.querySelectorAll('.ftc-guide-bubble, .guide-tooltip-bubble, .guide-tooltip').forEach(el => el.remove());
         doc.querySelectorAll('.ftc-guide-target-highlight').forEach(el => {
           el.classList.remove('ftc-guide-target-highlight');
         });
@@ -2960,14 +2967,14 @@
           border-color: transparent transparent transparent #ff0000 !important;
         }
         .ftc-guide-bubble.pos-bottom::before {
-          left: 50% !important;
+          left: var(--arrow-left, 50%) !important;
           top: -8px !important;
           transform: translateX(-50%) !important;
           border-width: 0 6px 8px 6px !important;
           border-color: transparent transparent #ff0000 transparent !important;
         }
         .ftc-guide-bubble.pos-top::before {
-          left: 50% !important;
+          left: var(--arrow-left, 50%) !important;
           bottom: -8px !important;
           transform: translateX(-50%) !important;
           border-width: 8px 6px 0 6px !important;
@@ -2983,7 +2990,7 @@
 
     function findGuideElements(doc, selectorStr) {
       if (!doc || !selectorStr) return [];
-      const parts = selectorStr.split(',').map(s => s.trim());
+      const parts = selectorStr.split(',').map(s => s.trim()).filter(Boolean);
       const results = [];
       for (const sel of parts) {
         try {
@@ -3022,30 +3029,47 @@
             continue;
           }
 
-          if (!sel.includes(':contains(')) {
-            const els = doc.querySelectorAll(sel);
-            els.forEach(el => results.push(el));
+          if (!sel.includes(':contains(') && !sel.includes(':has-text(')) {
+            try {
+              const els = doc.querySelectorAll(sel);
+              els.forEach(el => results.push(el));
+            } catch (errSel) {
+              console.warn("[findGuideElements] Invalid native selector:", sel, errSel);
+            }
             continue;
           }
 
-          // Tách selector thành các phân đoạn bằng khoảng trắng
-          const segments = sel.split(/\s+/).filter(Boolean);
+          // Tách selector thành các phân đoạn, tránh tách khoảng trắng bên trong ngoặc đơn
+          let segments = [];
+          try {
+            segments = sel.match(/(?:[^\s(]+|\([^)]*\))+/g) || sel.split(/\s+/).filter(Boolean);
+          } catch (e) {
+            segments = sel.split(/\s+/).filter(Boolean);
+          }
+
           let currentContexts = [doc.body || doc];
 
           for (let i = 0; i < segments.length; i++) {
             const seg = segments[i];
-            const match = seg.match(/^(.*?):contains\(["']?(.*?)["']?\)$/);
+            const match = seg.match(/^(.*?):(contains|has-text)\(["']?(.*?)["']?\)(.*)$/);
             let baseSel = seg;
             let textToMatch = null;
 
             if (match) {
-              baseSel = match[1] || '*';
-              textToMatch = match[2].trim().toLowerCase();
+              baseSel = (match[1] || '*') + (match[4] || '');
+              if (!baseSel || baseSel === '') baseSel = '*';
+              textToMatch = match[3].trim().toLowerCase();
             }
 
             const nextContexts = [];
             for (const ctx of currentContexts) {
-              const elements = ctx.querySelectorAll(baseSel);
+              let elements = [];
+              try {
+                elements = ctx.querySelectorAll(baseSel);
+              } catch (errQuery) {
+                // Fallback nếu baseSel chưa hợp lệ khi lồng
+                try { elements = ctx.querySelectorAll('*'); } catch (e2) {}
+              }
               elements.forEach(el => {
                 if (textToMatch) {
                   const txt = (el.textContent || el.innerText || '').trim().toLowerCase();
@@ -3139,6 +3163,21 @@
         const isSaved = Boolean(doc._ftcIsSaved || doc._ftc2gSaved) || 
           allDocs.some(d => Boolean(d._ftcIsSaved || d._ftc2gSaved || (d.location && d.location.search && d.location.search.includes('save_success=1'))));
         if (isSaved) {
+          const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
+          if (oldBubble) oldBubble.remove();
+          return;
+        }
+      }
+
+      // Filter by condition function if specified (hỗ trợ MikroTik và Vigor2927)
+      if (typeof pop.condition === 'function') {
+        let condPassed = true;
+        try {
+          condPassed = pop.condition(doc);
+        } catch (e) {
+          condPassed = false;
+        }
+        if (!condPassed) {
           const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
           if (oldBubble) oldBubble.remove();
           return;
@@ -3250,11 +3289,23 @@
       }
 
       // Giữ vị trí chính xác sát target, tránh đè lên ô nhập
+      if (pop.offsetX) calcLeft += pop.offsetX;
+      if (pop.offsetY) calcTop += pop.offsetY;
+
       calcLeft = Math.max(5, calcLeft);
-      calcTop = Math.max(5, calcTop);
+      if (calcLeft + bWidth > winW - 10) {
+        calcLeft = Math.max(5, winW - bWidth - 10);
+      }
+      const minTop = (pop.minTop !== undefined) ? pop.minTop : ((pop.offsetY && pop.offsetY < 0) ? -100 : 5);
+      calcTop = Math.max(minTop, calcTop);
 
       bubble.style.left = Math.round(calcLeft) + 'px';
       bubble.style.top = Math.round(calcTop) + 'px';
+
+      if (pos === 'bottom' || pos === 'top') {
+        const arrowX = Math.max(12, Math.min(bWidth - 12, (targetLeft + rect.width / 2) - calcLeft));
+        bubble.style.setProperty('--arrow-left', Math.round(arrowX) + 'px');
+      }
     });
 
     // Dọn dẹp các bubble thừa khi danh sách popups ngắn hơn
@@ -3282,6 +3333,10 @@
 
     triggerSaveFlashEffect(simWin ? simWin.document : null, null);
     window._hasClickedSaveInGuide = true;
+    if (currentDeviceId === 'mikrotik_hexs') {
+      window._ftcMkChanTooltip = true;
+      setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
+    }
 
     if (_currentLesson && typeof _currentLesson.onSimSave === 'function') {
       try {
@@ -3310,7 +3365,12 @@
         }
       } else {
         // 💡 Chế độ Hướng dẫn:
-        if (noConfigSaved || (evalResult && evalResult.passed)) {
+        const trangDangLamSach = evalResult
+          ? ((typeof evalResult.trangHienTaiDat === 'boolean')
+            ? evalResult.trangHienTaiDat : evalResult.passed)
+          : false;
+
+        if (noConfigSaved || window._hasSuccHintStored || (evalResult && evalResult.passed)) {
           // Cấu hình ĐÚNG hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
           if (btnSubmitLab) {
             btnSubmitLab.disabled = false;
@@ -3320,6 +3380,18 @@
           }
           if (btnGuideErrors) {
             btnGuideErrors.style.display = 'none';
+          }
+        } else if (trangDangLamSach) {
+          // Bài nhiều trang (như MikroTik Bài 4, 6, 7): Trang hiện tại đã làm đúng
+          // Ẩn nút báo lỗi, nhưng vẫn khóa nút Nộp bài cho tới khi xong toàn bộ bài
+          if (btnGuideErrors) {
+            btnGuideErrors.style.display = 'none';
+          }
+          if (btnSubmitLab) {
+            btnSubmitLab.disabled = true;
+            btnSubmitLab.style.opacity = '0.5';
+            btnSubmitLab.style.cursor = 'not-allowed';
+            btnSubmitLab.style.animation = 'none';
           }
         } else {
           // Cấu hình SAI ở Hướng dẫn: Nút Lỗi sai SÁNG LÊN, Nút Nộp bài TẮT/XÁM

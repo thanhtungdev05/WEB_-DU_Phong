@@ -116,7 +116,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
     {
       "selector": "button.dlg-luu",
       "text": "Lưu cấu hình",
-      "position": "right"
+      "position": "bottom"
     }
   ]
 });
