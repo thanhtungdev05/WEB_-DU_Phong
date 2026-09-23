@@ -86,7 +86,7 @@ assert.match(dashboard, /practiceAttemptNo/);
 assert.match(dashboard, /function resetLearnerDetailFilters\(\)/);
 assert.match(dashboard, /state\.selectedLearner !== nextLearner\) resetLearnerDetailFilters\(\)/);
 assert.match(dashboard, /Đang hiển thị \$\{pageData\.totalRows\}\/\$\{totalHistoryRows\} phiên theo bộ lọc/);
-assert.match(dashboard, /state\.sessionHistoryDays[\s\S]*ngày gần nhất/);
+assert.match(dashboard, /state\.sessionHistoryFrom && state\.sessionHistoryTo[\s\S]*\(trang đầu\)/);
 assert.match(dashboardStyles, /body\.detail-open \.sidebar[\s\S]*position: fixed;[\s\S]*inset: 0 auto 0 0;[\s\S]*height: auto;[\s\S]*max-height: none;/);
 assert.doesNotMatch(dashboard, /ftc-instructor-classes-v1/);
 assert.doesNotMatch(dashboard, /region\.branch_name \? `\$\{region\.branch_name\} · \$\{regionName\}`/);

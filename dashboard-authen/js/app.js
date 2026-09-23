@@ -126,6 +126,8 @@ const state = {
     lastSuccessfulRefreshAt: null,
     sessionHistoryDays: null,
     sessionHistoryFrom: '',
+    sessionHistoryTo: '',
+    sessionHistoryHasMore: false,
 
     // Roster (Quản lý KTV) — Admin
     rosterTab: 'list',
@@ -1133,8 +1135,8 @@ function renderLearnerDetail(rows) {
 
     if (els.learnerDetailTitle) els.learnerDetailTitle.textContent = getLearnerName(state.selectedLearner);
     if (els.learnerDetailSubtitle) {
-        const historyScope = state.sessionHistoryDays
-            ? `${state.sessionHistoryDays} ngày gần nhất`
+        const historyScope = state.sessionHistoryFrom && state.sessionHistoryTo
+            ? `khoảng ${formatDate(state.sessionHistoryFrom)} – ${formatDate(state.sessionHistoryTo)}${state.sessionHistoryHasMore ? ' (trang đầu)' : ''}`
             : 'phạm vi dữ liệu hiện có';
         els.learnerDetailSubtitle.textContent = `${allLearnerRows[0]?.region || getLearnerRegion(state.selectedLearner)} • ${state.selectedLearner} • ${allLearnerRows.length} phiên hoạt động trong ${historyScope}.`;
     }
@@ -2682,6 +2684,39 @@ async function fetchDashboardCatalog() {
     return data;
 }
 
+async function reloadDashboardSessionsForRange() {
+    if (!state.dashboardDataLoaded) return;
+    const periods = getKpiComparisonPeriods();
+    const query = new URLSearchParams({
+        from: periods.currentStart,
+        to: periods.currentEnd,
+        limit: '500',
+        include_assignments: '0'
+    });
+    const response = await fetch(`${API_BASE_URL}/dashboard/all?${query}`);
+    if (!response.ok) throw new Error(`API dữ liệu chi tiết trả về HTTP ${response.status}`);
+    const data = (await response.json()).data || {};
+    const activeLabNames = new Set(deviceCatalog.flatMap(device => device.labs || []).filter(Boolean));
+    sessions = mapApiSessions(data.sessions || []).filter(item => (
+        (!activeLabNames.size || activeLabNames.has(item.lab))
+        && (!isPracticeSession(item) || isRecordedPracticeSession(item))
+    ));
+    state.sessionHistoryFrom = String(data.session_page?.from || '');
+    state.sessionHistoryTo = String(data.session_page?.to || '');
+    state.sessionHistoryHasMore = data.session_page?.has_more === true;
+    rebuildLearnerNameMap();
+    refreshFilterOptionLists();
+    renderAll();
+}
+
+function reloadDashboardSelectedRange() {
+    if (!dashboardReport && !sessions.length) return;
+    void Promise.allSettled([
+        reloadDashboardReport(),
+        reloadDashboardSessionsForRange()
+    ]);
+}
+
 async function reloadDashboardReport() {
     const requestSequence = ++dashboardReportRequestSequence;
     state.dashboardReportStatus = 'loading';
@@ -2788,8 +2823,10 @@ async function fetchDashboardData(versionHint = '') {
         report,
         reportStatus,
         version,
-        sessionHistoryDays: Number(data.session_history_days) || null,
-        sessionHistoryFrom: String(data.session_history_from || ''),
+        sessionHistoryDays: null,
+        sessionHistoryFrom: String(data.session_page?.from || ''),
+        sessionHistoryTo: String(data.session_page?.to || ''),
+        sessionHistoryHasMore: data.session_page?.has_more === true,
         raw: { ...data, data_version: version, report_meta: report?.meta || null }
     };
 }
@@ -2807,6 +2844,8 @@ function applyDashboardData(data) {
     state.dashboardReportStatus = data.reportStatus || (dashboardReport ? 'ready' : 'unavailable');
     state.sessionHistoryDays = data.sessionHistoryDays;
     state.sessionHistoryFrom = data.sessionHistoryFrom;
+    state.sessionHistoryTo = data.sessionHistoryTo;
+    state.sessionHistoryHasMore = Boolean(data.sessionHistoryHasMore);
     technicianCatalogAuthoritative = Boolean(data.techniciansAuthoritative);
     state.dashboardDataLoaded = true;
     normalizeSessionDeviceNames();
@@ -3962,7 +4001,7 @@ const multiSelectFilterIds = new Set([
 ]);
 
 const TABLE_COLUMN_WIDTH_STORAGE_KEY = 'ftc-dashboard-column-widths-v1';
-const TABLE_COLUMN_MIN_WIDTH = 56;
+const TABLE_COLUMN_MIN_WIDTH = 34;
 const TABLE_COLUMN_MAX_WIDTH = 640;
 
 function getDashboardTableKey(table) {
@@ -4044,6 +4083,7 @@ function getColumnWidthVariable(table, columnIndex, leafCount) {
     }
     if (table.matches('.instructor-progress-table')) {
         if (columnIndex === 0) return '--instructor-index-width';
+        if (columnIndex === 1) return '--instructor-email-width';
         if (columnIndex === leafCount - 2) return '--instructor-total-width';
         if (columnIndex === leafCount - 1) return '--instructor-rate-width';
     }
@@ -4086,9 +4126,31 @@ function startDashboardColumnResize(event, table, header, columnIndex) {
     const pointerId = event.pointerId;
     document.body.classList.add('table-column-resizing');
     event.currentTarget.setPointerCapture?.(pointerId);
+
+    // Cache cell references and variable mapping once on drag start to prevent layout thrashing on move
+    const placements = getTableCellPlacements(table);
+    const targetCells = [];
+    placements.forEach((placement, cell) => {
+        if (placement.columnIndex === columnIndex && placement.columnSpan === 1) {
+            targetCells.push(cell);
+        }
+    });
+    const leafCount = getTableLeafCount(placements);
+    const variable = getColumnWidthVariable(table, columnIndex, leafCount);
+    let currentWidth = startWidth;
+
     const move = moveEvent => {
         if (moveEvent.pointerId === pointerId) {
-            applyDashboardColumnWidth(table, columnIndex, startWidth + moveEvent.clientX - startX);
+            const rawWidth = startWidth + moveEvent.clientX - startX;
+            currentWidth = Math.max(TABLE_COLUMN_MIN_WIDTH, Math.min(TABLE_COLUMN_MAX_WIDTH, Math.round(rawWidth)));
+            targetCells.forEach(cell => {
+                cell.style.setProperty('width', `${currentWidth}px`, 'important');
+                cell.style.setProperty('min-width', `${currentWidth}px`, 'important');
+                cell.style.setProperty('max-width', `${currentWidth}px`, 'important');
+            });
+            if (variable) {
+                table.style.setProperty(variable, `${currentWidth}px`);
+            }
         }
     };
     const finish = endEvent => {
@@ -4097,7 +4159,7 @@ function startDashboardColumnResize(event, table, header, columnIndex) {
         document.removeEventListener('pointerup', finish);
         document.removeEventListener('pointercancel', finish);
         document.body.classList.remove('table-column-resizing');
-        writeDashboardColumnWidth(table, columnIndex, Math.round(header.getBoundingClientRect().width));
+        writeDashboardColumnWidth(table, columnIndex, currentWidth);
     };
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', finish);
@@ -6152,7 +6214,7 @@ function initDateRangePicker() {
             }
             renderMonthGrid(year);
             renderAll();
-            if (dashboardReport || sessions.length) reloadDashboardReport();
+            reloadDashboardSelectedRange();
         };
 
         const renderMonthGrid = (year = Number(yearSelect?.value) || today.getFullYear()) => {
@@ -6280,7 +6342,7 @@ function initDateRangePicker() {
         state.realtimePage = 1;
         picker?.classList.remove('open');
         renderAll();
-        if (dashboardReport || sessions.length) reloadDashboardReport();
+        reloadDashboardSelectedRange();
     });
 
     document.getElementById('dateRangeClear')?.addEventListener('click', (e) => {
@@ -6300,7 +6362,7 @@ function initDateRangePicker() {
         picker?.classList.remove('open');
         renderCalendar();
         renderAll();
-        if (dashboardReport || sessions.length) reloadDashboardReport();
+        reloadDashboardSelectedRange();
     });
 
     document.addEventListener('click', (event) => {
@@ -7347,7 +7409,7 @@ const DASHBOARD_VIEWS = {
     technicians: {
         eyebrow: 'Tra cứu',
         title: 'Tra cứu KTV',
-        subtitle: 'Toàn bộ lịch sử, thiết bị và kết quả của từng KTV'
+        subtitle: 'Lịch sử, thiết bị và kết quả của từng KTV trong khoảng ngày đã chọn'
     },
     roster: {
         eyebrow: 'Quản trị nhân sự',

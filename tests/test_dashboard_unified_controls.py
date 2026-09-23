@@ -257,7 +257,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
             "Tiến độ lũy kế; bài nộp trong kỳ báo cáo",
             "Phát sinh trong kỳ; hoàn thành lũy kế đến cuối kỳ",
             "Tiến độ lũy kế của từng KTV trong lớp",
-            "Toàn bộ lịch sử, thiết bị và kết quả của từng KTV",
+            "Lịch sử, thiết bị và kết quả của từng KTV trong khoảng ngày đã chọn",
             "Dữ liệu hồ sơ hiện tại; cập nhật danh sách từ Excel",
             "Dữ liệu lớp hiện tại; chọn KTV và giao thiết bị",
         ):

@@ -7376,34 +7376,44 @@ thead th.instructor-progress-lab:hover {
 }
 
 table.unified-data-table {
-    width: max-content !important;
-    min-width: 100% !important;
+    width: max-content;
+    min-width: 100%;
     table-layout: auto !important;
 }
 
 table.unified-data-table th,
 table.unified-data-table td {
-    width: auto !important;
-    min-width: 96px;
+    min-width: 60px;
     white-space: nowrap !important;
     word-break: normal !important;
     overflow-wrap: normal !important;
+    box-sizing: border-box;
+}
+
+table.unified-data-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 table.unified-data-table th:first-child,
 table.unified-data-table td:first-child {
-    min-width: 150px;
+    min-width: 120px;
 }
 
 table.unified-data-table th:has(.popover-filter-wrapper),
 table.unified-data-table th:has(.sort-button) {
-    min-width: 140px;
+    min-width: 130px;
 }
 
 table.unified-data-table td a,
 table.unified-data-table td strong,
 table.unified-data-table td span {
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 /* Resizable column handles */
@@ -7411,12 +7421,27 @@ table.unified-data-table td span {
     position: relative;
 }
 
+/* Preserve sticky positioning on headers that are sticky */
+th.column-resizable.ktv-stt-head,
+th.column-resizable.ktv-code-head,
+th.column-resizable.ktv-info-head,
+th.column-resizable.ktv-total-head,
+th.column-resizable.ktv-rate-head,
+th.column-resizable.instructor-progress-index,
+th.column-resizable.instructor-progress-email,
+th.column-resizable.instructor-progress-total,
+th.column-resizable.instructor-progress-rate,
+th.column-resizable.admin-table-sticky,
+th.column-resizable[style*="sticky"] {
+    position: sticky !important;
+}
+
 .column-resizable > .column-resize-handle {
     position: absolute;
     top: 0;
     right: -6px;
     bottom: 0;
-    z-index: 40;
+    z-index: 45;
     width: 13px;
     min-width: 13px;
     margin: 0;
@@ -7432,14 +7457,23 @@ table.unified-data-table td span {
 .column-resize-handle::after {
     content: "";
     position: absolute;
-    top: 12%;
-    bottom: 12%;
+    top: 10%;
+    bottom: 10%;
     left: 4px;
-    width: 3px;
+    width: 4px;
     border-radius: 999px;
-    background: #2f6fed;
-    opacity: 0.22;
-    transition: opacity 120ms ease, background 120ms ease;
+    background: #3b82f6;
+    opacity: 0;
+    transition: opacity 140ms ease, background 140ms ease, transform 140ms ease;
+    transform: scaleY(0.7);
+}
+
+.column-resizable:hover > .column-resize-handle::after,
+.column-resize-handle:focus-visible::after,
+.column-resize-handle:active::after {
+    opacity: 1;
+    background: #2563eb;
+    transform: scaleY(1);
 }
 
 .column-resizable:hover > .column-resize-handle::after,
@@ -8549,6 +8583,7 @@ select:not(.searchable-select-source):focus-visible {
 
 .instructor-progress-table {
     --instructor-index-width: 52px;
+    --instructor-email-width: 230px;
     --instructor-total-width: 104px;
     --instructor-rate-width: 78px;
     width: max-content;
@@ -8595,28 +8630,35 @@ select:not(.searchable-select-source):focus-visible {
     position: sticky;
     left: 0;
     z-index: 3;
-    width: 48px;
-    min-width: 48px;
+    width: var(--instructor-index-width) !important;
+    min-width: var(--instructor-index-width) !important;
+    max-width: var(--instructor-index-width) !important;
     background: #ffffff;
 }
 
 .instructor-progress-email {
     position: sticky;
-    left: 48px;
+    left: var(--instructor-index-width);
     z-index: 3;
-    width: 230px;
-    min-width: 230px;
+    width: var(--instructor-email-width) !important;
+    min-width: var(--instructor-email-width) !important;
+    max-width: var(--instructor-email-width) !important;
     color: #25344d;
     background: #ffffff;
     text-align: left !important;
     font-size: 11.5px;
     font-weight: 720;
     box-shadow: 5px 0 9px rgba(36, 48, 70, 0.045);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .instructor-progress-table thead .instructor-progress-index,
 .instructor-progress-table thead .instructor-progress-email {
-    z-index: 5;
+    position: sticky;
+    top: 0;
+    z-index: 10 !important;
     color: #dbe5f4;
     background: #24344f;
 }
@@ -10645,6 +10687,8 @@ select:not(.searchable-select-source):focus-visible {
 
 /* Sticky left columns in header */
 .class-matrix-table thead .ktv-stt-head {
+    position: sticky;
+    top: 0;
     left: 0;
     z-index: 10 !important;
     width: var(--ktv-stt-width) !important;
@@ -10658,6 +10702,8 @@ select:not(.searchable-select-source):focus-visible {
 }
 
 .class-matrix-table thead .ktv-info-head {
+    position: sticky;
+    top: 0;
     left: calc(var(--ktv-stt-width) + var(--ktv-code-width));
     z-index: 10 !important;
     width: var(--ktv-info-width) !important;
@@ -10683,6 +10729,8 @@ select:not(.searchable-select-source):focus-visible {
 }
 
 .class-matrix-table thead .ktv-code-head {
+    position: sticky;
+    top: 0;
     left: var(--ktv-stt-width);
     z-index: 10 !important;
     width: var(--ktv-code-width) !important;
@@ -10697,6 +10745,8 @@ select:not(.searchable-select-source):focus-visible {
 
 /* Sticky right columns in header */
 .class-matrix-table thead .ktv-total-head {
+    position: sticky;
+    top: 0;
     right: var(--ktv-rate-width);
     z-index: 10 !important;
     width: var(--ktv-total-width) !important;
@@ -10708,6 +10758,8 @@ select:not(.searchable-select-source):focus-visible {
 }
 
 .class-matrix-table thead .ktv-rate-head {
+    position: sticky;
+    top: 0;
     right: 0;
     z-index: 10 !important;
     width: var(--ktv-rate-width) !important;

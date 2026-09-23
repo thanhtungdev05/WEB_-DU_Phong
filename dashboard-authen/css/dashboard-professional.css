@@ -2494,6 +2494,27 @@ body.report-export-open {
 :root[data-theme="dark"] .report-lab-head.report-device-tone-3 { background: #24344f !important; }
 :root[data-theme="dark"] .report-lab-head.report-device-tone-4 { background: #39283f !important; }
 
+
+:root[data-theme="dark"] .instructor-progress-table tbody .instructor-progress-index,
+:root[data-theme="dark"] .instructor-progress-table tbody .instructor-progress-email {
+    color: var(--ui-text) !important;
+    background: var(--ui-surface) !important;
+    border-color: var(--ui-border) !important;
+}
+
+:root[data-theme="dark"] .instructor-progress-table tbody .instructor-progress-total,
+:root[data-theme="dark"] .instructor-progress-table tbody .instructor-progress-rate {
+    color: var(--ui-text) !important;
+    background: #1b2a45 !important;
+}
+
+:root[data-theme="dark"] .instructor-progress-table tfoot th,
+:root[data-theme="dark"] .instructor-progress-table tfoot td {
+    color: var(--ui-text) !important;
+    background: #1d2d49 !important;
+    border-color: var(--ui-border-strong) !important;
+}
+
 :root[data-theme="dark"] .dashboard-loading {
     color: var(--ui-text) !important;
     background: rgba(11, 17, 32, .9) !important;

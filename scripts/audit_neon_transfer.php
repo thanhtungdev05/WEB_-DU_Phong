@@ -41,8 +41,8 @@ try {
                    last_action, practice_attempt_no, attempt_sequence_complete,
                    seed_batch
                ))) FILTER (
-                   WHERE COALESCE(started_at, finished_at) >= CURRENT_DATE - INTERVAL '180 days'
-               ), 0)::bigint AS recent_180d_payload_bytes
+                   WHERE COALESCE(started_at, finished_at) >= DATE_TRUNC('month', CURRENT_DATE)
+               ), 0)::bigint AS current_month_payload_bytes
           FROM timer_sessions
          WHERE NOT COALESCE(is_mock, FALSE)
            AND status IN ('completed', 'failed')
@@ -53,13 +53,11 @@ try {
         <<<'SQL'
         SELECT COUNT(*)
           FROM timer_sessions
-         WHERE COALESCE(started_at, finished_at) >=
-               CURRENT_DATE - make_interval(days => CAST(:history_days AS INTEGER))
+         WHERE COALESCE(started_at, finished_at) >= DATE_TRUNC('month', CURRENT_DATE)
+           AND COALESCE(started_at, finished_at) < CURRENT_DATE + INTERVAL '1 day'
         SQL
     );
-    $boundedSessionCount->execute([
-        'history_days' => env_int('DASHBOARD_HISTORY_DAYS', 180, 30, 3650),
-    ]);
+    $boundedSessionCount->execute();
 
     $stats = $pdo->query(
         <<<'SQL'
@@ -91,7 +89,8 @@ try {
         'database_bytes' => $databaseBytes,
         'tables' => $tables,
         'dashboard_session_projection' => $sessionPayload,
-        'bounded_dashboard_session_count' => (int)$boundedSessionCount->fetchColumn(),
+        'current_month_dashboard_session_count' => (int)$boundedSessionCount->fetchColumn(),
+        'configured_session_page_size' => env_int('DASHBOARD_SESSION_PAGE_SIZE', 500, 50, 1000),
         'database_activity_since_reset' => $stats,
         'dashboard_revision' => $dashboardRevision,
         'dashboard_revision_trigger_count' => $revisionTriggerCount,
