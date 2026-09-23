@@ -47,6 +47,12 @@ try {
         throw new RuntimeException('IAM login must not overwrite a roster display name imported from Excel.');
     }
 
+    $readOnlySessionSource = file_get_contents(dirname(__DIR__) . '/api/index.php');
+    if (!is_string($readOnlySessionSource)
+        || !str_contains($readOnlySessionSource, '[\'dev\', \'iam\', \'auth\']')) {
+        throw new RuntimeException('IAM login and callback must never run from a read-and-close session; oauth2state writes would be lost.');
+    }
+
     fwrite(STDOUT, "IAM identity name-order tests passed.\n");
 } catch (Throwable $exception) {
     fwrite(STDERR, $exception->getMessage() . "\n");

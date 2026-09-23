@@ -336,7 +336,7 @@ if ($requiresSession) {
     try {
         $readOnlySession = $method === 'GET'
             && !is_root_iam_callback($resource, $method)
-            && $resource !== 'dev';
+            && !in_array($resource, ['dev', 'iam', 'auth'], true);
         initialize_session($root, $readOnlySession);
     } catch (Throwable $exception) {
         report_exception($exception, 'session-start');
