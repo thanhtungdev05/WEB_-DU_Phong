@@ -1,7 +1,6 @@
 {
   "_ghi_chu": "Danh sach trang goc DA duoc dung lai tu reference/source/ qua render.py. Trang co ten trong day duoc phuc vu theo DUNG duong dan goc va lay du lieu tu config_store. Trang khong co ten thi van dung ban cu trong www/_pages/. Moi khi dung xong mot nhom menu thi them ten trang vao day.",
   "trang": [
-    "act_sta.htm",
     "doc/8021x.htm",
     "doc/DDNS.htm",
     "doc/DHCPOpt.htm",

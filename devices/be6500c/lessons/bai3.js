@@ -2,16 +2,16 @@
  * devices/be6500c/lessons/bai3.js
  */
 window.DEVICE_BE6500C_LESSONS = window.DEVICE_BE6500C_LESSONS || [];
-window.DEVICE_BE6500C_LESSONS.push({
+var bai3 = {
   id: 'be6500c-bai3',
   title: 'Cấu hình mạng Wi-Fi IOT',
   subtitle: 'Cấu hình mạng Wi-Fi IOT',
   instructions: [
-  "<b>Yêu cầu:</b>",
-  "Vào phần SMARTHOME NETWORK để cấu hình Wi-Fi IoT:",
-  "- Tên Wi-Fi: <span class=\"val\">FPT IoT</span>",
-  "- Mật khẩu: <span class=\"val\">fpt12345</span>"
-],
+    "<b>Yêu cầu:</b>",
+    "Vào phần SMARTHOME NETWORK để cấu hình Wi-Fi IoT:",
+    "- Tên Wi-Fi: <span class=\"val\">FPT IoT</span>",
+    "- Mật khẩu: <span class=\"val\">fpt12345</span>"
+  ],
   practiceUrl: '/sim_be6500c/wifi__general__t2.html',
   clearFields: ['input[name="networks.0.name"]', 'input[name="networks.0.passphrase"]'],
   grading: {
@@ -71,7 +71,14 @@ window.DEVICE_BE6500C_LESSONS.push({
     {
       "selector": "button:contains(\"Save\")",
       "text": "Chọn Save",
-      "position": "right"
+      "position": "bottom"
     }
   ]
-});
+};
+
+var existingIndex = window.DEVICE_BE6500C_LESSONS.findIndex(function (l) { return l.id === 'be6500c-bai3'; });
+if (existingIndex >= 0) {
+  window.DEVICE_BE6500C_LESSONS[existingIndex] = bai3;
+} else {
+  window.DEVICE_BE6500C_LESSONS.push(bai3);
+}

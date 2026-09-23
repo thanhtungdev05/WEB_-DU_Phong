@@ -24,7 +24,9 @@ window.DEVICE_VIGOR2927 = {
 if (!window.TOOLTIPS_VIGOR2927) window.TOOLTIPS_VIGOR2927 = {};
 if (window.DEVICE_VIGOR2927_LESSONS) {
   window.DEVICE_VIGOR2927_LESSONS.forEach(lesson => {
-    if (lesson.guidePopups) {
+    if (window.TOOLTIPS_VIGOR2927[lesson.id] && window.TOOLTIPS_VIGOR2927[lesson.id].length > 0) {
+      lesson.guidePopups = window.TOOLTIPS_VIGOR2927[lesson.id];
+    } else if (lesson.guidePopups && lesson.guidePopups.length > 0) {
       window.TOOLTIPS_VIGOR2927[lesson.id] = lesson.guidePopups;
     }
   });

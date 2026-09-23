@@ -1,0 +1,108 @@
+<!DOCTYPE html><html ng-app=myApp ng-controller=TranslateCtrl><head><script src="/js/gettext.min.js?094907"></script><meta / charset=UTF-8><link href="/style.min.css?094907" rel=stylesheet type=text/css><script src="/js/webchange.js?094907"></script></head><script> parent.multiWanIfSelectors&&(parent.multiWanIfSelectors=undefined);</script><body class=ng-cloak><textarea id=policyrt1init style=display:none>
+	var aryIpGrps = ;
+	var aryIpObjs = ;
+	var aryCnObjs = ;
+	var rdSrcIPAny = [];
+	var rdDstIPAny = [];
+	var rdDstPortAny = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]];
+	var chkModeWizard = [];
+	var sLTEmodulename = 'LTE';
+
+	var aryMoreLine = [[],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[],
+					   [],[]];
+
+	var aryDPortStart = [0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0];
+
+	var aryDPortCount = [0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0,
+						 0];
+
+	var aryProtocol = [0,
+					   0,
+					   0,
+					   0,
+					   0,
+					   0,
+					   0,
+					   0,
+					   0,
+					   0];
+
+	var aryWanIf = [3,
+					3,
+					3,
+					3,
+					3,
+					3,
+					3,
+					3,
+					3,
+					3];
+
+	var aryNATforSrcSub = [0,
+						   0,
+						   0,
+						   0,
+						   0,
+						   0,
+						   0,
+						   0,
+						   0,
+						   0];
+
+	var aryL2LProfile = ,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+	var aryMNatWanIp = [];
+	var iMNatWanIpFlag = [];
+	var aryPrio = [];
+	var aryWanIfalias = [];
+	var aryDestApp = [];
+	var aryIFwan = [];
+	var aryComment = ;
+
+	var aryEnable = [0,
+					 0,
+					 0,
+					 0,
+					 0,
+					 0,
+					 0,
+					 0,
+					 0,
+					 0];
+
+	var multiwanStat = [];
+</textarea><table align=center border=0 cellpadding=0 cellspacing=0 width=800><tr><td class=title><script>var policyrtinit1Script=document.createElement('script');policyrtinit1Script.text=document.getElementById("policyrt1init").value;document.head.appendChild(policyrtinit1Script);</script></td></tr><tr><td colspan=2><b parent="Routing" qslink="{{  ? 'http://www.draytek.com/index.php?option=com_k2&view=item&id=5181:policy-route&Itemid=293&lang=en' : 'https://www.draytek.com/support/knowledge-base/route-policy/'}}" sub-title></b><b ng-if=Tjudge translate>Load-Balance/Route Policy</b><b ng-if=!Tjudge translate>Route Policy</b><hr><form action=/cgi-bin/v2x00.cgi method=POST name=frm1><table id=upgradenote style=display:none><tr><td valign=top>1.&nbsp;</td><td translate>We have received feedbacks that Route Policy always has a higher Priority than Inter-LAN Routing. To make the design more flexible, we make Priority configurable in this firmware version.<br>Hint: Set Policy Priority lower than routes in Routing Table so that Policy will NOT affect Inter-LAN Routing.</td></tr><tr><td valign=top>2.&nbsp;</td><td translate>There are existing Policies inherited from the previous firmware version which does not support Priority,they will continue to operate as they did with the previous firmware.</td></tr><tr><td valign=top>3.&nbsp;</td><td translate>Click <b>Upgrade All</b> button to start configuring Priority for each Policy. Please note that each Route Policy may have a different behavior than before.</td></tr><tr><td></td></tr><tr><td colspan=2 id=link_moreinfo translate>For more information please<a>Click here</a></td></tr><tr align=center><td colspan=2><input id=upgradeforned name=btnUpdate onClick=onClkBtnUpdate() style=display:none type=button value="Upgrade All"></td></tr><tr><td></td></tr></table><table><table align=center cellpadding=2 cellspacing=0 width=100%><tr><td align=right>&nbsp;<span class="selperpage"><select name=sltperpage onchange=chgPerPage(this.value)><script>var maxsize=parseInt("50");if(maxsize>=10)document.write('<option value=10>10</option>');if(maxsize>=20)document.write('<option value=20>20</option>');if(maxsize>=30)document.write('<option value=30>30</option>');if(maxsize>=40)document.write('<option value=40>40</option>');if(maxsize>=40)document.write('<option value=50>50</option>');</script></select>&nbsp;rules per page</span><span style="color:red" align="right">&nbsp;|&nbsp; <a class=DenyLink href=javascript:ruOK() translate>Set to Factory Default</a>&nbsp;|</span><span style="color:red" align="right" id=routeDiagnose style="display:none">&nbsp; <a href="/cgi-bin/v2x00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=4046&iAct=0">Diagnose</a>&nbsp;|</span></td></tr></table><table border=1 cellpadding=0 cellspacing=0 width=100%><tr><td><table align=center border=0 cellpadding=2 cellspacing=2 width=100%><tr align=center class=row><td translate width=2%>Index</th><td translate width=2%>Enable</th><td id=obj style=display:none translate width=5%>Comment</th><td translate width=3%>Protocol</th><td translate width=12%>Interface</th><td class=upgradeneed style=display:none translate width=7%>Priority</th><td translate width=20%>Source</th><td translate width=20%>Destination</th><td translate width=10%>Dest Port</th><td translate>Move Up</th><td translate>Move Down</th></tr><script>var errmsg='';var upgrademsg='';var aryInfAddr=['904','904','904','904','904','904','904','904','904','904'];var arySIpStart=['','','','','','','','','',''];var arySIpCount=['','','','','','','','','',''];var aryDIpStart=['','','','','','','','','',''];var aryDIpCount=['','','','','','','','','',''];var iL2LValue='[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]';var aryWANIP=['---','---','---','---','---','---','---']; var idxperpage=parseInt('10');if(top.idxperpage!=undefined){idxperpage=parseInt(top.idxperpage);if(top.idxperpage>10&&aryMoreLine[0][0]==undefined)document.location="/cgi-bin/V2X00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=2087&sltperpage="+top.idxperpage+"&iPRToPage=1";}var strIPObjIdx='';var pagenum=parseInt("0");var iBwanNumber=parseInt("6");var iFixWanNum=parseInt("4");var iUSBNum=parseInt("2");var iSecUsbNum=parseInt("1");var DualDslEnable=parseInt("0");var bDualDSL=parseInt('0');var extra_vdsl_idx=iFixWanNum+iUSBNum;var idx_2nd_usb=iFixWanNum+iUSBNum-iSecUsbNum;var iPRProANY=parseInt("150");var iPRProTU=parseInt("255");var IF_LAN_SUBNET_1='100';var IF_LAN_SUBNET_RT='200';var IF_LAN_SUBNET_DMZ='150';var iLANNumber='16';var sPresetModel='2927';var iPRALIASBASE='1000';var alias_num=parseInt("32");if('0'=='1'){if(sPresetModel=="2925")iLANNumber--;else if(sPresetModel=="2860")iLANNumber-=2;}var iPRALIASBASE='1000'; var isLastPage=Math.ceil(maxsize/idxperpage)==pagenum;var idxperpageLast=maxsize%idxperpage;var str="";function getstrProtocol(iProtocol){if(iProtocol==iPRProTU)return"TCP/UDP";else if(iProtocol==6)return"TCP";else if(iProtocol==17)return"UDP";else if(iProtocol==1)return"ICMP";else if(iProtocol==2)return"IGMP";else if(iProtocol==iPRProANY)return gettext("Any");else return"";}const IF_WAN_HEAD_VAL=3;const IF_LAN_HEAD_VAL=100;const IF_VPN_HEAD_VAL=aryL2LProfile[0][1]+parseInt(iL2LValue);function getstrInterface(iWanIf,idx){if(top.notSupportWAN.indexOf(iWanIf-IF_WAN_HEAD_VAL)!=-1)return"";if(iWanIf<iL2LValue){if(aryWanIfalias[idx]<iPRALIASBASE){if(((iWanIf==5&&!parseInt('1'))||(iWanIf==7&&parseInt('1')))&&(parseInt('0'))){return gettext(sLTEmodulename);}else{return gettext('WAN')+(iWanIf-IF_WAN_HEAD_VAL+1);}}else{if(multiwanStat[(pagenum-1)*idxperpage+i]>0){return gettext('Multi WAN');}else{return gettext('WAN')+(iWanIf-IF_WAN_HEAD_VAL+1)+" "+gettext('IP Alias')+" "+parseInt((aryWanIfalias[idx]-iPRALIASBASE)%alias_num+1);}}}else if(iWanIf>(IF_LAN_SUBNET_1-1)&&iWanIf<(parseInt(IF_LAN_SUBNET_1)+parseInt(iLANNumber)))return gettext('LAN')+(iWanIf-(IF_LAN_SUBNET_1-1));else if(iWanIf==IF_LAN_SUBNET_RT)return gettext("IP Routed Subnet");else if(iWanIf==IF_LAN_SUBNET_DMZ)return gettext("DMZ Subnet");else{var tmp="VPN "+(iWanIf-iL2LValue+1)+".";for(j=0;j<aryL2LProfile.length;j++){if(aryL2LProfile[j][1]==iWanIf-iL2LValue){tmp+=aryL2LProfile[j][0];return tmp;}}}}function getObjectName(obj,idx){var objarr=obj.filter(function(x){return x[0]==idx;});return objarr.length?objarr[0][1]:gettext("Unspecified Address");}function getstrIfAddress(iNATforSrcSub,iWanIf,iInfAddr){if((iNATforSrcSub!=0)&&(iMNatWanIpFlag[iWanIf-3]>1)&&(iWanIf==3||iWanIf==4||((iWanIf==5||iWanIf==6)&&iFixWanNum==4)))return aryMNatWanIp[iInfAddr-parseInt(iPRALIASBASE)];else if(iWanIf<iL2LValue)return aryWANIP[iWanIf-3];else return"---";}var aryIPObj=strIPObjIdx.split(";");for(i=0;i<idxperpage;i++){if((pagenum-1)*idxperpage+i>=maxsize)break; if(aryDestApp[i]>1){str+="<tr align=center style='background-color:#99BBFF'>";str+="<td>"+((pagenum-1)*idxperpage+i+1)+"</td>";}else{str+="<tr align=center class=row"+i%2+">";str+="<td><a href='javascript:gotoDetailSet("+((pagenum-1)*idxperpage+i+1)+")'>"+((pagenum-1)*idxperpage+i+1)+"</a></td>";} str+="<td><input type=checkbox name=iPREnable"+i+" value=1 ";if(i<10){if((rdSrcIPAny[i]&&(rdSrcIPAny[i]<3)&&(arySIpStart[i]==""||arySIpCount[i]==""))||(rdDstIPAny[i]&&(rdDstIPAny[i]<3)&&(aryDIpStart[i]==""||aryDIpCount[i]==""))||(rdDstPortAny[i]&&(aryDPortStart[i]==""||aryDPortCount[i]=="")))str+="disabled";else if(aryDestApp[i]>1)str+="disabled";}else{if((rdSrcIPAny[i]&&(rdSrcIPAny[i]<3)&&(aryMoreLine[i-10][5]==""||aryMoreLine[i-10][6]==""))||(rdDstIPAny[i]&&(rdDstIPAny[i]<3)&&(aryMoreLine[i-10][7]==""||aryMoreLine[i-10][8]==""))||(rdDstPortAny[i]&&(aryMoreLine[i-10][9]==""||aryMoreLine[i-10][10]=="")))str+="disabled";else if(aryDestApp[i]>1)str+="disabled";}str+="></td>"; if(parseInt('1')){if(aryComment[i].length<9)str+="<td>"+aryComment[i]+"</td>";else str+="<td>"+aryComment[i].substring(0,8)+"...</td>";} if(aryDestApp[i]>1){str+="<td> - </td>";}else{str+="<td>"+getstrProtocol((i<10)?aryProtocol[i]:aryMoreLine[i-10][1])+"</td>";} if(aryIFwan[i]>0){str+="<td>"+gettext("VoIP_WAN")+"</td>";}else{str+="<td>"+getstrInterface((i<10)?aryWanIf[i]:aryMoreLine[i-10][2],i)+"</td>";}arySrcDstIP=aryIPObj[i].split(",");str+="<td class=upgradeneed style=display:none>"+aryPrio[i]+"</td>";if(rdSrcIPAny[i]==0)str+="<td>"+gettext("Any")+"</td>";else if(rdSrcIPAny[i]==3){str+="<td><a href=# onclick='gotoIPobjSet("+arySrcDstIP[0]+")'>"+getObjectName(aryIpObjs,arySrcDstIP[0])+"</a></td>";}else if(rdSrcIPAny[i]==4){str+="<td><a href=# onclick='gotoIPgrpSet("+arySrcDstIP[0]+")'>"+getObjectName(aryIpGrps,arySrcDstIP[0])+"</a></td>";}else{if(i<10)str+="<td>"+arySIpStart[i]+"~"+arySIpCount[i]+"</td>";else str+="<td>"+aryMoreLine[i-10][5]+"~"+aryMoreLine[i-10][6]+"</td>";}if(aryDestApp[i]==1||aryDestApp[i]==3)str+="<td>"+gettext("APP Service")+"</td>";else if(aryDestApp[i]==2)str+="<td>"+gettext("VoIP")+"</td>";else if(rdDstIPAny[i]==0)str+="<td>"+gettext("Any")+"</td>";else if(rdDstIPAny[i]==3){str+="<td><a href=# onclick='gotoIPobjSet("+arySrcDstIP[1]+")'>"+getObjectName(aryIpObjs,arySrcDstIP[1])+"</a></td>";}else if(rdDstIPAny[i]==4){str+="<td><a href=# onclick='gotoIPgrpSet("+arySrcDstIP[1]+")'>"+getObjectName(aryIpGrps,arySrcDstIP[1])+"</a></td>";}else if(rdDstIPAny[i]==5){str+="<td><a href=# onclick='gotoCtryObjSet("+arySrcDstIP[2]+")'>"+getObjectName(aryCnObjs,arySrcDstIP[2])+"</a></td>";}else if(rdDstIPAny[i]==6){str+="<td>"+gettext("Domain Name")+"</td>";}else{if(i<10)str+="<td>"+aryDIpStart[i]+"~"+aryDIpCount[i]+"</td>";else str+="<td>"+aryMoreLine[i-10][7]+"~"+aryMoreLine[i-10][8]+"</td>";}if(aryDestApp[i]>1)str+="<td> - </td>";else if(rdDstPortAny[i]==0)str+="<td>"+gettext("Any")+"</td>";else{if(i<10)str+="<td>"+(aryDPortStart[i]==0?"":aryDPortStart[i])+"~"+(aryDPortCount[i]==0?"":aryDPortCount[i])+"</td>";else str+="<td>"+(aryMoreLine[i-10][9]==0?"":aryMoreLine[i-10][9])+"~"+(aryMoreLine[i-10][10]==0?"":aryMoreLine[i-10][10])+"</td>";}if((pagenum-1)*idxperpage+i+1!=1){str+="<td><a href='javascript:submit_up("+((pagenum-1)*idxperpage+i+1)+")' class='DenyLink'>"+gettext("UP")+"</td>";}else{str+="<td></td>";}if((pagenum-1)*idxperpage+i+1<maxsize)str+="<td><a href='javascript:submit_down("+((pagenum-1)*idxperpage+i+1)+")' class='DenyLink'>"+gettext("Down")+"</td>";else str+="<td></td>";str+="</tr>";}document.write(str);</script></table></td></tr></table><script>var maxpage=Math.ceil(maxsize/idxperpage);if(maxpage==0)maxpage=1;str="";if(maxpage>1){str+="<table align=center width=100% border=0 cellspacing=0>";str+="<tr><td class=red>";for(i=1;i<=maxpage;i++){if(i==1)str+="<<&nbsp;";if(i>1)str+="&nbsp;|&nbsp;";str+="<a href='javascript:gotoPage("+i+")'>"+((i-1)*idxperpage+1)+"-"+(idxperpage*i>maxsize?maxsize:idxperpage*i)+"</a>";}str+="&nbsp;>></td><td align=right class=red>";if(pagenum>1)str+="<<&nbsp;<a href='javascript:gotoPage("+(pagenum-1)+")'>"+gettext("Back")+"</a>";if((pagenum>1)&&(maxpage>2)&&(pagenum<maxpage))str+="&nbsp;|&nbsp;";if(pagenum<maxpage)str+="<a href='javascript:gotoPage("+(pagenum+1)+")'>"+gettext("Next")+"</a>&nbsp;>>";str+="</td></tr></table>";document.write(str);}</script><table align=center border=0 cellpadding=2 cellspacing=2 width=100%><tr><td><input name=iModeWizAdv type=radio value=0>&nbsp;Wizard Mode: most frequently used settings in three pages</td></tr><tr><td><input name=iModeWizAdv type=radio value=1>&nbsp;Advance Mode: all settings in one page</td></tr><br><b translate>Note</b>: <ol><li ng-show="bAppSerID || bPRvoip" translate>The policies in blue are SD-WAN related, and can only be edited via ACS.</li></ol><table align=center><tr><td><input name=fid type=hidden><input name=iAct type=hidden><input name=iPRPageNum type=hidden value="0"><input name=iPRToPage type=hidden value="0"><input name=iPRIdx type=hidden><input name=sIpObjAct type=hidden><input name=iIpObjIdx type=hidden><input name=sIpGrpAct type=hidden><input name=iIpGrpIdx type=hidden><input name=webchange type=hidden value=0><input class=btnw id=upgradefor name=btnOk onClick=onClkBtnOk() style=display:none type=button value="OK"></td></tr></table><br><input name=sFormAuthStr type=hidden value="ZChZ65B1x7oWVPs"></form></td></tr></table><script>top.ACTION_STATUS=-1;top.iActionStatusFlag='1';top.iFwUpgradeState='0';top.act_sta.damage_alert();var bg=parent;var f=document.frm1;var sCommentStats='';bg.IfType&&(bg.IfType=undefined);var aryElmtEnable=[f.iPREnable0,f.iPREnable1,f.iPREnable2,f.iPREnable3,f.iPREnable4,f.iPREnable5,f.iPREnable6,f.iPREnable7,f.iPREnable8,f.iPREnable9];if(idxperpage>10){var aryElmtEnable1=[f.iPREnable10,f.iPREnable11,f.iPREnable12,f.iPREnable13,f.iPREnable14,f.iPREnable15,f.iPREnable16,f.iPREnable17,f.iPREnable18,f.iPREnable19];if(idxperpage>20){var aryElmtEnable2=[f.iPREnable20,f.iPREnable21,f.iPREnable22,f.iPREnable23,f.iPREnable24,f.iPREnable25,f.iPREnable26,f.iPREnable27,f.iPREnable28,f.iPREnable29];if(idxperpage>30){var aryElmtEnable3=[f.iPREnable30,f.iPREnable31,f.iPREnable32,f.iPREnable33,f.iPREnable34,f.iPREnable35,f.iPREnable36,f.iPREnable37,f.iPREnable38,f.iPREnable39];if(idxperpage>40)var aryElmtEnable4=[f.iPREnable40,f.iPREnable41,f.iPREnable42,f.iPREnable43,f.iPREnable44,f.iPREnable45,f.iPREnable46,f.iPREnable47,f.iPREnable48,f.iPREnable49];}}}angular.element(document).ready(function(){if((!parent.SHOW_WAN_BALANCE)||(('2927'=='2132'||'2927'=='2133')))$scope.Tjudge=0; else $scope.Tjudge=1;$scope.bAppSerID=parseInt('1');$scope.bPRvoip=parseInt('1');$scope.$apply();angular.element(document.querySelector("#link_moreinfo a")).attr("href","javascript:opennote()");initParameter();initWebChange();});function initParameter(){if(maxsize==10)bg.hideElmtByClass(document,"span","selperpage");if(parseInt('1')){document.getElementById("routeDiagnose").style.display="";}bg.setVle2Elmt(f.sltperpage,idxperpage,0);for(var j=0;j<f.sltperpage.options.length;j++){if(idxperpage==f.sltperpage.options[j].value){f.sltperpage.selectedIndex=j;}}for(i=0;i<idxperpage;i++){if((pagenum-1)*idxperpage+i>=maxsize)break;if(i<10)bg.setVle2Elmt(aryElmtEnable[i],aryEnable[i],0);else if(i<20)bg.setVle2Elmt(aryElmtEnable1[i-10],aryMoreLine[i-10][0],0);else if(i<30)bg.setVle2Elmt(aryElmtEnable2[i-20],aryMoreLine[i-10][0],0);else if(i<40)bg.setVle2Elmt(aryElmtEnable3[i-30],aryMoreLine[i-10][0],0);else bg.setVle2Elmt(aryElmtEnable4[i-40],aryMoreLine[i-10][0],0);}if(chkModeWizard==0)f.iModeWizAdv[0].checked=true;else f.iModeWizAdv[1].checked=true;if(errmsg==0&&errmsg!='')alert(gettext('Warning: loop condition detected in your failover settings'));if(upgrademsg=="0"){bg.showElmtByClass(document,"td","upgradeneed");bg.showElmtById(document,"upgradefor");}else{bg.showElmtById(document,"upgradeforned");bg.showElmtById(document,"upgradenote");}if(parseInt('1')){bg.showElmtById(document,"obj");}if(sCommentStats!=''){if(sCommentStats==5){alert(gettext('Error!We were unable to add your comment'));}else if(sCommentStats==6){alert(gettext('Error!We were unable to change your comment'));}else if(sCommentStats==7){alert(gettext('Error!We were unable to clear your comment'));}else if(sCommentStats==9){alert(gettext('Domain name is illegal!'));}else if(sCommentStats==10){alert(gettext('Object String is full!'));}else if(sCommentStats==0){alert(gettext('Object String Add fail!'));}else if(sCommentStats==3){alert(gettext('Object String Edit fail!'));}else if(sCommentStats==2){alert(gettext('Object String Clear fail!'));}}}function opennote(){window.open("/doc/rtpupgradenote.htm","rtpupgradenote","toolbars=no,width=1000px,height=700px,top=150px,left="+(screen.width/2-232)+"px,status=no,scrollbars=yes,resize=yes,menubar=no");}function onClkBtnOk(){if(checkWebChange()){f.webchange.value='1';} var itemNumPerPage=idxperpage; if(isLastPage){itemNumPerPage=idxperpageLast;} for(var i=0;i<itemNumPerPage;i++){eval("bg.cpntCtrl(true, f, f.iPREnable"+i+", 1)");}f.iAct.value=0;f.fid.value=4041;f.submit();}function onClkBtnUpdate(){f.iAct.value=0;f.fid.value=4045;f.submit();}function gotoPage(idx){f.iAct.value=0;f.fid.value=2087;f.iPRToPage.value=idx;f.submit();}function gotoDetailSet(idx){ var itemNumPerPage=idxperpage; if(isLastPage){itemNumPerPage=idxperpageLast;}for(var i=0;i<itemNumPerPage;i++){eval("bg.cpntCtrl(true, f, f.iPREnable"+i+", 1)");}if(f.iModeWizAdv[0].checked)f.iAct.value=2;else f.iAct.value=1;f.fid.value=4041;f.iPRIdx.value=idx;f.submit();}function gotoIPobjSet(idx){f.action="/cgi-bin/ipobj.cgi";f.sIpObjAct.value="showitem";f.iIpObjIdx.value=idx;f.submit();}function gotoIPgrpSet(idx){f.action="/cgi-bin/ipgrp.cgi";f.sIpGrpAct.value="showitem";f.iIpGrpIdx.value=idx;f.submit();}function gotoCtryObjSet(idx){document.location="/cgi-bin/cntrobj.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&sCnObjAct=showitem&iCnObjIdx="+idx;}function submit_up(_t){if(f.iModeWizAdv[0].checked)var iModeWizAdv=0;else var iModeWizAdv=1;document.location='/cgi-bin/v2x00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=4041&iAct=0&act=up&sltperpage='+top.idxperpage+'&iModeWizAdv='+iModeWizAdv+'&iPRToPage='+pagenum+'&index='+_t+"&webchange=1";}function submit_down(_t){if(f.iModeWizAdv[0].checked)var iModeWizAdv=0;else var iModeWizAdv=1;document.location='/cgi-bin/v2x00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=4041&iAct=0&act=down&sltperpage='+top.idxperpage+'&iModeWizAdv='+iModeWizAdv+'&iPRToPage='+pagenum+'&index='+_t+"&webchange=1";}function chgPerPage(per){top.idxperpage=per;if(per!=idxperpage)gotoPage(1);}function ruOK(){if(confirm(gettext('Do you want to clear all profiles?'))){document.location="/cgi-bin/v2x00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=4043&sltperpage="+top.idxperpage+"&iPRToPage=1"+"&webchange=1";}}</script></body></html>

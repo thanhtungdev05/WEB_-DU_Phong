@@ -1,0 +1,31 @@
+<!DOCTYPE html><html ng-app=myApp ng-controller=TranslateCtrl ng-init=result=[];emptyrow=8><head><script src="/js/gettext.min.js?094907"></script><style type=text/css>
+#cvml {
+	margin:0px 20px 0px 20px;
+	list-style:none;
+	overflow:hidden;
+	border:solid 1px;
+	padding-bottom:20px;
+}
+#cvml dd {
+	display:inline-block;
+	*display:inline;
+	zoom:1;
+	width:125px;
+	margin:3px 3px 3px 20px;
+	padding:3px;
+	vertical-align:top;
+}
+.cvmlitem {
+	display:block;
+	width:125px;
+	text-align:center;
+}
+.select {
+	background:Gainsboro;
+}
+th {
+	color:white;
+	font-weight:bold;
+	background-color:grey;
+}
+</style><meta / charset=UTF-8><link href="/style.min.css?094907" rel=stylesheet type=text/css><script src="/js/dhtml.min.js?094907"></script><script src="/js/webchange.js?094907"></script></head><body class=ng-cloak><form action=/cgi-bin/v2x00.cgi method=POST name=frm1><input name=iAct type=hidden value=""><input name=fid type=hidden value=2338><table align=center border=0 cellpadding=0 cellspacing=0 width=800><tr><td colspan=2><b parent="Applications" qslink=https://www.draytek.com/support/knowledge-base/5149 sub-title translate>DNS Security</b><hr></td></tr><tr><td colspan=2><table align=center border=0 cellpadding=0 cellspacing=0 width=100%><tr><td class=offtab id=tab1 onClick=onChgAccMod(1)><b translate>General Setup</b></td><td class=ontab id=tab2 onClick=onChgAccMod(2)><b translate>Domain Diagnosis</b></td><td width=30%></td><td align=right><script> if(parent.SHOW_SYS_ADMIN){document.write('<a href="/cgi-bin/V2X00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=2330">'+gettext('DNS Cache')+'</a>');}</script></td></tr></table><table border=1 cellpadding=0 cellspacing=0 width=100%><tr><td><table align=center width=95%><tr><td>Domain:</td><td><input name=sDomain type=text> &nbsp; <input name=rdDomain type=radio value=1>IPv4&nbsp;<input name=rdDomain type=radio value=28>IPv6</td></tr><tr><td>Interface:</td><td><select name=iWanIdx><script>var aryVle=JSON.parse("[]".replace(/'/g,'"'));var bNewWLWAN=parseInt('1');var bWless=parseInt('0');var bDualWless5G=parseInt('0');var sLTEmodulename='LTE';var wannum=aryVle.length; var str;for(i=0;i<wannum;i++){if(top.notSupportWAN.indexOf(i)!=-1)continue;if(parseInt('0')&&i==1){continue;}if(bNewWLWAN&&(i==2||i==3)&&!bWless&&!bDualWless5G)continue;else if(bNewWLWAN&&i==3&&!bDualWless5G)continue;if(((i==2&&!bNewWLWAN)||(i==4&&bNewWLWAN))&&(parseInt('0')))str="<option value="+i+">"+gettext(sLTEmodulename)+"</option>";else str="<option value="+i+">WAN"+(i+1)+"</option>";document.write(str);}</script></select></td></tr><tr><td>DNS Server:</td><td><input name=sServer type=text value=""></td></tr><tr><td><input name=diagnose onclick=Diagnose() type=button value="Diagnose"></td></tr><tr><td colspan=2><b translate>Note</b>: <ol><li translate>If the domain has not been queried before, it will take a few seconds to process.</li></ol></td></tr></table><br><table align=center width=95%><tr><td><b translate>Result</b></td><td align=right class=red>|&nbsp; <a href=# onclick=onClear() translate>Clear</a>&nbsp;|</td></tr><tr><td colspan=2><table style="border: 1px solid#767676" width=100%><tr><td style="width: 35%;border-bottom: 1px dashed #000" translate>Domain Name</td><td style="width: 25%;border-bottom: 1px dashed #000" translate>IP Address</td><td style="width: 15%;border-bottom: 1px dashed #000" translate>Interface</td><td style="width: 25%;border-bottom: 1px dashed #000" translate>Verify Result</td></tr><tbody ng-repeat="r in result track by $index"><tr><td>{{r[0]}}</td><td>{{r[1]}}</td><td>{{r[2]}}</td><td>{{r[3]}}</td></tr></tbody><tbody ng-repeat="r in [].constructor(emptyrow) track by $index"><tr><td colspan=4>&nbsp;</td></tr></tbody></table></td></tr></table></td></tr></table></td></tr></table><input name=sFormAuthStr type=hidden value="ZChZ65B1x7oWVPs"></form><script>top.ACTION_STATUS=-1;top.iActionStatusFlag='1';top.iFwUpgradeState='0';top.act_sta.damage_alert();var bg=parent;var f=document.frm1; var dtype=''; initpage();function initpage(){ bg.setVle2Elmt(f.rdDomain[0],dtype,0);}function Diagnose(){if(f.sDomain.value==""){alert(gettext("Please input Domain!"));return;} if((f.rdDomain.value==1&&!bg.isStrIp(f.sServer.value))||(f.rdDomain.value==28&&!bg.checkIpv6(f.sServer.value))){alert(gettext("Invalid DNS Server!"));return;} document.body.style.cursor="wait";f.diagnose.style.cursor="wait";f.diagnose.disabled=true;$scope.result.push([gettext("Please wait for around ###NUM### seconds!").replace("###NUM###",10),'','','']);if($scope.emptyrow>0){$scope.emptyrow--;}$scope.$apply();getResult(1);setTimeout("getResult(2)",10000);}function getResult(iAct){ $http.get('/cgi-bin/v2x00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=2340&iAct='+iAct+'&sDomain='+f.sDomain.value+'&sServer='+f.sServer.value+'&iWanIdx='+f.iWanIdx.value+'&rdDomain='+f.rdDomain.value).then(function(response){switch(iAct){case 2:$scope.result.pop();$scope.result.push(response.data);document.body.style.cursor="default";f.diagnose.style.cursor="default";f.diagnose.disabled=false;break;default:if(response.data==0){alert(gettext("WAN disconnected, please check again."));document.body.style.cursor="default";}}}).catch(function(err){document.body.style.cursor="default";});}function onChgAccMod(page){if(page==1){window.location.href='/cgi-bin/v2x00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=2337';}else if(page==2){window.location.href='/cgi-bin/v2x00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=2338';}}function onClear(){ $scope.result=[];$scope.emptyrow=8;$scope.$apply();}</script></body></html>

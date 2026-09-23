@@ -41,6 +41,18 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         cls.achi_server_source = (ROOT / "simulators/sim_ac1000HI/src/server.py").read_text(encoding="utf-8")
         cls.ap6500_store_source = (ROOT / "simulators/ont_be6500c/src/config_store.py").read_text(encoding="utf-8")
         cls.ont6500_store_source = (ROOT / "simulators/sim_ONT_be6500c/src/config_store.py").read_text(encoding="utf-8")
+        cls.mikrotik_source = (ROOT / "simulators/mikrotik_hexs/src/server.py").read_text(encoding="utf-8")
+
+    def test_mikrotik_configuration_is_isolated_per_technician_session(self):
+        module = load_server("simulators/mikrotik_hexs/src/server.py", "test_mikrotik_server")
+        first = module._kho_cua_ktv("ktv-a")
+        second = module._kho_cua_ktv("ktv-b")
+        first.dat_scalar((20, 9), {1: (33, b"KTV-A")})
+        self.assertEqual(first.lop_phu_scalar((20, 9))[1], (33, b"KTV-A"))
+        self.assertEqual(second.lop_phu_scalar((20, 9)), {})
+        self.assertIsNot(first, second)
+        self.assertIn("KhoCauHinh(tu_dia=False)", self.mikrotik_source)
+        self.assertIn("Session state is intentionally memory-only", self.mikrotik_source)
 
     def test_ac1000f_and_ax3000hv2_keep_independent_user_state(self):
         for relative_path, module_name in (
@@ -77,11 +89,13 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         self.assertNotIn("ACTIVE_SESSIONS.clear()", self.achi_store_source)
         self.assertIn("if sid:\n                kho.dat_lai_factory(sid)", self.achi_server_source)
 
-    def test_portal_reset_device_session_is_fire_and_forget(self):
+    def test_portal_waits_for_current_session_reset_before_loading(self):
         self.assertIn("const resetPromise = resetDeviceSession(currentDeviceId)", self.portal_js)
         self.assertIn("Promise.resolve(resetPromise).finally", self.portal_js)
-        self.assertIn("resetEndpoints.forEach(ep => {", self.portal_js)
-        self.assertIn("fetch(ep, { method: 'POST', cache: 'no-store' })", self.portal_js)
+        self.assertIn("const resetPromises = Array.from(resetEndpoints).map", self.portal_js)
+        self.assertIn("method: 'POST'", self.portal_js)
+        self.assertIn("credentials: 'same-origin'", self.portal_js)
+        self.assertIn("return Promise.allSettled(resetPromises)", self.portal_js)
         self.assertIn("window._sessionRuleCacheScope", self.portal_js)
 
     def test_select_device_and_lesson_scope_the_session_rule_cache(self):

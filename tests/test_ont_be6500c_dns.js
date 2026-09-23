@@ -48,9 +48,9 @@ assert.ok(!apBai4.grading.rules.some(r => (r.name && r.name.toLowerCase().includ
 
 // 3. Verify portal.html cachebusters
 const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(/devices\/ONT_be6500c\/lessons\/bai4\.js\?v=20260916\d+/.test(portalContent),
+assert.ok(/devices\/ONT_be6500c\/lessons\/bai4\.js\?v=202609\d+/.test(portalContent),
   'portal.html must have updated cachebuster for ONT BE6500C bai4.js');
-assert.ok(/devices\/be6500c\/lessons\/bai4\.js\?v=20260916\d+/.test(portalContent),
+assert.ok(/devices\/be6500c\/lessons\/bai4\.js\?v=202609\d+/.test(portalContent),
   'portal.html must have updated cachebuster for AP BE6500C bai4.js');
 assert.ok(/app\.js\?v=202609\d+/.test(portalContent),
   'portal.html must have updated cachebuster for app.js');

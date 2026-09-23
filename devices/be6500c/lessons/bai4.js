@@ -3,7 +3,7 @@
  */
 window.DEVICE_BE6500C_LESSONS = window.DEVICE_BE6500C_LESSONS || [];
 
-window.DEVICE_BE6500C_LESSONS.push({
+var bai4 = {
   id: 'be6500c-bai4',
   title: 'Cấu hình DNS',
   subtitle: 'Cấu hình DNS',
@@ -75,8 +75,15 @@ window.DEVICE_BE6500C_LESSONS.push({
     },
     {
       "selector": "body:has(input[name=\"ipv4Settings.dns.dnsServers.primary\"]) button.alternative-layout--submit, button:contains(\"Save\")",
-      "text": "Bước 5: Chọn Save để lưu cấu hình (Nút Save chiếu vào Nút nộp bài hoặc nút Xem lỗi sai)",
-      "position": "right"
+      "text": "Bước 5: Chọn Save để lưu cấu hình",
+      "position": "bottom"
     }
   ]
-});
+};
+
+var existingIndex = window.DEVICE_BE6500C_LESSONS.findIndex(function (l) { return l.id === 'be6500c-bai4'; });
+if (existingIndex >= 0) {
+  window.DEVICE_BE6500C_LESSONS[existingIndex] = bai4;
+} else {
+  window.DEVICE_BE6500C_LESSONS.push(bai4);
+}

@@ -11,6 +11,8 @@ class FirebaseV1ImportContractTests(unittest.TestCase):
         cls.importer = (ROOT / "api" / "import_firebase_v1.php").read_text(encoding="utf-8")
         cls.migration = (ROOT / "api" / "migrations" / "044_firebase_v1_history_import.sql").read_text(encoding="utf-8")
         cls.sync_migration = (ROOT / "api" / "migrations" / "045_dashboard_change_tracking.sql").read_text(encoding="utf-8")
+        cls.revision_migration = (ROOT / "api" / "migrations" / "047_dashboard_transfer_guard.sql").read_text(encoding="utf-8")
+        cls.sequence_migration = (ROOT / "api" / "migrations" / "048_dashboard_revision_sequence.sql").read_text(encoding="utf-8")
         cls.report = (ROOT / "api" / "lib" / "dashboard_report.php").read_text(encoding="utf-8")
         cls.api = (ROOT / "api" / "index.php").read_text(encoding="utf-8")
         cls.dashboard = (ROOT / "dashboard-authen" / "js" / "app.js").read_text(encoding="utf-8")
@@ -103,8 +105,10 @@ class FirebaseV1ImportContractTests(unittest.TestCase):
     def test_dashboard_version_tracks_in_place_session_and_legacy_corrections(self):
         self.assertIn("ADD COLUMN IF NOT EXISTS updated_at", self.sync_migration)
         self.assertIn("dashboard_touch_updated_at", self.sync_migration)
-        self.assertIn("MAX(updated_at) FROM timer_sessions", self.api)
-        self.assertIn("MAX(updated_at) FROM firebase_legacy_import_events", self.api)
+        self.assertIn("'timer_sessions'", self.revision_migration)
+        self.assertIn("'firebase_legacy_import_events'", self.revision_migration)
+        self.assertIn("nextval('dashboard_revision_seq')", self.sequence_migration)
+        self.assertIn("FROM dashboard_revision_seq", self.api)
 
     def test_overview_attempt_metrics_require_active_v2_catalog_mapping(self):
         self.assertIn("all_valid_sessions AS", self.report)

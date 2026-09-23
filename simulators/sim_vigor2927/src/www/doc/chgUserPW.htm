@@ -1,0 +1,68 @@
+<!DOCTYPE html><html ng-app=myApp ng-controller=TranslateCtrl><head><script src="/js/gettext.min.js?094907"></script><meta / charset=UTF-8><link href="/style.min.css?094907" rel=stylesheet type=text/css></head><body class=ng-cloak><table align=center border=0 cellpadding=0 cellspacing=0 width=700><tr><td><br><form action=/cgi-bin/chgbas.cgi method=POST name=frm1><br><table align=center border=0 cellpadding=2 cellspacing=0 width=700px><tr><td><h3 translate>For security reason, you must change the password before proceeding to the router webpage</h3></td></tr><tr><td><b translate>New Password</b></td></tr></table><table align=center border=1 cellpadding=0 cellspacing=0 width=700><tr><td><table align=center border=0 cellpadding=2 cellspacing=0 width=600><tr><td translate width=200>Password</td><td><input maxlength={{maxPswLen}} name=sSysPass onBlur=pwStrength(this.name,this.value) onKeyUp=pwStrength(this.name,this.value) placeholder="Max: ###LEN### characters" size=25 type=password></td></tr><tr><td translate>Confirm Password</td><td><input maxlength={{maxPswLen}} name=sSysNewPass placeholder="Max: ###LEN### characters" size=25 type=password></td></tr></table></td></tr></table><br><table border=0 cellpadding=2 cellspacing=0 width=700><tr><td width=250>Password Strength:</td><td><table cellspacing=0 cellspadding=0 style=height:20px;line-height:20px;border:0;><tr align=center><td id=wk_sSysPass style=background:#ddd;color:#fff; translate width=63>Weak</td><td width=1></td><td id=md_sSysPass style=background:#ddd;color:#fff; translate width=63>Medium</td><td width=1></td><td id=st_sSysPass style=background:#ddd;color:#fff; translate width=63>Strong</td></tr></table></td></tr><tr><td colspan=2><b translate>Password Requirements</b>: <ol><li translate>Must be a minimum of 8 characters.</li><li>Contain at least three of the following for a strong password: <br>uppercase letters<br>lowercase letters<br>numbers<br>symbols</li></ol></td></tr></table><br><table align=center><tr><td><input class=btnw name=ok onclick=onClkBtnOk() type=button value="OK"></td></tr></table><input name=iWebCfgLevel type=hidden value="0"><input name=sFormAuthStr type=hidden value="oDe0nkdYY0OqGPW"></form></td></tr></table><script> top.ACTION_STATUS=-1;top.iActionStatusFlag='0';top.iFwUpgradeState='0';top.act_sta.damage_alert();var bg=top;var f=document.frm1;const minPswLen=8;const isBGT=parseInt('0');if(isBGT){var maxPswLen=31;}else{var maxPswLen=parseInt('1')?83:23;}function remoteLoaded(lang){angular.element(document).ready(function(){angular.forEach(document.querySelectorAll("input[placeholder]"),function(self){self.placeholder=self.placeholder.replace("###LEN###",self.maxLength);});});}angular.element(document).ready(function(){if(isBGT){webcfg.language='nl';if(undefined==myApp.gettextCatalog.strings[webcfg.language]){$scope.loadRemote(webcfg.url+webcfg.path+"/"+webcfg.language+".json").catch(function(){if(!myApp.gettextCatalog.strings[webcfg.language]){$scope.loadRemote(webcfg.url.replace(/\.tw/,'')+webcfg.path+"/"+webcfg.language+".json").then(function(){remoteLoaded();});}}).then(function(){remoteLoaded();});}myApp.gettextCatalog.setCurrentLanguage(webcfg.language);$scope.$apply();}remoteLoaded();$scope.maxPswLen=maxPswLen;$scope.$apply();});function onClkBtnOk(){if(f.sSysPass.value==""){f.sSysPass.setCustomValidity(gettext("The new password can not be empty!"));return f.sSysPass.reportValidity();}if(f.sSysPass.value.length>maxPswLen||f.sSysPass.value.length<minPswLen){f.sSysPass.setCustomValidity(gettext("Password length must between ###MIN### and ###MAX###, please re-enter!").replace("###MIN###",minPswLen).replace("###MAX###",maxPswLen));return f.sSysPass.reportValidity();}if(f.sSysPass.value!=f.sSysNewPass.value){f.sSysPass.setCustomValidity(gettext('Passwords do not match. Please re-enter.'));return f.sSysPass.reportValidity();}if(f.sSysPass.value.match(/[^\w!@#$%^&*`~()\-_+=|\\{},./<>?;:'"[\]]/)){
+		f.sSysPass.setCustomValidity(gettext("Illegal character in password, please check!"));
+		return f.sSysPass.reportValidity();
+	}
+
+	var pstrength = 0;
+	if (f.sSysPass.value.match(/[A-Z]/)) pstrength ++;
+	if (f.sSysPass.value.match(/[a-z]/)) pstrength ++;
+	if (f.sSysPass.value.match(/[\d]/)) pstrength ++;
+	if (f.sSysPass.value.match(/[!@#$%^&*`~()\-_+=|\\{},./<>?;:'"[\]]/)) pstrength ++;
+	if (pstrength < 3) {
+		f.sSysPass.setCustomValidity(gettext("Password used doesn't meet minimum requirements, please check note."));
+		return f.sSysPass.reportValidity();
+	}
+	f.submit();
+}
+
+function CharMode(iN){
+	if (iN>=48 && iN <=57) //num
+		return 1;
+	if (iN>=65 && iN <=90) //A-Z
+		return 2;
+	if (iN>=97 && iN <=122) //a-z
+		return 4;
+	else
+		return 8;
+}
+function checkStrong(sPW){
+	Modes = 0;
+	for (i=0; i<sPW.length; i++){
+		Modes |= CharMode(sPW.charCodeAt(i));
+	}
+	return bitTotal(Modes);
+}
+function bitTotal(num){
+	modes = 0;
+	for (i=0; i<4; i++) {
+		if (num & 1) modes++;
+		num >>>= 1;
+	}
+	return modes;
+}
+function pwStrength(pwname,pwd){
+	O_color = "#dddddd";
+	L_color = "#ff3100";
+	M_color = "#ff7400";
+	H_color = "#89cd02";
+	if (pwd == null || pwd == ''){
+		Lcolor = Mcolor = Hcolor = O_color;
+	} else if (pwd.length < 8) {
+		Mcolor = Hcolor = O_color;
+		Lcolor = L_color;
+	} else {
+		S_level = checkStrong(pwd);
+		Lcolor = Mcolor = Hcolor = O_color;
+		switch(S_level) {
+			case 0:  break;
+			case 1:  Lcolor = L_color;  break;
+			case 2:  Mcolor = M_color;  break;
+			default: Hcolor = H_color;
+		}
+	}
+	document.getElementById("wk_"+pwname).style.background=Lcolor;
+	document.getElementById("md_"+pwname).style.background=Mcolor;
+	document.getElementById("st_"+pwname).style.background=Hcolor;
+	return;
+}
+</script></body></html>

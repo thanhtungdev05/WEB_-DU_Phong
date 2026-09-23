@@ -1,6 +1,6 @@
-﻿/**
+/**
  * devices/vigor2927/lessons/bai1.js
- * Bài 1: Cấu hình PPPoE
+ * Bài 1: Cấu hình PPPoE trên DrayTek Vigor2927
  */
 
 window.DEVICE_VIGOR2927_LESSONS = window.DEVICE_VIGOR2927_LESSONS || [];
@@ -11,54 +11,96 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình PPPoE',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Đăng nhập vào thiết bị và kiểm tra cấu hình WAN PPPoE.',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
+    'Thực hiện cấu hình kết nối WAN/Internet trên thiết bị DrayTek Vigor2927 theo chế độ PPPoE với các thông số sau:',
+    '- Username: <span class="val">sgfdl-211208-218</span>',
+    '- Password: <span class="val">12345678</span>',
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
+
+  // Xóa trắng các ô nhập liệu khi bài lab mở
+  clearFields: [
+    '#opt-pppoe-username',
+    'input[name="sDOutUser1"]',
+    '#opt-pppoe-password',
+    'input[name="sDOutPass1"]'
+  ],
+
+  // Ràng buộc điều kiện chấm đúng (3 tiêu chí)
   grading: {
-    description: 'Kiểm tra đăng nhập và truy cập cấu hình PPPoE trên Vigor2927',
+    description: 'Kiểm tra cấu hình PPPoE trên DrayTek Vigor2927',
     rules: [
       {
-        id: 'username',
-        name: 'Tên đăng nhập',
-        selector: 'input.userpwd:not([type="password"])',
-        expected: 'admin',
+        id: 'opt_pppoe_mode',
+        name: 'PPPoE Mode',
+        selector: 'input[name="PPPoE"]:checked',
+        expected: '1',
         type: 'text_exact',
         trim: true,
         required: true
       },
       {
-        id: 'password',
-        name: 'Mật khẩu',
-        selector: 'input.userpwd[type="password"]',
-        expected: 'admin',
+        id: 'opt_pppoe_username',
+        name: 'PPPoE Username',
+        selector: '#opt-pppoe-username, input[name="sDOutUser1"]',
+        expected: 'sgfdl-211208-218',
+        type: 'text_exact',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'opt_pppoe_password',
+        name: 'PPPoE Password',
+        selector: '#opt-pppoe-password, input[name="sDOutPass1"]',
+        expected: '12345678',
         type: 'text_exact',
         trim: true,
         required: true
       }
     ]
   },
-  guidePopups: [
+  guidePopups: (window.TOOLTIPS_VIGOR2927 && window.TOOLTIPS_VIGOR2927['vg2927-bai1']) || [
     {
-      selector: 'input.userpwd:not([type="password"])',
-      text: 'Nhập tên đăng nhập: admin',
-      position: 'right'
-    },
-    {
-      selector: 'input.userpwd[type="password"]',
-      text: 'Nhập mật khẩu: admin',
-      position: 'right'
-    },
-    {
-      selector: 'input.login',
-      text: 'Bấm Đăng Nhập',
+      selector: '#menu-wan:not(.open) .menu-text, #menu-wan:not(.open)',
+      text: 'Bước 1: chọn WAN',
       position: 'bottom'
     },
     {
-      selector: '#menu',
-      text: 'Sau khi đăng nhập, vào mục WAN để kiểm tra cấu hình PPPoE',
-      position: 'right'
+      selector: '#sub-wan:not(.hidden) #menu-wan-internet .menu-text, #sub-wan:not(.hidden) #menu-wan-internet',
+      text: 'Bước 2: chọn Internet Access',
+      position: 'bottom'
+    },
+    {
+      selector: 'input[name="btnDtPage0"], input[value="Details Page"]',
+      text: 'Bước 3: Chọn Details Page',
+      position: 'top'
+    },
+    {
+      selector: '#tab1.offtab, #tab1:not(.ontab)',
+      text: 'Bước 4: chọn PPPoE',
+      position: 'bottom'
+    },
+    {
+      selector: '#lbl-pppoe-disable, input[name="PPPoE"][value="0"]',
+      text: 'Bước 5: chọn Enable',
+      position: 'right',
+      expected: '1'
+    },
+    {
+      selector: '#opt-pppoe-username, input[name="sDOutUser1"]',
+      text: 'Bước 6: nhập sgfdl-211208-218',
+      position: 'right',
+      expected: 'sgfdl-211208-218'
+    },
+    {
+      selector: '#opt-pppoe-password, input[name="sDOutPass1"]',
+      text: 'Bước 7: nhập 12345678',
+      position: 'right',
+      expected: '12345678'
+    },
+    {
+      selector: '#btn-pppoe-ok, input[name="submit"][value="OK"], input[type="submit"][value="OK"]',
+      text: 'Bước 8: nhấn OK',
+      position: 'top'
     }
   ]
 });

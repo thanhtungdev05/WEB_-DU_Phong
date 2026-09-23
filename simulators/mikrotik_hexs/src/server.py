@@ -29,6 +29,7 @@ import struct
 import sys
 import threading
 import time
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import m2                      # noqa: E402
@@ -36,6 +37,7 @@ import mat_ma                  # noqa: E402
 import kho_cau_hinh            # noqa: E402
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer  # noqa: E402
+from http.cookies import SimpleCookie  # noqa: E402
 from urllib.parse import unquote  # noqa: E402
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -93,7 +95,48 @@ DOIT_CHAN = {
 L_DANG_KY = 0xFE0012    # subscribe
 L_HUY_DANG_KY = 0xFE0013  # unsubscribe
 
-KHO = kho_cau_hinh.KhoCauHinh()
+_KHO_LOCK = threading.RLock()
+_KHO_THEO_KTV = {}
+_KHO_LAST_SEEN = {}
+_KHO_CONTEXT = threading.local()
+_KHO_TTL_SECONDS = 6 * 60 * 60
+
+
+def _kho_cua_ktv(key):
+    """Return an in-memory configuration store isolated to one portal session."""
+    now = time.time()
+    with _KHO_LOCK:
+        stale = [session_key for session_key, seen_at in _KHO_LAST_SEEN.items()
+                 if now - seen_at > _KHO_TTL_SECONDS]
+        for session_key in stale:
+            _KHO_THEO_KTV.pop(session_key, None)
+            _KHO_LAST_SEEN.pop(session_key, None)
+        if key not in _KHO_THEO_KTV:
+            # Never load the legacy shared cau_hinh.json: every KTV starts clean.
+            _KHO_THEO_KTV[key] = kho_cau_hinh.KhoCauHinh(tu_dia=False)
+        _KHO_LAST_SEEN[key] = now
+        return _KHO_THEO_KTV[key]
+
+
+class _KhoTheoKTV:
+    """Compatibility proxy so existing protocol code keeps using ``KHO``."""
+    def _current(self):
+        return _kho_cua_ktv(getattr(_KHO_CONTEXT, "key", "anonymous"))
+
+    @property
+    def khoa(self):
+        return self._current().khoa
+
+    def luu(self):
+        # Session state is intentionally memory-only; writing one shared file
+        # would leak a technician's answer into another technician's lab.
+        return None
+
+    def __getattr__(self, name):
+        return getattr(self._current(), name)
+
+
+KHO = _KhoTheoKTV()
 
 MIME = {
     ".html": "text/html", ".js": "application/javascript", ".css": "text/css",
@@ -148,14 +191,13 @@ def _nap_du_lieu():
         if "__p" in goc:
             phan, so = goc.split("__p")
             duong_dan = tuple(int(x) for x in phan.split("-"))
-            kho_trang.setdefault(duong_dan, {})[int(so)] = \
-                open(os.path.join(DU_LIEU, ten), "rb").read()
+            kho_trang.setdefault(duong_dan, {})[int(so)] = Path(DU_LIEU, ten).read_bytes()
         elif goc.endswith("__map"):
             duong_dan = tuple(int(x) for x in goc[:-5].split("-"))
-            kho_map[duong_dan] = open(os.path.join(DU_LIEU, ten), "rb").read()
+            kho_map[duong_dan] = Path(DU_LIEU, ten).read_bytes()
         else:
             duong_dan = tuple(int(x) for x in goc.split("-"))
-            kho[duong_dan] = open(os.path.join(DU_LIEU, ten), "rb").read()
+            kho[duong_dan] = Path(DU_LIEU, ten).read_bytes()
     # doi dict{so:byte} -> list theo thu tu trang
     kho_trang = {k: [v[i] for i in sorted(v)] for k, v in kho_trang.items()}
     return kho, kho_trang, kho_map
@@ -216,7 +258,7 @@ def _nap_query():
         dd = tuple(int(x) for x in ten.split("-"))
         tep = sorted((f for f in os.listdir(thu_muc) if f.endswith(".bin")),
                      key=lambda f: int(f[1:-4]))
-        kho[dd] = [open(os.path.join(thu_muc, f), "rb").read() for f in tep]
+        kho[dd] = [Path(thu_muc, f).read_bytes() for f in tep]
     return kho
 
 
@@ -236,7 +278,7 @@ def _nap_lenh_truy_van():
     if not os.path.exists(p):
         return {}
     return {tuple(int(x) for x in k.split("-")): v
-            for k, v in _json.load(open(p, encoding="utf-8")).items()}
+            for k, v in _json.loads(Path(p).read_text(encoding="utf-8")).items()}
 
 
 LENH_TRUY_VAN = _nap_lenh_truy_van()
@@ -263,7 +305,7 @@ def _nap_loi_truy_van():
     if not os.path.exists(p):
         return {}
     ra = {}
-    for k, v in _json.load(open(p, encoding="utf-8")).items():
+    for k, v in _json.loads(Path(p).read_text(encoding="utf-8")).items():
         ra[tuple(int(x) for x in k.split("-"))] = (
             v.get("ma_loi"),
             v["mo_ta"].encode("latin-1") if v.get("mo_ta") else None)
@@ -312,7 +354,7 @@ def _nap_wizard():
         if not os.path.isdir(tm):
             continue
         dd = tuple(int(x) for x in ten.split("-"))
-        kho[dd] = [open(os.path.join(tm, f), "rb").read()
+        kho[dd] = [Path(tm, f).read_bytes()
                    for f in sorted(os.listdir(tm),
                                    key=lambda s: int(s[1:-4]))]
     return kho
@@ -345,10 +387,10 @@ def _nap_terminal():
     if not os.path.exists(ml):
         return kho
     import json as _json
-    for lenh, ten in _json.load(open(ml, encoding="utf-8")).items():
+    for lenh, ten in _json.loads(Path(ml).read_text(encoding="utf-8")).items():
         p = os.path.join(DU_LIEU_TERM, ten + ".bin")
         if os.path.exists(p):
-            kho[lenh] = open(p, "rb").read()
+            kho[lenh] = Path(p).read_bytes()
     return kho
 
 
@@ -421,12 +463,197 @@ def _tra_loi_dang_nhap(so_hieu, ma_phien):
     ]
 
 
+# ==========================================================================
+# LEASE GIA LAP CHO BAI 3 (Bind IP to MAC)
+#
+# Bang "IP > DHCP Server > Leases" [23,1] thu tu thiet bi that CHI CO 1 DONG
+# (Admin-PC 192.168.1.254) vi luc do chi co dung 1 may cam vao. Bai 3 can
+# nhin thay may tram dang duoc cap IP de chon ra cap IP/MAC ma gan tinh —
+# nhung ban gia lap chay tren may tinh, KHONG co thiet bi that cam vao nen
+# bang nay se mai chi co 1 dong.
+#
+# Anh Huynn yeu cau 2026-09-19 (kem anh chup Winbox that co 2 may PC1/PC2):
+# them 2 dong mo ta 2 may dang ket noi. Cach lam an toan nhat: NHAN BAN dong
+# THAT roi chi doi cac truong DINH DANH (id, Address, MAC, Client ID, ten
+# may, thoi gian con lai) — moi truong khac giu nguyen y het dong that, nen
+# cac cot con lai (Server, Bridge Port, trang thai...) van hien dung nhu
+# thiet bi that, KHONG bia cau truc moi.
+#
+# KHONG sua `du_lieu_goc/23-1.bin` (bang chung thu tu thiet bi that) — chi
+# them vao luc PHAT LAI khung tra loi.
+# Cot "Bridge Port" cua bang Leases KHONG nam trong dong lease — giao dien
+# tra nguoc bang HOST CAU [16,3] theo dia chi MAC (do that: dong Admin-PC o
+# [16,3] co cong id 6, dung bang cot "ether5" hien tren Leases). Vi vay moi
+# may gia lap phai co ca 2 noi: 1 dong lease [23,1] + 1 dong host cau [16,3].
+# Ma cong doc tu du_lieu_goc/20-55.bin: ether1=2, ether2=3, ether3=4,
+# ether4=5, ether5=6.
+# Moi may gia lap phai co mat o BA bang de du lieu nhat quan nhu thiet bi
+# that: lease [23,1] + host cau [16,3] (cot Bridge Port) + ARP [20,8] (may
+# xin DHCP xong thi router hoc luon IP<->MAC vao ARP). Bai 3 dung tinh nang
+# "Make Static" tren dong lease nen ARP phai co san mucding cua may do.
+LEASE_GIA_LAP = [
+    {"ma": 2, "ma_host": 4, "ma_arp": 2, "cong": 4,          # ether3
+     "ip": "192.168.1.249", "mac": b"\x00\x50\x79\x66\x68\x00",
+     "ten_may": b"PC1", "ma_khach": b"1:0:50:79:66:68:0", "con_lai": 9840},
+    {"ma": 3, "ma_host": 5, "ma_arp": 3, "cong": 5,          # ether4
+     "ip": "192.168.1.248", "mac": b"\x00\x50\x79\x66\x68\x01",
+     "ten_may": b"PC2", "ma_khach": b"1:0:50:79:66:68:1", "con_lai": 9210},
+]
+DD_LEASE = (23, 1)
+DD_HOST_CAU = (16, 3)
+DD_ARP = (20, 8)
+MAC_ADMIN_PC = b"\xd8\x43\xae\x2e\x65\x45"   # may that trong khung da thu
+T_HOST_MAC = 0x02            # dia chi MAC trong bang host cau
+T_HOST_CONG = (0x01, 0x65)   # ma cong (2 the cung mang gia tri nay)
+T_ARP_IP = 0x01              # dia chi IP trong bang IP > ARP
+T_ARP_MAC = 0x02             # dia chi MAC trong bang IP > ARP
+T_ARP_TRANG_THAI = 0x09      # cot "Status" (roteros.jg: {name:'Status',id:'s9'})
+ARP_TINH = b"permanent"      # trang thai cua muc ARP TINH tren RouterOS
+T_DONG = 0xFE0007            # co "dynamic" (D) — master-min.js: obj.bfe0007
+CMD_LEASE_MAKE_STATIC = 3    # doc tu dhcp-*.jg: {name:'Make Static',cmd:3}
+
+# ---- Routing > Tables ----------------------------------------------------
+# Duong dan bang dinh tuyen, doc tu roteros-*.jg:
+#     {name:'Routing Table',title:'Tables',type:'map',path:[44,20],
+#      nameval:'Name', c:[{name:'Name',id:'sfe0010'},{name:'FIB',id:'b2'},...]}
+# Trang IP > Routes [44,21] hien cot "Routing Table" bang cach TRA NGUOC vao
+# bang nay:
+#     {name:'Routing Table',type:'enm',id:'u4f',
+#      values:{type:'dynamic',path:[44,20]}}
+# tuc gia tri `u4f` cua moi tuyen la ID cua dong trong [44,20]. Khong tim thay
+# id do thi giao dien in ra chu **"unknown"**.
+DD_BANG_DT = (44, 20)
+ID_BANG_MAIN = 0             # dong `main` trong du_lieu_goc/44-20.bin
+
+# LOI DA TRA GIA (anh Huynn bao 2026-09-20, Bai 7 Policy Routing): dong `main`
+# bi XOA khoi kho (`da_xoa["44-20"]` co id 0) nen 4 tuyen thuoc bang main
+# (u4f = 0) deu hien "unknown" o cot Routing Table. `main` la bang DUNG SAN,
+# co co dynamic (0xFE0007 = True) trong khung that — RouterOS that KHONG cho
+# xoa. Ban gia lap truoc day khong chan, bam Remove la mat vinh vien (kho luu
+# ben). Nay chan o nhanh L_XOA_DONG ben duoi.
+
+# Ten the trong mot dong lease — doc duoc bang cach giai ma 23-1.bin
+T_LEASE_IP = 0x65          # Address
+T_LEASE_IP_HD = 0x6F       # Active Address
+T_LEASE_MAC = 0x70         # MAC Address (chuoi byte tho)
+T_LEASE_MAC_HD = 0x64      # Active MAC Address
+T_LEASE_TEN_MAY = 0x73     # Active Host Name
+T_LEASE_MA_KHACH = 0x6C    # Client ID
+T_LEASE_MA_KHACH2 = 0x7B   # Client ID (the thu hai, chi khi kieu chuoi 33)
+T_LEASE_CON_LAI = (0x67, 0x77)   # thoi gian con lai -> cot "Expires After"
+
+
+def _ip_sang_so(ip):
+    """'192.168.1.249' -> so nguyen dung thu tu byte nhu khung that."""
+    p = [int(x) for x in ip.split(".")]
+    return p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)
+
+
+def _doi_truong_lease(t, k, v, mo_ta):
+    if t == T_ID:
+        return (t, k, mo_ta["ma"])
+    if t in (T_LEASE_IP, T_LEASE_IP_HD):
+        return (t, k, _ip_sang_so(mo_ta["ip"]))
+    if t in (T_LEASE_MAC, T_LEASE_MAC_HD):
+        return (t, k, mo_ta["mac"])
+    if t == T_LEASE_TEN_MAY:
+        return (t, k, mo_ta["ten_may"])
+    if t == T_LEASE_MA_KHACH or (t == T_LEASE_MA_KHACH2 and k == 0x21):
+        return (t, k, mo_ta["ma_khach"])
+    if t in T_LEASE_CON_LAI:
+        return (t, k, mo_ta["con_lai"])
+    return (t, k, v)
+
+
+def _dong_co_mac(ds, the_mac, mac):
+    """Tim dong co dia chi MAC cho truoc; khong thay thi lay dong cuoi."""
+    for m in ds:
+        for t, k, v in m.get("the", []):
+            if t == the_mac and v == mac:
+                return m
+    return ds[-1]
+
+
+def _nhan_ban_dong(the, doi):
+    """Nhan ban 1 dong, thay cac the theo ham `doi(t, k, v)`."""
+    return {"the": [doi(t, k, v) for t, k, v in the]}
+
+
+def _them_dong_gia_lap(the, khoa_ma, mac_mau, the_mac, doi_truong):
+    """
+    Chen cac dong may tram gia lap vao mot bang, dua tren dong THAT lam mau.
+    `khoa_ma` = ten truong chua id cua dong trong `LEASE_GIA_LAP`.
+    """
+    ra = []
+    so_dong = None
+    for ten, kieu, gt in the:
+        if ten != T_DU_LIEU or not isinstance(gt, list) or not gt:
+            ra.append((ten, kieu, gt))
+            continue
+        ds = list(gt)
+        dang_co = set()
+        for m in ds:
+            dang_co.add(next((v for t, k, v in m.get("the", []) if t == T_ID), None))
+        mau = _dong_co_mac(ds, the_mac, mac_mau).get("the", [])
+        for mo_ta in LEASE_GIA_LAP:
+            if mo_ta[khoa_ma] in dang_co:
+                continue
+            ds.append(_nhan_ban_dong(mau, lambda t, k, v, d=mo_ta: doi_truong(t, k, v, d)))
+        so_dong = len(ds)
+        ra.append((ten, kieu, ds))
+    # ufe0019 = objCount. Quen cap nhat thi giao dien hien "3 items out of 1"
+    # (da vap that 2026-09-19). `_ap_kho` chi tinh lai so nay khi duong dan da
+    # co lop phu, nen o day phai tu dat.
+    if so_dong is not None:
+        ra = [(t, k, so_dong) if t == 0xFE0019 else (t, k, v) for t, k, v in ra]
+    return ra
+
+
+def _doi_truong_host_cau(t, k, v, mo_ta):
+    if t == T_ID:
+        return (t, k, mo_ta["ma_host"])
+    if t == T_HOST_MAC:
+        return (t, k, mo_ta["mac"])
+    if t in T_HOST_CONG:
+        return (t, k, mo_ta["cong"])
+    return (t, k, v)
+
+
+def _doi_truong_arp(t, k, v, mo_ta):
+    # Giao dien ARP gan voi interface `bridge-LAN` (ma 8) — giu nguyen nhu
+    # dong that, chi doi id/IP/MAC.
+    if t == T_ID:
+        return (t, k, mo_ta["ma_arp"])
+    if t == T_ARP_IP:
+        return (t, k, _ip_sang_so(mo_ta["ip"]))
+    if t == T_ARP_MAC:
+        return (t, k, mo_ta["mac"])
+    return (t, k, v)
+
+
 def _tra_loi_cho(duong_dan, so_hieu, ma_phien, ph=None, co_con_tro=False,
-                 lenh=None):
+                 lenh=None, chi_id=None):
     """
     Dung khung tra loi cho mot duong dan lenh.
     Lay khung THAT da thu tu thiet bi roi thay lai id phien + so hieu.
     Chua co du lieu that -> tra khung rong dung dinh dang (khong bia noi dung).
+
+    `chi_id` (2026-09-18, do tren master-min-*.js that): ObjectMap.prototype.
+    fetch() — sau khi Apply/OK sua xong mot dong bang, neu attrs.refetchon
+    change thi trinh duyet TU GUI THEM 1 yeu cau rieng uff0007=0xfe0002 (=
+    T_DU_LIEU, dung lai chinh ma the "cac dong du lieu" lam ma lenh "lay MOT
+    dong theo id") kem ufe0001=id, RIENG VOI vong poll getall (0xfe0004)
+    dinh ky. Ham fetch() lam `update(obj, rep)`: `update()` XOA SACH truong
+    cu cua obj roi CHEP DE truong CAP CAO NHAT cua rep — tuc client mong
+    khung tra ve la CAC TRUONG CUA DUNG 1 DOI TUONG o cap cao nhat (id + cac
+    field), KHONG boc trong the T_DU_LIEU/mang nhu getall. Neu tra sai dang
+    (ca bang, hoac boc trong danh sach) thi obj bi xoa sach truong roi gan
+    mot truong vo nghia -> giao dien hien lai gia tri rong "0.0.0.0/0" —
+    tai hien that tren giao dien 2026-09-18 (anh Huynn bao). Chi thay o bang
+    nhieu hon 1 dong (vd [20,1] IP > Addresses: id 1 la WAN, id 2 la
+    bridge-LAN) vi bang 1 dong (vd [23,2] DHCP Networks) tinh co giong nhau
+    du dung/sai dang. Phai LOC dung 1 dong theo id VA BOC PHANG cac truong
+    cua no len cap cao nhat truoc khi tra ve.
     """
     # Duong dan [120] — SPA hoi ngay sau khi dang nhap:
     #   post({Uff0001:[120], uff0007:5}, rep => { sysres.qscaps = rep.u1||0; ... })
@@ -493,7 +720,43 @@ def _tra_loi_cho(duong_dan, so_hieu, ma_phien, ph=None, co_con_tro=False,
         elif ten == T_SO_HIEU:
             gt = so_hieu
         ra.append((ten, kieu, gt))
-    return _ap_kho(duong_dan, ra)
+    # Them 2 may tram gia lap (xem chu thich o LEASE_GIA_LAP): 1 dong o bang
+    # DHCP Leases va 1 dong o bang host cau (de co cot "Bridge Port").
+    # Phai chen TRUOC `_ap_kho` de lop phu cua hoc vien van trum len dung
+    # dong theo id, va so dong (ufe0019) tu tinh lai cho dung.
+    if tuple(duong_dan) == DD_LEASE:
+        ra = _them_dong_gia_lap(ra, "ma", MAC_ADMIN_PC, T_LEASE_MAC, _doi_truong_lease)
+    elif tuple(duong_dan) == DD_HOST_CAU:
+        ra = _them_dong_gia_lap(ra, "ma_host", MAC_ADMIN_PC, T_HOST_MAC, _doi_truong_host_cau)
+    elif tuple(duong_dan) == DD_ARP:
+        ra = _them_dong_gia_lap(ra, "ma_arp", MAC_ADMIN_PC, T_ARP_MAC, _doi_truong_arp)
+    ra = _ap_kho(duong_dan, ra)
+    if chi_id is not None:
+        # DO THAT tren master-min.js (2026-09-18): ObjectMap.prototype.fetch
+        # gui uff0007=0xfe0002 roi lam `update(obj, rep)` — ham update() XOA
+        # SACH cac truong cu cua obj roi CHEP DE cac truong TRONG rep. `rep`
+        # o day la cac THE O CAP CAO NHAT cua khung tra loi (KHONG phai mang
+        # con trong mot the fe0002 nhu getall) — client KHONG tu "moc" vao
+        # mang do. Neu van tra nguyen dang bang (du da loc con 1 dong) thi
+        # `update()` xoa Address/Network/... cua obj va thay bang mot truong
+        # "Mfe0002" vo nghia -> giao dien hien lai "0.0.0.0/0". Phai BOC
+        # PHANG cac truong cua dung 1 dong (id + field) len cap cao nhat,
+        # BO HAN the T_DU_LIEU/objCount (chi hop le cho getall).
+        dong = None
+        for ten, kieu, gt in ra:
+            if ten == T_DU_LIEU and isinstance(gt, list):
+                dong = next((m for m in gt
+                             if next((v for t, k, v in m.get("the", [])
+                                      if t == T_ID), None) == chi_id), None)
+                break
+        moi = []
+        for ten, kieu, gt in ra:
+            if ten == T_DU_LIEU:
+                moi += list(dong["the"]) if dong else []
+            elif ten != 0xFE0019:
+                moi.append((ten, kieu, gt))
+        ra = moi
+    return ra
 
 
 # ==========================================================================
@@ -591,12 +854,45 @@ def _ap_bang(ds_goc, sua, xoa, thu_tu=()):
                           + [(t, k, v) for t, (k, v) in th.items()]})
 
     if thu_tu:
+        # THU TU HIEN THI — sua 2026-09-20 theo yeu cau anh Huynn cho GIONG
+        # ROUTEROS THAT: lenh `add` luon dua dong moi xuong CUOI danh sach.
+        #
+        # Truoc day: dong co trong `thu_tu` (= moi dong hoc vien them) xep
+        # TRUOC, dong goc xep SAU -> luat firewall/mangle moi luon nhay len
+        # DAU bang, nguoc voi thiet bi that (hoc vien ra may that se thay luat
+        # minh them nam duoi cung). Voi bang Mangle, thu tu luat la NGHIA cua
+        # cau hinh, nen sai lech nay khong the de nguyen.
+        #
+        # Nay: dong goc CHUA TUNG bi keo (khong co trong thu_tu) giu nguyen
+        # vi tri goc va dung TRUOC; dong co trong thu_tu xep theo thu_tu va
+        # dung SAU. Khi `doi_cho` da "vat chat hoa" thu_tu thanh thu tu day
+        # du (goc + moi) thi moi dong deu co trong thu_tu -> xep hoan toan
+        # theo thu_tu, keo dong goc len/xuong deu duoc.
         vt = {ma: i for i, ma in enumerate(thu_tu)}
-        def khoa_sap(m):
+        def khoa_sap(p):
+            i, m = p
             ma = next((v for t, k, v in m["the"] if t == T_ID), None)
-            return (0, vt[ma]) if ma in vt else (1, 0)
-        ra = sorted(ra, key=khoa_sap)
+            return (1, vt[ma]) if ma in vt else (0, i)
+        ra = [m for i, m in sorted(enumerate(ra), key=khoa_sap)]
     return ra
+
+
+def _ids_goc(duong_dan):
+    """Danh sach id cua cac dong GOC (khung that) theo dung thu tu hien thi."""
+    goc = KHO_TRA_LOI.get(tuple(duong_dan))
+    if goc is None:
+        return []
+    ids = []
+    try:
+        for ten, kieu, gt in m2.giai_ma(goc)["the"]:
+            if ten == T_DU_LIEU and isinstance(gt, list):
+                for m in gt:
+                    ma = next((v for t, k, v in m.get("the", []) if t == T_ID), None)
+                    if ma is not None:
+                        ids.append(ma)
+    except Exception:
+        return []
+    return ids
 
 
 def _id_lon_nhat_goc(duong_dan):
@@ -611,6 +907,11 @@ def _id_lon_nhat_goc(duong_dan):
                 for t, k, v in m.get("the", []):
                     if t == T_ID and isinstance(v, int):
                         lon = max(lon, v)
+    # Cac dong may tram gia lap khong nam trong khung goc nhung VAN dang
+    # chiem id — khong tinh vao day thi dong moi them se trung id voi chung.
+    khoa = {DD_LEASE: "ma", DD_HOST_CAU: "ma_host", DD_ARP: "ma_arp"}.get(tuple(duong_dan))
+    if khoa and LEASE_GIA_LAP:
+        lon = max([lon] + [x[khoa] for x in LEASE_GIA_LAP])
     return lon
 
 
@@ -625,10 +926,13 @@ def _day_terminal(ph, ma_phien, byte_ra):
 
 
 DOIT_BIET = {(82,), (138, 1), (24,), (67,), (19, 3), (24, 25), (20, 106),
-             (27, 53), (63,), (138, 11)}
+             (27, 53), (63,), (138, 11),
+             # Bang DHCP Leases: nut "Make Static" (cmd 3) va "Check Status"
+             # (cmd 2) deu la lenh `doit` — Bai 3 dung "Make Static".
+             DD_LEASE}
 
 
-def _xu_ly_doit(duong_dan, cmd, so_hieu, ma_phien):
+def _xu_ly_doit(duong_dan, cmd, so_hieu, ma_phien, t=None):
     """
     Lenh HANH DONG (`doit`). Hop dong do that 2026-08-25:
       thanh cong -> ACK tran 4 the
@@ -637,8 +941,34 @@ def _xu_ly_doit(duong_dan, cmd, so_hieu, ma_phien):
     Cac viec pha trang thai (Reboot/Shutdown/Reset/Restore/Revoke) nam trong
     DOIT_CHAN: tra ACK dung nhu thiet bi that nhung KHONG lam gi. Ban gia lap
     la de hoc, hoc vien bam nham khong duoc mat sach.
+
+    `t` = cac the cua yeu cau — can de biet lenh dang tac dong len DONG NAO
+    (vd "Make Static" gui kem ufe0001 = id cua lease).
     """
     dd = tuple(duong_dan)
+
+    # "Make Static" tren bang DHCP Leases (Bai 3): bien lease DONG thanh
+    # TINH — dung nghia la bo co `dynamic`. Doc tu master-min.js:
+    # `types.dynamic.get = obj.bfe0007`, nen chi can ghi de the 0xfe0007
+    # thanh False; kieu 0x00 chinh la "bool false" trong khung M2 (kieu 0x01
+    # la "bool true" — xem cac dong that trong du_lieu_goc/23-1.bin).
+    if dd == DD_LEASE and cmd == CMD_LEASE_MAKE_STATIC:
+        ma_dong = (t or {}).get(T_ID)
+        if ma_dong is None or not _co_dong(duong_dan, ma_dong):
+            return _khung_loi(duong_dan, so_hieu, ma_phien, LOI_KHONG_CO)
+        KHO.sua_dong(DD_LEASE, ma_dong, {T_DONG: (0x00, False)})
+        KHO.luu()
+        # PHAI DAY thay doi xuong may khach thi giao dien moi doi.
+        # Khac lenh GHI: khi ghi, may khach tu cap nhat mo hinh cua no nen
+        # may chu loai tru chinh phien do (`tru_phien`). Con `doit` thi
+        # `Doit.prototype.doit` trong master-min.js CHI xu ly loi, KHONG tu
+        # doc lai doi tuong — nen phai day cho CA phien vua bam, neu khong
+        # the "dynamic" van sang va nut "Make Static" van con (da do that).
+        _day_cho_cac_phien(DD_LEASE, {T_ID: (_kieu_id(ma_dong), ma_dong),
+                                      T_DONG: (0x00, False)})
+        _ghi(f"[doit] Make Static lease id {ma_dong} -> bo co dynamic")
+        return _ack(duong_dan, so_hieu, ma_phien)
+
     ten = (DOIT_CHAN.get(dd) or {}).get(cmd)
     if ten:
         _ghi(f"[doit] CHAN '{ten}' ({'/'.join(map(str, dd))} cmd {cmd}) "
@@ -888,6 +1218,49 @@ def _ack(duong_dan, so_hieu, ma_phien, ma_moi=None):
     return the
 
 
+def _arp_dong_theo_ip(ip_so):
+    """Tim id cac dong ARP dang co cung mot dia chi IP (khung goc + dong gia lap)."""
+    ra = []
+    goc = KHO_TRA_LOI.get(DD_ARP)
+    if goc is not None:
+        for ten, kieu, gt in m2.giai_ma(goc)["the"]:
+            if ten != T_DU_LIEU or not isinstance(gt, list):
+                continue
+            for m in gt:
+                the = m.get("the", [])
+                ma = next((v for t, k, v in the if t == T_ID), None)
+                ip = next((v for t, k, v in the if t == T_ARP_IP), None)
+                if ma is not None and ip == ip_so:
+                    ra.append(ma)
+    for x in LEASE_GIA_LAP:
+        if _ip_sang_so(x["ip"]) == ip_so:
+            ra.append(x["ma_arp"])
+    return ra
+
+
+def _arp_hoa_tinh(ma_moi, truong):
+    """
+    Hoan tat thao tac "Make Static" tren bang IP > ARP.
+
+    WebFig lam viec nay bang cach THEM MOT DONG MOI voi IP/MAC/Interface cua
+    dong dang chon (do that 2026-09-19: bam "Make Static" gui lenh 0xfe0005
+    len 20/8). Con thiet bi that thi ket qua nhin thay la:
+      - muc ARP do tro thanh TINH — cot Status hien `permanent`;
+      - va CHI CON MOT dong cho dia chi IP do (dong dong cu bi thay the).
+    Bo giai lap phai lam not 2 viec nay, neu khong se ra 2 dong trung IP va
+    cot Status bo trong.
+    """
+    kieu_ip, ip_so = truong.get(T_ARP_IP, (None, None))
+    KHO.sua_dong(DD_ARP, ma_moi, {T_ARP_TRANG_THAI: (0x21, ARP_TINH)})
+    if ip_so is None:
+        return
+    for ma_cu in _arp_dong_theo_ip(ip_so):
+        if ma_cu != ma_moi:
+            KHO.xoa_dong(DD_ARP, ma_cu)
+    _ghi(f"[arp] Make Static {ip_so} -> dong {ma_moi} (permanent), "
+         f"bo dong dong cu {[m for m in _arp_dong_theo_ip(ip_so) if m != ma_moi]}")
+
+
 def _xu_ly_ghi(duong_dan, lenh, cac_the, so_hieu, ma_phien):
     """
     Thi hanh mot lenh ghi len kho. Tra ve (the_tra_loi, truong_da_doi).
@@ -911,19 +1284,32 @@ def _xu_ly_ghi(duong_dan, lenh, cac_the, so_hieu, ma_phien):
         tl = _ack(duong_dan, so_hieu, ma_phien)
     elif lenh == L_THEM_DONG:
         ma_moi = KHO.them_dong(duong_dan, truong, _id_lon_nhat_goc(duong_dan))
+        if tuple(duong_dan) == DD_ARP:
+            _arp_hoa_tinh(ma_moi, truong)
         day = dict(truong)
         day[T_ID] = (_kieu_id(ma_moi), ma_moi)
         tl = _ack(duong_dan, so_hieu, ma_phien, ma_moi)
     elif lenh == L_XOA_DONG:
         if not _co_dong(duong_dan, ma_dong):
             return _khung_loi(duong_dan, so_hieu, ma_phien, LOI_KHONG_CO), None
+        # Bang dinh tuyen `main` la bang DUNG SAN cua RouterOS (co dynamic
+        # trong khung that) — thiet bi that KHONG cho xoa. Truoc day ban gia
+        # lap cho xoa, ma kho lai LUU BEN, nen chi mot lan bam Remove la moi
+        # tuyen thuoc bang main hien "unknown" o cot Routing Table mai mai
+        # (anh Huynn bao 2026-09-20 o Bai 7). Xem chu thich o DD_BANG_DT.
+        # Luu y: chua do duoc CAU CHU loi that cua thiet bi cho truong hop
+        # nay, nen chi dung mo ta chung — ma loi thi dung dung bo ma da do.
+        if tuple(duong_dan) == DD_BANG_DT and ma_dong == ID_BANG_MAIN:
+            _ghi("[xoa] chan xoa bang dinh tuyen 'main' (bang dung san)")
+            return _khung_loi(duong_dan, so_hieu, ma_phien, LOI_KHONG_CO,
+                              b"cannot remove built-in routing table"), None
         KHO.xoa_dong(duong_dan, ma_dong)
         # Ma goc: ObjectMap.remove dat obj.ufe0013 = 1 de danh dau da xoa
         day = {T_ID: (_kieu_id(ma_dong), ma_dong), 0xFE0013: (0x09, 1)}
         tl = _ack(duong_dan, so_hieu, ma_phien)
     elif lenh == L_DOI_CHO:
         ma_sau = next((v for t, k, v in cac_the if t == 0xFE0005), 0xFFFFFFFF)
-        if not KHO.doi_cho(duong_dan, ma_dong, ma_sau):
+        if not KHO.doi_cho(duong_dan, ma_dong, ma_sau, _ids_goc(duong_dan)):
             return _khung_loi(duong_dan, so_hieu, ma_phien, LOI_KHONG_CO), None
         day = None      # thiet bi that khong day gi cho lenh doi cho
         tl = _ack(duong_dan, so_hieu, ma_phien)
@@ -942,6 +1328,12 @@ def _co_dong(duong_dan, ma_dong):
         return False
     if ma_dong in sua:
         return True
+    # Cac dong may tram gia lap khong nam trong khung goc nhung VAN la dong
+    # co that voi may khach — khong tinh o day thi "Make Static" tren PC1/PC2
+    # se bi tra loi "object doesn't exist".
+    khoa = {DD_LEASE: "ma", DD_HOST_CAU: "ma_host", DD_ARP: "ma_arp"}.get(tuple(duong_dan))
+    if khoa and any(x[khoa] == ma_dong for x in LEASE_GIA_LAP):
+        return True
     goc = KHO_TRA_LOI.get(tuple(duong_dan))
     if goc is None:
         return False
@@ -954,6 +1346,24 @@ def _co_dong(duong_dan, ma_dong):
 
 
 class H(BaseHTTPRequestHandler):
+    def _client_key(self):
+        try:
+            cookie = SimpleCookie(self.headers.get("Cookie", ""))
+            for name in ("ftc_session", "PHPSESSID", "ktv_client_id"):
+                if name in cookie and cookie[name].value:
+                    return f"cookie:{name}:{cookie[name].value}"
+        except Exception:
+            pass
+        forwarded = (self.headers.get("X-FTC-Client-IP", "") or "").strip()
+        if forwarded:
+            return f"ip:{forwarded}"
+        address = getattr(self, "client_address", None)
+        return f"ip:{address[0] if address else 'anonymous'}"
+
+    def _bind_kho_context(self):
+        _KHO_CONTEXT.key = self._client_key()
+        _kho_cua_ktv(_KHO_CONTEXT.key)
+
     protocol_version = "HTTP/1.1"
     server_version = "Mikrotik HttpProxy"
     sys_version = ""
@@ -970,10 +1380,8 @@ class H(BaseHTTPRequestHandler):
             pass
 
     def do_GET(self):
+        self._bind_kho_context()
         p = self.path.split("?", 1)[0]
-        if p in ("/api/reset", "/resetsession"):
-            KHO.xoa_sach()
-            return self._tra(200, b'{"status":"ok","message":"Mikrotik hEX S state reset"}', "application/json")
         if p == "/":
             p = "/index.html"
         elif p == "/webfig" or p == "/webfig/":
@@ -990,6 +1398,174 @@ class H(BaseHTTPRequestHandler):
         # cung dot. Tra 404 la sai hop dong.
         elif p.rstrip("/") == "/files":
             return self._tra(403, b"403 Forbidden", "text/html")
+
+        # --- BO SUNG CHO HE THONG BAI HOC FTC (khong thuoc giao thuc WebFig) ---
+        # Dat lai cau hinh ve trang thai dau bai. Can thiet vi kho cau hinh luu
+        # BEN: hoc vien truoc lam xong se de lai san dap an cho hoc vien sau.
+        # Da do thuc te: khong the dat lai bang JS phia trinh duyet, vi WebFig
+        # dong bo lien tuc tu may chu nen ghi de lai sau ~4 giay.
+        elif p in ("/ftc_dat_lai", "/api/reset"):
+            from urllib.parse import urlparse, parse_qs
+            bai = (parse_qs(urlparse(self.path).query).get("bai") or [""])[0]
+            if bai in ("", "all"):
+                with KHO.khoa:
+                    if (20, 0) in KHO.bang:
+                        KHO.bang[(20, 0)].pop(9, None)
+                        KHO.bang[(20, 0)].pop(8, None)
+                    KHO.sua_dong((20, 0), 9, {6: (33, b"fpt"), 5: (33, b"123")})
+                    KHO.bang.pop((20, 9), None)
+                    KHO.thu_tu.pop((20, 9), None)
+                    KHO.da_xoa.pop((20, 9), None)
+                    for dd in (DD_LEASE, DD_ARP):
+                        KHO.bang.pop(dd, None)
+                        KHO.thu_tu.pop(dd, None)
+                        KHO.da_xoa.pop(dd, None)
+                    if (23, 2) in KHO.bang:
+                        KHO.bang[(23, 2)].pop(1, None)
+                    if (20, 1) in KHO.bang:
+                        KHO.bang[(20, 1)].pop(2, None)
+                    KHO.scalar.pop((14, 2), None)
+                    for dd in (DD_BANG_DT, (44, 21), (44, 18), (20, 7)):
+                        KHO.bang.pop(dd, None)
+                        KHO.thu_tu.pop(dd, None)
+                        KHO.da_xoa.pop(dd, None)
+                KHO.luu()
+                return self._tra(200, b'{"ok":true,"reset":"all"}', "application/json")
+            if bai == "1":
+                # [20,0] = bang interface PPP; dong 9 = pppoe-out1;
+                # truong 6 = User, truong 5 = Password (kieu 33 = chuoi byte).
+                #
+                # PHAI XOA HET lop phu cua dong nay truoc, roi moi dat lai 2
+                # truong can thiet. Neu chi ghi de User/Password thi cac truong
+                # khac (vd Dial On Demand) van giu nguyen thay doi cua hoc vien
+                # truoc do -> "gia tri mac dinh" khong con co dinh, khong the
+                # cham tieu chi "giu nguyen mac dinh" duoc.
+                # Xoa lop phu = tra ve dung gia tri GOC doc tu du_lieu_goc/*.bin
+                # (bang chung thiet bi that).
+                with KHO.khoa:
+                    if (20, 0) in KHO.bang:
+                        KHO.bang[(20, 0)].pop(9, None)
+                KHO.sua_dong((20, 0), 9, {6: (33, b"fpt"), 5: (33, b"123")})
+                KHO.luu()
+                return self._tra(200, b'{"ok":true,"bai":1}', "application/json")
+            if bai == "2":
+                # [20,9] = bang Queues > Simple Queues. Bai 2 la thao tac THEM
+                # DONG MOI (Add New) chu khong sua dong co san — do that
+                # 2026-09-19: bam Apply sinh lenh 0xfe0005 (them dong) len
+                # duong dan 20/9, dong moi nhan id 1.
+                # Vi vay dat lai = XOA SACH lop phu cua bang nay (ke ca thu tu
+                # va danh sach da xoa) -> tra ve dung danh sach goc cua thiet
+                # bi, va bo dem id cung ve dau nen lan sau van la id 1.
+                # Neu khong xoa: queue cua hoc vien truoc con nguyen, hoc vien
+                # sau vao la thay bai da lam san.
+                with KHO.khoa:
+                    KHO.bang.pop((20, 9), None)
+                    KHO.thu_tu.pop((20, 9), None)
+                    KHO.da_xoa.pop((20, 9), None)
+                KHO.luu()
+                return self._tra(200, b'{"ok":true,"bai":2}', "application/json")
+            if bai == "3":
+                # Bai 3 dung tinh nang "Make Static" tren bang DHCP Leases
+                # [23,1] — thao tac do ghi co `dynamic` = false vao kho. Kho
+                # luu BEN nen khong xoa thi hoc vien sau vao da thay lease
+                # thanh static san, khong con nut "Make Static" de bam (da
+                # vap that khi kiem thu 2026-09-19).
+                # Xoa luon lop phu bang ARP [20,8] (hoc vien "Make Static" o
+                # day) va rieng DONG bridge-LAN cua bang interface [20,0]
+                # (hoc vien doi o ARP sang `reply-only`). Chi xoa dung dong 8
+                # chu KHONG xoa ca bang [20,0] — bang do con chua cau hinh
+                # PPPoE cua Bai 1.
+                with KHO.khoa:
+                    for dd in (DD_LEASE, DD_ARP):
+                        KHO.bang.pop(dd, None)
+                        KHO.thu_tu.pop(dd, None)
+                        KHO.da_xoa.pop(dd, None)
+                    if (20, 0) in KHO.bang:
+                        KHO.bang[(20, 0)].pop(8, None)
+                KHO.luu()
+                return self._tra(200, b'{"ok":true,"bai":3}', "application/json")
+            if bai == "4":
+                # [23,2] dong 1 = rule Networks cua DHCP Server (Address/Gateway
+                # mac dinh 192.168.1.0/24 / 192.168.1.1);
+                # [20,1] dong 2 = item IP Addresses tren bridge-LAN (Address/Network
+                # mac dinh 192.168.1.1/24 / 192.168.1.0).
+                # Chi can XOA lop phu — khong can biet nghia tung truong ma hoa so
+                # nguyen (giong cach lam voi Bai 1): xoa xong se tra ve dung gia tri
+                # GOC doc tu du_lieu_goc/*.bin (bang chung thiet bi that).
+                with KHO.khoa:
+                    if (23, 2) in KHO.bang:
+                        KHO.bang[(23, 2)].pop(1, None)
+                    if (20, 1) in KHO.bang:
+                        KHO.bang[(20, 1)].pop(2, None)
+                KHO.luu()
+                return self._tra(200, b'{"ok":true,"bai":4}', "application/json")
+            if bai == "5":
+                # [14,2] = trang IP > DNS. Day la trang MUC DON (scalar), khong
+                # phai bang — hoc vien xoa bot may chu trong danh sach "Servers"
+                # roi Apply, tuc ghi de truong 10 (danh sach long nhau).
+                # Dat lai = xoa sach lop phu scalar cua duong dan nay -> tra ve
+                # dung 8 may chu goc doc tu du_lieu_goc/14-2.bin (4 IPv4 +
+                # 4 IPv6), va Cache Size ve dung 2048 that cua thiet bi.
+                # Neu khong xoa: hoc vien sau vao da thay 4 may chu bi xoa san,
+                # khong con gi de lam (kho cau hinh LUU BEN — da vap o Bai 3).
+                with KHO.khoa:
+                    KHO.scalar.pop((14, 2), None)
+                KHO.luu()
+                return self._tra(200, b'{"ok":true,"bai":5}', "application/json")
+            if bai == "7":
+                # Bai 7 Policy Routing: hoc vien THEM bang vao Routing > Tables
+                # [44,20], them tuyen vao IP > Routes [44,21], va them luat
+                # danh dau o IP > Firewall > Mangle [20,7] (doc tu roteros-*.jg:
+                # {title:'Mangle',type:'map',path:[20,7]}).
+                # Cung xoa luon Routing > Rules [44,18] cho sach — doc tu
+                # roteros-*.jg: {name:'Policy Routing Rule',title:'Rules',
+                # path:[44,18]}; KHONG phai [3,2], do la Log > Rules (trung ten).
+                #
+                # LOI DA VAP (2026-09-20, luc tu kiem thu): ban dau QUEN [20,7]
+                # nen moi lan chay lai kich ban lai chong them mot luat Mangle
+                # trung y het -> bang phinh dan (29 -> 30 -> 31 ...). Bang Mangle
+                # goc cua thiet bi co san 29 luat nam trong du_lieu_goc/20-7.bin,
+                # xoa lop phu KHONG dung toi chung.
+                # Dat lai = XOA SACH lop phu cua ca ba bang -> tra ve dung danh
+                # sach goc cua thiet bi (bang [44,20] co lai du 3 dong:
+                # `main`, `to_WAN1`, `to_WAN2`).
+                #
+                # QUAN TRONG: viec xoa `da_xoa` o day cung la cach SUA dong
+                # `main` da bi xoa nham truoc do — chinh no lam cot "Routing
+                # Table" cua IP > Routes hien "unknown" (xem DD_BANG_DT).
+                with KHO.khoa:
+                    for dd in (DD_BANG_DT, (44, 21), (44, 18), (20, 7)):
+                        KHO.bang.pop(dd, None)
+                        KHO.thu_tu.pop(dd, None)
+                        KHO.da_xoa.pop(dd, None)
+                KHO.luu()
+                return self._tra(200, b'{"ok":true,"bai":7}', "application/json")
+            if bai == "6":
+                # Bai 6 Load Balancing (PCC). Thiet bi THAT da co san tron bo
+                # cau hinh PCC trong bang Mangle [20,7] (do that 2026-09-20,
+                # xem memory.md muc 2.77):
+                #   id 8  : LAN, PCC both-addresses:2/0, dst-type !local
+                #           -> mark connection WAN1_conn
+                #   id 9  : LAN, PCC both-addresses:2/1, dst-type !local
+                #           -> mark connection WAN2_conn
+                #   id 10 : LAN, connection-mark WAN1_conn -> mark routing to_WAN1
+                #   id 11 : LAN, connection-mark WAN2_conn -> mark routing to_WAN2
+                #   id 12/13: nhu 10/11 nhung chain output
+                # Anh Huynn chot: hoc vien TU TAO LAI 2 luat PCC (id 8, 9) —
+                # "trai tim" cua load balancing; phan con lai giu nguyen de
+                # hoc vien thay toan canh. Vay dat lai = XOA 2 dong goc do
+                # (qua `da_xoa`, khong dung toi du_lieu_goc/20-7.bin) + xoa
+                # moi dong hoc vien them + xoa thu tu keo tha.
+                # Cung xoa lop phu bang/tuyen cua Bai 7 cho thiet bi ve sach.
+                with KHO.khoa:
+                    for dd in (DD_BANG_DT, (44, 21), (44, 18), (20, 7)):
+                        KHO.bang.pop(dd, None)
+                        KHO.thu_tu.pop(dd, None)
+                        KHO.da_xoa.pop(dd, None)
+                    KHO.da_xoa[(20, 7)] = {8, 9}
+                KHO.luu()
+                return self._tra(200, b'{"ok":true,"bai":6}', "application/json")
+            return self._tra(400, b'{"ok":false}', "application/json")
 
         # GET /jsproxy/?<uri da ma hoa> = ham fetchFile() trong master-min.js,
         # dung de tai tep phu (vd skins/default.json).
@@ -1037,10 +1613,10 @@ class H(BaseHTTPRequestHandler):
 
     # ------------------------------------------------------------- jsproxy
     def do_POST(self):
+        self._bind_kho_context()
         p = self.path.split("?", 1)[0]
-        if p in ("/api/reset", "/resetsession"):
-            KHO.xoa_sach()
-            return self._tra(200, b'{"status":"ok","message":"Mikrotik hEX S state reset"}', "application/json")
+        if p in ("/api/reset", "/ftc_dat_lai"):
+            return self.do_GET()
         if p != "/jsproxy":
             return self._tra(404, b"404 Not Found", "text/plain")
 
@@ -1136,7 +1712,7 @@ class H(BaseHTTPRequestHandler):
                 the = _xu_ly_wizard(duong_dan, so_hieu, ma_phien, ph)
             elif (lenh is not None and 0 < lenh < DOIT_CMD_TOI_DA
                     and tuple(duong_dan) in DOIT_BIET):
-                the = _xu_ly_doit(duong_dan, lenh, so_hieu, ma_phien)
+                the = _xu_ly_doit(duong_dan, lenh, so_hieu, ma_phien, t)
             elif lenh in (L_TERM_MO, L_TERM_DONG, L_TERM_GO, L_TERM_CO):
                 the = _xu_ly_terminal(lenh, t, so_hieu, ma_phien, ph)
             elif lenh in (L_BAT_DAU, L_HUY_TV) or (
@@ -1152,9 +1728,13 @@ class H(BaseHTTPRequestHandler):
                      f"-> {len(day) if day else 0} truong day di")
             else:
                 # 0xfe0003 co trong YEU CAU = trinh duyet dang xin TRANG TIEP
+                # 0xfe0002 (=T_DU_LIEU) + T_ID = ObjectMap.getObject(id): lay
+                # DUY NHAT 1 dong theo id, khong phai ca bang (xem chu thich
+                # `chi_id` trong _tra_loi_cho).
                 the = _tra_loi_cho(duong_dan, so_hieu, ma_phien, ph,
                                    co_con_tro=(0xFE0003 in t or 0xFE0015 in t),
-                                   lenh=lenh)
+                                   lenh=lenh,
+                                   chi_id=(t.get(T_ID) if lenh == T_DU_LIEU else None))
 
         # QUAN TRONG — magic=False:
         # Than goi tra ve la MOT DAY khung, moi khung mo dau bang 2 BYTE DO DAI

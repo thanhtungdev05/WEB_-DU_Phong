@@ -61,16 +61,20 @@ class DispatcherSecurityTests(unittest.TestCase):
                 self.assertEqual(status, 200)
 
     def test_liveness_endpoint_does_not_depend_on_database_or_internal_api(self):
-        status, headers, body = self.request('/healthz')
+        status, headers, body = self.request('/health/live')
         normalized_headers = {key.lower(): value for key, value in headers.items()}
 
         self.assertEqual(status, 200)
         self.assertEqual(normalized_headers.get('content-type'), 'application/json; charset=utf-8')
         self.assertEqual(body, b'{"ok":true,"service":"dispatcher"}')
 
-        status, _, body = self.request('/healthz', method='HEAD')
+        status, _, body = self.request('/health/live', method='HEAD')
         self.assertEqual(status, 200)
         self.assertEqual(body, b'')
+
+        # Backward-compatible alias for older monitors; Docker uses /health/live.
+        status, _, _ = self.request('/healthz')
+        self.assertEqual(status, 200)
 
     def test_every_active_device_has_a_non_empty_dispatcher_entry_page(self):
         paths = (

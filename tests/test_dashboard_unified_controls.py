@@ -242,7 +242,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
     def test_asset_version_prevents_stale_control_styles(self):
         self.assertIn("css/styles.css?v=20260916-theme-system-v27", self.html)
         self.assertIn("css/dashboard-professional.css?v=20260917-roster-loading-v31", self.html)
-        self.assertEqual(self.html.count("20260918-dev-notices-v41"), 1)
+        self.assertEqual(self.html.count("20260923-neon-transfer-guard"), 1)
 
     def test_yellow_data_notices_are_visible_only_to_dev_role(self):
         self.assertEqual(self.html.count("data-dev-only-notice"), 2)

@@ -44,8 +44,8 @@ assert.ok(
   'portal.html must include bumped cachebuster for tooltips/bai2.js'
 );
 assert.ok(
-  portalContent.includes('app.js?v=20260922-guest-guide-mode'),
-  'portal.html must preserve the Guest Guide Mode cachebuster for app.js'
+  portalContent.includes('app.js?v=20260923-ver21-device-sync'),
+  'portal.html must use the combined Guest Guide/Ver2.1 device cachebuster for app.js'
 );
 
 // 4b. app.js isolation & requireSaved check

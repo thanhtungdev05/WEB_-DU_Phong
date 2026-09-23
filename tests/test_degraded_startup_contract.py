@@ -29,8 +29,8 @@ class DegradedStartupContractTests(unittest.TestCase):
         self.assertIn('exit(2)', self.probe)
 
     def test_container_liveness_is_independent_from_database_readiness(self):
-        self.assertIn("+ '/healthz'", self.dockerfile)
-        self.assertIn("+ '/healthz'", self.compose)
+        self.assertIn("+ '/health/live'", self.dockerfile)
+        self.assertIn("+ '/health/live'", self.compose)
         self.assertNotIn("+ '/api/health'", self.dockerfile)
         self.assertNotIn("+ '/api/health'", self.compose)
 

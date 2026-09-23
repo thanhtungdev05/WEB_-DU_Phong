@@ -4,10 +4,11 @@ Cấu hình giao diện chuẩn mực, sạch sẽ, không dùng icon emoji.
 Bao gồm bộ lọc, tìm kiếm, xem chi tiết và xuất CSV.
 """
 import csv
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import Count, Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
@@ -178,6 +179,8 @@ class FtcUserAdmin(admin.ModelAdmin):
         'employment_status_badge', 'last_login_at',
     ]
     list_filter = ['role', TerminationFilter, 'unit__region']
+    # Email remains visible and clickable when display_name has not been set.
+    list_display_links = ['display_name', 'email']
     search_fields = ['email', 'display_name', 'employee_id',
                      'unit_code', 'unit_name', 'class_code',
                      'class_enrollments__training_class__class_code',
@@ -301,7 +304,32 @@ class FtcUserAdmin(admin.ModelAdmin):
         )
     employment_status_badge.short_description = 'Trạng thái'
 
-    actions = [_make_csv_export('users',
+    @admin.action(description='Chỉnh sửa user đã chọn', permissions=['change'])
+    def edit_selected_user(self, request, queryset):
+        selected_users = list(queryset[:2])
+        if len(selected_users) != 1:
+            self.message_user(
+                request,
+                'Vui lòng chọn đúng một user để chỉnh sửa.',
+                level=messages.WARNING,
+            )
+            return None
+
+        selected_user = selected_users[0]
+        if not self.has_change_permission(request, selected_user):
+            self.message_user(
+                request,
+                'Bạn không có quyền chỉnh sửa user này.',
+                level=messages.ERROR,
+            )
+            return None
+
+        return HttpResponseRedirect(reverse(
+            'admin:admin_portal_ftcuser_change',
+            args=(selected_user.pk,),
+        ))
+
+    actions = ['edit_selected_user', _make_csv_export('users',
                ['employee_id', 'display_name', 'email', 'role_id',
                 'unit_code', 'unit_name', 'dashboard_region',
                 'class_code', 'is_terminated', 'last_login_at'])]

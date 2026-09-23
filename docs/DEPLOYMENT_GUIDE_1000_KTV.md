@@ -69,6 +69,11 @@ DJANGO_WORKERS=4
 DJANGO_THREADS=8
 ```
 
+> **Lưu ý khi deploy qua Render hoặc nền tảng cloud:** file `.env` bị loại khỏi
+> Docker image bởi `.dockerignore`. Vì vậy phải cập nhật `DATABASE_URL` và
+> `DASHBOARD_HISTORY_DAYS=180` trong phần Environment của dịch vụ; chỉ sửa
+> `.env` trên máy local sẽ không đổi database của bản deploy.
+
 ### Bước 2: Khởi động hệ thống Production
 Bạn **CHỈ CẦN CHẠY ĐÚNG 1 LỆNH DUY NHẤT**:
 ```bash

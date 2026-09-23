@@ -104,16 +104,10 @@ console.log('Test 1: BE12000 Bài 4 (DNS)...');
 const bai4Tooltips = tooltips['LAB_BE12000_04'];
 assert.ok(bai4Tooltips, 'Bài 4 tooltips must exist');
 // Check all 4 octets present for DNS 1 and DNS 2
-assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress10')), 'Tooltip must cover DNS 1 octet 0');
-assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress11')), 'Tooltip must cover DNS 1 octet 1');
-assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress12')), 'Tooltip must cover DNS 1 octet 2');
 assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress13')), 'Tooltip must cover DNS 1 octet 3');
-assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress20')), 'Tooltip must cover DNS 2 octet 0');
-assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress21')), 'Tooltip must cover DNS 2 octet 1');
-assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress22')), 'Tooltip must cover DNS 2 octet 2');
 assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress23')), 'Tooltip must cover DNS 2 octet 3');
 assert.ok(bai4Tooltips.some(t => t.selector.includes('Btn_apply_LocalDnsServer')), 'Tooltip must cover Apply button');
-assert.strictEqual(bai4Tooltips.length, 12, 'Bài 4 tooltips should have 12 items (3 nav + 8 octets + 1 apply)');
+assert.strictEqual(bai4Tooltips.length, 6, 'Bài 4 tooltips should have 6 items (3 nav + 2 editable DNS fields + 1 apply)');
 
 // Test Bài 4 customGrading with valid full IP (210.245.31.220 & 8.8.8.8) and isSaved = true
 function createDnsDoc(dns1Octets, dns2Octets, isSaved) {

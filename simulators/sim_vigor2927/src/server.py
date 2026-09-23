@@ -179,6 +179,9 @@ class H(BaseHTTPRequestHandler):
     def _send(self, data, ctype, code=200):
         if isinstance(data, str):
             data = data.encode("utf-8")
+        if "text/html" in ctype and (b"translate" in data or b"{{" in data):
+            data = re.sub(rb'\{\{\s*[\x27\x22]([^\x27\x22]+)[\x27\x22]\s*\|\s*translate\s*\}\}', rb'\1', data)
+            data = re.sub(rb'option\s*\{\{num\}\}', rb'option', data)
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
@@ -204,12 +207,30 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Length", "0")
         self.end_headers()
 
-    def _file(self, rel):
+    def _file(self, rel, params=None):
         f = os.path.join(WWW, rel.lstrip("/"))
         if os.path.isfile(f):
             ext = os.path.splitext(f)[1].lower()
             with open(f, "rb") as fh:
-                self._send(fh.read(), CT.get(ext, "application/octet-stream"))
+                data = fh.read()
+            rl = rel.lstrip("/").replace("\\", "/")
+            if rl.startswith("doc/") or rl.startswith("_pages/"):
+                try:
+                    txt = data.decode("utf-8")
+                    enc = "utf-8"
+                except UnicodeDecodeError:
+                    txt = data.decode("latin-1")
+                    enc = "latin-1"
+                txt = render.sua_top_thanh_parent(txt)
+                txt = render.bat_tab_ipv6(txt)
+                if "ipbandw.htm" in rl:
+                    txt = render.sua_ipbandw_add(txt)
+                if "ipbmac.htm" in rl:
+                    txt = render.sua_ipbmac_add(txt)
+                if "p2_188.html" in rl and params:
+                    txt = render.sua_policyrt_detail(txt, params.get("iPRIdx"))
+                data = txt.encode(enc, "replace")
+            self._send(data, CT.get(ext, "application/octet-stream"))
             return True
         return False
 
@@ -283,7 +304,7 @@ class H(BaseHTTPRequestHandler):
         page = find_page(path, params)
         if page:
             self._log("CU", path, f"-> {page}")
-            return self._file(page)
+            return self._file(page, params)
         page = find_page(path, {})
         if page:
             self._log("CU", path, f"-> {page} (khop path tran)")

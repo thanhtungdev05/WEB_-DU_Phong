@@ -96,7 +96,8 @@ assert.deepEqual(
 const migrations = [
   '030_enforce_approved_dashboard_catalog.sql',
   '036_activate_be6500c_catalog.sql',
-  '046_activate_vigor2927_catalog.sql'
+  '046_activate_vigor2927_catalog.sql',
+  '049_activate_mikrotik_hexs_catalog.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
@@ -146,6 +147,36 @@ const be12000 = context.DEVICES.find((item) => item.id === 'be12000');
 const be15000 = context.DEVICES.find((item) => item.id === 'be15000');
 assert.ok(be12000?.categories.flatMap((category) => category.lessons || []).length >= 6);
 assert.equal(be15000?.categories.flatMap((category) => category.lessons || []).length, 1);
+
+const expectedLessonCounts = {
+  ac1000f: 6,
+  ax3000c: 6,
+  ax3000gz: 6,
+  ax3000hv2: 6,
+  ax3000s: 6,
+  ac1000HI: 6,
+  be12000: 6,
+  be15000: 1,
+  vigor2927: 7,
+  be6500c: 6,
+  ONT_be6500c: 6,
+  mikrotik_hexs: 7
+};
+for (const device of context.DEVICES) {
+  const lessons = device.categories.flatMap((category) => category.lessons || []);
+  assert.equal(lessons.length, expectedLessonCounts[device.id], `${device.id} has an unexpected lesson count`);
+  assert.equal(new Set(lessons.map((lesson) => lesson.id)).size, lessons.length, `${device.id} lab IDs must be unique`);
+  for (const lesson of lessons) {
+    assert.ok(lesson.practiceUrl?.startsWith(`/${device.folder}/`), `${lesson.id} must route to ${device.folder}`);
+    assert.ok(
+      (Array.isArray(lesson.grading?.rules) && lesson.grading.rules.length > 0) ||
+        typeof lesson.grading?.customGrading === 'function',
+      `${lesson.id} must define grading criteria`
+    );
+    assert.ok(migrations.includes(`'${lesson.id}'`) || device.id === 'be12000' || device.id === 'be15000',
+      `${lesson.id} is missing from a device activation migration`);
+  }
+}
 
 const activeCatalogMigration = fs.readFileSync(
   path.join(root, 'api/migrations/043_sync_portal_lab_catalog.sql'),
@@ -204,4 +235,4 @@ const ax3000cWifiPage = fs.readFileSync(
 );
 assert.match(ax3000cWifiPage, /class="tabs" style="margin-top: 40px;"/);
 
-console.log('Portal/catalog audit passed: 12 registered devices, 55 active catalog labs.');
+console.log('Portal/catalog audit passed: 12 registered devices, 69 active catalog labs.');

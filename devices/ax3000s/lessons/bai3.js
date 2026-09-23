@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ax3000s/lessons/bai3.js
  * Bài 3: Cấu hình WIFI IOT trên AX3000S
  */
@@ -14,15 +14,13 @@ const lessonObj3 = {
     'Thực hiện cấu hình mạng Wi-Fi IoT theo các thông số dưới đây:',
     '- SSID Name: <span class="val">FPT Telecom-IoT</span>',
     '- WPA Key: <span class="val">19006600</span>',
-    '- Bật cả 2 băng tần 2.4GHz và 5GHz',
+    '- Bật băng tần 2.4GHz',
     '- Tắt Band Steering'
   ],
   practiceUrl: '/sim_ax3000s/app.html#wlanMapSettingAll',
   clearFields: [
     'input[name="Txt_SSID_2G_3"]',
-    'input[name="Pwd_WpaPsk_2G_3"]',
-    'input[name="Txt_SSID_5G_3"]',
-    'input[name="Pwd_WpaPsk_5G_3"]'
+    'input[name="Pwd_WpaPsk_2G_3"]'
   ],
   grading: {
     description: 'Kiểm tra cấu hình Wi-Fi IOT (Network 3) trên AX3000S',
@@ -58,33 +56,6 @@ const lessonObj3 = {
         id: 'iot_key_2g',
         name: 'Mật khẩu Wi-Fi IoT (2.4GHz)',
         selector: '#Pwd_WpaPsk_2G_3',
-        expected: '19006600',
-        type: 'text_exact',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'iot_enable_5g',
-        name: 'Bật 5GHz',
-        selector: '#Chk_SsidEnable_5G_3',
-        expected: ['on', 'true', 'ON'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'iot_ssid_5g',
-        name: 'Tên Wi-Fi IoT (5GHz)',
-        selector: '#Txt_SSID_5G_3',
-        expected: 'FPT Telecom-IoT',
-        type: 'text_exact',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'iot_key_5g',
-        name: 'Mật khẩu Wi-Fi IoT (5GHz)',
-        selector: '#Pwd_WpaPsk_5G_3',
         expected: '19006600',
         type: 'text_exact',
         trim: true,

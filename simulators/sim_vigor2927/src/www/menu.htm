@@ -6,152 +6,328 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    background: linear-gradient(to bottom, #5a5a5a 0%, #8a8a8a 100%);
+    background: -webkit-linear-gradient(left, #696969 0%, #b0b0b0 100%);
+    background: linear-gradient(to right, #696969 0%, #b0b0b0 100%);
     font-family: Arial, Verdana, Tahoma, sans-serif;
     font-size: 12px;
     color: #fff;
+    padding: 6px 8px 8px 8px;
     min-height: 100vh;
     overflow-x: hidden;
 }
-.menu-top {
-    padding: 5px 4px 3px 4px;
-    border-bottom: 1px solid #666;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-.btn-small {
-    background: linear-gradient(to bottom, #e0e0e0, #c0c0c0);
-    color: #333;
-    border: 1px solid #999;
-    border-radius: 3px;
-    padding: 1px 6px;
-    font-size: 11px;
-    cursor: pointer;
-}
-.btn-ipv6 {
-    background: linear-gradient(to bottom, #4a7aff, #3060dd);
-    color: #fff;
-    border: 1px solid #2050cc;
-    border-radius: 3px;
-    padding: 1px 8px;
-    font-size: 11px;
+.menu-item {
+    display: block;
+    padding: 2px 0;
+    color: #ffffff;
     font-weight: bold;
-    cursor: pointer;
     text-decoration: none;
-    display: inline-block;
+    font-size: 12.5px;
+    cursor: pointer;
+    line-height: 1.35;
+    user-select: none;
 }
-.search-box { margin: 6px 4px 4px 4px; }
+.menu-item:hover {
+    color: #ffffff;
+    text-decoration: none;
+}
+.search-box {
+    margin: 6px 0;
+}
 .search-box input {
     width: 100%;
     padding: 3px 5px;
-    font-size: 11px;
-    border: 1px solid #aaa;
-    border-radius: 2px;
-    background: #f5f5f5;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    border: 1px solid #777;
+    background: #ffffff;
     color: #333;
 }
-.menu-section { padding: 4px 0 2px 4px; }
-.menu-item {
-    display: block;
-    padding: 2px 4px;
-    color: #fff;
-    text-decoration: none;
-    font-size: 12px;
-    cursor: pointer;
+.menu-separator {
+    border: 0;
+    border-top: 1px solid #888;
+    margin: 6px 0;
 }
-.menu-item:hover { color: #ffdd00; text-decoration: underline; }
-.menu-separator { border-top: 1px solid #777; margin: 5px 4px; }
-.section-title {
-    display: block;
-    padding: 6px 4px 2px 4px;
-    color: #fff;
+.sub-menu {
+    padding-left: 14px;
+    margin: 1px 0;
+    background: transparent;
+    border: none;
+}
+.sub-menu .menu-item {
+    color: #000000;
     font-weight: bold;
     font-size: 12px;
+    padding: 1.5px 0;
 }
-.copyright { text-align: center; color: #ffdd00; font-size: 11px; padding: 8px 4px 4px 4px; }
+.sub-menu .menu-item:hover {
+    color: #ffffff;
+    text-decoration: none;
+}
 .status-bar {
-    background: rgba(0,0,0,0.3);
-    padding: 4px 6px;
-    margin-top: 8px;
-    font-size: 11px;
-    color: #ddd;
     text-align: center;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 13px;
+    padding: 8px 0;
+    line-height: 1.35;
 }
-.hidden { display: none; }
+.hidden { display: none !important; }
 </style>
 </head>
 <body>
 
-<div class="menu-top">
-    <select class="btn-small">
-        <option>Auto Logout</option>
-        <option>30 min</option>
-        <option>60 min</option>
-        <option>Disable</option>
-    </select>
-    <a class="btn-ipv6" href="javascript:void(0)">IPv6</a>
-</div>
-
-<div class="menu-section">
+<div id="menuContainer">
+    <!-- Top Section -->
     <a class="menu-item" href="javascript:MainFunction('/cgi-bin/cgidashboard.cgi?fid=1&sFormAuthStr=K8sEXFc1TfxSlPA')">Dashboard</a>
-    <a class="menu-item" href="javascript:void(0)" onclick="toggleSub('sub-wizards')">Wizards</a>
-    <div id="sub-wizards" class="hidden" style="padding-left:10px;">
-        <a class="menu-item" href="javascript:MainFunction('/doc/wizmw.htm')">Quick Start Wizard</a>
-        <a class="menu-item" href="javascript:MainFunction('/cgi-bin/vpn.cgi?fid=0&sFormAuthStr=K8sEXFc1TfxSlPA')">VPN Client Wizard</a>
-        <a class="menu-item" href="javascript:MainFunction('/cgi-bin/vpn.cgi?fid=3&sFormAuthStr=K8sEXFc1TfxSlPA')">VPN Server Wizard</a>
+    <div class="menu-folder-group">
+        <a class="menu-item" id="menu-wizards" href="javascript:void(0)" onclick="toggleSub('sub-wizards')">Wizards</a>
+        <div id="sub-wizards" class="sub-menu hidden">
+            <a class="menu-item" href="javascript:MainFunction('/doc/wizmw.htm')">Quick Start Wizard</a>
+            <a class="menu-item" href="javascript:MainFunction('/cgi-bin/vpn.cgi?fid=0&sFormAuthStr=K8sEXFc1TfxSlPA')">VPN Client Wizard</a>
+            <a class="menu-item" href="javascript:MainFunction('/cgi-bin/vpn.cgi?fid=3&sFormAuthStr=K8sEXFc1TfxSlPA')">VPN Server Wizard</a>
+        </div>
     </div>
     <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=168&option=1&sFormAuthStr=K8sEXFc1TfxSlPA')">Online Status</a>
-</div>
 
-<div class="menu-separator"></div>
-<div class="search-box">
-    <input type="text" placeholder="Search Menu" id="menuSearch" oninput="filterMenu(this.value)">
-</div>
-<div class="menu-separator"></div>
+    <hr class="menu-separator">
 
-<div class="menu-section" id="allMenuItems">
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/wan.cgi?fid=100&sFormAuthStr=K8sEXFc1TfxSlPA')">WAN</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2001&sFormAuthStr=K8sEXFc1TfxSlPA')">LAN</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2225&iOpt=0&sFormAuthStr=K8sEXFc1TfxSlPA')">Hotspot Web Portal</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2053&sFormAuthStr=K8sEXFc1TfxSlPA')">Routing</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipnat.cgi?fid=0&iPageIdx=1&sFormAuthStr=K8sEXFc1TfxSlPA')">NAT</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipnat.cgi?fid=20&iAct=0&sFormAuthStr=K8sEXFc1TfxSlPA')">Hardware Acceleration</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipf1.cgi?sFormAuthStr=K8sEXFc1TfxSlPA')">Firewall</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/fwuser.cgi?fid=0&iAct=0&sFormAuthStr=K8sEXFc1TfxSlPA')">User Management</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipobj.cgi?sIpObjAct=showpage&iIpObjPnum=1&sFormAuthStr=K8sEXFc1TfxSlPA')">Objects Setting</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/appeprof.cgi?sProfileAct=showpage&sFormAuthStr=K8sEXFc1TfxSlPA')">CSM</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2092&sFormAuthStr=K8sEXFc1TfxSlPA')">Bandwidth Management</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2055&sFormAuthStr=K8sEXFc1TfxSlPA')">Applications</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2035&sFormAuthStr=K8sEXFc1TfxSlPA')">VPN and Remote Access</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=1210&sFormAuthStr=K8sEXFc1TfxSlPA')">Certificate Management</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ftpset.cgi?sProfileAct=showpage&sFormAuthStr=K8sEXFc1TfxSlPA')">USB Application</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2015&sFormAuthStr=K8sEXFc1TfxSlPA')">System Maintenance</a>
-    <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2440&sFormAuthStr=K8sEXFc1TfxSlPA')">Diagnostics</a>
-</div>
+    <!-- Search box -->
+    <div class="search-box">
+        <input type="text" placeholder="Search menu" id="menuSearch" oninput="filterMenu(this.value)">
+    </div>
 
-<div class="menu-separator"></div>
-<div class="menu-section">
-    <span class="section-title">Central Management</span>
-    <a class="menu-item" style="padding-left:8px;" href="javascript:void(0)">VPN</a>
-    <a class="menu-item" style="padding-left:8px;" href="javascript:void(0)">AP</a>
-    <a class="menu-item" style="padding-left:8px;" href="javascript:void(0)">Switch</a>
-    <a class="menu-item" style="padding-left:8px;" href="javascript:void(0)">External Devices</a>
-</div>
+    <!-- Main Menu Items -->
+    <div id="allMenuItems">
+        <!-- WAN -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-wan" href="javascript:void(0)" onclick="toggleSub('sub-wan')"><span class="menu-text">WAN</span></a>
+            <div id="sub-wan" class="sub-menu hidden">
+                <a class="menu-item" id="menu-wan-general" href="javascript:MainFunction('/cgi-bin/wan.cgi?fid=100&sFormAuthStr=K8sEXFc1TfxSlPA')"><span class="menu-text">General Setup</span></a>
+                <a class="menu-item" id="menu-wan-internet" href="javascript:MainFunction('/cgi-bin/wan.cgi?fid=104&sFormAuthStr=K8sEXFc1TfxSlPA')"><span class="menu-text">Internet Access</span></a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2560&sFormAuthStr=K8sEXFc1TfxSlPA')">Multi-VLAN</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/wan.cgi?fid=107&showdetail=0&sFormAuthStr=K8sEXFc1TfxSlPA')">WAN Budget</a>
+            </div>
+        </div>
 
-<div class="menu-separator"></div>
-<div class="menu-section">
-    <span class="section-title">MyVigor Services</span>
-    <a class="menu-item" style="padding-left:8px;" href="javascript:void(0)">Registration &amp; Services</a>
-    <a class="menu-item" style="padding-left:8px;" href="javascript:void(0)">Service Status</a>
-</div>
+        <!-- LAN -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-lan" href="javascript:void(0)" onclick="toggleSub('sub-lan')"><span class="menu-text">LAN</span></a>
+            <div id="sub-lan" class="sub-menu hidden">
+                <a class="menu-item" id="menu-lan-general" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2001&sFormAuthStr=K8sEXFc1TfxSlPA')"><span class="menu-text">General Setup</span></a>
+                <a class="menu-item" id="menu-lan-vlan" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2059&sFormAuthStr=K8sEXFc1TfxSlPA')">VLAN</a>
+                <a class="menu-item" id="menu-lan-ipbmac" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2090&sFormAuthStr=K8sEXFc1TfxSlPA')"><span class="menu-text">Bind IP to MAC</span></a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2113&sFormAuthStr=K8sEXFc1TfxSlPA')">LAN Port Mirror</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2888&sFormAuthStr=K8sEXFc1TfxSlPA')">Wired 802.1X</a>
+            </div>
+        </div>
 
-<div class="copyright">All Rights Reserved.</div>
+        <!-- Hotspot Web Portal -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-hotspot" href="javascript:void(0)" onclick="toggleSub('sub-hotspot')">Hotspot Web Portal</a>
+            <div id="sub-hotspot" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/hotspot.cgi?fid=0&sFormAuthStr=K8sEXFc1TfxSlPA')">Profile Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/hotspot.cgi?fid=10&sFormAuthStr=K8sEXFc1TfxSlPA')">Users Information</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/hotspot.cgi?fid=2&iAct=0&sFormAuthStr=K8sEXFc1TfxSlPA')">Quota Management</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/hotspot.cgi?fid=3&iAct=0&sFormAuthStr=K8sEXFc1TfxSlPA')">PIN Generator</a>
+            </div>
+        </div>
 
-<div class="status-bar">
-    <div id="modeText">Admin mode</div>
-    <div>Status: <span id="statusText">Ready</span></div>
+        <!-- Routing -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-routing" href="javascript:void(0)" onclick="toggleSub('sub-routing')"><span class="menu-text">Routing</span></a>
+            <div id="sub-routing" class="sub-menu hidden">
+                <a class="menu-item" id="menu-routing-static" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2053&sFormAuthStr=K8sEXFc1TfxSlPA')">Static Route</a>
+                <a class="menu-item" id="menu-routing-policy" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2087&iPRToPage=1&sFormAuthStr=K8sEXFc1TfxSlPA')"><span class="menu-text">Load-Balance/Route Policy</span></a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=4060&sFormAuthStr=K8sEXFc1TfxSlPA')">BGP</a>
+            </div>
+        </div>
+
+        <!-- NAT -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-nat" href="javascript:void(0)" onclick="toggleSub('sub-nat')">NAT</a>
+            <div id="sub-nat" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipnat.cgi?fid=0&iPageIdx=1&sFormAuthStr=K8sEXFc1TfxSlPA')">Port Redirection</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2&iAct=0&iInetWanIdx=1&iPageIdx=1&isTrueIpDmz=0&sFormAuthStr=K8sEXFc1TfxSlPA')">DMZ Host</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2054&iPageIdx=1&sFormAuthStr=K8sEXFc1TfxSlPA')">Open Ports</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=88&iAct=0&sFormAuthStr=K8sEXFc1TfxSlPA')">Port Triggering</a>
+            </div>
+        </div>
+
+        <!-- Hardware Acceleration -->
+        <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipnat.cgi?fid=20&iAct=0&sFormAuthStr=K8sEXFc1TfxSlPA')">Hardware Acceleration</a>
+
+        <!-- Firewall -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-firewall" href="javascript:void(0)" onclick="toggleSub('sub-firewall')">Firewall</a>
+            <div id="sub-firewall" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipf1.cgi?sFormAuthStr=K8sEXFc1TfxSlPA')">General Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipf.cgi?sFormAuthStr=K8sEXFc1TfxSlPA')">Filter Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2005&sFormAuthStr=K8sEXFc1TfxSlPA')">Defense Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2440&sFormAuthStr=K8sEXFc1TfxSlPA')">Diagnose</a>
+            </div>
+        </div>
+
+        <!-- User Management -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-usrmngt" href="javascript:void(0)" onclick="toggleSub('sub-usrmngt')">User Management</a>
+            <div id="sub-usrmngt" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/fwuser.cgi?fid=0&iAct=0&sFormAuthStr=K8sEXFc1TfxSlPA')">General Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/fwuser.cgi?fid=1&iAct=0&iPageIdx=1&sFormAuthStr=K8sEXFc1TfxSlPA')">User Profile</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/fwuser.cgi?fid=2&iAct=0&iPageIdx=1&sFormAuthStr=K8sEXFc1TfxSlPA')">User Group</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/fwuser.cgi?fid=3&iUserStauts=1&iPageIdx=1&sFormAuthStr=K8sEXFc1TfxSlPA')">User Online Status</a>
+            </div>
+        </div>
+
+        <!-- Objects Setting -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-objsetting" href="javascript:void(0)" onclick="toggleSub('sub-objsetting')">Objects Setting</a>
+            <div id="sub-objsetting" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipobj.cgi?sIpObjAct=showpage&iIpObjPnum=1&sFormAuthStr=K8sEXFc1TfxSlPA')">IP Object</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipgrp.cgi?sIpGrpAct=showpage&iIpGrpPnum=1&sFormAuthStr=K8sEXFc1TfxSlPA')">IP Group</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/stobj.cgi?sStObjAct=showpage&iStObjPnum=1&sFormAuthStr=K8sEXFc1TfxSlPA')">Service Type Object</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/kwobj.cgi?sKwObjAct=showpage&iPageIdx=1&sFormAuthStr=K8sEXFc1TfxSlPA')">Keyword Object</a>
+            </div>
+        </div>
+
+        <!-- CSM -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-csm" href="javascript:void(0)" onclick="toggleSub('sub-csm')">CSM</a>
+            <div id="sub-csm" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/appeprof.cgi?sProfileAct=showpage&sFormAuthStr=K8sEXFc1TfxSlPA')">APP Enforcement Profile</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2006&sAct=showpage&iPageIdx=1&sFormAuthStr=K8sEXFc1TfxSlPA')">URL Content Filter Profile</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2328&iAct=0&sFormAuthStr=K8sEXFc1TfxSlPA')">DNS Filter Profile</a>
+            </div>
+        </div>
+
+        <!-- Bandwidth Management -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-bandwidth" href="javascript:void(0)" onclick="toggleSub('sub-bandwidth')"><span class="menu-text">Bandwidth Management</span></a>
+            <div id="sub-bandwidth" class="sub-menu hidden">
+                <a class="menu-item" id="menu-bandwidth-sessions" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2092&sFormAuthStr=K8sEXFc1TfxSlPA')">Sessions Limit</a>
+                <a class="menu-item" id="menu-bandwidth-limit" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2093&sFormAuthStr=K8sEXFc1TfxSlPA')"><span class="menu-text">Bandwidth Limit</span></a>
+                <a class="menu-item" id="menu-bandwidth-qos" href="javascript:MainFunction('/cgi-bin/qos.cgi?fid=0&sFormAuthStr=K8sEXFc1TfxSlPA')">Quality of Service</a>
+            </div>
+        </div>
+
+        <!-- Applications -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-applications" href="javascript:void(0)" onclick="toggleSub('sub-applications')">Applications</a>
+            <div id="sub-applications" class="sub-menu hidden">
+                <a class="menu-item" id="menu-app-ddns" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2055&sFormAuthStr=K8sEXFc1TfxSlPA')">Dynamic DNS</a>
+                <a class="menu-item" id="menu-app-landns" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2326&iPageIdx=1&iOption=0&sFormAuthStr=K8sEXFc1TfxSlPA')">LAN DNS / DNS Forwarding</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2056&sFormAuthStr=K8sEXFc1TfxSlPA')">Schedule</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2007&sFormAuthStr=K8sEXFc1TfxSlPA')">UPnP</a>
+            </div>
+        </div>
+
+        <!-- VPN and Remote Access -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-vpn" href="javascript:void(0)" onclick="toggleSub('sub-vpn')">VPN and Remote Access</a>
+            <div id="sub-vpn" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2035&sFormAuthStr=K8sEXFc1TfxSlPA')">Remote Access Control</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2036&sFormAuthStr=K8sEXFc1TfxSlPA')">PPP General Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2037&sFormAuthStr=K8sEXFc1TfxSlPA')">IPsec General Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/dialin.cgi?sAct=showpage&iPageIdx=1&iProfileIdx=1&iSSLIdx=0&sFormAuthStr=K8sEXFc1TfxSlPA')">Remote Dial-in User</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/lan2lan.cgi?sAct=showpage&iPageIdx=1&iProfileIdx=0&sFormAuthStr=K8sEXFc1TfxSlPA')">LAN to LAN</a>
+            </div>
+        </div>
+
+        <!-- Certificate Management -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-cert" href="javascript:void(0)" onclick="toggleSub('sub-cert')">Certificate Management</a>
+            <div id="sub-cert" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=1210&sFormAuthStr=K8sEXFc1TfxSlPA')">Local Certificate</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=1220&sFormAuthStr=K8sEXFc1TfxSlPA')">Trusted CA Certificate</a>
+            </div>
+        </div>
+
+        <!-- LTE -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-lte" href="javascript:void(0)" onclick="toggleSub('sub-lte')">LTE</a>
+            <div id="sub-lte" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/cgilte.cgi?fid=9&sFormAuthStr=K8sEXFc1TfxSlPA')">General Settings</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/cgilte.cgi?fid=8&sFormAuthStr=K8sEXFc1TfxSlPA')">Status</a>
+            </div>
+        </div>
+
+        <!-- Mesh -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-mesh" href="javascript:void(0)" onclick="toggleSub('sub-mesh')">Mesh</a>
+            <div id="sub-mesh" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/cgimesh.cgi?fid=4&sFormAuthStr=K8sEXFc1TfxSlPA')">Mesh Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/cgimesh.cgi?fid=5&sFormAuthStr=K8sEXFc1TfxSlPA')">Mesh Status</a>
+            </div>
+        </div>
+
+        <!-- Wireless LAN (2.4 GHz) -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-wlan24" href="javascript:void(0)" onclick="toggleSub('sub-wlan24')">Wireless LAN (2.4 GHz)</a>
+            <div id="sub-wlan24" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2021&sFormAuthStr=K8sEXFc1TfxSlPA')">General Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2022&sFormAuthStr=K8sEXFc1TfxSlPA')">Security</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2023&sFormAuthStr=K8sEXFc1TfxSlPA')">Access Control</a>
+            </div>
+        </div>
+
+        <!-- Wireless LAN (5 GHz) -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-wlan5" href="javascript:void(0)" onclick="toggleSub('sub-wlan5')">Wireless LAN (5 GHz)</a>
+            <div id="sub-wlan5" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/dualwl.cgi?fid=0&sFormAuthStr=K8sEXFc1TfxSlPA')">General Setup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/dualwl.cgi?fid=2&sFormAuthStr=K8sEXFc1TfxSlPA')">Security</a>
+            </div>
+        </div>
+
+        <!-- USB Application -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-usb" href="javascript:void(0)" onclick="toggleSub('sub-usb')">USB Application</a>
+            <div id="sub-usb" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ftpset.cgi?sProfileAct=showpage&sFormAuthStr=K8sEXFc1TfxSlPA')">USB General Settings</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ftpmng.cgi?sProfileAct=showpage&sFormAuthStr=K8sEXFc1TfxSlPA')">USB User Management</a>
+                <a class="menu-item" href="javascript:MainFunction('/doc/usbweb.htm')">File Explorer</a>
+            </div>
+        </div>
+
+        <!-- System Maintenance -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-sysmaint" href="javascript:void(0)" onclick="toggleSub('sub-sysmaint')">System Maintenance</a>
+            <div id="sub-sysmaint" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2015&sFormAuthStr=K8sEXFc1TfxSlPA')">System Status</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=1300&sFormAuthStr=K8sEXFc1TfxSlPA')">TR-069</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2029&sFormAuthStr=K8sEXFc1TfxSlPA')">Administrator Password</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2102&sFormAuthStr=K8sEXFc1TfxSlPA')">User Password</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2016&sFormAuthStr=K8sEXFc1TfxSlPA')">Configuration Backup</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2017&sFormAuthStr=K8sEXFc1TfxSlPA')">SysLog / Mail Alert</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=6&sFormAuthStr=K8sEXFc1TfxSlPA')">Time and Date</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2041&sFormAuthStr=K8sEXFc1TfxSlPA')">Management</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2201&sFormAuthStr=K8sEXFc1TfxSlPA')">Reboot System</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2019&sFormAuthStr=K8sEXFc1TfxSlPA')">Firmware Upgrade</a>
+            </div>
+        </div>
+
+        <!-- Diagnostics -->
+        <div class="menu-folder-group">
+            <a class="menu-item" id="menu-diag" href="javascript:void(0)" onclick="toggleSub('sub-diag')">Diagnostics</a>
+            <div id="sub-diag" class="sub-menu hidden">
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/iprt.cgi?sFormAuthStr=K8sEXFc1TfxSlPA')">Routing Table</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/arp.cgi?sFormAuthStr=K8sEXFc1TfxSlPA')">ARP Cache Table</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/dhcp.cgi?sFormAuthStr=K8sEXFc1TfxSlPA')">DHCP Table</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/ipnatpm.cgi?sFormAuthStr=K8sEXFc1TfxSlPA')">NAT Sessions Table</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2095&sFormAuthStr=K8sEXFc1TfxSlPA')">Ping Diagnosis</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2096&sFormAuthStr=K8sEXFc1TfxSlPA')">Data Flow Monitor</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2098&sFormAuthStr=K8sEXFc1TfxSlPA')">Traffic Graph</a>
+                <a class="menu-item" href="javascript:MainFunction('/cgi-bin/v2x00.cgi?fid=2107&sFormAuthStr=K8sEXFc1TfxSlPA')">Syslog Explorer</a>
+            </div>
+        </div>
+    </div>
+
+    <hr class="menu-separator">
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div>Admin mode</div>
+        <div>Status: <span id="statusText">Ready</span></div>
+    </div>
 </div>
 
 <script>
@@ -165,13 +341,44 @@ function MainFunction(url) {
 
 function toggleSub(id) {
     var sub = document.getElementById(id);
-    if (sub) sub.classList.toggle('hidden');
+    if (sub) {
+        sub.classList.toggle('hidden');
+        var link = document.querySelector('a[onclick*="' + id + '"]');
+        if (link) {
+            link.classList.toggle('open', !sub.classList.contains('hidden'));
+        }
+        try {
+            if (window.top && typeof window.top.applyGuidePopups === 'function') {
+                window.top.applyGuidePopups();
+            }
+        } catch(e) {}
+    }
 }
 
 function filterMenu(val) {
     val = val.toLowerCase().trim();
-    document.querySelectorAll('#allMenuItems .menu-item').forEach(function(item) {
-        item.style.display = (!val || item.textContent.toLowerCase().indexOf(val) >= 0) ? '' : 'none';
+    var groups = document.querySelectorAll('#allMenuItems .menu-folder-group');
+    if (!val) {
+        groups.forEach(function(group) {
+            group.style.display = '';
+            var sub = group.querySelector('.sub-menu');
+            if (sub) {
+                sub.classList.add('hidden');
+            }
+        });
+        return;
+    }
+    groups.forEach(function(group) {
+        var text = group.textContent.toLowerCase();
+        if (text.indexOf(val) >= 0) {
+            group.style.display = '';
+            var sub = group.querySelector('.sub-menu');
+            if (sub) {
+                sub.classList.remove('hidden');
+            }
+        } else {
+            group.style.display = 'none';
+        }
     });
 }
 

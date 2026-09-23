@@ -5,7 +5,7 @@
 firebase-credentials/
 admin_app/.env.admin
 !admin_app/.env.admin.example
-
+tests
 # ── Python / Virtual Environments ──────────────────────────────
 __pycache__/
 **/__pycache__/
@@ -30,6 +30,8 @@ scratch/
 sim_state.json
 **/sim_state.json
 simulators/sim_be12000/src/state/user-*.json
+simulators/mikrotik_hexs/src/cau_hinh.json
+**/cau_hinh.json
 
 # ── Logs & Temporary Files ────────────────────────────────────
 *.log

@@ -498,7 +498,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         # Chuyen tiep /api/* -> PHP noi bo (browser chi can 1 cong 8080)
         # Ngoai tru /api/v1/data/* thuoc ve simulator ONT BE6500C
         path_only = self.path.split('?')[0]
-        if method in ('GET', 'HEAD') and path_only == '/healthz':
+        if method in ('GET', 'HEAD') and path_only in ('/health/live', '/healthz'):
             body = b'{"ok":true,"service":"dispatcher"}'
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')

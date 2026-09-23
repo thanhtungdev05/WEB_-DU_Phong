@@ -42,6 +42,39 @@ function env_int(string $key, int $default, int $minimum, int $maximum): int
     return max($minimum, min($maximum, (int)$value));
 }
 
+function database_query_count(): int
+{
+    return (int)($GLOBALS['database_query_count'] ?? 0);
+}
+
+function observe_database_query(): void
+{
+    $GLOBALS['database_query_count'] = database_query_count() + 1;
+}
+
+final class ObservedPDO extends PDO
+{
+    public function prepare(string $query, array $options = []): PDOStatement|false
+    {
+        observe_database_query();
+        return parent::prepare($query, $options);
+    }
+
+    public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
+    {
+        observe_database_query();
+        return $fetchMode === null
+            ? parent::query($query)
+            : parent::query($query, $fetchMode, ...$fetchModeArgs);
+    }
+
+    public function exec(string $statement): int|false
+    {
+        observe_database_query();
+        return parent::exec($statement);
+    }
+}
+
 function normalize_app_timezone(?string $timezone): string
 {
     $timezone = trim((string)$timezone);
@@ -130,7 +163,7 @@ function create_database_connection(): PDO
         $dsn .= ';options=' . $options;
     }
 
-    $pdo = new PDO($dsn, (string)$user, (string)$password, [
+    $pdo = new ObservedPDO($dsn, (string)$user, (string)$password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => env_bool('DB_EMULATE_PREPARES', true),

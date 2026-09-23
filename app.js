@@ -121,7 +121,8 @@
     if (!deviceId) return false;
     const id = String(deviceId).trim().toLowerCase();
     return id === 'ax3000c' || id === 'ax3000hv2' || id === 'ax3000s' ||
-           id === 'ont_be6500c' || id === 'be6500c' || id === 'be12000';
+           id === 'ont_be6500c' || id === 'be6500c' || id === 'be12000' ||
+           id === 'vigor2927' || id === 'mikrotik_hexs';
   }
 
   function populateDeviceDropdown(devices) {
@@ -236,7 +237,7 @@
   }
 
   function loadLearningCatalog() {
-    return fetch('/api/index.php/learning/catalog', { credentials: 'include' })
+    return fetch('/api/index.php/learning/catalog', { credentials: 'include', cache: 'force-cache' })
       .then(function (response) {
         if (!response.ok) throw new Error('Không thể tải danh sách bài luyện tập.');
         return response.json();
@@ -606,12 +607,23 @@
                 const markSaveInteraction = function (e) {
                   let el = e.target;
                   while (el && el !== doc) {
-                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || (el.getAttribute && el.getAttribute('role') === 'button')) {
+                    const laNutLuuMikrotik = (currentDeviceId === 'mikrotik_hexs') && (function () {
+                      try {
+                        const anchor = (el.tagName === 'A') ? el : (el.closest ? el.closest('a') : null);
+                        if (!anchor) return false;
+                        const text = (anchor.textContent || '').trim().toLowerCase();
+                        return text === 'ok' || text === 'apply';
+                      } catch (error) { return false; }
+                    })();
+                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' ||
+                        (el.getAttribute && el.getAttribute('role') === 'button') || laNutLuuMikrotik) {
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
-                      const isSaveOrApply = btnVal.includes('save') || 
+                      const isSaveOrApply = laNutLuuMikrotik ||
+                        btnVal.includes('save') ||
                         btnVal.includes('apply') || 
                         btnVal.includes('submit') || 
                         btnVal.includes('lưu') || 
+                        ((currentDeviceId === 'vigor2927') && (btnVal === 'ok' || el.name === 'submit')) ||
                         ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
                         (el.type === 'submit' && el.tagName === 'INPUT');
                       if (isSaveOrApply) {
@@ -639,7 +651,15 @@
                 doc.addEventListener('click', function (e) {
                   let el = e.target;
                   while (el && el !== doc) {
-                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+                    const laNutLuuMikrotik = (currentDeviceId === 'mikrotik_hexs') && (function () {
+                      try {
+                        const anchor = (el.tagName === 'A') ? el : (el.closest ? el.closest('a') : null);
+                        if (!anchor) return false;
+                        const text = (anchor.textContent || '').trim().toLowerCase();
+                        return text === 'ok' || text === 'apply';
+                      } catch (error) { return false; }
+                    })();
+                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || laNutLuuMikrotik) {
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
                       const isOntBai6 = (currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6');
 
@@ -650,11 +670,30 @@
                         (btnVal === 'add' && !isOntBai6 && currentLessonId !== 'LAB_AC1000F_06') ||
                         btnVal === 'delete' || btnVal === 'undo' || btnVal === 'cancel' || btnVal === 'reset';
 
+                      if (currentDeviceId === 'vigor2927') {
+                        const href = (el.getAttribute && el.getAttribute('href') || '').toLowerCase();
+                        const onclick = (el.getAttribute && el.getAttribute('onclick') || '').toLowerCase();
+                        if (btnVal.includes('details page') || (el.name && el.name.toLowerCase().startsWith('btndtpage')) ||
+                            href.includes('gotodetailset') || onclick.includes('gotodetailset') ||
+                            href.includes('fid=2117') || onclick.includes('fid=2117') ||
+                            href.includes('fid=4041') || onclick.includes('fid=4041')) {
+                          doc._ftcIsClickingDetailsPage = true;
+                          doc._ftcIsSaved = false;
+                          window._hasClickedSaveInGuide = false;
+                          return;
+                        }
+                      }
+
                       if (!isExcludedAction) {
-                        const isSaveOrApply = btnVal.includes('save') || 
+                        const isVigorOk = (currentDeviceId === 'vigor2927') &&
+                          (btnVal === 'ok' || el.id === 'btn-pppoe-ok' || el.id === 'btn-ipbmac-ok' ||
+                           (el.name && el.name.toLowerCase() === 'btnok') || el.name === 'submit');
+                        const isSaveOrApply = laNutLuuMikrotik ||
+                          btnVal.includes('save') ||
                           btnVal.includes('apply') || 
                           btnVal.includes('submit') || 
                           btnVal.includes('lưu') || 
+                          isVigorOk ||
                           (isOntBai6 && (el.classList.contains('dlg-luu') || el.closest('.MuiDialogActions-root') || btnVal === 'add')) ||
                           ((currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
                           (el.type === 'submit' && el.tagName === 'INPUT');
@@ -665,6 +704,11 @@
 
                           doc._ftcLastSaveInteraction = Date.now();
                           doc._ftcIsSaved = true;
+                          window._hasClickedSaveInGuide = true;
+                          if (currentDeviceId === 'mikrotik_hexs') {
+                            window._ftcMkChanTooltip = true;
+                            setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
+                          }
                           if (isAx3000sBai2_2g) {
                             doc._ftc2gSaved = true;
                           }
@@ -680,6 +724,18 @@
                           } catch (err) { }
                           triggerSaveFlashEffect(doc, el);
 
+                          if (currentDeviceId === 'vigor2927') {
+                            let statusMsg = doc.getElementById('ftc-save-status');
+                            if (!statusMsg) {
+                              statusMsg = doc.createElement('span');
+                              statusMsg.id = 'ftc-save-status';
+                              statusMsg.style.cssText = 'color:#15803d;font-weight:bold;font-size:13px;margin-left:12px;vertical-align:middle;';
+                              if (el.parentNode) el.parentNode.insertBefore(statusMsg, el.nextSibling);
+                            }
+                            statusMsg.textContent = ' Đã lưu cấu hình thành công!';
+                            setTimeout(function () { if (statusMsg) statusMsg.textContent = ''; }, 3000);
+                          }
+
                           if (!isAx3000sBai2_2g) {
                             window._hasClickedSaveInGuide = true;
                             setTimeout(function () {
@@ -692,6 +748,46 @@
                     el = el.parentNode;
                   }
                 }, true);
+
+                // Vigor2927 dùng nhiều form CGI: giữ điều hướng giữa các trang nhưng chặn reload khi lưu cấu hình.
+                if (currentDeviceId === 'vigor2927') {
+                  try {
+                    const win = doc.defaultView || doc.parentWindow;
+                    if (win) {
+                      win.confirm = function () { return true; };
+                      win.alert = function (message) { console.log('[Vigor Alert]', message); };
+                    }
+                  } catch (error) { }
+                  const isLogin = doc.location && (doc.location.href.includes('weblogin') || doc.location.href.includes('login'));
+                  if (!isLogin && !doc._ftcVigorSubmitAttached) {
+                    doc.addEventListener('submit', function (event) {
+                      const form = event.target;
+                      const action = (form && form.action) ? form.action.toLowerCase() : '';
+                      if (action.includes('wlogin') || action.includes('login')) return;
+                      const fid = form && form.elements && form.elements.fid ? String(form.elements.fid.value) : '';
+                      const iAct = form && form.elements && form.elements.iAct ? String(form.elements.iAct.value) : '';
+                      if (doc._ftcIsClickingDetailsPage || (fid === '2117' && iAct === '0') || fid === '102' ||
+                          (fid === '2087' && iAct === '0') || fid === '4041') {
+                        doc._ftcIsClickingDetailsPage = false;
+                        doc._ftcIsSaved = false;
+                        window._hasClickedSaveInGuide = false;
+                        if (form.action && !form.action.includes('/sim_vigor2927/') && form.action.includes('/cgi-bin/')) {
+                          form.action = form.action.replace('/cgi-bin/', '/sim_vigor2927/cgi-bin/');
+                        }
+                        return;
+                      }
+                      event.preventDefault();
+                      window._hasClickedSaveInGuide = true;
+                      doc._ftcIsSaved = true;
+                      try {
+                        if (typeof window.onSimulatorSave === 'function') {
+                          window.onSimulatorSave(doc.defaultView || doc.parentWindow);
+                        }
+                      } catch (error) { }
+                    }, true);
+                    doc._ftcVigorSubmitAttached = true;
+                  }
+                }
 
                 // Đánh dấu người dùng đã chạm vào ô nhập liệu để tránh bị clear tự động
                 // Đồng thời hủy bỏ trạng thái "Đã Save" nếu người dùng sửa lại dữ liệu
@@ -876,8 +972,13 @@
               }
             } else {
               // 💡 CHẾ ĐỘ HƯỚNG DẪN:
+              const trangDangLamSach = evalResult
+                ? ((typeof evalResult.trangHienTaiDat === 'boolean')
+                  ? evalResult.trangHienTaiDat : evalResult.passed)
+                : false;
+
               // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT:
-              if (noConfig || (window._hasClickedSaveInGuide && evalResult && evalResult.passed)) {
+              if (noConfig || (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed)))) {
                 // Nút Nộp bài SÁNG LÊN
                 if (btnSubmitLab) {
                   btnSubmitLab.disabled = false;
@@ -892,7 +993,8 @@
               } else {
                 // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
                 if (btnGuideErrors) {
-                  if (window._hasClickedSaveInGuide && evalResult && !evalResult.passed) {
+                  const hasMissingSteps = !trangDangLamSach;
+                  if (window._hasClickedSaveInGuide && evalResult && hasMissingSteps) {
                     if (currentLessonId === 'LAB_AX3000S_02') {
                       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
                       const hasSaved5g = allDocs.some(d => d.location && d.location.href.toLowerCase().includes('wlanbasicsetting5g') && d._ftcIsSaved);
@@ -1529,9 +1631,29 @@
     const targetDev = deviceId || currentDeviceId;
     window._hasSuccHintStored = false;
     window._hasClickedSaveInGuide = false;
+    window._ftcMkChanTooltip = false;
+    window._FTC_MK_BAI1 = null;
     window._sessionRuleCache = {};
     window._sessionRuleCacheScope = null;
-    if (!targetDev) return;
+
+    if (typeof window.vg2927Bai6Reset === 'function') {
+      try { window.vg2927Bai6Reset(); } catch (error) { }
+    }
+    window._FTC_VG2927_BAI6 = null;
+    window._FTC_VG2927_BAI6_LASTPAGE = null;
+    window._FTC_VG2927_BAI6_SCOPE = null;
+    window._ftcHasClickedAdd = false;
+    window._ftcLastAddFrom = null;
+    window._ftcLastAddTo = null;
+    window._ftcLastAddMode = null;
+    window._ftcLastAddTx = null;
+    window._ftcLastAddTxUnit = null;
+    window._ftcLastAddRx = null;
+    window._ftcLastAddRxUnit = null;
+    window._ftcLastAddIp = null;
+    window._ftcLastAddMac = null;
+
+    if (!targetDev) return Promise.resolve();
 
     let simFolder = '';
     if (typeof DEVICES !== 'undefined' && Array.isArray(DEVICES)) {
@@ -1542,26 +1664,9 @@
       simFolder = 'sim_' + targetDev;
     }
 
-    const resetEndpoints = ['/' + simFolder + '/api/reset'];
-    if (targetDev === 'ONT_be6500c' || targetDev === 'ont_be6500c') {
-      resetEndpoints.push('/sim_ONT_be6500c/api/reset', '/ont_be6500c/api/reset');
-    } else if (targetDev === 'be6500c') {
-      resetEndpoints.push('/sim_be6500c/api/reset');
-    } else if (targetDev === 'be12000') {
-      resetEndpoints.push('/sim_be12000/api/reset');
-    }
-
-    resetEndpoints.forEach(ep => {
-      try {
-        fetch(ep, { method: 'POST', cache: 'no-store' })
-          .catch(() => {
-            return fetch(ep + '?_t=' + Date.now(), { cache: 'no-store' });
-          })
-          .catch(() => {});
-      } catch (e) { }
-    });
-
     try {
+      localStorage.removeItem('ftc_sim_wifi24');
+      localStorage.removeItem('ftc_sim_wifi5g');
       localStorage.removeItem('BE12000_state');
       localStorage.removeItem('labStartTime');
       localStorage.removeItem('labStartSession');
@@ -1570,11 +1675,56 @@
       sessionStorage.removeItem('sid');
       sessionStorage.removeItem('be6500c_sid');
       sessionStorage.removeItem('tech_support_sid');
+      sessionStorage.removeItem('vg_session');
+      sessionStorage.removeItem('vg2927_sid');
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPUsername');
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPPassword');
-      localStorage.removeItem('ftc_sim_wifi24');
-      localStorage.removeItem('ftc_sim_wifi5g');
     } catch (e) { }
+
+    const normDev = normalizeDeviceId(targetDev);
+    const resetEndpoints = new Set(['/' + simFolder + '/api/reset']);
+    if (normDev === 'ont_be6500c') {
+      resetEndpoints.add('/sim_ONT_be6500c/api/reset');
+      resetEndpoints.add('/ont_be6500c/api/reset');
+    } else if (normDev === 'be6500c') {
+      resetEndpoints.add('/sim_be6500c/api/reset');
+      resetEndpoints.add('/sim_ONT_be6500c/api/reset');
+    } else if (normDev === 'be12000') {
+      resetEndpoints.add('/sim_be12000/api/reset');
+    } else if (normDev === 'be15000') {
+      resetEndpoints.add('/sim_be15000/api/reset');
+    } else if (normDev === 'vigor2927') {
+      resetEndpoints.add('/sim_vigor2927/api/reset');
+    } else if (normDev === 'mikrotik_hexs') {
+      resetEndpoints.add('/sim_mikrotik_hexs/api/reset');
+      resetEndpoints.add('/sim_mikrotik_hexs/ftc_dat_lai');
+    }
+
+    const resetPromises = Array.from(resetEndpoints).map(function (endpoint) {
+      const resetUrl = endpoint + '?_t=' + Date.now();
+      try {
+        return fetch(resetUrl, {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { 'X-FTC-Simulator-Reset': 'current-session' }
+        }).then(function (response) {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return true;
+        }).catch(function () {
+          return fetch(resetUrl, {
+            method: 'GET',
+            credentials: 'same-origin',
+            cache: 'no-store'
+          }).then(function (response) { return response.ok; }).catch(function () { return false; });
+        });
+      } catch (error) {
+        console.warn(`[Simulator] Không thể gửi yêu cầu đặt lại phiên ${endpoint}:`, error);
+        return Promise.resolve(false);
+      }
+    });
+
+    return Promise.allSettled(resetPromises).then(function () { return true; });
   }
 
   function confirmLeavePracticeSession() {
@@ -1684,6 +1834,8 @@
 
 
   // ── Grading & Evaluation Engine ──────────────────────────────────
+  window.ftcLayCheDo = function () { return currentMode; };
+
   function evaluateLesson(device, lesson) {
     if (!lesson) return null;
 
@@ -2799,7 +2951,7 @@
     try {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       allDocs.forEach(doc => {
-        doc.querySelectorAll('.ftc-guide-bubble, .guide-tooltip-bubble').forEach(el => el.remove());
+        doc.querySelectorAll('.ftc-guide-bubble, .guide-tooltip-bubble, .guide-tooltip').forEach(el => el.remove());
         doc.querySelectorAll('.ftc-guide-target-highlight').forEach(el => {
           el.classList.remove('ftc-guide-target-highlight');
         });
@@ -2819,7 +2971,10 @@
   }
 
   function applyGuidePopups() {
-    if (currentMode !== 'guide') {
+    const dangChanTooltip = (currentDeviceId === 'mikrotik_hexs')
+      ? window._ftcMkChanTooltip
+      : false;
+    if (currentMode !== 'guide' || dangChanTooltip) {
       clearGuidePopups();
       return;
     }
@@ -2924,14 +3079,14 @@
           border-color: transparent transparent transparent #ff0000 !important;
         }
         .ftc-guide-bubble.pos-bottom::before {
-          left: 50% !important;
+          left: var(--arrow-left, 50%) !important;
           top: -8px !important;
           transform: translateX(-50%) !important;
           border-width: 0 6px 8px 6px !important;
           border-color: transparent transparent #ff0000 transparent !important;
         }
         .ftc-guide-bubble.pos-top::before {
-          left: 50% !important;
+          left: var(--arrow-left, 50%) !important;
           bottom: -8px !important;
           transform: translateX(-50%) !important;
           border-width: 8px 6px 0 6px !important;
@@ -2947,34 +3102,79 @@
 
     function findGuideElements(doc, selectorStr) {
       if (!doc || !selectorStr) return [];
-      const parts = selectorStr.split(',').map(s => s.trim());
+      const parts = selectorStr.split(',').map(s => s.trim()).filter(Boolean);
       const results = [];
       for (const sel of parts) {
         try {
-          if (!sel.includes(':contains(')) {
-            const els = doc.querySelectorAll(sel);
-            els.forEach(el => results.push(el));
+          if (sel.startsWith('text:')) {
+            const textToFind = sel.slice(5).trim();
+            let marker = doc.querySelector(`.ftc-text-marker[data-text="${textToFind}"]`);
+            if (marker && marker.offsetParent !== null) {
+              results.push(marker);
+              continue;
+            }
+            const walker = doc.createTreeWalker(doc.body || doc, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            while ((node = walker.nextNode())) {
+              const index = node.nodeValue.indexOf(textToFind);
+              if (index !== -1 && node.parentElement && node.parentElement.offsetParent !== null &&
+                  !node.parentElement.closest('.ftc-guide-bubble')) {
+                const range = doc.createRange();
+                range.setStart(node, index);
+                range.setEnd(node, index + textToFind.length);
+                marker = doc.createElement('span');
+                marker.className = 'ftc-text-marker';
+                marker.dataset.text = textToFind;
+                marker.style.cssText = 'display:inline;padding:0;margin:0;border:none';
+                try {
+                  range.surroundContents(marker);
+                  results.push(marker);
+                } catch (error) {
+                  results.push(node.parentElement);
+                }
+                break;
+              }
+            }
             continue;
           }
 
-          // Tách selector thành các phân đoạn bằng khoảng trắng
-          const segments = sel.split(/\s+/).filter(Boolean);
+          if (!sel.includes(':contains(') && !sel.includes(':has-text(')) {
+            try {
+              doc.querySelectorAll(sel).forEach(el => results.push(el));
+            } catch (error) {
+              console.warn('[findGuideElements] Invalid native selector:', sel, error);
+            }
+            continue;
+          }
+
+          // Không tách khoảng trắng nằm bên trong pseudo selector.
+          let segments;
+          try {
+            segments = sel.match(/(?:[^\s(]+|\([^)]*\))+/g) || sel.split(/\s+/).filter(Boolean);
+          } catch (error) {
+            segments = sel.split(/\s+/).filter(Boolean);
+          }
           let currentContexts = [doc.body || doc];
 
           for (let i = 0; i < segments.length; i++) {
             const seg = segments[i];
-            const match = seg.match(/^(.*?):contains\(["']?(.*?)["']?\)$/);
+            const match = seg.match(/^(.*?):(contains|has-text)\(["']?(.*?)["']?\)(.*)$/);
             let baseSel = seg;
             let textToMatch = null;
 
             if (match) {
-              baseSel = match[1] || '*';
-              textToMatch = match[2].trim().toLowerCase();
+              baseSel = (match[1] || '*') + (match[4] || '');
+              textToMatch = match[3].trim().toLowerCase();
             }
 
             const nextContexts = [];
             for (const ctx of currentContexts) {
-              const elements = ctx.querySelectorAll(baseSel);
+              let elements = [];
+              try {
+                elements = ctx.querySelectorAll(baseSel);
+              } catch (error) {
+                try { elements = ctx.querySelectorAll('*'); } catch (fallbackError) { }
+              }
               elements.forEach(el => {
                 if (textToMatch) {
                   const txt = (el.textContent || el.innerText || '').trim().toLowerCase();
@@ -3068,6 +3268,20 @@
         const isSaved = Boolean(doc._ftcIsSaved || doc._ftc2gSaved) || 
           allDocs.some(d => Boolean(d._ftcIsSaved || d._ftc2gSaved || (d.location && d.location.search && d.location.search.includes('save_success=1'))));
         if (isSaved) {
+          const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
+          if (oldBubble) oldBubble.remove();
+          return;
+        }
+      }
+
+      if (typeof pop.condition === 'function') {
+        let conditionPassed = true;
+        try {
+          conditionPassed = pop.condition(doc);
+        } catch (error) {
+          conditionPassed = false;
+        }
+        if (!conditionPassed) {
           const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
           if (oldBubble) oldBubble.remove();
           return;
@@ -3179,11 +3393,23 @@
       }
 
       // Giữ vị trí chính xác sát target, tránh đè lên ô nhập
+      if (pop.offsetX) calcLeft += pop.offsetX;
+      if (pop.offsetY) calcTop += pop.offsetY;
+
       calcLeft = Math.max(5, calcLeft);
-      calcTop = Math.max(5, calcTop);
+      if (calcLeft + bWidth > winW - 10) {
+        calcLeft = Math.max(5, winW - bWidth - 10);
+      }
+      const minTop = (pop.minTop !== undefined) ? pop.minTop : ((pop.offsetY && pop.offsetY < 0) ? -100 : 5);
+      calcTop = Math.max(minTop, calcTop);
 
       bubble.style.left = Math.round(calcLeft) + 'px';
       bubble.style.top = Math.round(calcTop) + 'px';
+
+      if (pos === 'bottom' || pos === 'top') {
+        const arrowX = Math.max(12, Math.min(bWidth - 12, (targetLeft + rect.width / 2) - calcLeft));
+        bubble.style.setProperty('--arrow-left', Math.round(arrowX) + 'px');
+      }
     });
 
     // Dọn dẹp các bubble thừa khi danh sách popups ngắn hơn
@@ -3211,6 +3437,10 @@
 
     triggerSaveFlashEffect(simWin ? simWin.document : null, null);
     window._hasClickedSaveInGuide = true;
+    if (currentDeviceId === 'mikrotik_hexs') {
+      window._ftcMkChanTooltip = true;
+      setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
+    }
 
     if (_currentLesson && typeof _currentLesson.onSimSave === 'function') {
       try {
@@ -3239,7 +3469,12 @@
         }
       } else {
         // 💡 Chế độ Hướng dẫn:
-        if (noConfigSaved || (evalResult && evalResult.passed)) {
+        const trangDangLamSach = evalResult
+          ? ((typeof evalResult.trangHienTaiDat === 'boolean')
+            ? evalResult.trangHienTaiDat : evalResult.passed)
+          : false;
+
+        if (noConfigSaved || window._hasSuccHintStored || (evalResult && evalResult.passed)) {
           // Cấu hình ĐÚNG hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
           if (btnSubmitLab) {
             btnSubmitLab.disabled = false;
@@ -3249,6 +3484,14 @@
           }
           if (btnGuideErrors) {
             btnGuideErrors.style.display = 'none';
+          }
+        } else if (trangDangLamSach) {
+          if (btnGuideErrors) btnGuideErrors.style.display = 'none';
+          if (btnSubmitLab) {
+            btnSubmitLab.disabled = true;
+            btnSubmitLab.style.opacity = '0.5';
+            btnSubmitLab.style.cursor = 'not-allowed';
+            btnSubmitLab.style.animation = 'none';
           }
         } else {
           // Cấu hình SAI ở Hướng dẫn: Nút Lỗi sai SÁNG LÊN, Nút Nộp bài TẮT/XÁM

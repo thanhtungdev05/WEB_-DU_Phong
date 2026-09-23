@@ -15,6 +15,8 @@ require_once __DIR__ . '/lib/dashboard_report.php';
 load_app_environment($root);
 
 $GLOBALS['request_id'] = bin2hex(random_bytes(8));
+$GLOBALS['request_started_at'] = microtime(true);
+$GLOBALS['database_query_count'] = 0;
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -24,6 +26,7 @@ header('Access-Control-Allow-Origin: ' . $corsOrigin);
 header('Vary: Origin');
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Tracking-Key');
+header('Access-Control-Expose-Headers: X-Request-ID, X-Response-Bytes, X-Database-Queries');
 header('Access-Control-Max-Age: 86400');
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -90,6 +93,32 @@ function respond(array $payload = [], int $status = 200): void
         echo '{"error":{"code":"json-encode-failed","message":"Unable to encode API response."}}';
         exit;
     }
+
+    $responseBytes = strlen($json);
+    $queryCount = function_exists('database_query_count') ? database_query_count() : 0;
+    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '/';
+    $responseBudget = str_contains($requestPath, '/dashboard/all')
+        ? env_int('DASHBOARD_MAX_RESPONSE_BYTES', 2097152, 65536, 16777216)
+        : env_int('API_MAX_RESPONSE_BYTES', 8388608, 65536, 33554432);
+    $queryBudget = str_contains($requestPath, '/dashboard/all')
+        ? env_int('DASHBOARD_MAX_QUERY_COUNT', 8, 1, 100)
+        : env_int('API_MAX_QUERY_COUNT', 20, 1, 200);
+    header('X-Response-Bytes: ' . $responseBytes);
+    header('X-Database-Queries: ' . $queryCount);
+    error_log(json_encode([
+        'level' => ($responseBytes > $responseBudget || $queryCount > $queryBudget) ? 'warning' : 'info',
+        'event' => 'api_response',
+        'request_id' => $GLOBALS['request_id'] ?? null,
+        'method' => $_SERVER['REQUEST_METHOD'] ?? 'GET',
+        'endpoint' => $requestPath,
+        'status' => $status,
+        'response_bytes' => $responseBytes,
+        'database_queries' => $queryCount,
+        'response_budget_bytes' => $responseBudget,
+        'query_budget' => $queryBudget,
+        'budget_exceeded' => $responseBytes > $responseBudget || $queryCount > $queryBudget,
+        'duration_ms' => (int)round((microtime(true) - (float)($GLOBALS['request_started_at'] ?? microtime(true))) * 1000),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
     $acceptEncoding = strtolower((string)($_SERVER['HTTP_ACCEPT_ENCODING'] ?? ''));
     if (strlen($json) >= 1024 && str_contains($acceptEncoding, 'gzip') && function_exists('gzencode')) {
@@ -251,12 +280,14 @@ function should_use_secure_session_cookie(): bool
     return env_bool('SESSION_COOKIE_SECURE', is_https_request()) && is_https_request();
 }
 
-function initialize_session(string $root): void
+function initialize_session(string $root, bool $readOnly = false): void
 {
     $ttlSeconds = env_int('SESSION_TTL_SECONDS', 3600, 300, 86400);
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
     ini_set('session.gc_maxlifetime', (string)$ttlSeconds);
+    // Expired rows are cleaned by deploy/maintenance jobs, not random GETs.
+    ini_set('session.gc_probability', '0');
     session_name(env_value('SESSION_COOKIE_NAME', 'ftc_session'));
 
     $driver = strtolower(is_local_request()
@@ -287,7 +318,7 @@ function initialize_session(string $root): void
         'samesite' => 'Lax',
         'secure' => should_use_secure_session_cookie(),
     ]);
-    session_start();
+    session_start($readOnly ? ['read_and_close' => true] : []);
 }
 
 function is_root_iam_callback(string $resource, string $method): bool
@@ -303,7 +334,10 @@ $requiresSession = api_resource_requires_session($resource) || $resource === 'de
 
 if ($requiresSession) {
     try {
-        initialize_session($root);
+        $readOnlySession = $method === 'GET'
+            && !is_root_iam_callback($resource, $method)
+            && $resource !== 'dev';
+        initialize_session($root, $readOnlySession);
     } catch (Throwable $exception) {
         report_exception($exception, 'session-start');
         fail(500, 'session-error', 'Unable to initialize the application session.');
@@ -421,7 +455,7 @@ function require_user(): array
         fail(401, 'auth/unauthenticated', 'You must sign in first.');
     }
 
-    $user = $userId ? find_user_by_id($userId) : find_user((string)$email);
+    $user = $userId ? find_user_by_id($userId, true) : find_user((string)$email, true);
     if (!$user) {
         if (dev_bypass_enabled()) {
             return mock_bypass_user();
@@ -502,19 +536,25 @@ const USER_COLUMNS = 'user_id, email, display_name, role, last_login_at, iam_pro
     is_terminated, termination_date, termination_reason, unit_id, unit_code, unit_name,
     region_code, dashboard_region, region_id, employee_source,
     employee_seed_batch, employee_synced_at, created_at, updated_at';
+const AUTH_USER_COLUMNS = 'user_id, email, display_name, role, last_login_at,
+    employee_id, job_title, training_start_date, training_end_date, class_code,
+    is_terminated, termination_date, termination_reason, unit_id, unit_code, unit_name,
+    region_code, dashboard_region, region_id, created_at, updated_at';
 const LOGIN_LOG_COLUMNS = 'id, created_at, event_type, user_id, employee_id, display_name, email, role, iam_subject, ip_address, user_agent, session_id_hash';
 
-function find_user(string $email): ?array
+function find_user(string $email, bool $authorizationOnly = false): ?array
 {
-    $stmt = db()->prepare('SELECT ' . USER_COLUMNS . ' FROM users WHERE email = :email');
+    $columns = $authorizationOnly ? AUTH_USER_COLUMNS : USER_COLUMNS;
+    $stmt = db()->prepare('SELECT ' . $columns . ' FROM users WHERE email = :email');
     $stmt->execute(['email' => normalize_email($email)]);
     $row = $stmt->fetch();
     return $row ?: null;
 }
 
-function find_user_by_id(string $userId): ?array
+function find_user_by_id(string $userId, bool $authorizationOnly = false): ?array
 {
-    $stmt = db()->prepare('SELECT ' . USER_COLUMNS . ' FROM users WHERE user_id = :user_id');
+    $columns = $authorizationOnly ? AUTH_USER_COLUMNS : USER_COLUMNS;
+    $stmt = db()->prepare('SELECT ' . $columns . ' FROM users WHERE user_id = :user_id');
     $stmt->execute(['user_id' => $userId]);
     $row = $stmt->fetch();
     return $row ?: null;
@@ -825,9 +865,9 @@ function handle_auth(array $segments, string $method): void
         if (is_dev_bypass_session()) {
             $user = mock_bypass_user();
         } elseif (current_user_id()) {
-            $user = find_user_by_id((string)current_user_id());
+            $user = find_user_by_id((string)current_user_id(), true);
         } elseif (current_email()) {
-            $user = find_user((string)current_email());
+            $user = find_user((string)current_email(), true);
         }
         if ($user && database_boolean($user['is_terminated'] ?? false)) {
             unset($_SESSION['user_id'], $_SESSION['user_email'], $_SESSION['iam_subject']);
@@ -2599,7 +2639,10 @@ function handle_learning(array $segments, string $method): void
     $user = require_user();
     $action = $segments[1] ?? '';
     if ($action === 'catalog' && $method === 'GET') {
-        respond(['devices' => training_class_learning_catalog(db(), $user)]);
+        respond_private_cache(
+            ['devices' => training_class_learning_catalog(db(), $user)],
+            env_int('LEARNING_CATALOG_CACHE_SECONDS', 21600, 300, 86400)
+        );
     }
     if (($action === 'personal-dashboard' || $action === 'me' || $action === 'progress') && $method === 'GET') {
         respond(['data' => training_class_personal_dashboard_payload(db(), $user)]);
@@ -2633,33 +2676,8 @@ function handle_dashboard(array $segments, string $method): void
         try {
             $version = $pdo->query(
                 <<<'SQL'
-                SELECT CONCAT(
-                           TO_CHAR(
-                               GREATEST(
-                                   COALESCE((SELECT MAX(updated_at) FROM users), 'epoch'::timestamptz),
-                                   COALESCE((SELECT MAX(updated_at) FROM timer_sessions), 'epoch'::timestamptz),
-                                   COALESCE((SELECT MAX(updated_at) FROM firebase_legacy_import_events), 'epoch'::timestamptz),
-                                   COALESCE((SELECT MAX(updated_at) FROM regions), 'epoch'::timestamptz),
-                                   COALESCE((SELECT MAX(updated_at) FROM org_units), 'epoch'::timestamptz),
-                                   COALESCE((SELECT MAX(updated_at) FROM device_catalog), 'epoch'::timestamptz),
-                                   COALESCE((SELECT MAX(updated_at) FROM lab_catalog), 'epoch'::timestamptz),
-                                   COALESCE((SELECT MAX(updated_at) FROM training_classes), 'epoch'::timestamptz),
-                                   COALESCE((SELECT MAX(updated_at) FROM class_enrollments), 'epoch'::timestamptz),
-                                    COALESCE((SELECT MAX(updated_at) FROM class_lab_assignments), 'epoch'::timestamptz),
-                                    COALESCE((SELECT MAX(updated_at) FROM lab_assignments), 'epoch'::timestamptz),
-                                    COALESCE((SELECT MAX(linked_at) FROM timer_session_assignment_links), 'epoch'::timestamptz)
-                               ),
-                               'YYYYMMDDHH24MISS.US'
-                           ),
-                           ':', (SELECT COUNT(*) FROM users),
-                           ':', (SELECT COUNT(*) FROM timer_sessions),
-                           ':', (SELECT COUNT(*) FROM regions),
-                           ':', (SELECT COUNT(*) FROM org_units),
-                           ':', (SELECT COUNT(*) FROM training_classes),
-                           ':', (SELECT COUNT(*) FROM class_enrollments),
-                           ':', (SELECT COUNT(*) FROM lab_assignments),
-                           ':', (SELECT COUNT(*) FROM timer_session_assignment_links)
-                       )
+                SELECT last_value::text
+                  FROM dashboard_revision_seq
                 SQL
             )->fetchColumn();
             respond(['data' => ['data_version' => is_string($version) ? $version : '']]);
@@ -2669,18 +2687,107 @@ function handle_dashboard(array $segments, string $method): void
         }
     }
 
+    if ($action === 'catalog') {
+        $pdo = db();
+        $technicians = $pdo->query(
+            <<<'SQL'
+            SELECT user_id, employee_id, email, display_name, class_code, job_title,
+                   unit_id, unit_code, unit_name, region_id, region_code, region_name,
+                   dashboard_region, dashboard_group, branch_name, location_assigned,
+                   is_terminated, updated_at
+              FROM v_ktv_directory
+             WHERE is_terminated = FALSE
+             ORDER BY display_name NULLS LAST, email
+            SQL
+        )->fetchAll();
+        $catalogRows = $pdo->query(
+            <<<'SQL'
+            SELECT device.device_id, device.model, device.device_name,
+                   lab.lab_id, lab.lab_name
+              FROM device_catalog device
+              LEFT JOIN lab_catalog lab
+                ON lab.device_id = device.device_id AND lab.is_active = TRUE
+             WHERE device.is_active = TRUE
+             ORDER BY device.sort_order, device.device_name, lab.sort_order, lab.lab_name
+            SQL
+        )->fetchAll();
+        $devices = [];
+        $labs = [];
+        foreach ($catalogRows as $row) {
+            $deviceId = (string)$row['device_id'];
+            $devices[$deviceId] = [
+                'device_id' => $deviceId,
+                'model' => (string)($row['model'] ?? ''),
+                'device_name' => (string)$row['device_name'],
+            ];
+            if (!empty($row['lab_id'])) {
+                $labs[(string)$row['lab_id']] = [
+                    'lab_id' => (string)$row['lab_id'],
+                    'lab_name' => (string)$row['lab_name'],
+                    'device_id' => $deviceId,
+                ];
+            }
+        }
+        respond_private_cache(['data' => [
+            'technicians' => array_values($technicians),
+            'devices' => array_values($devices),
+            'labs' => array_values($labs),
+        ]], env_int('DASHBOARD_CATALOG_CACHE_SECONDS', 21600, 300, 86400));
+    }
+
     if ($action !== 'all') {
         fail(404, 'not-found', 'Dashboard endpoint not found.');
     }
 
+    $dateFrom = trim((string)($_GET['from'] ?? ''));
+    $dateTo = trim((string)($_GET['to'] ?? ''));
+    $validDate = static function (string $value): bool {
+        $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        return $parsed instanceof DateTimeImmutable && $parsed->format('Y-m-d') === $value;
+    };
+    if (!$validDate($dateFrom) || !$validDate($dateTo)) {
+        fail(400, 'dashboard-range-required', 'Dashboard detail requires valid from and to dates.');
+    }
+    $rangeStart = new DateTimeImmutable($dateFrom);
+    $rangeEnd = new DateTimeImmutable($dateTo);
+    $maxRangeDays = env_int('DASHBOARD_MAX_RANGE_DAYS', 366, 1, 3660);
+    if ($rangeEnd < $rangeStart || (int)$rangeStart->diff($rangeEnd)->format('%a') + 1 > $maxRangeDays) {
+        fail(400, 'dashboard-range-invalid', 'Dashboard detail date range is invalid or too large.');
+    }
+    $sessionLimit = query_limit(
+        env_int('DASHBOARD_SESSION_PAGE_SIZE', 500, 50, 1000),
+        1000
+    );
+    $sessionCursor = decode_cursor(isset($_GET['cursor']) ? (string)$_GET['cursor'] : null);
+    $includeSessions = !array_key_exists('include_sessions', $_GET)
+        || filter_var($_GET['include_sessions'], FILTER_VALIDATE_BOOLEAN);
+
     $pdo = db();
     try {
-        $userLookupRows = $pdo->query(
-            'SELECT user_id, employee_id, email, display_name, class_code, job_title,
-                    unit_code, unit_name, region_id, region_code, region_name,
-                    dashboard_region, dashboard_group, branch_name, is_terminated
-               FROM v_ktv_directory'
-        )->fetchAll();
+        $userLookupRows = [];
+        if ($includeSessions) {
+            $userLookupStatement = $pdo->prepare(
+            'SELECT directory.user_id, directory.employee_id, directory.email, directory.display_name,
+                    directory.class_code, directory.job_title, directory.unit_code, directory.unit_name,
+                    directory.region_id, directory.region_code, directory.region_name,
+                    directory.dashboard_region, directory.dashboard_group, directory.branch_name,
+                    directory.is_terminated
+               FROM v_ktv_directory directory
+              WHERE EXISTS (
+                    SELECT 1
+                      FROM timer_sessions timer
+                     WHERE COALESCE(timer.started_at, timer.finished_at) >= :lookup_from
+                       AND COALESCE(timer.started_at, timer.finished_at) < (:lookup_to::date + INTERVAL \'1 day\')
+                       AND (
+                           timer.user_id = directory.user_id
+                           OR (NULLIF(timer.email, \'\') IS NOT NULL AND LOWER(timer.email) = LOWER(directory.email))
+                           OR (NULLIF(timer.technician_id, \'\') IS NOT NULL AND timer.technician_id = directory.employee_id)
+                       )
+              )'
+        );
+            $userLookupStatement->execute(['lookup_from' => $dateFrom, 'lookup_to' => $dateTo]);
+            $userLookupRows = $userLookupStatement->fetchAll();
+        }
 
         $userByUserId = [];
         $userByEmployeeId = [];
@@ -2695,7 +2802,11 @@ function handle_dashboard(array $segments, string $method): void
         }
         unset($userLookupRows);
 
-        $timerSql = 'SELECT
+        $rows = [];
+        $hasMoreSessions = false;
+        $nextSessionCursor = null;
+        if ($includeSessions) {
+            $timerSql = 'SELECT
                     timer.id AS session_id,
                     timer.user_id,
                     timer.technician_id,
@@ -2770,17 +2881,16 @@ function handle_dashboard(array $segments, string $method): void
             'bypass_email_dev'   => 'dev-bypass@ftc.local',
         ];
 
-        $dateFrom = trim((string)($_GET['from'] ?? ''));
-        $dateTo   = trim((string)($_GET['to'] ?? ''));
-        if ($dateFrom !== '') {
-            $timerSql .= ' AND COALESCE(timer.started_at, timer.finished_at) >= :date_from';
-            $timerParams['date_from'] = $dateFrom . 'T00:00:00+07:00';
+        $timerSql .= ' AND COALESCE(timer.started_at, timer.finished_at) >= :date_from';
+        $timerSql .= ' AND COALESCE(timer.started_at, timer.finished_at) < (:date_to::date + INTERVAL \'1 day\')';
+        $timerParams['date_from'] = $dateFrom . 'T00:00:00+07:00';
+        $timerParams['date_to'] = $dateTo;
+        if (isset($sessionCursor['started_at'], $sessionCursor['session_id'])) {
+            $timerSql .= ' AND (COALESCE(timer.started_at, timer.finished_at), timer.id) < (:cursor_started_at, CAST(:cursor_session_id AS BIGINT))';
+            $timerParams['cursor_started_at'] = (string)$sessionCursor['started_at'];
+            $timerParams['cursor_session_id'] = (string)$sessionCursor['session_id'];
         }
-        if ($dateTo !== '') {
-            $timerSql .= ' AND COALESCE(timer.started_at, timer.finished_at) < (:date_to::date + INTERVAL \'1 day\')';
-            $timerParams['date_to'] = $dateTo;
-        }
-        $timerSql .= ' ORDER BY COALESCE(timer.started_at, timer.finished_at) DESC';
+        $timerSql .= ' ORDER BY COALESCE(timer.started_at, timer.finished_at) DESC, timer.id DESC LIMIT ' . ($sessionLimit + 1);
 
         $timerStmt = $pdo->prepare($timerSql);
         foreach ($timerParams as $k => $v) {
@@ -2788,6 +2898,18 @@ function handle_dashboard(array $segments, string $method): void
         }
         $timerStmt->execute();
         $rows = $timerStmt->fetchAll();
+        $hasMoreSessions = count($rows) > $sessionLimit;
+        if ($hasMoreSessions) {
+            array_pop($rows);
+        }
+        $lastSessionRow = $rows ? $rows[array_key_last($rows)] : null;
+            $nextSessionCursor = $hasMoreSessions && $lastSessionRow
+                ? encode_cursor([
+                    'started_at' => (string)$lastSessionRow['started_at'],
+                    'session_id' => (string)$lastSessionRow['session_id'],
+                ])
+                : null;
+        }
 
         $resolveRoster = function (?array $tRow) use ($userByUserId, $userByEmployeeId, $userByEmail): ?array {
             $uid = (string)($tRow['user_id'] ?? '');
@@ -2799,7 +2921,9 @@ function handle_dashboard(array $segments, string $method): void
             return null;
         };
 
-        $technicianRows = $pdo
+        $includeCatalog = array_key_exists('include_catalog', $_GET)
+            && filter_var($_GET['include_catalog'], FILTER_VALIDATE_BOOLEAN);
+        $technicianRows = $includeCatalog ? $pdo
             ->query(
                 <<<'SQL'
                 SELECT directory.*,
@@ -2824,9 +2948,9 @@ function handle_dashboard(array $segments, string $method): void
                            directory.display_name NULLS LAST, directory.email
                 SQL
             )
-            ->fetchAll();
+            ->fetchAll() : [];
 
-        $firebaseFtcRows = $pdo->query(
+        $firebaseFtcRows = $includeCatalog ? $pdo->query(
             <<<'SQL'
             SELECT LOWER(event.normalized_email) AS email,
                    MAX(NULLIF(timer.name, '')) AS display_name
@@ -2845,7 +2969,7 @@ function handle_dashboard(array $segments, string $method): void
              GROUP BY LOWER(event.normalized_email)
              ORDER BY LOWER(event.normalized_email)
             SQL
-        )->fetchAll();
+        )->fetchAll() : [];
         foreach ($firebaseFtcRows as $firebaseFtcRow) {
             $technicianRows[] = [
                 'user_id' => null,
@@ -2890,7 +3014,7 @@ function handle_dashboard(array $segments, string $method): void
     $deviceById = [];
     $labMap = [];
     try {
-        $catalogRows = $pdo
+        $catalogRows = ($includeCatalog ?? false) ? $pdo
             ->query(
                 'SELECT d.device_id, d.model, d.device_name, d.sort_order AS device_sort_order,
                         l.lab_id, l.lab_name, l.sort_order AS lab_sort_order
@@ -2900,7 +3024,7 @@ function handle_dashboard(array $segments, string $method): void
                  ORDER BY d.sort_order, d.device_name, d.device_id,
                           l.sort_order, l.lab_name, l.lab_id'
             )
-            ->fetchAll();
+            ->fetchAll() : [];
         foreach ($catalogRows as $row) {
             $deviceName = (string)($row['device_name'] ?? '');
             if ($deviceName !== '' && !isset($deviceMap[$deviceName])) {
@@ -2964,8 +3088,8 @@ function handle_dashboard(array $segments, string $method): void
     $assignments = [];
     $classMemberships = [];
     $assignmentsAvailable = true;
-    $includeAssignments = !array_key_exists('include_assignments', $_GET)
-        || filter_var($_GET['include_assignments'], FILTER_VALIDATE_BOOLEAN);
+    $includeAssignments = array_key_exists('include_assignments', $_GET)
+        && filter_var($_GET['include_assignments'], FILTER_VALIDATE_BOOLEAN);
     if ($includeAssignments) {
         try {
             $membershipRows = $pdo->query(
@@ -3126,7 +3250,21 @@ function handle_dashboard(array $segments, string $method): void
         'assignments' => $assignments,
         'class_memberships' => $classMemberships,
         'assignments_available' => $includeAssignments ? $assignmentsAvailable : null,
+        'session_page' => [
+            'from' => $dateFrom,
+            'to' => $dateTo,
+            'limit' => $sessionLimit,
+            'has_more' => $hasMoreSessions,
+            'next_cursor' => $nextSessionCursor,
+        ],
     ]]);
+}
+
+function respond_private_cache(array $payload, int $maxAge = 21600): void
+{
+    header_remove('Cache-Control');
+    header('Cache-Control: private, max-age=' . $maxAge . ', stale-while-revalidate=86400');
+    respond($payload);
 }
 
 try {

@@ -3501,7 +3501,7 @@
     "IP_MAC_NUM": "1024"
    },
    "inputs": {
-    "sIpBndMacEnable": "1",
+    "sIpBndMacEnable": "0",
     "sIpBndMacStrict": 0,
     "sMacLearnEnable": 0,
     "sNotReset": "0",
@@ -38281,13 +38281,27 @@
  },
  "_post_gan_nhat": {
   "/cgi-bin/wan.cgi": {
-   "sltTime": "60000",
-   "iInetWanIdx": "6",
-   "showdetail": "1",
-   "fid": "107",
+   "enchkwan0": "1",
+   "ldbchken0": "1",
+   "enchkwan1": "1",
+   "ldbchken1": "1",
+   "enchkwan4": "1",
+   "ldbchken4": "1",
+   "enchkwan5": "1",
+   "ldbchken5": "1",
+   "iBwLBBased": "1",
+   "iBwLBMode": "0",
+   "inBwLW": "1",
+   "weightupbar": "2",
+   "weightdwbar": "2",
+   "weightlaybar": "2",
+   "weightjittebar": "2",
+   "weightlespktbar": "2",
+   "fid": "102",
+   "iInetWanIdx": "1",
    "webchange": "1",
-   "resetflag": "0",
-   "idxclear": "0",
+   "wan2tolan": "0",
+   "tosetvlan": "0",
    "sFormAuthStr": "K8sEXFc1TfxSlPA"
   },
   "/cgi-bin/v2x00.cgi": {

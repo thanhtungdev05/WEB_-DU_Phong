@@ -79,8 +79,8 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
     },
     {
       "selector": "button.alternative-layout--submit, .formActionButton.submit, body:has(input[name=\"ipv4Settings.pppoe.username\"]) button.alternative-layout--submit",
-      "text": "Bước 3 chọn Save để lưu cấu hình nút Save chiếu vào Nút nộp bài hoặc nút Xem lỗi sai",
-      "position": "right"
+      "text": "Bước 3 chọn Save để lưu cấu hình",
+      "position": "bottom"
     }
   ]
 });

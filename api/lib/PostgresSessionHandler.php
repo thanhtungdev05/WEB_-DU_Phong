@@ -5,6 +5,8 @@ final class PostgresSessionHandler implements SessionHandlerInterface, SessionUp
 {
     private Closure $connectionFactory;
     private ?PDO $connection = null;
+    private ?string $validatedId = null;
+    private ?string $validatedData = null;
 
     public function __construct(callable $connectionFactory, private readonly int $ttlSeconds)
     {
@@ -23,6 +25,12 @@ final class PostgresSessionHandler implements SessionHandlerInterface, SessionUp
 
     public function read(string $id): string|false
     {
+        if ($this->validatedId === $id && $this->validatedData !== null) {
+            $data = $this->validatedData;
+            $this->validatedId = null;
+            $this->validatedData = null;
+            return $data;
+        }
         $stmt = $this->db()->prepare(
             'SELECT data FROM app_sessions WHERE session_id_hash = :session_id_hash AND expires_at > NOW()'
         );
@@ -51,10 +59,16 @@ final class PostgresSessionHandler implements SessionHandlerInterface, SessionUp
     public function validateId(string $id): bool
     {
         $stmt = $this->db()->prepare(
-            'SELECT 1 FROM app_sessions WHERE session_id_hash = :session_id_hash AND expires_at > NOW()'
+            'SELECT data FROM app_sessions WHERE session_id_hash = :session_id_hash AND expires_at > NOW()'
         );
         $stmt->execute(['session_id_hash' => $this->hashId($id)]);
-        return $stmt->fetchColumn() !== false;
+        $value = $stmt->fetchColumn();
+        if ($value === false) {
+            return false;
+        }
+        $this->validatedId = $id;
+        $this->validatedData = (string)$value;
+        return true;
     }
 
     public function updateTimestamp(string $id, string $data): bool

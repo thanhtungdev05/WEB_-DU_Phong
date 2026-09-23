@@ -124,6 +124,8 @@ const state = {
     dashboardDataLoaded: false,
     dashboardReportStatus: 'loading',
     lastSuccessfulRefreshAt: null,
+    sessionHistoryDays: null,
+    sessionHistoryFrom: '',
 
     // Roster (Quản lý KTV) — Admin
     rosterTab: 'list',
@@ -1130,7 +1132,12 @@ function renderLearnerDetail(rows) {
     const practiceSessionsCount = allLearnerRows.filter(item => item.mode === 'Thực hành').length;
 
     if (els.learnerDetailTitle) els.learnerDetailTitle.textContent = getLearnerName(state.selectedLearner);
-    if (els.learnerDetailSubtitle) els.learnerDetailSubtitle.textContent = `${allLearnerRows[0]?.region || getLearnerRegion(state.selectedLearner)} • ${state.selectedLearner} • ${allLearnerRows.length} phiên hoạt động trong toàn bộ lịch sử.`;
+    if (els.learnerDetailSubtitle) {
+        const historyScope = state.sessionHistoryDays
+            ? `${state.sessionHistoryDays} ngày gần nhất`
+            : 'phạm vi dữ liệu hiện có';
+        els.learnerDetailSubtitle.textContent = `${allLearnerRows[0]?.region || getLearnerRegion(state.selectedLearner)} • ${state.selectedLearner} • ${allLearnerRows.length} phiên hoạt động trong ${historyScope}.`;
+    }
     if (els.detailTotalSessions) els.detailTotalSessions.textContent = allLearnerRows.length;
     if (els.detailTotalSessionsSub) {
         els.detailTotalSessionsSub.innerHTML = `
@@ -2621,12 +2628,13 @@ function setDashboardLoading(visible, message = '') {
     document.getElementById('appPage')?.setAttribute('aria-busy', String(visible));
 }
 
-let dashboardPollTimer = null;
 let dashboardRefreshInFlight = false;
 let lastDashboardSignature = '';
 let lastDashboardVersion = '';
 let dashboardReportRequestSequence = 0;
-const DASHBOARD_POLL_INTERVAL_MS = 30000;
+// Stay above Neon's default five-minute idle window so an unattended browser
+// does not keep serverless compute awake. Manual refresh and tab focus remain
+// available when fresher data is needed.
 
 function dashboardReportQuery() {
     const periods = getKpiComparisonPeriods();
@@ -2652,6 +2660,26 @@ async function fetchDashboardVersion() {
     if (!response.ok) throw new Error(`API phiên bản dashboard trả về HTTP ${response.status}`);
     const payload = await response.json();
     return String(payload.data?.data_version || '');
+}
+
+async function fetchDashboardCatalog() {
+    const cacheKey = 'ftc-dashboard-catalog-v1';
+    const maxAgeMs = 6 * 60 * 60 * 1000;
+    try {
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+        if (cached?.savedAt && Date.now() - cached.savedAt < maxAgeMs && cached.data) return cached.data;
+    } catch (_error) {
+        // HTTP caching remains available when localStorage is disabled.
+    }
+    const response = await fetch(`${API_BASE_URL}/dashboard/catalog`, { cache: 'force-cache' });
+    if (!response.ok) throw new Error(`API danh mục dashboard trả về HTTP ${response.status}`);
+    const data = (await response.json()).data || {};
+    try {
+        localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data }));
+    } catch (_error) {
+        // Catalog loading must not fail because browser storage is unavailable.
+    }
+    return data;
 }
 
 async function reloadDashboardReport() {
@@ -2705,11 +2733,12 @@ function buildDashboardSignature(data) {
 
 async function fetchDashboardData(versionHint = '') {
     const allParams = new URLSearchParams();
-    // Assignment rows are required by class reports and KTV detail metrics.
-    // Once loaded, refresh them together with the rest of the dashboard data.
-    const assignmentsRequested = state.assignmentsLoaded
-        || ['instructors', 'class_matrix', 'analytics', 'technicians'].includes(activeDashboardView);
-    allParams.set('include_assignments', assignmentsRequested ? '1' : '0');
+    const periods = getKpiComparisonPeriods();
+    const assignmentsRequested = false;
+    allParams.set('from', periods.currentStart);
+    allParams.set('to', periods.currentEnd);
+    allParams.set('limit', '500');
+    allParams.set('include_assignments', '0');
     const reportRequest = fetch(`${API_BASE_URL}/dashboard/report?${dashboardReportQuery()}`).then(async response => {
         if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
         return (await response.json()).data || null;
@@ -2717,11 +2746,14 @@ async function fetchDashboardData(versionHint = '') {
     const versionRequest = versionHint
         ? Promise.resolve(versionHint)
         : fetchDashboardVersion();
+    const dashboardCatalogRequest = fetchDashboardCatalog();
     const regionCatalogPromise = fetchAndBuildRegionCatalog();
     const optionalRequests = Promise.allSettled([reportRequest, versionRequest]);
     const response = await fetch(`${API_BASE_URL}/dashboard/all?${allParams}`);
     if (!response.ok) throw new Error(`API dữ liệu chi tiết trả về HTTP ${response.status}`);
-    const [payload, [reportResult, versionResult]] = await Promise.all([response.json(), optionalRequests]);
+    const [payload, catalogData, [reportResult, versionResult]] = await Promise.all([
+        response.json(), dashboardCatalogRequest, optionalRequests
+    ]);
     const data = payload.data || {};
     if (assignmentsRequested && data.assignments_available !== true) {
         throw new Error('Dữ liệu phân lớp hiện không khả dụng.');
@@ -2732,20 +2764,20 @@ async function fetchDashboardData(versionHint = '') {
     if (reportResult.status === 'rejected') console.warn('Không đồng bộ được báo cáo tổng hợp; giữ dữ liệu gần nhất.', reportResult.reason);
     if (versionResult.status === 'rejected') console.warn('Không đọc được phiên bản dữ liệu dashboard.', versionResult.reason);
     await regionCatalogPromise;
-    const techniciansAuthoritative = Array.isArray(data.technicians);
-    const technicians = normalizeTechnicianCatalog(techniciansAuthoritative ? data.technicians : []);
+    const techniciansAuthoritative = Array.isArray(catalogData.technicians);
+    const technicians = normalizeTechnicianCatalog(techniciansAuthoritative ? catalogData.technicians : []);
     technicianCatalog = technicians;
     technicianCatalogAuthoritative = techniciansAuthoritative;
     rebuildTechnicianIndex();
-    const activeLabIds = new Set((data.labs || []).map(item => String(item.lab_id || '')).filter(Boolean));
+    const activeLabIds = new Set((catalogData.labs || []).map(item => String(item.lab_id || '')).filter(Boolean));
     const mappedSessions = mapApiSessions(data.sessions || []).filter(item => (
         activeLabIds.has(String(item.labId || ''))
         && (!isPracticeSession(item) || isRecordedPracticeSession(item))
     ));
     return {
         sessions: mappedSessions,
-        deviceCatalog: (Array.isArray(data.devices) && Array.isArray(data.labs))
-            ? buildDeviceCatalog(data.devices, data.labs)
+        deviceCatalog: (Array.isArray(catalogData.devices) && Array.isArray(catalogData.labs))
+            ? buildDeviceCatalog(catalogData.devices, catalogData.labs)
             : [],
         technicians,
         techniciansAuthoritative,
@@ -2756,6 +2788,8 @@ async function fetchDashboardData(versionHint = '') {
         report,
         reportStatus,
         version,
+        sessionHistoryDays: Number(data.session_history_days) || null,
+        sessionHistoryFrom: String(data.session_history_from || ''),
         raw: { ...data, data_version: version, report_meta: report?.meta || null }
     };
 }
@@ -2771,6 +2805,8 @@ function applyDashboardData(data) {
     }
     if (data.report !== undefined) dashboardReport = data.report;
     state.dashboardReportStatus = data.reportStatus || (dashboardReport ? 'ready' : 'unavailable');
+    state.sessionHistoryDays = data.sessionHistoryDays;
+    state.sessionHistoryFrom = data.sessionHistoryFrom;
     technicianCatalogAuthoritative = Boolean(data.techniciansAuthoritative);
     state.dashboardDataLoaded = true;
     normalizeSessionDeviceNames();
@@ -2947,11 +2983,6 @@ async function refreshDashboardData({ force = false, announce = false } = {}) {
     }
 }
 
-function startDashboardPolling() {
-    if (dashboardPollTimer) return;
-    dashboardPollTimer = setInterval(refreshDashboardData, DASHBOARD_POLL_INTERVAL_MS);
-}
-
 async function loadDashboardFromApi() {
     if (dashboardLoadRequest) return dashboardLoadRequest;
     dashboardLoadRequest = (async () => {
@@ -3004,7 +3035,6 @@ async function loadDashboardFromApi() {
         } finally {
             setDashboardLoading(false);
             dashboardLoadRequest = null;
-            startDashboardPolling();
         }
     })();
     return dashboardLoadRequest;
@@ -6655,7 +6685,15 @@ function getReportExportPreview(type) {
 
 async function ensureTrainingAssignmentsLoaded({ force = false } = {}) {
     if (state.assignmentsLoaded && !force) return trainingAssignments;
-    const response = await fetch(`${API_BASE_URL}/dashboard/all?include_assignments=1`);
+    const periods = getKpiComparisonPeriods();
+    const query = new URLSearchParams({
+        from: periods.currentStart,
+        to: periods.currentEnd,
+        limit: '50',
+        include_sessions: '0',
+        include_assignments: '1'
+    });
+    const response = await fetch(`${API_BASE_URL}/dashboard/all?${query}`);
     if (!response.ok) throw new Error(`API tiến độ lớp trả về HTTP ${response.status}`);
     const payload = await response.json();
     const data = payload.data || {};
@@ -7492,7 +7530,7 @@ function initDashboardExperience() {
             showToast(succeeded ? 'Dashboard đã được cập nhật.' : 'Không thể tải dữ liệu dashboard.', succeeded ? 'success' : 'error');
             return;
         }
-        await refreshDashboardData({ force: true, announce: true });
+        window.location.reload();
     });
 
     window.addEventListener('offline', () => {
@@ -7501,14 +7539,7 @@ function initDashboardExperience() {
             : 'Thiết bị đang ngoại tuyến');
     });
     window.addEventListener('online', () => {
-        setDashboardSyncState('syncing', 'Đã có kết nối, đang đồng bộ lại');
-        if (activeDashboardView === 'roster') loadRosterList();
-        else if (activeDashboardView === 'classes') loadTrainingClasses();
-        else if (state.dashboardDataLoaded) refreshDashboardData({ force: true });
-        else if (state.isAdmin) loadDashboardFromApi();
-    });
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && state.dashboardDataLoaded && !['roster', 'classes'].includes(activeDashboardView)) refreshDashboardData();
+        setDashboardSyncState('ready', 'Tải lại trang để nhận dữ liệu mới');
     });
 }
 

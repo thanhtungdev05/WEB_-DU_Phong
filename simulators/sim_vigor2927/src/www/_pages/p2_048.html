@@ -1,0 +1,157 @@
+<!DOCTYPE html><html ng-app=myApp ng-controller=TranslateCtrl><head><script src="/js/gettext.min.js?094907"></script><meta / charset=UTF-8><link href="/style.min.css?094907" rel=stylesheet type=text/css><script src="/js/dhtml.min.js?094907"></script><script src="/js/webchange.js?094907"></script></head><body class=ng-cloak><table align=center border=0 cellpadding=0 cellspacing=0 ng-style="{'width': b_ssid_bridge && bDualWless5G ? '1260px' : '800px', 'width': bWless ? '1010px' : '800px', 'width': iWan1IsXdsl && bWless ? '1010px' : '700px'}"><tr><td colspan=2><div ng-if=SHOW_MENU_WAN><b parent="WAN" qslink=https://www.draytek.com/router-help-redirect?stk_title=WAN&nd_title=Multi-VLAN sub-title></b><b ng-if=iWan1IsXdsl translate>Multi-PVC/VLAN</b><b ng-if=!iWan1IsXdsl translate>Multi-VLAN</b></div><hr><form name=frm1><table align=center border=0 cellpadding=2 cellspacing=0 width=100%><tr><th class=offtab id=tab1 onClick=dhtml.cycleTab(this.id) translate width=175px>General</th><th class=offtab id=tab2 ng-if=iWan1IsXdsl onClick=dhtml.cycleTab(this.id) translate width=175px>Advanced</th><th class=tabpadding>&nbsp;</th></tr></table><div class=pagetext id=page1><table align=center border=1 cellpadding=2 cellspacing=0 width=100%><tr><td><table border=0 cellpadding=2 cellspacing=0 class=table-striped width=100%><thead><tr align=center><th align=left translate width=12%>Channel</th><th translate>Enable</th><th translate width=16%>WAN Type</th><th ng-if=iWan1IsXdsl translate width=8%>VPI/VCI</th><th nowrap translate>VLAN Tag</th><th translate>Port-based Bridge</th><th ng-if=ssid24g translate width=25%>Wireless LAN(2.4GHz)</th><th ng-if=ssid5g translate width=25%>Wireless LAN(5GHz)</th></tr></thead><tbody><tr ng-hide="(i >= hide_wan && i < set_start)" ng-init="i = $index" ng-repeat="ch in wanInfo"><td align=left nowrap> <a ng-click="(i < set_start) ? false : setPVCWAN(i+1)" ng-href="{{ (i < set_start) ? '' : '#' }}">{{i+1}}.</a>&nbsp;&nbsp;{{ch.text}} </td><td align=center><span ng-show="ch.isCheckBox"><input name=enbchk{{i}} ng-checked=ch.enable onclick=enbchk(this) type=checkbox value=1></span><span ng-show="!ch.isCheckBox">{{ch.isWan4}}</span></td><td align=center nowrap>{{ch.wanType}}</td><td align=center ng-if=iWan1IsXdsl>{{ch.vpivci}}</td><td align=center>{{ch.vlanTag}}</td><td align=center nowrap><div ng-show="i >= hide_wan"><input name=iPtBrgEn{{i}} onclick=enableBridge(this) type=checkbox value=1>Enable&nbsp; <span ng-repeat="j in [].constructor(iMaxLanPt) track by $index" ng-init="j = $index+1"><input name=iP{{j}}BrgEn{{i}} onclick=columnCheck(this) type=checkbox value=1>P{{j}} </span></div></td><td ng-show="i > 1 && ssid24g" nowrap><input name=iS1BrgEn{{i}} onclick=columnCheck(this) type=checkbox value=1>SSID1 <input name=iS2BrgEn{{i}} onclick=columnCheck(this) type=checkbox value=1>SSID2 <input name=iS3BrgEn{{i}} onclick=columnCheck(this) type=checkbox value=1>SSID3 <input name=iS4BrgEn{{i}} onclick=columnCheck(this) type=checkbox value=1>SSID4 </td><td ng-show="!(i > 1 && ssid24g)" nowrap></td><td ng-show="i > 1 && ssid5g" nowrap><input name=iS5BrgEn{{i}} onclick=columnCheck(this) type=checkbox value=1>SSID1 <input name=iS6BrgEn{{i}} onclick=columnCheck(this) type=checkbox value=1>SSID2 <input name=iS7BrgEn{{i}} onclick=columnCheck(this) type=checkbox value=1>SSID3 <input name=iS8BrgEn{{i}} onclick=columnCheck(this) type=checkbox value=1>SSID4 </td><td ng-show="!(i > 1 && ssid5g)" nowrap></td></tr></tbody></table></td></tr></table><br><b translate>Note</b>: <ol><li translate>Greyed out or hidden WANs are reserved.</li><li class=link_note translate>Ports configured for bridge mode cannot be selected in <a>LAN &gt;&gt; VLAN</a> Configuration.</li></ol></div><div class=pagetext id=page2><table align=center border=1 cellpadding=2 cellspacing=0 width=100%><tr><td><table border=0 cellpadding=2 cellspacing=0 class=table-striped width=100%><thead><tr><th>&nbsp;</th><th colspan=4>ATM QoS<br><hr></th><th>&nbsp;</th></tr><tr><th translate>Channel</th><th translate>QoS Type</th><th translate>PCR</th><th translate>SCR</th><th translate>MBS</th><th translate>PVC to PVC Binding</th></tr></thead><tbody><tr align=center ng-hide="(pIdx >= hide_wan && pIdx < set_start)" ng-init="pIdx = $index" ng-repeat="i in [].constructor(MAX_PVCs) track by $index"><th>{{pIdx+1}}.</th><td><select name=iQosTp{{pIdx}}></select></td><td><input maxlength=9 name=sPCR{{pIdx}} size=9 type=text></td><td><input maxlength=9 name=sSCR{{pIdx}} size=9 type=text></td><td><input maxlength=9 name=sMBS{{pIdx}} size=9 type=text></td><td><select name=sPvcRedrct{{pIdx}} onchange=onSltPvc(this)><option translate value=0>Disable</option><option ng-init="cIdx = $index+1" ng-repeat="j in [].constructor(MAX_PVCs) track by $index" ng-value=cIdx>{{cIdx}}</option></select></td></tr></tbody></table></td></tr></table><br><b translate>Note</b>: <ol><li translate>If the parameters in the ATM QoS settings are set to zero, then their default settings will be used. Also, PCR(max)=ADSL Up Speed /53/8.</li><li translate>Multiple channels may use the same ADSL channel link through the PVC Binding configuration. The PVC Binding configuration is only supported for channels using ADSL, please make sure the channel that you are binding to is using ADSL as its WAN type. The binding will work only under PPPoE and MPoA 1483 Bridge mode.</li><li class=notelink translate>###ID### are reserved for USB WAN.</li></ol></div><br><table align=center><tr><td><input name=fid type=hidden value=2561><input name=iAct type=hidden value=0><input name=iInetWanIdx type=hidden><input class=btnw name=btnOk onclick=submitParameter() type=button value="OK">&nbsp;&nbsp; <input class=btnw name=btnCcl onclick=onClkCnl() type=button value="Cancel"><input name=webchange type=hidden value=0><span ng-repeat="i in [].constructor(MAX_PVCs) track by $index"><input name=IsAdsl{{$index}} type=hidden></span></td></tr></table><br><input name=sFormAuthStr type=hidden value="ZChZ65B1x7oWVPs"></form></td></tr></table><textarea id=ssiInitZone style="display: none;">
+var sPresetModel = '2927';
+var isSupLinkAgg = 1;
+var linkAggPorts = [];
+var iWan1IsXdsl = 0;
+var bWless = parseInt('0');
+var bDualWless5G = parseInt('0');
+var b_ssid_bridge = parseInt('1');
+var bDSLgfast = parseInt('0');
+var bWAN2Dsiable = parseInt('0');
+var iMaxLanPt = 5;
+var MAX_PVCs = 16;
+var iFixWanNum = 4;
+var iUSBNum = 2;
+var set_start = iFixWanNum+iUSBNum;
+var hide_wan = bWAN2Dsiable ? 1 : 2;
+var iBwanNumber = 6; //4
+var iAllBwanNum = 9;
+
+var webvdsl2 = 0;
+var iwanbelanx = 6;
+var aryDslWanTyp = [3,4,5,6,3,3,3,3,3,3,3,3,3,3,3,3];
+var aryWANBridgeSubnetPort = [];
+var aryWANBridgeSubnetPortv6 = [];
+var aryBwanEn = ['1','1'];
+var aryWanPhyMode = [0,0,7,8,3,3];
+var aryVleEn = [0,0,0,0,0,0,0,0];
+var aryVleVid = [0,0,0,0,0,0,0,0];
+var aryBWanFlag = [
+	'135172', '135172',
+	'135172', '135172',
+	'135168', '135168',
+	'135168', '135168' ];
+//vlan Tag
+var aryBwVlanTag = [
+	'0', '0',
+	'0', '0',
+	'0', '0',
+	'0', '0' ];
+//pvc Tag
+var aryDslCfgTag = [
+					'(nil)', '(nil)',
+					'(nil)', '(nil)',
+					'(nil)', '(nil)',
+					'(nil)', '(nil)' ];
+var aryWanPhyTp = [
+				'0', '0',
+				'5', '6',
+				'4', '4',
+				'0', '0' ];
+var aryBwPtBrg = [
+				'0', '0',
+				'0', '0',
+				'0', '0',
+				'0', '0' ];
+if(MAX_PVCs == 16){
+	aryBWanFlag = aryBWanFlag.concat([
+	'135168', '135168',
+	'135168', '135168',
+	'135168', '135168',
+	'135168', '135168']);
+	aryBwVlanTag = aryBwVlanTag.concat([
+	'0', '0',
+	'0', '0',
+	'0', '0',
+	'0', '0']);
+	aryDslCfgTag = aryDslCfgTag.concat([
+	'(nil)', '(nil)',
+	'(nil)', '(nil)' ,
+	'(nil)', '(nil)' ,
+	'(nil)', '(nil)']);
+	aryWanPhyTp = aryWanPhyTp.concat([
+	'0', '0',
+	'0', '0',
+	'0', '0',
+	'0', '0']);
+	aryBwPtBrg = aryBwPtBrg.concat([
+	'0', '0',
+	'0', '0',
+	'0', '0',
+	'0', '0']);
+}else if(MAX_PVCs == 10){
+	aryBWanFlag = aryBWanFlag.concat([
+	'135168', '135168']);
+	aryBwVlanTag = aryBwVlanTag.concat([
+	'0', '0']);
+	aryDslCfgTag = aryDslCfgTag.concat([
+	'(nil)', '(nil)',]);
+	aryWanPhyTp = aryWanPhyTp.concat([
+	'0', '0']);
+	aryBwPtBrg = aryBwPtBrg.concat([
+	'0', '0']);
+}
+var saryOptn = [
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)' ];
+var saryVPI = [
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)' ];
+var saryVCI = [
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)' ];
+var saryPCR = [
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)' ];
+var sarySCR = [
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)' ];
+var saryMBS = [
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)' ];
+var saryRedrct = [
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)',
+	'(nil)', '(nil)' ];
+</textarea><script> top.ACTION_STATUS=-1;top.iActionStatusFlag='0';top.iFwUpgradeState='0';top.act_sta.damage_alert();var bg=parent;var f=document.frm1;var script=document.createElement("script");script.text=document.getElementById("ssiInitZone").value;document.head.appendChild(script);var ATMBeginIndex=5*MAX_PVCs+1;var ATMRowNum=5; var BWAN_PORT_BRIDGE_ENABLE=(1<<0);var BWAN_BRIDGE_LAN_PORT1=(1<<1);var BWAN_BRIDGE_LAN_PORT2=(1<<2);var BWAN_BRIDGE_LAN_PORT3=(1<<3);var BWAN_BRIDGE_LAN_PORT4=(1<<4);var BWAN_BRIDGE_LAN_PORT5=(1<<5);var BWAN_BRIDGE_LAN_PORT6=(1<<6);var BWAN_BRIDGE_WLAN_SSID1=(1<<8);var BWAN_BRIDGE_WLAN_SSID2=(1<<9);var BWAN_BRIDGE_WLAN_SSID3=(1<<10);var BWAN_BRIDGE_WLAN_SSID4=(1<<11);var BWAN_BRIDGE_WLAN_SSID5=(1<<12);var BWAN_BRIDGE_WLAN_SSID6=(1<<13);var BWAN_BRIDGE_WLAN_SSID7=(1<<14);var BWAN_BRIDGE_WLAN_SSID8=(1<<15);const BWAN_NEED_VLAN_TAG=(1<<9);const IF_WAN1=3,IF_WAN2=4,IF_WAN3=5,IF_WAN4=6; var arrPvcTag,arrVlanTag;if(webvdsl2)var aryStrWanMode=["Ethernet","ADSL","Fiber","USB","Ethernet","ADSL","VDSL2",(bDualWless5G)?"Wireless 2.4G":"Wireless","Wireless 5G","G.fast"];else var aryStrWanMode=["Ethernet","ADSL","Fiber","USB","Ethernet","ADSL","VDSL",(bDualWless5G)?"Wireless 2.4G":"Wireless","Wireless 5G"];function initTag(){arrPvcTag=new Array(MAX_PVCs).fill(gettext("None"));arrVlanTag=new Array(MAX_PVCs).fill(gettext("None"));for(var i=0;i<MAX_PVCs;i++){if((aryBwVlanTag[i]&0x1fff)!='0')arrVlanTag[i]=(aryBwVlanTag[i]&0x1fff);if(aryDslCfgTag[i]!=0)arrPvcTag[i]=aryDslCfgTag[i];}}function isAdsl(ichannel){return(aryDslWanTyp[ichannel]==IF_WAN1&&aryWanPhyTp[ichannel]==1);}angular.element(document).ready(function(){initPage(); initParameter();initWebChange();});function initPage(){initTag();var wanInfo=[];for(var i=0;i<MAX_PVCs;i++){wanInfo[i]=new Object();wanInfo[i]['text']=(i>=iBwanNumber&&i<iAllBwanNum)?gettext("WAN")+(i+1):'';wanInfo[i]['isCheckBox']=1; if(i<=1){wanInfo[i]['enable']=aryBwanEn[i]==1;wanInfo[i]['wanType']=gettext(aryStrWanMode[aryWanPhyMode[i]])+'('+gettext("WAN")+(i+1)+')';}else{if(!iWan1IsXdsl){wanInfo[i]['enable']=(aryBWanFlag[i]&BWAN_NEED_VLAN_TAG)?true:false;wanInfo[i]['wanType']=gettext(aryStrWanMode[aryWanPhyMode[(aryDslWanTyp[i]==IF_WAN1)?0:1]])+'('+gettext("WAN")+(aryDslWanTyp[i]-IF_WAN1+1)+')';}else{if(aryDslWanTyp[i]==IF_WAN1){if(aryWanPhyTp[i]==3){ wanInfo[i]['enable']=(aryBWanFlag[i]&BWAN_NEED_VLAN_TAG)?true:false;wanInfo[i]['wanType']=gettext("VDSL")+((bDSLgfast)?"/G.fast":"");}else{ wanInfo[i]['enable']=(saryOptn[i]&0x01)?true:false;wanInfo[i]['wanType']=gettext("ADSL");if(0==i) wanInfo[i]['vpivci']=((aryBWanFlag[i]>>8)&0x01)?saryVPI[1]+'/'+saryVCI[1]:saryVPI[0]+'/'+saryVCI[0];else wanInfo[i]['vpivci']=saryVPI[i]+'/'+saryVCI[i];}}else if(aryDslWanTyp[i]==IF_WAN2){ wanInfo[i]['enable']=(aryBWanFlag[i]&BWAN_NEED_VLAN_TAG)?true:false;wanInfo[i]['wanType']=gettext('Ethernet')+'('+gettext("WAN")+'2)';}else if(aryDslWanTyp[i]==IF_WAN4){wanInfo[i]['isWan4']=(aryBWanFlag[i]&BWAN_NEED_VLAN_TAG)?gettext('Yes'):gettext('No');wanInfo[i]['wanType']=gettext("VDSL")+((bDSLgfast)?"/G.fast":"");wanInfo[i]['isCheckBox']=0;}else{wanInfo[i]['isCheckBox']=0;}}}wanInfo[i]['vlanTag']=isAdsl(i)?arrPvcTag[i]:arrVlanTag[i];}var sChannel="";for(var i=0;i<MAX_PVCs;i++){if(i>=hide_wan&&i<set_start)sChannel+=(sChannel==""?gettext("Channel"):" "+gettext("and channel"))+" "+(i+1);} const notelink=angular.element(document.querySelector('.notelink'));notelink.html(notelink.html().replace('###ID###',sChannel));dhtml.cycleTab('tab1');angular.element(document.querySelector(".link_note a")).attr("href",'/cgi-bin/v2x00.cgi?fid=2059&sFormAuthStr=ZChZ65B1x7oWVPs');$scope.SHOW_MENU_WAN=bg.SHOW_MENU_WAN;$scope.MAX_PVCs=MAX_PVCs;$scope.hide_wan=hide_wan;$scope.set_start=set_start;$scope.b_ssid_bridge=b_ssid_bridge;$scope.bDualWless5G=bDualWless5G;$scope.bWless=bWless;$scope.ssid24g=b_ssid_bridge&&bWless&&sPresetModel!='2135';$scope.ssid5g=b_ssid_bridge&&bDualWless5G&&sPresetModel!='2135';$scope.iWan1IsXdsl=iWan1IsXdsl;$scope.iMaxLanPt=iMaxLanPt;$scope.wanInfo=wanInfo;$scope.setPVCWAN=function(idx){f.iInetWanIdx.value=idx;f.method="post";f.action="/cgi-bin/v2x00.cgi";f.submit();};$scope.$apply();}function initParameter(){ for(var i=set_start;i<MAX_PVCs;i++){ setPvcPort(i,(isAdsl(i)?0:1));} angular.forEach(document.querySelectorAll("input[name^=enbchk]"),function(ele){enbchk(ele);});f.enbchk0.disabled=true;f.enbchk1.disabled=true;if(iWan1IsXdsl){ var idx;for(var i=0;i<MAX_PVCs;i++){initQosOfATM(i);idx=bg.getIdxbyName(f,"iQosTp"+i);f[idx].value=(saryOptn[i]>>1)&0xf; f[idx+1].value=saryPCR[i]; f[idx+2].value=sarySCR[i]; f[idx+3].value=saryMBS[i]; if(saryRedrct[i]==0){f[idx+4].value=0;}else{saryRedrct[i]=saryRedrct[i]&~(1<<i);for(var j=0;j<MAX_PVCs;j++){if((saryRedrct[i]>>j)&0x01)f[idx+4].value=j+1;}}if(saryOptn[i]&0x01&&isAdsl(i))bg.cpntCtrl(true,f,f[idx],ATMRowNum);else bg.cpntCtrl(false,f,f[idx],ATMRowNum);if(i<2){ bg.cpntCtrl((aryBwanEn[i]==1&&isAdsl(i)),f,f[idx],ATMRowNum-1);bg.cpntCtrl(false,f,f[idx+4],1);}}setLinkAggPortStat();}}function setLinkAggPortStat(){if(!isSupLinkAgg)return;var ports=linkAggPorts;var controlPort,lockPort;for(var i=0;i<ports.length;i++){controlPort=parseInt(ports[i].lagPort);lockPort=parseInt(ports[i].lagAggrPort);if(controlPort>lockPort){ controlPort=controlPort^lockPort;lockPort=controlPort^lockPort;controlPort=controlPort^lockPort;}for(var j=0;j<MAX_PVCs;j++){if(f["iPtBrgEn"+j]&&f["iPtBrgEn"+j].checked){f["iP"+lockPort+"BrgEn"+j]&&(f["iP"+lockPort+"BrgEn"+j].disabled=true);if(f["iP"+lockPort+"BrgEn"+j]&&f["iP"+controlPort+"BrgEn"+j]){f["iP"+lockPort+"BrgEn"+j].checked=f["iP"+controlPort+"BrgEn"+j].checked;}}}}}function setPvcPort(ichannel,flag){var idx=bg.getIdxbyName(f,"iPtBrgEn"+ichannel);if(0==flag){ f[idx].checked=(saryOptn[ichannel]>>5)&0x1;f[idx+1].checked=(saryOptn[ichannel]>>8)&0x1; f[idx+2].checked=(saryOptn[ichannel]>>9)&0x1; if(iMaxLanPt>=3)f[idx+3].checked=(saryOptn[ichannel]>>10)&0x1; if(iMaxLanPt>=4)f[idx+4].checked=(saryOptn[ichannel]>>11)&0x1; if(iMaxLanPt>=5)f[idx+5].checked=(saryOptn[ichannel]>>12)&0x1; if(iMaxLanPt>=6)f[idx+6].checked=(saryOptn[ichannel]>>13)&0x1;}else{ f[idx].checked=aryBwPtBrg[ichannel]&BWAN_PORT_BRIDGE_ENABLE;f[idx+1].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_LAN_PORT1;f[idx+2].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_LAN_PORT2;if(iMaxLanPt>=3)f[idx+3].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_LAN_PORT3;if(iMaxLanPt>=4)f[idx+4].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_LAN_PORT4;if(iMaxLanPt>=5)f[idx+5].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_LAN_PORT5;if(iMaxLanPt>=6)f[idx+6].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_LAN_PORT6;}if($scope.ssid24g&&$scope.ssid5g){f['iS1BrgEn'+ichannel].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_WLAN_SSID1;f['iS2BrgEn'+ichannel].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_WLAN_SSID2;f['iS3BrgEn'+ichannel].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_WLAN_SSID3;f['iS4BrgEn'+ichannel].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_WLAN_SSID4;f['iS5BrgEn'+ichannel].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_WLAN_SSID5;f['iS6BrgEn'+ichannel].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_WLAN_SSID6;f['iS7BrgEn'+ichannel].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_WLAN_SSID7;f['iS8BrgEn'+ichannel].checked=aryBwPtBrg[ichannel]&BWAN_BRIDGE_WLAN_SSID8;}}function onSltPvc(ele){var i=angular.element(ele).scope().$index;var aryRct=[f.sPvcRedrct0,f.sPvcRedrct1,f.sPvcRedrct2,f.sPvcRedrct3,f.sPvcRedrct4,f.sPvcRedrct5,f.sPvcRedrct6,f.sPvcRedrct7,f.sPvcRedrct8,f.sPvcRedrct9];if(aryRct[i].value==(i+1)){alert(gettext('The PVC Binding cannot be same with Channel index!'));aryRct[i].value=0;return false;}if(!isAdsl(aryRct[i].value-1)){alert(gettext('The PVC channel binded to channel ###ID### is not using ADSL!').replace("###ID###",(i+1)));aryRct[i].value=0;return false;}}function enableBridge(ele){var channel=ele.name.split("En")[1];angular.forEach(document.querySelectorAll("input[name$=BrgEn"+channel+"]:not([name^=iPtBrg])"),function(row){ var rowInfo=row.name.split("En"); if(ele.checked&&rowInfo[0]!=="iP1Brg"){ columnCheck(row);}else{row.disabled=true;}});}function columnCheck(ele){var name=ele.name.split("En")[0];var hasChecked=angular.element(document.querySelectorAll("input[name^="+name+"]:checked")).length;angular.forEach(document.querySelectorAll("input[name^="+name+"]"),function(col_emt){ let arytmp=col_emt.name.match(/\d{1,2}/g); if(!hasChecked||col_emt.checked){if(f["iPtBrgEn"+arytmp[1]].checked&&f["enbchk"+arytmp[1]].checked){let subnetPort=aryWANBridgeSubnetPort.indexOf(parseInt(arytmp[0])-1);if(subnetPort!=-1&&!col_emt.name.includes("iS")){if(aryWANBridgeSubnetPort[subnetPort]<5){}else if(aryWANBridgeSubnetPort[subnetPort]==5&&(iMaxLanPt>4)){}else if(aryWANBridgeSubnetPort[subnetPort]==6&&(iMaxLanPt>5)){}else return;col_emt.disabled=true;return;}subnetPort=aryWANBridgeSubnetPortv6.indexOf(parseInt(arytmp[0])-1);if(subnetPort!=-1&&!col_emt.name.includes("iS")){if(aryWANBridgeSubnetPortv6[subnetPort]<5){}else if(aryWANBridgeSubnetPortv6[subnetPort]==5&&(iMaxLanPt>4)){}else if(aryWANBridgeSubnetPortv6[subnetPort]==6&&(iMaxLanPt>5)){}else return;col_emt.disabled=true;return;}col_emt.disabled=(aryBwanEn[1]==1&&col_emt.name.indexOf("iP4BrgEn")!=-1&&iwanbelanx==4)?true:false;}else col_emt.disabled=true;}else{col_emt.disabled=true;}});setLinkAggPortStat();}function initQosOfATM(idx){var i,ii=bg.getIdxbyName(f,"iQosTp"+idx);var qos=['UBR','CBR','ABR','nrtVBR','rtVBR'];for(i=0;i<f[ii].length;i++){f[ii].options[0]=null;}for(i=0;i<qos.length;i++){f[ii].options[i]=new Option(qos[i],i);}}function submitParameter(){var idx,i,j;var tagConflict=0;var tagTmp=""; for(i=set_start;i<MAX_PVCs;i++){if(f["iPtBrgEn"+i].checked&&!f["iPtBrgEn"+i].disabled){if(document.querySelectorAll("input[name$=BrgEn"+i+"]:not([name^=iPtBrg]):checked").length==0){alert(gettext("If some channel is enable, you must select a port!"));return false;}}if(!checkTag(i)){alert(gettext("If some channel is enable, VLAN Tag should be different from other channels for the same WAN Type."));return false;} if(tagConflict)break;tagTmp=isAdsl(i)?arrPvcTag[i]:arrVlanTag[i];if(f["iPtBrgEn"+i].checked){for(j=0;j<aryVleEn.length;j++){if(aryVleEn[j]&&aryVleVid[j]==tagTmp){tagConflict=1;break;}}}}if(tagConflict){alert(gettext('VLAN Tag should be different from LAN>>VLAN if Port-based Bridge is needed.'));return false;} for(i=0;i<MAX_PVCs;i++){idx=bg.getIdxbyName(f,"sPCR"+i);if(f[idx].value<0||f[idx+1].value<0||f[idx+2].value<0){alert(gettext("PCR,SCR and MBS should be >= ###NUM###!").replace("###NUM###",0));return;}}for(i=set_start;i<MAX_PVCs;i++)f["IsAdsl"+i].value=isAdsl(i)?1:0;unGrayOutALL();if(checkWebChange())f.webchange.value=1;f.method="post";f.action="/cgi-bin/v2x00.cgi";f.fid.value=2562;f.submit();}function unGrayOutALL(){angular.forEach(document.querySelectorAll('input[name^="iPtBrgEn"]'),function(x){x.disabled=false;});angular.forEach(document.querySelectorAll('input[name^="iP"]'),function(x){x.disabled=false;});angular.forEach(document.querySelectorAll('input[name^="iS"]'),function(x){x.disabled=false;});}function checkTag(ichannel){if(!f["enbchk"+ichannel].checked)return true;if(!(isAdsl(ichannel)&&(saryOptn[i]&0x01)==1))return true;var tmpWANphyType=isAdsl(ichannel)?aryDslCfgTag:aryBwVlanTag;var sTag=tmpWANphyType[ichannel&0x1fff];if(sTag==0)return false;for(var i=set_start;i<tmpWANphyType.length;i++){if(i!=ichannel&&f["enbchk"+i].checked){if((aryDslWanTyp[i]==IF_WAN1)&&(sTag==tmpWANphyType[i]&0x1fff)){return false;}}}return true;}function onClkCnl(){document.location="/cgi-bin/V2X00.cgi?sFormAuthStr=ZChZ65B1x7oWVPs&fid=2560";}function enbchk(ele){var ichannel=angular.element(ele).scope().$index;if(f["enbchk"+ichannel].checked){f["iPtBrgEn"+ichannel].disabled=false;enableBridge(f["iPtBrgEn"+ichannel]);}else{angular.forEach(document.querySelectorAll("input[name$=BrgEn"+ichannel+"]"),function(elem){elem.disabled=true;});}}</script></body></html>

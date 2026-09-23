@@ -45,11 +45,11 @@ assert.doesNotMatch(
 // 6. Guide mode vẫn giữ hành vi cũ: chỉ sáng khi bấm Save/Apply và đạt.
 assert.match(
   portalApp,
-  /if \(noConfig \|\| \(window\._hasClickedSaveInGuide && evalResult && evalResult\.passed\)\)/,
+  /if \(noConfig \|\| \(window\._hasClickedSaveInGuide && \(hasSuccHint \|\| \(evalResult && evalResult\.passed\)\)\)\)/,
 );
 assert.match(
   portalApp,
-  /if \(noConfigSaved \|\| \(evalResult && evalResult\.passed\)\)/,
+  /if \(noConfigSaved \|\| window\._hasSuccHintStored \|\| \(evalResult && evalResult\.passed\)\)/,
 );
 
 console.log('Practice submit-button contract passed.');
