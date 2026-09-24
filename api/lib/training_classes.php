@@ -1432,7 +1432,9 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
     unset($dev);
     $deviceProgressList = array_values($deviceProgressMap);
 
-    // 5. Timer sessions history
+    // 5. Timer sessions history. KPI and trend queries below still cover the
+    // complete history; only the client-side detail table is bounded.
+    $sessionHistoryLimit = env_int('PERSONAL_DASHBOARD_SESSION_LIMIT', 100, 24, 500);
     $sessionsQuery = $pdo->prepare(
         <<<'SQL'
         SELECT s.id,
@@ -1476,13 +1478,14 @@ function training_class_personal_dashboard_payload(PDO $pdo, array $user): array
                )
            )
          ORDER BY s.finished_at DESC NULLS LAST, s.id DESC
-         LIMIT 500
+         LIMIT CAST(:session_history_limit AS INTEGER)
         SQL
     );
     $sessionsQuery->execute([
         'user_id' => $userId,
         'email' => $user['email'] ?? '',
         'employee_id' => $user['employee_id'] ?? '',
+        'session_history_limit' => $sessionHistoryLimit,
     ]);
     $rawSessions = $sessionsQuery->fetchAll(PDO::FETCH_ASSOC);
 

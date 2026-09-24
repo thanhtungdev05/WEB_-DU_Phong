@@ -7,6 +7,7 @@
     <meta name="theme-color" content="#f3f6fb">
     <meta name="color-scheme" content="light dark">
     <title>Tổng quan thực hành KTV | FTC</title>
+    <link rel="icon" type="image/png" href="/assets/logoFPT.png?v=20260924-fpt-telecom">
     <script>
         (function () {
             const THEME_KEY = 'ftc_dashboard_theme';
@@ -25,7 +26,7 @@
             document.documentElement.style.colorScheme = resolved;
         })();
     </script>
-    <link rel="stylesheet" href="css/styles.css?v=20260916-theme-system-v27">
+    <link rel="stylesheet" href="css/styles.css?v=20260924-column-resize-v28">
     <link rel="stylesheet" href="css/dashboard-professional.css?v=20260917-roster-loading-v31">
 </head>
 
@@ -448,7 +449,7 @@
                             <div class="instructor-progress-summary" id="instructorProgressSummary"></div>
                             <div class="instructor-progress-scroll" id="instructorProgressScroll" tabindex="0"
                                 aria-label="Bảng tiến độ bài lab theo lớp, có thể cuộn ngang và dọc">
-                                <table class="instructor-progress-table">
+                                <table class="instructor-progress-table" data-resizable-columns="legacy">
                                     <caption class="sr-only">Tiến độ lớp học theo kỹ thuật viên</caption>
                                     <thead id="instructorProgressHead"></thead>
                                     <tbody id="instructorProgressBody"></tbody>
@@ -476,7 +477,7 @@
                                 </div>
                             </div>
                             <div class="panel-body">
-                                <table>
+                                <table id="realtimeSessionsTable" data-resizable-columns="colgroup">
                                     <caption class="sr-only">Danh sách bài nộp gần đây</caption>
                                     <thead>
                                         <tr>
@@ -645,7 +646,7 @@
                                 </div>
                                 <div class="detail-report-scroll" id="detailReportScroll" tabindex="0"
                                     aria-label="Bảng tiến độ theo khu vực và chi nhánh, có thể cuộn ngang">
-                                    <table class="detail-report-table">
+                                    <table class="detail-report-table" data-resizable-columns="legacy">
                                         <caption class="sr-only">Tiến độ bài lab theo khu vực và chi nhánh</caption>
                                         <thead id="detailReportHead"></thead>
                                         <tbody id="detailReportBody"></tbody>
@@ -666,7 +667,7 @@
                                         aria-label="Đóng chi tiết" title="Đóng chi tiết">&times;</button>
                                 </div>
                                 <div class="detail-report-scroll" tabindex="0" aria-label="Bảng kết quả thực hành theo chi nhánh">
-                                    <table class="detail-report-table">
+                                    <table class="detail-report-table" data-resizable-columns="legacy">
                                         <caption class="sr-only">Kết quả thực hành theo chi nhánh</caption>
                                         <thead id="branchMatrixHead"></thead>
                                         <tbody id="branchMatrixBody"></tbody>
@@ -687,7 +688,7 @@
                                         aria-label="Đóng chi tiết" title="Đóng chi tiết">&times;</button>
                                 </div>
                                 <div class="detail-report-scroll class-matrix-scroll" tabindex="0" aria-label="Bảng kết quả thực hành theo KTV trong chi nhánh">
-                                    <table class="detail-report-table class-matrix-table">
+                                    <table class="detail-report-table class-matrix-table" data-resizable-columns="legacy">
                                         <caption class="sr-only">Kết quả thực hành theo KTV trong chi nhánh</caption>
                                         <thead id="branchKtvMatrixHead"></thead>
                                         <tbody id="branchKtvMatrixBody"></tbody>
@@ -741,7 +742,8 @@
                                 </div>
                                 <div class="detail-report-scroll class-matrix-scroll" id="classOverviewScroll"
                                     tabindex="0" aria-label="Bảng tổng quan tất cả lớp học">
-                                    <table class="detail-report-table class-overview-table">
+                                    <table class="detail-report-table class-overview-table" id="classOverviewTable"
+                                        data-resizable-columns="colgroup">
                                         <caption class="sr-only">Tổng hợp kết quả thực hành theo tất cả lớp học</caption>
                                         <thead id="classOverviewHead"></thead>
                                         <tbody id="classOverviewBody"></tbody>
@@ -811,7 +813,7 @@
 
                                 <div class="detail-report-scroll class-matrix-scroll" id="classMatrixScroll"
                                     tabindex="0" aria-label="Bảng tiến độ KTV theo lớp, có thể cuộn ngang">
-                                    <table class="detail-report-table class-matrix-table">
+                                    <table class="detail-report-table class-matrix-table" data-resizable-columns="legacy">
                                         <caption class="sr-only">Tiến độ thực hành KTV theo lớp học</caption>
                                         <thead id="classMatrixHead"></thead>
                                         <tbody id="classMatrixBody"></tbody>
@@ -848,14 +850,16 @@
                                     <input type="search" id="learnerKtvSearch"
                                         placeholder="Tìm theo tên hoặc email KTV..." autocomplete="off">
                                 </label>
-                                <button type="button" class="learner-filter-reset" id="learnerFilterReset">Xóa bộ
-                                    lọc</button>
+                                <div class="learner-toolbar-actions">
+                                    <button type="button" class="learner-column-reset" id="learnerColumnWidthReset">Đặt lại cột</button>
+                                    <button type="button" class="learner-filter-reset" id="learnerFilterReset">Xóa bộ lọc</button>
+                                </div>
                             </div>
-                            <table>
+                            <table id="technicianSessionsTable" data-resizable-columns="colgroup">
                                 <caption class="sr-only">Danh sách kỹ thuật viên và hoạt động gần nhất</caption>
                                 <thead>
                                     <tr>
-                                        <th style="width: 22%;">
+                                        <th style="width: 22%;" data-resize-min-width="180">
                                             <div class="popover-filter-wrapper" id="learnerKtvPopoverWrapper">
                                                 <button class="popover-trigger-btn" type="button"
                                                     aria-label="Lọc theo KTV">KTV</button>
@@ -868,7 +872,7 @@
                                                 </div>
                                             </div>
                                         </th>
-                                        <th style="width: 18%;">
+                                        <th style="width: 18%;" data-resize-min-width="220">
                                             <div class="popover-filter-wrapper" id="learnerEmailPopoverWrapper">
                                                 <button class="popover-trigger-btn" type="button"
                                                     aria-label="Lọc theo email">Email</button>
@@ -881,7 +885,7 @@
                                                 </div>
                                             </div>
                                         </th>
-                                        <th style="width: 12%;">
+                                        <th style="width: 12%;" data-resize-min-width="140">
                                             <div class="popover-filter-wrapper" id="learnerRegionPopoverWrapper">
                                                 <button class="popover-trigger-btn" type="button"
                                                     aria-label="Lọc theo khu vực">Khu vực / CN</button>
@@ -894,10 +898,10 @@
                                                 </div>
                                             </div>
                                         </th>
-                                        <th style="width: 8%;"><button class="sort-button" type="button"
+                                        <th style="width: 8%;" data-resize-min-width="90"><button class="sort-button" type="button"
                                                 data-table="sessions" data-key="total">Số lượt <span
                                                     class="sort-mark"></span></button></th>
-                                        <th style="width: 14%;">
+                                        <th style="width: 14%;" data-resize-min-width="200">
                                             <div class="popover-filter-wrapper" id="learnerDevicePopoverWrapper">
                                                 <button class="popover-trigger-btn" type="button"
                                                     aria-label="Lọc theo thiết bị">Thiết bị</button>
@@ -910,7 +914,7 @@
                                                 </div>
                                             </div>
                                         </th>
-                                        <th style="width: 14%;">
+                                        <th style="width: 14%;" data-resize-min-width="240">
                                             <div class="popover-filter-wrapper" id="learnerLabPopoverWrapper">
                                                 <button class="popover-trigger-btn" type="button"
                                                     aria-label="Lọc theo bài lab">Lab</button>
@@ -923,7 +927,7 @@
                                                 </div>
                                             </div>
                                         </th>
-                                        <th style="width: 12%;"><button class="sort-button" type="button"
+                                        <th style="width: 12%;" data-resize-min-width="160"><button class="sort-button" type="button"
                                                 data-table="sessions" data-key="lastDateTimeMs">Thời gian <span
                                                     class="sort-mark"></span></button></th>
                                     </tr>
@@ -946,7 +950,7 @@
 
                     <div class="roster-panel" id="classListPanel" role="tabpanel">
                         <div class="roster-table-wrapper" tabindex="0" aria-label="Danh sách lớp học">
-                            <table class="roster-table" id="classManagementTable">
+                            <table class="roster-table" id="classManagementTable" data-resizable-columns="colgroup">
                                 <thead><tr>
                                     <th scope="col"><div class="admin-filter-label"><span>Mã lớp</span><span class="admin-header-filter" id="classCodeFilterWrapper"><select id="classCodeFilter" aria-label="Lọc theo mã lớp"><option value="">Tất cả mã lớp</option></select></span></div></th>
                                     <th scope="col"><div class="admin-filter-label"><span>Tên lớp</span><span class="admin-header-filter" id="classNameFilterWrapper"><select id="classNameFilter" aria-label="Lọc theo tên lớp"><option value="">Tất cả tên lớp</option></select></span></div></th>
@@ -1060,7 +1064,7 @@
                     <div class="roster-panel" id="rosterListPanel" role="tabpanel" aria-labelledby="rosterListTab"
                         tabindex="0">
                         <div class="roster-table-wrapper" tabindex="0" aria-label="Danh sách hồ sơ KTV, có thể cuộn ngang">
-                            <table class="roster-table" id="rosterManagementTable">
+                            <table class="roster-table" id="rosterManagementTable" data-resizable-columns="colgroup">
                                 <caption class="sr-only">Danh sách hồ sơ kỹ thuật viên</caption>
                                 <thead>
                                     <tr>
@@ -1135,7 +1139,7 @@
                         aria-labelledby="rosterHistoryTab" tabindex="0" hidden>
                         <div class="roster-table-wrapper" tabindex="0"
                             aria-label="Lịch sử nhập KTV, có thể cuộn ngang">
-                            <table class="roster-table">
+                            <table class="roster-table" id="rosterHistoryTable" data-resizable-columns="colgroup">
                                 <caption class="sr-only">Lịch sử nhập danh sách KTV</caption>
                                 <thead>
                                     <tr>
@@ -1327,7 +1331,7 @@
         <div class="detail-section">
             <h4>Lịch sử hoạt động</h4>
             <div class="learner-history">
-                <table>
+                <table id="learnerHistoryTable" data-resizable-columns="colgroup">
                     <caption class="sr-only">Nhật ký phiên hoạt động của kỹ thuật viên</caption>
                     <thead>
                         <tr>
@@ -1604,7 +1608,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=20260923-neon-transfer-guard"></script>
+    <script src="js/app.js?v=20260924-neon-transfer-v4"></script>
 </body>
 
 </html>

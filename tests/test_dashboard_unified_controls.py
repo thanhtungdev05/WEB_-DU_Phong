@@ -240,9 +240,28 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn(".class-overview-action", self.css)
 
     def test_asset_version_prevents_stale_control_styles(self):
-        self.assertIn("css/styles.css?v=20260916-theme-system-v27", self.html)
+        self.assertIn("css/styles.css?v=20260924-column-resize-v28", self.html)
         self.assertIn("css/dashboard-professional.css?v=20260917-roster-loading-v31", self.html)
-        self.assertEqual(self.html.count("20260923-neon-transfer-guard"), 1)
+        self.assertEqual(self.html.count("20260924-neon-transfer-v4"), 1)
+
+    def test_resizable_tables_use_stable_column_models(self):
+        self.assertIn('id="technicianSessionsTable" data-resizable-columns="colgroup"', self.html)
+        self.assertIn('id="realtimeSessionsTable" data-resizable-columns="colgroup"', self.html)
+        self.assertIn('data-resizable-columns="legacy"', self.html)
+        self.assertIn("ftc-dashboard-column-widths-v2", self.javascript)
+        self.assertIn("function getDashboardColgroup", self.javascript)
+        self.assertIn("function ensureDashboardColgroupLayout", self.javascript)
+        self.assertIn("function resetDashboardTableColumnWidths", self.javascript)
+        self.assertIn("if (!resizeMode) return;", self.javascript)
+        self.assertIn('table[data-resizable-columns="colgroup"].column-widths-fixed', self.css)
+        self.assertIn('data-resize-min-width="180"', self.html)
+        self.assertIn('id="learnerColumnWidthReset"', self.html)
+
+    def test_manual_refresh_is_in_place_and_version_gated(self):
+        self.assertIn("await refreshDashboardData({ force: false, announce: true });", self.javascript)
+        self.assertNotIn("window.location.reload();", self.javascript)
+        self.assertIn("version === lastDashboardVersion", self.javascript)
+        self.assertIn("Dữ liệu dashboard đã là phiên bản mới nhất.", self.javascript)
 
     def test_yellow_data_notices_are_visible_only_to_dev_role(self):
         self.assertEqual(self.html.count("data-dev-only-notice"), 2)

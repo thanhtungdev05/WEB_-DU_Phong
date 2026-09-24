@@ -88,7 +88,12 @@
   let trackingSaveInFlight = false;
   let currentUserRequest = null;
   let sessionHeartbeatInterval = null;
-  const SESSION_HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
+  const SESSION_HEARTBEAT_INTERVAL_MS = 20 * 60 * 1000;
+  const SESSION_HEARTBEAT_LAST_SUCCESS_KEY = 'ftc-session-heartbeat-last-success-v1';
+  const SESSION_HEARTBEAT_LEASE_KEY = 'ftc-session-heartbeat-lease-v1';
+  const SESSION_HEARTBEAT_LEASE_MS = 30 * 1000;
+  const sessionHeartbeatOwner = globalThis.crypto?.randomUUID?.()
+    || `portal-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   function normalizeDeviceId(id) {
     if (!id) return '';
@@ -1149,7 +1154,9 @@
         });
       })
       .then(function (data) {
-        return applyCurrentUser(data && data.user ? data.user : null);
+        const user = applyCurrentUser(data && data.user ? data.user : null);
+        if (user) markSessionHeartbeatSuccess();
+        return user;
       })
       .finally(function () {
         currentUserRequest = null;
@@ -1204,8 +1211,52 @@
     });
   }
 
+  function markSessionHeartbeatSuccess() {
+    try {
+      localStorage.setItem(SESSION_HEARTBEAT_LAST_SUCCESS_KEY, String(Date.now()));
+    } catch (error) {
+      console.debug('[Auth] Không thể chia sẻ thời điểm heartbeat giữa các tab.', error);
+    }
+  }
+
+  function sessionHeartbeatDue() {
+    try {
+      const lastSuccess = Number(localStorage.getItem(SESSION_HEARTBEAT_LAST_SUCCESS_KEY) || 0);
+      return !Number.isFinite(lastSuccess) || Date.now() - lastSuccess >= SESSION_HEARTBEAT_INTERVAL_MS;
+    } catch (error) {
+      return true;
+    }
+  }
+
+  function claimSessionHeartbeatLease() {
+    if (!sessionHeartbeatDue()) return false;
+    try {
+      const now = Date.now();
+      const current = JSON.parse(localStorage.getItem(SESSION_HEARTBEAT_LEASE_KEY) || 'null');
+      if (current?.owner !== sessionHeartbeatOwner && Number(current?.expiresAt) > now) return false;
+      localStorage.setItem(SESSION_HEARTBEAT_LEASE_KEY, JSON.stringify({
+        owner: sessionHeartbeatOwner,
+        expiresAt: now + SESSION_HEARTBEAT_LEASE_MS
+      }));
+      return JSON.parse(localStorage.getItem(SESSION_HEARTBEAT_LEASE_KEY) || 'null')?.owner
+        === sessionHeartbeatOwner;
+    } catch (error) {
+      return true;
+    }
+  }
+
+  function releaseSessionHeartbeatLease() {
+    try {
+      const current = JSON.parse(localStorage.getItem(SESSION_HEARTBEAT_LEASE_KEY) || 'null');
+      if (current?.owner === sessionHeartbeatOwner) localStorage.removeItem(SESSION_HEARTBEAT_LEASE_KEY);
+    } catch (error) {
+      // A short lease expiry remains the fallback when storage is unavailable.
+    }
+  }
+
   function refreshSessionHeartbeat() {
     if (document.visibilityState === 'hidden' || !_currentUser) return;
+    if (!claimSessionHeartbeatLease()) return;
     requestCurrentUserSession().then(function (user) {
       if (!user && sessionHeartbeatInterval) {
         clearInterval(sessionHeartbeatInterval);
@@ -1213,6 +1264,8 @@
       }
     }).catch(function (error) {
       console.warn('[Auth] Chưa thể gia hạn phiên đăng nhập:', error);
+    }).finally(function () {
+      releaseSessionHeartbeatLease();
     });
   }
 

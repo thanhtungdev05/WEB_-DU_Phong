@@ -1987,7 +1987,10 @@ function handle_roster_regions(): void
         'dashboard_group' => $row['dashboard_group'] ?? null,
     ], $stmt->fetchAll());
 
-    respond(['data' => ['items' => $items]]);
+    respond_private_cache(
+        ['data' => ['items' => $items]],
+        env_int('ROSTER_REGION_CACHE_SECONDS', 3600, 300, 86400)
+    );
 }
 
 function handle_roster_history(): void

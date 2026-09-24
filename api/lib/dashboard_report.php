@@ -665,6 +665,271 @@ numbered_sessions AS (
 SQL;
 }
 
+/**
+ * Build the region x lab matrix in PostgreSQL when technician/branch details
+ * are not requested. This keeps personal rows inside Neon and transfers only
+ * the aggregate result to PHP.
+ */
+function dashboard_report_region_summary_rows(PDO $pdo, string $from, string $to): array
+{
+    $sql = dashboard_report_region_common_cte() . ",\n" . <<<'SQL'
+activity AS (
+    SELECT session.person_id,
+           session.lab_id,
+           COUNT(session.id) FILTER (WHERE session.mode IN ('Thực hành', 'practice')) AS submitted_attempt_count,
+           COUNT(session.id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS NOT NULL
+                 AND session.attempt_sequence_complete IS TRUE
+           ) AS attempt_count,
+           COUNT(session.id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND ((session.is_passed IS NOT NULL AND session.attempt_sequence_complete IS TRUE)
+                      OR session.is_historical_pass)
+           ) AS recorded_practice_count,
+           COUNT(session.id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice') AND session.is_historical_pass
+           ) AS historical_pass_count,
+           COUNT(session.id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS TRUE
+                 AND session.attempt_sequence_complete IS TRUE
+           ) AS pass_count,
+           COUNT(session.id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.attempt_sequence_complete IS FALSE
+           ) AS incomplete_attempt_count
+      FROM numbered_sessions session
+     WHERE session.occurred_at >= CAST(:from_date AS date)
+       AND session.occurred_at < CAST(:to_date AS date) + INTERVAL '1 day'
+     GROUP BY session.person_id, session.lab_id
+),
+progress AS (
+    SELECT session.person_id,
+           session.lab_id,
+           BOOL_OR(
+               session.mode IN ('Thực hành', 'practice')
+               AND session.is_passed IS TRUE
+               AND (session.attempt_sequence_complete IS TRUE OR session.is_historical_pass)
+           ) AS completed
+      FROM numbered_sessions session
+     WHERE session.occurred_at < CAST(:to_date AS date) + INTERVAL '1 day'
+     GROUP BY session.person_id, session.lab_id
+),
+metric_pairs AS (
+    SELECT person_id, lab_id FROM activity
+    UNION
+    SELECT person_id, lab_id FROM progress WHERE completed IS TRUE
+),
+configured_regions AS (
+    SELECT region.region_id,
+           region.region_code,
+           region.region_name,
+           region.dashboard_group,
+           STRING_AGG(DISTINCT NULLIF(unit.unit_name, ''), ', ' ORDER BY NULLIF(unit.unit_name, '')) AS branch_name,
+           0 AS scope_order
+      FROM regions region
+      LEFT JOIN org_units unit
+        ON unit.region_id = region.region_id
+       AND unit.is_active = TRUE
+     WHERE region.is_active = TRUE
+     GROUP BY region.region_id, region.region_code, region.region_name, region.dashboard_group
+),
+unconfigured_regions AS (
+    SELECT person.region_id,
+           person.region_code,
+           person.region_name,
+           person.dashboard_group,
+           STRING_AGG(DISTINCT NULLIF(person.branch_name, ''), ', ' ORDER BY NULLIF(person.branch_name, '')) AS branch_name,
+           1 AS scope_order
+      FROM regional_people person
+     WHERE NOT EXISTS (
+         SELECT 1 FROM configured_regions configured
+          WHERE configured.region_id IS NOT DISTINCT FROM person.region_id
+            AND configured.region_code = person.region_code
+     )
+     GROUP BY person.region_id, person.region_code, person.region_name, person.dashboard_group
+),
+region_scopes AS (
+    SELECT * FROM configured_regions
+    UNION ALL
+    SELECT * FROM unconfigured_regions
+),
+region_population AS (
+    SELECT scope.region_id,
+           scope.region_code,
+           scope.region_name,
+           scope.dashboard_group,
+           scope.branch_name,
+           scope.scope_order,
+           COUNT(DISTINCT person.person_id)::bigint AS population_count
+      FROM region_scopes scope
+      LEFT JOIN regional_people person
+        ON person.region_id IS NOT DISTINCT FROM scope.region_id
+       AND person.region_code = scope.region_code
+     GROUP BY scope.region_id, scope.region_code, scope.region_name, scope.dashboard_group, scope.branch_name, scope.scope_order
+),
+region_metrics AS (
+    SELECT person.region_id,
+           person.region_code,
+           person.region_name,
+           person.dashboard_group,
+           metric.lab_id,
+           COUNT(*) FILTER (WHERE COALESCE(activity.recorded_practice_count, 0) > 0)::bigint AS attempted_count,
+           COUNT(*) FILTER (WHERE progress.completed IS TRUE)::bigint AS completed_count,
+           COALESCE(SUM(activity.submitted_attempt_count), 0)::bigint AS submitted_attempt_count,
+           COALESCE(SUM(activity.attempt_count), 0)::bigint AS attempt_count,
+           COALESCE(SUM(activity.recorded_practice_count), 0)::bigint AS recorded_practice_count,
+           COALESCE(SUM(activity.historical_pass_count), 0)::bigint AS historical_pass_count,
+           COALESCE(SUM(activity.pass_count), 0)::bigint AS pass_count,
+           COALESCE(SUM(activity.incomplete_attempt_count), 0)::bigint AS incomplete_attempt_count
+      FROM metric_pairs metric
+      JOIN regional_people person USING (person_id)
+      LEFT JOIN activity USING (person_id, lab_id)
+      LEFT JOIN progress USING (person_id, lab_id)
+     GROUP BY person.region_id, person.region_code, person.region_name, person.dashboard_group, metric.lab_id
+)
+SELECT population.region_id,
+       population.region_code,
+       population.region_name,
+       population.dashboard_group,
+       population.branch_name,
+       lab.device_id,
+       lab.device_name,
+       lab.device_sort_order,
+       lab.lab_id,
+       lab.lab_name,
+       lab.lab_sort_order,
+       population.population_count,
+       COALESCE(metrics.attempted_count, 0) AS attempted_count,
+       COALESCE(metrics.completed_count, 0) AS completed_count,
+       COALESCE(metrics.submitted_attempt_count, 0) AS submitted_attempt_count,
+       COALESCE(metrics.attempt_count, 0) AS attempt_count,
+       COALESCE(metrics.attempt_count, 0) AS rate_eligible_attempt_count,
+       COALESCE(metrics.recorded_practice_count, 0) AS recorded_practice_count,
+       COALESCE(metrics.historical_pass_count, 0) AS historical_pass_count,
+       COALESCE(metrics.pass_count, 0) AS pass_count,
+       COALESCE(metrics.pass_count, 0) AS passed_eligible_attempt_count,
+       COALESCE(metrics.incomplete_attempt_count, 0) AS incomplete_attempt_count,
+       COALESCE(metrics.incomplete_attempt_count, 0) AS legacy_incomplete_attempt_count
+  FROM region_population population
+ CROSS JOIN active_labs lab
+  LEFT JOIN region_metrics metrics
+    ON metrics.region_id IS NOT DISTINCT FROM population.region_id
+   AND metrics.region_code = population.region_code
+   AND metrics.lab_id = lab.lab_id
+ ORDER BY population.scope_order, COALESCE(population.dashboard_group, population.region_name), population.region_name,
+          lab.device_sort_order, lab.lab_sort_order, lab.lab_id
+SQL;
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['from_date' => $from, 'to_date' => $to]);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Compact monthly activity by the technician's current dashboard region.
+ * This replaces downloading raw session rows just to draw the overview chart.
+ */
+function dashboard_report_monthly_regions(PDO $pdo, int $year): array
+{
+    $sql = dashboard_report_common_cte() . ",\n" . <<<'SQL'
+people_locations AS (
+    SELECT roster.user_id::text AS person_id,
+           COALESCE(
+               NULLIF(roster.dashboard_region, ''),
+               NULLIF(roster.region_name, ''),
+               NULLIF(roster.region_code, ''),
+               'FTC'
+           ) AS region
+      FROM v_ktv_directory roster
+     WHERE roster.is_terminated = FALSE
+    UNION ALL
+    SELECT 'firebase:' || LOWER(event.normalized_email) AS person_id,
+           'FTC' AS region
+      FROM firebase_legacy_import_events event
+     WHERE event.account_group = 'KTV'
+       AND event.resolution_status = 'imported'
+       AND NULLIF(event.normalized_email, '') IS NOT NULL
+       AND NOT EXISTS (
+           SELECT 1
+             FROM v_ktv_directory roster
+            WHERE roster.is_terminated = FALSE
+              AND LOWER(roster.email) = LOWER(event.normalized_email)
+       )
+     GROUP BY LOWER(event.normalized_email)
+),
+region_population AS (
+    SELECT location.region,
+           COUNT(DISTINCT location.person_id) AS headcount
+      FROM people_locations location
+     GROUP BY location.region
+),
+months AS (
+    SELECT month::date AS month
+      FROM generate_series(
+               CAST(:year_start AS date),
+               CAST(:year_start AS date) + INTERVAL '11 months',
+               INTERVAL '1 month'
+           ) AS generated(month)
+),
+activity AS (
+    SELECT DATE_TRUNC('month', session.occurred_at)::date AS month,
+           location.region,
+           COUNT(*) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND (
+                     (session.is_passed IS NOT NULL AND session.attempt_sequence_complete IS TRUE)
+                     OR session.is_historical_pass
+                 )
+           ) AS recorded_practice_count,
+           COUNT(*) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS NOT NULL
+                 AND session.attempt_sequence_complete IS TRUE
+           ) AS rate_eligible_attempt_count,
+           COUNT(*) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS TRUE
+                 AND session.attempt_sequence_complete IS TRUE
+           ) AS passed_eligible_attempt_count,
+           COUNT(*) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_historical_pass
+           ) AS historical_pass_count,
+           COUNT(DISTINCT session.person_id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS TRUE
+                 AND (
+                     session.attempt_sequence_complete IS TRUE
+                     OR session.is_historical_pass
+                 )
+           ) AS passed_technicians
+      FROM catalog_sessions session
+      JOIN people_locations location ON location.person_id = session.person_id
+     WHERE session.occurred_at >= CAST(:year_start AS date)
+       AND session.occurred_at < CAST(:year_start AS date) + INTERVAL '1 year'
+     GROUP BY DATE_TRUNC('month', session.occurred_at)::date, location.region
+)
+SELECT TO_CHAR(months.month, 'YYYY-MM') AS month,
+       population.region,
+       population.headcount,
+       COALESCE(activity.recorded_practice_count, 0) AS recorded_practice_count,
+       COALESCE(activity.rate_eligible_attempt_count, 0) AS rate_eligible_attempt_count,
+       COALESCE(activity.passed_eligible_attempt_count, 0) AS passed_eligible_attempt_count,
+       COALESCE(activity.historical_pass_count, 0) AS historical_pass_count,
+       COALESCE(activity.passed_technicians, 0) AS passed_technicians
+  FROM months
+ CROSS JOIN region_population population
+  LEFT JOIN activity
+    ON activity.month = months.month
+   AND activity.region = population.region
+ ORDER BY months.month, population.region
+SQL;
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['year_start' => sprintf('%04d-01-01', $year)]);
+    return $stmt->fetchAll();
+}
+
 function dashboard_report_branch_drilldown(PDO $pdo, string $from, string $to): array
 {
     $sql = dashboard_report_region_common_cte() . ",\n" . <<<'SQL'
@@ -1003,10 +1268,7 @@ SQL;
 
 function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $includeBranchDrilldown = true): array
 {
-    // The branch drill-down already contains the complete region × branch × lab
-    // population and outcome totals. Reuse it for the region matrix instead of
-    // rebuilding the same active-roster cross product in a second large query.
-    $branchDrilldown = dashboard_report_branch_drilldown($pdo, $from, $to);
+    $branchDrilldown = ['regions' => []];
 
     $catalogRows = $pdo->query(
         'SELECT device.device_id, device.device_name, device.sort_order AS device_sort_order,
@@ -1033,67 +1295,81 @@ function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $inclu
         $labMetadata[(string)$row['lab_id']] = $row;
     }
 
-    $rowsByRegionLab = [];
-    foreach (($branchDrilldown['regions'] ?? []) as $region) {
-        $regionMeta = $region['region'] ?? [];
-        foreach (($region['branches'] ?? []) as $branch) {
-            foreach (($branch['cells'] ?? []) as $labId => $cell) {
-                if (!isset($labMetadata[(string)$labId])) {
-                    continue;
+    if ($includeBranchDrilldown) {
+        // The analytics view needs technician details. Reuse its drill-down for
+        // region totals so the expensive detailed query still runs only once.
+        $branchDrilldown = dashboard_report_branch_drilldown($pdo, $from, $to);
+        $rowsByRegionLab = [];
+        foreach (($branchDrilldown['regions'] ?? []) as $region) {
+            $regionMeta = $region['region'] ?? [];
+            foreach (($region['branches'] ?? []) as $branch) {
+                foreach (($branch['cells'] ?? []) as $labId => $cell) {
+                    if (!isset($labMetadata[(string)$labId])) {
+                        continue;
+                    }
+                    $catalog = $labMetadata[(string)$labId];
+                    $key = (string)($regionMeta['region_id'] ?? '') . '|'
+                        . (string)($regionMeta['code'] ?? '') . '|'
+                        . (string)$labId;
+                    if (!isset($rowsByRegionLab[$key])) {
+                        $rowsByRegionLab[$key] = [
+                            'region_id' => $regionMeta['region_id'] ?? null,
+                            'region_code' => (string)($regionMeta['code'] ?? 'FTC'),
+                            'region_name' => (string)($regionMeta['name'] ?? 'FTC'),
+                            'dashboard_group' => $regionMeta['dashboard_group'] ?? null,
+                            'branch_names' => [],
+                            'device_id' => (string)$catalog['device_id'],
+                            'device_name' => (string)$catalog['device_name'],
+                            'device_sort_order' => (int)$catalog['device_sort_order'],
+                            'lab_id' => (string)$catalog['lab_id'],
+                            'lab_name' => (string)$catalog['lab_name'],
+                            'lab_sort_order' => (int)$catalog['lab_sort_order'],
+                            'population_count' => 0,
+                            'attempted_count' => 0,
+                            'completed_count' => 0,
+                            'submitted_attempt_count' => 0,
+                            'attempt_count' => 0,
+                            'rate_eligible_attempt_count' => 0,
+                            'recorded_practice_count' => 0,
+                            'historical_pass_count' => 0,
+                            'pass_count' => 0,
+                            'passed_eligible_attempt_count' => 0,
+                            'incomplete_attempt_count' => 0,
+                            'legacy_incomplete_attempt_count' => 0,
+                        ];
+                    }
+                    $aggregate =& $rowsByRegionLab[$key];
+                    $branchName = trim((string)($branch['name'] ?? $branch['unit_code'] ?? ''));
+                    if ($branchName !== '') {
+                        $aggregate['branch_names'][$branchName] = true;
+                    }
+                    foreach (['population_count', 'attempted_count', 'completed_count', 'submitted_attempt_count', 'attempt_count', 'rate_eligible_attempt_count', 'recorded_practice_count', 'historical_pass_count', 'pass_count', 'passed_eligible_attempt_count', 'incomplete_attempt_count', 'legacy_incomplete_attempt_count'] as $metric) {
+                        $aggregate[$metric] += (int)($cell[$metric] ?? 0);
+                    }
+                    unset($aggregate);
                 }
-                $catalog = $labMetadata[(string)$labId];
-                $key = (string)($regionMeta['region_id'] ?? '') . '|'
-                    . (string)($regionMeta['code'] ?? '') . '|'
-                    . (string)$labId;
-                if (!isset($rowsByRegionLab[$key])) {
-                    $rowsByRegionLab[$key] = [
-                        'region_id' => $regionMeta['region_id'] ?? null,
-                        'region_code' => (string)($regionMeta['code'] ?? 'FTC'),
-                        'region_name' => (string)($regionMeta['name'] ?? 'FTC'),
-                        'dashboard_group' => $regionMeta['dashboard_group'] ?? null,
-                        'branch_names' => [],
-                        'device_id' => (string)$catalog['device_id'],
-                        'device_name' => (string)$catalog['device_name'],
-                        'device_sort_order' => (int)$catalog['device_sort_order'],
-                        'lab_id' => (string)$catalog['lab_id'],
-                        'lab_name' => (string)$catalog['lab_name'],
-                        'lab_sort_order' => (int)$catalog['lab_sort_order'],
-                        'population_count' => 0,
-                        'attempted_count' => 0,
-                        'completed_count' => 0,
-                        'submitted_attempt_count' => 0,
-                        'attempt_count' => 0,
-                        'rate_eligible_attempt_count' => 0,
-                        'recorded_practice_count' => 0,
-                        'historical_pass_count' => 0,
-                        'pass_count' => 0,
-                        'passed_eligible_attempt_count' => 0,
-                        'incomplete_attempt_count' => 0,
-                        'legacy_incomplete_attempt_count' => 0,
-                    ];
-                }
-                $aggregate =& $rowsByRegionLab[$key];
-                $branchName = trim((string)($branch['name'] ?? $branch['unit_code'] ?? ''));
-                if ($branchName !== '') {
-                    $aggregate['branch_names'][$branchName] = true;
-                }
-                foreach (['population_count', 'attempted_count', 'completed_count', 'submitted_attempt_count', 'attempt_count', 'rate_eligible_attempt_count', 'recorded_practice_count', 'historical_pass_count', 'pass_count', 'passed_eligible_attempt_count', 'incomplete_attempt_count', 'legacy_incomplete_attempt_count'] as $metric) {
-                    $aggregate[$metric] += (int)($cell[$metric] ?? 0);
-                }
-                unset($aggregate);
             }
         }
-    }
-    $rows = [];
-    foreach ($rowsByRegionLab as $aggregate) {
-        $branchNames = array_keys($aggregate['branch_names']);
-        sort($branchNames, SORT_NATURAL | SORT_FLAG_CASE);
-        unset($aggregate['branch_names']);
-        $aggregate['branch_name'] = implode(', ', $branchNames);
-        $aggregate['completion_rate'] = $aggregate['population_count']
-            ? round(100 * $aggregate['completed_count'] / $aggregate['population_count'], 2)
-            : null;
-        $rows[] = $aggregate;
+        $rows = [];
+        foreach ($rowsByRegionLab as $aggregate) {
+            $branchNames = array_keys($aggregate['branch_names']);
+            sort($branchNames, SORT_NATURAL | SORT_FLAG_CASE);
+            unset($aggregate['branch_names']);
+            $aggregate['branch_name'] = implode(', ', $branchNames);
+            $aggregate['completion_rate'] = $aggregate['population_count']
+                ? round(100 * $aggregate['completed_count'] / $aggregate['population_count'], 2)
+                : null;
+            $rows[] = $aggregate;
+        }
+    } else {
+        $rows = dashboard_report_region_summary_rows($pdo, $from, $to);
+        foreach ($rows as &$row) {
+            $population = (int)($row['population_count'] ?? 0);
+            $row['completion_rate'] = $population
+                ? round(100 * (int)($row['completed_count'] ?? 0) / $population, 2)
+                : null;
+        }
+        unset($row);
     }
 
     $regionRows = [];
@@ -1200,6 +1476,7 @@ function dashboard_report_payload(PDO $pdo, array $query): array
     $previous = dashboard_report_metric($pdo, $compareFrom->format('Y-m-d'), $compareTo->format('Y-m-d'));
     $lifetime = dashboard_report_metric($pdo, null, null);
     $monthly = dashboard_report_monthly($pdo, (int)$from->format('Y'));
+    $monthlyRegions = dashboard_report_monthly_regions($pdo, (int)$from->format('Y'));
     $matrix = dashboard_report_matrix(
         $pdo,
         $from->format('Y-m-d'),
@@ -1236,6 +1513,7 @@ function dashboard_report_payload(PDO $pdo, array $query): array
         ],
         'summary' => ['current' => $current, 'previous' => $previous, 'lifetime' => $lifetime],
         'monthly' => $monthly,
+        'monthly_regions' => $monthlyRegions,
         'matrix' => $matrix,
     ];
 }

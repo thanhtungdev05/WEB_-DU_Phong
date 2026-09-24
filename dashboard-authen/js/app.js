@@ -16,6 +16,16 @@ let rosterEditReturnFocus = null;
 let dashboardLoadRequest = null;
 let deviceSubModalReturnFocus = null;
 let learnerDetailReturnIdentity = '';
+let dashboardSessionHeartbeatInterval = null;
+let dashboardSessionHeartbeatRequest = null;
+let dashboardSessionsRequest = null;
+
+const DASHBOARD_SESSION_HEARTBEAT_INTERVAL_MS = 20 * 60 * 1000;
+const SESSION_HEARTBEAT_LAST_SUCCESS_KEY = 'ftc-session-heartbeat-last-success-v1';
+const SESSION_HEARTBEAT_LEASE_KEY = 'ftc-session-heartbeat-lease-v1';
+const SESSION_HEARTBEAT_LEASE_MS = 30 * 1000;
+const dashboardSessionHeartbeatOwner = globalThis.crypto?.randomUUID?.()
+    || `dashboard-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 const formatNumber = new Intl.NumberFormat('vi-VN');
 const LEARNER_TABLE_PAGE_SIZE = 4;
@@ -128,6 +138,7 @@ const state = {
     sessionHistoryFrom: '',
     sessionHistoryTo: '',
     sessionHistoryHasMore: false,
+    sessionHistoryLoaded: false,
 
     // Roster (Quản lý KTV) — Admin
     rosterTab: 'list',
@@ -966,24 +977,41 @@ function renderOverviewMonthlyTrend(rows) {
     const monthlyPassedSessions = new Map();
     const monthlyEligibleSessions = new Map();
     const monthlyHistoricalPasses = new Map();
-    rows.forEach(session => {
-        const date = parseDate(session.date);
-        if (date.getTime() <= 0 || date.getFullYear() !== reportYear) return;
-        if (session.mode !== 'Thực hành' && session.mode !== 'practice') return;
-        if (effectiveRegion && getLearnerRegion(session.learner) !== effectiveRegion) return;
-        if (!isRecordedPracticeSession(session)) return;
-        const monthIndex = date.getMonth();
-        monthlySessions.set(monthIndex, (monthlySessions.get(monthIndex) || 0) + 1);
-        if (isRateEligiblePracticeSession(session)) {
-            monthlyEligibleSessions.set(monthIndex, (monthlyEligibleSessions.get(monthIndex) || 0) + 1);
-            if (isSuccessfulSession(session)) {
-                monthlyPassedSessions.set(monthIndex, (monthlyPassedSessions.get(monthIndex) || 0) + 1);
+    const reportMonthlyRows = effectiveRegion
+        ? (dashboardReport?.monthly_regions || []).filter(row => normalizeRegionName(row.region || 'FTC') === effectiveRegion)
+        : (dashboardReport?.monthly || []);
+    const authoritativeRows = reportMonthlyRows.filter(row => (
+        Number(String(row?.month || '').slice(0, 4)) === reportYear
+    ));
+    if (authoritativeRows.length) {
+        authoritativeRows.forEach(row => {
+            const monthIndex = Number(String(row.month || '').slice(5, 7)) - 1;
+            if (monthIndex < 0 || monthIndex > 11) return;
+            monthlySessions.set(monthIndex, Number(row.recorded_practice_count) || 0);
+            monthlyEligibleSessions.set(monthIndex, Number(row.rate_eligible_attempt_count ?? row.graded_count) || 0);
+            monthlyPassedSessions.set(monthIndex, Number(row.passed_eligible_attempt_count ?? row.passed_count) || 0);
+            monthlyHistoricalPasses.set(monthIndex, Number(row.historical_pass_count) || 0);
+        });
+    } else {
+        rows.forEach(session => {
+            const date = parseDate(session.date);
+            if (date.getTime() <= 0 || date.getFullYear() !== reportYear) return;
+            if (session.mode !== 'Thực hành' && session.mode !== 'practice') return;
+            if (effectiveRegion && getLearnerRegion(session.learner) !== effectiveRegion) return;
+            if (!isRecordedPracticeSession(session)) return;
+            const monthIndex = date.getMonth();
+            monthlySessions.set(monthIndex, (monthlySessions.get(monthIndex) || 0) + 1);
+            if (isRateEligiblePracticeSession(session)) {
+                monthlyEligibleSessions.set(monthIndex, (monthlyEligibleSessions.get(monthIndex) || 0) + 1);
+                if (isSuccessfulSession(session)) {
+                    monthlyPassedSessions.set(monthIndex, (monthlyPassedSessions.get(monthIndex) || 0) + 1);
+                }
             }
-        }
-        if (isHistoricalPassSession(session)) {
-            monthlyHistoricalPasses.set(monthIndex, (monthlyHistoricalPasses.get(monthIndex) || 0) + 1);
-        }
-    });
+            if (isHistoricalPassSession(session)) {
+                monthlyHistoricalPasses.set(monthIndex, (monthlyHistoricalPasses.get(monthIndex) || 0) + 1);
+            }
+        });
+    }
 
     const periods = Array.from({ length: 12 }, (_, index) => {
         const date = new Date(reportYear, index, 1);
@@ -1525,7 +1553,7 @@ let REGION_FILTER_OPTIONS = [];
 
 async function fetchAndBuildRegionCatalog() {
     try {
-        const response = await fetch(`${API_BASE_URL}/roster/regions`);
+        const response = await fetch(`${API_BASE_URL}/roster/regions`, { cache: 'force-cache' });
         if (!response.ok) return;
         const payload = await response.json();
         const items = payload.data?.items || [];
@@ -2046,6 +2074,10 @@ const REGION_USAGE_COLORS = [
 
 function getRegionUsageYears() {
     const years = new Set([now.getFullYear()]);
+    [...(dashboardReport?.monthly || []), ...(dashboardReport?.monthly_regions || [])].forEach(row => {
+        const year = Number(String(row?.month || '').slice(0, 4));
+        if (Number.isInteger(year) && year > 0) years.add(year);
+    });
     sessions.forEach(session => {
         const date = parseDate(session.date);
         if (date.getTime() > 0) years.add(date.getFullYear());
@@ -2058,6 +2090,63 @@ function isPracticeSession(session) {
 }
 
 function getRegionUsageSeries(year) {
+    const reportRows = (dashboardReport?.monthly_regions || []).filter(row => (
+        Number(String(row?.month || '').slice(0, 4)) === year
+    ));
+    if (reportRows.length) {
+        const byRegion = new Map();
+        reportRows.forEach(row => {
+            const region = normalizeRegionName(row.region || 'FTC');
+            if (!byRegion.has(region)) {
+                byRegion.set(region, {
+                    region,
+                    headcount: Number(row.headcount) || 0,
+                    monthly: new Map()
+                });
+            }
+            const item = byRegion.get(region);
+            item.headcount = Math.max(item.headcount, Number(row.headcount) || 0);
+            const monthIndex = Number(String(row.month || '').slice(5, 7)) - 1;
+            if (monthIndex >= 0 && monthIndex < 12) {
+                item.monthly.set(monthIndex, {
+                    practiceSessions: Number(row.recorded_practice_count) || 0,
+                    passedLearners: Number(row.passed_technicians) || 0
+                });
+            }
+        });
+        const currentYear = now.getFullYear();
+        const observedMonthCount = year < currentYear ? 12 : (year === currentYear ? now.getMonth() + 1 : 0);
+        return [...byRegion.values()]
+            .sort((left, right) => left.region.localeCompare(right.region, 'vi', { numeric: true, sensitivity: 'base' }))
+            .map((item, colorIndex) => {
+                const months = Array.from({ length: 12 }, (_, monthIndex) => {
+                    if (monthIndex >= observedMonthCount) return null;
+                    const metric = item.monthly.get(monthIndex) || { practiceSessions: 0, passedLearners: 0 };
+                    return {
+                        month: monthIndex + 1,
+                        ...metric,
+                        headcount: item.headcount,
+                        rate: item.headcount > 0
+                            ? Math.round((metric.passedLearners / item.headcount) * 1000) / 10
+                            : 0
+                    };
+                });
+                const practiceSessions = months.filter(Boolean)
+                    .reduce((sum, month) => sum + month.practiceSessions, 0);
+                return {
+                    region: item.region,
+                    headcount: item.headcount,
+                    color: REGION_USAGE_COLORS[colorIndex % REGION_USAGE_COLORS.length],
+                    months,
+                    practiceSessions,
+                    sessionsPerKtv: item.headcount > 0
+                        ? Math.round((practiceSessions / item.headcount) * 10) / 10
+                        : 0
+                };
+            })
+            .filter(item => item.headcount > 0);
+    }
+
     const headcountByRegion = new Map();
     technicianCatalog
         .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId))
@@ -2650,6 +2739,14 @@ function dashboardReportQuery() {
     });
 }
 
+function dashboardViewNeedsReport(viewName = activeDashboardView) {
+    return viewName === 'overview' || viewName === 'analytics';
+}
+
+function dashboardViewNeedsSessions(viewName = activeDashboardView) {
+    return viewName === 'technicians' || viewName === 'instructors';
+}
+
 async function fetchDashboardReport(query = dashboardReportQuery()) {
     const response = await fetch(`${API_BASE_URL}/dashboard/report?${query}`);
     if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
@@ -2704,17 +2801,43 @@ async function reloadDashboardSessionsForRange() {
     state.sessionHistoryFrom = String(data.session_page?.from || '');
     state.sessionHistoryTo = String(data.session_page?.to || '');
     state.sessionHistoryHasMore = data.session_page?.has_more === true;
+    state.sessionHistoryLoaded = true;
     rebuildLearnerNameMap();
+    mergeUntouchedFilterSets(
+        [...new Set(sessions.map(item => item.learner))].sort(),
+        getCanonicalDeviceList(),
+        getCanonicalLabList(),
+        [...new Set(sessions.map(item => item.region))].sort((a, b) => a.localeCompare(b, 'vi'))
+    );
     refreshFilterOptionLists();
     renderAll();
 }
 
+async function ensureDashboardSessionsLoaded() {
+    if (!state.dashboardDataLoaded) return;
+    const periods = getKpiComparisonPeriods();
+    const matchesRange = state.sessionHistoryLoaded
+        && state.sessionHistoryFrom === periods.currentStart
+        && state.sessionHistoryTo === periods.currentEnd;
+    if (matchesRange) return;
+    if (dashboardSessionsRequest) return dashboardSessionsRequest;
+    dashboardSessionsRequest = reloadDashboardSessionsForRange()
+        .finally(() => { dashboardSessionsRequest = null; });
+    return dashboardSessionsRequest;
+}
+
 function reloadDashboardSelectedRange() {
-    if (!dashboardReport && !sessions.length) return;
-    void Promise.allSettled([
-        reloadDashboardReport(),
-        reloadDashboardSessionsForRange()
-    ]);
+    if (!state.dashboardDataLoaded) return;
+    const requests = [];
+    if (dashboardViewNeedsSessions()) {
+        requests.push(reloadDashboardSessionsForRange());
+    } else {
+        sessions = [];
+        state.sessionHistoryLoaded = false;
+        state.sessionHistoryHasMore = false;
+    }
+    if (dashboardViewNeedsReport()) requests.push(reloadDashboardReport());
+    void Promise.allSettled(requests);
 }
 
 async function reloadDashboardReport() {
@@ -2774,29 +2897,51 @@ async function fetchDashboardData(versionHint = '') {
     allParams.set('to', periods.currentEnd);
     allParams.set('limit', '500');
     allParams.set('include_assignments', '0');
-    const reportRequest = fetch(`${API_BASE_URL}/dashboard/report?${dashboardReportQuery()}`).then(async response => {
-        if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
-        return (await response.json()).data || null;
-    });
+    const sessionsRequested = dashboardViewNeedsSessions();
+    allParams.set('include_sessions', sessionsRequested ? '1' : '0');
+    const reportRequested = dashboardViewNeedsReport();
+    const reportRequest = reportRequested
+        ? fetch(`${API_BASE_URL}/dashboard/report?${dashboardReportQuery()}`).then(async response => {
+            if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
+            return (await response.json()).data || null;
+        })
+        : Promise.resolve(undefined);
     const versionRequest = versionHint
         ? Promise.resolve(versionHint)
         : fetchDashboardVersion();
     const dashboardCatalogRequest = fetchDashboardCatalog();
     const regionCatalogPromise = fetchAndBuildRegionCatalog();
     const optionalRequests = Promise.allSettled([reportRequest, versionRequest]);
-    const response = await fetch(`${API_BASE_URL}/dashboard/all?${allParams}`);
-    if (!response.ok) throw new Error(`API dữ liệu chi tiết trả về HTTP ${response.status}`);
+    const detailRequest = sessionsRequested
+        ? fetch(`${API_BASE_URL}/dashboard/all?${allParams}`).then(async response => {
+            if (!response.ok) throw new Error(`API dữ liệu chi tiết trả về HTTP ${response.status}`);
+            return response.json();
+        })
+        : Promise.resolve({
+            data: {
+                sessions: [],
+                session_page: {
+                    from: periods.currentStart,
+                    to: periods.currentEnd,
+                    has_more: false
+                }
+            }
+        });
     const [payload, catalogData, [reportResult, versionResult]] = await Promise.all([
-        response.json(), dashboardCatalogRequest, optionalRequests
+        detailRequest, dashboardCatalogRequest, optionalRequests
     ]);
     const data = payload.data || {};
     if (assignmentsRequested && data.assignments_available !== true) {
         throw new Error('Dữ liệu phân lớp hiện không khả dụng.');
     }
-    const report = reportResult.status === 'fulfilled' ? reportResult.value : dashboardReport;
-    const reportStatus = reportResult.status === 'fulfilled' ? 'ready' : (report ? 'stale' : 'unavailable');
+    const report = reportResult.status === 'fulfilled' && reportResult.value !== undefined
+        ? reportResult.value
+        : dashboardReport;
+    const reportStatus = !reportRequested
+        ? (report ? 'ready' : 'idle')
+        : (reportResult.status === 'fulfilled' ? 'ready' : (report ? 'stale' : 'unavailable'));
     const version = versionResult.status === 'fulfilled' ? String(versionResult.value || '') : String(versionHint || lastDashboardVersion || '');
-    if (reportResult.status === 'rejected') console.warn('Không đồng bộ được báo cáo tổng hợp; giữ dữ liệu gần nhất.', reportResult.reason);
+    if (reportRequested && reportResult.status === 'rejected') console.warn('Không đồng bộ được báo cáo tổng hợp; giữ dữ liệu gần nhất.', reportResult.reason);
     if (versionResult.status === 'rejected') console.warn('Không đọc được phiên bản dữ liệu dashboard.', versionResult.reason);
     await regionCatalogPromise;
     const techniciansAuthoritative = Array.isArray(catalogData.technicians);
@@ -2827,6 +2972,7 @@ async function fetchDashboardData(versionHint = '') {
         sessionHistoryFrom: String(data.session_page?.from || ''),
         sessionHistoryTo: String(data.session_page?.to || ''),
         sessionHistoryHasMore: data.session_page?.has_more === true,
+        sessionHistoryLoaded: sessionsRequested,
         raw: { ...data, data_version: version, report_meta: report?.meta || null }
     };
 }
@@ -2846,6 +2992,7 @@ function applyDashboardData(data) {
     state.sessionHistoryFrom = data.sessionHistoryFrom;
     state.sessionHistoryTo = data.sessionHistoryTo;
     state.sessionHistoryHasMore = Boolean(data.sessionHistoryHasMore);
+    state.sessionHistoryLoaded = Boolean(data.sessionHistoryLoaded);
     technicianCatalogAuthoritative = Boolean(data.techniciansAuthoritative);
     state.dashboardDataLoaded = true;
     normalizeSessionDeviceNames();
@@ -2982,6 +3129,7 @@ async function refreshDashboardData({ force = false, announce = false } = {}) {
         if (!force && version !== '' && version === lastDashboardVersion) {
             state.lastSuccessfulRefreshAt = new Date();
             setDashboardSyncState('ready');
+            if (announce) showToast('Dữ liệu dashboard đã là phiên bản mới nhất.', 'success');
             return false;
         }
         const data = await fetchDashboardData(version);
@@ -2992,6 +3140,7 @@ async function refreshDashboardData({ force = false, announce = false } = {}) {
             state.lastSuccessfulRefreshAt = new Date();
             setDashboardSyncState('ready');
             if (previousReportStatus !== state.dashboardReportStatus) renderAll();
+            if (announce) showToast('Dữ liệu dashboard đã là phiên bản mới nhất.', 'success');
             return false;
         }
         lastDashboardSignature = signature;
@@ -3079,21 +3228,148 @@ async function loadDashboardFromApi() {
     return dashboardLoadRequest;
 }
 
-async function guardDashboardAdmin() {
-    let response;
+async function fetchDashboardSessionUser() {
+    const response = await fetch(`${API_BASE_URL}/auth/session`, {
+        cache: 'no-store',
+        credentials: 'same-origin'
+    });
+    if (!response.ok) {
+        const error = new Error(`Dashboard session API returned HTTP ${response.status}`);
+        error.status = response.status;
+        throw error;
+    }
+    const user = (await response.json().catch(() => null))?.user || null;
+    if (user) markDashboardSessionHeartbeatSuccess();
+    return user;
+}
+
+function markDashboardSessionHeartbeatSuccess() {
     try {
-        response = await fetch(`${API_BASE_URL}/auth/session`);
+        localStorage.setItem(SESSION_HEARTBEAT_LAST_SUCCESS_KEY, String(Date.now()));
     } catch (error) {
+        console.debug('Không thể chia sẻ thời điểm heartbeat giữa các tab.', error);
+    }
+}
+
+function dashboardSessionHeartbeatDue() {
+    try {
+        const lastSuccess = Number(localStorage.getItem(SESSION_HEARTBEAT_LAST_SUCCESS_KEY) || 0);
+        return !Number.isFinite(lastSuccess)
+            || Date.now() - lastSuccess >= DASHBOARD_SESSION_HEARTBEAT_INTERVAL_MS;
+    } catch (error) {
+        return true;
+    }
+}
+
+function claimDashboardSessionHeartbeatLease() {
+    if (!dashboardSessionHeartbeatDue()) return false;
+    try {
+        const now = Date.now();
+        const current = JSON.parse(localStorage.getItem(SESSION_HEARTBEAT_LEASE_KEY) || 'null');
+        if (current?.owner !== dashboardSessionHeartbeatOwner && Number(current?.expiresAt) > now) {
+            return false;
+        }
+        localStorage.setItem(SESSION_HEARTBEAT_LEASE_KEY, JSON.stringify({
+            owner: dashboardSessionHeartbeatOwner,
+            expiresAt: now + SESSION_HEARTBEAT_LEASE_MS
+        }));
+        return JSON.parse(localStorage.getItem(SESSION_HEARTBEAT_LEASE_KEY) || 'null')?.owner
+            === dashboardSessionHeartbeatOwner;
+    } catch (error) {
+        return true;
+    }
+}
+
+function releaseDashboardSessionHeartbeatLease() {
+    try {
+        const current = JSON.parse(localStorage.getItem(SESSION_HEARTBEAT_LEASE_KEY) || 'null');
+        if (current?.owner === dashboardSessionHeartbeatOwner) {
+            localStorage.removeItem(SESSION_HEARTBEAT_LEASE_KEY);
+        }
+    } catch (error) {
+        // A short lease expiry remains the fallback when storage is unavailable.
+    }
+}
+
+function stopDashboardSessionHeartbeat() {
+    if (dashboardSessionHeartbeatInterval) {
+        clearInterval(dashboardSessionHeartbeatInterval);
+        dashboardSessionHeartbeatInterval = null;
+    }
+    releaseDashboardSessionHeartbeatLease();
+}
+
+function redirectAfterDashboardSessionExpiry() {
+    stopDashboardSessionHeartbeat();
+    state.currentUser = null;
+    window.location.replace(`${window.location.origin}/`);
+}
+
+async function refreshDashboardSessionHeartbeat() {
+    if (document.visibilityState === 'hidden' || !state.currentUser) return false;
+    if (dashboardSessionHeartbeatRequest) return dashboardSessionHeartbeatRequest;
+    if (!claimDashboardSessionHeartbeatLease()) return false;
+
+    dashboardSessionHeartbeatRequest = (async () => {
+        try {
+            const user = await fetchDashboardSessionUser();
+            const role = String(user?.role || '').toUpperCase();
+            const isAdmin = Boolean(user && (user.isAdmin ?? user.is_admin ?? user.permissions?.admin ?? ['ADMIN', 'DEV'].includes(role)));
+            if (!isAdmin) {
+                redirectAfterDashboardSessionExpiry();
+                return false;
+            }
+            state.currentUser = user;
+            return true;
+        } catch (error) {
+            if (error?.status === 401 || error?.status === 403) {
+                redirectAfterDashboardSessionExpiry();
+                return false;
+            }
+            console.warn('Chưa thể gia hạn phiên dashboard; sẽ thử lại.', error);
+            return false;
+        } finally {
+            dashboardSessionHeartbeatRequest = null;
+            releaseDashboardSessionHeartbeatLease();
+        }
+    })();
+    return dashboardSessionHeartbeatRequest;
+}
+
+function startDashboardSessionHeartbeat() {
+    if (!dashboardSessionHeartbeatInterval) {
+        dashboardSessionHeartbeatInterval = setInterval(
+            refreshDashboardSessionHeartbeat,
+            DASHBOARD_SESSION_HEARTBEAT_INTERVAL_MS
+        );
+    }
+    if (document.body.dataset.dashboardSessionHeartbeatBound === 'true') return;
+    document.body.dataset.dashboardSessionHeartbeatBound = 'true';
+    window.addEventListener('focus', refreshDashboardSessionHeartbeat);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') refreshDashboardSessionHeartbeat();
+    });
+}
+
+async function guardDashboardAdmin() {
+    let user;
+    try {
+        user = await fetchDashboardSessionUser();
+    } catch (error) {
+        if (error?.status === 401 || error?.status === 403) {
+            redirectAfterDashboardSessionExpiry();
+            return false;
+        }
         console.warn('Không thể xác minh phiên quản trị.', error);
-        setDataSourceLabel('Không thể xác minh phiên quản trị');
+        setDataSourceLabel('Không thể xác minh phiên quản trị. Vui lòng thử lại.');
+        setDashboardSyncState(navigator.onLine ? 'stale' : 'offline', 'Máy chủ xác thực tạm thời không phản hồi');
         setDashboardLoading(false);
         return false;
     }
-    const user = response.ok ? (await response.json().catch(() => null))?.user : null;
     const role = String(user?.role || '').toUpperCase();
     const isAdmin = Boolean(user && (user.isAdmin ?? user.is_admin ?? user.permissions?.admin ?? ['ADMIN', 'DEV'].includes(role)));
     if (!isAdmin) {
-        window.location.replace(`${window.location.origin}/`);
+        redirectAfterDashboardSessionExpiry();
         return false;
     }
     state.currentUser = user;
@@ -3108,6 +3384,7 @@ async function guardDashboardAdmin() {
     );
     applyReportExportPermission();
     applyDeveloperNoticeVisibility();
+    startDashboardSessionHeartbeat();
     return true;
 }
 
@@ -4000,8 +4277,9 @@ const multiSelectFilterIds = new Set([
     'classStatusFilter'
 ]);
 
-const TABLE_COLUMN_WIDTH_STORAGE_KEY = 'ftc-dashboard-column-widths-v1';
+const TABLE_COLUMN_WIDTH_STORAGE_KEY = 'ftc-dashboard-column-widths-v2';
 const TABLE_COLUMN_MIN_WIDTH = 34;
+const TABLE_SIMPLE_COLUMN_MIN_WIDTH = 72;
 const TABLE_COLUMN_MAX_WIDTH = 640;
 
 function getDashboardTableKey(table) {
@@ -4045,6 +4323,16 @@ function writeDashboardColumnWidth(table, columnIndex, width) {
     }
 }
 
+function clearDashboardStoredColumnWidths(table) {
+    try {
+        const allWidths = readDashboardColumnWidths();
+        delete allWidths[getDashboardTableKey(table)];
+        window.localStorage.setItem(TABLE_COLUMN_WIDTH_STORAGE_KEY, JSON.stringify(allWidths));
+    } catch (error) {
+        // Resetting the current layout must still work when browser storage is disabled.
+    }
+}
+
 function getTableCellPlacements(table) {
     const grid = [];
     const placements = new Map();
@@ -4072,6 +4360,85 @@ function getTableLeafCount(placements) {
     return Math.max(0, ...[...placements.values()].map(item => item.columnIndex + item.columnSpan));
 }
 
+function getDashboardColumnResizeMode(table) {
+    const mode = table?.dataset?.resizableColumns || '';
+    return mode === 'colgroup' || mode === 'legacy' ? mode : '';
+}
+
+function getDashboardHeaderByColumn(table, placements = getTableCellPlacements(table)) {
+    const headerByColumn = new Map();
+    [...(table.tHead?.querySelectorAll('th') || [])].forEach(header => {
+        const placement = placements.get(header);
+        if (placement?.columnSpan === 1) headerByColumn.set(placement.columnIndex, header);
+    });
+    return headerByColumn;
+}
+
+function getDashboardColumnMinWidth(table, columnIndex, header = null) {
+    if (getDashboardColumnResizeMode(table) !== 'colgroup') return TABLE_COLUMN_MIN_WIDTH;
+    const configured = Number(header?.dataset?.resizeMinWidth);
+    if (Number.isFinite(configured) && configured > 0) return configured;
+    if (columnIndex === 0) return 120;
+    if (header?.querySelector('.popover-filter-wrapper, .sort-button, .admin-header-filter')) return 110;
+    return TABLE_SIMPLE_COLUMN_MIN_WIDTH;
+}
+
+function normalizeDashboardColumnWidth(table, columnIndex, width, header = null) {
+    const minimumWidth = getDashboardColumnMinWidth(table, columnIndex, header);
+    return Math.max(minimumWidth, Math.min(TABLE_COLUMN_MAX_WIDTH, Math.round(width)));
+}
+
+function getDashboardColgroup(table, leafCount) {
+    let colgroup = table.querySelector(':scope > colgroup[data-dashboard-column-model]');
+    if (colgroup && colgroup.children.length !== leafCount) {
+        colgroup.remove();
+        colgroup = null;
+    }
+    if (!colgroup) {
+        colgroup = document.createElement('colgroup');
+        colgroup.dataset.dashboardColumnModel = 'true';
+        for (let index = 0; index < leafCount; index += 1) colgroup.appendChild(document.createElement('col'));
+        table.insertBefore(colgroup, table.tHead || table.tBodies[0] || null);
+    }
+    return colgroup;
+}
+
+function syncDashboardColgroupTableWidth(table, colgroup) {
+    const totalWidth = [...colgroup.children].reduce((total, col) => {
+        const width = Number.parseFloat(col.style.width);
+        return total + (Number.isFinite(width) ? width : 0);
+    }, 0);
+    if (totalWidth > 0) table.style.setProperty('--resizable-table-width', `${Math.round(totalWidth)}px`);
+}
+
+function ensureDashboardColgroupLayout(table, placements = getTableCellPlacements(table)) {
+    const leafCount = getTableLeafCount(placements);
+    if (!leafCount) return null;
+    const headerByColumn = getDashboardHeaderByColumn(table, placements);
+    const storedWidths = readDashboardColumnWidths()[getDashboardTableKey(table)] || {};
+    const colgroup = getDashboardColgroup(table, leafCount);
+    [...colgroup.children].forEach((col, columnIndex) => {
+        if (col.style.width) return;
+        const storedWidth = Number(storedWidths[columnIndex]);
+        const measuredWidth = headerByColumn.get(columnIndex)?.getBoundingClientRect().width || 0;
+        const fallbackWidth = columnIndex === 0 ? 160 : 130;
+        const width = Number.isFinite(storedWidth) && storedWidth > 0
+            ? storedWidth
+            : (measuredWidth > 0 ? measuredWidth : fallbackWidth);
+        const normalizedWidth = normalizeDashboardColumnWidth(table, columnIndex, width, headerByColumn.get(columnIndex));
+        col.style.width = `${normalizedWidth}px`;
+    });
+    table.classList.add('column-widths-fixed');
+    syncDashboardColgroupTableWidth(table, colgroup);
+    return colgroup;
+}
+
+function clearDashboardColgroupLayout(table) {
+    table.querySelector(':scope > colgroup[data-dashboard-column-model]')?.remove();
+    table.classList.remove('column-widths-fixed');
+    table.style.removeProperty('--resizable-table-width');
+}
+
 function getColumnWidthVariable(table, columnIndex, leafCount) {
     if (table.matches('.class-matrix-table')) {
         if (columnIndex === 0) return '--ktv-stt-width';
@@ -4092,7 +4459,17 @@ function getColumnWidthVariable(table, columnIndex, leafCount) {
 
 function applyDashboardColumnWidth(table, columnIndex, width) {
     const placements = getTableCellPlacements(table);
-    const normalizedWidth = Math.max(TABLE_COLUMN_MIN_WIDTH, Math.min(TABLE_COLUMN_MAX_WIDTH, Math.round(width)));
+    const header = getDashboardHeaderByColumn(table, placements).get(columnIndex);
+    const normalizedWidth = normalizeDashboardColumnWidth(table, columnIndex, width, header);
+    if (getDashboardColumnResizeMode(table) === 'colgroup') {
+        const colgroup = ensureDashboardColgroupLayout(table, placements);
+        const column = colgroup?.children[columnIndex];
+        if (column) {
+            column.style.width = `${normalizedWidth}px`;
+            syncDashboardColgroupTableWidth(table, colgroup);
+        }
+        return normalizedWidth;
+    }
     placements.forEach((placement, cell) => {
         if (placement.columnIndex !== columnIndex || placement.columnSpan !== 1) return;
         cell.style.setProperty('width', `${normalizedWidth}px`, 'important');
@@ -4105,6 +4482,12 @@ function applyDashboardColumnWidth(table, columnIndex, width) {
 }
 
 function resetDashboardColumnWidth(table, columnIndex) {
+    if (getDashboardColumnResizeMode(table) === 'colgroup') {
+        writeDashboardColumnWidth(table, columnIndex, null);
+        clearDashboardColgroupLayout(table);
+        window.requestAnimationFrame(() => syncDashboardTableColumnResizers(table));
+        return;
+    }
     const placements = getTableCellPlacements(table);
     placements.forEach((placement, cell) => {
         if (placement.columnIndex !== columnIndex || placement.columnSpan !== 1) return;
@@ -4117,39 +4500,59 @@ function resetDashboardColumnWidth(table, columnIndex) {
     writeDashboardColumnWidth(table, columnIndex, null);
 }
 
+function resetDashboardTableColumnWidths(table) {
+    if (!table) return;
+    clearDashboardStoredColumnWidths(table);
+    if (getDashboardColumnResizeMode(table) === 'colgroup') {
+        clearDashboardColgroupLayout(table);
+        return;
+    }
+    const placements = getTableCellPlacements(table);
+    const headerByColumn = getDashboardHeaderByColumn(table, placements);
+    headerByColumn.forEach((_header, columnIndex) => resetDashboardColumnWidth(table, columnIndex));
+}
+
 function startDashboardColumnResize(event, table, header, columnIndex) {
     if (event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
     const startX = event.clientX;
-    const startWidth = header.getBoundingClientRect().width;
+    let startWidth = header.getBoundingClientRect().width;
     const pointerId = event.pointerId;
     document.body.classList.add('table-column-resizing');
     event.currentTarget.setPointerCapture?.(pointerId);
 
-    // Cache cell references and variable mapping once on drag start to prevent layout thrashing on move
+    // Cache the resize target once on drag start to prevent layout thrashing on move.
     const placements = getTableCellPlacements(table);
+    const resizeMode = getDashboardColumnResizeMode(table);
+    const colgroup = resizeMode === 'colgroup' ? ensureDashboardColgroupLayout(table, placements) : null;
+    const targetColumn = colgroup?.children[columnIndex] || null;
+    const colgroupWidth = Number.parseFloat(targetColumn?.style.width || '');
+    if (Number.isFinite(colgroupWidth)) startWidth = colgroupWidth;
     const targetCells = [];
-    placements.forEach((placement, cell) => {
-        if (placement.columnIndex === columnIndex && placement.columnSpan === 1) {
-            targetCells.push(cell);
-        }
-    });
+    if (resizeMode !== 'colgroup') {
+        placements.forEach((placement, cell) => {
+            if (placement.columnIndex === columnIndex && placement.columnSpan === 1) targetCells.push(cell);
+        });
+    }
     const leafCount = getTableLeafCount(placements);
-    const variable = getColumnWidthVariable(table, columnIndex, leafCount);
+    const variable = resizeMode === 'legacy' ? getColumnWidthVariable(table, columnIndex, leafCount) : '';
     let currentWidth = startWidth;
 
     const move = moveEvent => {
         if (moveEvent.pointerId === pointerId) {
             const rawWidth = startWidth + moveEvent.clientX - startX;
-            currentWidth = Math.max(TABLE_COLUMN_MIN_WIDTH, Math.min(TABLE_COLUMN_MAX_WIDTH, Math.round(rawWidth)));
-            targetCells.forEach(cell => {
-                cell.style.setProperty('width', `${currentWidth}px`, 'important');
-                cell.style.setProperty('min-width', `${currentWidth}px`, 'important');
-                cell.style.setProperty('max-width', `${currentWidth}px`, 'important');
-            });
-            if (variable) {
-                table.style.setProperty(variable, `${currentWidth}px`);
+            currentWidth = normalizeDashboardColumnWidth(table, columnIndex, rawWidth, header);
+            if (targetColumn) {
+                targetColumn.style.width = `${currentWidth}px`;
+                syncDashboardColgroupTableWidth(table, colgroup);
+            } else {
+                targetCells.forEach(cell => {
+                    cell.style.setProperty('width', `${currentWidth}px`, 'important');
+                    cell.style.setProperty('min-width', `${currentWidth}px`, 'important');
+                    cell.style.setProperty('max-width', `${currentWidth}px`, 'important');
+                });
+                if (variable) table.style.setProperty(variable, `${currentWidth}px`);
             }
         }
     };
@@ -4168,12 +4571,10 @@ function startDashboardColumnResize(event, table, header, columnIndex) {
 
 function syncDashboardTableColumnResizers(table) {
     if (!table.tHead) return;
+    const resizeMode = getDashboardColumnResizeMode(table);
+    if (!resizeMode) return;
     const placements = getTableCellPlacements(table);
-    const headerByColumn = new Map();
-    [...table.tHead.querySelectorAll('th')].forEach(header => {
-        const placement = placements.get(header);
-        if (placement?.columnSpan === 1) headerByColumn.set(placement.columnIndex, header);
-    });
+    const headerByColumn = getDashboardHeaderByColumn(table, placements);
     const storedWidths = readDashboardColumnWidths()[getDashboardTableKey(table)] || {};
     headerByColumn.forEach((header, columnIndex) => {
         header.classList.add('column-resizable');
@@ -4208,7 +4609,9 @@ function syncDashboardTableColumnResizers(table) {
             header.appendChild(handle);
         }
         const storedWidth = Number(storedWidths[columnIndex]);
-        if (Number.isFinite(storedWidth)) applyDashboardColumnWidth(table, columnIndex, storedWidth);
+        if (Number.isFinite(storedWidth) && table.getClientRects().length > 0) {
+            applyDashboardColumnWidth(table, columnIndex, storedWidth);
+        }
     });
 }
 
@@ -4496,6 +4899,10 @@ function enhanceSearchableFilterSelect(select) {
 function initUnifiedDashboardControls() {
     enhanceDashboardTables();
     searchableFilterSelectIds.forEach(id => enhanceSearchableFilterSelect(document.getElementById(id)));
+    document.getElementById('learnerColumnWidthReset')?.addEventListener('click', () => {
+        resetDashboardTableColumnWidths(document.getElementById('technicianSessionsTable'));
+        showToast('Đã đặt lại độ rộng các cột.', 'success');
+    });
 
     const observer = new MutationObserver(mutations => {
         mutations.forEach(mutation => mutation.addedNodes.forEach(node => {
@@ -7469,9 +7876,12 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
     });
 
     renderAll();
-    if (activeDashboardView === 'analytics'
-        && state.dashboardDataLoaded
-        && dashboardReport?.meta?.includes_branch_drilldown !== true
+    const reportMissingForView = dashboardViewNeedsReport()
+        && (!dashboardReport
+            || !dashboardReportMatchesSelectedPeriod()
+            || (activeDashboardView === 'analytics' && dashboardReport?.meta?.includes_branch_drilldown !== true));
+    if (state.dashboardDataLoaded
+        && reportMissingForView
         && state.dashboardReportStatus !== 'loading') {
         reloadDashboardReport();
     }
@@ -7485,21 +7895,31 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
         setDataSourceLabel(state.dashboardDataLoaded ? 'Dữ liệu vận hành đã đồng bộ' : 'Đang đồng bộ dữ liệu vận hành');
         if (!state.dashboardDataLoaded) {
             loadDashboardFromApi().then(() => {
-                if (['instructors', 'class_matrix', 'analytics', 'technicians'].includes(activeDashboardView) && !state.assignmentsLoaded) {
+                if (['instructors', 'class_matrix', 'analytics'].includes(activeDashboardView) && !state.assignmentsLoaded) {
                     ensureTrainingAssignmentsLoaded().catch(error => {
                         console.warn('Không đồng bộ được tiến độ lớp.', error);
                         showToast('Chưa thể đồng bộ dữ liệu tiến độ lớp.', 'error');
                     });
                 }
             });
-        } else if (['instructors', 'class_matrix', 'analytics', 'technicians'].includes(activeDashboardView) && !state.assignmentsLoaded) {
+        } else if (['instructors', 'class_matrix', 'analytics'].includes(activeDashboardView) && !state.assignmentsLoaded) {
             ensureTrainingAssignmentsLoaded().catch(error => {
                 console.warn('Không đồng bộ được tiến độ lớp.', error);
                 showToast('Chưa thể đồng bộ dữ liệu tiến độ lớp.', 'error');
             });
         }
     }
-    if (focusHeading) window.requestAnimationFrame(() => document.getElementById('pageTitle')?.focus({ preventScroll: true }));
+    if (state.isAdmin && state.dashboardDataLoaded && dashboardViewNeedsSessions()) {
+        ensureDashboardSessionsLoaded().catch(error => {
+            console.warn('Không tải được dữ liệu phiên theo màn hình.', error);
+            showToast('Chưa thể tải dữ liệu phiên chi tiết.', 'error');
+        });
+    }
+    window.requestAnimationFrame(() => {
+        const activeView = document.querySelector(`.dashboard-page-view[data-page-view="${activeDashboardView}"]`);
+        if (activeView) enhanceDashboardTables(activeView);
+        if (focusHeading) document.getElementById('pageTitle')?.focus({ preventScroll: true });
+    });
 }
 
 function initDashboardViewRouting() {
@@ -7592,7 +8012,7 @@ function initDashboardExperience() {
             showToast(succeeded ? 'Dashboard đã được cập nhật.' : 'Không thể tải dữ liệu dashboard.', succeeded ? 'success' : 'error');
             return;
         }
-        window.location.reload();
+        await refreshDashboardData({ force: false, announce: true });
     });
 
     window.addEventListener('offline', () => {
@@ -7600,8 +8020,12 @@ function initDashboardExperience() {
             ? formatDashboardSyncDetail(state.lastSuccessfulRefreshAt)
             : 'Thiết bị đang ngoại tuyến');
     });
-    window.addEventListener('online', () => {
-        setDashboardSyncState('ready', 'Tải lại trang để nhận dữ liệu mới');
+    window.addEventListener('online', async () => {
+        setDashboardSyncState('syncing', 'Đã có kết nối, đang kiểm tra dữ liệu mới');
+        if (activeDashboardView === 'roster') await loadRosterList();
+        else if (activeDashboardView === 'classes') await loadTrainingClasses();
+        else if (state.dashboardDataLoaded) await refreshDashboardData();
+        else if (state.isAdmin) await loadDashboardFromApi();
     });
 }
 
@@ -7929,7 +8353,7 @@ async function loadRosterMeta(force = false) {
 
 async function loadRosterRegions() {
     if (state.rosterRegionsLoaded) return;
-    const resp = await fetch(`${API_BASE_URL}/roster/regions`);
+    const resp = await fetch(`${API_BASE_URL}/roster/regions`, { cache: 'force-cache' });
     if (!resp.ok) throw new Error('Không tải được danh mục khu vực.');
     const json = await resp.json();
     state.rosterRegions = json.data?.items || [];

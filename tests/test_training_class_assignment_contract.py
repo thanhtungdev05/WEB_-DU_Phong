@@ -235,6 +235,7 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         portal = (ROOT / "portal.html").read_text(encoding="utf-8")
         dashboard_html = (ROOT / "personal-dashboard.html").read_text(encoding="utf-8")
         dashboard_js = (ROOT / "assets" / "personal-dashboard.js").read_text(encoding="utf-8")
+        example_env = (ROOT / ".env.example").read_text(encoding="utf-8")
 
         self.assertIn("training_class_personal_dashboard_payload", api)
         self.assertIn("personal-dashboard", api)
@@ -248,6 +249,9 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertIn("has_completion_pass", library)
         self.assertIn("historical_passed_sessions_count", library)
         self.assertIn("practice_duration_coverage_percent", library)
+        self.assertIn("env_int('PERSONAL_DASHBOARD_SESSION_LIMIT', 100, 24, 500)", library)
+        self.assertIn("LIMIT CAST(:session_history_limit AS INTEGER)", library)
+        self.assertIn("PERSONAL_DASHBOARD_SESSION_LIMIT=100", example_env)
         self.assertIn('id="btn-personal-dashboard"', portal)
         self.assertIn('href="/personal-dashboard.html"', portal)
         self.assertIn('id="btn-goto-practice"', dashboard_html)
@@ -260,6 +264,7 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertIn("${passedSessions}/${gradedSessions} lượt đạt", dashboard_js)
         self.assertIn("historicalPassedSessions", dashboard_js)
         self.assertIn("20260918-recorded-practice-v4", dashboard_html)
+        self.assertIn('/assets/logoFPT.png?v=20260924-fpt-telecom', dashboard_html)
 
 
 if __name__ == "__main__":
