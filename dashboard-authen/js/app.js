@@ -19,6 +19,9 @@ let learnerDetailReturnIdentity = '';
 let dashboardSessionHeartbeatInterval = null;
 let dashboardSessionHeartbeatRequest = null;
 let dashboardSessionsRequest = null;
+let technicianSummaries = [];
+let technicianSummaryRequest = null;
+let technicianDetailRequest = null;
 
 const DASHBOARD_SESSION_HEARTBEAT_INTERVAL_MS = 20 * 60 * 1000;
 const SESSION_HEARTBEAT_LAST_SUCCESS_KEY = 'ftc-session-heartbeat-last-success-v1';
@@ -107,6 +110,17 @@ const state = {
     learnerTablePage: 1,
     learnerDetailPage: 1,
     sessionsSort: { key: 'lastDateTimeMs', direction: 'desc' },
+    technicianSummaryLoaded: false,
+    technicianSummaryLoading: false,
+    technicianSummaryTotal: 0,
+    technicianSummarySessionTotal: 0,
+    technicianSummaryFrom: '',
+    technicianSummaryTo: '',
+    selectedLearnerPersonId: '',
+    selectedLearnerTotalSessions: 0,
+    selectedLearnerHistoryHasMore: false,
+    selectedLearnerHistoryCursor: '',
+    selectedLearnerHistoryLoading: false,
 
     // Learner Detail popup filters & sort
     detailTimeSortDir: 'desc',
@@ -796,6 +810,10 @@ function buildLearnerSummaries(rows) {
 }
 
 function renderSessions(rows) {
+    if (activeDashboardView === 'technicians') {
+        renderTechnicianSummaryTable();
+        return;
+    }
     let filteredRows = rows.filter(item => (
         state.learnerSelectedKtvs.has(item.learner)
         && state.learnerSelectedEmails.has(item.learner)
@@ -855,6 +873,64 @@ function renderSessions(rows) {
     renderLearnerTableMeta(pageData);
 }
 
+function renderTechnicianSummaryTable() {
+    if (els.sessionCountBadge) {
+        els.sessionCountBadge.textContent = state.technicianSummaryLoaded
+            ? `${formatNumber.format(state.technicianSummaryTotal)} KTV / ${formatNumber.format(state.technicianSummarySessionTotal)} phiên`
+            : 'Đang tải dữ liệu KTV';
+    }
+    if (state.technicianSummaryLoading && !state.technicianSummaryLoaded) {
+        if (els.sessionsBody) {
+            els.sessionsBody.innerHTML = '<tr><td colspan="7" class="empty">Đang tải danh sách KTV…</td></tr>';
+        }
+        if (els.learnerTableMeta) els.learnerTableMeta.innerHTML = '';
+        return;
+    }
+    if (!technicianSummaries.length) {
+        if (els.sessionsBody) {
+            els.sessionsBody.innerHTML = '<tr><td colspan="7" class="empty">Không có KTV phù hợp với bộ lọc.</td></tr>';
+        }
+        if (els.learnerTableMeta) els.learnerTableMeta.innerHTML = '';
+        return;
+    }
+    if (els.sessionsBody) {
+        els.sessionsBody.innerHTML = technicianSummaries.map(item => `
+            <tr class="clickable-row ${state.selectedLearnerPersonId === item.personId ? 'active' : ''}">
+                <td>
+                    <button type="button" class="learner-link" data-open-technician="${escapeHTML(item.personId)}" title="Mở chi tiết ${escapeHTML(item.learner)}">${escapeHTML(item.technicianName || getLearnerName(item.learner))}</button>
+                    <div class="item-sub">${item.passRate === null ? 'Chưa có phiên thực hành' : `${item.passRate}% phiên thực hành đạt`}</div>
+                </td>
+                <td>${escapeHTML(item.learner)}</td>
+                <td>${escapeHTML(item.region)}</td>
+                <td><strong>${formatNumber.format(item.total)}</strong></td>
+                <td>${escapeHTML(item.devicesLabel)}</td>
+                <td>${escapeHTML(item.labsLabel)}</td>
+                <td>
+                    <div><strong>${escapeHTML(item.lastDateTimeFormatted)}</strong></div>
+                    <div class="item-sub">Thời gian phiên gần nhất: ${formatDuration(item.latestDuration)}</div>
+                </td>
+            </tr>
+        `).join('');
+        els.sessionsBody.querySelectorAll('[data-open-technician]').forEach(button => {
+            button.addEventListener('click', () => {
+                const summary = technicianSummaries.find(item => item.personId === button.dataset.openTechnician);
+                openTechnicianSummary(summary);
+            });
+        });
+    }
+    const totalPages = Math.max(1, Math.ceil(state.technicianSummaryTotal / 25));
+    const start = (state.learnerTablePage - 1) * 25;
+    renderLearnerTableMeta({
+        rows: technicianSummaries,
+        currentPage: state.learnerTablePage,
+        totalPages,
+        totalRows: state.technicianSummaryTotal,
+        start,
+        end: Math.min(start + technicianSummaries.length, state.technicianSummaryTotal),
+        serverSide: true
+    });
+}
+
 function getPageSlice(rows, page, pageSize) {
     const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
     const currentPage = Math.min(Math.max(1, page), totalPages);
@@ -889,14 +965,15 @@ function renderLearnerTableMeta(pageData) {
             event.stopPropagation();
             const action = button.dataset.learnerTablePage;
             state.learnerTablePage += action === 'next' ? 1 : -1;
-            renderAll();
+            if (pageData.serverSide) void reloadTechnicianSummaries();
+            else renderAll();
         });
     });
 }
 
-function renderLearnerHistoryMeta(pageData, totalHistoryRows = pageData.totalRows) {
+function renderLearnerHistoryMeta(pageData, totalHistoryRows = pageData.totalRows, hasMoreServerRows = false) {
     if (!els.learnerHistoryMeta) return;
-    if (!totalHistoryRows) {
+    if (!totalHistoryRows && !hasMoreServerRows) {
         els.learnerHistoryMeta.innerHTML = '';
         return;
     }
@@ -908,11 +985,12 @@ function renderLearnerHistoryMeta(pageData, totalHistoryRows = pageData.totalRow
     const summaryText = isFiltered
         ? `Đang hiển thị ${pageData.totalRows}/${totalHistoryRows} phiên theo bộ lọc${rangeText ? ` • ${rangeText}` : ''}`
         : `Hiển thị ${pageData.start + 1}-${pageData.end} / ${pageData.totalRows} phiên`;
-    const pagination = pageData.totalRows ? `
+    const canLoadNextPage = pageData.currentPage < pageData.totalPages || hasMoreServerRows;
+    const pagination = pageData.totalRows || hasMoreServerRows ? `
         <span class="table-page-controls">
             <button type="button" class="table-page-btn" data-learner-page="prev" ${pageData.currentPage <= 1 ? 'disabled' : ''}>Trước</button>
-            <span>Trang ${pageData.currentPage}/${pageData.totalPages}</span>
-            <button type="button" class="table-page-btn" data-learner-page="next" ${pageData.currentPage >= pageData.totalPages ? 'disabled' : ''}>Sau</button>
+            <span>Trang ${pageData.currentPage}/${pageData.totalPages}${hasMoreServerRows ? '+' : ''}</span>
+            <button type="button" class="table-page-btn" data-learner-page="next" ${canLoadNextPage ? '' : 'disabled'}>${state.selectedLearnerHistoryLoading ? 'Đang tải…' : 'Sau'}</button>
         </span>
     ` : '';
     els.learnerHistoryMeta.innerHTML = `
@@ -920,10 +998,16 @@ function renderLearnerHistoryMeta(pageData, totalHistoryRows = pageData.totalRow
         ${pagination}
     `;
     els.learnerHistoryMeta.querySelectorAll('[data-learner-page]').forEach(button => {
-        button.addEventListener('click', (event) => {
+        button.addEventListener('click', async (event) => {
             event.stopPropagation();
             const action = button.dataset.learnerPage;
-            state.learnerDetailPage += action === 'next' ? 1 : -1;
+            if (action === 'next' && pageData.currentPage >= pageData.totalPages && hasMoreServerRows) {
+                await loadSelectedTechnicianHistory({ append: true });
+                const loadedPages = Math.ceil((state.currentLearnerRows || []).length / LEARNER_HISTORY_PAGE_SIZE);
+                if (state.learnerDetailPage < loadedPages) state.learnerDetailPage += 1;
+            } else {
+                state.learnerDetailPage += action === 'next' ? 1 : -1;
+            }
             renderAll();
         });
     });
@@ -931,7 +1015,16 @@ function renderLearnerHistoryMeta(pageData, totalHistoryRows = pageData.totalRow
 
 function hideLearnerDetail() {
     const returnIdentity = state.selectedLearner || learnerDetailReturnIdentity;
+    if (technicianDetailRequest) {
+        technicianDetailRequest.abort();
+        technicianDetailRequest = null;
+    }
     state.selectedLearner = '';
+    state.selectedLearnerPersonId = '';
+    state.selectedLearnerTotalSessions = 0;
+    state.selectedLearnerHistoryHasMore = false;
+    state.selectedLearnerHistoryCursor = '';
+    state.selectedLearnerHistoryLoading = false;
     state.learnerDetailPage = 1;
     document.body.classList.remove('detail-open');
     els.learnerDetailCard?.classList.remove('visible');
@@ -942,8 +1035,9 @@ function hideLearnerDetail() {
     learnerDetailReturnIdentity = '';
     if (returnIdentity) {
         window.requestAnimationFrame(() => {
-            [...(els.sessionsBody?.querySelectorAll('[data-open-learner]') || [])]
-                .find(button => button.dataset.learner === returnIdentity)
+            [...(els.sessionsBody?.querySelectorAll('[data-open-learner], [data-open-technician]') || [])]
+                .find(button => button.dataset.learner === returnIdentity
+                    || technicianSummaries.find(item => item.personId === button.dataset.openTechnician)?.learner === returnIdentity)
                 ?.focus({ preventScroll: true });
         });
     }
@@ -1104,7 +1198,21 @@ function renderLearnerDetail(rows) {
     }
 
     const wasVisible = els.learnerDetailCard?.classList.contains('visible');
-    const allLearnerRows = rows.filter(item => item.learner === state.selectedLearner);
+    const usesLazyHistory = Boolean(state.selectedLearnerPersonId);
+    if (usesLazyHistory && state.selectedLearnerHistoryLoading && !(state.currentLearnerRows || []).length) {
+        if (els.learnerDetailTitle) els.learnerDetailTitle.textContent = getLearnerName(state.selectedLearner);
+        if (els.learnerDetailSubtitle) els.learnerDetailSubtitle.textContent = 'Đang tải lịch sử hoạt động…';
+        if (els.learnerHistoryBody) {
+            els.learnerHistoryBody.innerHTML = '<tr><td colspan="6" class="empty">Đang tải lịch sử KTV…</td></tr>';
+        }
+        if (els.learnerHistoryMeta) els.learnerHistoryMeta.innerHTML = '';
+        els.learnerDetailCard?.classList.add('visible');
+        els.learnerDetailCard?.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('detail-open');
+        return;
+    }
+    const sourceRows = usesLazyHistory ? (state.currentLearnerRows || []) : rows;
+    const allLearnerRows = sourceRows.filter(item => item.learner === state.selectedLearner);
 
     if (!allLearnerRows.length) {
         els.learnerDetailCard?.classList.remove('visible');
@@ -1166,9 +1274,17 @@ function renderLearnerDetail(rows) {
         const historyScope = state.sessionHistoryFrom && state.sessionHistoryTo
             ? `khoảng ${formatDate(state.sessionHistoryFrom)} – ${formatDate(state.sessionHistoryTo)}${state.sessionHistoryHasMore ? ' (trang đầu)' : ''}`
             : 'phạm vi dữ liệu hiện có';
-        els.learnerDetailSubtitle.textContent = `${allLearnerRows[0]?.region || getLearnerRegion(state.selectedLearner)} • ${state.selectedLearner} • ${allLearnerRows.length} phiên hoạt động trong ${historyScope}.`;
+        const totalSessions = usesLazyHistory ? state.selectedLearnerTotalSessions : allLearnerRows.length;
+        const loadedNote = usesLazyHistory && state.selectedLearnerHistoryHasMore
+            ? `; đã tải ${allLearnerRows.length}`
+            : '';
+        els.learnerDetailSubtitle.textContent = `${allLearnerRows[0]?.region || getLearnerRegion(state.selectedLearner)} • ${state.selectedLearner} • ${totalSessions} phiên hoạt động trong ${historyScope}${loadedNote}.`;
     }
-    if (els.detailTotalSessions) els.detailTotalSessions.textContent = allLearnerRows.length;
+    if (els.detailTotalSessions) {
+        els.detailTotalSessions.textContent = usesLazyHistory
+            ? state.selectedLearnerTotalSessions
+            : allLearnerRows.length;
+    }
     if (els.detailTotalSessionsSub) {
         els.detailTotalSessionsSub.innerHTML = `
             <div>${practiceSessionsCount} Thực hành</div>
@@ -1226,7 +1342,7 @@ function renderLearnerDetail(rows) {
             `).join('');
         }
     }
-    renderLearnerHistoryMeta(pageData, allLearnerRows.length);
+    renderLearnerHistoryMeta(pageData, allLearnerRows.length, usesLazyHistory && state.selectedLearnerHistoryHasMore);
     els.learnerDetailCard?.classList.add('visible');
     els.learnerDetailCard?.setAttribute('aria-hidden', 'false');
     document.body.classList.add('detail-open');
@@ -2744,7 +2860,7 @@ function dashboardViewNeedsReport(viewName = activeDashboardView) {
 }
 
 function dashboardViewNeedsSessions(viewName = activeDashboardView) {
-    return viewName === 'technicians' || viewName === 'instructors';
+    return viewName === 'instructors';
 }
 
 async function fetchDashboardReport(query = dashboardReportQuery()) {
@@ -2826,10 +2942,166 @@ async function ensureDashboardSessionsLoaded() {
     return dashboardSessionsRequest;
 }
 
+function selectedTechnicianFilterValues(values, touched) {
+    if (!touched) return [];
+    const selected = [...values];
+    return selected.length ? selected : ['__no_matching_value__'];
+}
+
+function buildTechnicianSummaryQuery() {
+    const periods = getKpiComparisonPeriods();
+    let identities = [];
+    if (state.learnerKtvsTouched || state.learnerEmailsTouched) {
+        const ktvs = state.learnerKtvsTouched ? state.learnerSelectedKtvs : state.learnerSelectedEmails;
+        const emails = state.learnerEmailsTouched ? state.learnerSelectedEmails : state.learnerSelectedKtvs;
+        identities = [...ktvs].filter(value => emails.has(value));
+        if (!identities.length) identities = ['__no_matching_value__'];
+    }
+    return new URLSearchParams({
+        from: periods.currentStart,
+        to: periods.currentEnd,
+        page: String(state.learnerTablePage),
+        limit: '25',
+        search: state.learnerSearchKtv.trim(),
+        sort: state.sessionsSort.key,
+        direction: state.sessionsSort.direction,
+        identities: JSON.stringify(identities),
+        regions: JSON.stringify(selectedTechnicianFilterValues(state.learnerSelectedRegions, state.learnerRegionsTouched)),
+        devices: JSON.stringify(selectedTechnicianFilterValues(state.learnerSelectedDevices, state.learnerDevicesTouched)),
+        labs: JSON.stringify(selectedTechnicianFilterValues(state.learnerSelectedLabs, state.learnerLabsTouched))
+    });
+}
+
+function mapTechnicianSummaries(items = []) {
+    return items.map(item => {
+        const devices = Array.isArray(item.device_names) ? item.device_names.filter(Boolean) : [];
+        const labs = Array.isArray(item.lab_names) ? item.lab_names.filter(Boolean) : [];
+        const eligible = Number(item.rate_eligible_count) || 0;
+        const passed = Number(item.passed_count) || 0;
+        return {
+            personId: String(item.person_id || ''),
+            learner: String(item.email || item.employee_id || item.person_id || ''),
+            technicianId: String(item.employee_id || ''),
+            technicianName: String(item.display_name || item.email || item.person_id || ''),
+            region: normalizeRegionName(item.region || 'FTC'),
+            total: Number(item.total_sessions) || 0,
+            devices,
+            labs,
+            devicesLabel: formatCompactList(new Set(devices)),
+            labsLabel: formatCompactList(new Set(labs)),
+            lastDate: dateOnly(item.last_started_at),
+            lastTime: timeOnly(item.last_started_at),
+            lastDateTimeMs: item.last_started_at ? new Date(item.last_started_at).getTime() : 0,
+            lastDateTimeFormatted: formatDateTime(dateOnly(item.last_started_at), timeOnly(item.last_started_at)),
+            latestDuration: item.latest_duration_sec === null || item.latest_duration_sec === undefined
+                ? null
+                : Number(item.latest_duration_sec),
+            passRate: eligible > 0 ? Math.round((passed / eligible) * 100) : null
+        };
+    });
+}
+
+async function reloadTechnicianSummaries({ resetPage = false } = {}) {
+    if (!state.dashboardDataLoaded) return;
+    if (resetPage) state.learnerTablePage = 1;
+    if (technicianSummaryRequest) return technicianSummaryRequest;
+    state.technicianSummaryLoading = true;
+    renderAll();
+    technicianSummaryRequest = (async () => {
+        const response = await fetch(`${API_BASE_URL}/dashboard/technicians?${buildTechnicianSummaryQuery()}`);
+        if (!response.ok) throw new Error(`API tổng hợp KTV trả về HTTP ${response.status}`);
+        const payload = (await response.json()).data || {};
+        technicianSummaries = mapTechnicianSummaries(payload.items || []);
+        state.technicianSummaryTotal = Number(payload.page?.total) || 0;
+        state.technicianSummarySessionTotal = Number(payload.page?.total_sessions) || 0;
+        const periods = getKpiComparisonPeriods();
+        state.technicianSummaryFrom = periods.currentStart;
+        state.technicianSummaryTo = periods.currentEnd;
+        state.technicianSummaryLoaded = true;
+        renderAll();
+    })().finally(() => {
+        state.technicianSummaryLoading = false;
+        technicianSummaryRequest = null;
+        renderAll();
+    });
+    return technicianSummaryRequest;
+}
+
+function ensureTechnicianSummariesLoaded() {
+    const periods = getKpiComparisonPeriods();
+    if (state.technicianSummaryLoaded
+        && state.technicianSummaryFrom === periods.currentStart
+        && state.technicianSummaryTo === periods.currentEnd) {
+        return Promise.resolve();
+    }
+    return reloadTechnicianSummaries({ resetPage: true });
+}
+
+async function loadSelectedTechnicianHistory({ append = false } = {}) {
+    const personId = state.selectedLearnerPersonId;
+    if (!personId || (append && !state.selectedLearnerHistoryHasMore)) return;
+    if (technicianDetailRequest) technicianDetailRequest.abort();
+    const controller = new AbortController();
+    technicianDetailRequest = controller;
+    state.selectedLearnerHistoryLoading = true;
+    renderAll();
+    const periods = getKpiComparisonPeriods();
+    const query = new URLSearchParams({
+        from: periods.currentStart,
+        to: periods.currentEnd,
+        person_id: personId,
+        limit: '50'
+    });
+    if (append && state.selectedLearnerHistoryCursor) {
+        query.set('cursor', state.selectedLearnerHistoryCursor);
+    }
+    try {
+        const response = await fetch(`${API_BASE_URL}/dashboard/technician-sessions?${query}`, {
+            signal: controller.signal
+        });
+        if (!response.ok) throw new Error(`API lịch sử KTV trả về HTTP ${response.status}`);
+        const payload = (await response.json()).data || {};
+        const mapped = mapApiSessions(payload.sessions || []);
+        if (state.selectedLearnerPersonId !== personId) return;
+        state.currentLearnerRows = append
+            ? [...(state.currentLearnerRows || []), ...mapped]
+            : mapped;
+        state.selectedLearnerHistoryHasMore = payload.session_page?.has_more === true;
+        state.selectedLearnerHistoryCursor = String(payload.session_page?.next_cursor || '');
+    } catch (error) {
+        if (error?.name !== 'AbortError') {
+            console.warn('Không tải được lịch sử KTV.', error);
+            showToast('Chưa thể tải lịch sử KTV.', 'error');
+        }
+    } finally {
+        if (technicianDetailRequest === controller) technicianDetailRequest = null;
+        if (state.selectedLearnerPersonId === personId) {
+            state.selectedLearnerHistoryLoading = false;
+            renderAll();
+        }
+    }
+}
+
+function openTechnicianSummary(summary) {
+    if (!summary?.personId) return;
+    if (state.selectedLearner !== summary.learner) resetLearnerDetailFilters();
+    learnerDetailReturnIdentity = summary.learner;
+    state.selectedLearner = summary.learner;
+    state.selectedLearnerPersonId = summary.personId;
+    state.selectedLearnerTotalSessions = summary.total;
+    state.currentLearnerRows = [];
+    state.selectedLearnerHistoryHasMore = true;
+    state.selectedLearnerHistoryCursor = '';
+    state.learnerDetailPage = 1;
+    void loadSelectedTechnicianHistory();
+}
+
 function reloadDashboardSelectedRange() {
     if (!state.dashboardDataLoaded) return;
     const requests = [];
-    if (dashboardViewNeedsSessions()) {
+    if (activeDashboardView === 'technicians') {
+        requests.push(reloadTechnicianSummaries({ resetPage: true }));
+    } else if (dashboardViewNeedsSessions()) {
         requests.push(reloadDashboardSessionsForRange());
     } else {
         sessions = [];
@@ -3068,6 +3340,20 @@ function getCanonicalLabList() {
         .sort((a, b) => a.localeCompare(b, 'vi'));
 }
 
+function getLearnerFilterIdentities() {
+    const source = activeDashboardView === 'technicians'
+        ? technicianSummaries.map(item => item.learner)
+        : sessions.map(item => item.learner);
+    return [...new Set(source.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+}
+
+function getLearnerFilterRegions() {
+    const source = activeDashboardView === 'technicians'
+        ? technicianCatalog.map(item => item.dashboardRegion || item.regionName || 'FTC')
+        : sessions.map(item => item.region);
+    return [...new Set(source.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+}
+
 function mergeUntouchedFilterSets(allKtvs, allDevices, allLabs, allRegions) {
     if (!state.realtimeKtvsTouched) state.realtimeSelectedKtvs = new Set(allKtvs);
     if (!state.learnerKtvsTouched) state.learnerSelectedKtvs = new Set(allKtvs);
@@ -3146,6 +3432,9 @@ async function refreshDashboardData({ force = false, announce = false } = {}) {
         lastDashboardSignature = signature;
         lastDashboardVersion = data.version || version;
         applyDashboardData(data);
+        if (activeDashboardView === 'technicians') {
+            await reloadTechnicianSummaries();
+        }
         const allKtvs = [...new Set(sessions.map(item => item.learner))].sort();
         const allDevices = getCanonicalDeviceList();
         const allLabs = getCanonicalLabList();
@@ -3829,7 +4118,10 @@ function initPopovers() {
         state.learnerSearchKtv = e.target.value;
         state.learnerTablePage = 1;
         window.clearTimeout(learnerSearchTimer);
-        learnerSearchTimer = window.setTimeout(renderAll, 180);
+        learnerSearchTimer = window.setTimeout(() => {
+            if (activeDashboardView === 'technicians') void reloadTechnicianSummaries({ resetPage: true });
+            else renderAll();
+        }, 250);
     });
     const repopulateLearnerFilters = () => {
         populatePopoverOptions('learnerKtvOptions', allKtvs, state.learnerSelectedKtvs, () => { state.learnerKtvsTouched = true; }, undefined, getLearnerName);
@@ -3842,6 +4134,10 @@ function initPopovers() {
         const searchInput = document.querySelector(`#${wrapperId} .header-filter-search`)
             || document.getElementById(wrapperId)?._floatingDropdown?.querySelector('.header-filter-search');
         if (searchInput) searchInput.value = '';
+    };
+    const refreshLearnerTable = () => {
+        if (activeDashboardView === 'technicians') void reloadTechnicianSummaries({ resetPage: true });
+        else renderAll();
     };
     const resetLearnerFilters = () => {
         state.learnerSelectedKtvs = new Set(allKtvs);
@@ -3864,7 +4160,7 @@ function initPopovers() {
         clearHeaderSearch('learnerDevicePopoverWrapper');
         clearHeaderSearch('learnerLabPopoverWrapper');
         repopulateLearnerFilters();
-        renderAll();
+        refreshLearnerTable();
     };
     document.getElementById('learnerKtvClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3872,7 +4168,7 @@ function initPopovers() {
         state.learnerKtvsTouched = false;
         clearHeaderSearch('learnerKtvPopoverWrapper');
         repopulateLearnerFilters();
-        renderAll();
+        refreshLearnerTable();
     });
     document.getElementById('learnerEmailClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3880,7 +4176,7 @@ function initPopovers() {
         state.learnerEmailsTouched = false;
         clearHeaderSearch('learnerEmailPopoverWrapper');
         repopulateLearnerFilters();
-        renderAll();
+        refreshLearnerTable();
     });
     document.getElementById('learnerRegionClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3888,7 +4184,7 @@ function initPopovers() {
         state.learnerRegionsTouched = false;
         clearHeaderSearch('learnerRegionPopoverWrapper');
         repopulateLearnerFilters();
-        renderAll();
+        refreshLearnerTable();
     });
     document.getElementById('learnerDeviceClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3896,7 +4192,7 @@ function initPopovers() {
         state.learnerDevicesTouched = false;
         clearHeaderSearch('learnerDevicePopoverWrapper');
         repopulateLearnerFilters();
-        renderAll();
+        refreshLearnerTable();
     });
     document.getElementById('learnerLabClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3904,7 +4200,7 @@ function initPopovers() {
         state.learnerLabsTouched = false;
         clearHeaderSearch('learnerLabPopoverWrapper');
         repopulateLearnerFilters();
-        renderAll();
+        refreshLearnerTable();
     });
     document.getElementById('learnerFilterReset')?.addEventListener('click', resetLearnerFilters);
 
@@ -6458,11 +6754,11 @@ function updatePopoverTriggerLabels() {
     const allRegions = [...new Set(sessions.map(item => item.region))].sort((a, b) => a.localeCompare(b, 'vi'));
     const learnerReset = document.getElementById('learnerFilterReset');
     const selectedLearners = state.learnerSelectedKtvs.size;
-    const ktvFiltered = selectedLearners !== allKtvs.length;
-    const emailFiltered = state.learnerSelectedEmails.size !== allKtvs.length;
-    const regionFiltered = state.learnerSelectedRegions.size !== allRegions.length;
-    const deviceFiltered = state.learnerSelectedDevices.size !== allDevices.length;
-    const labFiltered = state.learnerSelectedLabs.size !== allLabs.length;
+    const ktvFiltered = state.learnerKtvsTouched || selectedLearners !== allKtvs.length;
+    const emailFiltered = state.learnerEmailsTouched || state.learnerSelectedEmails.size !== allKtvs.length;
+    const regionFiltered = state.learnerRegionsTouched || state.learnerSelectedRegions.size !== allRegions.length;
+    const deviceFiltered = state.learnerDevicesTouched || state.learnerSelectedDevices.size !== allDevices.length;
+    const labFiltered = state.learnerLabsTouched || state.learnerSelectedLabs.size !== allLabs.length;
     document.getElementById('learnerKtvPopoverWrapper')?.classList.toggle('has-filter', ktvFiltered);
     document.getElementById('learnerEmailPopoverWrapper')?.classList.toggle('has-filter', emailFiltered);
     document.getElementById('learnerRegionPopoverWrapper')?.classList.toggle('has-filter', regionFiltered);
@@ -6503,7 +6799,11 @@ function initSort() {
                 sortState.direction = ['total', 'lastDateTimeMs'].includes(button.dataset.key) ? 'desc' : 'asc';
             }
             if (button.dataset.table === 'sessions') state.learnerTablePage = 1;
-            renderAll();
+            if (button.dataset.table === 'sessions' && activeDashboardView === 'technicians') {
+                void reloadTechnicianSummaries({ resetPage: true });
+            } else {
+                renderAll();
+            }
         });
     });
 }
@@ -7764,7 +8064,12 @@ function populatePopoverOptions(containerId, values, selectedSet, onCheckChange,
                 state.realtimePage = 1;
                 state.learnerTablePage = 1;
                 state.learnerDetailPage = 1;
-                renderAll();
+                if (activeDashboardView === 'technicians'
+                    && ['learnerKtvOptions', 'learnerEmailOptions', 'learnerRegionOptions', 'learnerDeviceOptions', 'learnerLabOptions'].includes(containerId)) {
+                    void reloadTechnicianSummaries({ resetPage: true });
+                } else {
+                    renderAll();
+                }
             }
         });
     });
@@ -7895,6 +8200,12 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
         setDataSourceLabel(state.dashboardDataLoaded ? 'Dữ liệu vận hành đã đồng bộ' : 'Đang đồng bộ dữ liệu vận hành');
         if (!state.dashboardDataLoaded) {
             loadDashboardFromApi().then(() => {
+                if (activeDashboardView === 'technicians') {
+                    ensureTechnicianSummariesLoaded().catch(error => {
+                        console.warn('Không tải được danh sách KTV tổng hợp.', error);
+                        showToast('Chưa thể tải danh sách KTV.', 'error');
+                    });
+                }
                 if (['instructors', 'class_matrix', 'analytics'].includes(activeDashboardView) && !state.assignmentsLoaded) {
                     ensureTrainingAssignmentsLoaded().catch(error => {
                         console.warn('Không đồng bộ được tiến độ lớp.', error);
@@ -7913,6 +8224,12 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
         ensureDashboardSessionsLoaded().catch(error => {
             console.warn('Không tải được dữ liệu phiên theo màn hình.', error);
             showToast('Chưa thể tải dữ liệu phiên chi tiết.', 'error');
+        });
+    }
+    if (state.isAdmin && state.dashboardDataLoaded && activeDashboardView === 'technicians') {
+        ensureTechnicianSummariesLoaded().catch(error => {
+            console.warn('Không tải được danh sách KTV tổng hợp.', error);
+            showToast('Chưa thể tải danh sách KTV.', 'error');
         });
     }
     window.requestAnimationFrame(() => {

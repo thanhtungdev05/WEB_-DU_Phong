@@ -12,6 +12,7 @@ require_once __DIR__ . '/lib/ktv_roster_import.php';
 require_once __DIR__ . '/lib/training_classes.php';
 require_once __DIR__ . '/lib/report_xlsx.php';
 require_once __DIR__ . '/lib/dashboard_report.php';
+require_once __DIR__ . '/lib/dashboard_technicians.php';
 load_app_environment($root);
 
 $GLOBALS['request_id'] = bin2hex(random_bytes(8));
@@ -2738,7 +2739,7 @@ function handle_dashboard(array $segments, string $method): void
         ]], env_int('DASHBOARD_CATALOG_CACHE_SECONDS', 21600, 300, 86400));
     }
 
-    if ($action !== 'all') {
+    if (!in_array($action, ['all', 'technicians', 'technician-sessions'], true)) {
         fail(404, 'not-found', 'Dashboard endpoint not found.');
     }
 
@@ -2757,6 +2758,126 @@ function handle_dashboard(array $segments, string $method): void
     if ($rangeEnd < $rangeStart || (int)$rangeStart->diff($rangeEnd)->format('%a') + 1 > $maxRangeDays) {
         fail(400, 'dashboard-range-invalid', 'Dashboard detail date range is invalid or too large.');
     }
+
+    if ($action === 'technicians') {
+        $decodeList = static function (string $name): array {
+            $raw = trim((string)($_GET[$name] ?? ''));
+            if ($raw === '') return [];
+            try {
+                $values = json_decode($raw, true, 128, JSON_THROW_ON_ERROR);
+            } catch (JsonException) {
+                fail(400, 'invalid-dashboard-filter', 'Dashboard filter must be a JSON array.');
+            }
+            if (!is_array($values) || count($values) > 100) {
+                fail(400, 'invalid-dashboard-filter', 'Dashboard filter has too many values.');
+            }
+            $normalized = [];
+            foreach ($values as $value) {
+                if (!is_scalar($value)) {
+                    fail(400, 'invalid-dashboard-filter', 'Dashboard filter contains an invalid value.');
+                }
+                $text = trim((string)$value);
+                if ($text === '' || mb_strlen($text) > 200) continue;
+                $normalized[] = $text;
+            }
+            return array_values(array_unique($normalized));
+        };
+        $search = trim((string)($_GET['search'] ?? ''));
+        if (mb_strlen($search) > 200) {
+            fail(400, 'invalid-dashboard-search', 'Dashboard search is too long.');
+        }
+        $page = filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT);
+        if ($page === false || $page < 1 || $page > 100000) {
+            fail(400, 'invalid-dashboard-page', 'Dashboard page is invalid.');
+        }
+        $limit = query_limit(
+            env_int('DASHBOARD_TECHNICIAN_PAGE_SIZE', 25, 10, 100),
+            100
+        );
+        $payload = dashboard_technician_summary_page(
+            db(),
+            $dateFrom,
+            $dateTo,
+            [
+                'search' => $search,
+                'regions' => $decodeList('regions'),
+                'devices' => $decodeList('devices'),
+                'labs' => $decodeList('labs'),
+                'identities' => $decodeList('identities'),
+            ],
+            $limit,
+            ($page - 1) * $limit,
+            trim((string)($_GET['sort'] ?? 'lastDateTimeMs')),
+            trim((string)($_GET['direction'] ?? 'desc'))
+        );
+        $payload['page']['number'] = (int)$page;
+        respond(['data' => $payload]);
+    }
+
+    if ($action === 'technician-sessions') {
+        $personId = trim((string)($_GET['person_id'] ?? ''));
+        if ($personId === '' || strlen($personId) > 400) {
+            fail(400, 'invalid-technician-identity', 'Technician identity is invalid.');
+        }
+        $limit = query_limit(
+            env_int('DASHBOARD_TECHNICIAN_HISTORY_PAGE_SIZE', 50, 12, 200),
+            200
+        );
+        $cursor = decode_cursor(isset($_GET['cursor']) ? (string)$_GET['cursor'] : null);
+        $result = dashboard_technician_session_page(
+            db(),
+            $personId,
+            $dateFrom,
+            $dateTo,
+            $limit,
+            $cursor
+        );
+        $rows = $result['rows'];
+        $sessions = array_map(static fn(array $row): array => [
+            'session_id' => (string)$row['session_id'],
+            'technician_id' => (string)($row['employee_id'] ?? ''),
+            'full_name' => (string)($row['display_name'] ?? ''),
+            'email' => (string)($row['email'] ?? ''),
+            'region_name' => (string)($row['region'] ?? 'FTC'),
+            'job_title' => (string)($row['job_title'] ?? ''),
+            'unit_code' => (string)($row['unit_code'] ?? ''),
+            'unit_name' => (string)($row['unit_name'] ?? ''),
+            'branch_name' => (string)($row['branch_name'] ?? ''),
+            'class_code' => (string)($row['class_code'] ?? ''),
+            'started_at' => safe_datetime($row['occurred_at'] ?? null),
+            'duration_sec' => $row['duration_sec'] !== null ? (int)$row['duration_sec'] : null,
+            'mode' => (string)($row['mode'] ?? 'Thực hành'),
+            'device_id' => (string)($row['device_id'] ?? ''),
+            'device_name' => (string)($row['device_name'] ?? ''),
+            'lab_id' => (string)($row['lab_id'] ?? ''),
+            'lab_name' => (string)($row['lab_name'] ?? ''),
+            'is_passed' => isset($row['is_passed']) ? (bool)$row['is_passed'] : null,
+            'status' => (string)($row['status'] ?? 'completed'),
+            'completed_first_try' => database_nullable_boolean($row['completed_first_try'] ?? null),
+            'practice_attempt_no' => $row['practice_attempt_no'] !== null ? (int)$row['practice_attempt_no'] : null,
+            'attempt_sequence_complete' => database_boolean($row['attempt_sequence_complete'] ?? true),
+            'seed_batch' => (string)($row['seed_batch'] ?? ''),
+            'last_action' => (string)($row['last_action'] ?? ''),
+            'assignment_class_codes' => [],
+        ], $rows);
+        $last = $rows ? $rows[array_key_last($rows)] : null;
+        respond(['data' => [
+            'sessions' => $sessions,
+            'session_page' => [
+                'from' => $dateFrom,
+                'to' => $dateTo,
+                'limit' => $limit,
+                'has_more' => $result['has_more'],
+                'next_cursor' => $result['has_more'] && $last
+                    ? encode_cursor([
+                        'started_at' => (string)$last['occurred_at'],
+                        'session_id' => (string)$last['session_id'],
+                    ])
+                    : null,
+            ],
+        ]]);
+    }
+
     $sessionLimit = query_limit(
         env_int('DASHBOARD_SESSION_PAGE_SIZE', 500, 50, 1000),
         1000
