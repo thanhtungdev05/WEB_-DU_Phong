@@ -13,8 +13,11 @@ const lessonObj5 = {
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình IPv4 LAN theo các thông số dưới đây:',
     '- IP Address (Gateway): <span class="val">192.168.2.1</span>',
-    '- Subnet Mask: <span class="val">255.255.255.0</span>'
-
+    '- Subnet Mask: <span class="val">255.255.255.0</span>',
+    '- DHCP Server: <span class="val">Enable</span>',
+    '- Start IP: <span class="val">192.168.2.2</span>',
+    '- End IP: <span class="val">192.168.2.254</span>',
+    '- Lease Time: <span class="val">2 minute</span>'
   ],
   practiceUrl: '/sim_ax3000s/app.html#lancfgv4',
   clearFields: [],

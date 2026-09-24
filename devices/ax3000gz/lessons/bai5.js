@@ -11,9 +11,13 @@ var lessonObj = {
   title: 'Cấu hình DHCP',
   subtitle: 'Cấu hình DHCP',
   instructions: [
-    '<b>Yêu cầu:</b> Thực hiện đổi lớp mạng LAN trên thiết bị theo thông số sau:',
-    '- LAN IP Address: <span class="val">192.168.10.1</span>',
-    '- DHCP Server: <span class="val">On</span>'
+    '<b>Yêu cầu:</b> Thực hiện thay đổi cấu hình DHCP trên thiết bị theo các thông số:',
+    '- IP Address: <span class="val">192.168.10.1</span>',
+    '- IP Subnet Mask: <span class="val">255.255.255.0</span>',
+    '- DHCP Server: <span class="val">Enable</span>',
+    '- Start IP: <span class="val">192.168.10.2</span>',
+    '- End IP: <span class="val">192.168.10.254</span>',
+    '- Lease Time: <span class="val">12h</span>'
   ],
   practiceUrl: '/sim_ax3000gz/cgi-bin/luci/admin/localnetwork/lan',
   clearFields: [],
