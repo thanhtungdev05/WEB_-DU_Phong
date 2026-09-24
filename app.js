@@ -1822,6 +1822,17 @@
       window._hasClickedSaveInGuide = true;
     }
 
+    // Đổi giá trị thô (vd radio value="1"/"0") sang chữ học viên nhìn thấy trên
+    // giao diện (vd "Enable"/"Disable"), nếu tiêu chí có khai báo `valueLabels`.
+    // Không có `valueLabels` thì trả nguyên giá trị thô — không đổi hành vi cũ
+    // của các tiêu chí khác (IP, username, v.v. vẫn hiện đúng chữ đã nhập).
+    function nhanHienThi(rule, giaTri) {
+      if (rule.valueLabels && Object.prototype.hasOwnProperty.call(rule.valueLabels, giaTri)) {
+        return rule.valueLabels[giaTri];
+      }
+      return giaTri;
+    }
+
     rules.forEach(rule => {
       let actualValue = '';
       let elementFound = false;
@@ -2007,12 +2018,12 @@
         if (isSaveRequiredDevice(effectiveDeviceId) && elementFound && !isSaved) {
           msg = 'Chưa bấm Save để lưu cấu hình';
         } else {
-          msg = `Mong muốn: "${expectedVal}", Thực tế: "${actualValue || 'Trống'}"`;
+          msg = `Mong muốn: "${nhanHienThi(rule, expectedVal)}", Thực tế: "${nhanHienThi(rule, actualValue) || 'Trống'}"`;
         }
       }
 
-      let displayExpected = rule.displayExpected || expectedVal;
-      let displayActual = actualValue;
+      let displayExpected = rule.displayExpected || nhanHienThi(rule, expectedVal);
+      let displayActual = nhanHienThi(rule, actualValue);
       if (rule.selector && rule.selector.includes('dhcpTypeRadio')) {
         if (actualValue === '1' || actualValue === 'true') displayActual = 'Bật/Enable';
         else if (actualValue === '0' || actualValue === 'false') displayActual = 'Tắt/Disable';

@@ -123,7 +123,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai1'] = [
   },
   {
     selector: '#ftc-mk-user, tr:has-text("User") input',
-    text: 'Bước 4: nhập hnftc-hlkt-234',
+    text: 'Bước 4: nhập sgfdl-211208-218',
     position: 'right',
     condition: function (doc) { return mkBai1DialOutDaMo(doc); }
   },
