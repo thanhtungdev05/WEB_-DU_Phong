@@ -5,7 +5,6 @@
 firebase-credentials/
 admin_app/.env.admin
 !admin_app/.env.admin.example
-tests
 # ── Python / Virtual Environments ──────────────────────────────
 __pycache__/
 **/__pycache__/

@@ -131,7 +131,7 @@ assert.match(dashboard, /fetchDashboardCatalog\(\)/);
 assert.match(dashboard, /new URLSearchParams\(\{[\s\S]*include_assignments: '1'/);
 assert.match(dashboard, /include_branch_drilldown: activeDashboardView === 'analytics' \? '1' : '0'/);
 assert.match(dashboard, /function dashboardViewNeedsReport[\s\S]*viewName === 'overview' \|\| viewName === 'analytics'/);
-assert.match(dashboard, /function dashboardViewNeedsSessions[\s\S]*viewName === 'technicians' \|\| viewName === 'instructors'/);
+assert.match(dashboard, /function dashboardViewNeedsSessions[\s\S]*viewName === 'instructors'/);
 assert.match(dashboard, /const sessionsRequested = dashboardViewNeedsSessions\(\)/);
 assert.match(dashboard, /const detailRequest = sessionsRequested[\s\S]*Promise\.resolve\(\{/);
 assert.match(dashboard, /ensureDashboardSessionsLoaded\(\)/);
