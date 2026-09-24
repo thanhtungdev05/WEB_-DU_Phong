@@ -14,8 +14,7 @@ const lessonObj3 = {
     'Thực hiện cấu hình mạng Wi-Fi IoT theo các thông số dưới đây:',
     '- SSID Name: <span class="val">FPT Telecom-IoT</span>',
     '- WPA Key: <span class="val">19006600</span>',
-    '- Bật băng tần 2.4GHz',
-    '- Tắt Band Steering'
+
   ],
   practiceUrl: '/sim_ax3000s/app.html#wlanMapSettingAll',
   clearFields: [
@@ -68,7 +67,7 @@ const lessonObj3 = {
 
 const existingIndex3 = window.DEVICE_AX3000S_LESSONS.findIndex(l => l.id === 'LAB_AX3000S_03');
 if (existingIndex3 !== -1) {
-    window.DEVICE_AX3000S_LESSONS[existingIndex3] = lessonObj3;
+  window.DEVICE_AX3000S_LESSONS[existingIndex3] = lessonObj3;
 } else {
-    window.DEVICE_AX3000S_LESSONS.push(lessonObj3);
+  window.DEVICE_AX3000S_LESSONS.push(lessonObj3);
 }

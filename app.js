@@ -593,7 +593,7 @@
                         btnVal.includes('submit') || 
                         btnVal.includes('lưu') || 
                         ((currentDeviceId === 'vigor2927') && (btnVal === 'ok' || el.name === 'submit')) ||
-                        ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
+                        ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06') && (btnVal === 'add' || el.name === 'AddBtn' || el.name === 'Add1')) ||
                         (el.type === 'submit' && el.tagName === 'INPUT');
                       if (isSaveOrApply) {
                         doc._ftcLastSaveInteraction = Date.now();
@@ -632,12 +632,13 @@
                     if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || laNutLuuMikrotik) {
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
                       const isOntBai6 = (currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6');
+                      const isPortFwdAdd = (currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06');
 
                       // Nút "Add New" trên thanh công cụ dùng để mở modal thêm mới, KHÔNG phải nút lưu cấu hình
                       const isAddNewBtn = btnVal === 'add new' || el.classList.contains('sim-them') || (isOntBai6 && btnVal === 'add' && !el.closest('.MuiDialog-root, .MuiPaper-root') && !el.classList.contains('dlg-luu'));
 
                       const isExcludedAction = isAddNewBtn ||
-                        (btnVal === 'add' && !isOntBai6 && currentLessonId !== 'LAB_AC1000F_06') ||
+                        (btnVal === 'add' && !isOntBai6 && !isPortFwdAdd) ||
                         btnVal === 'delete' || btnVal === 'undo' || btnVal === 'cancel' || btnVal === 'reset';
 
                       // Nút chuyển trang chi tiết Vigor2927: TUYỆT ĐỐI KHÔNG kích hoạt lưu cấu hình hay chấm điểm
@@ -666,22 +667,16 @@
                           btnVal.includes('lưu') || 
                           isVigorOk ||
                           (isOntBai6 && (el.classList.contains('dlg-luu') || el.closest('.MuiDialogActions-root') || btnVal === 'add')) ||
-                          ((currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
+                          (isPortFwdAdd && (btnVal === 'add' || el.name === 'AddBtn' || el.name === 'Add1')) ||
                           (el.type === 'submit' && el.tagName === 'INPUT');
 
                         if (isSaveOrApply) {
-                          const isAx3000sBai2_2g = (currentLessonId === 'LAB_AX3000S_02') && 
-                            (doc.location && ((doc.location.href && doc.location.href.toLowerCase().includes('wlanbasicsetting2g')) || (doc.location.hash && doc.location.hash.toLowerCase().includes('wlanbasicsetting2g'))));
-
                           doc._ftcLastSaveInteraction = Date.now();
                           doc._ftcIsSaved = true;
                           window._hasClickedSaveInGuide = true;
                           if (currentDeviceId === 'mikrotik_hexs') {
                             window._ftcMkChanTooltip = true;
                             setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
-                          }
-                          if (isAx3000sBai2_2g) {
-                            doc._ftc2gSaved = true;
                           }
                           // Lưu giữ giá trị password thực tế trước khi router (như ZTE BE12000) mask thành tabs
                           try {
@@ -711,7 +706,7 @@
                             window._hasClickedSaveInGuide = true;
                             setTimeout(function () {
                               try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
-                            }, isOntBai6 ? 350 : 50);
+                            }, (isOntBai6 || isPortFwdAdd) ? 350 : 50);
                           }
                         }
                       }
@@ -947,7 +942,11 @@
                   ? evalResult.trangHienTaiDat : evalResult.passed)
                 : false;
 
-              // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT:
+              // Thiết bị không yêu cầu cấu hình (như BE15000), hoặc Bài 6 AC1000HI/AC1000F đã điền đúng thông số:
+              if ((currentLessonId === 'LAB_AC1000HI_06' || currentLessonId === 'LAB_AC1000F_06') && evalResult && evalResult.passed) {
+                window._hasClickedSaveInGuide = true;
+              }
+
               if (noConfig || (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed)))) {
                 // Nút Nộp bài SÁNG LÊN
                 if (btnSubmitLab) {
@@ -965,14 +964,6 @@
                 if (btnGuideErrors) {
                   const hasMissingSteps = !trangDangLamSach;
                   if (window._hasClickedSaveInGuide && evalResult && hasMissingSteps) {
-                    if (currentLessonId === 'LAB_AX3000S_02') {
-                      const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
-                      const hasSaved5g = allDocs.some(d => d.location && d.location.href.toLowerCase().includes('wlanbasicsetting5g') && d._ftcIsSaved);
-                      if (!hasSaved5g) {
-                        btnGuideErrors.style.display = 'none';
-                        return;
-                      }
-                    }
                     // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN để trợ giúp học tập
                     btnGuideErrors.style.display = 'flex';
                     btnGuideErrors.disabled = false;
@@ -1672,9 +1663,6 @@
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       const isAnyDocSaved = allDocs.some(d => {
         try {
-          if (currentLessonId === 'LAB_AX3000S_02' && d.location && d.location.href.toLowerCase().includes('wlanbasicsetting2g')) {
-            return false;
-          }
           return Boolean(d._ftcLastSaveInteraction && (d._ftcIsSaved === true || (d.location && d.location.search && d.location.search.includes('save_success=1'))));
         } catch (e) { return false; }
       });
@@ -2215,7 +2203,7 @@
     unexpectedErrors = unexpectedErrors.filter(err => {
       const lbl = (err.label || '').toLowerCase();
       const act = (err.actual || '').toLowerCase();
-      if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) && (act === 'admin' || act === '')) {
+      if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) ) {
         return false;
       }
       if (lbl.includes('dns relay') || lbl.includes('dnstyperadio') || lbl.includes('chế độ dns') || lbl.includes('dns mode')) {
@@ -3324,12 +3312,6 @@
         return;
       }
     }
-    if (_currentLesson && _currentLesson.id === 'LAB_AX3000S_02') {
-      const href = (simWin && simWin.location && simWin.location.href) ? simWin.location.href.toLowerCase() : '';
-      if (href.includes('wlanbasicsetting2g')) {
-        return;
-      }
-    }
 
     triggerSaveFlashEffect(simWin ? simWin.document : null, null);
     window._hasClickedSaveInGuide = true;
@@ -3351,6 +3333,19 @@
       const evalResult = evaluateLesson(device, lesson);
       const btnGuideErrors = document.getElementById('btn-guide-errors');
       const noConfigSaved = isNoConfigDevice();
+
+      // Riêng Bài 6 ONT AC1000HI: Nút Add được hiểu là nút Nộp bài sau khi cấu hình đúng các điều kiện ràng buộc
+      const normDev = (currentDeviceId || '').toLowerCase();
+      if (normDev === 'ac1000hi' && lesson.id === 'LAB_AC1000HI_06' && evalResult && evalResult.passed) {
+        if (btnSubmitLab) {
+          btnSubmitLab.disabled = false;
+          btnSubmitLab.style.opacity = '1';
+        }
+        setTimeout(function () {
+          submitLab();
+        }, 600);
+        return;
+      }
 
       if (currentMode === 'practice') {
         // ⚡ Chế độ Thực hành: Nút lỗi sai LUÔN ẨN, Nút Nộp bài LUÔN SÁNG để học viên nộp bài

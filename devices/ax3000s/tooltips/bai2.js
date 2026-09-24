@@ -5,71 +5,37 @@
 if (!window.TOOLTIPS_AX3000S) window.TOOLTIPS_AX3000S = {};
 
 window.TOOLTIPS_AX3000S['LAB_AX3000S_02'] = [
-  // Nếu ở trang khác, hướng dẫn điều hướng vào WLAN
+  // Bước 1: Chọn menu WLAN (Nếu ở trang khác, điều hướng vào WLAN)
   {
-    selector: "#Sky_WLAN li, #Sky_WLAN span, #Sky_WLAN, a[href*='/wlan']",
-    text: 'Chọn WLAN',
+    selector: "#Sky_WLAN li, #Sky_WLAN span, #Sky_WLAN, #nav-layer1 a[href*='/wlan'] li, a[href*='/wlan'] span, a[href*='/wlan']",
+    text: 'Bước 1: Chọn WLAN',
     position: 'bottom',
     hideOnPage: 'wlan'
   },
-  {
-    selector: "#layer2-leaf-wlangband .dt, #layer2-leaf-wlangband, a[href*='/wlanBasicSetting2g']",
-    text: 'Chọn WLAN 2.4G',
-    position: 'right',
-    hideOnPage: 'wlanBasicSetting2g'
-  },
 
-  // --- PHẦN 1: CẤU HÌNH WLAN 2.4G ---
-  // Bước 1: Nhập Primary SSID: FPT Telecom
+  // Bước 2: Nhập Primary SSID: FPT Telecom (Luôn hiển thị trên trang cấu hình Wi-Fi)
   {
     selector: '#Txt_SSID',
-    text: 'Bước 1: Nhập Primary SSID: FPT Telecom',
+    text: 'Bước 2: Nhập Primary SSID: FPT Telecom',
     position: 'right',
     page: 'wlanBasicSetting2g',
-    expected: 'FPT Telecom',
-    hideWhenSaved: true
-  },
-  // Bước 2: Nhập WPA Passphrase: 19006600
-  {
-    selector: '#Pwd_WpaPsk',
-    text: 'Bước 2: Nhập WPA Passphrase: 19006600',
-    position: 'right',
-    page: 'wlanBasicSetting2g',
-    expected: '19006600',
-    hideWhenSaved: true
-  },
-  // Bước 3: Nhấn Save & Apply để lưu cấu hình 2.4G
-  {
-    selector: '#button_apply',
-    text: 'Bước 3: Nhấn Save & Apply để lưu cấu hình 2.4G',
-    position: 'top',
-    page: 'wlanBasicSetting2g',
-    hideWhenSaved: true
-  },
-  // Bước 4: Chọn menu WLAN 5G (chỉ hiện sau khi làm xong Bước 3)
-  {
-    selector: '#layer2-leaf-wlanaband .dt, #layer2-leaf-wlanaband',
-    text: 'Bước 4: Chọn menu WLAN 5G',
-    position: 'right',
-    page: 'wlanBasicSetting2g',
-    hideOnPage: 'wlanBasicSetting5g',
-    requireSaved: true
+    expected: 'FPT Telecom'
   },
 
-  // --- PHẦN 2: CẤU HÌNH WLAN 5G ---
-  // Bước 5: Chọn mục Basic Settings của WLAN 5G
+  // Bước 3: Nhập WPA Passphrase: 19006600 (Luôn hiển thị trên trang cấu hình Wi-Fi)
   {
-    selector: '#layer2-leaf-wlanaband a[href*="wlanBasicSetting5g"], #layer2-leaf-wlanaband #Sky_Basic_Settings, #layer2-leaf-wlanaband .layer3-menu li:first-child',
-    text: 'Bước 5: Chọn mục Basic Settings',
+    selector: '#Pwd_WpaPsk',
+    text: 'Bước 3: Nhập WPA Passphrase: 19006600',
     position: 'right',
-    hideOnPage: 'wlanBasicSetting5g',
-    requireSaved: true
+    page: 'wlanBasicSetting2g',
+    expected: '19006600'
   },
-  // Bước 6: Nhấn Save & Apply để lưu cấu hình 5G
+
+  // Bước 4: Nhấn Save & Apply để lưu cấu hình Wi-Fi (Luôn hiển thị trên trang cấu hình Wi-Fi)
   {
     selector: '#button_apply',
-    text: 'Bước 6: Nhấn Save & Apply để lưu cấu hình 5G',
+    text: 'Bước 4: Nhấn Save & Apply để lưu cấu hình',
     position: 'top',
-    page: 'wlanBasicSetting5g'
+    page: 'wlanBasicSetting2g'
   }
 ];

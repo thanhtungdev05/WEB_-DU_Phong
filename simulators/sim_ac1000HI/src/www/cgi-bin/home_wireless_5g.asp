@@ -1,4 +1,4 @@
-﻿
+
  
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" dir="ltr" lang="utf-8">
@@ -3737,16 +3737,46 @@ function doWirelessTxStreamChange(){
         }
     }
 
+    var isSavingAction = false;
+
+    // Ghi nhận khi người dùng bấm trực tiếp vào nút Save / Apply
+    document.addEventListener('click', function(e) {
+        var btn = e.target && e.target.closest ? e.target.closest('input[value="Save"], input[name="BUTTON"], input[name="SaveBtn"], #save, #btnSave, .button1') : null;
+        if (btn && (btn.value === 'Save' || (btn.textContent && btn.textContent.trim() === 'Save'))) {
+            isSavingAction = true;
+        }
+    }, true);
+
+    function isActualSaveAction(formEl) {
+        if (isSavingAction) return true;
+        try {
+            var flag = formEl && formEl.wlanWEPFlag ? String(formEl.wlanWEPFlag.value) : '';
+            if (flag === '3') return true;
+        } catch(e) {}
+        return false;
+    }
+
     // 1. Chặn submit HTML native
     document.addEventListener('submit', function(e) {
         e.preventDefault();
-        showFakeSaveMsg(e.target);
+        if (isActualSaveAction(e.target)) {
+            isSavingAction = false;
+            showFakeSaveMsg(e.target);
+        }
     });
 
     // 2. Chặn submit bằng JS (document.form.submit())
     if (typeof HTMLFormElement !== 'undefined') {
         HTMLFormElement.prototype.submit = function() {
-            showFakeSaveMsg(this);
+            var flag = this && this.wlanWEPFlag ? String(this.wlanWEPFlag.value) : '';
+            if (flag === '2') {
+                isSavingAction = false;
+                return;
+            }
+            if (isActualSaveAction(this)) {
+                isSavingAction = false;
+                showFakeSaveMsg(this);
+            }
         };
     }
 

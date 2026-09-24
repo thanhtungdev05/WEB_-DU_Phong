@@ -26,13 +26,13 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_05'] = [
     position: 'top',
     page: 'lancfgv4'
   },
-  // Bước 2: Nhập IP Address (Gateway) 192.168.1.1
+  // Bước 2: Nhập IP Address (Gateway) 192.168.2.1
   {
     selector: '#ethIpAddress',
-    text: 'Bước 4: Nhập IP Address (Gateway) 192.168.1.1',
+    text: 'Bước 4: Nhập IP Address (Gateway) 192.168.2.1',
     position: 'right',
     page: 'lancfgv4',
-    expected: '192.168.1.1'
+    expected: '192.168.2.1'
   },
   // Bước 3: Nhập Subnet Mask 255.255.255.0
   {
@@ -50,21 +50,21 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_05'] = [
     page: 'lancfgv4',
     expected: '1' // radio value
   },
-  // Bước 5: Đặt Start IP 192.168.1.2
+  // Bước 5: Đặt Start IP 192.168.2.2
   {
     selector: '#dhcpEthStart',
-    text: 'Bước 7: Đặt Start IP 192.168.1.2',
+    text: 'Bước 7: Đặt Start IP 192.168.2.2',
     position: 'right',
     page: 'lancfgv4',
-    expected: '192.168.1.2'
+    expected: '192.168.2.2'
   },
-  // Bước 6: Đặt End IP 192.168.1.254
+  // Bước 6: Đặt End IP 192.168.2.254
   {
     selector: '#dhcpEthEnd',
-    text: 'Bước 8: Đặt End IP 192.168.1.254',
+    text: 'Bước 8: Đặt End IP 192.168.2.254',
     position: 'right',
     page: 'lancfgv4',
-    expected: '192.168.1.254'
+    expected: '192.168.2.254'
   },
   // Bước 7: Chọn Lease Time 2 minute
   {
@@ -76,7 +76,7 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_05'] = [
   },
   // Bước 8: Nhấn Save & Apply
   {
-    selector: '#Sky_Apply',
+    selector: 'html:has(#dhcpSrvType2:checked) #Sky_Apply',
     text: 'Bước 10: Nhấn Save & Apply',
     position: 'top',
     page: 'lancfgv4'
