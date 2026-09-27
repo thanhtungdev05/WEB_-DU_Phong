@@ -11,9 +11,9 @@ var lessonObj = {
   title: 'Bài 5 - Cấu hình DHCP',
   subtitle: 'Cấu hình DHCP',
   instructions: [
-    '<b>Yêu cầu:</b> Thực hiện đổi lớp mạng LAN và cấu hình DHCP trên thiết bị theo các thông số:',
+    '<b>Yêu cầu:</b>',
     '- IP Address: <span class="val">192.168.10.1</span>',
-    '- IP Subnet Mask: <span class="val">255.255.255.0</span>'
+    '- Subnet Mask: <span class="val">255.255.255.0</span>'
   ],
   practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=home_lan.asp',
   // Clear old localStorage when starting a new session

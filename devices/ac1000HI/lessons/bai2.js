@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ac1000hi/lessons/bai2.js
  * Bài 2: Cấu hình mạng Wi-Fi trên ONT AC1000HI
  */
@@ -12,7 +12,6 @@ var lessonObj = {
   subtitle: 'Cấu hình Wi-Fi',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Cấu hình dùng cho cả 2 băng tần <b>2.4G</b> và <b>5G</b> theo thông số:',
     '- SSID Name: <span class="val">FPT Telecom-7EA8</span>',
     '- WPA Key: <span class="val">00032934</span>'
   ],

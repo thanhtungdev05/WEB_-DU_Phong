@@ -24,7 +24,10 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_05'] = [
     selector: '#Sky_IPv4_Configuration, #layer2-leaf-lancfg #Sky_IPv4_Configuration',
     text: 'Bước 3: IPv4 Configuration',
     position: 'top',
-    page: 'lancfgv4'
+    page: 'lancfgv4',
+    condition: function(doc) {
+      return !doc.querySelector('#ethIpAddress');
+    }
   },
   // Bước 2: Nhập IP Address (Gateway) 192.168.2.1
   {

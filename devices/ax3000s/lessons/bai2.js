@@ -11,9 +11,9 @@ var lessonObj = {
   subtitle: 'Cấu hình wifi',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình các thông số mạng Wi-Fi theo đúng yêu cầu dưới đây:',
     '- SSID Name: <span class="val">FPT Telecom</span>',
-    '- WPA Key: <span class="val">19006600</span>'
+    '- WPA Key: <span class="val">19006600</span>',
+    '- Bandwidth (2.4G): <span class="val">20Mhz</span>'
   ],
   practiceUrl: '/sim_ax3000s/app.html#wlanBasicSetting2g',
   clearFields: [
@@ -39,6 +39,15 @@ var lessonObj = {
         name: 'Mật khẩu Wi-Fi (WPA Key)',
         selector: '#Pwd_WpaPsk, input[name="Pwd_WpaPsk"]',
         expected: '19006600',
+        type: 'text_exact',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'wifi_bw',
+        name: 'Độ rộng kênh (Bandwidth)',
+        selector: '#Sel_BandWidth, select[name="Sel_BandWidth"]',
+        expected: '20Mhz',
         type: 'text_exact',
         trim: true,
         required: true

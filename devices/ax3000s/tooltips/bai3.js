@@ -28,42 +28,44 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_03'] = [
     page: 'wlan',
     hideOnPage: 'wlanMapSettingAll'
   },
-  // Bước 1: Wi-Fi Network_3 (IOT WiFi)
+  // Bước 4: Wi-Fi Network_3 (IOT WiFi)
   {
-    selector: 'div.collapsible:nth-of-type(2) .collapsible-header',
+    selector: 'div.collapsible:nth-of-type(2) .collapsible-header:not(.active)',
     text: 'Bước 4: Chọn Wi-Fi Network_3 (IOT WiFi)',
     position: 'top',
     page: 'wlanMapSettingAll'
   },
-  // Tắt Band Steering (Khuyến nghị)
-  // Tooltip này và các tooltip phía sau CHỈ HÌNH THÀNH khi phần mở rộng .active được kích hoạt (nhờ sibling selector `.active + .collapsible-content`)
+  // Tắt Band Steering nếu lỡ bị bật (chỉ hiện khi Band Steering đang checked)
   {
     selector: 'div.collapsible:nth-of-type(2) .active + .collapsible-content label[for="Chk_BandSteeringEnable_3"]',
-    text: 'Bước 5: Tắt Band Steering (Khuyến nghị)',
+    text: 'Bước phụ: Tắt Band Steering (để tách riêng 2.4GHz)',
     position: 'right',
     page: 'wlanMapSettingAll',
-    expected: 'false'
+    condition: function(doc) {
+      const chk = doc.querySelector('#Chk_BandSteeringEnable_3');
+      return chk && chk.checked;
+    }
   },
-  // Bước 2: Tick chọn Enable (Bật 2.4GHz)
+  // Bước 5: Tick chọn Enable (Bật 2.4GHz)
   {
     selector: 'div.collapsible:nth-of-type(2) .active + .collapsible-content label[for="Chk_SsidEnable_2G_3"]',
-    text: 'Bước 6: Tick chọn Enable (Bật 2.4GHz)',
+    text: 'Bước 5: Tick chọn Enable (Bật 2.4GHz)',
     position: 'right',
     page: 'wlanMapSettingAll',
     expected: 'on'
   },
-  // Bước 3: Đặt tên Wi-Fi IOT (2.4G) FPT Telecom-IoT
+  // Bước 6: Đặt tên Wi-Fi IOT (2.4G) FPT Telecom-IoT
   {
     selector: 'div.collapsible:nth-of-type(2) .active + .collapsible-content #Txt_SSID_2G_3',
-    text: 'Bước 7: Đặt tên Wi-Fi IOT (2.4G) FPT Telecom-IoT',
+    text: 'Bước 6: Đặt tên Wi-Fi IOT (2.4G) FPT Telecom-IoT',
     position: 'right',
     page: 'wlanMapSettingAll',
     expected: 'FPT Telecom-IoT'
   },
-  // Bước 4: Đặt mật khẩu IOT (2.4G) 19006600
+  // Bước 7: Đặt mật khẩu IOT (2.4G) 19006600
   {
     selector: 'div.collapsible:nth-of-type(2) .active + .collapsible-content #Pwd_WpaPsk_2G_3',
-    text: 'Bước 8: Đặt mật khẩu IOT (2.4G) 19006600',
+    text: 'Bước 7: Đặt mật khẩu IOT (2.4G) 19006600',
     position: 'right',
     page: 'wlanMapSettingAll',
     expected: '19006600'
@@ -71,7 +73,7 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_03'] = [
   // Bước 8: Lưu cấu hình IOT
   {
     selector: 'div.collapsible:nth-of-type(2) .active + .collapsible-content button[onclick="BntClick_Apply(2)"]',
-    text: 'Bước 9: Lưu cấu hình IOT',
+    text: 'Bước 8: Lưu cấu hình IOT',
     position: 'top',
     page: 'wlanMapSettingAll'
   }

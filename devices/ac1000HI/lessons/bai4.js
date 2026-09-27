@@ -11,7 +11,7 @@ var lessonObj = {
   title: 'Bài 4 - Cấu hình DNS',
   subtitle: 'Cấu hình DNS',
   instructions: [
-    '<b>Yêu cầu:</b> Thiết lập thông số DNS thủ công (Manually) trên cổng LAN:',
+    '<b>Yêu cầu:</b>',
     '- Primary DNS: <span class="val">8.8.8.8</span>',
     '- Secondary DNS: <span class="val">8.8.4.4</span>'
   ],

@@ -11,10 +11,8 @@ const lessonObj5 = {
   subtitle: 'Cấu hình DHCP',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình IPv4 LAN theo các thông số dưới đây:',
-    '- IP Address (Gateway): <span class="val">192.168.2.1</span>',
+    '- IP Address: <span class="val">192.168.2.1</span>',
     '- Subnet Mask: <span class="val">255.255.255.0</span>',
-    '- DHCP Server: <span class="val">Enable</span>',
     '- Start IP: <span class="val">192.168.2.2</span>',
     '- End IP: <span class="val">192.168.2.254</span>',
     '- Lease Time: <span class="val">2 minute</span>'
@@ -80,7 +78,7 @@ const lessonObj5 = {
       }
     ]
   },
-  guidePopups: []
+  guidePopups: (window.TOOLTIPS_AX3000S && window.TOOLTIPS_AX3000S['LAB_AX3000S_05']) || []
 };
 
 const existingIndex5 = window.DEVICE_AX3000S_LESSONS.findIndex(l => l.id === 'LAB_AX3000S_05');

@@ -24,7 +24,10 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_04'] = [
     selector: '#Sky_IPv4_Configuration, #layer2-leaf-lancfg #Sky_IPv4_Configuration',
     text: 'Bước 3: Chọn IPv4 Configuration',
     position: 'top',
-    page: 'lancfgv4'
+    page: 'lancfgv4',
+    condition: function(doc) {
+      return !doc.querySelector('#dnsPrimary');
+    }
   },
   // Bước 4: Chọn Enable (DHCP Server)
   {

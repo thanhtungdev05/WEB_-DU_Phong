@@ -67,8 +67,9 @@ assert.ok(!bai5.clearFields || bai5.clearFields.length === 0, 'clearFields must 
 
 // Verify instructions
 assert.ok(bai5.instructions.some(i => i.includes('192.168.10.1')), 'Instructions must require 192.168.10.1');
-assert.ok(bai5.instructions.some(i => i.includes('DHCP Server')), 'Instructions must require DHCP Server');
 assert.ok(bai5.instructions.some(i => i.includes('255.255.255.0')), 'Instructions must contain Subnet Mask');
+assert.ok(bai5.instructions.some(i => i.includes('192.168.10.2')), 'Instructions must contain Start IP');
+assert.ok(bai5.instructions.some(i => i.includes('12h')), 'Instructions must contain Lease Time');
 
 // Verify grading rules
 const rules = bai5.grading.rules;

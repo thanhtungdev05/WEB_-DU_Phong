@@ -11,10 +11,9 @@ var lessonObj = {
   title: 'Cấu hình DHCP',
   subtitle: 'Cấu hình DHCP',
   instructions: [
-    '<b>Yêu cầu:</b> Thực hiện thay đổi cấu hình DHCP trên thiết bị theo các thông số:',
+    '<b>Yêu cầu:</b>',
     '- IP Address: <span class="val">192.168.10.1</span>',
-    '- IP Subnet Mask: <span class="val">255.255.255.0</span>',
-    '- DHCP Server: <span class="val">Enable</span>',
+    '- Subnet Mask: <span class="val">255.255.255.0</span>',
     '- Start IP: <span class="val">192.168.10.2</span>',
     '- End IP: <span class="val">192.168.10.254</span>',
     '- Lease Time: <span class="val">12h</span>'

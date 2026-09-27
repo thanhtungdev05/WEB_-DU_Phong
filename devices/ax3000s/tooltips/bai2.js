@@ -31,10 +31,19 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_02'] = [
     expected: '19006600'
   },
 
-  // Bước 4: Nhấn Save & Apply để lưu cấu hình Wi-Fi (Luôn hiển thị trên trang cấu hình Wi-Fi)
+  // Bước 4: Chọn Bandwidth: 20Mhz
+  {
+    selector: '#Sel_BandWidth',
+    text: 'Bước 4: Chọn Bandwidth: 20Mhz',
+    position: 'right',
+    page: 'wlanBasicSetting2g',
+    expected: '20Mhz'
+  },
+
+  // Bước 5: Nhấn Save & Apply để lưu cấu hình Wi-Fi (Luôn hiển thị trên trang cấu hình Wi-Fi)
   {
     selector: '#button_apply',
-    text: 'Bước 4: Nhấn Save & Apply để lưu cấu hình',
+    text: 'Bước 5: Nhấn Save & Apply để lưu cấu hình',
     position: 'top',
     page: 'wlanBasicSetting2g'
   }

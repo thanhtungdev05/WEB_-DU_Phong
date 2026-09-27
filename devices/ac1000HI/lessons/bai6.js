@@ -12,12 +12,11 @@ var lessonObj = {
   subtitle: 'Cấu hình Port Forwarding',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình Mở Port trên thiết bị theo các thông số được cung cấp dưới đây.',
     '- Start External Port: <span class="val">3389</span>',
     '- End External Port: <span class="val">3389</span>',
     '- IP Address: <span class="val">192.168.1.254</span>',
     '- Start Internal Port: <span class="val">3389</span>',
-    '- End Internal Port: <span class="val">3389</span>',
+    '- End Internal Port: <span class="val">3389</span>'
   ],
   practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=adv_nat_top.asp',
     // Clear old localStorage when starting a new session

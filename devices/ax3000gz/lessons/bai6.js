@@ -12,9 +12,7 @@ var lessonObj = {
   subtitle: 'Cấu hình Port Forwarding',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình Mở Port trên thiết bị theo các thông số được cung cấp dưới đây:',
     '- Name: <span class="val">FPT Telecom</span>',
-    '- Enable: <span class="val">On</span>',
     '- Protocol: <span class="val">TCP/UDP</span>',
     '- WAN Host IP Address: <span class="val">0.0.0.0/0</span>',
     '- LAN Host: <span class="val">192.168.1.254</span>',

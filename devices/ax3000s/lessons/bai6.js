@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ax3000s/lessons/bai6.js
  * Bài 6: Cấu hình Port Forwarding trên AX3000S
  */
@@ -11,13 +11,12 @@ const lessonObj6 = {
   subtitle: 'Cấu hình Port Forwarding',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình Port Forwarding theo các thông số dưới đây:',
     '- Tên dịch vụ: <span class="val">NAT FPT</span>',
+    '- External Port: <span class="val">8080</span>',
     '- Internal IP: <span class="val">192.168.1.100</span>',
-    '- Lease Duration: <span class="val">0</span>',
+    '- Internal Port: <span class="val">8080</span>',
     '- Protocol: <span class="val">TCP/UDP</span>',
-    '- External Port (WAN): <span class="val">8080</span>',
-    '- Internal Port (LAN): <span class="val">8080</span>'
+    '- Lease Duration: <span class="val">0</span>'
   ],
   practiceUrl: '/sim_ax3000s/app.html#portforward',
   clearFields: [
@@ -94,7 +93,7 @@ const lessonObj6 = {
       }
     ]
   },
-  guidePopups: []
+  guidePopups: (window.TOOLTIPS_AX3000S && window.TOOLTIPS_AX3000S['LAB_AX3000S_06']) || []
 };
 
 const existingIndex6 = window.DEVICE_AX3000S_LESSONS.findIndex(l => l.id === 'LAB_AX3000S_06');

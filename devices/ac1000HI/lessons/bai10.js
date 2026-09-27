@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ac1000HI/lessons/bai10.js
  * Bài 10: Cấu hình chặn Web
  */
@@ -9,13 +9,11 @@ window.DEVICE_AC1000HI_LESSONS.push({
   id: 'LAB_AC1000HI_10',
   title: 'Bài 10 - Cấu hình chặn Web',
   subtitle: 'Thiết lập quy tắc lọc và chặn truy cập Web',
-    instructions: [
-    '<b>Yêu cầu:</b> Cấu hình tính năng chặn Website (URL Filter):',
-    '- Filter Type Selection: <span class="val">URL Filter</span>',
-    '- Active: <span class="val">Enable</span>',
+  instructions: [
+    '<b>Yêu cầu:</b>',
+    '- Filter Type: <span class="val">URL Filter</span>',
     '- URL Index: <span class="val">1</span>',
-    '- Individual active: <span class="val">Enable</span>',
-    '- URL(host): <span class="val">facebook.com</span>'
+    '- URL (Host): <span class="val">facebook.com</span>'
   ],
   practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=access_ipfilter.asp',
 

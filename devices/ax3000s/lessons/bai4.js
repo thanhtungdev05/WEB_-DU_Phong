@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ax3000s/lessons/bai4.js
  * Bài 4: Cấu hình DNS trên AX3000S
  */
@@ -11,9 +11,8 @@ const lessonObj4 = {
   subtitle: 'Cấu hình DNS',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình DNS trên thiết bị và cấu hình các máy chủ DNS theo yêu cầu sau:',
-    '- DNS Server 1: <span class="val">210.245.31.220</span> (DNS của FPT)',
-    '- DNS Server 2: <span class="val">8.8.8.8</span> (DNS của Google)'
+    '- Primary DNS: <span class="val">210.245.31.220</span>',
+    '- Secondary DNS: <span class="val">8.8.8.8</span>'
   ],
   practiceUrl: '/sim_ax3000s/app.html#lancfgv4',
   clearFields: [
@@ -53,7 +52,7 @@ const lessonObj4 = {
       }
     ]
   },
-  guidePopups: []
+  guidePopups: (window.TOOLTIPS_AX3000S && window.TOOLTIPS_AX3000S['LAB_AX3000S_04']) || []
 };
 
 const existingIndex4 = window.DEVICE_AX3000S_LESSONS.findIndex(l => l.id === 'LAB_AX3000S_04');
