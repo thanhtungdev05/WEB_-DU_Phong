@@ -167,7 +167,14 @@ assert.match(dashboard, /assignmentsRequested && data\.assignments_available !==
 assert.doesNotMatch(dashboard, /trainingAssignments\.length === 0 \? true/);
 assert.doesNotMatch(dashboard, /score: item\.score/);
 assert.match(dashboard, /function isRateEligiblePracticeSession\(item\)/);
-assert.match(dashboard, /const rateEligibleSessions = labSessions\.filter\(isRateEligiblePracticeSession\)/);
+assert.match(api, /'period_counts' => \[/);
+assert.match(api, /AS period_pass_count/);
+assert.match(api, /AS period_attempt_count/);
+assert.match(api, /AS period_historical_pass_count/);
+assert.match(api, /period_link\.assignment_id = progress\.assignment_id/);
+assert.match(dashboard, /const periodCounts = Array\.isArray\(item\.period_counts\)/);
+assert.match(dashboard, /const hasPeriodCounts = assignment\?\.periodAttemptCount !== null/);
+assert.match(dashboard, /\? assignment\.periodPassCount/);
 assert.match(dashboard, /totalSessions: recordedPractices/);
 assert.match(report, /recorded_practice_count/);
 assert.match(report, /historical_pass_count/);
@@ -188,7 +195,7 @@ assert.doesNotMatch(dashboardHtml, /Lượt thực hành phát sinh|Lượt phá
 assert.doesNotMatch(dashboard, /lượt phát sinh|lượt thiếu chuỗi lịch sử/);
 assert.doesNotMatch(dashboardHtml, /id="detailReportEligibleSessions"/);
 assert.doesNotMatch(dashboardHtml, /id="detailReportIncompleteSessions"/);
-assert.match(dashboard, /const passCount = rateEligibleSessions\.filter\(session => session\.isPassed === true\)\.length/);
+assert.match(dashboard, /: rateEligibleSessions\.filter\(session => session\.isPassed === true\)\.length/);
 assert.match(dashboard, /attemptSequenceComplete:/);
 assert.doesNotMatch(dashboard, /100 điểm/);
 assert.match(dashboard, /allLearnersCount: allClassLearners\.length/);

@@ -65,6 +65,17 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn("allParams.set('include_sessions', sessionsRequested ? '1' : '0')", self.dashboard)
         self.assertIn('ensureDashboardSessionsLoaded()', self.dashboard)
 
+    def test_class_matrix_uses_compact_period_counts_without_raw_sessions(self):
+        self.assertIn("'period_counts' => [", self.api)
+        self.assertIn('AS period_pass_count', self.api)
+        self.assertIn('AS period_attempt_count', self.api)
+        self.assertIn('AS period_historical_pass_count', self.api)
+        self.assertIn('period_link.assignment_id = progress.assignment_id', self.api)
+        self.assertIn("$dateFrom . 'T00:00:00+07:00'", self.api)
+        self.assertIn('periodAttemptCount:', self.dashboard)
+        self.assertIn('const hasPeriodCounts = assignment?.periodAttemptCount !== null', self.dashboard)
+        self.assertIn('? assignment.periodPassCount', self.dashboard)
+
     def test_technician_lookup_uses_server_pages_and_lazy_history(self):
         self.assertIn('function dashboard_technician_summary_page', self.technicians)
         self.assertIn('COUNT(*) OVER () AS matched_technicians', self.technicians)

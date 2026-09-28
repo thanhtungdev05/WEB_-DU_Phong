@@ -3239,9 +3239,12 @@ function handle_dashboard(array $segments, string $method): void
                     'email' => strtolower(trim((string)($row['email'] ?? ''))),
                 ];
             }
-            $assignmentRows = $pdo
-                ->query(
+            $assignmentStatement = $pdo->prepare(
                 <<<'SQL'
+                WITH selected_period AS (
+                    SELECT CAST(:assignment_period_from AS TIMESTAMPTZ) AS date_from,
+                           CAST(:assignment_period_to AS DATE) + INTERVAL '1 day' AS date_to
+                )
                 SELECT progress.email,
                        progress.class_code,
                        progress.class_name,
@@ -3252,8 +3255,12 @@ function handle_dashboard(array $segments, string $method): void
                        COALESCE(evidence.passed_at, progress.completed_at) AS completed_at,
                        evidence.first_pass_attempt_no,
                        COALESCE(evidence.historical_pass_count, 0) AS historical_pass_count,
-                       COALESCE(evidence.recorded_practice_count, 0) AS recorded_practice_count
+                       COALESCE(evidence.recorded_practice_count, 0) AS recorded_practice_count,
+                       COALESCE(evidence.period_pass_count, 0) AS period_pass_count,
+                       COALESCE(evidence.period_attempt_count, 0) AS period_attempt_count,
+                       COALESCE(evidence.period_historical_pass_count, 0) AS period_historical_pass_count
                   FROM v_lab_assignment_progress progress
+                  CROSS JOIN selected_period period
                   JOIN users roster ON roster.user_id = progress.user_id
                    JOIN training_classes training ON training.class_id = progress.class_id
                    JOIN lab_assignments assignment ON assignment.assignment_id = progress.assignment_id
@@ -3300,8 +3307,33 @@ function handle_dashboard(array $segments, string $method): void
                                      AND session.attempt_sequence_complete IS FALSE
                                      AND session.seed_batch LIKE 'firebase-v1-%'
                                  )
-                             ) AS recorded_practice_count
+                             ) AS recorded_practice_count,
+                             COUNT(*) FILTER (
+                                 WHERE session.is_passed IS TRUE
+                                   AND session.attempt_sequence_complete IS TRUE
+                                   AND period_link.timer_session_id IS NOT NULL
+                                   AND COALESCE(session.started_at, session.finished_at) >= period.date_from
+                                   AND COALESCE(session.started_at, session.finished_at) < period.date_to
+                             ) AS period_pass_count,
+                             COUNT(*) FILTER (
+                                 WHERE session.is_passed IS NOT NULL
+                                   AND session.attempt_sequence_complete IS TRUE
+                                   AND period_link.timer_session_id IS NOT NULL
+                                   AND COALESCE(session.started_at, session.finished_at) >= period.date_from
+                                   AND COALESCE(session.started_at, session.finished_at) < period.date_to
+                             ) AS period_attempt_count,
+                             COUNT(*) FILTER (
+                                 WHERE session.is_passed IS TRUE
+                                   AND session.attempt_sequence_complete IS FALSE
+                                   AND session.seed_batch LIKE 'firebase-v1-%'
+                                   AND period_link.timer_session_id IS NOT NULL
+                                   AND COALESCE(session.started_at, session.finished_at) >= period.date_from
+                                   AND COALESCE(session.started_at, session.finished_at) < period.date_to
+                             ) AS period_historical_pass_count
                         FROM timer_sessions session
+                        LEFT JOIN timer_session_assignment_links period_link
+                          ON period_link.timer_session_id = session.id
+                         AND period_link.assignment_id = progress.assignment_id
                        WHERE session.lab_id = progress.lab_id
                          AND (
                              session.user_id = progress.user_id
@@ -3324,8 +3356,12 @@ function handle_dashboard(array $segments, string $method): void
                  ORDER BY progress.class_code, progress.email,
                           progress.device_name, progress.lab_name
                 SQL
-                )
-                ->fetchAll();
+            );
+            $assignmentStatement->execute([
+                'assignment_period_from' => $dateFrom . 'T00:00:00+07:00',
+                'assignment_period_to' => $dateTo,
+            ]);
+            $assignmentRows = $assignmentStatement->fetchAll();
             foreach ($assignmentRows as $row) {
                 $assignments[] = [
                     'email' => (string)($row['email'] ?? ''),
@@ -3340,6 +3376,12 @@ function handle_dashboard(array $segments, string $method): void
                         : null,
                     'historical_pass_count' => (int)($row['historical_pass_count'] ?? 0),
                     'recorded_practice_count' => (int)($row['recorded_practice_count'] ?? 0),
+                    // Compact [passed, graded attempts, historical passes] for the selected period.
+                    'period_counts' => [
+                        (int)($row['period_pass_count'] ?? 0),
+                        (int)($row['period_attempt_count'] ?? 0),
+                        (int)($row['period_historical_pass_count'] ?? 0),
+                    ],
                 ];
             }
         } catch (Throwable $e) {

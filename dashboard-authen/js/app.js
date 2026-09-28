@@ -2647,21 +2647,27 @@ function normalizeTechnicianCatalog(apiTechnicians = []) {
 }
 
 function normalizeTrainingAssignments(apiAssignments = []) {
-    return apiAssignments.map(item => ({
-        learner: String(item.email || item.learner || '').trim().toLowerCase(),
-        classCode: item.class_code || item.classCode || '',
-        className: item.class_name || item.className || item.class_code || item.classCode || '',
-        device: item.device_name || item.deviceName || item.device || 'N/A',
-        lab: item.lab_name || item.labName || item.lab || 'N/A',
-        status: item.status || 'assigned',
-        completed: item.status === 'passed' || Boolean(item.passed),
-        completedAt: item.completed_at || item.completedAt || null,
-        historicalPassCount: Number(item.historical_pass_count ?? item.historicalPassCount) || 0,
-        recordedPracticeCount: Number(item.recorded_practice_count ?? item.recordedPracticeCount) || 0,
-        firstPassAttemptNo: item.first_pass_attempt_no == null
-            ? null
-            : Number(item.first_pass_attempt_no)
-    }));
+    return apiAssignments.map(item => {
+        const periodCounts = Array.isArray(item.period_counts) ? item.period_counts : null;
+        return ({
+            learner: String(item.email || item.learner || '').trim().toLowerCase(),
+            classCode: item.class_code || item.classCode || '',
+            className: item.class_name || item.className || item.class_code || item.classCode || '',
+            device: item.device_name || item.deviceName || item.device || 'N/A',
+            lab: item.lab_name || item.labName || item.lab || 'N/A',
+            status: item.status || 'assigned',
+            completed: item.status === 'passed' || Boolean(item.passed),
+            completedAt: item.completed_at || item.completedAt || null,
+            historicalPassCount: Number(item.historical_pass_count ?? item.historicalPassCount) || 0,
+            recordedPracticeCount: Number(item.recorded_practice_count ?? item.recordedPracticeCount) || 0,
+            periodPassCount: periodCounts ? (Number(periodCounts[0]) || 0) : null,
+            periodAttemptCount: periodCounts ? (Number(periodCounts[1]) || 0) : null,
+            periodHistoricalPassCount: periodCounts ? (Number(periodCounts[2]) || 0) : null,
+            firstPassAttemptNo: item.first_pass_attempt_no == null
+                ? null
+                : Number(item.first_pass_attempt_no)
+        });
+    });
 }
 
 function rebuildTechnicianIndex() {
@@ -5808,13 +5814,21 @@ function getClassMatrixData() {
                 ? classSessionsForCell(selectedClass.code, learnerKey, col.device, col.lab)
                 : [];
             const rateEligibleSessions = labSessions.filter(isRateEligiblePracticeSession);
-            const attempts = rateEligibleSessions.length;
-            const passCount = rateEligibleSessions.filter(session => session.isPassed === true).length;
             const assignment = selectedClass
                 ? assignmentByCell.get(`${selectedClass.code}\u001f${learnerKey}\u001f${col.device}\u001f${col.lab}`)
                 : null;
+            const hasPeriodCounts = assignment?.periodAttemptCount !== null
+                && assignment?.periodAttemptCount !== undefined;
+            const attempts = hasPeriodCounts
+                ? assignment.periodAttemptCount
+                : rateEligibleSessions.length;
+            const passCount = hasPeriodCounts
+                ? assignment.periodPassCount
+                : rateEligibleSessions.filter(session => session.isPassed === true).length;
             const isAssigned = Boolean(assignment);
-            const historicalPassCount = Number(assignment?.historicalPassCount) || 0;
+            const historicalPassCount = hasPeriodCounts
+                ? assignment.periodHistoricalPassCount
+                : (Number(assignment?.historicalPassCount) || 0);
             const recordedAttempts = attempts + historicalPassCount;
             const assignmentCompleted = Boolean(assignment && assignmentHasCompletionEvidence(assignment));
             if (isAssigned) ktvAssigned += 1;
