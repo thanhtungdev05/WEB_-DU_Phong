@@ -10326,10 +10326,32 @@ select:not(.searchable-select-source):focus-visible {
 }
 
 .class-overview-progress {
+    --class-rate-fill: #c7ced9;
+    --class-rate-text: #1f3150;
     display: grid;
     grid-template-columns: minmax(90px, 1fr) 38px;
     align-items: center;
     gap: 9px;
+}
+
+.class-overview-progress.is-high {
+    --class-rate-fill: #54b48e;
+    --class-rate-text: #08745a;
+}
+
+.class-overview-progress.is-medium {
+    --class-rate-fill: #e9bd55;
+    --class-rate-text: #9a6700;
+}
+
+.class-overview-progress.is-low {
+    --class-rate-fill: #e37a83;
+    --class-rate-text: #b4233a;
+}
+
+.class-overview-progress.is-zero {
+    --class-rate-fill: #c7ced9;
+    --class-rate-text: #a1aabc;
 }
 
 .class-overview-progress-track {
@@ -10343,13 +10365,33 @@ select:not(.searchable-select-source):focus-visible {
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, #2563eb, #16a085);
+    background: var(--class-rate-fill);
 }
 
 .class-overview-progress strong {
-    color: #1f3150;
+    color: var(--class-rate-text);
     font-size: 11.5px;
     text-align: right;
+}
+
+.class-overview-rate-total.is-high {
+    color: #08745a;
+}
+
+.class-overview-rate-total.is-medium {
+    color: #9a6700;
+}
+
+.class-overview-rate-total.is-low {
+    color: #b4233a;
+}
+
+.class-overview-rate-total.is-zero {
+    color: #a1aabc;
+}
+
+.class-overview-legend {
+    margin-top: 10px;
 }
 
 .class-overview-action-cell {

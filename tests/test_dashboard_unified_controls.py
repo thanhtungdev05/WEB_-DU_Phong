@@ -277,6 +277,32 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn(".class-overview-progress-track", self.css)
         self.assertIn(".class-overview-action", self.css)
 
+    def test_class_overview_completion_rate_is_coloured_by_band(self):
+        self.assertIn("function getClassRateLevel(rate)", self.javascript)
+        for threshold in ("rate >= 80", "rate >= 50", "return 'zero'"):
+            self.assertIn(threshold, self.javascript)
+        self.assertIn("class-overview-progress is-${getClassRateLevel(row.rate)}", self.javascript)
+        self.assertIn("class-overview-rate-total is-${getClassRateLevel(overallRate)}", self.javascript)
+        # A fixed gradient would hide the band entirely: fill must come from a custom property.
+        track_fill = self.css.split(".class-overview-progress-track span {", 1)[1].split("}", 1)[0]
+        self.assertIn("background: var(--class-rate-fill)", track_fill)
+        self.assertNotIn("gradient", track_fill)
+        self.assertIn("color: var(--class-rate-text)", self.css)
+        for level in ("high", "medium", "low", "zero"):
+            self.assertIn(f".class-overview-progress.is-{level}", self.css)
+            self.assertIn(f".class-overview-rate-total.is-{level}", self.css)
+        # Fill colours must match the swatches in the shared completion legend.
+        for swatch, level in (("legend-high", "high"), ("legend-medium", "medium"), ("legend-low", "low")):
+            fill = self.css.split(f".class-overview-progress.is-{level} {{", 1)[1].split("}", 1)[0]
+            legend = self.css.split(f".{swatch} {{", 1)[1].split("}", 1)[0].split("background:", 1)[1].strip().rstrip(";")
+            self.assertIn(legend, fill, f"is-{level} fill must reuse the {swatch} swatch")
+        self.assertIn('id="classOverviewLegend"', self.html)
+        self.assertIn("legend-unassigned", self.html)
+        self.assertIn("if (legend) legend.hidden = !hasRows", self.javascript)
+        # Dark theme must keep the rate text readable on the dark surface.
+        for level in ("high", "medium", "low", "zero"):
+            self.assertIn(f':root[data-theme="dark"] .class-overview-progress.is-{level}', self.professional_css)
+
     def test_asset_version_prevents_stale_control_styles(self):
         styles_hash = hashlib.sha256((ROOT / "dashboard-authen" / "css" / "styles.css").read_bytes()).hexdigest()[:16]
         professional_hash = hashlib.sha256((ROOT / "dashboard-authen" / "css" / "dashboard-professional.css").read_bytes()).hexdigest()[:16]

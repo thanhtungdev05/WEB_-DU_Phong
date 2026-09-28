@@ -6133,6 +6133,13 @@ function formatClassEmployeeId(value) {
     return code.slice(0, 8);
 }
 
+function getClassRateLevel(rate) {
+    if (rate === null || rate === undefined) return 'zero';
+    if (rate >= 80) return 'high';
+    if (rate >= 50) return 'medium';
+    return 'low';
+}
+
 function renderClassOverview(data) {
     const head = document.getElementById('classOverviewHead');
     const body = document.getElementById('classOverviewBody');
@@ -6190,6 +6197,8 @@ function renderClassOverview(data) {
     </tr>`;
     bindClassOverviewControls();
 
+    const legend = document.getElementById('classOverviewLegend');
+
     body.innerHTML = data.summaryRows.map(row => {
         const isSelected = row.id === state.classMatrixSelectedClass;
         return `<tr class="class-overview-row ${isSelected ? 'is-selected' : ''}" data-class-id="${escapeHTML(row.id)}">
@@ -6208,7 +6217,7 @@ function renderClassOverview(data) {
                 </button>
             </td>
             <td class="class-overview-progress-cell">
-                <div class="class-overview-progress" title="${escapeHTML(`${row.fullyCompletedCount}/${row.memberCount} KTV hoàn thành tất cả bài được giao`)}">
+                <div class="class-overview-progress is-${getClassRateLevel(row.rate)}" title="${escapeHTML(`${row.fullyCompletedCount}/${row.memberCount} KTV hoàn thành tất cả bài được giao`)}">
                     <div class="class-overview-progress-track" aria-hidden="true"><span style="width:${row.rate || 0}%"></span></div>
                     <strong>${row.rate === null ? '—' : `${row.rate}%`}</strong>
                 </div>
@@ -6232,12 +6241,13 @@ function renderClassOverview(data) {
         <td>${formatNumber.format(assignedDeviceCount)}</td>
         <td>${formatNumber.format(totalAttempts)}</td>
         <td><strong>${completedPeople}/${classPeople}</strong></td>
-        <td><strong>${overallRate === null ? '—' : `${overallRate}%`}</strong></td>
+        <td class="class-overview-rate-total is-${getClassRateLevel(overallRate)}"><strong>${overallRate === null ? '—' : `${overallRate}%`}</strong></td>
         <td></td>
     </tr>`;
 
     const hasRows = data.summaryRows.length > 0;
     if (scroll) scroll.hidden = !hasRows;
+    if (legend) legend.hidden = !hasRows;
     if (empty) {
         empty.hidden = hasRows;
         empty.textContent = state.classOverviewSelectedClasses !== null

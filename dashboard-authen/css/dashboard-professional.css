@@ -2459,6 +2459,22 @@ body.report-export-open {
     background: var(--ui-surface) !important;
 }
 
+:root[data-theme="dark"] .class-overview-progress.is-high {
+    --class-rate-text: #86efac;
+}
+
+:root[data-theme="dark"] .class-overview-progress.is-medium {
+    --class-rate-text: #fde68a;
+}
+
+:root[data-theme="dark"] .class-overview-progress.is-low {
+    --class-rate-text: #fda4af;
+}
+
+:root[data-theme="dark"] .class-overview-progress.is-zero {
+    --class-rate-text: #718096;
+}
+
 :root[data-theme="dark"] .report-region-cell,
 :root[data-theme="dark"] .class-matrix-table tbody .ktv-stt-cell,
 :root[data-theme="dark"] .class-matrix-table tbody .ktv-code-cell,
