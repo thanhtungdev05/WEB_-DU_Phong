@@ -177,7 +177,9 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         ):
             self.assertIn(f'id="{element_id}"', self.html)
         self.assertIn("const applySelectedRange", self.javascript)
-        self.assertIn("normalizeMonthRange(selectionAnchor, selectedMonth)", self.javascript)
+        self.assertIn("const normalizeMonthRange", self.javascript)
+        self.assertIn("selectedMonth < draftStartMonth", self.javascript)
+        self.assertIn("selectedMonth > draftEndMonth", self.javascript)
         self.assertIn("state.startDate = startBounds.start", self.javascript)
         self.assertIn("state.endDate = endBounds.end", self.javascript)
         self.assertIn("function isFullCalendarMonthRange", self.javascript)
@@ -193,6 +195,13 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn("updateDraftSummary()", month_click_handler)
         self.assertNotIn("applySelectedRange(", month_click_handler)
         self.assertNotIn("reloadDashboardSelectedRange()", month_click_handler)
+
+    def test_overview_month_picker_supports_accumulated_multi_month_selection(self):
+        self.assertIn("let draftSelectionStarted = false", self.javascript)
+        self.assertIn("selectedMonth < draftStartMonth", self.javascript)
+        self.assertIn("selectedMonth > draftEndMonth", self.javascript)
+        self.assertIn("selectedMonthCount()", self.javascript)
+        self.assertIn("Chọn một hoặc nhiều tháng liên tiếp", self.html)
         self.assertIn(
             "applyButton?.addEventListener('click', () => applySelectedRange(draftStartMonth, draftEndMonth))",
             self.javascript,

@@ -7031,7 +7031,7 @@ function initDateRangePicker() {
         const cancelButton = document.getElementById('overviewMonthCancel');
         let draftStartMonth = String(state.startDate || '').slice(0, 7);
         let draftEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
-        let selectionAnchor = null;
+        let draftSelectionStarted = false;
 
         if (panel) {
             panel.classList.add('portal');
@@ -7046,6 +7046,18 @@ function initDateRangePicker() {
         const normalizeMonthRange = (start, end) => (
             start <= end ? [start, end] : [end, start]
         );
+        const offsetMonthKey = (value, offset) => {
+            const bounds = getMonthBounds(value);
+            if (!bounds) return value;
+            const shifted = new Date(bounds.year, bounds.monthIndex + offset, 1);
+            return monthKey(shifted.getFullYear(), shifted.getMonth());
+        };
+        const selectedMonthCount = () => {
+            const start = getMonthBounds(draftStartMonth);
+            const end = getMonthBounds(draftEndMonth);
+            if (!start || !end) return 0;
+            return ((end.year - start.year) * 12) + end.monthIndex - start.monthIndex + 1;
+        };
         const updateCommittedLabel = () => {
             const start = String(state.startDate || '').slice(0, 7);
             const end = String(state.endDate || state.startDate || '').slice(0, 7);
@@ -7056,13 +7068,10 @@ function initDateRangePicker() {
         };
         const updateDraftSummary = () => {
             if (!summary) return;
-            if (selectionAnchor) {
-                summary.textContent = `Đã chọn từ ${formatMonthKey(draftStartMonth)}. Chọn tháng kết thúc hoặc bấm Áp dụng để xem một tháng.`;
-                return;
-            }
-            summary.textContent = draftStartMonth === draftEndMonth
-                ? `Kỳ báo cáo: tháng ${formatMonthKey(draftStartMonth)}`
-                : `Kỳ báo cáo: ${formatMonthKey(draftStartMonth)} – ${formatMonthKey(draftEndMonth)}`;
+            const count = selectedMonthCount();
+            summary.textContent = count <= 1
+                ? `Đã chọn tháng ${formatMonthKey(draftStartMonth)}. Chọn thêm tháng hoặc bấm Áp dụng.`
+                : `Đã chọn ${count} tháng liên tiếp: ${formatMonthKey(draftStartMonth)} – ${formatMonthKey(draftEndMonth)}.`;
         };
 
         const positionMonthPanel = () => {
@@ -7081,7 +7090,7 @@ function initDateRangePicker() {
             if (!startBounds || !endBounds) return;
             draftStartMonth = normalizedStart;
             draftEndMonth = normalizedEnd;
-            selectionAnchor = null;
+            draftSelectionStarted = false;
             state.startDate = startBounds.start;
             state.endDate = endBounds.end;
             state.tempStartDate = startBounds.start;
@@ -7127,13 +7136,21 @@ function initDateRangePicker() {
             monthGrid.querySelectorAll('[data-report-month]').forEach(button => {
                 button.addEventListener('click', () => {
                     const selectedMonth = button.dataset.monthKey;
-                    if (selectionAnchor === null) {
-                        selectionAnchor = selectedMonth;
+                    if (!draftSelectionStarted) {
                         draftStartMonth = selectedMonth;
                         draftEndMonth = selectedMonth;
+                        draftSelectionStarted = true;
+                    } else if (selectedMonth < draftStartMonth) {
+                        draftStartMonth = selectedMonth;
+                    } else if (selectedMonth > draftEndMonth) {
+                        draftEndMonth = selectedMonth;
+                    } else if (draftStartMonth !== draftEndMonth && selectedMonth === draftStartMonth) {
+                        draftStartMonth = offsetMonthKey(draftStartMonth, 1);
+                    } else if (draftStartMonth !== draftEndMonth && selectedMonth === draftEndMonth) {
+                        draftEndMonth = offsetMonthKey(draftEndMonth, -1);
                     } else {
-                        [draftStartMonth, draftEndMonth] = normalizeMonthRange(selectionAnchor, selectedMonth);
-                        selectionAnchor = null;
+                        draftStartMonth = selectedMonth;
+                        draftEndMonth = selectedMonth;
                     }
                     renderMonthGrid(year);
                     updateDraftSummary();
@@ -7159,7 +7176,7 @@ function initDateRangePicker() {
             if (willOpen) {
                 draftStartMonth = String(state.startDate || '').slice(0, 7);
                 draftEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
-                selectionAnchor = null;
+                draftSelectionStarted = false;
                 if (yearSelect) yearSelect.value = draftStartMonth.slice(0, 4);
                 positionMonthPanel();
                 renderMonthGrid(Number(yearSelect?.value) || today.getFullYear());
