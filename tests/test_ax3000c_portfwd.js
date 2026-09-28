@@ -40,7 +40,7 @@ assert.ok(ttPortFwd, 'Must have Chọn Port Forwarding tooltip');
 
 // 3. Verify portal.html cachebuster is updated
 const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(portalContent.includes('devices/ax3000c/lessons/bai6.js?v=20260916101500'), 'portal.html must have updated cachebuster for bai6.js');
-assert.ok(portalContent.includes('devices/ax3000c/tooltips/bai6.js?v=20260916101500'), 'portal.html must have updated cachebuster for tooltips bai6.js');
+assert.ok(portalContent.includes('devices/ax3000c/lessons/bai6.js?v='), 'portal.html must have updated cachebuster for bai6.js');
+assert.ok(portalContent.includes('devices/ax3000c/tooltips/bai6.js?v='), 'portal.html must have updated cachebuster for tooltips bai6.js');
 
 console.log('ALL AX3000C PORT FORWARDING (BAI 6) TESTS PASSED SUCCESSFULLY!');

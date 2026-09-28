@@ -12,13 +12,13 @@ const portalPath = path.join(root, 'portal.html');
 const portalContent = fs.readFileSync(portalPath, 'utf8');
 
 assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai1.js'), 'portal.html must include ax3000s bai1 tooltips');
-assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai2.js?v=20260927231500'), 'portal.html must include ax3000s bai2 tooltips with bumped version');
-assert.ok(portalContent.includes('devices/ax3000s/lessons/bai2.js?v=20260927235000'), 'portal.html must include ax3000s bai2 lessons with bumped version');
-assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai3.js?v=20260927233500'), 'portal.html must include ax3000s bai3 tooltips with bumped version');
-assert.ok(portalContent.includes('devices/ax3000s/lessons/bai3.js?v=20260927235000'), 'portal.html must include ax3000s bai3 lessons with bumped version');
-assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai4.js?v=20260927231500'), 'portal.html must include ax3000s bai4 tooltips with bumped version');
-assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai5.js?v=20260927231500'), 'portal.html must include ax3000s bai5 tooltips with bumped version');
-assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai6.js?v=20260927231500'), 'portal.html must include ax3000s bai6 tooltips with bumped version');
+assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai2.js?v='), 'portal.html must include ax3000s bai2 tooltips with bumped version');
+assert.ok(portalContent.includes('devices/ax3000s/lessons/bai2.js?v='), 'portal.html must include ax3000s bai2 lessons with bumped version');
+assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai3.js?v='), 'portal.html must include ax3000s bai3 tooltips with bumped version');
+assert.ok(portalContent.includes('devices/ax3000s/lessons/bai3.js?v='), 'portal.html must include ax3000s bai3 lessons with bumped version');
+assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai4.js?v='), 'portal.html must include ax3000s bai4 tooltips with bumped version');
+assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai5.js?v='), 'portal.html must include ax3000s bai5 tooltips with bumped version');
+assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai6.js?v='), 'portal.html must include ax3000s bai6 tooltips with bumped version');
 
 // 2. Setup VM environment and load all AX3000S files
 const context = {

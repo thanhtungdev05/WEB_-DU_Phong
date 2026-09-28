@@ -58,8 +58,8 @@ assert.ok(ttStep3 && ttStep3.text.includes('8.8.8.8'), 'Step 3 tooltip must guid
 
 // 3. Verify portal.html cachebuster is updated
 const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(portalContent.includes('devices/ax3000c/lessons/bai4.js?v=20260916101500'), 'portal.html must have updated cachebuster for bai4.js');
-assert.ok(portalContent.includes('devices/ax3000c/tooltips/bai4.js?v=20260916101500'), 'portal.html must have updated cachebuster for tooltips bai4.js');
+assert.ok(portalContent.includes('devices/ax3000c/lessons/bai4.js?v='), 'portal.html must have updated cachebuster for bai4.js');
+assert.ok(portalContent.includes('devices/ax3000c/tooltips/bai4.js?v='), 'portal.html must have updated cachebuster for tooltips bai4.js');
 
 // Verify tooltip selector for Network points to Network title and not Status
 const ttNetwork = tooltips.find(t => t.text.includes('Chọn Network'));

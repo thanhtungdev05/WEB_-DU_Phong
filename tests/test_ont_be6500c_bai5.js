@@ -46,7 +46,7 @@ expectedPopups.forEach(text => {
 
 // 2. Verify portal.html cachebuster for bai5.js
 const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(/devices\/ONT_be6500c\/lessons\/bai5\.js\?v=202609\d+/.test(portalContent),
+assert.ok(/devices\/ONT_be6500c\/lessons\/bai5\.js\?v=[a-f0-9]{16}/.test(portalContent),
   'portal.html must have updated cachebuster for ONT BE6500C bai5.js');
 
 console.log('ALL ONT BE6500C BAI 5 TESTS PASSED SUCCESSFULLY!');

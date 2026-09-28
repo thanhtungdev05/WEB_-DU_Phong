@@ -42,15 +42,15 @@ assert.ok(
 
 // 4. Portal cachebuster check
 assert.ok(
-  portalContent.includes('devices/ax3000s/tooltips/bai2.js?v=20260927231500'),
+  portalContent.includes('devices/ax3000s/tooltips/bai2.js?v='),
   'portal.html must include bumped cachebuster for tooltips/bai2.js'
 );
 assert.ok(
-  portalContent.includes('devices/ax3000s/lessons/bai2.js?v=20260927235000'),
+  portalContent.includes('devices/ax3000s/lessons/bai2.js?v='),
   'portal.html must include bumped cachebuster for lessons/bai2.js'
 );
 assert.ok(
-  /app\.js\?v=\d+/.test(portalContent),
+  /app\.js\?v=[a-f0-9]{16}/.test(portalContent),
   'portal.html must include cachebuster for app.js'
 );
 

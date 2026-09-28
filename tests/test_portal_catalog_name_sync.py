@@ -28,7 +28,7 @@ class PortalCatalogNameSyncContractTests(unittest.TestCase):
     def test_portal_and_report_share_the_database_catalog_contract(self):
         self.assertIn("lab.lab_id, lab.lab_name", self.catalog_api)
         self.assertIn("lab.lab_id, lab.lab_name", self.dashboard_report)
-        self.assertIn("app.js?v=20260928-ver21-merge-v23", self.portal)
+        self.assertRegex(self.portal, r'app\.js\?v=[a-f0-9]{16}')
 
     def test_catalog_failure_is_closed_and_retryable(self):
         self.assertIn("_catalogDeviceIds = new Set()", self.portal_js)

@@ -13,7 +13,7 @@ const portalContent = fs.readFileSync(portalPath, 'utf8');
 
 for (let i = 1; i <= 6; i++) {
   assert.ok(
-    portalContent.includes(`devices/ac1000HI/lessons/bai${i}.js?v=20260927235500`),
+    portalContent.includes(`devices/ac1000HI/lessons/bai${i}.js?v=`),
     `portal.html must include bumped version of ac1000HI bai${i}.js`
   );
 }

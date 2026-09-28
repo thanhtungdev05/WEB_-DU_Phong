@@ -165,9 +165,25 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertNotIn("@media (max-width: 1400px) and (min-width: 961px)", self.professional_css)
 
     def test_report_year_follows_the_selected_month(self):
-        self.assertIn("state.regionUsageYear = bounds.year", self.javascript)
+        self.assertIn("state.regionUsageYear = startBounds.year", self.javascript)
         self.assertIn("Khác kỳ báo cáo đang chọn", self.javascript)
         self.assertIn("100%* là kỳ chỉ có dữ liệu đạt lịch sử", self.html)
+
+    def test_overview_accepts_an_arbitrary_contiguous_month_range(self):
+        for element_id in (
+            "overviewMonthSummary",
+            "overviewMonthApply",
+            "overviewMonthCancel",
+        ):
+            self.assertIn(f'id="{element_id}"', self.html)
+        self.assertIn("const applySelectedRange", self.javascript)
+        self.assertIn("normalizeMonthRange(selectionAnchor, selectedMonth)", self.javascript)
+        self.assertIn("state.startDate = startBounds.start", self.javascript)
+        self.assertIn("state.endDate = endBounds.end", self.javascript)
+        self.assertIn("function isFullCalendarMonthRange", self.javascript)
+        self.assertIn("currentStart.getMonth() - monthCount", self.javascript)
+        self.assertIn("overview-month-option.in-range", self.css)
+        self.assertIn(".overview-month-option.range-start", self.css)
 
     def test_class_report_uses_compact_master_detail_overview(self):
         overview = self.html.index('id="classOverviewCard"')

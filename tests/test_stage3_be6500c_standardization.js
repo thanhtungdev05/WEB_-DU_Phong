@@ -179,11 +179,11 @@ for (const cfg of wifiIoTConfigs) {
 console.log('\n--- TEST 4: PORTAL.HTML CACHEBUSTERS ---');
 const portalHtml = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
 const cachebusterChecks = [
-  /devices\/be6500c\/lessons\/bai3\.js\?v=202609\d+/,
-  /devices\/be6500c\/lessons\/bai6\.js\?v=202609\d+/,
-  /devices\/ONT_be6500c\/lessons\/bai3\.js\?v=202609\d+/,
-  /devices\/ONT_be6500c\/lessons\/bai5\.js\?v=202609\d+/,
-  /devices\/ONT_be6500c\/lessons\/bai6\.js\?v=202609\d+/
+  /devices\/be6500c\/lessons\/bai3\.js\?v=[a-f0-9]{16}/,
+  /devices\/be6500c\/lessons\/bai6\.js\?v=[a-f0-9]{16}/,
+  /devices\/ONT_be6500c\/lessons\/bai3\.js\?v=[a-f0-9]{16}/,
+  /devices\/ONT_be6500c\/lessons\/bai5\.js\?v=[a-f0-9]{16}/,
+  /devices\/ONT_be6500c\/lessons\/bai6\.js\?v=[a-f0-9]{16}/
 ];
 
 for (const pattern of cachebusterChecks) {

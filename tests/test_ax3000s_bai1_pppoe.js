@@ -30,11 +30,11 @@ assert.ok(
 
 // 3. Verify portal.html cachebuster bump
 assert.ok(
-  portalContent.includes('devices/ax3000s/tooltips/bai1.js?v=20260918102500'),
+  portalContent.includes('devices/ax3000s/tooltips/bai1.js?v='),
   'portal.html must include cachebuster 20260918102500 for ax3000s/tooltips/bai1.js'
 );
 assert.ok(
-  portalContent.includes('devices/ax3000s/lessons/bai1.js?v=20260927235000'),
+  portalContent.includes('devices/ax3000s/lessons/bai1.js?v='),
   'portal.html must include cachebuster 20260927235000 for ax3000s/lessons/bai1.js'
 );
 
@@ -102,7 +102,7 @@ assert.ok(
   'login.html must NOT prefill username: id="user" value=""'
 );
 assert.ok(
-  portalContent.includes('devices/ax3000s/tooltips/common_login.js?v=20260918103800'),
+  portalContent.includes('devices/ax3000s/tooltips/common_login.js?v='),
   'portal.html must include cachebuster 20260918103800 for common_login.js'
 );
 

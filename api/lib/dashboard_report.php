@@ -404,15 +404,16 @@ SQL;
     return $stmt->fetch() ?: [];
 }
 
-function dashboard_report_monthly(PDO $pdo, int $year): array
+function dashboard_report_monthly(PDO $pdo, int $startYear, ?int $endYear = null): array
 {
+    $endYear ??= $startYear;
     $sql = dashboard_report_common_cte() . ",\n" . <<<'SQL'
 months AS (
     SELECT month,
            LEAST(month + INTERVAL '1 month', CURRENT_DATE + INTERVAL '1 day') AS cutoff
       FROM generate_series(
                CAST(:year_start AS date),
-               CAST(:year_start AS date) + INTERVAL '11 months',
+               CAST(:year_end AS date) + INTERVAL '11 months',
                INTERVAL '1 month'
            ) AS generated(month)
 ),
@@ -429,7 +430,7 @@ scoped AS (
            DATE_TRUNC('month', occurred_at)::date AS month
       FROM catalog_sessions numbered
      WHERE occurred_at >= CAST(:year_start AS date)
-       AND occurred_at < CAST(:year_start AS date) + INTERVAL '1 year'
+       AND occurred_at < CAST(:year_end AS date) + INTERVAL '1 year'
 ),
 attempt_metrics AS (
     SELECT scoped.month,
@@ -554,7 +555,10 @@ SELECT TO_CHAR(months.month, 'YYYY-MM') AS month,
  ORDER BY months.month
 SQL;
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(['year_start' => sprintf('%04d-01-01', $year)]);
+    $stmt->execute([
+        'year_start' => sprintf('%04d-01-01', $startYear),
+        'year_end' => sprintf('%04d-01-01', $endYear),
+    ]);
     return $stmt->fetchAll();
 }
 
@@ -670,9 +674,24 @@ SQL;
  * are not requested. This keeps personal rows inside Neon and transfers only
  * the aggregate result to PHP.
  */
-function dashboard_report_region_summary_rows(PDO $pdo, string $from, string $to): array
+function dashboard_report_region_summary_rows(PDO $pdo, ?string $from, ?string $to): array
 {
-    $sql = dashboard_report_region_common_cte() . ",\n" . <<<'SQL'
+    $activityWhere = [];
+    $progressWhere = [];
+    $params = [];
+    if ($from !== null) {
+        $activityWhere[] = 'session.occurred_at >= CAST(:activity_from_date AS date)';
+        $params['activity_from_date'] = $from;
+    }
+    if ($to !== null) {
+        $activityWhere[] = "session.occurred_at < CAST(:activity_to_date AS date) + INTERVAL '1 day'";
+        $progressWhere[] = "session.occurred_at < CAST(:progress_to_date AS date) + INTERVAL '1 day'";
+        $params['activity_to_date'] = $to;
+        $params['progress_to_date'] = $to;
+    }
+    $activityPredicate = $activityWhere ? 'WHERE ' . implode(' AND ', $activityWhere) : '';
+    $progressPredicate = $progressWhere ? 'WHERE ' . implode(' AND ', $progressWhere) : '';
+    $sql = dashboard_report_region_common_cte() . ",\n" . <<<SQL
 activity AS (
     SELECT session.person_id,
            session.lab_id,
@@ -700,8 +719,7 @@ activity AS (
                  AND session.attempt_sequence_complete IS FALSE
            ) AS incomplete_attempt_count
       FROM numbered_sessions session
-     WHERE session.occurred_at >= CAST(:from_date AS date)
-       AND session.occurred_at < CAST(:to_date AS date) + INTERVAL '1 day'
+     $activityPredicate
      GROUP BY session.person_id, session.lab_id
 ),
 progress AS (
@@ -713,7 +731,7 @@ progress AS (
                AND (session.attempt_sequence_complete IS TRUE OR session.is_historical_pass)
            ) AS completed
       FROM numbered_sessions session
-     WHERE session.occurred_at < CAST(:to_date AS date) + INTERVAL '1 day'
+     $progressPredicate
      GROUP BY session.person_id, session.lab_id
 ),
 metric_pairs AS (
@@ -822,7 +840,7 @@ SELECT population.region_id,
           lab.device_sort_order, lab.lab_sort_order, lab.lab_id
 SQL;
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(['from_date' => $from, 'to_date' => $to]);
+    $stmt->execute($params);
     return $stmt->fetchAll();
 }
 
@@ -830,8 +848,9 @@ SQL;
  * Compact monthly activity by the technician's current dashboard region.
  * This replaces downloading raw session rows just to draw the overview chart.
  */
-function dashboard_report_monthly_regions(PDO $pdo, int $year): array
+function dashboard_report_monthly_regions(PDO $pdo, int $startYear, ?int $endYear = null): array
 {
+    $endYear ??= $startYear;
     $sql = dashboard_report_common_cte() . ",\n" . <<<'SQL'
 people_locations AS (
     SELECT roster.user_id::text AS person_id,
@@ -868,7 +887,7 @@ months AS (
     SELECT month::date AS month
       FROM generate_series(
                CAST(:year_start AS date),
-               CAST(:year_start AS date) + INTERVAL '11 months',
+               CAST(:year_end AS date) + INTERVAL '11 months',
                INTERVAL '1 month'
            ) AS generated(month)
 ),
@@ -907,7 +926,7 @@ activity AS (
       FROM catalog_sessions session
       JOIN people_locations location ON location.person_id = session.person_id
      WHERE session.occurred_at >= CAST(:year_start AS date)
-       AND session.occurred_at < CAST(:year_start AS date) + INTERVAL '1 year'
+       AND session.occurred_at < CAST(:year_end AS date) + INTERVAL '1 year'
      GROUP BY DATE_TRUNC('month', session.occurred_at)::date, location.region
 )
 SELECT TO_CHAR(months.month, 'YYYY-MM') AS month,
@@ -926,13 +945,31 @@ SELECT TO_CHAR(months.month, 'YYYY-MM') AS month,
  ORDER BY months.month, population.region
 SQL;
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(['year_start' => sprintf('%04d-01-01', $year)]);
+    $stmt->execute([
+        'year_start' => sprintf('%04d-01-01', $startYear),
+        'year_end' => sprintf('%04d-01-01', $endYear),
+    ]);
     return $stmt->fetchAll();
 }
 
-function dashboard_report_branch_drilldown(PDO $pdo, string $from, string $to): array
+function dashboard_report_branch_drilldown(PDO $pdo, ?string $from, ?string $to): array
 {
-    $sql = dashboard_report_region_common_cte() . ",\n" . <<<'SQL'
+    $activityWhere = [];
+    $progressWhere = [];
+    $params = [];
+    if ($from !== null) {
+        $activityWhere[] = 'session.occurred_at >= CAST(:activity_from_date AS date)';
+        $params['activity_from_date'] = $from;
+    }
+    if ($to !== null) {
+        $activityWhere[] = "session.occurred_at < CAST(:activity_to_date AS date) + INTERVAL '1 day'";
+        $progressWhere[] = "session.occurred_at < CAST(:progress_to_date AS date) + INTERVAL '1 day'";
+        $params['activity_to_date'] = $to;
+        $params['progress_to_date'] = $to;
+    }
+    $activityPredicate = $activityWhere ? 'WHERE ' . implode(' AND ', $activityWhere) : '';
+    $progressPredicate = $progressWhere ? 'WHERE ' . implode(' AND ', $progressWhere) : '';
+    $sql = dashboard_report_region_common_cte() . ",\n" . <<<SQL
 activity AS (
     SELECT session.person_id,
            session.lab_id,
@@ -982,8 +1019,7 @@ activity AS (
                  AND session.attempt_sequence_complete IS FALSE
            ) AS legacy_incomplete_attempt_count
       FROM numbered_sessions session
-     WHERE session.occurred_at >= CAST(:from_date AS date)
-       AND session.occurred_at < CAST(:to_date AS date) + INTERVAL '1 day'
+     $activityPredicate
      GROUP BY session.person_id, session.lab_id
 ),
 progress AS (
@@ -998,7 +1034,7 @@ progress AS (
                )
            ) AS completed
       FROM numbered_sessions session
-     WHERE session.occurred_at < CAST(:to_date AS date) + INTERVAL '1 day'
+     $progressPredicate
      GROUP BY session.person_id, session.lab_id
 ),
 metric_pairs AS (
@@ -1033,7 +1069,7 @@ SELECT person.*,
           lab.device_sort_order, lab.lab_sort_order, lab.lab_id
 SQL;
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(['from_date' => $from, 'to_date' => $to]);
+    $stmt->execute($params);
 
     $regions = [];
     $organizationRows = $pdo->query(
@@ -1266,7 +1302,7 @@ SQL;
     return ['regions' => array_values($regions)];
 }
 
-function dashboard_report_matrix(PDO $pdo, string $from, string $to, bool $includeBranchDrilldown = true): array
+function dashboard_report_matrix(PDO $pdo, ?string $from, ?string $to, bool $includeBranchDrilldown = true): array
 {
     $branchDrilldown = ['regions' => []];
 
@@ -1456,37 +1492,52 @@ function dashboard_report_payload(PDO $pdo, array $query): array
     if ($cohort !== 'assigned_as_of_period_end') {
         throw new InvalidArgumentException('Unsupported dashboard report cohort.');
     }
+    $scope = trim((string)($query['scope'] ?? 'period'));
+    if (!in_array($scope, ['period', 'lifetime'], true)) {
+        throw new InvalidArgumentException('Unsupported dashboard report scope.');
+    }
     $today = new DateTimeImmutable('today');
     $defaultStart = $today->modify('first day of this month');
     $defaultEnd = $today;
-    $from = dashboard_report_parse_date($query['from'] ?? null, $defaultStart);
-    $to = dashboard_report_parse_date($query['to'] ?? null, $defaultEnd);
-    if ($to < $from) {
+    $from = $scope === 'lifetime' ? null : dashboard_report_parse_date($query['from'] ?? null, $defaultStart);
+    $to = $scope === 'lifetime' ? null : dashboard_report_parse_date($query['to'] ?? null, $defaultEnd);
+    if ($from !== null && $to !== null && $to < $from) {
         throw new InvalidArgumentException('Dashboard report end date must not be before start date.');
     }
-    $previousEndDefault = $from->modify('-1 day');
-    $periodLength = (int)$from->diff($to)->format('%a');
-    $previousStartDefault = $previousEndDefault->modify('-' . $periodLength . ' days');
-    $compareFrom = dashboard_report_parse_date($query['compare_from'] ?? null, $previousStartDefault);
-    $compareTo = dashboard_report_parse_date($query['compare_to'] ?? null, $previousEndDefault);
 
     $includeBranchDrilldown = !array_key_exists('include_branch_drilldown', $query)
         || filter_var($query['include_branch_drilldown'], FILTER_VALIDATE_BOOLEAN);
-    $current = dashboard_report_metric($pdo, $from->format('Y-m-d'), $to->format('Y-m-d'));
-    $previous = dashboard_report_metric($pdo, $compareFrom->format('Y-m-d'), $compareTo->format('Y-m-d'));
-    $lifetime = dashboard_report_metric($pdo, null, null);
-    $monthly = dashboard_report_monthly($pdo, (int)$from->format('Y'));
-    $monthlyRegions = dashboard_report_monthly_regions($pdo, (int)$from->format('Y'));
+    if ($scope === 'lifetime') {
+        $current = dashboard_report_metric($pdo, null, null);
+        $previous = $current;
+        $lifetime = $current;
+        $reportStartYear = (int)$today->format('Y');
+        $reportEndYear = $reportStartYear;
+    } else {
+        $previousEndDefault = $from->modify('-1 day');
+        $periodLength = (int)$from->diff($to)->format('%a');
+        $previousStartDefault = $previousEndDefault->modify('-' . $periodLength . ' days');
+        $compareFrom = dashboard_report_parse_date($query['compare_from'] ?? null, $previousStartDefault);
+        $compareTo = dashboard_report_parse_date($query['compare_to'] ?? null, $previousEndDefault);
+        $current = dashboard_report_metric($pdo, $from->format('Y-m-d'), $to->format('Y-m-d'));
+        $previous = dashboard_report_metric($pdo, $compareFrom->format('Y-m-d'), $compareTo->format('Y-m-d'));
+        $lifetime = dashboard_report_metric($pdo, null, null);
+        $reportStartYear = (int)$from->format('Y');
+        $reportEndYear = (int)$to->format('Y');
+    }
+    $monthly = dashboard_report_monthly($pdo, $reportStartYear, $reportEndYear);
+    $monthlyRegions = dashboard_report_monthly_regions($pdo, $reportStartYear, $reportEndYear);
     $matrix = dashboard_report_matrix(
         $pdo,
-        $from->format('Y-m-d'),
-        $to->format('Y-m-d'),
+        $from?->format('Y-m-d'),
+        $to?->format('Y-m-d'),
         $includeBranchDrilldown
     );
 
     return [
         'meta' => [
             'source' => 'database',
+            'scope' => $scope,
             'cohort' => 'assigned_as_of_period_end',
             'metric_semantics' => [
                 'assigned_count' => 'KTV-lab assignments effective at the period end.',
@@ -1505,9 +1556,11 @@ function dashboard_report_payload(PDO $pdo, array $query): array
             'data_quality' => $matrix['data_quality'] ?? [],
             'includes_branch_drilldown' => $includeBranchDrilldown,
             'period' => [
-                'from' => $from->format('Y-m-d'),
-                'to' => $to->format('Y-m-d'),
-                'label' => $from->format('d/m/Y') . ' – ' . $to->format('d/m/Y'),
+                'from' => $from?->format('Y-m-d'),
+                'to' => $to?->format('Y-m-d'),
+                'label' => $scope === 'lifetime'
+                    ? 'Dữ liệu lũy kế'
+                    : $from->format('d/m/Y') . ' – ' . $to->format('d/m/Y'),
             ],
             'generated_at' => (new DateTimeImmutable())->format(DATE_ATOM),
         ],

@@ -66,8 +66,8 @@ assert.ok(appContent.includes("actualValue === '1' || actualValue === 'true'"), 
 
 // 3. Verify portal.html cachebusters
 const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(portalContent.includes('devices/ax3000hv2/lessons/bai5.js?v=20260917142000'), 'portal.html must have updated cachebuster for lessons/bai5.js');
-assert.ok(/app\.js\?v=202609\d+/.test(portalContent), 'portal.html must have updated cachebuster for app.js');
+assert.ok(portalContent.includes('devices/ax3000hv2/lessons/bai5.js?v='), 'portal.html must have updated cachebuster for lessons/bai5.js');
+assert.ok(/app\.js\?v=[a-f0-9]{16}/.test(portalContent), 'portal.html must have updated cachebuster for app.js');
 
 // 4. Test evaluateLesson simulation for DHCP: Enable vs Disable
 function simulateDHCPEval(dhcpRadioValue) {

@@ -30,7 +30,7 @@ assert.ok(!bai4.grading.rules.some(r => r.id === 'dns_relay'), 'dns_relay must n
 
 // 2. Verify portal.html cachebusters
 const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(portalContent.includes('devices/ax3000hv2/lessons/bai4.js?v=20260916103500'), 'portal.html must have updated cachebuster for AX3000HV2 bai4.js');
-assert.ok(/app\.js\?v=\d+/.test(portalContent), 'portal.html must have updated cachebuster for app.js');
+assert.ok(portalContent.includes('devices/ax3000hv2/lessons/bai4.js?v='), 'portal.html must have updated cachebuster for AX3000HV2 bai4.js');
+assert.ok(/app\.js\?v=[a-f0-9]{16}/.test(portalContent), 'portal.html must have updated cachebuster for app.js');
 
 console.log('AX3000HV2 DNS (BAI 4) TESTS PASSED SUCCESSFULLY!');

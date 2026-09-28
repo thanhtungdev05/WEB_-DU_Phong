@@ -309,6 +309,15 @@ function isFullCalendarMonth(startValue, endValue) {
         && end.getDate() === new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
 }
 
+function isFullCalendarMonthRange(startValue, endValue) {
+    if (!startValue || !endValue) return false;
+    const start = parseDate(startValue);
+    const end = parseDate(endValue);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return false;
+    return start.getDate() === 1
+        && end.getDate() === new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
+}
+
 function formatDate(value) {
     if (!value) return 'Chưa chọn';
     return parseDate(value).toLocaleDateString('vi-VN');
@@ -518,6 +527,25 @@ function getKpiComparisonPeriods() {
             };
         }
 
+        if (isFullCalendarMonthRange(state.startDate, state.endDate)) {
+            const monthCount = ((currentEnd.getFullYear() - currentStart.getFullYear()) * 12)
+                + currentEnd.getMonth() - currentStart.getMonth() + 1;
+            const previousStart = new Date(
+                currentStart.getFullYear(),
+                currentStart.getMonth() - monthCount,
+                1
+            );
+            const previousEnd = new Date(currentStart.getFullYear(), currentStart.getMonth(), 0);
+            return {
+                currentStart: toDateKey(currentStart),
+                currentEnd: toDateKey(currentEnd),
+                previousStart: toDateKey(previousStart),
+                previousEnd: toDateKey(previousEnd),
+                currentLabel: `${String(currentStart.getMonth() + 1).padStart(2, '0')}/${currentStart.getFullYear()} – ${String(currentEnd.getMonth() + 1).padStart(2, '0')}/${currentEnd.getFullYear()}`,
+                previousLabel: `${monthCount} tháng liền trước`
+            };
+        }
+
         const periodLengthMs = Math.max(0, currentEnd.getTime() - currentStart.getTime());
         const previousEnd = new Date(currentStart);
         previousEnd.setDate(previousEnd.getDate() - 1);
@@ -598,6 +626,9 @@ function mapReportMetrics(metric) {
 }
 
 function dashboardReportMatchesSelectedPeriod() {
+    if (activeDashboardView === 'analytics') {
+        return dashboardReport?.meta?.scope === 'lifetime';
+    }
     const periods = getKpiComparisonPeriods();
     const reportPeriod = dashboardReport?.meta?.period;
     return reportPeriod?.from === periods.currentStart && reportPeriod?.to === periods.currentEnd;
@@ -1063,7 +1094,8 @@ function renderOverviewMonthlyTrend(rows) {
     container.classList.remove('is-empty');
 
     const selectedDate = state.startDate ? parseDate(state.startDate) : now;
-    const selectedKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}`;
+    const selectedStartKey = String(state.startDate || '').slice(0, 7);
+    const selectedEndKey = String(state.endDate || state.startDate || '').slice(0, 7);
     const reportYear = state.regionUsageYear || selectedDate.getFullYear();
     const today = new Date();
     const selectedRegion = state.overviewSelectedRegion;
@@ -1120,7 +1152,7 @@ function renderOverviewMonthlyTrend(rows) {
         const historicalOnlyPassRate = eligibleSessions === 0 && historicalPasses > 0;
         return {
             date,
-            key: `${date.getFullYear()}-${date.getMonth()}`,
+            key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
             label: `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`,
             shortLabel: `T${String(date.getMonth() + 1).padStart(2, '0')}`,
             isFuture: date > new Date(today.getFullYear(), today.getMonth(), 1),
@@ -1145,7 +1177,7 @@ function renderOverviewMonthlyTrend(rows) {
     const maxSessions = Math.max(...periods.map(period => period.totalSessions), 1);
     container.innerHTML = periods.map(period => {
         const height = period.totalSessions ? Math.max(12, Math.round((period.totalSessions / maxSessions) * 100)) : 0;
-        const isSelected = period.key === selectedKey;
+        const isSelected = period.key >= selectedStartKey && period.key <= selectedEndKey;
         return `
             <div class="ktv-month-column ${isSelected ? 'selected' : ''} ${period.isFuture ? 'future' : ''}" title="${period.label}: ${period.totalSessions} lượt thực hành ghi nhận${period.historicalOnlyPassRate ? '; 100% trên dữ liệu đạt lịch sử — hệ thống cũ không lưu lượt không đạt' : `; ${period.passedSessions}/${period.eligibleSessions} lượt đạt${period.historicalPasses ? `; ${period.historicalPasses} lượt đạt lịch sử không tính vào tỷ lệ` : ''}`}.">
                 <strong>${period.totalSessions}</strong>
@@ -1158,7 +1190,26 @@ function renderOverviewMonthlyTrend(rows) {
         `;
     }).join('');
 
-    const matchedIndex = periods.findIndex(period => period.key === selectedKey);
+    const isMultiMonthRange = isFullCalendarMonthRange(state.startDate, state.endDate)
+        && !isFullCalendarMonth(state.startDate, state.endDate);
+    if (isMultiMonthRange && dashboardReportMatchesSelectedPeriod()) {
+        const currentMetrics = mapReportMetrics(dashboardReport?.summary?.current);
+        const previousMetrics = mapReportMetrics(dashboardReport?.summary?.previous);
+        const difference = currentMetrics.totalSessions - previousMetrics.totalSessions;
+        const changeClass = difference > 0 ? 'positive' : (difference < 0 ? 'negative' : 'neutral');
+        const changeText = difference === 0 ? 'Không đổi' : `${difference > 0 ? '↑' : '↓'} ${Math.abs(difference)} lượt`;
+        const comparison = getKpiComparisonPeriods();
+        if (summary) {
+            summary.className = `ktv-monthly-summary ${changeClass}`;
+            summary.innerHTML = `
+                <strong>${escapeHTML(comparison.currentLabel)}</strong>
+                <span>${changeText} so với ${escapeHTML(comparison.previousLabel)} · ${currentMetrics.passedEligibleAttempts}/${currentMetrics.rateEligibleAttempts} lượt đạt${currentMetrics.historicalPasses > 0 ? ` · ${currentMetrics.historicalPasses} lượt đạt lịch sử không tính vào tỷ lệ` : ''}</span>
+            `;
+        }
+        return;
+    }
+
+    const matchedIndex = periods.findIndex(period => period.key === selectedStartKey);
     const selectedIndex = matchedIndex >= 0 ? matchedIndex : periods.length - 1;
     const currentPeriod = periods[selectedIndex] || periods[Math.min(today.getMonth(), periods.length - 1)];
     let previousPeriod = periods[selectedIndex - 1];
@@ -2401,10 +2452,16 @@ function renderRegionUsageChart() {
     const yearOptions = years.map(year => `<option value="${year}">${year}</option>`).join('');
     if (yearSelect.innerHTML !== yearOptions) yearSelect.innerHTML = yearOptions;
     yearSelect.value = String(state.regionUsageYear);
-    const selectedReportYear = state.startDate ? parseDate(state.startDate).getFullYear() : state.regionUsageYear;
+    const selectedReportStartYear = state.startDate ? parseDate(state.startDate).getFullYear() : state.regionUsageYear;
+    const selectedReportEndYear = state.endDate ? parseDate(state.endDate).getFullYear() : selectedReportStartYear;
     if (periodNote) {
-        const mismatch = selectedReportYear !== state.regionUsageYear
-            ? ` Khác kỳ báo cáo đang chọn (${selectedReportYear}).`
+        const inSelectedRange = state.regionUsageYear >= selectedReportStartYear
+            && state.regionUsageYear <= selectedReportEndYear;
+        const selectedYearsLabel = selectedReportStartYear === selectedReportEndYear
+            ? String(selectedReportStartYear)
+            : `${selectedReportStartYear}–${selectedReportEndYear}`;
+        const mismatch = !inSelectedRange
+            ? ` Khác kỳ báo cáo đang chọn (${selectedYearsLabel}).`
             : '';
         periodNote.textContent = `Toàn năm ${state.regionUsageYear}; quy về cơ cấu KTV/khu vực hiện tại.${mismatch}`;
     }
@@ -2433,9 +2490,13 @@ function renderRegionUsageChart() {
     const plotHeight = height - plot.top - plot.bottom;
     const xAt = monthIndex => plot.left + (plotWidth * monthIndex / 11);
     const yAt = rate => plot.top + plotHeight - (Math.min(rate, yMax) / yMax * plotHeight);
-    const selectedMonthIndex = selectedReportYear === state.regionUsageYear && state.startDate
-        ? parseDate(state.startDate).getMonth()
-        : -1;
+    const selectedStartMonth = String(state.startDate || '').slice(0, 7);
+    const selectedEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
+    const selectedMonthIndexes = new Set(Array.from({ length: 12 }, (_, monthIndex) => monthIndex)
+        .filter(monthIndex => {
+            const key = `${state.regionUsageYear}-${String(monthIndex + 1).padStart(2, '0')}`;
+            return key >= selectedStartMonth && key <= selectedEndMonth;
+        }));
 
     const grid = yTicks.map(value => {
         const y = yAt(value);
@@ -2445,7 +2506,7 @@ function renderRegionUsageChart() {
         `;
     }).join('');
     const monthLabels = Array.from({ length: 12 }, (_, monthIndex) => `
-        <text x="${xAt(monthIndex)}" y="${height - 22}" text-anchor="middle" class="region-usage-month-label ${monthIndex === selectedMonthIndex ? 'is-selected' : ''}">Th ${monthIndex + 1}</text>
+        <text x="${xAt(monthIndex)}" y="${height - 22}" text-anchor="middle" class="region-usage-month-label ${selectedMonthIndexes.has(monthIndex) ? 'is-selected' : ''}">Th ${monthIndex + 1}</text>
     `).join('');
     const lines = series.map((item, seriesIndex) => {
         const points = item.months
@@ -2453,7 +2514,7 @@ function renderRegionUsageChart() {
             .filter(Boolean);
         const path = points.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
         const circles = points.map(point => `
-            <circle class="region-usage-point ${point.month - 1 === selectedMonthIndex ? 'is-selected-month' : ''}" cx="${point.x}" cy="${point.y}" r="${point.month - 1 === selectedMonthIndex ? '6' : '4.5'}" tabindex="0"
+            <circle class="region-usage-point ${selectedMonthIndexes.has(point.month - 1) ? 'is-selected-month' : ''}" cx="${point.x}" cy="${point.y}" r="${selectedMonthIndexes.has(point.month - 1) ? '6' : '4.5'}" tabindex="0"
                 data-region="${escapeHTML(item.region)}" data-month="${point.month}" data-rate="${point.rate.toFixed(1)}"
                 data-sessions="${point.practiceSessions}" data-passed-learners="${point.passedLearners}"
                 data-headcount="${item.headcount}"
@@ -2480,6 +2541,7 @@ function renderRegionUsageChart() {
         </svg>
     `;
 
+    const selectedMonthIndex = [...selectedMonthIndexes].at(-1) ?? -1;
     const focusMonthIndex = selectedMonthIndex >= 0
         ? selectedMonthIndex
         : Math.max(0, Math.min(11, state.regionUsageYear === now.getFullYear() ? now.getMonth() : 11));
@@ -2648,7 +2710,7 @@ function normalizeTechnicianCatalog(apiTechnicians = []) {
 
 function normalizeTrainingAssignments(apiAssignments = []) {
     return apiAssignments.map(item => {
-        const periodCounts = Array.isArray(item.period_counts) ? item.period_counts : null;
+        const lifetimeCounts = Array.isArray(item.lifetime_counts) ? item.lifetime_counts : null;
         return ({
             learner: String(item.email || item.learner || '').trim().toLowerCase(),
             classCode: item.class_code || item.classCode || '',
@@ -2660,9 +2722,9 @@ function normalizeTrainingAssignments(apiAssignments = []) {
             completedAt: item.completed_at || item.completedAt || null,
             historicalPassCount: Number(item.historical_pass_count ?? item.historicalPassCount) || 0,
             recordedPracticeCount: Number(item.recorded_practice_count ?? item.recordedPracticeCount) || 0,
-            periodPassCount: periodCounts ? (Number(periodCounts[0]) || 0) : null,
-            periodAttemptCount: periodCounts ? (Number(periodCounts[1]) || 0) : null,
-            periodHistoricalPassCount: periodCounts ? (Number(periodCounts[2]) || 0) : null,
+            lifetimePassCount: lifetimeCounts ? (Number(lifetimeCounts[0]) || 0) : null,
+            lifetimeAttemptCount: lifetimeCounts ? (Number(lifetimeCounts[1]) || 0) : null,
+            lifetimeHistoricalPassCount: lifetimeCounts ? (Number(lifetimeCounts[2]) || 0) : null,
             firstPassAttemptNo: item.first_pass_attempt_no == null
                 ? null
                 : Number(item.first_pass_attempt_no)
@@ -2855,8 +2917,16 @@ let dashboardReportRequestSequence = 0;
 // available when fresher data is needed.
 
 function dashboardReportQuery() {
+    if (activeDashboardView === 'analytics') {
+        return new URLSearchParams({
+            scope: 'lifetime',
+            cohort: 'assigned_as_of_period_end',
+            include_branch_drilldown: '1'
+        });
+    }
     const periods = getKpiComparisonPeriods();
     return new URLSearchParams({
+        scope: 'period',
         from: periods.currentStart,
         to: periods.currentEnd,
         compare_from: periods.previousStart,
@@ -5736,11 +5806,6 @@ function getClassMatrixData() {
         isFirst: labIndex === 0,
         isLast: labIndex === group.labs.length - 1
     })));
-    const overviewColumns = allGroups.flatMap(group => (group.labs || []).map(lab => ({
-        device: group.device,
-        lab
-    })));
-
     const mappedLearners = learners.map(email => {
         const tech = technicianByIdentity.get(String(email).toLowerCase());
         const name = tech?.displayName || getLearnerName(email) || email;
@@ -5817,17 +5882,17 @@ function getClassMatrixData() {
             const assignment = selectedClass
                 ? assignmentByCell.get(`${selectedClass.code}\u001f${learnerKey}\u001f${col.device}\u001f${col.lab}`)
                 : null;
-            const hasPeriodCounts = assignment?.periodAttemptCount !== null
-                && assignment?.periodAttemptCount !== undefined;
-            const attempts = hasPeriodCounts
-                ? assignment.periodAttemptCount
+            const hasLifetimeCounts = assignment?.lifetimeAttemptCount !== null
+                && assignment?.lifetimeAttemptCount !== undefined;
+            const attempts = hasLifetimeCounts
+                ? assignment.lifetimeAttemptCount
                 : rateEligibleSessions.length;
-            const passCount = hasPeriodCounts
-                ? assignment.periodPassCount
+            const passCount = hasLifetimeCounts
+                ? assignment.lifetimePassCount
                 : rateEligibleSessions.filter(session => session.isPassed === true).length;
             const isAssigned = Boolean(assignment);
-            const historicalPassCount = hasPeriodCounts
-                ? assignment.periodHistoricalPassCount
+            const historicalPassCount = hasLifetimeCounts
+                ? assignment.lifetimeHistoricalPassCount
                 : (Number(assignment?.historicalPassCount) || 0);
             const recordedAttempts = attempts + historicalPassCount;
             const assignmentCompleted = Boolean(assignment && assignmentHasCompletionEvidence(assignment));
@@ -5946,12 +6011,15 @@ function getClassMatrixData() {
                 return assignments.length > 0 && assignments.every(assignmentHasCompletionEvidence);
             }).length;
             const assignedDevices = new Set(classAssignments.map(assignment => assignment.device));
-            const classLabSessions = members.flatMap(email => overviewColumns.flatMap(column =>
-                classSessionsForCell(item.code, email, column.device, column.lab)
-            ));
-            const eligibleAttempts = classLabSessions.filter(isRateEligiblePracticeSession).length;
-            const historicalPasses = classAssignments.reduce((sum, assignment) => sum + assignment.historicalPassCount, 0);
-            const attempts = eligibleAttempts + historicalPasses;
+            const attempts = classAssignments.reduce((sum, assignment) => {
+                const gradedAttempts = assignment.lifetimeAttemptCount === null
+                    ? 0
+                    : assignment.lifetimeAttemptCount;
+                const historicalPasses = assignment.lifetimeHistoricalPassCount === null
+                    ? assignment.historicalPassCount
+                    : assignment.lifetimeHistoricalPassCount;
+                return sum + gradedAttempts + historicalPasses;
+            }, 0);
             return {
                 ...item,
                 memberCount: members.length,
@@ -6957,12 +7025,45 @@ function initDateRangePicker() {
         const panel = document.getElementById('overviewMonthPanel');
         const yearSelect = document.getElementById('overviewYearSelect');
         const monthGrid = document.getElementById('overviewMonthGrid');
+        const summary = document.getElementById('overviewMonthSummary');
         const currentMonthButton = document.getElementById('overviewMonthToday');
+        const applyButton = document.getElementById('overviewMonthApply');
+        const cancelButton = document.getElementById('overviewMonthCancel');
+        let draftStartMonth = String(state.startDate || '').slice(0, 7);
+        let draftEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
+        let selectionAnchor = null;
 
         if (panel) {
             panel.classList.add('portal');
             document.body.appendChild(panel);
         }
+
+        const monthKey = (year, monthIndex) => `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+        const formatMonthKey = value => {
+            const match = /^(\d{4})-(\d{2})$/.exec(value || '');
+            return match ? `${match[2]}/${match[1]}` : '—';
+        };
+        const normalizeMonthRange = (start, end) => (
+            start <= end ? [start, end] : [end, start]
+        );
+        const updateCommittedLabel = () => {
+            const start = String(state.startDate || '').slice(0, 7);
+            const end = String(state.endDate || state.startDate || '').slice(0, 7);
+            if (label) label.textContent = start === end
+                ? formatMonthKey(start)
+                : `${formatMonthKey(start)} – ${formatMonthKey(end)}`;
+            monthInput.value = start === end ? start : `${start}:${end}`;
+        };
+        const updateDraftSummary = () => {
+            if (!summary) return;
+            if (selectionAnchor) {
+                summary.textContent = `Đã chọn từ ${formatMonthKey(draftStartMonth)}. Chọn tháng kết thúc hoặc bấm Áp dụng để xem một tháng.`;
+                return;
+            }
+            summary.textContent = draftStartMonth === draftEndMonth
+                ? `Kỳ báo cáo: tháng ${formatMonthKey(draftStartMonth)}`
+                : `Kỳ báo cáo: ${formatMonthKey(draftStartMonth)} – ${formatMonthKey(draftEndMonth)}`;
+        };
 
         const positionMonthPanel = () => {
             if (!trigger || !panel) return;
@@ -6973,51 +7074,77 @@ function initDateRangePicker() {
             panel.style.left = `${left}px`;
         };
 
-        const applySelectedMonth = (year, monthIndex, closePanel = true) => {
-            monthInput.value = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
-            const bounds = getMonthBounds(monthInput.value);
-            if (!bounds) return;
-            state.startDate = bounds.start;
-            state.endDate = bounds.end;
-            state.tempStartDate = bounds.start;
-            state.tempEndDate = bounds.end;
-            state.calendarMonth = new Date(bounds.year, bounds.monthIndex, 1);
-            state.regionUsageYear = bounds.year;
+        const applySelectedRange = (startMonth, endMonth, closePanel = true) => {
+            const [normalizedStart, normalizedEnd] = normalizeMonthRange(startMonth, endMonth);
+            const startBounds = getMonthBounds(normalizedStart);
+            const endBounds = getMonthBounds(normalizedEnd);
+            if (!startBounds || !endBounds) return;
+            draftStartMonth = normalizedStart;
+            draftEndMonth = normalizedEnd;
+            selectionAnchor = null;
+            state.startDate = startBounds.start;
+            state.endDate = endBounds.end;
+            state.tempStartDate = startBounds.start;
+            state.tempEndDate = endBounds.end;
+            state.calendarMonth = new Date(startBounds.year, startBounds.monthIndex, 1);
+            state.regionUsageYear = startBounds.year;
             state.dashboardReportStatus = 'loading';
             state.learnerTablePage = 1;
             state.learnerDetailPage = 1;
             state.realtimePage = 1;
             if (state.selectedLearner) hideLearnerDetail();
-            if (label) label.textContent = `${String(monthIndex + 1).padStart(2, '0')}/${year}`;
-            if (yearSelect) yearSelect.value = String(year);
+            updateCommittedLabel();
+            updateDraftSummary();
+            if (yearSelect) yearSelect.value = String(startBounds.year);
             if (closePanel) {
                 panel?.classList.remove('open');
                 trigger?.setAttribute('aria-expanded', 'false');
                 trigger?.focus();
             }
-            renderMonthGrid(year);
+            renderMonthGrid(Number(yearSelect?.value) || startBounds.year);
             renderAll();
             reloadDashboardSelectedRange();
         };
 
         const renderMonthGrid = (year = Number(yearSelect?.value) || today.getFullYear()) => {
             if (!monthGrid) return;
-            const selectedBounds = getMonthBounds(monthInput.value);
             monthGrid.innerHTML = Array.from({ length: 12 }, (_, monthIndex) => {
+                const key = monthKey(year, monthIndex);
                 const isFuture = year > today.getFullYear()
                     || (year === today.getFullYear() && monthIndex > today.getMonth());
-                const isSelected = selectedBounds?.year === year && selectedBounds?.monthIndex === monthIndex;
-                return `<button type="button" class="overview-month-option ${isSelected ? 'selected' : ''}" data-report-month="${monthIndex}" aria-label="Tháng ${monthIndex + 1} năm ${year}" aria-pressed="${isSelected ? 'true' : 'false'}" ${isFuture ? 'disabled' : ''}>Th ${monthIndex + 1}</button>`;
+                const isInRange = key >= draftStartMonth && key <= draftEndMonth;
+                const isStart = key === draftStartMonth;
+                const isEnd = key === draftEndMonth;
+                const classes = [
+                    'overview-month-option',
+                    isInRange ? 'in-range' : '',
+                    isStart || isEnd ? 'selected' : '',
+                    isStart ? 'range-start' : '',
+                    isEnd ? 'range-end' : ''
+                ].filter(Boolean).join(' ');
+                return `<button type="button" class="${classes}" data-report-month="${monthIndex}" data-month-key="${key}" aria-label="Tháng ${monthIndex + 1} năm ${year}" aria-pressed="${isInRange ? 'true' : 'false'}" ${isFuture ? 'disabled' : ''}>Th ${monthIndex + 1}</button>`;
             }).join('');
             monthGrid.querySelectorAll('[data-report-month]').forEach(button => {
                 button.addEventListener('click', () => {
-                    applySelectedMonth(year, Number(button.dataset.reportMonth));
+                    const selectedMonth = button.dataset.monthKey;
+                    if (selectionAnchor === null) {
+                        selectionAnchor = selectedMonth;
+                        draftStartMonth = selectedMonth;
+                        draftEndMonth = selectedMonth;
+                    } else {
+                        [draftStartMonth, draftEndMonth] = normalizeMonthRange(selectionAnchor, selectedMonth);
+                        selectionAnchor = null;
+                    }
+                    renderMonthGrid(year);
+                    updateDraftSummary();
+                    monthGrid.querySelector(`[data-month-key="${selectedMonth}"]`)?.focus();
                 });
             });
+            updateDraftSummary();
         };
 
         if (yearSelect) {
-            yearSelect.innerHTML = Array.from({ length: 3 }, (_, index) => today.getFullYear() - 2 + index)
+            yearSelect.innerHTML = Array.from({ length: 11 }, (_, index) => today.getFullYear() - 10 + index)
                 .map(year => `<option value="${year}">${year}</option>`)
                 .join('');
             yearSelect.value = String(today.getFullYear());
@@ -7030,6 +7157,10 @@ function initDateRangePicker() {
             panel?.classList.toggle('open', willOpen);
             trigger.setAttribute('aria-expanded', String(willOpen));
             if (willOpen) {
+                draftStartMonth = String(state.startDate || '').slice(0, 7);
+                draftEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
+                selectionAnchor = null;
+                if (yearSelect) yearSelect.value = draftStartMonth.slice(0, 4);
                 positionMonthPanel();
                 renderMonthGrid(Number(yearSelect?.value) || today.getFullYear());
                 window.requestAnimationFrame(() => {
@@ -7051,7 +7182,16 @@ function initDateRangePicker() {
             }
             trapDialogFocus(event, panel);
         });
-        currentMonthButton?.addEventListener('click', () => applySelectedMonth(today.getFullYear(), today.getMonth()));
+        currentMonthButton?.addEventListener('click', () => {
+            const current = monthKey(today.getFullYear(), today.getMonth());
+            applySelectedRange(current, current);
+        });
+        applyButton?.addEventListener('click', () => applySelectedRange(draftStartMonth, draftEndMonth));
+        cancelButton?.addEventListener('click', () => {
+            panel?.classList.remove('open');
+            trigger?.setAttribute('aria-expanded', 'false');
+            trigger?.focus();
+        });
         document.addEventListener('click', () => {
             panel?.classList.remove('open');
             trigger?.setAttribute('aria-expanded', 'false');
@@ -7071,7 +7211,8 @@ function initDateRangePicker() {
             if (panel?.classList.contains('open')) positionMonthPanel();
         }, true);
 
-        applySelectedMonth(today.getFullYear(), today.getMonth(), false);
+        const current = monthKey(today.getFullYear(), today.getMonth());
+        applySelectedRange(current, current, false);
         return;
     }
 
@@ -7567,10 +7708,12 @@ function getReportExportPreview(type) {
 
 async function ensureTrainingAssignmentsLoaded({ force = false } = {}) {
     if (state.assignmentsLoaded && !force) return trainingAssignments;
-    const periods = getKpiComparisonPeriods();
+    // The shared endpoint still requires a valid range, but assignment progress
+    // and compact counters are cumulative and intentionally ignore overview dates.
+    const requestDate = toDateKey(new Date());
     const query = new URLSearchParams({
-        from: periods.currentStart,
-        to: periods.currentEnd,
+        from: requestDate,
+        to: requestDate,
         limit: '50',
         include_sessions: '0',
         include_assignments: '1'

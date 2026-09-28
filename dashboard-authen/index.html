@@ -195,24 +195,29 @@
                             </div>
                             <div class="date-range-picker overview-month-picker" id="dateRangePicker">
                                 <div class="overview-month-field">
-                                    <span>Tháng báo cáo</span>
+                                    <span>Kỳ báo cáo</span>
                                     <input type="hidden" id="overviewMonthSelect">
                                     <button type="button" class="overview-month-trigger" id="overviewMonthTrigger"
-                                        aria-label="Chọn tháng báo cáo" aria-haspopup="dialog" aria-expanded="false"
+                                        aria-label="Chọn khoảng tháng báo cáo" aria-haspopup="dialog" aria-expanded="false"
                                         aria-controls="overviewMonthPanel">
-                                        <span>Tháng <strong id="overviewMonthLabel">—</strong></span>
+                                        <span>Kỳ <strong id="overviewMonthLabel">—</strong></span>
                                         <svg viewBox="0 0 24 24" aria-hidden="true">
                                             <path d="m6 9 6 6 6-6" />
                                         </svg>
                                     </button>
                                     <div class="overview-month-panel" id="overviewMonthPanel" role="dialog"
-                                        aria-label="Bộ lọc tháng báo cáo" tabindex="-1">
+                                        aria-label="Bộ lọc khoảng tháng báo cáo" tabindex="-1">
                                         <select class="overview-year-select" id="overviewYearSelect"
                                             aria-label="Chọn năm báo cáo"></select>
                                         <div class="overview-month-grid" id="overviewMonthGrid" role="group"
-                                            aria-label="Chọn tháng"></div>
-                                        <button type="button" class="overview-current-month"
-                                            id="overviewMonthToday">Tháng này</button>
+                                            aria-label="Chọn tháng bắt đầu và tháng kết thúc"></div>
+                                        <p class="overview-month-summary" id="overviewMonthSummary" aria-live="polite"></p>
+                                        <div class="overview-month-actions">
+                                            <button type="button" class="overview-current-month"
+                                                id="overviewMonthToday">Tháng này</button>
+                                            <button type="button" class="button secondary" id="overviewMonthCancel">Hủy</button>
+                                            <button type="button" class="button" id="overviewMonthApply">Áp dụng</button>
+                                        </div>
                                     </div>
                                 </div>
                                 <input type="hidden" id="startDate">

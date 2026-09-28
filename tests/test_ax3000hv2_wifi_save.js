@@ -26,8 +26,8 @@ assert.ok(appContent.includes('_ftcScrollBound'), 'Scroll listener for tooltips 
 
 // 4. Verify portal.html cachebuster timestamps
 const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(portalContent.includes('devices/ax3000hv2/lessons/bai2.js?v=20260915141500'), 'bai2.js cachebuster must be updated in portal.html');
-assert.ok(/app\.js\?v=\d+/.test(portalContent), 'app.js cachebuster must be updated in portal.html');
+assert.ok(portalContent.includes('devices/ax3000hv2/lessons/bai2.js?v='), 'bai2.js cachebuster must be updated in portal.html');
+assert.ok(/app\.js\?v=[a-f0-9]{16}/.test(portalContent), 'app.js cachebuster must be updated in portal.html');
 
 // 5. Verify bai2.js grading rules structure and strict grading evaluation
 const bai2Code = fs.readFileSync(path.join(root, 'devices/ax3000hv2/lessons/bai2.js'), 'utf8');

@@ -65,16 +65,30 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn("allParams.set('include_sessions', sessionsRequested ? '1' : '0')", self.dashboard)
         self.assertIn('ensureDashboardSessionsLoaded()', self.dashboard)
 
-    def test_class_matrix_uses_compact_period_counts_without_raw_sessions(self):
-        self.assertIn("'period_counts' => [", self.api)
-        self.assertIn('AS period_pass_count', self.api)
-        self.assertIn('AS period_attempt_count', self.api)
-        self.assertIn('AS period_historical_pass_count', self.api)
-        self.assertIn('period_link.assignment_id = progress.assignment_id', self.api)
-        self.assertIn("$dateFrom . 'T00:00:00+07:00'", self.api)
-        self.assertIn('periodAttemptCount:', self.dashboard)
-        self.assertIn('const hasPeriodCounts = assignment?.periodAttemptCount !== null', self.dashboard)
-        self.assertIn('? assignment.periodPassCount', self.dashboard)
+    def test_class_matrix_uses_compact_lifetime_counts_without_raw_sessions(self):
+        self.assertIn("'lifetime_counts' => [", self.api)
+        self.assertIn('AS lifetime_pass_count', self.api)
+        self.assertIn('AS lifetime_attempt_count', self.api)
+        self.assertIn('AS lifetime_historical_pass_count', self.api)
+        self.assertIn('assignment_link.assignment_id = progress.assignment_id', self.api)
+        self.assertNotIn('assignment_period_from', self.api)
+        self.assertIn('lifetimeAttemptCount:', self.dashboard)
+        self.assertIn('const hasLifetimeCounts = assignment?.lifetimeAttemptCount !== null', self.dashboard)
+        self.assertIn('? assignment.lifetimePassCount', self.dashboard)
+        self.assertIn('from: requestDate', self.dashboard)
+        self.assertIn('to: requestDate', self.dashboard)
+
+    def test_branch_report_uses_lifetime_scope_independent_of_overview_range(self):
+        self.assertIn("scope: 'lifetime'", self.dashboard)
+        self.assertIn("dashboardReport?.meta?.scope === 'lifetime'", self.dashboard)
+        self.assertIn("$scope === 'lifetime'", self.report)
+        self.assertIn('dashboard_report_matrix(', self.report)
+
+    def test_multi_year_month_range_returns_only_compact_monthly_aggregates(self):
+        self.assertIn('function dashboard_report_monthly(PDO $pdo, int $startYear, ?int $endYear = null)', self.report)
+        self.assertIn('function dashboard_report_monthly_regions(PDO $pdo, int $startYear, ?int $endYear = null)', self.report)
+        self.assertIn("CAST(:year_end AS date) + INTERVAL '11 months'", self.report)
+        self.assertIn('$reportEndYear = (int)$to->format(\'Y\')', self.report)
 
     def test_technician_lookup_uses_server_pages_and_lazy_history(self):
         self.assertIn('function dashboard_technician_summary_page', self.technicians)

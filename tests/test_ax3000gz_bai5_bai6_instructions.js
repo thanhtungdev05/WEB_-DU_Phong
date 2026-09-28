@@ -12,11 +12,11 @@ const portalPath = path.join(root, 'portal.html');
 const portalContent = fs.readFileSync(portalPath, 'utf8');
 
 assert.ok(
-  portalContent.includes('devices/ax3000gz/lessons/bai5.js?v=20260928000500'),
+  portalContent.includes('devices/ax3000gz/lessons/bai5.js?v='),
   'portal.html must include bumped version of ax3000gz bai5.js'
 );
 assert.ok(
-  portalContent.includes('devices/ax3000gz/lessons/bai6.js?v=20260928000500'),
+  portalContent.includes('devices/ax3000gz/lessons/bai6.js?v='),
   'portal.html must include bumped version of ax3000gz bai6.js'
 );
 

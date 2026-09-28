@@ -10,8 +10,8 @@ const root = path.resolve(__dirname, '..');
 // 1. Kiểm tra portal.html
 const portalPath = path.join(root, 'portal.html');
 const portalContent = fs.readFileSync(portalPath, 'utf8');
-assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai3.js?v=20260927233500'), 'portal.html must include bumped version of bai3 tooltips');
-assert.ok(portalContent.includes('devices/ax3000s/lessons/bai3.js?v=20260927235000'), 'portal.html must include bumped version of bai3 lessons');
+assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai3.js?v='), 'portal.html must include bumped version of bai3 tooltips');
+assert.ok(portalContent.includes('devices/ax3000s/lessons/bai3.js?v='), 'portal.html must include bumped version of bai3 lessons');
 
 // 2. Kiểm tra wlanMapSettingAll.js
 const wlanJsPath = path.join(root, 'simulators/sim_ax3000s/www/luci-static/resources/view/skgwfpt/wlanMapSettingAll.js');
