@@ -1,9 +1,11 @@
-import http.client
 import gzip
+import hashlib
+import http.client
 import sys
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 
 # Some legacy simulator modules read sys.argv[1] as a port at import time.
 # Isolate the dispatcher import from unittest's module/discovery arguments.
@@ -206,14 +208,39 @@ class DispatcherSecurityTests(unittest.TestCase):
         self.assertEqual(normalized_headers.get('x-frame-options'), 'SAMEORIGIN')
         self.assertIn("frame-ancestors 'self'", normalized_headers.get('content-security-policy', ''))
 
+        stylesheet = Path(run_all.BASE_DIR) / 'dashboard-authen' / 'css' / 'dashboard-professional.css'
+        asset_version = hashlib.sha256(stylesheet.read_bytes()).hexdigest()[:16]
         status, headers, body = self.request(
-            '/dashboard/css/dashboard-professional.css?v=20260825-1',
+            f'/dashboard/css/dashboard-professional.css?v={asset_version}',
             method='HEAD',
         )
         normalized_headers = {key.lower(): value for key, value in headers.items()}
         self.assertEqual(status, 200)
         self.assertEqual(body, b'')
         self.assertIn('immutable', normalized_headers.get('cache-control', ''))
+
+        status, headers, _ = self.request(
+            '/dashboard/css/dashboard-professional.css?v=legacy-manual-version',
+            method='HEAD',
+        )
+        normalized_headers = {key.lower(): value for key, value in headers.items()}
+        self.assertEqual(status, 200)
+        self.assertEqual(normalized_headers.get('cache-control'), 'no-cache')
+
+        status, headers, _ = self.request('/portal.html', method='HEAD')
+        normalized_headers = {key.lower(): value for key, value in headers.items()}
+        self.assertEqual(status, 200)
+        self.assertEqual(normalized_headers.get('cache-control'), 'no-cache, must-revalidate')
+        self.assertNotIn('no-store', normalized_headers.get('cache-control', ''))
+
+        last_modified = normalized_headers.get('last-modified')
+        self.assertTrue(last_modified)
+        status, _, body = self.request(
+            '/portal.html',
+            headers={'If-Modified-Since': last_modified},
+        )
+        self.assertEqual(status, 304)
+        self.assertEqual(body, b'')
 
     def test_large_json_response_supports_gzip_without_compressing_workbooks(self):
         source = b'{"data":"' + (b'x' * 4096) + b'"}'

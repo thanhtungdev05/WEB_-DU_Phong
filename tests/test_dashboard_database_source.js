@@ -52,7 +52,7 @@ assert.match(api, /timer\.is_passed/);
 assert.match(api, /ROSTER_REGION_CACHE_SECONDS/);
 assert.match(api, /respond_private_cache\([\s\S]*?\['data' => \['items' => \$items\]\]/);
 assert.equal((dashboard.match(/roster\/regions`, \{ cache: 'force-cache' \}/g) || []).length, 2);
-assert.match(dashboardHtml, /\/assets\/logoFPT\.png\?v=20260924-fpt-telecom/);
+assert.match(dashboardHtml, /\/assets\/logoFPT\.png\?v=[a-f0-9]{16}/);
 assert.match(api, /'is_passed' => isset\(\$row\['is_passed'\]\)/);
 assert.doesNotMatch(api, /timer\.score/);
 assert.doesNotMatch(api, /'score' => \$row\['score'\] !== null/);

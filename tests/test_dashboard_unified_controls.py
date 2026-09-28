@@ -1,6 +1,6 @@
+import hashlib
 import unittest
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -160,7 +160,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertNotIn("function computeMetrics", self.javascript)
 
     def test_desktop_header_keeps_actions_inline_with_dashboard_title(self):
-        self.assertIn("20260917-roster-loading-v31", self.html)
+        self.assertIn("css/dashboard-professional.css?v=", self.html)
         self.assertIn("@media (max-width: 1180px) and (min-width: 961px)", self.professional_css)
         self.assertNotIn("@media (max-width: 1400px) and (min-width: 961px)", self.professional_css)
 
@@ -184,6 +184,19 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn("currentStart.getMonth() - monthCount", self.javascript)
         self.assertIn("overview-month-option.in-range", self.css)
         self.assertIn(".overview-month-option.range-start", self.css)
+
+    def test_overview_month_clicks_are_staged_until_apply(self):
+        handler_start = self.javascript.index("monthGrid.querySelectorAll('[data-report-month]')")
+        handler_end = self.javascript.index("if (yearSelect)", handler_start)
+        month_click_handler = self.javascript[handler_start:handler_end]
+        self.assertIn("renderMonthGrid(year)", month_click_handler)
+        self.assertIn("updateDraftSummary()", month_click_handler)
+        self.assertNotIn("applySelectedRange(", month_click_handler)
+        self.assertNotIn("reloadDashboardSelectedRange()", month_click_handler)
+        self.assertIn(
+            "applyButton?.addEventListener('click', () => applySelectedRange(draftStartMonth, draftEndMonth))",
+            self.javascript,
+        )
 
     def test_class_report_uses_compact_master_detail_overview(self):
         overview = self.html.index('id="classOverviewCard"')
@@ -256,9 +269,12 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn(".class-overview-action", self.css)
 
     def test_asset_version_prevents_stale_control_styles(self):
-        self.assertIn("css/styles.css?v=20260924-column-resize-v28", self.html)
-        self.assertIn("css/dashboard-professional.css?v=20260917-roster-loading-v31", self.html)
-        self.assertEqual(self.html.count("20260928-technician-pagination-v5"), 1)
+        styles_hash = hashlib.sha256((ROOT / "dashboard-authen" / "css" / "styles.css").read_bytes()).hexdigest()[:16]
+        professional_hash = hashlib.sha256((ROOT / "dashboard-authen" / "css" / "dashboard-professional.css").read_bytes()).hexdigest()[:16]
+        app_hash = hashlib.sha256((ROOT / "dashboard-authen" / "js" / "app.js").read_bytes()).hexdigest()[:16]
+        self.assertIn(f"css/styles.css?v={styles_hash}", self.html)
+        self.assertIn(f"css/dashboard-professional.css?v={professional_hash}", self.html)
+        self.assertIn(f"js/app.js?v={app_hash}", self.html)
 
     def test_resizable_tables_use_stable_column_models(self):
         self.assertIn('id="technicianSessionsTable" data-resizable-columns="colgroup"', self.html)

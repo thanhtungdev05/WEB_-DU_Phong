@@ -3420,6 +3420,7 @@ function respond_private_cache(array $payload, int $maxAge = 21600): void
 {
     header_remove('Cache-Control');
     header('Cache-Control: private, max-age=' . $maxAge . ', stale-while-revalidate=86400');
+    header('Vary: Cookie', false);
     respond($payload);
 }
 

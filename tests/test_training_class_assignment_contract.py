@@ -2,7 +2,6 @@ import re
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -263,8 +262,8 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertNotIn("stats.legacy_incomplete_practice_sessions_count", dashboard_js)
         self.assertIn("${passedSessions}/${gradedSessions} lượt đạt", dashboard_js)
         self.assertIn("historicalPassedSessions", dashboard_js)
-        self.assertIn("20260918-recorded-practice-v4", dashboard_html)
-        self.assertIn('/assets/logoFPT.png?v=20260924-fpt-telecom', dashboard_html)
+        self.assertRegex(dashboard_html, r'assets/personal-dashboard\.js\?v=[a-f0-9]{16}')
+        self.assertRegex(dashboard_html, r'/assets/logoFPT\.png\?v=[a-f0-9]{16}')
 
 
 if __name__ == "__main__":

@@ -131,6 +131,10 @@ PUBLIC_ROOT_PREFIXES = ('/devices/', '/assets/', '/login/')
 DASHBOARD_PUBLIC_PATHS = {
     '/', '/index.html', '/css/styles.css', '/css/dashboard-professional.css', '/js/app.js'
 }
+HTML_DOCUMENT_PATHS = {
+    '/', '/index.html', '/portal.html', '/personal-dashboard.html',
+    '/login/index.html', '/dashboard/', '/dashboard/index.html',
+}
 SENSITIVE_EXTENSIONS = {
     '.env', '.ini', '.log', '.lock', '.md', '.php', '.py', '.pyc', '.sql',
     '.toml', '.yaml', '.yml', '.sh', '.ps1', '.bat', '.cmd'
@@ -247,8 +251,11 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         request_url = urlparse(self.path)
         extension = os.path.splitext(request_url.path.lower())[1]
         download_filename = DOWNLOADABLE_ROOT_FILES.get(unquote(request_url.path))
-        versioned_asset = extension in {'.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.woff', '.woff2'} \
-            and any(part.startswith('v=') for part in request_url.query.split('&'))
+        cacheable_extensions = {'.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.avif', '.woff', '.woff2'}
+        version_tokens = [part[2:] for part in request_url.query.split('&') if part.startswith('v=')]
+        versioned_asset = extension in cacheable_extensions \
+            and len(version_tokens) == 1 \
+            and re.fullmatch(r'[0-9a-f]{16}', version_tokens[0]) is not None
         has_cache_control = any(
             header.lower().startswith(b'cache-control:')
             for header in getattr(self, '_headers_buffer', [])
@@ -260,10 +267,16 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         if not has_cache_control:
             if versioned_asset:
                 self.send_header('Cache-Control', 'public, max-age=31536000, immutable')
-            elif extension in {'.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.woff', '.woff2'}:
+            elif extension in cacheable_extensions:
                 self.send_header('Cache-Control', 'no-cache')
+            elif request_url.path in HTML_DOCUMENT_PATHS:
+                # HTML must discover new content hashes immediately, while
+                # conditional requests can still return a lightweight 304.
+                self.send_header('Cache-Control', 'no-cache, must-revalidate')
             else:
                 self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                self.send_header('Pragma', 'no-cache')
+                self.send_header('Expires', '0')
         if download_filename and not has_content_disposition:
             self.send_header(
                 'Content-Disposition',

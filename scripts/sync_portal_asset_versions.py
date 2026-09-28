@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Synchronize portal asset cache keys with their file contents."""
+"""Synchronize public web asset cache keys with their file contents.
+
+The historical filename is kept because deployment scripts already call it.
+"""
 
 from __future__ import annotations
 
@@ -8,12 +11,17 @@ import hashlib
 import re
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
-PORTAL = ROOT / "portal.html"
+DOCUMENTS = (
+    ROOT / "index.html",
+    ROOT / "portal.html",
+    ROOT / "personal-dashboard.html",
+    ROOT / "login" / "index.html",
+    ROOT / "dashboard-authen" / "index.html",
+)
 ASSET_PATTERN = re.compile(
     r'(?P<prefix>\b(?:src|href)=")'
-    r'(?P<path>(?!https?://|//|#)[^"?]+\.(?:css|js|png|svg|webp|woff2?))'
+    r'(?P<path>(?!https?://|//|#)[^"?]+\.(?:css|js|png|jpe?g|svg|webp|avif|woff2?))'
     r'(?:\?v=[^"&]+)?'
     r'(?P<suffix>")'
 )
@@ -23,12 +31,23 @@ def content_version(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
 
 
-def synchronized_html(source: str) -> tuple[str, list[str]]:
+def resolve_asset(document: Path, url_path: str) -> Path:
+    if url_path.startswith("/"):
+        return ROOT / url_path.lstrip("/")
+    return document.parent / url_path
+
+
+def synchronized_html(document: Path, source: str) -> tuple[str, list[str]]:
     missing: list[str] = []
 
     def replace(match: re.Match[str]) -> str:
-        relative_path = match.group("path").lstrip("/")
-        asset_path = ROOT / relative_path
+        relative_path = match.group("path")
+        asset_path = resolve_asset(document, relative_path).resolve()
+        try:
+            asset_path.relative_to(ROOT.resolve())
+        except ValueError:
+            missing.append(relative_path)
+            return match.group(0)
         if not asset_path.is_file():
             missing.append(relative_path)
             return match.group(0)
@@ -49,20 +68,32 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    source = PORTAL.read_text(encoding="utf-8")
-    updated, missing = synchronized_html(source)
-    if missing:
-        print("Missing portal assets: " + ", ".join(sorted(set(missing))))
+    stale_documents: list[Path] = []
+    missing_assets: list[str] = []
+    updates: list[tuple[Path, str]] = []
+    for document in DOCUMENTS:
+        source = document.read_text(encoding="utf-8")
+        updated, missing = synchronized_html(document, source)
+        missing_assets.extend(f"{document.relative_to(ROOT)}: {item}" for item in missing)
+        if updated != source:
+            stale_documents.append(document)
+            updates.append((document, updated))
+
+    if missing_assets:
+        print("Missing public assets: " + ", ".join(sorted(set(missing_assets))))
         return 2
-    if updated == source:
-        print("Portal asset versions are synchronized.")
+    if not stale_documents:
+        print("Public web asset versions are synchronized.")
         return 0
     if args.check:
-        print("portal.html contains stale asset versions; run scripts/sync_portal_asset_versions.py")
+        names = ", ".join(str(path.relative_to(ROOT)) for path in stale_documents)
+        print(f"Stale asset versions in {names}; run scripts/sync_portal_asset_versions.py")
         return 1
 
-    PORTAL.write_text(updated, encoding="utf-8", newline="\n")
-    print("Updated portal.html asset versions from file content hashes.")
+    for document, updated in updates:
+        document.write_text(updated, encoding="utf-8", newline="\n")
+    names = ", ".join(str(path.relative_to(ROOT)) for path in stale_documents)
+    print(f"Updated content-hash asset versions in: {names}")
     return 0
 
 

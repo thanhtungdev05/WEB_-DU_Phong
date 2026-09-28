@@ -55,6 +55,7 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn('fetchDashboardCatalog({ includeTechnicians: technicianCatalogRequested })', self.dashboard)
         self.assertIn('function dashboardViewNeedsTechnicianCatalog', self.dashboard)
         self.assertIn('DASHBOARD_CATALOG_CACHE_SECONDS=21600', self.example_env)
+        self.assertIn("header('Vary: Cookie', false)", self.api)
         self.assertIn('function reloadDashboardSessionsForRange()', self.dashboard)
         self.assertIn('reloadDashboardSelectedRange();', self.dashboard)
 

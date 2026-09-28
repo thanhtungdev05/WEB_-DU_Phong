@@ -41,9 +41,9 @@ assert.match(app, /if \(_guestGuideMode\) \{[\s\S]*?kết quả và tiến độ
 assert.match(app, /function sendTrackingTimer\([\s\S]*?if \(_guestGuideMode\) return Promise\.resolve\(false\);/);
 
 assert.match(portal, /app\.js\?v=[a-f0-9]{16}/);
-assert.match(loginPage, /app\.js\?v=20260922-guest-guide-mode/);
+assert.match(loginPage, /app\.js\?v=[a-f0-9]{16}/);
 assert.match(portal, /\/assets\/logoFPT\.png\?v=[a-f0-9]{16}/);
-assert.match(loginPage, /\/assets\/logoFPT\.png\?v=20260924-fpt-telecom/);
+assert.match(loginPage, /\/assets\/logoFPT\.png\?v=[a-f0-9]{16}/);
 
 async function executeLoginPage(databasePayload, rejectHealthRequest = false) {
   const redirects = [];
