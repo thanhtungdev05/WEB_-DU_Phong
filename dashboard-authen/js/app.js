@@ -8296,7 +8296,7 @@ function initEvents() {
     document.addEventListener('click', (event) => {
         if (!document.body.classList.contains('detail-open')) return;
         const path = event.composedPath();
-        const insideCard = path.some(el => el.classList?.contains('learner-detail-card') || el.classList?.contains('sub-modal-backdrop') || el.classList?.contains('sub-modal-card') || el.getAttribute?.('data-learner'));
+        const insideCard = path.some(el => el.classList?.contains('learner-detail-card') || el.classList?.contains('sub-modal-backdrop') || el.classList?.contains('sub-modal-card') || el.getAttribute?.('data-learner') || el.getAttribute?.('data-open-technician'));
         if (insideCard) return;
         hideLearnerDetail();
         renderAll();

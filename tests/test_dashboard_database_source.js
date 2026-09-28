@@ -116,6 +116,15 @@ assert.match(dashboard, /state\.selectedLearner !== nextLearner\) resetLearnerDe
 assert.match(dashboard, /Đang hiển thị \$\{pageData\.totalRows\}\/\$\{totalHistoryRows\} phiên theo bộ lọc/);
 assert.match(dashboard, /state\.sessionHistoryFrom && state\.sessionHistoryTo[\s\S]*\(trang đầu\)/);
 assert.match(dashboardStyles, /body\.detail-open \.sidebar[\s\S]*position: fixed;[\s\S]*inset: 0 auto 0 0;[\s\S]*height: auto;[\s\S]*max-height: none;/);
+const outsideClickGuard = dashboard.match(/const insideCard = path\.some\([\s\S]*?\);/);
+assert.ok(outsideClickGuard, 'outside-click guard for the KTV detail drawer must exist');
+for (const opener of ['data-learner', 'data-open-technician']) {
+  assert.ok(
+    outsideClickGuard[0].includes(`el.getAttribute?.('${opener}')`),
+    `outside-click guard must treat clicks on [${opener}] as inside the drawer, otherwise it closes in the same click that opened it`
+  );
+}
+assert.match(dashboard, /function openTechnicianSummary\(summary\)[\s\S]*void loadSelectedTechnicianHistory\(\);/);
 assert.doesNotMatch(dashboard, /ftc-instructor-classes-v1/);
 assert.doesNotMatch(dashboard, /region\.branch_name \? `\$\{region\.branch_name\} · \$\{regionName\}`/);
 assert.doesNotMatch(dashboard, /deviceCatalog\.length \|\| 5/);
