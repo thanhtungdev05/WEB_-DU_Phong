@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ac1000hi/tooltips/bai6.js
  * Bài 6: Cấu hình Port Forwarding trên ONT AC1000HI
  */
@@ -61,7 +61,7 @@ window.TOOLTIPS_AC1000HI['LAB_AC1000HI_06'] = [
   {
     page: 'adv_nat_top',
     selector: 'input[name="AddBtn"], input[value="Add"], input[onclick*="Add_virtualsvr"]',
-    text: 'Bước 9: Chọn Add để lưu cấu hình',
+    text: 'Bước 9: Chọn Add để lưu cấu hình và nộp bài',
     position: 'right'
   }
 ];

@@ -5,30 +5,25 @@
 
 window.DEVICE_AC1000HI_LESSONS = window.DEVICE_AC1000HI_LESSONS || [];
 
-var index = window.DEVICE_AC1000HI_LESSONS.findIndex(function(l) { return l.id === 'LAB_AC1000HI_04'; });
+var index = window.DEVICE_AC1000HI_LESSONS.findIndex(function (l) { return l.id === 'LAB_AC1000HI_04'; });
 var lessonObj = {
   id: 'LAB_AC1000HI_04',
   title: 'Bài 4 - Cấu hình DNS',
   subtitle: 'Cấu hình DNS',
   instructions: [
-    '<b>Yêu cầu:</b> Thiết lập thông số DNS thủ công (Manually) trên cổng LAN:',
+    '<b>Yêu cầu:</b>',
     '- Primary DNS: <span class="val">8.8.8.8</span>',
-    '- Secondary DNS: <span class="val">8.8.4.4</span>',
-    '<br><b>Cách làm:</b>',
-    '1. Vào mục Advanced Setup > LAN',
-    '2. Tìm mục DNS Relay chọn <b>Use User Discovered DNS Server Only</b> (hoặc cấu hình tùy chỉnh để mở ô nhập)',
-    '3. Nhập <b>8.8.8.8</b> vào Primary DNS và <b>8.8.4.4</b> vào Secondary DNS',
-    '4. Bấm <b>Apply/Save</b> để lưu cấu hình'
+    '- Secondary DNS: <span class="val">8.8.4.4</span>'
   ],
   practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=home_lan.asp',
-  
-  onSimLoad: function(iframeWindow) {
+
+  onSimLoad: function (iframeWindow) {
     try {
       var loc = (iframeWindow.location.href || '').toLowerCase();
       if (loc.indexOf('home_lan') === -1) {
         localStorage.removeItem('ftc_sim_dhcp');
       }
-    } catch(e) {}
+    } catch (e) { }
   },
 
   clearFields: [
@@ -38,7 +33,7 @@ var lessonObj = {
 
   grading: {
     description: 'Kiểm tra thông số cấu hình DNS trên LAN',
-    customGrading: function(allDocs) {
+    customGrading: function (allDocs) {
       // 1. Đọc từ localStorage để xem đã nhấn Save chưa
       var data = null;
       var isSaved = false;
@@ -77,7 +72,7 @@ var lessonObj = {
       function g(data, name) {
         return data && data[name] ? String(data[name]).trim() : '';
       }
-      
+
       // dnsTypeRadio: "0" = Auto, "1" = Use User Discovered DNS
       var dnsRelay = g(data, 'dnsTypeRadio') === '1' ? 'Manually (User Discovered)' : 'Auto';
 
@@ -89,14 +84,12 @@ var lessonObj = {
 
       var passedCount = 0;
       var details = [];
-      rules.forEach(function(r) {
+      rules.forEach(function (r) {
         var actualVal = (r.actual || '').toString().trim();
         var expectVal = (r.expected || '').toString().trim();
         var isMatch = (actualVal.toLowerCase() === expectVal.toLowerCase());
-        
-        // Bắt buộc phải nhấn Save mới qua
-        if (isMatch && isSaved) passedCount++;
-        else isMatch = false;
+
+        if (isMatch) passedCount++;
 
         details.push({
           id: r.id,
@@ -114,7 +107,7 @@ var lessonObj = {
       }
 
       return {
-        passed: passedCount === rules.length,
+        passed: passedCount === rules.length && isSaved,
         score: Math.round((passedCount / rules.length) * 100),
         passedCount: passedCount,
         totalRules: rules.length,

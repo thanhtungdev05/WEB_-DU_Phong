@@ -1,110 +1,143 @@
-﻿/**
+/**
  * devices/ac1000hi/lessons/bai3.js
  * Bài 3: Cấu hình wifi IoT trên ONT AC1000HI
  */
 
 window.DEVICE_AC1000HI_LESSONS = window.DEVICE_AC1000HI_LESSONS || [];
 
-var index = window.DEVICE_AC1000HI_LESSONS.findIndex(function(l) { return l.id === 'LAB_AC1000HI_03'; });
+var index = window.DEVICE_AC1000HI_LESSONS.findIndex(function (l) { return l.id === 'LAB_AC1000HI_03'; });
 var lessonObj = {
   id: 'LAB_AC1000HI_03',
   title: 'Bài 3 - Cấu hình wifi IoT',
   subtitle: 'Cấu hình wifi IoT',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình mạng Wi-Fi IoT (băng tần 2.4G) theo các thông số dưới đây:',
     '- SSID Index: <span class="val">2</span>',
     '- SSID Name: <span class="val">FPT Telecom_IoT</span>',
-    '- WPA Key: <span class="val">fpt12345</span>',
-    '<br><b>Cách làm:</b>',
-    '1. Vào Wireless 2.4G > Chọn SSID index 2',
-    '2. Đặt tên và mật khẩu theo yêu cầu > bấm <b>Save & Apply</b>'
+    '- WPA Key: <span class="val">fpt12345</span>'
   ],
   practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=home_wireless.asp',
-    // Clear old wifi localStorage when starting a new session (on login page only)
-    onSimLoad: function(iframeWindow) {
-      try {
-        var loc = (iframeWindow.location.href || '').toLowerCase();
-        if (loc.indexOf('home_wireless') === -1) {
-          localStorage.removeItem('ftc_sim_wifi24');
-          localStorage.removeItem('ftc_sim_wifi5g');
-        }
-      } catch(e) {}
-    },
+  // Clear old wifi localStorage when starting a new session (on login page only)
+  onSimLoad: function (iframeWindow) {
+    try {
+      var loc = (iframeWindow.location.href || '').toLowerCase();
+      if (loc.indexOf('home_wireless') === -1) {
+        localStorage.removeItem('ftc_sim_wifi24');
+        localStorage.removeItem('ftc_sim_wifi5g');
+      }
+    } catch (e) { }
+  },
 
-    // CSS selectors for fields to clear at session start
-    clearFields: [
-      'input[name="ESSID"]',
-      'input[name="PreSharedKey1"]',
-      'input[name="PreSharedKey2"]',
-      'input[name="PreSharedKey3"]'
-    ],
+  // CSS selectors for fields to clear at session start
+  clearFields: [
+    'input[name="ESSID"]',
+    'input[name="PreSharedKey1"]',
+    'input[name="PreSharedKey2"]',
+    'input[name="PreSharedKey3"]'
+  ],
 
 
   grading: {
     description: 'Kiểm tra cấu hình SSID Index 2 (IoT) trên 2.4G',
-    customGrading: function(allDocs) {
-      function fetchHTML(url) {
-        try {
-          var req = new XMLHttpRequest();
-          req.open('GET', url, false);
-          req.send(null);
-          if (req.status === 200) {
-            var parser = new DOMParser();
-            return parser.parseFromString(req.responseText, 'text/html');
-          }
-        } catch(e) {}
-        return null;
-      }
-      
-      var doc24 = fetchHTML('/sim_ac1000HI/cgi-bin/home_wireless.asp?_=' + new Date().getTime());
-      
-      function getVal(doc, selector) {
-        if (!doc) return '';
-        var el = doc.querySelector(selector);
-        return el ? el.value.trim() : '';
-      }
-      
-      var rules = [
-        { id: '1', name: 'Chọn SSID Index 2', expected: '1', actual: getVal(doc24, 'select[name="SSID_INDEX"]') },
-        { id: '2', name: 'SSID Name (IoT)', expected: 'FPT Telecom_IoT', actual: getVal(doc24, 'input[name="ESSID"]') },
-        { id: '3', name: 'WPA Key (IoT)', expected: 'fpt12345', actual: getVal(doc24, 'input[name="PreSharedKey2"]') }
-      ];
-
-      var passedCount = 0;
-      var details = [];
-      rules.forEach(function(r) {
-        var actualVal = (r.actual || '').toString().trim();
-        var expectVal = (r.expected || '').toString().trim();
-        var isMatch = (actualVal === expectVal);
-        
-        if (isMatch) passedCount++;
-        
-        var displayActual = actualVal;
-        var displayExpected = expectVal;
-        if (r.id === '1') {
-           displayActual = actualVal === '1' ? 'SSID Index 2' : (actualVal === '0' ? 'SSID Index 1' : actualVal);
-           displayExpected = 'SSID Index 2';
+    customGrading: function (allDocs) {
+      var data24 = null;
+      var is24Saved = false;
+      try {
+        var raw24 = localStorage.getItem('ftc_sim_wifi24');
+        if (raw24) {
+          data24 = JSON.parse(raw24);
+          is24Saved = true;
         }
+      } catch (e) { }
 
-        details.push({
-          id: r.id,
-          name: r.name,
-          expected: displayExpected,
-          actual: displayActual || '(Trống)',
-          passed: isMatch
+      for (var i = 0; i < allDocs.length; i++) {
+        try {
+          var url = allDocs[i].URL.toLowerCase();
+          if (url.indexOf('home_wireless.asp') !== -1) {
+            data24 = _captureFormData(allDocs[i]);
+          }
+        } catch (e) { }
+      }
+
+      var allDetails = [];
+      var totalRules = 0, passedRules = 0;
+
+      function g(data, name) {
+        return data && data[name] ? String(data[name]).trim() : '';
+      }
+
+      function getKey(data) {
+        if (!data) return '';
+        var auth = g(data, 'WEP_Selection');
+        if (auth === 'WPA2PSK') return g(data, 'PreSharedKey1');
+        if (auth === 'WPAPSK') return g(data, 'PreSharedKey2');
+        if (auth === 'WPAPSKWPA2PSK') return g(data, 'PreSharedKey3');
+        return g(data, 'PreSharedKey3') || g(data, 'PreSharedKey2') || g(data, 'PreSharedKey1') || g(data, 'PreSharedKey');
+      }
+
+      function addRule(id, name, expected, actual, passed) {
+        totalRules++;
+        if (passed) passedRules++;
+        allDetails.push({
+          id: id,
+          name: name,
+          expected: expected,
+          actual: actual || '(Trống)',
+          passed: passed,
+          message: passed ? 'Chính xác' : 'Sai'
         });
-      });
+      }
+
+      if (data24) {
+        var ssidIndex = g(data24, 'SSID_INDEX');
+        var ssidIndexDisplay = ssidIndex === '1' ? 'SSID Index 2' : (ssidIndex === '0' ? 'SSID Index 1' : ('Index ' + ssidIndex));
+        addRule('1', 'Chọn SSID Index 2', 'SSID Index 2', ssidIndexDisplay, (ssidIndex === '1' || ssidIndex === '2') && is24Saved);
+
+        var ssidName = g(data24, 'ESSID') || g(data24, 'ssid');
+        addRule('2', 'SSID Name (IoT)', 'FPT Telecom_IoT', ssidName, ssidName === 'FPT Telecom_IoT' && is24Saved);
+
+        var key = getKey(data24);
+        addRule('3', 'WPA Key (IoT)', 'fpt12345', key, key === 'fpt12345' && is24Saved);
+
+        if (!is24Saved) {
+          totalRules++;
+          allDetails.push({ id: 'hint_save', name: '⚠ Chưa lưu cấu hình', expected: 'Bấm Save & Apply để lưu', actual: 'Chưa lưu', passed: false, _isHint: true });
+        }
+      } else {
+        totalRules++;
+        allDetails.push({ id: 'hint_save', name: '⚠ Chưa cấu hình Wi-Fi IoT', expected: 'Vào Wireless 2.4G → chọn SSID 2 → cấu hình → bấm Save', actual: 'Chưa cấu hình', passed: false, _isHint: true });
+      }
+
+      var score = totalRules === 0 ? 0 : Math.round((passedRules / totalRules) * 100);
       return {
-        passed: passedCount === rules.length,
-        score: Math.round((passedCount / rules.length) * 100),
-        passedCount: passedCount,
-        totalRules: rules.length,
-        details: details
+        passed: passedRules > 0 && passedRules === totalRules,
+        score: score,
+        passedCount: passedRules,
+        totalRules: totalRules,
+        details: allDetails
       };
     }
   }
 };
+
+// Helper: lấy dữ liệu form từ một document
+function _captureFormData(doc) {
+  try {
+    var form = doc.WLAN || doc.forms[0];
+    if (!form) return null;
+    var data = {};
+    for (var i = 0; i < form.elements.length; i++) {
+      var el = form.elements[i];
+      if (!el.name) continue;
+      if (el.type === 'radio' || el.type === 'checkbox') {
+        if (el.checked) data[el.name] = el.value;
+      } else {
+        data[el.name] = el.value;
+      }
+    }
+    return data;
+  } catch (e) { return null; }
+}
 
 if (index !== -1) {
   window.DEVICE_AC1000HI_LESSONS[index] = lessonObj;

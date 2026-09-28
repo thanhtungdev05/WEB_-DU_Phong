@@ -40,7 +40,7 @@ assert.equal((app.match(/if \(!_currentUser && !_guestGuideMode\)/g) || []).leng
 assert.match(app, /if \(_guestGuideMode\) \{[\s\S]*?kết quả và tiến độ không được lưu/);
 assert.match(app, /function sendTrackingTimer\([\s\S]*?if \(_guestGuideMode\) return Promise\.resolve\(false\);/);
 
-assert.match(portal, /app\.js\?v=20260924-session-heartbeat-v22/);
+assert.match(portal, /app\.js\?v=20260928-ver21-merge-v23/);
 assert.match(loginPage, /app\.js\?v=20260922-guest-guide-mode/);
 assert.match(portal, /\/assets\/logoFPT\.png\?v=20260924-fpt-telecom/);
 assert.match(loginPage, /\/assets\/logoFPT\.png\?v=20260924-fpt-telecom/);

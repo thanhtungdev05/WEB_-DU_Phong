@@ -1,4 +1,4 @@
-﻿
+
 
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -258,7 +258,11 @@ function Add_virtualsvr()
                 return;
         showSpin1();
         document.NAT_form.virsevFlag.value = 2;
-        document.NAT_form.submit();
+        if (typeof window.showFakeSaveMsg === 'function') {
+            window.showFakeSaveMsg(document.NAT_form);
+        } else {
+            document.NAT_form.submit();
+        }
 }
 
 
@@ -1208,4 +1212,143 @@ showTableTrig('porttriggeringCfg',tableHeader2,tableData2,2);
                 
 </form>
 </body>
-</html>        
+</html>
+
+<!-- SCRIPT CHAN RELOAD + LOCALSTORAGE (TU DONG THEM VAO) -->
+<script>
+(function() {
+    var STORE_KEY = 'ftc_sim_portfwd';
+
+    function updateTableWithRule(data) {
+        try {
+            if (typeof tableData1 !== 'undefined' && typeof showTableVir === 'function' && typeof tableHeader1 !== 'undefined') {
+                var startExt = data['start_port1'] || '';
+                var endExt = data['end_port1'] || '';
+                var localIp = data['Addr1'] || '';
+                var startInt = data['local_sport'] || startExt;
+                var endInt = data['local_eport'] || endExt;
+                if (startExt && endExt && localIp) {
+                    tableData1[0] = ["1", startExt, endExt, localIp, startInt, endInt, "0"];
+                    showTableVir('Virserconfigration', tableHeader1, tableData1, 2);
+                }
+            }
+        } catch(e) {}
+    }
+
+    function saveFormToStorage() {
+        try {
+            var form = document.NAT_form || document.forms[0];
+            if (!form) return;
+            var data = {};
+            for (var i = 0; i < form.elements.length; i++) {
+                var el = form.elements[i];
+                if (!el.name) continue;
+                if (el.type === 'radio' || el.type === 'checkbox') {
+                    if (el.checked) data[el.name] = el.value;
+                } else {
+                    data[el.name] = el.value;
+                }
+            }
+            localStorage.setItem(STORE_KEY, JSON.stringify(data));
+            updateTableWithRule(data);
+        } catch(e) {}
+    }
+
+    function restoreFormFromStorage() {
+        try {
+            var raw = localStorage.getItem(STORE_KEY);
+            if (!raw) return;
+            var data = JSON.parse(raw);
+            var form = document.NAT_form || document.forms[0];
+            if (!form) return;
+            for (var name in data) {
+                var elements = form.elements[name];
+                if (!elements) continue;
+                var list = elements.length !== undefined && elements.tagName === undefined ? elements : [elements];
+                for (var i = 0; i < list.length; i++) {
+                    var el = list[i];
+                    if (el.type === 'radio' || el.type === 'checkbox') {
+                        el.checked = (el.value === data[name]);
+                    } else {
+                        el.value = data[name];
+                    }
+                }
+            }
+            updateTableWithRule(data);
+        } catch(e) {}
+    }
+
+    function showFakeSaveMsg(formEl) {
+        saveFormToStorage();
+
+        // Dừng spinner xoay vòng sau 500ms để không bị xoay vô tận
+        setTimeout(function() {
+            var s0 = document.getElementById('firstDiv0');
+            if (s0) s0.innerHTML = '';
+            var s1 = document.getElementById('firstDiv1');
+            if (s1) s1.innerHTML = '';
+            var s2 = document.getElementById('firstDiv2');
+            if (s2) s2.innerHTML = '';
+
+            var target = document.getElementById('firstDiv1') || document.getElementById('firstDiv0') || document.getElementById('firstDiv2');
+            if (!target) {
+                var btns = formEl ? formEl.querySelectorAll('.button1, input[type=submit], input[type=button]') : [];
+                if (btns.length > 0) {
+                    target = document.createElement('span');
+                    btns[0].parentNode.insertBefore(target, btns[0].nextSibling);
+                } else {
+                    target = document.body;
+                }
+            }
+
+            var msgEl = document.getElementById('fakeSaveMsg');
+            if (!msgEl) {
+                msgEl = document.createElement('span');
+                msgEl.id = 'fakeSaveMsg';
+                msgEl.style.color = '#15803d';
+                msgEl.style.fontWeight = 'bold';
+                msgEl.style.fontSize = '12px';
+                msgEl.style.marginLeft = '10px';
+                msgEl.style.lineHeight = '24px';
+                target.appendChild(msgEl);
+            }
+            msgEl.innerHTML = '\u2714 Saved successfully!';
+            setTimeout(function() {
+                if (msgEl) msgEl.innerHTML = '';
+            }, 3000);
+        }, 500);
+
+        try {
+            var w = window;
+            for (var i = 0; i < 10; i++) {
+                if (w.onSimulatorSave) {
+                    w.onSimulatorSave(window);
+                    break;
+                }
+                if (w === w.parent) break;
+                w = w.parent;
+            }
+        } catch(e) {}
+    }
+    window.showFakeSaveMsg = showFakeSaveMsg;
+
+    document.addEventListener('submit', function(e) {
+        e.preventDefault();
+        showFakeSaveMsg(e.target);
+    });
+
+    if (typeof HTMLFormElement !== 'undefined') {
+        HTMLFormElement.prototype.submit = function() {
+            showFakeSaveMsg(this);
+        };
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', restoreFormFromStorage);
+    } else {
+        restoreFormFromStorage();
+    }
+    setTimeout(restoreFormFromStorage, 800);
+})();
+</script>
+<!-- KET THUC SCRIPT CHAN RELOAD -->

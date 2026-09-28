@@ -51,7 +51,8 @@ const bai3 = lessons.find(l => l.id === 'LAB_AX3000GZ_03');
 assert.ok(bai3, 'LAB_AX3000GZ_03 must exist');
 
 // Check instructions
-assert.ok(bai3.instructions.some(i => i.includes('SSID2(2.4G)')), 'Instructions must explicitly require SSID2(2.4G)');
+assert.ok(bai3.instructions.some(i => i.includes('FPT IoT')), 'Instructions must explicitly require FPT IoT');
+assert.ok(bai3.instructions.some(i => i.includes('fptiot123')), 'Instructions must explicitly require fptiot123');
 
 // Check rules
 const rules = bai3.grading.rules;

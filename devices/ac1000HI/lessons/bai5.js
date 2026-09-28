@@ -5,30 +5,26 @@
 
 window.DEVICE_AC1000HI_LESSONS = window.DEVICE_AC1000HI_LESSONS || [];
 
-var index = window.DEVICE_AC1000HI_LESSONS.findIndex(function(l) { return l.id === 'LAB_AC1000HI_05'; });
+var index = window.DEVICE_AC1000HI_LESSONS.findIndex(function (l) { return l.id === 'LAB_AC1000HI_05'; });
 var lessonObj = {
   id: 'LAB_AC1000HI_05',
   title: 'Bài 5 - Cấu hình DHCP',
   subtitle: 'Cấu hình DHCP',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện thay đổi cấu hình địa chỉ IP LAN trên thiết bị theo các thông số được cung cấp dưới đây.',
-    '- IP Address: <span class="val">192.168.1.1</span>',
-    '- IP Subnet Mask: <span class="val">255.255.255.0</span>',
-    '- Start IP: <span class="val">192.168.1.2</span>',
-    '- IP Pool Count: <span class="val">253</span>',
-    '- Lease Time: <span class="val">86400</span>',
+    '- IP Address: <span class="val">192.168.10.1</span>',
+    '- Subnet Mask: <span class="val">255.255.255.0</span>'
   ],
   practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=home_lan.asp',
-    // Clear old localStorage when starting a new session
-    onSimLoad: function(iframeWindow) {
-      try {
-        var loc = (iframeWindow.location.href || '').toLowerCase();
-        if (loc.indexOf('home_lan') === -1) {
-          localStorage.removeItem('ftc_sim_dhcp');
-        }
-      } catch(e) {}
-    },
+  // Clear old localStorage when starting a new session
+  onSimLoad: function (iframeWindow) {
+    try {
+      var loc = (iframeWindow.location.href || '').toLowerCase();
+      if (loc.indexOf('home_lan') === -1) {
+        localStorage.removeItem('ftc_sim_dhcp');
+      }
+    } catch (e) { }
+  },
 
 
   clearFields: [
@@ -39,7 +35,7 @@ var lessonObj = {
 
   grading: {
     description: 'Kiểm tra cấu hình IP LAN & DHCP',
-    customGrading: function(allDocs) {
+    customGrading: function (allDocs) {
       // 1. Đọc từ localStorage để xem đã nhấn Save chưa
       var data = null;
       var isSaved = false;
@@ -78,28 +74,26 @@ var lessonObj = {
       function g(data, name) {
         return data && data[name] ? String(data[name]).trim() : '';
       }
-      
+
       var isDhcpEnable = g(data, 'dhcpTypeRadio') === '1';
 
       var rules = [
-        { id: '1', name: 'IP Address', expected: '192.168.1.1', actual: g(data, 'uiViewIPAddr') },
+        { id: '1', name: 'IP Address', expected: '192.168.10.1', actual: g(data, 'uiViewIPAddr') },
         { id: '2', name: 'IP Subnet Mask', expected: '255.255.255.0', actual: g(data, 'uiViewNetMask') },
         { id: '3', name: 'DHCP State', expected: 'Enable', actual: isDhcpEnable ? 'Enable' : 'Disable' },
-        { id: '4', name: 'Start IP', expected: '192.168.1.2', actual: g(data, 'StartIp') },
+        { id: '4', name: 'Start IP', expected: '192.168.10.2', actual: g(data, 'StartIp') },
         { id: '5', name: 'IP Pool Count', expected: '253', actual: g(data, 'PoolSize') },
         { id: '6', name: 'Lease Time', expected: '86400', actual: g(data, 'dhcp_LeaseTime') }
       ];
 
       var passedCount = 0;
       var details = [];
-      rules.forEach(function(r) {
+      rules.forEach(function (r) {
         var actualVal = (r.actual || '').toString().trim();
         var expectVal = (r.expected || '').toString().trim();
-        var isMatch = (actualVal === expectVal);
-        
-        // Bắt buộc phải nhấn Save mới qua
-        if (isMatch && isSaved) passedCount++;
-        else isMatch = false;
+        var isMatch = (actualVal.toLowerCase() === expectVal.toLowerCase());
+
+        if (isMatch) passedCount++;
 
         details.push({
           id: r.id,
@@ -117,7 +111,7 @@ var lessonObj = {
       }
 
       return {
-        passed: passedCount === rules.length,
+        passed: passedCount === rules.length && isSaved,
         score: Math.round((passedCount / rules.length) * 100),
         passedCount: passedCount,
         totalRules: rules.length,

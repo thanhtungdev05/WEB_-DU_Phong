@@ -34,6 +34,12 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         name: 'PPPoE Mode',
         selector: 'input[name="PPPoE"]:checked',
         expected: '1',
+        // Đo thật trên thiết bị (radio value="1" = "Enable", value="0" = "Disable"
+        // — xem HTML gốc `mwpvcvlan_clkid-108.html`): bảng "Xem lỗi sai" trước đây
+        // hiện thẳng giá trị thô "1"/"0" thay vì chữ học viên nhìn thấy trên màn
+        // hình, dễ gây hiểu nhầm (anh Huynn báo 2026-09-23). `valueLabels` đổi
+        // giá trị thô sang đúng chữ hiển thị khi in ra bảng kết quả.
+        valueLabels: { '1': 'Enable', '0': 'Disable' },
         type: 'text_exact',
         trim: true,
         required: true

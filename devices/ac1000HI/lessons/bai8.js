@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/ac1000HI/lessons/bai8.js
  * Bài 8: Cấu hình WiFi Timer
  */
@@ -9,8 +9,8 @@ window.DEVICE_AC1000HI_LESSONS.push({
   id: 'LAB_AC1000HI_08',
   title: 'Bài 8 - Cấu hình WiFi Timer',
   subtitle: 'Lên lịch tắt/bật Wi-Fi tự động',
-    instructions: [
-    '<b>Yêu cầu:</b> Lên lịch tự động bật/tắt Wi-Fi với khoảng thời gian:',
+  instructions: [
+    '<b>Yêu cầu:</b>',
     '- Start Time: <span class="val">8:00</span>',
     '- End Time: <span class="val">17:00</span>'
   ],

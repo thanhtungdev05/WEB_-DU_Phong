@@ -4,6 +4,11 @@
  *
  * Nguồn đề bài: bản lab cũ của FPT (16_authen_log_old/modules/R_MIKROTIK),
  * giá trị User/Password do anh Huynn chốt lại ngày 2026-09-18.
+ * User đã sửa lại thành sgfdl-211208-218 theo yêu cầu anh Huynn 2026-09-23
+ * (giống đúng đáp án User của Bài 1 Vigor2927 — cùng một bài "Cấu hình PPPoE").
+ * Password vẫn là 'ftc1234' — KHÁC với Vigor2927 ('12345678'), nhưng đây là
+ * CÓ CHỦ ĐÍCH: anh Huynn xác nhận (2026-09-23) giữ nguyên, là đáp án RIÊNG
+ * của MikroTik, không đồng bộ theo Vigor2927.
  *
  * CÁCH ĐỌC GIÁ TRỊ (khác hẳn DrayTek): WebFig không đặt name/id cho ô nhập,
  * mọi ô đều nằm trong <td class="value">, cùng hàng <tr> với <td class="label">
@@ -12,8 +17,8 @@
 
 window.DEVICE_MIKROTIK_HEXS_LESSONS = window.DEVICE_MIKROTIK_HEXS_LESSONS || [];
 
-/** Đáp án bài lab (anh Huynn chốt 2026-09-18, lấy từ bản lab cũ của FPT). */
-var MK_BAI1_DAP_AN = { user: 'hnftc-hlkt-234', pass: 'ftc1234' };
+/** Đáp án bài lab (User sửa lại 2026-09-23 theo anh Huynn — xem chú thích đầu file). */
+var MK_BAI1_DAP_AN = { user: 'sgfdl-211208-218', pass: 'ftc1234' };
 
 /**
  * BẢNG GIÁ TRỊ CHUẨN của trang chi tiết pppoe-out1.
@@ -26,8 +31,8 @@ var MK_BAI1_DAP_AN = { user: 'hnftc-hlkt-234', pass: 'ftc1234' };
  *         'nhieu'  -> nhiều checkbox cùng một nhãn (hàng Allow)
  */
 var MK_BAI1_CHUAN = [
-  { nhan: 'User',                  kieu: 'chu',   dung: 'hnftc-hlkt-234', deBai: true,
-    ten: 'User: hnftc-hlkt-234' },
+  { nhan: 'User',                  kieu: 'chu',   dung: 'sgfdl-211208-218', deBai: true,
+    ten: 'User: sgfdl-211208-218' },
   { nhan: 'Password',              kieu: 'chu',   dung: 'ftc1234',        deBai: true,
     ten: 'Password: ftc1234' },
   { nhan: 'Enabled',               kieu: 'tich',  dung: true,   ten: 'Enabled: giữ nguyên (có tích)' },
@@ -164,7 +169,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
     '- Password: <span class="val">admin</span>',
     '- Vào menu <b>PPP</b>, nhấn đúp vào giao diện <b>pppoe-out1</b>',
     '- Mở rộng mục <b>Dial Out</b>',
-    '- User: <span class="val">hnftc-hlkt-234</span>',
+    '- User: <span class="val">sgfdl-211208-218</span>',
     '- Password: <span class="val">ftc1234</span>',
     '- Nhấn <b>OK</b> để lưu cấu hình'
   ],
@@ -174,9 +179,9 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
     rules: [
       {
         id: 'pppoe_user',
-        name: 'User: hnftc-hlkt-234',
+        name: 'User: sgfdl-211208-218',
         selector: '#ftc-mk-user',
-        expected: 'hnftc-hlkt-234',
+        expected: 'sgfdl-211208-218',
         type: 'text_exact',
         required: true
       },

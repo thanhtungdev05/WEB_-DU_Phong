@@ -34,8 +34,8 @@ assert.ok(
   'portal.html must include cachebuster 20260918102500 for ax3000s/tooltips/bai1.js'
 );
 assert.ok(
-  portalContent.includes('devices/ax3000s/lessons/bai1.js?v=20260918102500'),
-  'portal.html must include cachebuster 20260918102500 for ax3000s/lessons/bai1.js'
+  portalContent.includes('devices/ax3000s/lessons/bai1.js?v=20260927235000'),
+  'portal.html must include cachebuster 20260927235000 for ax3000s/lessons/bai1.js'
 );
 
 // 4. Verify context evaluation

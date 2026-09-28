@@ -65,13 +65,11 @@ assert.ok(bai5, 'LAB_AX3000GZ_05 must exist');
 // Verify clearFields is empty to preserve router defaults
 assert.ok(!bai5.clearFields || bai5.clearFields.length === 0, 'clearFields must be empty to keep router defaults intact');
 
-// Verify instructions: Subnet Mask, Start IP, End IP, Lease Time removed
+// Verify instructions
 assert.ok(bai5.instructions.some(i => i.includes('192.168.10.1')), 'Instructions must require 192.168.10.1');
-assert.ok(bai5.instructions.some(i => i.includes('DHCP Server')), 'Instructions must require DHCP Server: On');
-assert.ok(!bai5.instructions.some(i => i.includes('DHCP Start IP:')), 'Instructions must NOT contain DHCP Start IP bullet point');
-assert.ok(!bai5.instructions.some(i => i.includes('DHCP End IP:')), 'Instructions must NOT contain DHCP End IP bullet point');
-assert.ok(!bai5.instructions.some(i => i.includes('Custom Lease Time:')), 'Instructions must NOT contain Custom Lease Time bullet point');
-assert.ok(!bai5.instructions.some(i => i.includes('Subnet Mask:')), 'Instructions must NOT contain Subnet Mask bullet point');
+assert.ok(bai5.instructions.some(i => i.includes('255.255.255.0')), 'Instructions must contain Subnet Mask');
+assert.ok(bai5.instructions.some(i => i.includes('192.168.10.2')), 'Instructions must contain Start IP');
+assert.ok(bai5.instructions.some(i => i.includes('12h')), 'Instructions must contain Lease Time');
 
 // Verify grading rules
 const rules = bai5.grading.rules;

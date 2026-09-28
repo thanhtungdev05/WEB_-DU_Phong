@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
  *  BACKEND-EXT - Mo rong backend ao: cap du lieu cho cac method "get" con lai
  *  (firewall, filter, QoS, DDNS, TR-069, port forward, NTP, chan doan, WPS...).
  *  Cac method GHI (set/add/del...) da duoc dispatch tra "ok" tu dong.
@@ -32,7 +32,12 @@
   R("rtweb.ipfilter.getIpFilterBasic", function () { return { ipfilter: { enable: 0, defaultAction: "accept" } }; });
 
   /* ---------------- NAT / PORT FORWARD / VIRTUAL SERVER ---------------- */
-  R("gwweb.virserver.get", function () { return { vircfg: [] }; });
+    let virCfgState = [];
+  let virCfgIdCounter = 1;
+  R("gwweb.virserver.get", function () { return { vircfg: virCfgState }; });
+  R("gwweb.virserver.add", function (param) { if(param) { param.idx = virCfgIdCounter++; virCfgState.push(param); } return {result:0}; });
+  R("gwweb.virserver.delete", function (param) { if(param && param.idx) { virCfgState = virCfgState.filter(item => item.idx != param.idx); } return {result:0}; });
+  R("gwweb.virserver.edit", function (param) { if(param && param.idx) { let idx = virCfgState.findIndex(item => item.idx == param.idx); if(idx !== -1) { virCfgState[idx] = Object.assign({}, virCfgState[idx], param); } } return {result:0}; });
 
   /* ---------------- STATIC ROUTE ---------------- */
   R("rtweb.staticroute.get_static_route", function () { return { route4_num: 0, route6_num: 0, route4: [], route6: [] }; });

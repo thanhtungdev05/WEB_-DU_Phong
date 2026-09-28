@@ -12,19 +12,18 @@ var lessonObj = {
   subtitle: 'Cấu hình Port Forwarding',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình Mở Port trên thiết bị theo các thông số được cung cấp dưới đây.',
     '- Start External Port: <span class="val">3389</span>',
     '- End External Port: <span class="val">3389</span>',
     '- IP Address: <span class="val">192.168.1.254</span>',
     '- Start Internal Port: <span class="val">3389</span>',
-    '- End Internal Port: <span class="val">3389</span>',
+    '- End Internal Port: <span class="val">3389</span>'
   ],
   practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=adv_nat_top.asp',
     // Clear old localStorage when starting a new session
     onSimLoad: function(iframeWindow) {
       try {
         var loc = (iframeWindow.location.href || '').toLowerCase();
-        if (loc.indexOf('adv_nat_top') === -1) {
+        if (loc.indexOf('adv_nat') === -1) {
           localStorage.removeItem('ftc_sim_portfwd');
         }
       } catch(e) {}
@@ -42,9 +41,10 @@ var lessonObj = {
   grading: {
     description: 'Kiểm tra cấu hình Port Forwarding (Virtual Server)',
     customGrading: function(allDocs) {
-      // 1. Đọc từ localStorage để xem đã nhấn Save chưa
       var data = null;
       var isSaved = false;
+
+      // 1. Đọc từ localStorage
       try {
         var raw = localStorage.getItem('ftc_sim_portfwd');
         if (raw) {
@@ -53,12 +53,39 @@ var lessonObj = {
         }
       } catch (e) { }
 
-      // 2. Dự phòng lấy dữ liệu từ form hiện tại nếu có
-      if (!isSaved) {
+      // 2. Kiểm tra từ bảng tableData1 hoặc cờ _ftcIsSaved của tài liệu
+      for (var i = 0; i < allDocs.length; i++) {
+        try {
+          var d = allDocs[i];
+          var win = d.defaultView || d.parentWindow;
+          if (win && win.tableData1 && win.tableData1[0] && win.tableData1[0][1] && win.tableData1[0][1] !== 'N/A') {
+            isSaved = true;
+            if (!data) {
+              data = {
+                start_port1: win.tableData1[0][1],
+                end_port1: win.tableData1[0][2],
+                Addr1: win.tableData1[0][3],
+                local_sport: win.tableData1[0][4],
+                local_eport: win.tableData1[0][5]
+              };
+            }
+          }
+          if (d._ftcIsSaved) {
+            isSaved = true;
+          }
+        } catch (e) { }
+      }
+
+      if (window._hasClickedSaveInGuide) {
+        isSaved = true;
+      }
+
+      // 3. Dự phòng lấy dữ liệu trực tiếp từ form nếu chưa có data
+      if (!data) {
         for (var i = 0; i < allDocs.length; i++) {
           try {
             var url = allDocs[i].URL.toLowerCase();
-            if (url.indexOf('adv_nat_top.asp') !== -1) {
+            if (url.indexOf('adv_nat') !== -1) {
               var form = allDocs[i].NAT_form || allDocs[i].forms[0];
               if (form) {
                 data = {};
@@ -100,11 +127,9 @@ var lessonObj = {
       rules.forEach(function(r) {
         var actualVal = (r.actual || '').toString().trim();
         var expectVal = (r.expected || '').toString().trim();
-        var isMatch = (actualVal === expectVal);
+        var isMatch = (actualVal.toLowerCase() === expectVal.toLowerCase());
         
-        // Bắt buộc phải nhấn Save mới qua
-        if (isMatch && isSaved) passedCount++;
-        else isMatch = false;
+        if (isMatch) passedCount++;
 
         details.push({
           id: r.id,
@@ -115,14 +140,18 @@ var lessonObj = {
         });
       });
 
-      if (!isSaved) {
+      var allFieldsMatched = (passedCount === rules.length);
+      // Đạt yêu cầu nếu đã nhập đúng cả 5 trường thông số
+      var passed = allFieldsMatched;
+
+      if (!isSaved && !allFieldsMatched) {
         details.push({
-          id: 'hint', name: '⚠ Chưa lưu cấu hình', expected: 'Bấm Save để lưu cấu hình', actual: 'Chưa lưu', passed: false, _isHint: true
+          id: 'hint', name: '⚠ Thao tác lưu', expected: 'Bấm Add để lưu cấu hình', actual: 'Chưa lưu', passed: false, _isHint: true
         });
       }
 
       return {
-        passed: passedCount === rules.length,
+        passed: passed,
         score: Math.round((passedCount / rules.length) * 100),
         passedCount: passedCount,
         totalRules: rules.length,

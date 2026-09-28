@@ -629,7 +629,7 @@
                         btnVal.includes('submit') || 
                         btnVal.includes('lưu') || 
                         ((currentDeviceId === 'vigor2927') && (btnVal === 'ok' || el.name === 'submit')) ||
-                        ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
+                        ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06') && (btnVal === 'add' || el.name === 'AddBtn' || el.name === 'Add1')) ||
                         (el.type === 'submit' && el.tagName === 'INPUT');
                       if (isSaveOrApply) {
                         doc._ftcLastSaveInteraction = Date.now();
@@ -667,12 +667,13 @@
                     if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || laNutLuuMikrotik) {
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
                       const isOntBai6 = (currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6');
+                      const isPortFwdAdd = (currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06');
 
                       // Nút "Add New" trên thanh công cụ dùng để mở modal thêm mới, KHÔNG phải nút lưu cấu hình
                       const isAddNewBtn = btnVal === 'add new' || el.classList.contains('sim-them') || (isOntBai6 && btnVal === 'add' && !el.closest('.MuiDialog-root, .MuiPaper-root') && !el.classList.contains('dlg-luu'));
 
                       const isExcludedAction = isAddNewBtn ||
-                        (btnVal === 'add' && !isOntBai6 && currentLessonId !== 'LAB_AC1000F_06') ||
+                        (btnVal === 'add' && !isOntBai6 && !isPortFwdAdd) ||
                         btnVal === 'delete' || btnVal === 'undo' || btnVal === 'cancel' || btnVal === 'reset';
 
                       if (currentDeviceId === 'vigor2927') {
@@ -700,7 +701,7 @@
                           btnVal.includes('lưu') || 
                           isVigorOk ||
                           (isOntBai6 && (el.classList.contains('dlg-luu') || el.closest('.MuiDialogActions-root') || btnVal === 'add')) ||
-                          ((currentLessonId === 'LAB_AC1000F_06') && (btnVal === 'add' || el.name === 'AddBtn')) ||
+                          (isPortFwdAdd && (btnVal === 'add' || el.name === 'AddBtn' || el.name === 'Add1')) ||
                           (el.type === 'submit' && el.tagName === 'INPUT');
 
                         if (isSaveOrApply) {
@@ -745,7 +746,7 @@
                             window._hasClickedSaveInGuide = true;
                             setTimeout(function () {
                               try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
-                            }, isOntBai6 ? 350 : 50);
+                            }, (isOntBai6 || isPortFwdAdd) ? 350 : 50);
                           }
                         }
                       }
@@ -1993,6 +1994,13 @@
       window._hasClickedSaveInGuide = true;
     }
 
+    function gradingDisplayValue(rule, value) {
+      if (rule.valueLabels && Object.prototype.hasOwnProperty.call(rule.valueLabels, value)) {
+        return rule.valueLabels[value];
+      }
+      return value;
+    }
+
     rules.forEach(rule => {
       let actualValue = '';
       let elementFound = false;
@@ -2178,12 +2186,12 @@
         if (isSaveRequiredDevice(effectiveDeviceId) && elementFound && !isSaved) {
           msg = 'Chưa bấm Save để lưu cấu hình';
         } else {
-          msg = `Mong muốn: "${expectedVal}", Thực tế: "${actualValue || 'Trống'}"`;
+          msg = `Mong muốn: "${gradingDisplayValue(rule, expectedVal)}", Thực tế: "${gradingDisplayValue(rule, actualValue) || 'Trống'}"`;
         }
       }
 
-      let displayExpected = rule.displayExpected || expectedVal;
-      let displayActual = actualValue;
+      let displayExpected = rule.displayExpected || gradingDisplayValue(rule, expectedVal);
+      let displayActual = gradingDisplayValue(rule, actualValue);
       if (rule.selector && rule.selector.includes('dhcpTypeRadio')) {
         if (actualValue === '1' || actualValue === 'true') displayActual = 'Bật/Enable';
         else if (actualValue === '0' || actualValue === 'false') displayActual = 'Tắt/Disable';
@@ -3508,6 +3516,16 @@
       const evalResult = evaluateLesson(device, lesson);
       const btnGuideErrors = document.getElementById('btn-guide-errors');
       const noConfigSaved = isNoConfigDevice();
+
+      const normalizedDeviceId = (currentDeviceId || '').toLowerCase();
+      if (normalizedDeviceId === 'ac1000hi' && lesson.id === 'LAB_AC1000HI_06' && evalResult && evalResult.passed) {
+        if (btnSubmitLab) {
+          btnSubmitLab.disabled = false;
+          btnSubmitLab.style.opacity = '1';
+        }
+        setTimeout(function () { submitLab(); }, 600);
+        return;
+      }
 
       if (currentMode === 'practice') {
         // ⚡ Chế độ Thực hành: Nút lỗi sai LUÔN ẨN, Nút Nộp bài LUÔN SÁNG để học viên nộp bài

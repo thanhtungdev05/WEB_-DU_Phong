@@ -13,7 +13,6 @@ var lessonObj = {
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình một mạng Wi-Fi riêng biệt dành riêng cho các thiết bị IoT (Smart Home, Camera, v.v.). Cấu hình các thông số mạng Wi-Fi IoT trên băng tần 2.4G theo đúng yêu cầu dưới đây:',
-    '- Chọn cấu hình dòng: <span class="val">SSID2(2.4G)</span>',
     '- SSID Name: <span class="val">FPT IoT</span>',
     '- WPA Key: <span class="val">fptiot123</span>',
   ],
