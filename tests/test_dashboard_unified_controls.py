@@ -242,7 +242,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
     def test_asset_version_prevents_stale_control_styles(self):
         self.assertIn("css/styles.css?v=20260924-column-resize-v28", self.html)
         self.assertIn("css/dashboard-professional.css?v=20260917-roster-loading-v31", self.html)
-        self.assertEqual(self.html.count("20260924-neon-transfer-v4"), 1)
+        self.assertEqual(self.html.count("20260928-technician-pagination-v5"), 1)
 
     def test_resizable_tables_use_stable_column_models(self):
         self.assertIn('id="technicianSessionsTable" data-resizable-columns="colgroup"', self.html)

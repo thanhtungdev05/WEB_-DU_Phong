@@ -7,6 +7,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const api = fs.readFileSync(path.join(root, 'api/index.php'), 'utf8');
 const report = fs.readFileSync(path.join(root, 'api/lib/dashboard_report.php'), 'utf8');
+const technicianApi = fs.readFileSync(path.join(root, 'api/lib/dashboard_technicians.php'), 'utf8');
 const dashboard = fs.readFileSync(path.join(root, 'dashboard-authen/js/app.js'), 'utf8');
 const dashboardHtml = fs.readFileSync(path.join(root, 'dashboard-authen/index.html'), 'utf8');
 const dashboardBaseStyles = fs.readFileSync(path.join(root, 'dashboard-authen/css/styles.css'), 'utf8');
@@ -24,6 +25,22 @@ const attemptMigration = fs.readFileSync(
   'utf8'
 );
 const trackingHandler = fs.readFileSync(path.join(root, 'api/lib/tracking_handler.php'), 'utf8');
+const technicianIndexMigration = fs.readFileSync(
+  path.join(root, 'api/migrations/050_dashboard_technician_pagination_indexes.sql'),
+  'utf8'
+);
+
+assert.match(api, /dashboard_technicians\.php/);
+assert.match(api, /\['all', 'technicians', 'technician-sessions'\]/);
+assert.match(api, /dashboard_technician_summary_page/);
+assert.match(api, /dashboard_technician_session_page/);
+assert.match(technicianApi, /function dashboard_technician_summary_page/);
+assert.match(technicianApi, /COUNT\(\*\) OVER \(\) AS matched_technicians/);
+assert.match(technicianApi, /LIMIT :page_limit OFFSET :page_offset/);
+assert.match(technicianApi, /function dashboard_technician_session_page/);
+assert.match(technicianApi, /activity\.occurred_at, activity\.session_id/);
+assert.match(technicianIndexMigration, /idx_timer_sessions_dashboard_time/);
+assert.match(technicianIndexMigration, /idx_timer_sessions_dashboard_user_time/);
 
 assert.match(api, /JOIN lab_catalog active_lab ON active_lab\.lab_id = timer\.lab_id/);
 assert.match(api, /JOIN device_catalog active_device ON active_device\.device_id = active_lab\.device_id/);
@@ -127,7 +144,9 @@ assert.match(dashboard, /if \(isPassed === true\) return 'Đạt'/);
 assert.match(dashboard, /currentMetrics\.passed/);
 assert.doesNotMatch(dashboard, /function computeMetrics/);
 assert.match(dashboard, /allParams\.set\('include_assignments', '0'\)/);
-assert.match(dashboard, /fetchDashboardCatalog\(\)/);
+assert.match(dashboard, /fetchDashboardCatalog\(\{ includeTechnicians: technicianCatalogRequested \}\)/);
+assert.match(dashboard, /function dashboardViewNeedsTechnicianCatalog/);
+assert.match(api, /include_technicians/);
 assert.match(dashboard, /new URLSearchParams\(\{[\s\S]*include_assignments: '1'/);
 assert.match(dashboard, /include_branch_drilldown: activeDashboardView === 'analytics' \? '1' : '0'/);
 assert.match(dashboard, /function dashboardViewNeedsReport[\s\S]*viewName === 'overview' \|\| viewName === 'analytics'/);
@@ -135,6 +154,10 @@ assert.match(dashboard, /function dashboardViewNeedsSessions[\s\S]*viewName === 
 assert.match(dashboard, /const sessionsRequested = dashboardViewNeedsSessions\(\)/);
 assert.match(dashboard, /const detailRequest = sessionsRequested[\s\S]*Promise\.resolve\(\{/);
 assert.match(dashboard, /ensureDashboardSessionsLoaded\(\)/);
+assert.match(dashboard, /reloadTechnicianSummaries/);
+assert.match(dashboard, /\/dashboard\/technicians\?/);
+assert.match(dashboard, /\/dashboard\/technician-sessions\?/);
+assert.match(dashboard, /loadSelectedTechnicianHistory/);
 assert.match(dashboard, /dashboardReport\?\.monthly_regions/);
 assert.match(dashboard, /reportRequested = dashboardViewNeedsReport\(\)[\s\S]*Promise\.resolve\(undefined\)/);
 assert.match(dashboard, /dashboardReport\?\.meta\?\.includes_branch_drilldown !== true[\s\S]*reloadDashboardReport\(\)/);

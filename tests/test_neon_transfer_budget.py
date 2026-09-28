@@ -10,8 +10,10 @@ class NeonTransferBudgetTests(unittest.TestCase):
         cls.api = (ROOT / 'api' / 'index.php').read_text(encoding='utf-8')
         cls.dashboard = (ROOT / 'dashboard-authen' / 'js' / 'app.js').read_text(encoding='utf-8')
         cls.report = (ROOT / 'api' / 'lib' / 'dashboard_report.php').read_text(encoding='utf-8')
+        cls.technicians = (ROOT / 'api' / 'lib' / 'dashboard_technicians.php').read_text(encoding='utf-8')
         cls.migration = (ROOT / 'api' / 'migrations' / '047_dashboard_transfer_guard.sql').read_text(encoding='utf-8')
         cls.sequence_migration = (ROOT / 'api' / 'migrations' / '048_dashboard_revision_sequence.sql').read_text(encoding='utf-8')
+        cls.technician_index_migration = (ROOT / 'api' / 'migrations' / '050_dashboard_technician_pagination_indexes.sql').read_text(encoding='utf-8')
         cls.example_env = (ROOT / '.env.example').read_text(encoding='utf-8')
         cls.runtime = (ROOT / 'api' / 'lib' / 'runtime.php').read_text(encoding='utf-8')
         cls.session_handler = (ROOT / 'api' / 'lib' / 'PostgresSessionHandler.php').read_text(encoding='utf-8')
@@ -50,7 +52,8 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn("$action === 'catalog'", self.api)
         self.assertIn("allParams.set('include_assignments', '0')", self.dashboard)
         self.assertIn("include_sessions: '0'", self.dashboard)
-        self.assertIn('fetchDashboardCatalog()', self.dashboard)
+        self.assertIn('fetchDashboardCatalog({ includeTechnicians: technicianCatalogRequested })', self.dashboard)
+        self.assertIn('function dashboardViewNeedsTechnicianCatalog', self.dashboard)
         self.assertIn('DASHBOARD_CATALOG_CACHE_SECONDS=21600', self.example_env)
         self.assertIn('function reloadDashboardSessionsForRange()', self.dashboard)
         self.assertIn('reloadDashboardSelectedRange();', self.dashboard)
@@ -61,6 +64,16 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn('const sessionsRequested = dashboardViewNeedsSessions()', self.dashboard)
         self.assertIn("allParams.set('include_sessions', sessionsRequested ? '1' : '0')", self.dashboard)
         self.assertIn('ensureDashboardSessionsLoaded()', self.dashboard)
+
+    def test_technician_lookup_uses_server_pages_and_lazy_history(self):
+        self.assertIn('function dashboard_technician_summary_page', self.technicians)
+        self.assertIn('COUNT(*) OVER () AS matched_technicians', self.technicians)
+        self.assertIn('function dashboard_technician_session_page', self.technicians)
+        self.assertIn('/dashboard/technicians?', self.dashboard)
+        self.assertIn('/dashboard/technician-sessions?', self.dashboard)
+        self.assertIn('loadSelectedTechnicianHistory', self.dashboard)
+        self.assertIn('DASHBOARD_TECHNICIAN_PAGE_SIZE=25', self.example_env)
+        self.assertIn('idx_timer_sessions_dashboard_time', self.technician_index_migration)
 
     def test_overview_region_charts_use_compact_database_aggregates(self):
         self.assertIn('function dashboard_report_monthly_regions', self.report)

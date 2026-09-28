@@ -98,10 +98,11 @@ function respond(array $payload = [], int $status = 200): void
     $responseBytes = strlen($json);
     $queryCount = function_exists('database_query_count') ? database_query_count() : 0;
     $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '/';
-    $responseBudget = str_contains($requestPath, '/dashboard/all')
+    $isDashboardDataEndpoint = str_contains($requestPath, '/dashboard/');
+    $responseBudget = $isDashboardDataEndpoint
         ? env_int('DASHBOARD_MAX_RESPONSE_BYTES', 2097152, 65536, 16777216)
         : env_int('API_MAX_RESPONSE_BYTES', 8388608, 65536, 33554432);
-    $queryBudget = str_contains($requestPath, '/dashboard/all')
+    $queryBudget = $isDashboardDataEndpoint
         ? env_int('DASHBOARD_MAX_QUERY_COUNT', 8, 1, 100)
         : env_int('API_MAX_QUERY_COUNT', 20, 1, 200);
     header('X-Response-Bytes: ' . $responseBytes);
@@ -2693,7 +2694,9 @@ function handle_dashboard(array $segments, string $method): void
 
     if ($action === 'catalog') {
         $pdo = db();
-        $technicians = $pdo->query(
+        $includeTechnicians = !array_key_exists('include_technicians', $_GET)
+            || filter_var($_GET['include_technicians'], FILTER_VALIDATE_BOOLEAN);
+        $technicians = $includeTechnicians ? $pdo->query(
             <<<'SQL'
             SELECT user_id, employee_id, email, display_name, class_code, job_title,
                    unit_id, unit_code, unit_name, region_id, region_code, region_name,
@@ -2703,7 +2706,7 @@ function handle_dashboard(array $segments, string $method): void
              WHERE is_terminated = FALSE
              ORDER BY display_name NULLS LAST, email
             SQL
-        )->fetchAll();
+        )->fetchAll() : [];
         $catalogRows = $pdo->query(
             <<<'SQL'
             SELECT device.device_id, device.model, device.device_name,
@@ -2734,6 +2737,7 @@ function handle_dashboard(array $segments, string $method): void
         }
         respond_private_cache(['data' => [
             'technicians' => array_values($technicians),
+            'technicians_included' => $includeTechnicians,
             'devices' => array_values($devices),
             'labs' => array_values($labs),
         ]], env_int('DASHBOARD_CATALOG_CACHE_SECONDS', 21600, 300, 86400));

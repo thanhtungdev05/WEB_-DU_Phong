@@ -22,6 +22,8 @@ let dashboardSessionsRequest = null;
 let technicianSummaries = [];
 let technicianSummaryRequest = null;
 let technicianDetailRequest = null;
+let technicianExportSessions = null;
+let technicianCatalogRequest = null;
 
 const DASHBOARD_SESSION_HEARTBEAT_INTERVAL_MS = 20 * 60 * 1000;
 const SESSION_HEARTBEAT_LAST_SUCCESS_KEY = 'ftc-session-heartbeat-last-success-v1';
@@ -114,6 +116,7 @@ const state = {
     technicianSummaryLoading: false,
     technicianSummaryTotal: 0,
     technicianSummarySessionTotal: 0,
+    technicianSummaryPageSize: 25,
     technicianSummaryFrom: '',
     technicianSummaryTo: '',
     selectedLearnerPersonId: '',
@@ -147,6 +150,7 @@ const state = {
     dataSourceLabel: 'Đang đồng bộ dữ liệu vận hành',
     dashboardDataLoaded: false,
     dashboardReportStatus: 'loading',
+    technicianCatalogLoaded: false,
     lastSuccessfulRefreshAt: null,
     sessionHistoryDays: null,
     sessionHistoryFrom: '',
@@ -918,8 +922,9 @@ function renderTechnicianSummaryTable() {
             });
         });
     }
-    const totalPages = Math.max(1, Math.ceil(state.technicianSummaryTotal / 25));
-    const start = (state.learnerTablePage - 1) * 25;
+    const pageSize = state.technicianSummaryPageSize || 25;
+    const totalPages = Math.max(1, Math.ceil(state.technicianSummaryTotal / pageSize));
+    const start = (state.learnerTablePage - 1) * pageSize;
     renderLearnerTableMeta({
         rows: technicianSummaries,
         currentPage: state.learnerTablePage,
@@ -1223,13 +1228,13 @@ function renderLearnerDetail(rows) {
     }
 
     const ktvDevices = [...new Set(allLearnerRows.map(item => item.device))].sort();
-    if (state.detailSelectedDevices.size === 0 && !state.detailDevicesTouched) {
+    if (!state.detailDevicesTouched) {
         state.detailSelectedDevices = new Set(ktvDevices);
     }
     populatePopoverOptions('detailDeviceOptions', ktvDevices, state.detailSelectedDevices, () => { state.detailDevicesTouched = true; }, state.detailSearchDevice);
 
     const ktvLabs = [...new Set(allLearnerRows.map(item => item.lab))].sort((a, b) => a.localeCompare(b, 'vi'));
-    if (state.detailSelectedLabs.size === 0 && !state.detailLabsTouched) {
+    if (!state.detailLabsTouched) {
         state.detailSelectedLabs = new Set(ktvLabs);
     }
     populatePopoverOptions('detailLabOptions', ktvLabs, state.detailSelectedLabs, () => { state.detailLabsTouched = true; }, state.detailSearchLab);
@@ -2863,6 +2868,10 @@ function dashboardViewNeedsSessions(viewName = activeDashboardView) {
     return viewName === 'instructors';
 }
 
+function dashboardViewNeedsTechnicianCatalog(viewName = activeDashboardView) {
+    return viewName === 'instructors' || viewName === 'class_matrix';
+}
+
 async function fetchDashboardReport(query = dashboardReportQuery()) {
     const response = await fetch(`${API_BASE_URL}/dashboard/report?${query}`);
     if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
@@ -2877,8 +2886,10 @@ async function fetchDashboardVersion() {
     return String(payload.data?.data_version || '');
 }
 
-async function fetchDashboardCatalog() {
-    const cacheKey = 'ftc-dashboard-catalog-v1';
+async function fetchDashboardCatalog({ includeTechnicians = false } = {}) {
+    const cacheKey = includeTechnicians
+        ? 'ftc-dashboard-catalog-full-v2'
+        : 'ftc-dashboard-catalog-core-v2';
     const maxAgeMs = 6 * 60 * 60 * 1000;
     try {
         const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
@@ -2886,7 +2897,8 @@ async function fetchDashboardCatalog() {
     } catch (_error) {
         // HTTP caching remains available when localStorage is disabled.
     }
-    const response = await fetch(`${API_BASE_URL}/dashboard/catalog`, { cache: 'force-cache' });
+    const query = new URLSearchParams({ include_technicians: includeTechnicians ? '1' : '0' });
+    const response = await fetch(`${API_BASE_URL}/dashboard/catalog?${query}`, { cache: 'force-cache' });
     if (!response.ok) throw new Error(`API danh mục dashboard trả về HTTP ${response.status}`);
     const data = (await response.json()).data || {};
     try {
@@ -2895,6 +2907,26 @@ async function fetchDashboardCatalog() {
         // Catalog loading must not fail because browser storage is unavailable.
     }
     return data;
+}
+
+async function ensureDashboardTechnicianCatalogLoaded() {
+    if (state.technicianCatalogLoaded) return technicianCatalog;
+    if (technicianCatalogRequest) return technicianCatalogRequest;
+    technicianCatalogRequest = (async () => {
+        const data = await fetchDashboardCatalog({ includeTechnicians: true });
+        if (data.technicians_included !== true || !Array.isArray(data.technicians)) {
+            throw new Error('API danh mục KTV không trả về dữ liệu đầy đủ.');
+        }
+        technicianCatalog = normalizeTechnicianCatalog(data.technicians);
+        technicianCatalogAuthoritative = true;
+        state.technicianCatalogLoaded = true;
+        rebuildTechnicianIndex();
+        rebuildLearnerNameMap();
+        refreshFilterOptionLists();
+        renderAll();
+        return technicianCatalog;
+    })().finally(() => { technicianCatalogRequest = null; });
+    return technicianCatalogRequest;
 }
 
 async function reloadDashboardSessionsForRange() {
@@ -2961,7 +2993,6 @@ function buildTechnicianSummaryQuery() {
         from: periods.currentStart,
         to: periods.currentEnd,
         page: String(state.learnerTablePage),
-        limit: '25',
         search: state.learnerSearchKtv.trim(),
         sort: state.sessionsSort.key,
         direction: state.sessionsSort.direction,
@@ -3004,27 +3035,52 @@ function mapTechnicianSummaries(items = []) {
 async function reloadTechnicianSummaries({ resetPage = false } = {}) {
     if (!state.dashboardDataLoaded) return;
     if (resetPage) state.learnerTablePage = 1;
-    if (technicianSummaryRequest) return technicianSummaryRequest;
+    if (technicianSummaryRequest) technicianSummaryRequest.abort();
+    const controller = new AbortController();
+    technicianSummaryRequest = controller;
     state.technicianSummaryLoading = true;
     renderAll();
-    technicianSummaryRequest = (async () => {
-        const response = await fetch(`${API_BASE_URL}/dashboard/technicians?${buildTechnicianSummaryQuery()}`);
+    try {
+        const response = await fetch(`${API_BASE_URL}/dashboard/technicians?${buildTechnicianSummaryQuery()}`, {
+            signal: controller.signal
+        });
         if (!response.ok) throw new Error(`API tổng hợp KTV trả về HTTP ${response.status}`);
         const payload = (await response.json()).data || {};
+        if (technicianSummaryRequest !== controller) return;
         technicianSummaries = mapTechnicianSummaries(payload.items || []);
         state.technicianSummaryTotal = Number(payload.page?.total) || 0;
         state.technicianSummarySessionTotal = Number(payload.page?.total_sessions) || 0;
+        state.technicianSummaryPageSize = Number(payload.page?.limit) || 25;
         const periods = getKpiComparisonPeriods();
         state.technicianSummaryFrom = periods.currentStart;
         state.technicianSummaryTo = periods.currentEnd;
         state.technicianSummaryLoaded = true;
+        rebuildLearnerNameMap();
+        technicianSummaries.forEach(item => {
+            if (item.learner) learnerNameMap.set(item.learner, item.technicianName || item.learner);
+        });
+        mergeUntouchedFilterSets(
+            getLearnerFilterIdentities(),
+            getCanonicalDeviceList(),
+            getCanonicalLabList(),
+            getLearnerFilterRegions()
+        );
+        refreshFilterOptionLists();
         renderAll();
-    })().finally(() => {
-        state.technicianSummaryLoading = false;
-        technicianSummaryRequest = null;
-        renderAll();
-    });
-    return technicianSummaryRequest;
+    } catch (error) {
+        if (error?.name !== 'AbortError') {
+            console.warn('Không tải được danh sách KTV tổng hợp.', error);
+            if (activeDashboardView === 'technicians') {
+                showToast('Chưa thể tải danh sách KTV.', 'error');
+            }
+        }
+    } finally {
+        if (technicianSummaryRequest === controller) {
+            state.technicianSummaryLoading = false;
+            technicianSummaryRequest = null;
+            renderAll();
+        }
+    }
 }
 
 function ensureTechnicianSummariesLoaded() {
@@ -3049,8 +3105,7 @@ async function loadSelectedTechnicianHistory({ append = false } = {}) {
     const query = new URLSearchParams({
         from: periods.currentStart,
         to: periods.currentEnd,
-        person_id: personId,
-        limit: '50'
+        person_id: personId
     });
     if (append && state.selectedLearnerHistoryCursor) {
         query.set('cursor', state.selectedLearnerHistoryCursor);
@@ -3181,7 +3236,8 @@ async function fetchDashboardData(versionHint = '') {
     const versionRequest = versionHint
         ? Promise.resolve(versionHint)
         : fetchDashboardVersion();
-    const dashboardCatalogRequest = fetchDashboardCatalog();
+    const technicianCatalogRequested = dashboardViewNeedsTechnicianCatalog();
+    const dashboardCatalogRequest = fetchDashboardCatalog({ includeTechnicians: technicianCatalogRequested });
     const regionCatalogPromise = fetchAndBuildRegionCatalog();
     const optionalRequests = Promise.allSettled([reportRequest, versionRequest]);
     const detailRequest = sessionsRequested
@@ -3216,10 +3272,13 @@ async function fetchDashboardData(versionHint = '') {
     if (reportRequested && reportResult.status === 'rejected') console.warn('Không đồng bộ được báo cáo tổng hợp; giữ dữ liệu gần nhất.', reportResult.reason);
     if (versionResult.status === 'rejected') console.warn('Không đọc được phiên bản dữ liệu dashboard.', versionResult.reason);
     await regionCatalogPromise;
-    const techniciansAuthoritative = Array.isArray(catalogData.technicians);
-    const technicians = normalizeTechnicianCatalog(techniciansAuthoritative ? catalogData.technicians : []);
+    const techniciansAuthoritative = catalogData.technicians_included === true
+        && Array.isArray(catalogData.technicians);
+    const technicians = techniciansAuthoritative
+        ? normalizeTechnicianCatalog(catalogData.technicians)
+        : technicianCatalog;
     technicianCatalog = technicians;
-    technicianCatalogAuthoritative = techniciansAuthoritative;
+    if (techniciansAuthoritative) technicianCatalogAuthoritative = true;
     rebuildTechnicianIndex();
     const activeLabIds = new Set((catalogData.labs || []).map(item => String(item.lab_id || '')).filter(Boolean));
     const mappedSessions = mapApiSessions(data.sessions || []).filter(item => (
@@ -3233,6 +3292,7 @@ async function fetchDashboardData(versionHint = '') {
             : [],
         technicians,
         techniciansAuthoritative,
+        technicianCatalogLoaded: techniciansAuthoritative || state.technicianCatalogLoaded,
         assignments: normalizeTrainingAssignments(data.assignments || []),
         classMemberships: normalizeClassMemberships(data.class_memberships || []),
         assignmentsRequested,
@@ -3265,7 +3325,8 @@ function applyDashboardData(data) {
     state.sessionHistoryTo = data.sessionHistoryTo;
     state.sessionHistoryHasMore = Boolean(data.sessionHistoryHasMore);
     state.sessionHistoryLoaded = Boolean(data.sessionHistoryLoaded);
-    technicianCatalogAuthoritative = Boolean(data.techniciansAuthoritative);
+    technicianCatalogAuthoritative = Boolean(data.techniciansAuthoritative) || technicianCatalogAuthoritative;
+    state.technicianCatalogLoaded = Boolean(data.technicianCatalogLoaded);
     state.dashboardDataLoaded = true;
     normalizeSessionDeviceNames();
     rebuildTechnicianIndex();
@@ -3349,7 +3410,7 @@ function getLearnerFilterIdentities() {
 
 function getLearnerFilterRegions() {
     const source = activeDashboardView === 'technicians'
-        ? technicianCatalog.map(item => item.dashboardRegion || item.regionName || 'FTC')
+        ? REGION_FILTER_OPTIONS
         : sessions.map(item => item.region);
     return [...new Set(source.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
 }
@@ -3378,10 +3439,10 @@ function mergeDefaultClassLearners() {
 }
 
 function refreshFilterOptionLists() {
-    const allKtvs = [...new Set(sessions.map(item => item.learner))].sort();
+    const allKtvs = getLearnerFilterIdentities();
     const allDevices = getCanonicalDeviceList();
     const allLabs = getCanonicalLabList();
-    const allRegions = [...new Set(sessions.map(item => item.region))].sort((a, b) => a.localeCompare(b, 'vi'));
+    const allRegions = getLearnerFilterRegions();
     const universes = state.popoverUniverses;
     if (universes) {
         universes.allKtvs.splice(0, universes.allKtvs.length, ...allKtvs);
@@ -3435,10 +3496,10 @@ async function refreshDashboardData({ force = false, announce = false } = {}) {
         if (activeDashboardView === 'technicians') {
             await reloadTechnicianSummaries();
         }
-        const allKtvs = [...new Set(sessions.map(item => item.learner))].sort();
+        const allKtvs = getLearnerFilterIdentities();
         const allDevices = getCanonicalDeviceList();
         const allLabs = getCanonicalLabList();
-        const allRegions = [...new Set(sessions.map(item => item.region))].sort((a, b) => a.localeCompare(b, 'vi'));
+        const allRegions = getLearnerFilterRegions();
         mergeUntouchedFilterSets(allKtvs, allDevices, allLabs, allRegions);
         refreshFilterOptionLists();
         mergeDefaultClassLearners();
@@ -3974,10 +4035,10 @@ function initPopovers() {
         return;
     }
     state.popoversInitialized = true;
-    const allKtvs = [...new Set(sessions.map(item => item.learner))].sort();
+    const allKtvs = getLearnerFilterIdentities();
     const allDevices = getCanonicalDeviceList();
     const allLabs = getCanonicalLabList();
-    const allRegions = [...new Set(sessions.map(item => item.region))].sort((a, b) => a.localeCompare(b, 'vi'));
+    const allRegions = getLearnerFilterRegions();
     state.popoverUniverses = { allKtvs, allDevices, allLabs, allRegions };
     let learnerSearchTimer = null;
     let detailDeviceSearchTimer = null;
@@ -6748,10 +6809,10 @@ function renderAll() {
 }
 
 function updatePopoverTriggerLabels() {
-    const allKtvs = [...new Set(sessions.map(item => item.learner))].sort();
+    const allKtvs = getLearnerFilterIdentities();
     const allDevices = getCanonicalDeviceList();
     const allLabs = getCanonicalLabList();
-    const allRegions = [...new Set(sessions.map(item => item.region))].sort((a, b) => a.localeCompare(b, 'vi'));
+    const allRegions = getLearnerFilterRegions();
     const learnerReset = document.getElementById('learnerFilterReset');
     const selectedLearners = state.learnerSelectedKtvs.size;
     const ktvFiltered = state.learnerKtvsTouched || selectedLearners !== allKtvs.length;
@@ -6912,6 +6973,7 @@ function initDateRangePicker() {
             state.learnerTablePage = 1;
             state.learnerDetailPage = 1;
             state.realtimePage = 1;
+            if (state.selectedLearner) hideLearnerDetail();
             if (label) label.textContent = `${String(monthIndex + 1).padStart(2, '0')}/${year}`;
             if (yearSelect) yearSelect.value = String(year);
             if (closePanel) {
@@ -7047,6 +7109,7 @@ function initDateRangePicker() {
         state.learnerTablePage = 1;
         state.learnerDetailPage = 1;
         state.realtimePage = 1;
+        if (state.selectedLearner) hideLearnerDetail();
         picker?.classList.remove('open');
         renderAll();
         reloadDashboardSelectedRange();
@@ -7181,8 +7244,8 @@ async function downloadXlsxReport(type, descriptor) {
     return filename;
 }
 
-function getTechnicianFilteredExportRows() {
-    let rows = [...sessions];
+function getTechnicianFilteredExportRows(sourceRows = sessions) {
+    let rows = [...sourceRows];
     const applySetFilter = (set, touched, getValue) => {
         if (!touched && !set.size) return;
         rows = rows.filter(item => set.has(getValue(item)));
@@ -7201,10 +7264,10 @@ function getTechnicianFilteredExportRows() {
 
 function buildActivityReportDescriptor() {
     const sourceRows = activeDashboardView === 'technicians'
-        ? getTechnicianFilteredExportRows()
+        ? getTechnicianFilteredExportRows(technicianExportSessions || sessions)
         : getDateFilteredSessions();
     const orderedRows = [...sourceRows].sort((left, right) => sessionTimestampMs(right) - sessionTimestampMs(left));
-    const period = activeDashboardView === 'technicians' ? 'Dữ liệu lũy kế' : getRangeLabel();
+    const period = getRangeLabel();
     const scope = activeDashboardView === 'technicians'
         ? 'Các bộ lọc đang áp dụng tại trang Thống kê kỹ thuật viên'
         : 'Tất cả phiên hoạt động trong kỳ đã chọn';
@@ -7445,10 +7508,46 @@ function getRosterReportPreview() {
     };
 }
 
+async function fetchTechnicianSessionsForExport() {
+    const periods = getKpiComparisonPeriods();
+    const collected = [];
+    let cursor = '';
+    for (let page = 0; page < 100; page += 1) {
+        const query = new URLSearchParams({
+            from: periods.currentStart,
+            to: periods.currentEnd,
+            limit: '500',
+            include_assignments: '0',
+            include_sessions: '1'
+        });
+        if (cursor) query.set('cursor', cursor);
+        const response = await fetch(`${API_BASE_URL}/dashboard/all?${query}`);
+        if (!response.ok) throw new Error(`API dữ liệu xuất báo cáo trả về HTTP ${response.status}`);
+        const data = (await response.json()).data || {};
+        collected.push(...mapApiSessions(data.sessions || []).filter(item => (
+            !isPracticeSession(item) || isRecordedPracticeSession(item)
+        )));
+        if (data.session_page?.has_more !== true) return collected;
+        cursor = String(data.session_page?.next_cursor || '');
+        if (!cursor) break;
+    }
+    throw new Error('Báo cáo vượt 50.000 phiên. Vui lòng chọn khoảng ngày ngắn hơn.');
+}
+
 function getReportExportPreview(type) {
     if (type === 'region') return buildRegionReportDescriptor();
     if (type === 'class_matrix') return buildClassMatrixReportDescriptor();
     if (type === 'roster') return getRosterReportPreview();
+    if (activeDashboardView === 'technicians' && technicianExportSessions === null) {
+        return {
+            type: 'activity',
+            period: getRangeLabel(),
+            scope: 'Các bộ lọc đang áp dụng tại trang Thống kê kỹ thuật viên',
+            filename: buildReportFilename('FTC_Chi_tiet_hoat_dong_KTV'),
+            countLabel: `${formatNumber.format(state.technicianSummarySessionTotal)} phiên trước bộ lọc chi tiết`,
+            available: state.technicianSummaryLoaded && state.technicianSummarySessionTotal > 0
+        };
+    }
     return buildActivityReportDescriptor();
 }
 
@@ -7587,6 +7686,10 @@ async function handleReportExportDownload() {
     setReportExportStatus(type === 'class_matrix' ? 'Đang đồng bộ dữ liệu lớp mới nhất…' : 'Đang chuẩn bị file báo cáo…', 'info');
     try {
         if (type === 'class_matrix') await refreshAssignmentsForClassExport();
+        if (type === 'activity' && activeDashboardView === 'technicians') {
+            setReportExportStatus('Đang tải các trang dữ liệu chi tiết để xuất báo cáo…', 'info');
+            technicianExportSessions = await fetchTechnicianSessionsForExport();
+        }
         const descriptor = getReportExportPreview(type);
         const filename = await downloadXlsxReport(type, descriptor);
         setReportExportStatus(`Đã tạo “${filename}”. Trình duyệt đang tải file xuống.`, 'success');
@@ -7594,6 +7697,7 @@ async function handleReportExportDownload() {
         console.error('Không thể xuất báo cáo.', error);
         setReportExportStatus(error?.message || 'Không thể tạo báo cáo. Vui lòng thử lại.', 'error');
     } finally {
+        technicianExportSessions = null;
         setReportExportBusy(false);
         updateReportExportDialog();
     }
@@ -8200,6 +8304,12 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
         setDataSourceLabel(state.dashboardDataLoaded ? 'Dữ liệu vận hành đã đồng bộ' : 'Đang đồng bộ dữ liệu vận hành');
         if (!state.dashboardDataLoaded) {
             loadDashboardFromApi().then(() => {
+                if (dashboardViewNeedsTechnicianCatalog()) {
+                    ensureDashboardTechnicianCatalogLoaded().catch(error => {
+                        console.warn('Không tải được danh mục KTV.', error);
+                        showToast('Chưa thể tải danh mục KTV.', 'error');
+                    });
+                }
                 if (activeDashboardView === 'technicians') {
                     ensureTechnicianSummariesLoaded().catch(error => {
                         console.warn('Không tải được danh sách KTV tổng hợp.', error);
@@ -8230,6 +8340,12 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
         ensureTechnicianSummariesLoaded().catch(error => {
             console.warn('Không tải được danh sách KTV tổng hợp.', error);
             showToast('Chưa thể tải danh sách KTV.', 'error');
+        });
+    }
+    if (state.isAdmin && state.dashboardDataLoaded && dashboardViewNeedsTechnicianCatalog()) {
+        ensureDashboardTechnicianCatalogLoaded().catch(error => {
+            console.warn('Không tải được danh mục KTV.', error);
+            showToast('Chưa thể tải danh mục KTV.', 'error');
         });
     }
     window.requestAnimationFrame(() => {
