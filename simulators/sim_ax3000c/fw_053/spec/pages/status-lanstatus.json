@@ -1,0 +1,28 @@
+{
+ "trang": "Status >> LAN Status",
+ "route": "#/status/lanstatus",
+ "view": "status/lanstatus",
+ "chunk_goc": "js/chunk-2d229a01.9b4ab5b7.1726822665278.js",
+ "nguon_bang_chung": [
+  "reference/api/quet_doc_59_api.json (data_repo.weboui.lanstatus)",
+  "reference/api/mau_that_lanstatus.json (61 lan doc that cach 2 giay)"
+ ],
+ "cot_bang": [
+  "Etherent",
+  "Status",
+  "RXRate",
+  "TXRate",
+  "CRC"
+ ],
+ "doc_du_lieu": {
+  "loi_goi": "data_repo.weboui.lanstatus, lap moi 2 giay",
+  "tinh_toc_do": "rxrate = (rx_moi - rx_cu)/2 dinh dang '%mB/s' — chi hien khi bo dem TANG; khong tang -> 0"
+ },
+ "ghi_du_lieu": null,
+ "muc_dat_duoc": {
+  "1_hinh_anh": "19/21 o trung chu + toa do; 2 o RXRate/TXRate LAN1 la so chay — phat lai vong tron gia so that (anh Huynn chon 2026-09-25), lap lai sau ~2 phut",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat — N5/N6, D2",
+  "4_trang_thai": "khong co truong ghi"
+ }
+}

@@ -67,7 +67,8 @@ API_PROXY_TIMEOUT_SECONDS = max(10, min(API_PROXY_TIMEOUT_SECONDS, 300))
 
 # Import các Handler của từng thiết bị
 import simulators.sim_ac1000f.server2 as ac1000f
-import simulators.sim_ax3000c.server as ax3000c
+# AX3000CV2 firmware 0.5.3 (fw_053/)
+import simulators.sim_ax3000c.server_fw053 as ax3000c
 import simulators.sim_ax3000gz.server as ax3000gz
 import simulators.sim_ax3000hv2.server2 as ax3000hv2
 import simulators.sim_ax3000s.server as ax3000s

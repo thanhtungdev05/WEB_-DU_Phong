@@ -1,0 +1,894 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25 qua Chrome (tab thiet bi that, sid that), CHI DOC",
+ "cach_do": "Goi /ubus data_repo.data_element get + network topology + network.wireless.easymesh get + op-mode get trong trang that, JSON.stringify ghep 4 khung (13731 ky tu), rut ra 15 manh 950 ky tu. Moi manh doi chieu FNV-1a 32 bit voi tong tinh tren trang that: 15/15 trung, tong 1e53e63a.",
+ "ghi_chu": "Trang status/topology (Networks & Devices) va status/easymeshtopo dung callBatch [data_repo.data_element.get, network.topology] (+ system.board). Thieu data_element -> ca batch hong -> trang gia lap hien 'No Data'. easymesh/op-mode do kem, trung khung cu nen khong dua vao day.",
+ "sha256_chuoi_goc": "ac9a3efe6fc06fd16649692f7d13557657fd20d9846ff1e9d9b0a93c098f60d1",
+ "khung": {
+  "data_repo.data_element.get": [
+   0,
+   {
+    "version": "1.0",
+    "name": "wifi",
+    "description": "Wireless 802.11 plugin",
+    "date": "Fri Dec 12 20:29:18 2025",
+    "TimeStamp": "2025-12-12T20:29:18.620579-08:00",
+    "data": [
+     {
+      "wfa-dataelements:Network": {
+       "ID": "NETWORK-ID",
+       "NumberOfDevices": 1,
+       "TimeStamp": "2025-12-12T20:29:18.620719-08:00",
+       "ControllerID": "94:f7:17:24:0a:90",
+       "DeviceList": [
+        {
+         "ID": "94:f7:17:24:0a:90",
+         "NumberOfRadios": 2,
+         "CollectionInterval": 60000,
+         "SerialNumber": "FPTT24C1E15F",
+         "SoftwareVersion": "0.5.3",
+         "ExecutionEnv": "Linux",
+         "MultiAPCapabilities": "0x0",
+         "RadioList": [
+          {
+           "ID": "94:f7:17:24:0a:98",
+           "Enabled": true,
+           "Noise": 157,
+           "NumberOfCurrOpClass": 1,
+           "NumberOfUnassocSta": 0,
+           "NumberOfBSS": 1,
+           "Utilization": 75,
+           "BSSList": [
+            {
+             "BSSID": "94:f7:17:24:0a:99",
+             "SSID": "FPT Telecom-0A91",
+             "Enabled": true,
+             "LastChange": 79384,
+             "TimeStamp": "2025-12-12T20:29:18.757901-08:00",
+             "UnicastBytesSent": 0,
+             "UnicastBytesReceived": 0,
+             "NumberOfSTA": 0,
+             "EstServiceParametersBE": "0x19088",
+             "EstServiceParametersBK": "0x000",
+             "EstServiceParametersVO": "0x000",
+             "EstServiceParametersVI": "0x000",
+             "STAList": []
+            }
+           ],
+           "UnassociatedStaList": [],
+           "BackhaulStaList": [],
+           "ScanResultList": [
+            {
+             "TimeStamp": "2025-12-12T20:29:20.589826-08:00",
+             "NumberOfOpClassScans": 1,
+             "OpClassScanList": [
+              {
+               "OperatingClass": 81,
+               "NumberOfChannelScans": 11,
+               "ChannelScanList": [
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.590053-08:00",
+                 "Channel": 1,
+                 "Utilization": 73,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.590199-08:00",
+                 "Channel": 2,
+                 "Utilization": 29,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.590330-08:00",
+                 "Channel": 3,
+                 "Utilization": 33,
+                 "Noise": 167,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.590446-08:00",
+                 "Channel": 4,
+                 "Utilization": 33,
+                 "Noise": 161,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.590549-08:00",
+                 "Channel": 5,
+                 "Utilization": 37,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.590647-08:00",
+                 "Channel": 6,
+                 "Utilization": 67,
+                 "Noise": 163,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.590747-08:00",
+                 "Channel": 7,
+                 "Utilization": 26,
+                 "Noise": 161,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.590842-08:00",
+                 "Channel": 8,
+                 "Utilization": 59,
+                 "Noise": 163,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.590938-08:00",
+                 "Channel": 9,
+                 "Utilization": 41,
+                 "Noise": 163,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.591031-08:00",
+                 "Channel": 10,
+                 "Utilization": 30,
+                 "Noise": 167,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:20.591123-08:00",
+                 "Channel": 11,
+                 "Utilization": 66,
+                 "Noise": 161,
+                 "NumberOfNeighbors": 21,
+                 "NeighborList": [
+                  {
+                   "BSSID": "0c:82:47:31:56:81",
+                   "SSID": "123456789",
+                   "SignalStrength": 31,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 242,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "0c:82:47:30:22:01",
+                   "SSID": "123456789",
+                   "SignalStrength": 23,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 251,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "60:22:32:a6:1f:42",
+                   "SSID": "WiFi BGD Vung",
+                   "SignalStrength": 23,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 213,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "06:ec:da:47:1b:c3",
+                   "SSID": "Test",
+                   "SignalStrength": 26,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 139,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "fc:ec:da:47:1b:c3",
+                   "SSID": "FPT TELECOM",
+                   "SignalStrength": 24,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 139,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "02:ec:da:47:1b:c3",
+                   "SSID": "FPT TELECOM 2.4Ghz",
+                   "SignalStrength": 22,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 139,
+                   "StationCount": 2
+                  },
+                  {
+                   "BSSID": "7a:45:58:96:99:83",
+                   "SSID": "",
+                   "SignalStrength": 18,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 89,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "78:45:58:c6:99:83",
+                   "SSID": "FPL - Security",
+                   "SignalStrength": 14,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 91,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "0c:82:47:31:56:84",
+                   "SSID": "",
+                   "SignalStrength": 30,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 242,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "0c:82:47:30:22:04",
+                   "SSID": "",
+                   "SignalStrength": 24,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 251,
+                   "StationCount": 1
+                  },
+                  {
+                   "BSSID": "60:22:32:9c:ab:0e",
+                   "SSID": "FPT TELECOM",
+                   "SignalStrength": 27,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 214,
+                   "StationCount": 1
+                  },
+                  {
+                   "BSSID": "66:22:32:9c:ab:0e",
+                   "SSID": "FPT TELECOM 2.4Ghz",
+                   "SignalStrength": 26,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 214,
+                   "StationCount": 1
+                  },
+                  {
+                   "BSSID": "94:2a:6f:a4:90:26",
+                   "SSID": "FTI HO 2.4Ghz",
+                   "SignalStrength": 22,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 0,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "9a:2a:6f:a4:90:26",
+                   "SSID": "",
+                   "SignalStrength": 23,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 238,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "3c:f9:f0:9c:2c:a8",
+                   "SSID": "Free WIFI FPT VIP",
+                   "SignalStrength": 33,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 0,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "a2:05:d6:ff:5e:f5",
+                   "SSID": "",
+                   "SignalStrength": 32,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 215,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "9c:05:d6:ff:5e:f5",
+                   "SSID": "FPT Telecom-DV",
+                   "SignalStrength": 30,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 215,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "66:22:32:9c:ac:7a",
+                   "SSID": "FPT TELECOM 2.4Ghz",
+                   "SignalStrength": 20,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 251,
+                   "StationCount": 5
+                  },
+                  {
+                   "BSSID": "60:22:32:9c:ac:7a",
+                   "SSID": "FPT TELECOM",
+                   "SignalStrength": 20,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 253,
+                   "StationCount": 1
+                  },
+                  {
+                   "BSSID": "02:f0:7b:30:e9:bb",
+                   "SSID": "FPT Telecom-E9BC",
+                   "SignalStrength": 23,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 142,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "06:f0:7b:30:e9:bc",
+                   "SSID": "FPT Telecom-E9BC IOT",
+                   "SignalStrength": 23,
+                   "ChannelBandwidth": "20",
+                   "ChannelUtilization": 142,
+                   "StationCount": 0
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ],
+           "CurrentOperatingClasses": [
+            {
+             "TimeStamp": "2025-12-12T20:29:18.688847-08:00",
+             "Class": 81,
+             "TxPower": 25,
+             "Channel": 11
+            }
+           ],
+           "Capabilities": {
+            "NumberOfOpClass": 3,
+            "HTCapabilities": "0x5e",
+            "HECapabilities": "0x",
+            "OperatingClasses": [
+             {
+              "Class": 81,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 2,
+              "NonOperable": [
+               12,
+               13
+              ]
+             },
+             {
+              "Class": 83,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 84,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 2,
+              "NonOperable": [
+               12,
+               13
+              ]
+             }
+            ]
+           }
+          },
+          {
+           "ID": "94:f7:17:24:0a:a0",
+           "Enabled": true,
+           "Noise": 160,
+           "NumberOfCurrOpClass": 1,
+           "NumberOfUnassocSta": 0,
+           "NumberOfBSS": 2,
+           "Utilization": 25,
+           "BSSList": [
+            {
+             "BSSID": "94:f7:17:24:0a:a1",
+             "SSID": "FPT Telecom-0A91",
+             "Enabled": true,
+             "LastChange": 79384,
+             "TimeStamp": "2025-12-12T20:29:20.731557-08:00",
+             "UnicastBytesSent": 0,
+             "UnicastBytesReceived": 0,
+             "NumberOfSTA": 0,
+             "EstServiceParametersBE": "0x19088",
+             "EstServiceParametersBK": "0x000",
+             "EstServiceParametersVO": "0x000",
+             "EstServiceParametersVI": "0x000",
+             "STAList": []
+            },
+            {
+             "BSSID": "94:f7:17:24:0a:a4",
+             "SSID": "FPT TelecomBH-0A91",
+             "Enabled": true,
+             "LastChange": 79384,
+             "TimeStamp": "2025-12-12T20:29:20.732146-08:00",
+             "UnicastBytesSent": 0,
+             "UnicastBytesReceived": 0,
+             "NumberOfSTA": 0,
+             "EstServiceParametersBE": "0x19088",
+             "EstServiceParametersBK": "0x000",
+             "EstServiceParametersVO": "0x000",
+             "EstServiceParametersVI": "0x000",
+             "STAList": []
+            }
+           ],
+           "UnassociatedStaList": [],
+           "BackhaulStaList": [],
+           "ScanResultList": [
+            {
+             "TimeStamp": "2025-12-12T20:29:22.594535-08:00",
+             "NumberOfOpClassScans": 4,
+             "OpClassScanList": [
+              {
+               "OperatingClass": 115,
+               "NumberOfChannelScans": 4,
+               "ChannelScanList": [
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.594758-08:00",
+                 "Channel": 36,
+                 "Utilization": 15,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.594898-08:00",
+                 "Channel": 40,
+                 "Utilization": 21,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.595017-08:00",
+                 "Channel": 44,
+                 "Utilization": 9,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.595124-08:00",
+                 "Channel": 48,
+                 "Utilization": 7,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                }
+               ]
+              },
+              {
+               "OperatingClass": 118,
+               "NumberOfChannelScans": 4,
+               "ChannelScanList": [
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.595234-08:00",
+                 "Channel": 52,
+                 "Utilization": 7,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 6,
+                 "NeighborList": [
+                  {
+                   "BSSID": "06:f0:7b:30:e9:c0",
+                   "SSID": "FPT Telecom-E9BC IOT",
+                   "SignalStrength": 8,
+                   "ChannelBandwidth": "160",
+                   "ChannelUtilization": 78,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "06:f0:7b:30:e9:c2",
+                   "SSID": "",
+                   "SignalStrength": 9,
+                   "ChannelBandwidth": "160",
+                   "ChannelUtilization": 78,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "00:19:92:31:56:09",
+                   "SSID": "FPT TELECOM 5Ghz",
+                   "SignalStrength": 21,
+                   "ChannelBandwidth": "160",
+                   "ChannelUtilization": 0,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "cc:cf:83:ec:08:d2",
+                   "SSID": "Paracetamol 500mg",
+                   "SignalStrength": 9,
+                   "ChannelBandwidth": "160",
+                   "ChannelUtilization": 0,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "cc:cf:83:ec:08:d4",
+                   "SSID": "",
+                   "SignalStrength": 9,
+                   "ChannelBandwidth": "160",
+                   "ChannelUtilization": 0,
+                   "StationCount": 0
+                  },
+                  {
+                   "BSSID": "02:f0:7b:30:e9:bc",
+                   "SSID": "FPT Telecom-E9BC",
+                   "SignalStrength": 9,
+                   "ChannelBandwidth": "160",
+                   "ChannelUtilization": 78,
+                   "StationCount": 0
+                  }
+                 ]
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.595489-08:00",
+                 "Channel": 56,
+                 "Utilization": 9,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.595615-08:00",
+                 "Channel": 60,
+                 "Utilization": 10,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.595719-08:00",
+                 "Channel": 64,
+                 "Utilization": 39,
+                 "Noise": 157,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                }
+               ]
+              },
+              {
+               "OperatingClass": 121,
+               "NumberOfChannelScans": 12,
+               "ChannelScanList": [
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.595818-08:00",
+                 "Channel": 100,
+                 "Utilization": 4,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.595908-08:00",
+                 "Channel": 104,
+                 "Utilization": 46,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.595996-08:00",
+                 "Channel": 108,
+                 "Utilization": 5,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596086-08:00",
+                 "Channel": 112,
+                 "Utilization": 4,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596174-08:00",
+                 "Channel": 116,
+                 "Utilization": 1,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596293-08:00",
+                 "Channel": 120,
+                 "Utilization": 4,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596396-08:00",
+                 "Channel": 124,
+                 "Utilization": 3,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596487-08:00",
+                 "Channel": 128,
+                 "Utilization": 5,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596576-08:00",
+                 "Channel": 132,
+                 "Utilization": 30,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596665-08:00",
+                 "Channel": 136,
+                 "Utilization": 38,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596752-08:00",
+                 "Channel": 140,
+                 "Utilization": 49,
+                 "Noise": 159,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596840-08:00",
+                 "Channel": 144,
+                 "Utilization": 7,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                }
+               ]
+              },
+              {
+               "OperatingClass": 125,
+               "NumberOfChannelScans": 5,
+               "ChannelScanList": [
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.596999-08:00",
+                 "Channel": 149,
+                 "Utilization": 41,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.597716-08:00",
+                 "Channel": 153,
+                 "Utilization": 46,
+                 "Noise": 157,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.597935-08:00",
+                 "Channel": 157,
+                 "Utilization": 5,
+                 "Noise": 157,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.598065-08:00",
+                 "Channel": 161,
+                 "Utilization": 4,
+                 "Noise": 158,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                },
+                {
+                 "TimeStamp": "2025-12-12T20:29:22.598177-08:00",
+                 "Channel": 165,
+                 "Utilization": 6,
+                 "Noise": 157,
+                 "NumberOfNeighbors": 0,
+                 "NeighborList": []
+                }
+               ]
+              }
+             ]
+            }
+           ],
+           "CurrentOperatingClasses": [
+            {
+             "TimeStamp": "2025-12-12T20:29:20.656101-08:00",
+             "Class": 118,
+             "TxPower": 27,
+             "Channel": 52
+            }
+           ],
+           "Capabilities": {
+            "NumberOfOpClass": 15,
+            "HTCapabilities": "0x5e",
+            "VHTCapabilities": "0xfffafffa27a0",
+            "HECapabilities": "0x",
+            "OperatingClasses": [
+             {
+              "Class": 115,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 116,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 117,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 118,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 119,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 120,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 121,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 122,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 123,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 0,
+              "NonOperable": []
+             },
+             {
+              "Class": 125,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 3,
+              "NonOperable": [
+               169,
+               173,
+               177
+              ]
+             },
+             {
+              "Class": 126,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 2,
+              "NonOperable": [
+               165,
+               173
+              ]
+             },
+             {
+              "Class": 127,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 2,
+              "NonOperable": [
+               169,
+               177
+              ]
+             },
+             {
+              "Class": 128,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 1,
+              "NonOperable": [
+               171
+              ]
+             },
+             {
+              "Class": 129,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 1,
+              "NonOperable": [
+               163
+              ]
+             },
+             {
+              "Class": 130,
+              "MaxTxPower": 30,
+              "NumberOfNonOperChan": 1,
+              "NonOperable": [
+               171
+              ]
+             }
+            ]
+           }
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   }
+  ],
+  "network.topology": [
+   0,
+   {
+    "94:F7:17:24:0A:90": {
+     "mapdevice": "true",
+     "ip": "192.168.100.1",
+     "hostname": "AP-AX3000CV2-0A91",
+     "modelname": "AP-AX3000CV2",
+     "ipv6": [
+      "fd00:db80::1"
+     ],
+     "info": {
+      "ath0": {
+       "mac": "94:F7:17:24:0A:99",
+       "medium_type": "WLAN2G"
+      },
+      "ath1": {
+       "mac": "94:F7:17:24:0A:A1",
+       "medium_type": "WLAN5G"
+      },
+      "ath11": {
+       "mac": "94:F7:17:24:0A:A4",
+       "medium_type": "WLAN5G"
+      },
+      "eth1.5": {
+       "mac": "94:F7:17:24:0A:90",
+       "medium_type": "ETHER",
+       "speed": "1000"
+      },
+      "eth1.6": {
+       "mac": "94:F7:17:24:0A:90",
+       "medium_type": "ETHER",
+       "speed": "0"
+      },
+      "eth1.7": {
+       "mac": "94:F7:17:24:0A:90",
+       "medium_type": "ETHER",
+       "speed": "0"
+      }
+     },
+     "legacy_devices": [
+      {
+       "connect_interface": "94:F7:17:24:0A:90",
+       "connect_method": "eth1.5",
+       "mac": "D8:43:AE:2E:65:45",
+       "ip": "192.168.100.109",
+       "hostname": "Admin-PC",
+       "ipv6": [
+        "fd00:db80::2"
+       ]
+      }
+     ],
+     "radio": [
+      {
+       "mac": "94:F7:17:24:0A:98",
+       "type": "WLAN2G",
+       "channel": "11",
+       "bandwidth": "20MHz"
+      },
+      {
+       "mac": "94:F7:17:24:0A:A0",
+       "type": "WLAN5G",
+       "channel": "52",
+       "bandwidth": "160MHz"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

@@ -1,6 +1,0 @@
-config crash_dump global
-	option enabled 1
-	option auto_garbage_collection_enabled 1
-	option auto_garbage_collection_interval 86400
-	option skip_collecting_threshold 70
-	option storage_path /aeimnt/rt_app/crash_dump

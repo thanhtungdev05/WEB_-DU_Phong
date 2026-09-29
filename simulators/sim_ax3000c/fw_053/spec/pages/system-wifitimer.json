@@ -1,0 +1,22 @@
+{
+ "trang": "System >> Wi-Fi Timer",
+ "route": "#/system/wifitimer",
+ "view": "system/wifitimer",
+ "chunk_goc": "js/chunk-2d221fa5",
+ "doc": "uci get {config:aeiWiFiTimer} (section an danh .type WiFiTimer)",
+ "ghi": "uci-form: uci set/apply/confirm (hop dong chung da do nhom 2). Apply khong doi -> khong goi gi, hien 'There are no changes to apply'",
+ "giao_dien": "trang thai tat 4/4, bat 25/25 (fnv 67e02c19) trung",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom7_system.json",
+  "reference/api/hop_dong_ghi_nhom7_system.json"
+ ],
+ "ghi_nhom13": {
+  "bang_chung": "reference/api/hop_dong_nhom13.json 'wifi_timer'",
+  "ap_dung": "uci apply sau khi aeiWiFiTimer doi -> 2 dong crontab (BAT luc StartTime, TAT luc EndTime, ngay Sun 0..Sat 6) + wireless wifi0/wifi1 disabled theo khung gio ngay luc do; Enable '0' -> xoa dong, disabled '0'",
+  "cron": "dung phut: uci set disabled 0/1 (mtime = phut do)",
+  "khoa": "lan ap dung lam doi Wi-Fi giu khoa ~74 s (nap lai xep hang); apply trong khoa: <=21 s thi xu ly khi het khoa, con lai bo qua",
+  "ma": "src/uci_tac_dong.py (dong_crontab_wifitimer, wifitimer_muon_tat), src/server.py (_wt_*, _hen_gio_tick)",
+  "kiem": "WT1-WT3 (13 apply + 2 cron)",
+  "khong_mo_phong": "song vo tuyen that len/xuong (~42 s), repacd MAPConfig FH/Backhaul doi khi tat song"
+ }
+}

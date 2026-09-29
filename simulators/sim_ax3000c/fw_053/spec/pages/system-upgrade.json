@@ -1,0 +1,25 @@
+{
+ "trang": "System >> Backup / Upgrade",
+ "route": "#/system/upgrade",
+ "view": "system/upgrade",
+ "chunk_goc": "js/chunk-2d0c4301",
+ "doc": "khong goi API doc",
+ "ghi": "Generate archive: POST /cgi-bin/cgi-backup (tep that, trung tung byte). Upload archive: POST /cgi-bin/cgi-upload (multipart filename/sessionid/file) -> oui.system drop_caches -> hop thoai Checksum/Size -> OK -> oui.system backup_restore -> [0,{code:0}] -> 'Reboot now' -> system reboot. Tep sai -> code 1 + stderr (3 truong hop do); that bai -> 'Close' -> backup_clean. Perform reset / Flash firmware: KHONG do, KHONG gia lap (an toan).",
+ "giao_dien": "11/11 trung (fnv 2aa9c7eb)",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom7_system.json",
+  "reference/api/hop_dong_ghi_nhom7_system.json",
+  "reference/api/hop_dong_uci_nhom12.json",
+  "reference/api/hop_dong_nhom13.json"
+ ],
+ "ghi_nhom13": {
+  "bang_chung": [
+   "reference/api/hop_dong_uci_nhom12.json 'upload_archive'",
+   "reference/api/hop_dong_nhom13.json 'cgi_io', 'oui_system', 'nap_backup_lan_3'"
+  ],
+  "nap_tep": "moi tep trong tar ghi de NGAY (noi dung + mtime); moi trang doc lai tu uci (uci_doc_nguoc.py); mat khau admin + Remote Web ve goc khi tep co etc/shadow",
+  "cgi_io": "HTTP/1.1 chunked + Keep-Alive timeout=20; phien sai: backup 403 'Backup permission denied', upload 'Upload permission denied'; ten ngoai ACL: 'Access to path denied by ACL'",
+  "kiem": "UP1-UP10, PW2",
+  "chua_do": "tar hong giua chung / gzip hong -> gia lap tra -32000; tep firmware: chi nhan vao /tmp, upgrade_test khong mo phong"
+ }
+}

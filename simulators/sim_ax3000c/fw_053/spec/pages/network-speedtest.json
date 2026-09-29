@@ -1,0 +1,27 @@
+{
+ "trang": "Network >> Speed test",
+ "route": "#/network/speedtest",
+ "view": "network/speedtest",
+ "chunk_goc": "js/chunk-4404d53e",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom5_maintain.json",
+  "reference/api/hop_dong_ghi_nhom5_maintain.json"
+ ],
+ "doc_du_lieu": "speedtest_get + speedtest.history ([0] tron) + running + servers ({})",
+ "hanh_dong": {
+  "set": "-> [0] TRON",
+  "start": "{url} -> {status:true}; running res 1 (2-5 s, gia lap 5 s) roi res 4 {up/dn '0.00', lat 0} va GIU res 4"
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "31/32 khi tai lai truc tiep (thanh tab 93 vs 109 px — dua font); bam menu: trung",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat (Z1-Z2, Z10-Z15)",
+  "4_trang_thai": "lich ghi vao kho; trang thai res 4 giu lai"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "speedtest_set -> speedtest 'option' (auto, sched, Mon..Sun) + dong crontab root khi auto",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

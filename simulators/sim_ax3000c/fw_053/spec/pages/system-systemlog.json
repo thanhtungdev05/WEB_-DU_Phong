@@ -1,0 +1,26 @@
+{
+ "trang": "Network >> Maintain >> System Log",
+ "route": "#/network/systemlog",
+ "view": "system/systemlog",
+ "chunk_goc": "js/chunk-2d21e749",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom5_maintain.json",
+  "reference/api/hop_dong_ghi_nhom5_maintain.json"
+ ],
+ "doc_du_lieu": "systemlog_get: 22/09 tra 348 KB (gia lap dung ban nay theo lua chon anh Huynn); 25/09 treo 60 s -> -32003",
+ "hanh_dong": {
+  "set": "{level,server_state,server,protocol,port} -> [0,{status:true}]"
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "theo nhat ky 22/09 (thiet bi hom nay khong tra duoc)",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat (Z20)",
+  "4_trang_thai": "set ghi vao kho"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "systemlog_set -> system: conloglevel, log_remote, log_ip, log_port, log_proto",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

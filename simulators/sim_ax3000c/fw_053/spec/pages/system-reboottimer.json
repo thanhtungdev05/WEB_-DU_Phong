@@ -1,0 +1,14 @@
+{
+ "trang": "System >> Reboot Timer",
+ "route": "#/system/reboottimer",
+ "view": "system/reboottimer",
+ "chunk_goc": "js/chunk-2d0ba6ca",
+ "doc": "uci get {config:aeiRebootTimer}",
+ "ghi": "nhu Wi-Fi Timer",
+ "giao_dien": "tat 4/4 (cfb2ca4e), bat 22/22 (b88511dd) trung",
+ "ghi_chu": "Gia lap KHONG khoi dong lai theo lich (khong co bang chung hanh vi den gio).",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom7_system.json",
+  "reference/api/hop_dong_ghi_nhom7_system.json"
+ ]
+}

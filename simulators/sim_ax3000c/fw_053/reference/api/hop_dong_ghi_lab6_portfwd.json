@@ -1,0 +1,40 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-24 03:04-03:06 UTC, CO SU DONG Y cua anh Huynn",
+ "cach_do": "Goi chinh onSubmit() cua component trang network/portfwd (js/chunk-82690506...js). Moc XHR luu sessionStorage de song qua location.reload(). Da THEM -> SUA -> XOA, thiet bi tro ve redirect [] nhu luc dau.",
+ "trang": "network/portfwd (bai Lab 6)",
+ "truoc_khi_do": [0, { "redirect": [] }],
+ "dom_that": {
+  "khung_nhin": "1536x695",
+  "tieu_de_cot": ["Enable", "Protocol", "External port", "Device/IP", "Internal port"],
+  "nut": ["Add", "Apply", "Undo"],
+  "bang_rong": [126, 178, 1353, 108],
+  "lua_chon_Device_IP": [["192.168.100.109", "Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45)"]],
+  "lua_chon_Protocol_tu_ma_trang": [["tcp udp", "TCP+UDP"], ["tcp", "TCP"], ["udp", "UDP"]]
+ },
+ "buoc_1_them": {
+  "gui": ["data_repo.weboui", "portfwd_set", { "redirect": [ { "enabled": true, "proto": "tcp udp", "src_dport": "8080", "dest_ip": "192.168.100.109", "dest_port": "80", "_idx": "", "_method": "add", "name": "1790219099640_8218843" } ] }],
+  "nhan": [0, { "status": true }],
+  "doc_lai": [0, { "redirect": [ { "_idx": "cfg303837", "enabled": true, "name": "1790219099640_8218843", "proto": "tcp udp", "src_dport": "8080", "dest_port": "80", "dest_ip": "192.168.100.109" } ] }],
+  "dom_sau": ["chk:true | TCP+UDP | 8080 | Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45) | 80"]
+ },
+ "buoc_2_sua": {
+  "gui": ["data_repo.weboui", "portfwd_set", { "redirect": [ { "_idx": "cfg303837", "enabled": false, "name": "1790219099640_8218843", "proto": "tcp udp", "src_dport": "8080", "dest_port": "8081", "dest_ip": "192.168.100.109", "_method": "update" } ] }],
+  "nhan": [0, { "status": true }],
+  "doc_lai": [0, { "redirect": [ { "_idx": "cfg303837", "enabled": false, "name": "1790219099640_8218843", "proto": "tcp udp", "src_dport": "8080", "dest_port": "8081", "dest_ip": "192.168.100.109" } ] }],
+  "dom_sau": ["chk:false | TCP+UDP | 8080 | Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45) | 8081"]
+ },
+ "buoc_3_xoa_tra_ve": {
+  "gui": ["data_repo.weboui", "portfwd_set", { "redirect": [ { "_idx": "cfg303837", "enabled": false, "name": "1790219099640_8218843", "proto": "tcp udp", "src_dport": "8080", "dest_port": "8081", "dest_ip": "192.168.100.109", "_method": "del" } ] }],
+  "nhan": [0, { "status": true }],
+  "doc_lai": [0, { "redirect": [] }],
+  "dom_sau": "No Data"
+ },
+ "rut_ra": [
+  "name do TRINH DUYET sinh (Date.now() + '_' + so ngau nhien), thiet bi giu nguyen",
+  "_idx do THIET BI cap, dang 'cfg' + 6 hex thuong — cung dang voi Reserved IP",
+  "doc ve theo THU TU KHOA RIENG cua thiet bi: _idx, enabled, name, proto, src_dport, dest_port, dest_ip (khac thu tu gui)",
+  "enabled giu kieu BOOLEAN (true/false), cac so cong giu kieu CHUOI",
+  "update: gui ca dong, thiet bi ghi de cac truong; del: xoa theo _idx",
+  "moi lan set thanh cong tra [0,{status:true}] roi trang tu location.reload()"
+ ]
+}

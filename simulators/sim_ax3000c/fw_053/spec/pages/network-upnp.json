@@ -1,0 +1,31 @@
+{
+ "trang": "Network >> Access >> UPnP",
+ "route": "#/network/upnpd",
+ "view": "network/upnp",
+ "chunk_goc": "js/chunk-2d0b3d9e.9b4ab5b7.1726822665278.js",
+ "nguon_bang_chung": [
+  "reference/api/quet_doc_59_api.json",
+  "reference/api/hop_dong_ghi_nhom2_access.json"
+ ],
+ "o": {
+  "Enable UPnP": "el-switch -> config.enabled (boolean)"
+ },
+ "doc_du_lieu": "data_repo.weboui.upnpd_get",
+ "ghi_du_lieu": {
+  "loi_goi": "data_repo.weboui.upnpd_set {config:{enabled}}",
+  "tra_ve": "[0,{status:true}]",
+  "da_do": true
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 7/7",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat",
+  "4_trang_thai": "dat — tat/tai lai/bat tren giao dien gia lap"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "upnpd_set -> upnpd 'config' enabled",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

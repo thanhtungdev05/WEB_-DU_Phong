@@ -1,0 +1,343 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25 CO SU DONG Y cua anh Huynn (UPnP, DMZ, Dynamic DNS)",
+ "cach_do": "Moc XHR trong trang; UPnP/DMZ goi onSubmit() cua component; DDNS bam cong tac roi goi UciForm.apply(). Sau moi buoc doc lai.",
+ "upnp": {
+  "trang": "network/upnpd (chunk-2d0b3d9e)",
+  "truoc": [
+   0,
+   {
+    "config": {
+     "enabled": true
+    }
+   }
+  ],
+  "buoc": [
+   {
+    "ten": "tat",
+    "gui": [
+     "data_repo.weboui",
+     "upnpd_set",
+     {
+      "config": {
+       "enabled": false
+      }
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "config": {
+       "enabled": false
+      }
+     }
+    ],
+    "thong_bao": "Configuration has been applied"
+   },
+   {
+    "ten": "bat_lai",
+    "gui": [
+     "data_repo.weboui",
+     "upnpd_set",
+     {
+      "config": {
+       "enabled": true
+      }
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "config": {
+       "enabled": true
+      }
+     }
+    ]
+   }
+  ],
+  "sau_do": "trung trang thai ban dau"
+ },
+ "dmz": {
+  "trang": "network/dmz (chunk-93c79032)",
+  "truoc": [
+   0,
+   {
+    "dmz_v4": {
+     "enabled": false,
+     "dest_ip": ""
+    }
+   }
+  ],
+  "buoc": [
+   {
+    "ten": "bat",
+    "gui": [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": true,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "dmz_v4": {
+       "enabled": true,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ]
+   },
+   {
+    "ten": "tat_tu_trang",
+    "gui": [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": false,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "dmz_v4": {
+       "enabled": false,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ]
+   },
+   {
+    "ten": "thu_tra_dest_ip_rong_goi_thang",
+    "gui": [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": false,
+       "dest_ip": ""
+      }
+     }
+    ],
+    "nhan": [
+     8,
+     {
+      "status": false
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "dmz_v4": {
+       "enabled": false,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ]
+   }
+  ],
+  "sau_do": "DMZ TAT; dest_ip con 192.168.100.109 — KHONG tra ve rong duoc (thiet bi tu choi, ma trang cung khong bao gio gui rong vi check() bat IPv4 hop le)",
+  "hop_dong_loi_moi": "dmz_set voi dest_ip khong hop le -> result [8, {status:false}] (khong phai khoi error), cau hinh khong doi"
+ },
+ "ddns": {
+  "trang": "network/ddns (chunk-2d0e5d9d, uci-form config=ddns, rollback=true)",
+  "bat": [
+   [
+    "uci",
+    "set",
+    {
+     "config": "ddns",
+     "section": "myddns_ipv4",
+     "values": {
+      "enabled": "1"
+     }
+    },
+    [
+     0
+    ]
+   ],
+   [
+    "uci",
+    "set",
+    {
+     "config": "ddns",
+     "section": "myddns_ipv6",
+     "values": {
+      "enabled": "1"
+     }
+    },
+    [
+     0
+    ]
+   ],
+   [
+    "uci",
+    "apply",
+    {
+     "rollback": true,
+     "timeout": 10
+    },
+    [
+     0
+    ]
+   ],
+   [
+    "uci",
+    "confirm",
+    {},
+    [
+     0
+    ]
+   ],
+   [
+    "ddns",
+    "set",
+    {
+     "enabled": "1"
+    },
+    [
+     0,
+     {
+      "address": "",
+      "datetime": "1765549061",
+      "status": "Fail"
+     }
+    ]
+   ],
+   [
+    "ddns",
+    "get",
+    {},
+    [
+     0,
+     {
+      "address": "",
+      "datetime": "1765549062",
+      "status": "Fail"
+     }
+    ]
+   ]
+  ],
+  "dom_sau_bat_bang_reporting": [
+   "",
+   "December 12,2025",
+   "9:17 PM",
+   "Fail"
+  ],
+  "tat": [
+   [
+    "uci",
+    "set",
+    {
+     "config": "ddns",
+     "section": "myddns_ipv4",
+     "values": {
+      "enabled": "0"
+     }
+    },
+    [
+     0
+    ]
+   ],
+   [
+    "uci",
+    "set",
+    {
+     "config": "ddns",
+     "section": "myddns_ipv6",
+     "values": {
+      "enabled": "0"
+     }
+    },
+    [
+     0
+    ]
+   ],
+   [
+    "uci",
+    "apply",
+    {
+     "rollback": true,
+     "timeout": 10
+    },
+    [
+     0
+    ]
+   ],
+   [
+    "uci",
+    "confirm",
+    {},
+    [
+     0
+    ]
+   ],
+   [
+    "ddns",
+    "set",
+    {
+     "enabled": "1"
+    },
+    [
+     0,
+     {
+      "status": "Success"
+     }
+    ]
+   ],
+   [
+    "ddns",
+    "get",
+    {},
+    [
+     0,
+     {}
+    ]
+   ]
+  ],
+  "uci_get_sau_bat_fnv": "783d0400 (861 ky tu)",
+  "uci_get_sau_tat_fnv": "fd5eae34 (861 ky tu)",
+  "rut_ra": [
+   "uci set {config,section,values}: option vua ghi CHUYEN XUONG CUOI section trong uci get — xac nhan bang FNV: lay khung goc, chuyen 'enabled' xuong cuoi ca 2 section -> trung 783d0400 / fd5eae34",
+   "sau khi tat, GIA TRI trung ban goc, chi khac THU TU khoa (enabled o cuoi)",
+   "uci apply rollback:true timeout:10 -> [0]; trang doi ~2 s roi goi uci confirm -> [0]",
+   "trang LUON goi ddns set {enabled:'1'} (hard-code trong onApplied) ke ca khi tat: bat -> tra {address,datetime,status:'Fail'} (tai khoan mau), tat -> {status:'Success'}",
+   "ddns get: dang bat -> {address:'',datetime:<epoch UTC>,status:'Fail'}; dang tat -> {}",
+   "datetime la epoch UTC (trinh duyet gio VN hien 9:17 PM); system.info localtime doc truoc do vai phut = 1765574033 -> lech ~6.94 h ~ UTC+7 (khop timezone ICT-7 trong uci system). Ket luan: localtime = UTC + 7 h; sai so vai phut vi 2 lan doc khong cung luc"
+  ]
+ },
+ "trang_thai_thiet_bi_sau_do": {
+  "upnp": "enabled true (nhu goc)",
+  "dmz": "enabled false, dest_ip 192.168.100.109 (goc la rong)",
+  "ddns": "enabled 0/0, gia tri nhu goc, thu tu khoa enabled xuong cuoi"
+ }
+}

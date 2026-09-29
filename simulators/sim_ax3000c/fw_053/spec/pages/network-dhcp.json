@@ -1,0 +1,50 @@
+{
+ "trang": "Network >> LAN >> Reserved IP",
+ "route": "#/network/dhcp",
+ "view": "network/dhcp",
+ "chunk_goc": "js/chunk-3404a532.9b4ab5b7.1726822665278.js",
+ "bai_lab": [
+  5
+ ],
+ "nguon_bang_chung": [
+  "reference/api/quet_doc_59_api.json",
+  "reference/api/dom_that_lab4_5.json",
+  "reference/api/lab5_reserved_ip.json"
+ ],
+ "doc_du_lieu": {
+  "thu_tu": [
+   "oui.network.dhcp_leases",
+   "oui.network.arp_table",
+   "data_repo.weboui.dhcp_reservation_get"
+  ],
+  "dhcp_reservation_get": "{host:[...]} — hien tai rong",
+  "lua_chon_Device_MAC": "'<hostname> (<mac>)' tu dhcp_leases; them tu arp_table neu device bat dau 'br', bo 00:00:00:00:00:00",
+  "lua_chon_Device_IP": "'<hostname> (<ip> / <mac>)' tu dhcp_leases; them '<ip> / <mac>' tu arp_table"
+ },
+ "ghi_du_lieu": {
+  "loi_goi": "data_repo.weboui.dhcp_reservation_set",
+  "hinh_dang_gui": "{host:[ {ip, mac, _idx:'', _method:'add'} | {..., _idx:<cu>, _method:'update'} | {..., _idx:<cu>, _method:'del'} ]} — CHI gui cac dong thay doi",
+  "sau_ghi_thanh_cong": "location.reload()",
+  "da_do": true,
+  "trong_gia_lap": "theo DUNG hop dong do that (phep kiem J)",
+  "bang_chung": "reference/api/hop_dong_ghi_lab1_4_5.json",
+  "tra_ve": [
+   0,
+   {
+    "status": true
+   }
+  ]
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — bang, cot, nut, 'No Data', toa do bang trung; bam Add ra 1 dong, danh sach Device/MAC trung",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat chieu doc; chieu ghi CHUA DO",
+  "4_trang_thai": "CHUA — bi chan co chu dich"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "dhcp_reservation_set -> dhcp: them section host (dhcp_pool 'lan', mac, ip) cuoi tep; _idx = ten section",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

@@ -1,5 +1,0 @@
-config aeilogpull 'aeifm'
-        option enabled '1'
-
-config aeilogpull 'config'
-	option state 'None'

@@ -1,2 +1,0 @@
-model:AP-AX3000CV2
-mac:AABBCCDDEEFF

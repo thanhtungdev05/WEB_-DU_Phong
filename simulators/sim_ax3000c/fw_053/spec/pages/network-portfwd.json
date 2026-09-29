@@ -1,0 +1,67 @@
+{
+ "trang": "Network >> Access >> Port Forwarding",
+ "route": "#/network/portfwd",
+ "view": "network/portfwd",
+ "chunk_goc": "js/chunk-82690506.9b4ab5b7.1726822665278.js",
+ "bai_lab": [
+  6
+ ],
+ "nguon_bang_chung": [
+  "reference/api/hop_dong_ghi_lab6_portfwd.json",
+  "reference/api/quet_doc_59_api.json"
+ ],
+ "doc_du_lieu": {
+  "thu_tu": [
+   "oui.network.dhcp_leases",
+   "oui.network.arp_table",
+   "data_repo.weboui.portfwd_get"
+  ],
+  "portfwd_get": "{redirect:[{_idx, enabled(bool), name, proto, src_dport, dest_port, dest_ip}]}",
+  "lua_chon_Protocol": [
+   [
+    "tcp udp",
+    "TCP+UDP"
+   ],
+   [
+    "tcp",
+    "TCP"
+   ],
+   [
+    "udp",
+    "UDP"
+   ]
+  ],
+  "lua_chon_Device_IP": "'<hostname> (<ip> / <mac>)' tu dhcp_leases; them '<ip> / <mac>' tu arp_table (device bat dau 'br')"
+ },
+ "ghi_du_lieu": {
+  "loi_goi": "data_repo.weboui.portfwd_set",
+  "da_do": true,
+  "hinh_dang_gui": "{redirect:[chi cac dong thay doi, moi dong co _method add|update|del va _idx]}",
+  "name": "do TRINH DUYET sinh: Date.now()+'_'+so ngau nhien",
+  "tra_ve": [
+   0,
+   {
+    "status": true
+   }
+  ],
+  "sau_ghi": "location.reload()",
+  "kiem_tra_trinh_duyet": [
+   "khong trung (src_dport+dest_ip)",
+   "proto bat buoc",
+   "dest_ip IPv4 hop le",
+   "src_dport/dest_port trong 1-65535"
+  ]
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — cot/nut/'No Data'/toa do bang/danh sach Device/IP trung that",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat — doc + ghi (them/sua/xoa) do that",
+  "4_trang_thai": "dat — phat lai 3 buoc that trung (K1-K6)"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "portfwd_set -> firewall: them redirect (reflection, src wan, dest lan, target DNAT, enabled, name, proto, src_dport, dest_port, dest_ip)",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

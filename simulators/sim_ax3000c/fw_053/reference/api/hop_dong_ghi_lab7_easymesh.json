@@ -1,0 +1,56 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-24 03:34-03:40 UTC. Anh Huynn ngoi canh thiet bi, chon cach (b): do ca chuyen sang Agent.",
+ "cach_do": "Goi chinh onSubmit() cua component network/easymesh (js/chunk-2d0a387e...js). Trang gui ca 4 truong {MeshEnabled, MeshRole, MeshBand, MeshBSS}. Sau moi buoc doc lai easymesh.get; o trang thai Agent doc them wifi_get, wifiadv_get va DOM 2 trang Wi-Fi.",
+ "trang": "network/easymesh (bai Lab 7)",
+ "truoc_khi_do": [0, { "MeshEnabled": true, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+ "dom_that_truoc": {
+  "khung_nhin": "1536x639",
+  "o_hien": ["Enabled~sw:true@126,178,700,40", "MeshRole~Controller@126,240,700,41", "MeshBSS~FPT TelecomBH-0A91@126,302,700,41"]
+ },
+ "buoc": [
+  {
+   "ten": "tat_easymesh",
+   "gui": ["network.wireless.easymesh", "set", { "MeshEnabled": false, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "nhan": [0, { "MeshEnabled": true, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "doc_lai": [0, { "MeshEnabled": false, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "dom_sau": ["Enabled~sw:false"]
+  },
+  {
+   "ten": "bat_lai_controller",
+   "gui": ["network.wireless.easymesh", "set", { "MeshEnabled": true, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "nhan": [0, { "MeshEnabled": false, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "doc_lai": [0, { "MeshEnabled": true, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }]
+  },
+  {
+   "ten": "chuyen_agent",
+   "gui": ["network.wireless.easymesh", "set", { "MeshEnabled": true, "MeshRole": "Agent", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "nhan": [0, { "MeshEnabled": true, "MeshRole": "Agent", "MeshBand": "5G", "MeshBSS": "OpenWRT-5G.backhaul" }],
+   "doc_lai": [0, { "MeshEnabled": true, "MeshRole": "Agent", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "wifi_get_doi": false,
+   "wifiadv_get_doi": false,
+   "dom_trang_wifi": {
+    "mat_na": "Currently in agent mode, can not configure wifi parameters@105,100,1396,354",
+    "chu": "Host SSIDGuest SSIDSpecific SSID Use separate SSID Wi-Fi SSID Enabled Apply Undo Currently in agent mode, can not configure wifi parameters"
+   },
+   "dom_trang_wifiadv": {
+    "mat_na": "Currently in agent mode, can not configure wifi parameters@105,100,1381,1187"
+   },
+   "dom_trang_easymesh": ["Enabled~sw:true", "MeshRole~Agent", "MeshBSS~FPT TelecomBH-0A91"],
+   "ghi_chu": "Trang Easymesh KHONG bi khoa khi o Agent — MeshRole van doi duoc tu chinh trang. (Ghi chu 22/09 'MeshRole chi doc' la do o input cua el-select LUON co thuoc tinh readonly, khong phai khoa.)"
+  },
+  {
+   "ten": "tra_ve_controller",
+   "gui": ["network.wireless.easymesh", "set", { "MeshEnabled": true, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "nhan": [0, { "MeshEnabled": true, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "doc_lai": [0, { "MeshEnabled": true, "MeshRole": "Controller", "MeshBand": "5G", "MeshBSS": "FPT TelecomBH-0A91" }],
+   "ghi_chu": "Tra ve thanh cong tu chinh trang, KHONG can anh Huynn thao tac tay. Trang Wi-Fi mo khoa lai; wifi_get trung khung goc."
+  }
+ ],
+ "rut_ra": [
+  "doc lai sau moi lan ghi luon dung gia tri vua gui (tru MeshBSS giu nguyen) -> kho gia lap chi can luu 4 truong",
+  "GIA TRI TRA VE cua easymesh.set KHONG nhat quan: buoc 1-2 tra trang thai TRUOC khi ghi; buoc 4 tra trang thai SAU; buoc 3 tra role moi nhung MeshBSS la 'OpenWRT-5G.backhaul' (khong xuat hien o dau khac). Trang chi xet .status (undefined -> coi la thanh cong) nen gia tri nay khong anh huong giao dien. Khong dung quy tac nao tu day.",
+  "Agent KHOA 2 trang network/wifi va network/wifiadv bang mat na 'Currently in agent mode, can not configure wifi parameters' — do ma trang tu doc easymesh.get, khong phai do may chu",
+  "Agent KHONG doi wifi_get, wifiadv_get, MeshBSS",
+  "sau khi doi vai tro, trang Wi-Fi co the hien 'Loading...' vai chuc giay (network.wireless init_status)"
+ ]
+}

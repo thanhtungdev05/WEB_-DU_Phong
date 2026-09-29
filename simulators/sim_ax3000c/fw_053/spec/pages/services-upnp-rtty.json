@@ -1,0 +1,23 @@
+{
+ "trang": "Services >> Rtty configure / UPnP (2 muc menu, 1 plugin)",
+ "route": ["#/services/rtty", "#/services/upnp"],
+ "view": ["services/rtty", "services/upnp"],
+ "nguon_bang_chung": [
+  "reference/api/oui.ui__menu.json",
+  "reference/api/khung_that_services.json",
+  "reference/api/khung_that_uci.json (config upnpd)",
+  "reference/www/views__services__rtty.js, views__services__upnp.js, i18n__services__*.json"
+ ],
+ "ket_luan_do_that": "Menu co 2 muc services/* (plugin:true) nhung KHONG co muc cha 'services' -> SPA khong tao route; ca 2 hash ve '<div id=\"app\"><div><h1>404 Not Found</h1></div></div>'. Tep plugin van phuc vu qua GET (text/javascript, application/json).",
+ "noi_dung_plugin_neu_duoc_nap": {
+  "tab_1": "Active UPnP Redirects: upnp status -> entries[] (proto, extport, intaddr, host_hint, intport, descr)",
+  "tab_2": "MiniUPnP settings: uci-form config=upnpd section=config; enabled co applied -> $system.initStart/initStop('miniupnpd') = oui.system init_action {name,action}",
+  "ghi_chu": "Khong nguoi dung nao cham duoc tren thiet bi that -> KHONG do ghi (khong can dong vao thiet bi)"
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — trang 404 trung: h1 Noto Sans 28px rgb(51,51,51), chu rong 194.2375 px ca hai",
+  "2_cau_truc": "dat — 4 tep plugin trung FNV, outerHTML #app trung 53 ky tu",
+  "3_giao_tiep": "dat — upnp status (S1), uci get upnpd (U1, S2), menu khong co muc cha (S3), MIME (A4)",
+  "4_trang_thai": "khong ap dung — khong co trang nao ghi duoc"
+ }
+}

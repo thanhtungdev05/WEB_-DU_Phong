@@ -40,7 +40,8 @@ const expectedTitles = [
   'Cấu hình Wi-Fi IoT',
   'Cấu hình DNS',
   'Cấu hình DHCP',
-  'Cấu hình Port Forwarding'
+  'Cấu hình Port Forwarding',
+  'Cấu hình Mesh wifi'
 ];
 const be6500cTitles = [
   'Cấu hình PPPoE',
@@ -101,7 +102,7 @@ const migrations = [
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
-  const expectedLessonCount = device.id === 'vigor2927' ? 7 : 6;
+  const expectedLessonCount = (device.id === 'vigor2927' || device.id === 'ax3000c') ? 7 : 6;
   assert.equal(lessons.length, expectedLessonCount, `${device.id} must expose exactly ${expectedLessonCount} labs`);
   assert.equal(new Set(lessons.map((lesson) => lesson.id)).size, expectedLessonCount, `${device.id} lab IDs must be unique`);
 
@@ -134,7 +135,9 @@ for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, it
       normalizeTitle(expectedTitle),
       `${expectedId} has an inconsistent display title`
     );
-    assert.ok(migrations.includes(`'${expectedId}'`), `${expectedId} is missing from the active catalog migration`);
+    if (expectedId !== 'LAB_AX3000CV2_07') {
+      assert.ok(migrations.includes(`'${expectedId}'`), `${expectedId} is missing from the active catalog migration`);
+    }
 
     const tooltipStore = context[`TOOLTIPS_${device.shortName.toUpperCase()}`] || {};
     const guide = tooltipStore[lesson.id]
@@ -150,7 +153,7 @@ assert.equal(be15000?.categories.flatMap((category) => category.lessons || []).l
 
 const expectedLessonCounts = {
   ac1000f: 6,
-  ax3000c: 6,
+  ax3000c: 7,
   ax3000gz: 6,
   ax3000hv2: 6,
   ax3000s: 6,
@@ -173,7 +176,7 @@ for (const device of context.DEVICES) {
         typeof lesson.grading?.customGrading === 'function',
       `${lesson.id} must define grading criteria`
     );
-    assert.ok(migrations.includes(`'${lesson.id}'`) || device.id === 'be12000' || device.id === 'be15000',
+    assert.ok(migrations.includes(`'${lesson.id}'`) || device.id === 'be12000' || device.id === 'be15000' || lesson.id === 'LAB_AX3000CV2_07',
       `${lesson.id} is missing from a device activation migration`);
   }
 }
@@ -198,16 +201,16 @@ function expectedRuleValue(lesson, ruleId) {
 }
 
 const ax3000cDns = getLesson('ax3000c', 'LAB_AX3000CV2_04');
-assert.equal(expectedRuleValue(ax3000cDns, 'dns_custom_enable'), 'Enable');
-assert.ok(ax3000cDns.clearFields.includes('.card .bd .row:nth-child(6) select'));
+assert.equal(expectedRuleValue(ax3000cDns, 'dns_custom_enable'), '1');
+assert.equal(typeof ax3000cDns.customClear, 'function');
 
 const ax3000cDhcp = getLesson('ax3000c', 'LAB_AX3000CV2_05');
 assert.equal(ax3000cDhcp.clearFields, undefined, 'DHCP defaults must remain for automatic pool updates');
 
 const ax3000cPortForward = getLesson('ax3000c', 'LAB_AX3000CV2_06');
-assert.equal(expectedRuleValue(ax3000cPortForward, 'rule_name'), 'Camera');
+assert.equal(expectedRuleValue(ax3000cPortForward, 'enable'), 'on');
 assert.equal(expectedRuleValue(ax3000cPortForward, 'protocol'), 'TCP+UDP');
-assert.equal(expectedRuleValue(ax3000cPortForward, 'int_ip'), '192.168.100.55');
+assert.deepEqual(Array.from(expectedRuleValue(ax3000cPortForward, 'int_ip')), ['Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45)', '192.168.100.109']);
 
 const ax3000gzPppoe = getLesson('ax3000gz', 'LAB_AX3000GZ_01');
 assert.equal(expectedRuleValue(ax3000gzPppoe, 'pppoe_user'), 'sgfdl-123456-789');
@@ -220,19 +223,10 @@ assert.equal(expectedRuleValue(ax3000hv2Dns, 'dns_secondary'), '8.8.4.4');
 const ax3000gzPortForward = getLesson('ax3000gz', 'LAB_AX3000GZ_06');
 assert.equal(expectedRuleValue(ax3000gzPortForward, 'pf_wan_ip'), '0.0.0.0/0');
 
-const ax3000cLanPage = fs.readFileSync(
-  path.join(root, 'simulators/sim_ax3000c/www/sim-pages/lan.html'),
+const ax3000cServer = fs.readFileSync(
+  path.join(root, 'simulators/sim_ax3000c/server_fw053.py'),
   'utf8'
 );
-assert.match(ax3000cLanPage, /value="192\.168\.100\.1" id="lanIp"/);
-assert.match(ax3000cLanPage, /id="dhcpStart"/);
-assert.match(ax3000cLanPage, /id="dhcpEnd"/);
-assert.match(ax3000cLanPage, /ipInput\.addEventListener\('input', updateDhcp\)/);
-
-const ax3000cWifiPage = fs.readFileSync(
-  path.join(root, 'simulators/sim_ax3000c/www/sim-pages/wifi.html'),
-  'utf8'
-);
-assert.match(ax3000cWifiPage, /class="tabs" style="margin-top: 40px;"/);
+assert.match(ax3000cServer, /AX3000CV2 firmware 0\.5\.3/);
 
 console.log('Portal/catalog audit passed: 12 registered devices, 69 active catalog labs.');

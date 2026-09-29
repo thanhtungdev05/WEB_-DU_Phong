@@ -1,0 +1,648 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, firmware 0.5.3, thu ngay 2026-09-22",
+ "cach_thu": "Chrome fetch() tung tai nguyen roi POST sang localhost:9099 (sandbox bi chan 403)",
+ "quy_uoc_ten": "dau / trong duong dan doi thanh __ ; trang goc / luu thanh __ROOT__index.html",
+ "so_tep": 127,
+ "tep": {
+  "__ROOT__index.html": {
+   "duong_dan_that": "/",
+   "byte": 7304,
+   "sha256": "bec8f0333aed60ae19b7388286a66b7b819a0484287e7d33419a50858aa2db6f"
+  },
+  "css__app.06c49f94.css": {
+   "duong_dan_that": "/css/app.06c49f94.css",
+   "byte": 15927,
+   "sha256": "c3db62dfa716e5d85d2df83279f37c5d40df609051e7fd7ada11fb070a18eef9"
+  },
+  "css__chunk-111c3e62.46ed1060.css": {
+   "duong_dan_that": "/css/chunk-111c3e62.46ed1060.css",
+   "byte": 46,
+   "sha256": "a71373f80f928f1233bd3a8c935a39a6b93b86dbd0b423d0e53555d2d0449d2b"
+  },
+  "css__chunk-13b00c3f.aff3f176.css": {
+   "duong_dan_that": "/css/chunk-13b00c3f.aff3f176.css",
+   "byte": 186,
+   "sha256": "a070ae6a7aee4a7ec549c892b05eaeed9548f125aab1f5790b7c017e5536be18"
+  },
+  "css__chunk-26c4d9fc.38524610.css": {
+   "duong_dan_that": "/css/chunk-26c4d9fc.38524610.css",
+   "byte": 503,
+   "sha256": "59f32b4e2f5a6d7106cf892b12ba4c5302860992585226f2389e31870eb14d6f"
+  },
+  "css__chunk-44bc1f1e.ebecf51c.css": {
+   "duong_dan_that": "/css/chunk-44bc1f1e.ebecf51c.css",
+   "byte": 168,
+   "sha256": "f2db91ef9bca615d90f3489702a31d4952a312f2b36c60b7c4354d5b6bf11d06"
+  },
+  "css__chunk-47368b9a.6f7ff7c6.css": {
+   "duong_dan_that": "/css/chunk-47368b9a.6f7ff7c6.css",
+   "byte": 1754,
+   "sha256": "8c3f4a5519106b141fc5d8d4d1e5c9c5bfbb0359b1537527449b8fbd9284a3d1"
+  },
+  "css__chunk-49a2fa96.fa76887e.css": {
+   "duong_dan_that": "/css/chunk-49a2fa96.fa76887e.css",
+   "byte": 570,
+   "sha256": "cd0d5b791dd8254c8de666f9cd3fdb9eac251f9c4d59120636261a1213f3be25"
+  },
+  "css__chunk-49cb6422.25cdc277.css": {
+   "duong_dan_that": "/css/chunk-49cb6422.25cdc277.css",
+   "byte": 150,
+   "sha256": "acd3cbe800d0d4739b45fdf5499b4916b473fc117745341face315210ab0c731"
+  },
+  "css__chunk-541b5d29.478330f3.css": {
+   "duong_dan_that": "/css/chunk-541b5d29.478330f3.css",
+   "byte": 301,
+   "sha256": "1d25a216fedada3dc3ac7758615d5d097007c57f223c4eb171c7d18876968366"
+  },
+  "css__chunk-7317dafa.478330f3.css": {
+   "duong_dan_that": "/css/chunk-7317dafa.478330f3.css",
+   "byte": 301,
+   "sha256": "1d25a216fedada3dc3ac7758615d5d097007c57f223c4eb171c7d18876968366"
+  },
+  "css__chunk-a30460e6.ef587977.css": {
+   "duong_dan_that": "/css/chunk-a30460e6.ef587977.css",
+   "byte": 38,
+   "sha256": "4f12e32a5042159f1876d7f52a184cf0770377303e802132fbf3794dccbf17f0"
+  },
+  "css__chunk-b90fa57a.3da7f943.css": {
+   "duong_dan_that": "/css/chunk-b90fa57a.3da7f943.css",
+   "byte": 40,
+   "sha256": "470b59ec9daf8013c5e45a63fc9cb6254e3e36127e7783136c0fef4fc07b305b"
+  },
+  "css__chunk-b9e44e90.a3c64df7.css": {
+   "duong_dan_that": "/css/chunk-b9e44e90.a3c64df7.css",
+   "byte": 269,
+   "sha256": "0906d8f4aafcc6f052768d5a153f0397e3ff1c3ebf99be4b8451d588eb545a36"
+  },
+  "css__chunk-vendors.7705225a.css": {
+   "duong_dan_that": "/css/chunk-vendors.7705225a.css",
+   "byte": 171253,
+   "sha256": "7b69c70232e100fa498fb00d3414bb27a2d6805106f5a530388b628dc15f5d7f"
+  },
+  "fonts__NotoSans-Regular.2a1861cd.ttf": {
+   "duong_dan_that": "/fonts/NotoSans-Regular.2a1861cd.ttf",
+   "byte": 556216,
+   "sha256": "2ec33f84606cbaa0a1a944488e14f97faf2f6a25ecdd8354f5358f06da13c7d9"
+  },
+  "fonts__element-icons.535877f5.woff": {
+   "duong_dan_that": "/fonts/element-icons.535877f5.woff",
+   "byte": 28200,
+   "sha256": "ab40a58972be2ceab32e7e35dab3131b959aae63835d7bda1a79ae51f9a73c17"
+  },
+  "icons__GF_815.png": {
+   "duong_dan_that": "/icons/GF_815.png",
+   "byte": 338743,
+   "sha256": "5b201c2805e54129f750aa6255c31b77810473d560511f16759c3c016d863a3a"
+  },
+  "icons__GF_Logo_index.svg": {
+   "duong_dan_that": "/icons/GF_Logo_index.svg",
+   "byte": 13404,
+   "sha256": "5c8b7cfd8b5bbe36d2291e0c000ad9f178fd3b1914058b8f08f5b56c2b6c6b34"
+  },
+  "icons__Internet.svg": {
+   "duong_dan_that": "/icons/Internet.svg",
+   "byte": 19144,
+   "sha256": "5976fffd8525d31df8584162b5364a922f4d3b501cd828b376609e69bad38e1c"
+  },
+  "icons__command.svg": {
+   "duong_dan_that": "/icons/command.svg",
+   "byte": 416,
+   "sha256": "2d91e0b245eafe774838bc0d33c0a5436ffcb094a1c49bf12543b2e4547795ae"
+  },
+  "icons__device.svg": {
+   "duong_dan_that": "/icons/device.svg",
+   "byte": 1294,
+   "sha256": "35a964e99fe5b722cba15df44d59908e04dad0cedeea4d4774b7b7632cd93972"
+  },
+  "icons__error.png": {
+   "duong_dan_that": "/icons/error.png",
+   "byte": 811,
+   "sha256": "836148961ec1b6a391ac1720be171934cece2a1714dc2aa3204b13e2475929f8"
+  },
+  "icons__file.png": {
+   "duong_dan_that": "/icons/file.png",
+   "byte": 214,
+   "sha256": "c12c68568f214f65459c3c13090cd8ee5d33d13590fdfaa91abbb92d9384ee97"
+  },
+  "icons__folder.png": {
+   "duong_dan_that": "/icons/folder.png",
+   "byte": 137,
+   "sha256": "c1d912d5b6b59d24825770422c68d0ce646f1c2ecc993a53d20aa46de9b3ef11"
+  },
+  "icons__gf_logo.png": {
+   "duong_dan_that": "/icons/gf_logo.png",
+   "byte": 51026,
+   "sha256": "675959d7a8ac65e710047d420fd0720d9867ccfbd58ef050a610d10a6408e23a"
+  },
+  "icons__grid.svg": {
+   "duong_dan_that": "/icons/grid.svg",
+   "byte": 399,
+   "sha256": "bd93be7002e80a879178c5b0d7530a4ea0ecd741451ef96bfa6969d9d84c5d2e"
+  },
+  "icons__log-out.svg": {
+   "duong_dan_that": "/icons/log-out.svg",
+   "byte": 362,
+   "sha256": "0609fcc2b376b88e51391b425f5279e3ec201961d0c88c49053fc8cee236d9c0"
+  },
+  "icons__parent-folder.png": {
+   "duong_dan_that": "/icons/parent-folder.png",
+   "byte": 258,
+   "sha256": "aeaa3f8cfa0e69a19e407fe92de9f2e267c0cb15c791113ddc9671364e3085fd"
+  },
+  "icons__port_down.png": {
+   "duong_dan_that": "/icons/port_down.png",
+   "byte": 769,
+   "sha256": "a4bb46243a97df708370c0b4c9c847b8e40a1cf6d7130eb22b3d0c2820aa369b"
+  },
+  "icons__port_up.png": {
+   "duong_dan_that": "/icons/port_up.png",
+   "byte": 1151,
+   "sha256": "cd1d68ca936af488f7a9da06bad5935889a4549211df4e709ca75e2ea079797e"
+  },
+  "icons__settings.svg": {
+   "duong_dan_that": "/icons/settings.svg",
+   "byte": 1006,
+   "sha256": "b54f20662ccfa4cb842f070d00240ca9b83fd77a507d99d2ca5eb6f43963568e"
+  },
+  "icons__share.svg": {
+   "duong_dan_that": "/icons/share.svg",
+   "byte": 440,
+   "sha256": "760b5c8ab5a631468b3b037d962ce26945f263888bfc6c5dca542bf1e341c68e"
+  },
+  "icons__wifi-icon.svg": {
+   "duong_dan_that": "/icons/wifi-icon.svg",
+   "byte": 10251,
+   "sha256": "72e3e24d962a21eb41d2b03c9f2378f7b378e29f94bf233e7309273295b635c6"
+  },
+  "img__Up-side.55586474.png": {
+   "duong_dan_that": "/img/Up-side.55586474.png",
+   "byte": 617109,
+   "sha256": "3243abe18c01cca074587c7675db8acf09f67c2d8a3a140bcc617b45e29a2092"
+  },
+  "img__product_810df.7351e3a5.png": {
+   "duong_dan_that": "/img/product_810df.7351e3a5.png",
+   "byte": 142391,
+   "sha256": "afde6eeca7d46fcb09f0c4ed649f85bc5019e08cf1c50a2c20b24c726a030ad8"
+  },
+  "index.html": {
+   "duong_dan_that": "/index.html",
+   "byte": 160,
+   "sha256": "54d7dbdeffe1b0132e561e2c1ac893023b406da9e016dcec50aa3e4b3843eb31"
+  },
+  "js__app.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/app.9b4ab5b7.1726822665278.js",
+   "byte": 127493,
+   "sha256": "33dd1934a11e3aec8d89bd858dd6f0d2dac59df091bfc8c0a19556619ebe1cc7"
+  },
+  "js__chunk-111c3e62.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-111c3e62.9b4ab5b7.1726822665278.js",
+   "byte": 5381,
+   "sha256": "33d8fc056dd92925d2c95978200b47cee2f4e4c2c37a9e0cb9b9eb01a894aec5"
+  },
+  "js__chunk-13b00c3f.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-13b00c3f.9b4ab5b7.1726822665278.js",
+   "byte": 784,
+   "sha256": "bcb7c8fb27d33f5111695e066df3f9d51e02dda10ec2778e5d52608d828994d5"
+  },
+  "js__chunk-13cd769e.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-13cd769e.9b4ab5b7.1726822665278.js",
+   "byte": 13116,
+   "sha256": "9efb8c5e56e2e68004c700b0a15a962f3fdc01bb732f40711baa844098002cc1"
+  },
+  "js__chunk-16271a96.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-16271a96.9b4ab5b7.1726822665278.js",
+   "byte": 9089,
+   "sha256": "50864810ec8ee52b5e2fc8fd1b8e40edd84f4bbb0e6aa7d1ba282b98cac95a67"
+  },
+  "js__chunk-26b0e1a8.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-26b0e1a8.9b4ab5b7.1726822665278.js",
+   "byte": 3201,
+   "sha256": "7e0ed2daef81a624a1a336e2db1d0add01c3f5d8e9993cf0d502000c9e01897d"
+  },
+  "js__chunk-26c4d9fc.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-26c4d9fc.9b4ab5b7.1726822665278.js",
+   "byte": 16756,
+   "sha256": "c28e1e6e627c47118f80e36acab9df605f7dc44a6a72a113b45f36ef92dc3ac5"
+  },
+  "js__chunk-2d0a387e.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0a387e.9b4ab5b7.1726822665278.js",
+   "byte": 2650,
+   "sha256": "79d726774f1f2a23b2004f28b7c7e63822cbde06b70b3d541724b97e3a0bf223"
+  },
+  "js__chunk-2d0a49eb.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0a49eb.9b4ab5b7.1726822665278.js",
+   "byte": 2022,
+   "sha256": "b689b5887cf81a12ea38cf2d9fb9671e29d6149771098da81bc4db96333cf35a"
+  },
+  "js__chunk-2d0a4da0.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0a4da0.9b4ab5b7.1726822665278.js",
+   "byte": 3470,
+   "sha256": "faeadb7a142682534593e0c79aa771a54e0f5b06141be22b466377889d9bea3c"
+  },
+  "js__chunk-2d0aa5a7.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0aa5a7.9b4ab5b7.1726822665278.js",
+   "byte": 1076,
+   "sha256": "c7283d578f21b61621fa4e787aa28beb35e1bfebe6bd7b034fd75f963e7ba768"
+  },
+  "js__chunk-2d0aeb29.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0aeb29.9b4ab5b7.1726822665278.js",
+   "byte": 24194,
+   "sha256": "54d003e1a3db3a2d762d35d0fa0329a64afa9c738448c7c26c7bcff7bddb6f4e"
+  },
+  "js__chunk-2d0b2002.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0b2002.9b4ab5b7.1726822665278.js",
+   "byte": 4394,
+   "sha256": "6df23207cf42e241e370ebbdd0d8b5855474c01e39a40b860edf8f05a5119f9c"
+  },
+  "js__chunk-2d0b2198.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0b2198.9b4ab5b7.1726822665278.js",
+   "byte": 418,
+   "sha256": "b2506f5fedb5409b4fb0c1f566a235b73d5afa6f6191ccfd60a4bb62348ad406"
+  },
+  "js__chunk-2d0b37ef.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0b37ef.9b4ab5b7.1726822665278.js",
+   "byte": 935,
+   "sha256": "42a50f79c74125e11b4379f2f48e8e7b8d91c0682d102640c4d5aed2cab6995d"
+  },
+  "js__chunk-2d0b3d9e.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0b3d9e.9b4ab5b7.1726822665278.js",
+   "byte": 1692,
+   "sha256": "e9bf7fc166bd607b139cff37df7449e9f8a2a30d9774878cb3e32497755b5ac7"
+  },
+  "js__chunk-2d0b6e5b.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0b6e5b.9b4ab5b7.1726822665278.js",
+   "byte": 22531,
+   "sha256": "29d6b882fd41e0748d23a69f3ee7e1419974320c5fdad03c723141d1146dfa87"
+  },
+  "js__chunk-2d0ba6ca.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0ba6ca.9b4ab5b7.1726822665278.js",
+   "byte": 2516,
+   "sha256": "4318e9ae93c660e15e7037ddf4881a29c7286b6b275dabb52a91f8f2e1013292"
+  },
+  "js__chunk-2d0baaa6.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0baaa6.9b4ab5b7.1726822665278.js",
+   "byte": 4166,
+   "sha256": "4a5dc63d76645b1bcb2b38564be262e970c6043d229bd3424ee0f89715bee78b"
+  },
+  "js__chunk-2d0bcdac.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0bcdac.9b4ab5b7.1726822665278.js",
+   "byte": 4378,
+   "sha256": "498093858dc0d25d70c13734f90c6cbf51d4b0e413c3411eb3e70a4a381b3400"
+  },
+  "js__chunk-2d0bd1a7.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0bd1a7.9b4ab5b7.1726822665278.js",
+   "byte": 676,
+   "sha256": "4b61c4121c2dad3b71ff81f756aa6b74f14332ac0cef2c01f815342007e8232e"
+  },
+  "js__chunk-2d0c0a84.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0c0a84.9b4ab5b7.1726822665278.js",
+   "byte": 3379,
+   "sha256": "099302dc3874ae833aa8cbe7c78bb4d48806a471893f4e80544ad2982d625f5f"
+  },
+  "js__chunk-2d0c0fcc.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0c0fcc.9b4ab5b7.1726822665278.js",
+   "byte": 4956,
+   "sha256": "f3bce49ed68596ca3c88cc6ed798bdc6d18a032a9a0478de69ec337cb48a280d"
+  },
+  "js__chunk-2d0c4301.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0c4301.9b4ab5b7.1726822665278.js",
+   "byte": 5340,
+   "sha256": "8e82267710229fd4363d488f96c70ce4a1eef268aa3e4a0644182565c2600214"
+  },
+  "js__chunk-2d0c4a66.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0c4a66.9b4ab5b7.1726822665278.js",
+   "byte": 1304,
+   "sha256": "6f4fc20b85afd46e9e267cd8e087d71093e0da092f19199afad2f94676e8b0db"
+  },
+  "js__chunk-2d0c7ef6.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0c7ef6.9b4ab5b7.1726822665278.js",
+   "byte": 2176,
+   "sha256": "5436ca369fd2feac5d2af666fa5ca38cedc11a823ba4419307553f7c990c3f87"
+  },
+  "js__chunk-2d0c8817.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0c8817.9b4ab5b7.1726822665278.js",
+   "byte": 58934,
+   "sha256": "7838784bcad9cf296ffbec173ec4fe10f50c303340974ba5506a596c5fded1f6"
+  },
+  "js__chunk-2d0c8bc6.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0c8bc6.9b4ab5b7.1726822665278.js",
+   "byte": 2315,
+   "sha256": "01ea38280df67d2d9fea0537d4a1de77b9f05264da769e484912e19d7ff19dc5"
+  },
+  "js__chunk-2d0cbef1.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0cbef1.9b4ab5b7.1726822665278.js",
+   "byte": 12304,
+   "sha256": "3ac2cd53edfba7f48de39bbe41e5cc27110c93b82f137def62b6264fffe7d786"
+  },
+  "js__chunk-2d0ced27.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0ced27.9b4ab5b7.1726822665278.js",
+   "byte": 3137,
+   "sha256": "b8b451969244e0baaa9bc308764607df310ce41c739b7222c56466d731a40950"
+  },
+  "js__chunk-2d0d0215.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0d0215.9b4ab5b7.1726822665278.js",
+   "byte": 3737,
+   "sha256": "e9b325f91024f1a9ab75be55ea343f2db76aa3ad757c6e33a03215a1e0cc1b8e"
+  },
+  "js__chunk-2d0d0bca.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0d0bca.9b4ab5b7.1726822665278.js",
+   "byte": 1336,
+   "sha256": "fb74259c0533e7537ecdb0da00a93d02dd3a52ec6d92a46c40f6449114191594"
+  },
+  "js__chunk-2d0d70a4.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0d70a4.9b4ab5b7.1726822665278.js",
+   "byte": 1356,
+   "sha256": "7744da211599abc68031ad9acd2fab36cdcee2446be68636cfb3da18a638bbec"
+  },
+  "js__chunk-2d0d7658.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0d7658.9b4ab5b7.1726822665278.js",
+   "byte": 640,
+   "sha256": "c127fcb39db679aeba75edc8109d5d22dae7a1744cac8e565dfc0d2e032aa396"
+  },
+  "js__chunk-2d0da00f.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0da00f.9b4ab5b7.1726822665278.js",
+   "byte": 2531,
+   "sha256": "1041a28d0fe075219e8babc36ee877e9c42d905297b942c70424ecaa0bbb1dd3"
+  },
+  "js__chunk-2d0df02a.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0df02a.9b4ab5b7.1726822665278.js",
+   "byte": 1253,
+   "sha256": "1c02747f42ffef9f0f814707195944a247a44cee93848b405f9b142b89def18c"
+  },
+  "js__chunk-2d0df482.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0df482.9b4ab5b7.1726822665278.js",
+   "byte": 3318,
+   "sha256": "d4ca0ed2140e0977651ae9ad7f27553e10c987032acffe4be7760bcbcb62f555"
+  },
+  "js__chunk-2d0e2751.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0e2751.9b4ab5b7.1726822665278.js",
+   "byte": 4211,
+   "sha256": "90504ff9598e7af0e703656aa18e5b42503bd6aaf472021d494eac8daeef9998"
+  },
+  "js__chunk-2d0e5bff.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0e5bff.9b4ab5b7.1726822665278.js",
+   "byte": 9672,
+   "sha256": "e74481ad77ccaae125b72c9b8032dcf1e602d083ba815912816c899266205ff1"
+  },
+  "js__chunk-2d0e5d41.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0e5d41.9b4ab5b7.1726822665278.js",
+   "byte": 1908,
+   "sha256": "c8e6973552d948c8c062020fef1ac9cdc4226166f0d2079a65099b86f3bb6529"
+  },
+  "js__chunk-2d0e5d9d.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0e5d9d.9b4ab5b7.1726822665278.js",
+   "byte": 3819,
+   "sha256": "de17f7e3ca3cfe19d2ef7e5ab5814f2f4a847804054ec561753a527ea19d9638"
+  },
+  "js__chunk-2d0f003e.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0f003e.9b4ab5b7.1726822665278.js",
+   "byte": 3112,
+   "sha256": "835374b8573d018d88dd1ec617391f7c596c455c898d2140daa5720dad684342"
+  },
+  "js__chunk-2d0f0d91.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d0f0d91.9b4ab5b7.1726822665278.js",
+   "byte": 1693,
+   "sha256": "8feb40a9328ca1d518825b532d248664646fc3dd2e16129ecb11dc9e01c8b296"
+  },
+  "js__chunk-2d208525.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d208525.9b4ab5b7.1726822665278.js",
+   "byte": 1471,
+   "sha256": "3a1ec9615007de043be8c44a7c6194e7bd263f6dbb2e1ec4eca05e6ac1161e7d"
+  },
+  "js__chunk-2d20fe10.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d20fe10.9b4ab5b7.1726822665278.js",
+   "byte": 185,
+   "sha256": "636d8d0d0665f5563d714b6a2f355680cc7a8e96ad8ce573ac51c58c6cbf281c"
+  },
+  "js__chunk-2d20fee3.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d20fee3.9b4ab5b7.1726822665278.js",
+   "byte": 7610,
+   "sha256": "ae533ad15c9525fcb1d4d68c36f03d775e2ef7f628efb637905bbf3939f5a912"
+  },
+  "js__chunk-2d2131b2.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d2131b2.9b4ab5b7.1726822665278.js",
+   "byte": 625,
+   "sha256": "b4fb0c6a42d3b09eccb58329dffa0b4c045fcc17e4cedb36f3548033a7cda145"
+  },
+  "js__chunk-2d216efa.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d216efa.9b4ab5b7.1726822665278.js",
+   "byte": 506,
+   "sha256": "9386fe1f9ba94bfb93e2e8e88682f1952c29e229588602e6cf2305f494abf60e"
+  },
+  "js__chunk-2d2176af.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d2176af.9b4ab5b7.1726822665278.js",
+   "byte": 1233,
+   "sha256": "3059b37a7b3b525f9639cc5cf328d31bc6bae44952b8f22d587e1ef87aa5b692"
+  },
+  "js__chunk-2d21e210.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d21e210.9b4ab5b7.1726822665278.js",
+   "byte": 3907,
+   "sha256": "6b543e7280b4a6d22be2e31f8992faf70ffb3b8d28b384264a6e2ea487d4d2b1"
+  },
+  "js__chunk-2d21e749.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d21e749.9b4ab5b7.1726822665278.js",
+   "byte": 5143,
+   "sha256": "505896808673913d6a683b7892ab42a6876aabf65229a82633c8c3d50e6b4444"
+  },
+  "js__chunk-2d21f8ac.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d21f8ac.9b4ab5b7.1726822665278.js",
+   "byte": 16185,
+   "sha256": "300e722cdd557f9cc05a15bae48f7920e1f010216875dea4f0ec31a9b05a6033"
+  },
+  "js__chunk-2d221fa5.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d221fa5.9b4ab5b7.1726822665278.js",
+   "byte": 2708,
+   "sha256": "b557c7a729aacd82fe67fd764a8d9ae45baca315fb763bfd4063d3c41c774691"
+  },
+  "js__chunk-2d222962.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d222962.9b4ab5b7.1726822665278.js",
+   "byte": 7218,
+   "sha256": "ded1c9dc1086da81c1902afd576537396e77bc2c13b49310941b045fc048996d"
+  },
+  "js__chunk-2d2262b2.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d2262b2.9b4ab5b7.1726822665278.js",
+   "byte": 4136,
+   "sha256": "e1d0db0cb57d56b06593626c3b1779ca46302287cdbf570fe41cdfcd34ad29db"
+  },
+  "js__chunk-2d2288ef.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d2288ef.9b4ab5b7.1726822665278.js",
+   "byte": 2290,
+   "sha256": "772337bc5d56c8282544db622d6d283495ee474855c00788a4ce6afd2bda9338"
+  },
+  "js__chunk-2d229a01.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d229a01.9b4ab5b7.1726822665278.js",
+   "byte": 1662,
+   "sha256": "e40e6a6626569cfca53b603b8bcb09a03fa2691cba6ad1a91ca32cb6369a6883"
+  },
+  "js__chunk-2d22c541.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d22c541.9b4ab5b7.1726822665278.js",
+   "byte": 1752,
+   "sha256": "0c902d4981a5bfdf41c3238837fdd4501344f53bc79a195da20a13e202c28cbb"
+  },
+  "js__chunk-2d22fc9b.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d22fc9b.9b4ab5b7.1726822665278.js",
+   "byte": 2827,
+   "sha256": "e82c2de4557fc9c2f55f3e873ccf35eab197d14656ac2ce0d86f5310b187f5b8"
+  },
+  "js__chunk-2d237504.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-2d237504.9b4ab5b7.1726822665278.js",
+   "byte": 21570,
+   "sha256": "e8acb3c1ddc3ee869ca135b5b6138c0d956c85a795845667683c8534d1f86684"
+  },
+  "js__chunk-3404a532.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-3404a532.9b4ab5b7.1726822665278.js",
+   "byte": 5994,
+   "sha256": "33017e8832e9666b7e43d2f3800f9151838654ab766d82f40cf26b49c74d482c"
+  },
+  "js__chunk-3ae6ae42.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-3ae6ae42.9b4ab5b7.1726822665278.js",
+   "byte": 1745,
+   "sha256": "ec38423622213eee9ce9f71b72ada3ef6e7c5986a87a3d33c69a2ce80b1f564f"
+  },
+  "js__chunk-3e0849fc.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-3e0849fc.9b4ab5b7.1726822665278.js",
+   "byte": 2838,
+   "sha256": "2ebdf544e43090c25765bddb78751b7cb1fead4620b41e915f92377019cbe168"
+  },
+  "js__chunk-4404d53e.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-4404d53e.9b4ab5b7.1726822665278.js",
+   "byte": 131198,
+   "sha256": "d210bb0045a3c8d2f1ebde5ba5965896673c7f766b316743987872ed5bb6581c"
+  },
+  "js__chunk-44bc1f1e.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-44bc1f1e.9b4ab5b7.1726822665278.js",
+   "byte": 3426,
+   "sha256": "7f0b58079f56ae680b16c943fd5135cf8e6d7a231950c00e00824a5e0bcf8de3"
+  },
+  "js__chunk-47368b9a.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-47368b9a.9b4ab5b7.1726822665278.js",
+   "byte": 7590,
+   "sha256": "ed3cb3fac1064e091b00619d69d3880fefcd0e94d83ada4c73870b3d5ff4377b"
+  },
+  "js__chunk-482a93a2.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-482a93a2.9b4ab5b7.1726822665278.js",
+   "byte": 4862,
+   "sha256": "36b99f20968344b347101a1fd6892278c705fe1ba2e7d5e723f28265060537d0"
+  },
+  "js__chunk-49a2fa96.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-49a2fa96.9b4ab5b7.1726822665278.js",
+   "byte": 20310,
+   "sha256": "fb4447db6190ca826aa725bd6ff9076bef897e74039ca16c333deb9e06c9955f"
+  },
+  "js__chunk-49cb6422.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-49cb6422.9b4ab5b7.1726822665278.js",
+   "byte": 4528,
+   "sha256": "bc4ada15dac53a4b2a588cd088578eb911c3de1521ffadcd0789734700904a81"
+  },
+  "js__chunk-541b5d29.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-541b5d29.9b4ab5b7.1726822665278.js",
+   "byte": 18905,
+   "sha256": "1f191e9b8bc138eccad038478201f1de8bbfdf37ae5ae987776711f7d561dfcd"
+  },
+  "js__chunk-58926e63.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-58926e63.9b4ab5b7.1726822665278.js",
+   "byte": 6894,
+   "sha256": "73b647d77d8ac17e73f49328d8a48610b81e8b7d01c57d56541be17ea58c1616"
+  },
+  "js__chunk-60de137c.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-60de137c.9b4ab5b7.1726822665278.js",
+   "byte": 711020,
+   "sha256": "5e71097e920b6d1209aac9339df74e80248fe2ab7a427ca9fa3e2f15b0bf5a00"
+  },
+  "js__chunk-67efadc4.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-67efadc4.9b4ab5b7.1726822665278.js",
+   "byte": 3321,
+   "sha256": "4246ff0ec7a4eb8913f32cda22d7d4f001e0bb312d2dc6f6a85308605f98560b"
+  },
+  "js__chunk-6b9124a9.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-6b9124a9.9b4ab5b7.1726822665278.js",
+   "byte": 4275,
+   "sha256": "dd8ef7358abe5e427ea2bf4e048977641bd9f4d424e5be8dcb578a8953dce302"
+  },
+  "js__chunk-7266f7c8.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-7266f7c8.9b4ab5b7.1726822665278.js",
+   "byte": 10831,
+   "sha256": "2cd7288e291785b971a74897d29529acac4c43f98c2e3bf087fae33229823e5b"
+  },
+  "js__chunk-7317dafa.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-7317dafa.9b4ab5b7.1726822665278.js",
+   "byte": 16967,
+   "sha256": "d7e8262828d3c2da0cbdd68693cfad39c01a487764302b8e7cff9855b5866b73"
+  },
+  "js__chunk-82690506.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-82690506.9b4ab5b7.1726822665278.js",
+   "byte": 8020,
+   "sha256": "d79dfddeb5e17bb262194f20d0bf902ae81a3d3d57eda5e4b8804e6e1f9fba1f"
+  },
+  "js__chunk-93c79032.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-93c79032.9b4ab5b7.1726822665278.js",
+   "byte": 4194,
+   "sha256": "2ad63373e2269ebb51852a9bd974f673ee29d35a345e33a3644caa036b0d941d"
+  },
+  "js__chunk-a30460e6.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-a30460e6.9b4ab5b7.1726822665278.js",
+   "byte": 4953,
+   "sha256": "830453717a5ce4a3ca8f9bf825cd1c039680a717811ec5f16e28cf0c450dcf97"
+  },
+  "js__chunk-aff71f62.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-aff71f62.9b4ab5b7.1726822665278.js",
+   "byte": 9271,
+   "sha256": "cc29f366776b383e7658050d35abc40d0ce60d4736e53e78f3ce3cfbe1abdc8b"
+  },
+  "js__chunk-b90fa57a.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-b90fa57a.9b4ab5b7.1726822665278.js",
+   "byte": 12331,
+   "sha256": "2d9ca6b673272eccf1793b8be33656246203e47eb4b271216ee0233646061388"
+  },
+  "js__chunk-b9e44e90.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-b9e44e90.9b4ab5b7.1726822665278.js",
+   "byte": 21672,
+   "sha256": "4bad21ca0a73954d4e01b75776c8f3d79eb97c3443d690c3cb92fa1646408eca"
+  },
+  "js__chunk-f0a37f38.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-f0a37f38.9b4ab5b7.1726822665278.js",
+   "byte": 2790,
+   "sha256": "1de55d049520e6ea601026cd3337a115cda0e685c317304fc36948891c2f5429"
+  },
+  "js__chunk-f9027850.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-f9027850.9b4ab5b7.1726822665278.js",
+   "byte": 3592,
+   "sha256": "ba39bf599b6896cb3fc438c2776502ee03aaa9a529568f5b00b551d3216c36bb"
+  },
+  "js__chunk-vendors.9b4ab5b7.1726822665278.js": {
+   "duong_dan_that": "/js/chunk-vendors.9b4ab5b7.1726822665278.js",
+   "byte": 954316,
+   "sha256": "78469bb33703c130deb85f68b34a43f5133dbc8099316000f6db5029f66203fb"
+  },
+  "logo-fpt.ico": {
+   "duong_dan_that": "/logo-fpt.ico",
+   "byte": 192347,
+   "sha256": "069498becea26db06e1378b13fcf3a8bd4e0b4a95fa04f1652798d31b5aaa506"
+  },
+  "views__services__rtty.js": {
+   "duong_dan_that": "/views/services/rtty.js",
+   "byte": 14521,
+   "sha256": "27ceceb405bf81acb3c8f312e3fa10945cbeb24ff8b1e2e26893592774907be3",
+   "nguon": "2026-09-25: noi dung tai tu thiet bi that trong Chrome (fetch), doi chieu FNV-1a toan tep trung; byte ghi tu ban sim_ax3000c (0.10.2) — chi khac cacheIdentifier '50756588'->'72a0f867'"
+  },
+  "views__services__upnp.js": {
+   "duong_dan_that": "/views/services/upnp.js",
+   "byte": 14521,
+   "sha256": "4c43f70be5d83cb628057ed7aca80800733937b5bf1777ed0997a4683d4cdd75",
+   "nguon": "2026-09-25: noi dung tai tu thiet bi that trong Chrome (fetch), doi chieu FNV-1a toan tep trung; byte ghi tu ban sim_ax3000c (0.10.2) — chi khac cacheIdentifier 'cba9db74'->'08dc0e28'"
+  },
+  "i18n__services__rtty.json": {
+   "duong_dan_that": "/i18n/services/rtty.json",
+   "byte": 153,
+   "sha256": "7f0a29752618f6fb2f2a8962ab7a0b9e230dc2a42bdfa7fbef0651456d5bdcaa",
+   "nguon": "2026-09-25: noi dung tai tu thiet bi that trong Chrome (fetch), doi chieu FNV-1a toan tep trung; byte ghi tu ban sim_ax3000c (0.10.2) — trung nguyen van"
+  },
+  "i18n__services__upnp.json": {
+   "duong_dan_that": "/i18n/services/upnp.json",
+   "byte": 3222,
+   "sha256": "a2023cc0bfa09df5b746b93f03e1ef99f557d1a077f208eaf47c63d2f438566d",
+   "nguon": "2026-09-25: noi dung tai tu thiet bi that trong Chrome (fetch), doi chieu FNV-1a toan tep trung; byte ghi tu ban sim_ax3000c (0.10.2) — trung nguyen van"
+  }
+ },
+ "ghi_chu_bo_sung": "2026-09-22 bo sung 5 tai nguyen phat hien thieu khi mo ban gia lap tren trinh duyet: anh bi vo. Do lai trang /#/home cua thiet bi that moi thay chung duoc tai."
+}

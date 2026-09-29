@@ -1,9 +1,0 @@
-config global 'instance'
-	option backup_interval 86400
-	option system_monitor_interval '900'
-	option system_load_threshold '5.0'
-	option name 'data_repository'
-	option module_path '/usr/lib/data_repository'
-	option nonvolatile_path '/aeimnt/rt_app'
-	option log_level '5'
-	option skip_collecting_threshold 70

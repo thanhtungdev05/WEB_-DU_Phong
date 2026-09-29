@@ -1,0 +1,43 @@
+{
+ "trang": "Network >> LAN >> LAN IPv6",
+ "route": "#/network/lan6",
+ "view": "network/lan6",
+ "chunk_goc": "js/chunk-16271a96.9b4ab5b7.1726822665278.js",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_cigext_lan6.json",
+  "reference/api/hop_dong_ghi_nhom3.json"
+ ],
+ "o": [
+  "PD Mode (Auto|Static)",
+  "Prefix",
+  "Preferred Lifetime",
+  "Enable RADVD",
+  "M Flag",
+  "O Flag",
+  "Max Ra Interval",
+  "Min Ra Interval",
+  "Enable DHCPv6 Server",
+  "IPv6 Start Suffix (hex)",
+  "IPv6 End Suffix (hex = limit+start)",
+  "Enable ULA",
+  "ULA Prefix"
+ ],
+ "doc_du_lieu": "data_repo.cigext get voi ban mau trong getLan6()",
+ "ghi_du_lieu": {
+  "loi_goi": "data_repo.cigext set (ra_flags object, odhcpd.maindhcp '0')",
+  "sau_do": "cho 20 s -> cigext get rut gon",
+  "da_do": true
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 35/35 (ca 5 checkbox)",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat (W1, X)",
+  "4_trang_thai": "dat — Apply 600 / tai lai / tra 300 tren giao dien gia lap"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "data_repo.cigext set -> ghi thang uci (dhcp.lan ra_*, network.globals ula_prefix)",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

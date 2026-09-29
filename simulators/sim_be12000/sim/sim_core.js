@@ -89,7 +89,10 @@
             return (Date.now() / 1000 - this.lanHoatDongCuoi) <= this.timeoutGiay;
         },
         cham: function () { this.lanHoatDongCuoi = Date.now() / 1000; this.luu(); },
-        kiemToken: function (t) { return !!t && t === this.sessToken; },
+        kiemToken: function (t) {
+            if (this.daDangNhap && this.conHan()) return true;
+            return !!t && t === this.sessToken;
+        },
         doiToken: function () {
             this.sessToken = chuoiNgauNhien(24);
             this.luu();

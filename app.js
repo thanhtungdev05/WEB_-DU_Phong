@@ -694,11 +694,16 @@
                         const isVigorOk = (currentDeviceId === 'vigor2927') &&
                           (btnVal === 'ok' || el.id === 'btn-pppoe-ok' || el.id === 'btn-ipbmac-ok' ||
                            (el.name && el.name.toLowerCase() === 'btnok') || el.name === 'submit');
+                        const isAx3000sApply = (el.id === 'button_apply') ||
+                          (el.name && el.name.toLowerCase() === 'button_apply') ||
+                          (el.classList && el.classList.contains('btn-apply'));
                         const isSaveOrApply = laNutLuuMikrotik ||
+                          isAx3000sApply ||
                           btnVal.includes('save') ||
                           btnVal.includes('apply') || 
                           btnVal.includes('submit') || 
                           btnVal.includes('lưu') || 
+                          btnVal.includes('áp dụng') ||
                           isVigorOk ||
                           (isOntBai6 && (el.classList.contains('dlg-luu') || el.closest('.MuiDialogActions-root') || btnVal === 'add')) ||
                           (isPortFwdAdd && (btnVal === 'add' || el.name === 'AddBtn' || el.name === 'Add1')) ||
@@ -706,7 +711,12 @@
 
                         if (isSaveOrApply) {
                           const isAx3000sBai2_2g = (currentLessonId === 'LAB_AX3000S_02') && 
-                            (doc.location && ((doc.location.href && doc.location.href.toLowerCase().includes('wlanbasicsetting2g')) || (doc.location.hash && doc.location.hash.toLowerCase().includes('wlanbasicsetting2g'))));
+                            (
+                              Boolean(doc.querySelector && (doc.querySelector('[id="11n_BandWidth"]') || doc.getElementById('11n_BandWidth') || (function(){ try { return doc.querySelector('#11n_BandWidth'); } catch(e){ return null; } })())) ||
+                              (doc.location && ((doc.location.href && doc.location.href.toLowerCase().includes('wlanbasicsetting2g')) || (doc.location.hash && doc.location.hash.toLowerCase().includes('wlanbasicsetting2g')))) ||
+                              (doc.defaultView && doc.defaultView.location && doc.defaultView.location.hash && doc.defaultView.location.hash.toLowerCase().includes('wlanbasicsetting2g')) ||
+                              Boolean(doc.querySelector && doc.querySelector('.skpage-title') && doc.querySelector('.skpage-title').textContent.includes('2.4G'))
+                            );
 
                           doc._ftcLastSaveInteraction = Date.now();
                           doc._ftcIsSaved = true;
@@ -717,6 +727,37 @@
                           }
                           if (isAx3000sBai2_2g) {
                             doc._ftc2gSaved = true;
+                            window._ftc2gSaved = true;
+                            // Snapshot các giá trị 2.4G vào session cache ngay thời điểm click Save
+                            try {
+                              const ssidEl = doc.querySelector('#Txt_SSID, input[name="Txt_SSID"]');
+                              const keyEl = doc.querySelector('#Pwd_WpaPsk, input[name="Pwd_WpaPsk"]');
+                              const bwEl = doc.querySelector('#Sel_BandWidth, select[name="Sel_BandWidth"]');
+                              if (!window._sessionRuleCache) window._sessionRuleCache = {};
+                              window._sessionRuleCacheScope = 'ax3000s_LAB_AX3000S_02';
+                              if (ssidEl) {
+                                const sVal = (ssidEl.value || '').trim();
+                                window._sessionRuleCache['wifi_ssid'] = { actualValue: sVal, isSaved: true, isMatch: (sVal === 'FPT Telecom') };
+                              }
+                              if (keyEl) {
+                                const kVal = (keyEl.value || '').trim();
+                                window._sessionRuleCache['wifi_key'] = { actualValue: kVal, isSaved: true, isMatch: (kVal === '19006600') };
+                              }
+                              if (bwEl) {
+                                const bVal = (bwEl.value || '').trim();
+                                window._sessionRuleCache['wifi_bw'] = { actualValue: bVal, isSaved: true, isMatch: (bVal === '20Mhz') };
+                              }
+                            } catch (e) { }
+
+                            let statusMsg = doc.getElementById('ftc-ax3000s-save-status');
+                            if (!statusMsg) {
+                              statusMsg = doc.createElement('span');
+                              statusMsg.id = 'ftc-ax3000s-save-status';
+                              statusMsg.style.cssText = 'color:#15803d;font-weight:bold;font-size:13px;margin-left:12px;vertical-align:middle;';
+                              if (el.parentNode) el.parentNode.insertBefore(statusMsg, el.nextSibling);
+                            }
+                            statusMsg.textContent = ' Đã lưu cấu hình Wi-Fi 2.4G thành công!';
+                            setTimeout(function () { if (statusMsg) statusMsg.textContent = ''; }, 3500);
                           }
                           // Lưu giữ giá trị password thực tế trước khi router (như ZTE BE12000) mask thành tabs
                           try {
@@ -742,12 +783,10 @@
                             setTimeout(function () { if (statusMsg) statusMsg.textContent = ''; }, 3000);
                           }
 
-                          if (!isAx3000sBai2_2g) {
-                            window._hasClickedSaveInGuide = true;
-                            setTimeout(function () {
-                              try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
-                            }, (isOntBai6 || isPortFwdAdd) ? 350 : 50);
-                          }
+                          window._hasClickedSaveInGuide = true;
+                          setTimeout(function () {
+                            try { if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(doc.defaultView || doc.parentWindow); } catch(ex) { console.warn('[FTC] onSimulatorSave error:', ex); }
+                          }, (isOntBai6 || isPortFwdAdd) ? 350 : 50);
                         }
                       }
                     }
@@ -795,6 +834,28 @@
                   }
                 }
 
+                function isEventOnAx3000s2g(e, d) {
+                  if (currentLessonId !== 'LAB_AX3000S_02') return true;
+                  const targetEl = e.target;
+                  const isInput2g = Boolean(targetEl && (
+                    targetEl.id === 'Txt_SSID' || targetEl.name === 'Txt_SSID' ||
+                    targetEl.id === 'Pwd_WpaPsk' || targetEl.name === 'Pwd_WpaPsk' ||
+                    targetEl.id === 'Sel_BandWidth' || targetEl.name === 'Sel_BandWidth'
+                  ));
+                  try {
+                    const is5gTarget = Boolean(targetEl.closest && (targetEl.closest('[id="11n_BandWidth5G"]') || (targetEl.closest('.modset') && d.querySelector && d.querySelector('.skpage-title')?.textContent.includes('5G'))));
+                    if (is5gTarget) return false;
+                    const has5gBlock = Boolean(d.querySelector && (d.querySelector('[id="11n_BandWidth5G"]') || d.getElementById('11n_BandWidth5G')));
+                    const has2gBlock = Boolean(d.querySelector && (d.querySelector('[id="11n_BandWidth"]') || d.getElementById('11n_BandWidth')));
+                    if (has5gBlock && !has2gBlock) return false;
+                  } catch (e) { }
+                  const title = d.querySelector && d.querySelector('.skpage-title');
+                  if (title && title.textContent.includes('5G')) return false;
+                  const hash = (d.defaultView && d.defaultView.location && d.defaultView.location.hash) || '';
+                  if (hash.includes('wlanBasicSetting5g')) return false;
+                  return true;
+                }
+
                 // Đánh dấu người dùng đã chạm vào ô nhập liệu để tránh bị clear tự động
                 // Đồng thời hủy bỏ trạng thái "Đã Save" nếu người dùng sửa lại dữ liệu
                 doc.addEventListener('keydown', function (e) {
@@ -802,10 +863,13 @@
                     e.target._ftcUserModified = true;
                   }
                   if (e.isTrusted) {
-                    window._hasSuccHintStored = false;
-                    window._hasClickedSaveInGuide = false;
-                    doc._ftcIsSaved = false;
-                    doc._ftc2gSaved = false;
+                    if (isEventOnAx3000s2g(e, doc)) {
+                      window._hasSuccHintStored = false;
+                      window._hasClickedSaveInGuide = false;
+                      doc._ftcIsSaved = false;
+                      doc._ftc2gSaved = false;
+                      window._ftc2gSaved = false;
+                    }
                   }
                 }, true);
                 doc.addEventListener('input', function (e) {
@@ -820,10 +884,13 @@
                     }
                   }
                   if (e.isTrusted) {
-                    window._hasSuccHintStored = false;
-                    window._hasClickedSaveInGuide = false;
-                    doc._ftcIsSaved = false;
-                    doc._ftc2gSaved = false;
+                    if (isEventOnAx3000s2g(e, doc)) {
+                      window._hasSuccHintStored = false;
+                      window._hasClickedSaveInGuide = false;
+                      doc._ftcIsSaved = false;
+                      doc._ftc2gSaved = false;
+                      window._ftc2gSaved = false;
+                    }
                   }
                 }, true);
                 doc.addEventListener('change', function (e) {
@@ -838,14 +905,21 @@
                     }
                   }
                   if (e.isTrusted) {
+                    // Nếu đã lưu 2.4G thành công, không hủy cờ lưu khi phát sinh sự kiện change thông thường
+                    if (currentLessonId === 'LAB_AX3000S_02' && (doc._ftc2gSaved || window._ftc2gSaved)) {
+                      return;
+                    }
                     // Nếu sự kiện change phát sinh do người dùng vừa click nút Save/Apply (blur khỏi input trong vòng 1.5s), không hủy cờ Save
                     if (doc._ftcLastSaveInteraction && (Date.now() - doc._ftcLastSaveInteraction < 1500)) {
                       return;
                     }
-                    window._hasSuccHintStored = false;
-                    window._hasClickedSaveInGuide = false;
-                    doc._ftcIsSaved = false;
-                    doc._ftc2gSaved = false;
+                    if (isEventOnAx3000s2g(e, doc)) {
+                      window._hasSuccHintStored = false;
+                      window._hasClickedSaveInGuide = false;
+                      doc._ftcIsSaved = false;
+                      doc._ftc2gSaved = false;
+                      window._ftc2gSaved = false;
+                    }
                   }
                 }, true);
 
@@ -999,16 +1073,8 @@
               } else {
                 // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
                 if (btnGuideErrors) {
-                  const hasMissingSteps = !trangDangLamSach;
+                  const hasMissingSteps = !trangDangLamSach || !evalResult.passed;
                   if (window._hasClickedSaveInGuide && evalResult && hasMissingSteps) {
-                    if (currentLessonId === 'LAB_AX3000S_02') {
-                      const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
-                      const hasSaved5g = allDocs.some(d => d.location && d.location.href.toLowerCase().includes('wlanbasicsetting5g') && d._ftcIsSaved);
-                      if (!hasSaved5g) {
-                        btnGuideErrors.style.display = 'none';
-                        return;
-                      }
-                    }
                     // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN để trợ giúp học tập
                     btnGuideErrors.style.display = 'flex';
                     btnGuideErrors.disabled = false;
@@ -1466,6 +1532,7 @@
     window._sessionRuleCacheScope = null;
     window._hasClickedSaveInGuide = false;
     window._hasSuccHintStored = false;
+    window._ftc2gSaved = false;
     resetDeviceSession(device.id);
 
     // Update nav active state
@@ -1689,6 +1756,7 @@
     window._FTC_MK_BAI1 = null;
     window._sessionRuleCache = {};
     window._sessionRuleCacheScope = null;
+    window._ftc2gSaved = false;
 
     if (typeof window.vg2927Bai6Reset === 'function') {
       try { window.vg2927Bai6Reset(); } catch (error) { }
@@ -1710,9 +1778,11 @@
     if (!targetDev) return Promise.resolve();
 
     let simFolder = '';
+    let devResetUrl = null;
     if (typeof DEVICES !== 'undefined' && Array.isArray(DEVICES)) {
       const dev = DEVICES.find(d => normalizeDeviceId(d.id) === normalizeDeviceId(targetDev));
       if (dev && dev.folder) simFolder = dev.folder;
+      if (dev && dev.resetSessionUrl) devResetUrl = dev.resetSessionUrl;
     }
     if (!simFolder) {
       simFolder = 'sim_' + targetDev;
@@ -1752,6 +1822,9 @@
     } else if (normDev === 'mikrotik_hexs') {
       resetEndpoints.add('/sim_mikrotik_hexs/api/reset');
       resetEndpoints.add('/sim_mikrotik_hexs/ftc_dat_lai');
+    }
+    if (devResetUrl) {
+      resetEndpoints.add(devResetUrl);
     }
 
     const resetPromises = Array.from(resetEndpoints).map(function (endpoint) {
@@ -1821,7 +1894,7 @@
    * Chạy sau mỗi lần iframe load hoặc định kỳ để học viên phải tự nhập giá trị.
    */
   function clearLessonFields() {
-    if (window._hasClickedSaveInGuide) return;
+    if (window._hasClickedSaveInGuide && currentLessonId !== 'LAB_AX3000S_02') return;
     if (!_currentLesson) return;
 
     // Nếu lesson có hàm customClear riêng thì chạy hàm đó
@@ -1833,13 +1906,13 @@
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       const isAnyDocSaved = allDocs.some(d => {
         try {
-          if (currentLessonId === 'LAB_AX3000S_02' && d.location && d.location.href.toLowerCase().includes('wlanbasicsetting2g')) {
-            return false;
-          }
-          return Boolean(d._ftcLastSaveInteraction && (d._ftcIsSaved === true || (d.location && d.location.search && d.location.search.includes('save_success=1'))));
+          return Boolean(
+            (d._ftcLastSaveInteraction && (d._ftcIsSaved === true || (d.location && d.location.search && d.location.search.includes('save_success=1')))) ||
+            (currentLessonId === 'LAB_AX3000S_02' && (d._ftc2gSaved === true || window._ftc2gSaved === true))
+          );
         } catch (e) { return false; }
       });
-      if (isAnyDocSaved) {
+      if (isAnyDocSaved || (currentLessonId === 'LAB_AX3000S_02' && window._ftc2gSaved === true)) {
         window._hasClickedSaveInGuide = true;
         return;
       }
@@ -1849,7 +1922,10 @@
     try {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       allDocs.forEach(doc => {
-        if (doc._ftcLastSaveInteraction && (doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1')))) {
+        if (
+          (currentLessonId === 'LAB_AX3000S_02' && (doc._ftc2gSaved || window._ftc2gSaved)) ||
+          (doc._ftcLastSaveInteraction && (doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1'))))
+        ) {
           return;
         }
         _currentLesson.clearFields.forEach(selector => {
@@ -1862,7 +1938,9 @@
               }
 
               // Bỏ qua việc xóa trường SSID/Mật khẩu trên trang 5G để KTV có thể nhìn thấy dữ liệu phản chiếu từ 2.4G
-              const is5GPage = doc.defaultView && doc.defaultView.location.hash.includes('wlanBasicSetting5g');
+              const is5GPage = (doc.defaultView && doc.defaultView.location.hash.includes('wlanBasicSetting5g')) ||
+                Boolean(doc.querySelector && (doc.querySelector('[id="11n_BandWidth5G"]') || doc.getElementById('11n_BandWidth5G') || (function(){ try { return doc.querySelector('#11n_BandWidth5G'); } catch(e){ return null; } })())) ||
+                Boolean(doc.querySelector && doc.querySelector('.skpage-title') && doc.querySelector('.skpage-title').textContent.includes('5G'));
               if (is5GPage && (selector.includes('Txt_SSID') || selector.includes('Pwd_WpaPsk'))) {
                 return;
               }
@@ -2014,12 +2092,43 @@
       // Tìm element trong tất cả accessible frames (hỗ trợ cả các trang có nhiều instances/hàng cấu hình)
       for (const doc of allDocs) {
         try {
-          const els = Array.from(doc.querySelectorAll(rule.selector));
+          let els = Array.from(doc.querySelectorAll(rule.selector));
           if (els.length > 0) {
+            // Cho bài 2 AX3000S: Ràng buộc wifi_bw chỉ áp dụng cho băng tần 2.4G,
+            // bỏ qua dropdown bandwidth của trang 5G để không bị xung đột với 80Mhz mặc định của 5G.
+            if ((currentLessonId === 'LAB_AX3000S_02' || (lesson && lesson.id === 'LAB_AX3000S_02')) && rule.id === 'wifi_bw') {
+              els = els.filter(el => {
+                let is5g = false;
+                try {
+                  if (el.closest && (el.closest('[id="11n_BandWidth5G"]') || (function(){ try { return el.closest('#11n_BandWidth5G'); } catch(e){ return null; } })())) {
+                    is5g = true;
+                  }
+                } catch (e) { }
+                try {
+                  if (!is5g && el.querySelector && el.querySelector('option[value="80Mhz"]')) {
+                    is5g = true;
+                  }
+                } catch (e) { }
+                try {
+                  if (!is5g) {
+                    const isInside2g = Boolean(el.closest && (el.closest('[id="11n_BandWidth"]') || (function(){ try { return el.closest('#11n_BandWidth'); } catch(e){ return null; } })()));
+                    if (!isInside2g) {
+                      const has5gBlock = Boolean(doc.querySelector && (doc.querySelector('[id="11n_BandWidth5G"]') || doc.getElementById('11n_BandWidth5G') || (function(){ try { return doc.querySelector('#11n_BandWidth5G'); } catch(e){ return null; } })()));
+                      const has5gTitle = Boolean(doc.querySelector && doc.querySelector('.skpage-title') && doc.querySelector('.skpage-title').textContent.includes('5G'));
+                      if (has5gBlock || has5gTitle) is5g = true;
+                    }
+                  }
+                } catch (e) { }
+                return !is5g;
+              });
+              if (els.length === 0) continue;
+            }
+
             elementFound = true;
             const isDocSaved = doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1') && doc._ftcIsSaved !== false);
             const isSessionSaved = (window._hasClickedSaveInGuide === true && doc._ftcIsSaved !== false);
-            if (isDocSaved || isSessionSaved) isSaved = true;
+            const isAx3000s2gSaved = ((currentLessonId === 'LAB_AX3000S_02') || (lesson && lesson.id === 'LAB_AX3000S_02')) && Boolean(doc._ftc2gSaved || window._ftc2gSaved);
+            if (isDocSaved || isSessionSaved || isAx3000s2gSaved) isSaved = true;
 
             // Tìm xem có phần tử nào khớp với expectedVal không
             let chosenEl = els[0];
@@ -2115,7 +2224,11 @@
       // Nếu không tìm thấy element trong các frame hiện hành (do học viên đã chuyển trang khác như LAN, Wi-Fi...)
       // thì kiểm tra xem rule này đã từng được nhập và lưu thành công trong phiên làm việc hiện tại hay chưa (Session Cache)
       if (!elementFound) {
-        const isScopeValid = (window._sessionRuleCacheScope === currentLessonKey);
+        const isScopeValid = (
+          window._sessionRuleCacheScope === currentLessonKey ||
+          window._sessionRuleCacheScope === `${effectiveDeviceId}_${(lesson && lesson.id) || currentLessonId}` ||
+          (effectiveDeviceId === 'ax3000s' && ((lesson && lesson.id === 'LAB_AX3000S_02') || currentLessonId === 'LAB_AX3000S_02') && window._sessionRuleCacheScope && window._sessionRuleCacheScope.includes('LAB_AX3000S_02'))
+        );
         const cached = isScopeValid && (
           (_trackingSession && _trackingSession.ruleCache && _trackingSession.ruleCache[rule.id]) ||
           (window._sessionRuleCache && window._sessionRuleCache[rule.id])
@@ -2125,6 +2238,35 @@
           actualValue = cached.actualValue;
           isSaved = cached.isSaved;
           isMatch = cached.isMatch;
+        } else if (((currentLessonId === 'LAB_AX3000S_02') || (lesson && lesson.id === 'LAB_AX3000S_02'))) {
+          // Fallback cho AX3000S bài 2: nếu đã bấm lưu 2.4G và simulator lưu vào SIM.RADIOS[0]
+          for (const d of allDocs) {
+            try {
+              const sim = (d.defaultView && d.defaultView.SIM) || (window.SIM);
+              if (sim && sim.RADIOS && sim.RADIOS[0]) {
+                const r = sim.RADIOS[0];
+                if (rule.id === 'wifi_bw' && r.bandwidth) {
+                  elementFound = true;
+                  actualValue = r.bandwidth;
+                  isMatch = (r.bandwidth === expectedVal);
+                  isSaved = Boolean(window._ftc2gSaved || d._ftc2gSaved || d._ftcIsSaved);
+                  break;
+                } else if (rule.id === 'wifi_ssid' && r.ssid) {
+                  elementFound = true;
+                  actualValue = r.ssid;
+                  isMatch = (r.ssid === expectedVal);
+                  isSaved = Boolean(window._ftc2gSaved || d._ftc2gSaved || d._ftcIsSaved);
+                  break;
+                } else if (rule.id === 'wifi_key' && r.password) {
+                  elementFound = true;
+                  actualValue = r.password;
+                  isMatch = (r.password === expectedVal);
+                  isSaved = Boolean(window._ftc2gSaved || d._ftc2gSaved || d._ftcIsSaved);
+                  break;
+                }
+              }
+            } catch (e) { }
+          }
         }
       }
 
@@ -2164,7 +2306,34 @@
           }
         } else {
           const isActuallyInDom = allDocs.some(d => {
-            try { return d.querySelector(rule.selector) !== null; } catch (e) { return false; }
+            try {
+              if (((currentLessonId === 'LAB_AX3000S_02') || (lesson && lesson.id === 'LAB_AX3000S_02')) && rule.id === 'wifi_bw') {
+                const sel = d.querySelector(rule.selector);
+                if (!sel) return false;
+                let is5g = false;
+                try {
+                  if (sel.closest && (sel.closest('[id="11n_BandWidth5G"]') || (function(){ try { return sel.closest('#11n_BandWidth5G'); } catch(e){ return null; } })())) {
+                    is5g = true;
+                  }
+                } catch (e) { }
+                try {
+                  if (!is5g && sel.querySelector && sel.querySelector('option[value="80Mhz"]')) {
+                    is5g = true;
+                  }
+                } catch (e) { }
+                try {
+                  if (!is5g) {
+                    const isInside2g = Boolean(sel.closest && (sel.closest('[id="11n_BandWidth"]') || (function(){ try { return sel.closest('#11n_BandWidth'); } catch(e){ return null; } })()));
+                    if (!isInside2g) {
+                      const has5gBlock = Boolean(d.querySelector && (d.querySelector('[id="11n_BandWidth5G"]') || d.getElementById('11n_BandWidth5G') || (function(){ try { return d.querySelector('#11n_BandWidth5G'); } catch(e){ return null; } })()));
+                      if (has5gBlock) is5g = true;
+                    }
+                  }
+                } catch (e) { }
+                return !is5g;
+              }
+              return d.querySelector(rule.selector) !== null;
+            } catch (e) { return false; }
           });
           if (isActuallyInDom) {
             if (window._sessionRuleCache && window._sessionRuleCacheScope === currentLessonKey) {
@@ -3489,15 +3658,84 @@
         return;
       }
     }
-    if (_currentLesson && _currentLesson.id === 'LAB_AX3000S_02') {
-      const href = (simWin && simWin.location && simWin.location.href) ? simWin.location.href.toLowerCase() : '';
-      if (href.includes('wlanbasicsetting2g')) {
-        return;
-      }
-    }
-
     triggerSaveFlashEffect(simWin ? simWin.document : null, null);
     window._hasClickedSaveInGuide = true;
+    if (currentLessonId === 'LAB_AX3000S_02') {
+      const simDoc = simWin ? simWin.document : (deviceIframe ? deviceIframe.contentDocument : null);
+      const is2g = (modalTitle === 'wlanBasicSetting2g') || (simDoc && (
+        Boolean(simDoc.querySelector && (simDoc.querySelector('[id="11n_BandWidth"]') || simDoc.getElementById('11n_BandWidth') || (function(){ try { return simDoc.querySelector('#11n_BandWidth'); } catch(e){ return null; } })())) ||
+        (simDoc.location && ((simDoc.location.href && simDoc.location.href.toLowerCase().includes('wlanbasicsetting2g')) || (simDoc.location.hash && simDoc.location.hash.toLowerCase().includes('wlanbasicsetting2g')))) ||
+        Boolean(simDoc.querySelector && simDoc.querySelector('.skpage-title') && simDoc.querySelector('.skpage-title').textContent.includes('2.4G'))
+      ));
+      if (is2g) {
+        if (simDoc) {
+          simDoc._ftc2gSaved = true;
+          simDoc._ftcIsSaved = true;
+          try {
+            const sEl = simDoc.querySelector('#Txt_SSID, input[name="Txt_SSID"]');
+            const pEl = simDoc.querySelector('#Pwd_WpaPsk, input[name="Pwd_WpaPsk"]');
+            const bEl = simDoc.querySelector('#Sel_BandWidth, select[name="Sel_BandWidth"]');
+            const lessonKey = 'ax3000s:LAB_AX3000S_02';
+            if (!window._sessionRuleCache) window._sessionRuleCache = {};
+            window._sessionRuleCacheScope = lessonKey;
+            if (sEl && sEl.value) {
+              const val = sEl.value.trim();
+              window._sessionRuleCache['wifi_ssid'] = { actualValue: val, isSaved: true, isMatch: (val === 'FPT Telecom') };
+            }
+            if (pEl && pEl.value) {
+              const val = pEl.value.trim();
+              window._sessionRuleCache['wifi_key'] = { actualValue: val, isSaved: true, isMatch: (val === '19006600') };
+            }
+            if (bEl && bEl.value) {
+              const val = bEl.value.trim();
+              window._sessionRuleCache['wifi_bw'] = { actualValue: val, isSaved: true, isMatch: (val === '20Mhz') };
+            }
+          } catch (e) { }
+        }
+        window._ftc2gSaved = true;
+      }
+    }
+    if (currentLessonId === 'LAB_AX3000S_05') {
+      const simDoc = simWin ? simWin.document : (deviceIframe ? deviceIframe.contentDocument : null);
+      if (simDoc) {
+        simDoc._ftcIsSaved = true;
+        try {
+          const ipEl = simDoc.querySelector('#ethIpAddress');
+          const maskEl = simDoc.querySelector('#ethSubnetMask');
+          const dhcpType2 = simDoc.querySelector('#dhcpSrvType2');
+          const startEl = simDoc.querySelector('#dhcpEthStart');
+          const endEl = simDoc.querySelector('#dhcpEthEnd');
+          const leaseEl = simDoc.querySelector('#dhcpLeasedTime');
+          const lessonKey = 'ax3000s:LAB_AX3000S_05';
+          if (!window._sessionRuleCache) window._sessionRuleCache = {};
+          window._sessionRuleCacheScope = lessonKey;
+          if (ipEl && ipEl.value) {
+            const v = ipEl.value.trim();
+            window._sessionRuleCache['lan_ip'] = { actualValue: v, isSaved: true, isMatch: (v === '192.168.2.1') };
+          }
+          if (maskEl && maskEl.value) {
+            const v = maskEl.value.trim();
+            window._sessionRuleCache['lan_subnet'] = { actualValue: v, isSaved: true, isMatch: (v === '255.255.255.0') };
+          }
+          if (dhcpType2) {
+            const isChecked = dhcpType2.checked;
+            window._sessionRuleCache['lan_dhcp_enable'] = { actualValue: isChecked ? '1' : '0', isSaved: true, isMatch: isChecked };
+          }
+          if (startEl && startEl.value) {
+            const v = startEl.value.trim();
+            window._sessionRuleCache['lan_dhcp_start'] = { actualValue: v, isSaved: true, isMatch: (v === '192.168.2.2') };
+          }
+          if (endEl && endEl.value) {
+            const v = endEl.value.trim();
+            window._sessionRuleCache['lan_dhcp_end'] = { actualValue: v, isSaved: true, isMatch: (v === '192.168.2.254') };
+          }
+          if (leaseEl && leaseEl.value) {
+            const v = leaseEl.value.trim();
+            window._sessionRuleCache['lan_dhcp_lease'] = { actualValue: v, isSaved: true, isMatch: (v === '120') };
+          }
+        } catch (e) { }
+      }
+    }
     if (currentDeviceId === 'mikrotik_hexs') {
       window._ftcMkChanTooltip = true;
       setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
@@ -3591,12 +3829,51 @@
   window.addEventListener('message', function (e) {
     if (e.data && e.data.type === 'FTC_SAVE_SUCCESS') {
       window._hasClickedSaveInGuide = true;
+      if (e.data.source === 'ax3000s_wlanBasicSetting2g' || currentLessonId === 'LAB_AX3000S_02') {
+        window._ftc2gSaved = true;
+        if (e.data.data) {
+          const lessonKey = 'ax3000s:LAB_AX3000S_02';
+          if (!window._sessionRuleCache) window._sessionRuleCache = {};
+          window._sessionRuleCacheScope = lessonKey;
+          if (e.data.data.ssid) {
+            const sVal = String(e.data.data.ssid).trim();
+            window._sessionRuleCache['wifi_ssid'] = { actualValue: sVal, isSaved: true, isMatch: (sVal === 'FPT Telecom') };
+          }
+          if (e.data.data.password) {
+            const pVal = String(e.data.data.password).trim();
+            window._sessionRuleCache['wifi_key'] = { actualValue: pVal, isSaved: true, isMatch: (pVal === '19006600') };
+          }
+          if (e.data.data.bandwidth) {
+            const bVal = String(e.data.data.bandwidth).trim();
+            window._sessionRuleCache['wifi_bw'] = { actualValue: bVal, isSaved: true, isMatch: (bVal === '20Mhz') };
+          }
+        }
+      }
+      if (e.data.source === 'ax3000s_lancfgv4' || currentLessonId === 'LAB_AX3000S_05') {
+        if (e.data.data) {
+          const lessonKey = 'ax3000s:LAB_AX3000S_05';
+          if (!window._sessionRuleCache) window._sessionRuleCache = {};
+          window._sessionRuleCacheScope = lessonKey;
+          const d = e.data.data;
+          if (d.ip) window._sessionRuleCache['lan_ip'] = { actualValue: String(d.ip).trim(), isSaved: true, isMatch: (String(d.ip).trim() === '192.168.2.1') };
+          if (d.mask) window._sessionRuleCache['lan_subnet'] = { actualValue: String(d.mask).trim(), isSaved: true, isMatch: (String(d.mask).trim() === '255.255.255.0') };
+          if (d.dhcpmode !== undefined) window._sessionRuleCache['lan_dhcp_enable'] = { actualValue: String(d.dhcpmode).trim(), isSaved: true, isMatch: (d.dhcpmode == 1) };
+          if (d.start) window._sessionRuleCache['lan_dhcp_start'] = { actualValue: String(d.start).trim(), isSaved: true, isMatch: (String(d.start).trim() === '192.168.2.2') };
+          if (d.end) window._sessionRuleCache['lan_dhcp_end'] = { actualValue: String(d.end).trim(), isSaved: true, isMatch: (String(d.end).trim() === '192.168.2.254') };
+          if (d.lease !== undefined) window._sessionRuleCache['lan_dhcp_lease'] = { actualValue: String(d.lease).trim(), isSaved: true, isMatch: (String(d.lease).trim() === '120') };
+        }
+      }
       try {
         const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
-        allDocs.forEach(d => { d._ftcIsSaved = true; });
+        allDocs.forEach(d => {
+          d._ftcIsSaved = true;
+          if (e.data.source === 'ax3000s_wlanBasicSetting2g' || currentLessonId === 'LAB_AX3000S_02') {
+            d._ftc2gSaved = true;
+          }
+        });
       } catch (err) { }
       if (typeof window.onSimulatorSave === 'function') {
-        try { window.onSimulatorSave(deviceIframe ? deviceIframe.contentWindow : null); } catch (err) { }
+        try { window.onSimulatorSave(deviceIframe ? deviceIframe.contentWindow : null, e.data.source || 'wlanBasicSetting2g'); } catch (err) { }
       }
     }
   });

@@ -1,0 +1,90 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-24 sau khi anh Huynn khoi dong lai thiet bi",
+ "ghi_chu": "data_repo.cigext.get theo co che BAN MAU: truyen vao ban mau (lay nguyen tu ham getWanNcs trong js/chunk-2d0b6e5b...js), thiet bi tra ve CHINH hinh dang do voi gia tri THAT. Goi voi {} thi tra {}.",
+ "trang": "network/wan (bai Lab 1)",
+ "canh_bao": "Cac gia tri trong 'ban_mau_gui_di' la MAC DINH CUA MA NGUON (fpt, 8.8.8.8 1.1.1.1, 2001::1 2001::2). KHONG phai cau hinh that. Chi 'khung' moi la bang chung.",
+ "ban_mau_gui_di": {
+  "network": {
+   "wan": {
+    "disabled": "0",
+    "proto": "dhcp",
+    "mtu": "1500",
+    "peerdns": "0",
+    "dns": "8.8.8.8 1.1.1.1",
+    "username": "fpt",
+    "password": "fpt",
+    "demand": "",
+    "ipaddr": "",
+    "netmask": "",
+    "gateway": "",
+    "ifname": ""
+   },
+   "wan6": {
+    "disabled": "0",
+    "proto": "dhcpv6",
+    "ip6addr": "",
+    "ip6gw": "",
+    "ip6prefix": "",
+    "peerdns": "1",
+    "dns": "2001::1 2001::2",
+    "defaultroute": "1",
+    "reqaddress": "try",
+    "reqprefix": "auto",
+    "enableslaac": "0"
+   },
+   "lan": {
+    "ifname": ""
+   },
+   "wan64": {
+    "disabled": "",
+    "iface_dslite": "",
+    "peeraddr": ""
+   }
+  }
+ },
+ "khung": {
+  "data_repo.cigext.cay_cau_hinh": [
+   0,
+   {
+    "network": {
+     "wan": {
+      "disabled": "0",
+      "proto": "pppoe",
+      "mtu": "1500",
+      "peerdns": "1",
+      "dns": "",
+      "username": "fpt",
+      "password": "fpt",
+      "demand": "",
+      "ipaddr": "",
+      "netmask": "",
+      "gateway": "",
+      "ifname": "eth0"
+     },
+     "wan6": {
+      "disabled": "0",
+      "proto": "dhcpv6",
+      "ip6addr": "",
+      "ip6gw": "",
+      "ip6prefix": "",
+      "peerdns": "0",
+      "dns": "2001:4860:4860::8888 2001:4860:4860::8844",
+      "defaultroute": "1",
+      "reqaddress": "none",
+      "reqprefix": "auto",
+      "enableslaac": "1"
+     },
+     "lan": {
+      "ifname": "eth1.5 eth1.6 eth1.7"
+     },
+     "wan64": {
+      "disabled": "1",
+      "iface_dslite": "1",
+      "peeraddr": " "
+     }
+    }
+   }
+  ]
+ },
+ "ghi_chu_khoa": "Khoa 'data_repo.cigext.cay_cau_hinh' KHONG phai ten mot loi goi that. Day la cay cau hinh ma cigext.get doc ra theo ban mau, va cigext.set ghi vao. May chu gia lap CHAN moi loi goi truc tiep toi khoa nay (tra Object not found) de khong tao ra mot API khong ton tai tren thiet bi that."
+}

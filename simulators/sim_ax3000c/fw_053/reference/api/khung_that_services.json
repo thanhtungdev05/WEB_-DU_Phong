@@ -1,0 +1,17 @@
+{
+ "nguon": "AX3000CV2 that, fw 0.5.3, do 2026-09-25, CHI DOC",
+ "ghi_chu": "plugin services/rtty va services/upnp (ma gan nhu y het, chi khac cacheIdentifier) goi upnp status + uci get upnpd",
+ "khung": {
+  "upnp.status": [
+   0,
+   {
+    "entries": []
+   }
+  ]
+ },
+ "do_giao_dien": {
+  "ngay": "2026-09-25",
+  "ket_qua": "#/services/upnp va #/services/rtty tren thiet bi that deu ve '<div id=\"app\"><div><h1>404 Not Found</h1></div></div>' (53 ky tu): oui.ui menu co 2 muc services/* nhung KHONG co muc cha 'services' -> SPA khong tao route. Tep plugin van phuc vu duoc qua GET.",
+  "do_cuoi": "h1 Noto Sans 28px rgb(51,51,51), chu rong 194.2375 px — that = gia lap"
+ }
+}

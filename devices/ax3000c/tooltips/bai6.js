@@ -1,83 +1,60 @@
 /**
- * devices/ax3000c/tooltips/bai6.js — Tooltip Hướng dẫn cho Bài 6: Cấu hình Port Forwarding (AX3000C)
+ * devices/ax3000c/tooltips/bai6.js — Tooltip Hướng dẫn cho Bài 6: Cấu hình Port Forwarding (AX3000CV2, firmware 0.5.3)
+ * Trang Network >> Access >> Port Forwarding (#/network/portfwd). Bấm Add thêm dòng NGAY TRONG BẢNG.
+ * Firmware 0.5.3 không có cột Rule Name (anh Huynn chọn bỏ, thay bằng tiêu chí Enable — học viên
+ * tự bật vì dòng mới mặc định tắt).
+ * Ô Device/IP là ô chọn từ danh sách thiết bị: đáp án là dòng Admin-PC (192.168.100.109).
  */
 
 if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
 
-window.TOOLTIPS_AX3000C['LAB_AX3000CV2_06'] = [
-  // 1. Chọn Network ở Menu bên trái (chỉ hiện khi chưa ở trang Port Forwarding)
-  {
-    selector: '.el-submenu[index="/network"]:not(.is-opened) .el-submenu__title, li.el-submenu:not(.is-opened) .el-submenu__title:contains("Network")',
-    text: 'Chọn Network',
-    position: 'right',
-    hideOnPage: 'portfwd'
-  },
-  // 2. Chọn Access ở Menu bên trái cấp 1 (chỉ hiện khi chưa ở trang Port Forwarding)
-  {
-    selector: 'li.el-submenu.is-opened li.el-submenu:not(.is-opened) .el-submenu__title:contains("Access"), .el-submenu[index="/network/access"]:not(.is-opened) .el-submenu__title',
-    text: 'Chọn Access',
-    position: 'right',
-    hideOnPage: 'portfwd'
-  },
-  // 3. Chọn Port Forwarding ở Submenu bên trái cấp 2 (chỉ hiện khi chưa ở trang Port Forwarding)
-  {
-    selector: 'li.el-submenu.is-opened li.el-submenu.is-opened li.el-menu-item:contains("Port Forwarding"), li.el-submenu.is-opened li.el-menu-item:contains("Port"), .el-menu-item[index="/network/access/portfwd"]',
-    text: 'Chọn Port Forwarding',
-    position: 'right',
-    hideOnPage: 'portfwd'
-  },
-  // Bước 1: Chọn Add để thêm rule mới (chỉ hiện khi ở trang Port Forwarding)
-  {
-    selector: 'button[onclick*="simAdd"], .card .bd button:contains("Add"), button.btn-sm',
-    text: 'Bước 1: chọn Add để thêm rule',
-    position: 'left',
-    page: 'portfwd'
-  },
-  // Bước 2: Nhập Rule Name ví dụ: Camera (so le bottom)
-  {
-    selector: 'table tr td:nth-child(1) input, input[placeholder*="rule name"]',
-    text: 'Bước 2: nhập Rule name ví dụ: Camera',
-    position: 'bottom',
-    expected: 'Camera',
-    page: 'portfwd'
-  },
-  // Bước 3: Chọn Protocol TCP+UDP (so le top)
-  {
-    selector: 'table tr td:nth-child(2) select',
-    text: 'Bước 3: chọn Protocol TCP+UDP',
-    position: 'top',
-    expected: 'TCP+UDP',
-    page: 'portfwd'
-  },
-  // Bước 4: Nhập External Port ví dụ: 8080 (so le bottom)
-  {
-    selector: 'table tr td:nth-child(3) input, input[placeholder*="8080"]',
-    text: 'Bước 4: nhập External port ví dụ: 8080',
-    position: 'bottom',
-    expected: '8080',
-    page: 'portfwd'
-  },
-  // Bước 5: Nhập Internal IP ví dụ: 192.168.100.55 (so le top)
-  {
-    selector: 'table tr td:nth-child(4) input, input[placeholder*="192.168.100"]',
-    text: 'Bước 5: nhập Internal IP ví dụ: 192.168.100.55',
-    position: 'top',
-    expected: '192.168.100.55',
-    page: 'portfwd'
-  },
-  // Bước 6: Nhập Internal Port ví dụ: 80 (so le bottom)
-  {
-    selector: 'table tr td:nth-child(5) input, input[placeholder*="80"]',
-    text: 'Bước 6: nhập Internal port ví dụ: 80',
-    position: 'bottom',
-    expected: '80',
-    page: 'portfwd'
-  },
-  // Bước 7: Chọn Apply để lưu cấu hình
-  {
-    selector: '.actions button.apply, button[onclick*="simState.save"], button.apply',
-    text: 'Bước 7: chọn Apply để lưu cấu hình',
-    position: 'bottom',
-    page: 'portfwd'
-  }
-];
+(function (F) {
+  window.TOOLTIPS_AX3000C['LAB_AX3000CV2_06'] = F.menu('Access', 'Port Forwarding', 'network/portfwd').concat([
+    {
+      selector: F.nut('Add'),
+      text: 'Bước 1: chọn Add để thêm rule',
+      position: 'bottom',
+      page: 'network/portfwd'
+    },
+    // Dòng mới do Add tạo có Enable TẮT (mã firmware: enabled undefined -> false) — học viên tự bật.
+    // Đặt phía trên để không che nút Add; chỉ hiện khi công tắc còn tắt.
+    {
+      selector: '.el-table__body td[data-ftc-cot="Enable"] .el-switch:not(.is-checked)',
+      text: 'Bước 2: Bật Enable',
+      position: 'top',
+      page: 'network/portfwd'
+    },
+    // Bước 3–6 cùng một hàng, trỏ thẳng vào ô (chữ đã ngắn nên không đè nhau)
+    {
+      selector: F.cot('Protocol'),
+      text: 'Bước 3: chọn TCP+UDP',
+      position: 'bottom',
+      page: 'network/portfwd'
+    },
+    {
+      selector: F.cot('External port'),
+      text: 'Bước 4: nhập 8080',
+      position: 'bottom',
+      page: 'network/portfwd'
+    },
+    {
+      selector: F.cot('Device/IP'),
+      // Chọn dòng "Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45)" trong danh sách thiết bị
+      text: 'Bước 5: chọn 192.168.100.109',
+      position: 'bottom',
+      page: 'network/portfwd'
+    },
+    {
+      selector: F.cot('Internal port'),
+      text: 'Bước 6: nhập 80',
+      position: 'bottom',
+      page: 'network/portfwd'
+    },
+    {
+      selector: F.nut('Apply'),
+      text: 'Bước 7: chọn Apply',
+      position: 'left',
+      page: 'network/portfwd'
+    }
+  ]);
+})(window.FTC_AX3000C);

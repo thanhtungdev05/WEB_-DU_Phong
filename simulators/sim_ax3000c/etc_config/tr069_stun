@@ -1,9 +1,0 @@
-config stun 'stun'
-	option enable '0'
-	option min_keepalive '30'
-	option max_keepalive '360'
-	option username 'stun'
-	option password 'stun'
-	option log_level '3'
-	option client_port 7547
-

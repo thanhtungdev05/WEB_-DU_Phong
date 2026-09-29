@@ -1,0 +1,142 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25 (nhom 10) — CHI DOC, anh Huynn cho phep; sau khi anh cam lai day LAN/WAN (uptime ~26 phut luc do)",
+ "khung": {},
+ "doc_lai_sau_cam_lai_day": {
+  "cach": "goi /ubus id 1, FNV-1a 32 bit tren JSON.stringify(result|error) / do dai",
+  "ket_qua": {
+   "data_repo.weboui.system_get": "ff00c699/163",
+   "data_repo.weboui.wifi_get": "7c3f0597/787",
+   "data_repo.weboui.wifiadv_get": "fe18ef96/394",
+   "data_repo.weboui.lan_get": "fe4ae750/122",
+   "data_repo.weboui.wan_get": "50a8186c/114",
+   "data_repo.weboui.firewall_get": "0f8c4534/569",
+   "data_repo.weboui.dmz_get": "6318aaeb/60",
+   "data_repo.weboui.upnpd_get": "1c823e7a/31",
+   "data_repo.weboui.portfwd_get": "160961ed/19",
+   "data_repo.weboui.dhcp_reservation_get": "48ff7653/15",
+   "data_repo.weboui.parentctrl_get": "8a4562fb/24",
+   "data_repo.weboui.websitefilter_get": "8a4562fb/24",
+   "data_repo.weboui.speedtest_get": "5bae5def/141",
+   "data_repo.weboui.loginpwd_get": "22906e57/34",
+   "ssh.get": "73fc8723/49",
+   "remote-gui.get": "48a8554e/51",
+   "alg.get": "3ac140a6/92",
+   "network.wireless.easymesh.get": "d05a2f68/95",
+   "uci.get.system": "17148c1f/591",
+   "uci.get.ddns": "fd5eae34/861",
+   "uci.get.upnpd": "2bdd91f7/773",
+   "system.board": "1b263dc5/441"
+  },
+  "so_voi_gia_lap_goc": "18/21 trung tung byte (system.info bo qua: gio/uptime). 3 lech deu la DAU VET do: dmz dest_ip 192.168.100.109 (nhom 2), uci ddns 'enabled' xuong cuoi (nhom 2), uci system THEM log_port '0' (systemlog_set nhom 5 — MOI phat hien)",
+  "ket_luan": "cam lai day / khoi dong lai KHONG doi cau hinh"
+ },
+ "uci_get_them": {
+  "cach": "uci get {config} voi phien admin, FNV ca goi tin JSON-RPC id 1 / do dai",
+  "ket_qua": {
+   "network": "a8c1298d/2682",
+   "wireless": "2cbb7425/9450",
+   "dhcp": "1fc67794/1309",
+   "firewall": "7f3e17d9/10879",
+   "dropbear": "1b55ba67/201",
+   "uhttpd": "82c18aaf/37",
+   "openvpn": "82c18aaf/37",
+   "collectd": "82c18aaf/37",
+   "oui-bwm": "09133910/151",
+   "dhcrelay": "82c18aaf/37",
+   "pppoe": "82c18aaf/37",
+   "rtty": "8f3713e7/51",
+   "openssl": "82c18aaf/37",
+   "ubootenv": "82c18aaf/37",
+   "khongco_xyz": "82c18aaf/37"
+  },
+  "rut_ra": [
+   "82c18aaf/37 = {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":[6]}: config CO tep nhung NGOAI ACL uci (acl_that.json) cung tra [6] — [6] la tu choi quyen, khong chi 'khong ton tai'",
+   "rtty (tep khong phai cu phap uci) -> result [0,{values:{}}]",
+   "ten section an danh theo quy tac cfg%02x%04x khop ca network/wireless/dhcp/firewall (47 section)"
+  ]
+ },
+ "backup_that": {
+  "tep": "reference/backup/ (anh Huynn luu tu Generate archive; Chrome de ten tam 'Unconfirmed 688465.crdownload')",
+  "kich_thuoc": 37952,
+  "fnv": "28c2405a",
+  "sha256": "e6725cafd2946576564952ebb0d2f1fbeaf293b2da35be002ce82f7ded6bc26f",
+  "trung_ban_doc_trong_trang": "fetch POST /cgi-bin/cgi-backup trong trang cung ra 37952 byte fnv 28c2405a -> gzip cua thiet bi TAT DINH",
+  "tar": "GNU ('ustar  \\0'), uid/gid 0000000, uname/gname root, 102 muc, 1024 byte 0 cuoi, KHONG dem toi 10240 (tar 202752 byte)",
+  "gzip": "1f8b 08 00 00000000 00 03; zlib muc 1-9 KHONG tai tao duoc than nen (busybox gzip)",
+  "symlink": "etc/easy-rsa/openssl-easyrsa.cnf -> /etc/easy-rsa/openssl-1.0.cnf",
+  "tep_da_commit": "28/64 tep etc/config o dang 'uci commit' (dong trong dau, TAB, '...', dong trong cuoi); 36 tep con nguyen ban firmware (mtime 1726821159/1726821103)",
+  "mtime_dang_chu_y": {
+   "etc/config/dropbear": 1765570194,
+   "etc/passwd": 1765570210,
+   "etc/shadow": 1765570210,
+   "etc/config/firewall": 1765570183,
+   "etc/crontabs/root": 1765570320
+  },
+  "kiem_mat_khau_root": "etc/shadow root = md5-crypt muoi 8 ky tu; so FNV voi md5crypt(ung vien, muoi): TRUNG '6455147589' (= mat khau web admin); KHONG trung 'Tmp#Sim2026A' (mat khau SSH thu nhom 9) va ''. shadow bi ghi lai 16 s sau dropbear (luc thu SSH) nhung mat khau root KHONG bi doi sang mat khau thu."
+ },
+ "tra_ve_dropbear": {
+  "nguon": "2026-09-25, anh Huynn cho phep tra ve dau vet SSH nhom 9",
+  "truoc": {
+   "section": "cfg014dd4",
+   "options": [
+    "PasswordAuth=on",
+    "RootPasswordAuth=on",
+    "Port=22",
+    "enable=1"
+   ],
+   "tien_trinh": "/usr/sbin/dropbear -F -P /var/run/dropbear.1.pid -p 22 -K 300 -T 3 (pid 2135)"
+  },
+  "chuoi": [
+   {
+    "gui": [
+     "uci",
+     "set",
+     {
+      "config": "dropbear",
+      "section": "cfg014dd4",
+      "values": {
+       "enable": "0"
+      }
+     }
+    ],
+    "nhan": [
+     0
+    ]
+   },
+   {
+    "gui": [
+     "uci",
+     "apply",
+     {
+      "rollback": true,
+      "timeout": 10
+     }
+    ],
+    "nhan": [
+     0
+    ]
+   },
+   {
+    "gui": [
+     "uci",
+     "confirm",
+     {}
+    ],
+    "nhan": [
+     0
+    ]
+   }
+  ],
+  "sau_4s": {
+   "options": [
+    "PasswordAuth=on",
+    "RootPasswordAuth=on",
+    "Port=22",
+    "enable=0"
+   ],
+   "tien_trinh_dropbear": "KHONG con",
+   "ssh.get": "73fc8723/49 (LANState 0, WANState 0 — khong doi)"
+  },
+  "gioi_han": "tep etc/config/dropbear khong ve duoc byte nguyen ban firmware (156 B, 0644) vi da bi uci commit; tep Backup trong reference/backup chup TRUOC buoc tra ve (enable '1')"
+ }
+}

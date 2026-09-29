@@ -1,0 +1,317 @@
+{
+ "trang": "Network >> WAN",
+ "route": "#/network/wan",
+ "view": "network/wanncs",
+ "chunk_goc": "js/chunk-2d0b6e5b.9b4ab5b7.1726822665278.js",
+ "bai_lab": 1,
+ "nguon_bang_chung": [
+  "reference/api/lab1_wan_pppoe.json  (do DOM that 2026-09-22)",
+  "reference/www/js__chunk-2d0b6e5b...js  (ma goc, ham getWanNcs/onApply)"
+ ],
+ "canh_bao": "Cac gia tri 'fpt', '8.8.8.8 1.1.1.1', '2001::1 2001::2' trong ban mau la MAC DINH CUA MA NGUON, khong phai cau hinh that cua thiet bi. Khong duoc dung lam du lieu.",
+ "doc_du_lieu": {
+  "loi_goi": "data_repo.cigext.get",
+  "co_che": "Truyen vao mot BAN MAU liet ke dung nhung khoa muon lay; thiet bi tra ve chinh hinh dang do voi gia tri that. Goi voi {} thi tra {}.",
+  "ban_mau": {
+   "network": {
+    "wan": {
+     "disabled": "0",
+     "proto": "dhcp",
+     "mtu": "1500",
+     "peerdns": "0",
+     "dns": "8.8.8.8 1.1.1.1",
+     "username": "fpt",
+     "password": "fpt",
+     "demand": "",
+     "ipaddr": "",
+     "netmask": "",
+     "gateway": "",
+     "ifname": ""
+    },
+    "wan6": {
+     "disabled": "0",
+     "proto": "dhcpv6",
+     "ip6addr": "",
+     "ip6gw": "",
+     "ip6prefix": "",
+     "peerdns": "1",
+     "dns": "2001::1 2001::2",
+     "defaultroute": "1",
+     "reqaddress": "try",
+     "reqprefix": "auto",
+     "enableslaac": "0"
+    },
+    "lan": {
+     "ifname": ""
+    },
+    "wan64": {
+     "disabled": "",
+     "iface_dslite": "",
+     "peeraddr": ""
+    }
+   }
+  },
+  "khung_tra_ve_that": "reference/api/khung_that_cigext_wan.json (do 2026-09-24)"
+ },
+ "anh_xa_o": {
+  "IP Version": "wan.disabled + wan6.disabled -> 0/0:IPv4 & IPv6 (val 2), 0/1:IPv4 Only (0), 1/0:IPv6 Only (1)",
+  "Connection Type": "wan.proto; rieng wan.disabled=1 VA wan6.disabled=1 -> 'bridge'",
+  "MTU": "wan.mtu",
+  "IPv4 Static IP": "wan.ipaddr",
+  "IPv4 Subnet Mask": "wan.netmask",
+  "IPv4 Gateway Address": "wan.gateway",
+  "IPv6 WAN Address": "wan6.ip6addr",
+  "PPP Username": "wan.username",
+  "PPP Password": "wan.password",
+  "PPP Connect Mode": "wan.demand == '' -> '0' (Always), nguoc lai '1' (On Demand)",
+  "User Specify IPv4 DNS Servers": "wan.peerdns  (radio '0'=Enable, '1'=Disable)",
+  "IPv4 Primary DNS": "wan.dns.split(' ')[0]",
+  "IPv4 Secondary DNS": "wan.dns.split(' ')[1]",
+  "User Specify IPv6 DNS Servers": "wan6.peerdns  (radio '0'=Enable, '1'=Disable)",
+  "IPv6 Primary DNS": "wan6.dns.split(' ')[0]",
+  "IPv6 Secondary DNS": "wan6.dns.split(' ')[1]",
+  "IPv6 Address Mode": "wan6.proto=='static' -> '2'; dhcpv6 + reqaddress='try' + enableslaac='0' -> '0'; dhcpv6 + reqaddress='none' + enableslaac='1' -> '1' (SLAAC)",
+  "IPv6 PD Mode": "wan6.reqprefix",
+  "IPv6 Default Gateway": "wan6.ip6gw != '' -> '0' (Manual); rong -> '1' (Auto)",
+  "DS-Lite": "wan64.disabled (rong -> '1')",
+  "DS-Lite Mode": "wan64.iface_dslite (rong -> '1')"
+ },
+ "ghi_du_lieu": {
+  "loi_goi": "data_repo.cigext.set",
+  "hop_dong": "DA DO — reference/api/hop_dong_ghi_lab1_4_5.json (wan_apply_khong_doi)",
+  "tra_ve": [
+   0,
+   {
+    "status": true
+   }
+  ]
+ },
+ "truong": [
+  {
+   "nhan": "IP Version",
+   "gia_tri": "IPv4 & IPv6",
+   "kieu_o": "text",
+   "la_select": true,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "Connection Type",
+   "gia_tri": "PPPoE",
+   "kieu_o": "text",
+   "la_select": true,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "MTU",
+   "gia_tri": "1500",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "IPv4 Static IP",
+   "gia_tri": "",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": true
+  },
+  {
+   "nhan": "IPv4 Subnet Mask",
+   "gia_tri": "",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": true
+  },
+  {
+   "nhan": "IPv4 Gateway Address",
+   "gia_tri": "",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": true
+  },
+  {
+   "nhan": "IPv6 WAN Address",
+   "gia_tri": "",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": true
+  },
+  {
+   "nhan": "PPP Username",
+   "gia_tri": "fpt",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "PPP Password",
+   "gia_tri": "fpt",
+   "kieu_o": "password",
+   "la_select": false,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "PPP Connect Mode",
+   "gia_tri": "Always",
+   "kieu_o": "text",
+   "la_select": true,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "User Specify IPv4 DNS Servers",
+   "gia_tri": "0",
+   "kieu_o": "radio",
+   "la_select": false,
+   "radio": [
+    "Enable",
+    "Disable"
+   ],
+   "an": false
+  },
+  {
+   "nhan": "IPv4 Primary DNS",
+   "gia_tri": "",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": true
+  },
+  {
+   "nhan": "IPv4 Secondary DNS",
+   "gia_tri": "",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": true
+  },
+  {
+   "nhan": "User Specify IPv6 DNS Servers",
+   "gia_tri": "0",
+   "kieu_o": "radio",
+   "la_select": false,
+   "radio": [
+    "Enable",
+    "Disable"
+   ],
+   "an": false
+  },
+  {
+   "nhan": "IPv6 Primary DNS",
+   "gia_tri": "2001:4860:4860::8888",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "IPv6 Secondary DNS",
+   "gia_tri": "2001:4860:4860::8844",
+   "kieu_o": "text",
+   "la_select": false,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "DS-Lite",
+   "gia_tri": "0",
+   "kieu_o": "radio",
+   "la_select": false,
+   "radio": [
+    "Enable",
+    "Disable"
+   ],
+   "an": true
+  },
+  {
+   "nhan": "DS-Lite Mode",
+   "gia_tri": "Auto",
+   "kieu_o": "text",
+   "la_select": true,
+   "radio": [],
+   "an": true
+  },
+  {
+   "nhan": "IPv6 Address Mode",
+   "gia_tri": "SLAAC",
+   "kieu_o": "text",
+   "la_select": true,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "IPv6 PD Mode",
+   "gia_tri": "PD",
+   "kieu_o": "text",
+   "la_select": true,
+   "radio": [],
+   "an": false
+  },
+  {
+   "nhan": "IPv6 Default Gateway",
+   "gia_tri": "Auto",
+   "kieu_o": "text",
+   "la_select": true,
+   "radio": [],
+   "an": false
+  }
+ ],
+ "dropdown": {
+  "IP Version": [
+   "IPv4 Only",
+   "IPv6 Only",
+   "IPv4 & IPv6"
+  ],
+  "Connection Type": [
+   "PPPoE",
+   "DHCP",
+   "Static IP",
+   "Bridge"
+  ],
+  "PPP Connect Mode": [
+   "Always",
+   "On Demand"
+  ],
+  "IPv6 Address Mode": [
+   "DHCPv6",
+   "SLAAC",
+   "Static"
+  ],
+  "IPv6 PD Mode": [
+   "PD",
+   "Static"
+  ],
+  "IPv6 Default Gateway": [
+   "Auto",
+   "Manual"
+  ]
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "chua do lai sau khi noi cigext",
+  "2_cau_truc": "dat — 21/21 o dung nhan, dung thu tu",
+  "3_giao_tiep": "dat — cigext.get theo ban mau trung khung that (phep kiem H2)",
+  "4_trang_thai": "dat — ghi do that, phat lai trung (J)"
+ },
+ "an_hien": {
+  "IPv4 Primary/Secondary DNS": "chi hien khi ipv4DnsServer VA ipv4State == '0' (Enable)",
+  "IPv6 Primary/Secondary DNS": "chi hien khi ipv6DnsServer VA ipv6State == '0' (Enable)",
+  "PPP Connect Mode": "v-show pppMode"
+ },
+ "doi_chieu_voi_lab1": "Khung do duoc 2026-09-24 giai thich dung tung o ma lab1 chup duoc hom 2026-09-22: wan.peerdns='1' -> IPv4 DNS AN; wan6.peerdns='0' -> IPv6 DNS HIEN voi 2001:4860:4860::8888 / ::8844; wan6 dhcpv6+none+slaac1 -> SLAAC; ip6gw rong -> Auto.",
+ "loi_cua_bo_trich_lab1": "Truong kieu radio trong lab1_wan_pppoe.json ghi gia_tri='0' cho CA HAI radio IPv4 va IPv6 — do bo trich doc nhan cua radio DAU TIEN chu khong doc model. Co ghi lai de khong ai doc nham; co 'an' cua tung o thi dung.",
+ "ghi_uci_nhom11": {
+  "tac_dong": "data_repo.cigext set -> ghi thang uci network.wan/wan6 (username, ...)",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

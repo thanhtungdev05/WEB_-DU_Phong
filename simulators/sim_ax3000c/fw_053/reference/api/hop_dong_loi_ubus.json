@@ -1,0 +1,130 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-22",
+ "ghi_chu": "HOP DONG LOI cua /ubus — do truc tiep. Luu y: khi loi thi than tra ve co khoa \"error\" (JSON-RPC), KHONG phai \"result\".",
+ "truong_hop": {
+  "sid hop le + doi tuong la": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "error": {
+    "code": -32000,
+    "message": "Object not found"
+   }
+  },
+  "sid hop le + ham la tren doi tuong that": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "error": {
+    "code": -32000,
+    "message": "Object not found"
+   }
+  },
+  "sid la + system.board": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "error": {
+    "code": -32002,
+    "message": "Access denied"
+   }
+  },
+  "sid la + oui.ui.menu": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "error": {
+    "code": -32002,
+    "message": "Access denied"
+   }
+  },
+  "sid la + data_repo.webinfo.system": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "error": {
+    "code": -32000,
+    "message": "Object not found"
+   }
+  },
+  "sid la + data_repo.weboui.wan_get": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "error": {
+    "code": -32000,
+    "message": "Object not found"
+   }
+  },
+  "sid toan 0 + system.info": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "error": {
+    "code": -32002,
+    "message": "Access denied"
+   }
+  },
+  "login sai mat khau": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "result": [
+    6
+   ]
+  },
+  "session.get": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "result": [
+    0,
+    {
+     "values": {
+      "username": "admin"
+     }
+    }
+   ]
+  },
+  "session.access co scope, ham co trong ACL": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "result": [
+    0,
+    {
+     "access": true
+    }
+   ]
+  },
+  "session.access co scope, ham KHONG co trong ACL": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "result": [
+    0,
+    {
+     "access": false
+    }
+   ]
+  },
+  "wifi_set voi tham so rong": {
+   "jsonrpc": "2.0",
+   "id": 7,
+   "error": {
+    "code": -32000,
+    "message": "Object not found"
+   }
+  }
+ },
+ "session_access_ky_tu_dai_dien": {
+  "nguon": "do that 2026-09-24, phien admin",
+  "ghi_chu": "ACL that co 'oui.ui': ['*'] va 'uci': ['*'] — thiet bi so khop theo MAU (fnmatch), khong so khop chinh xac tung chu.",
+  "ket_qua": {
+   "oui.ui / menu": {
+    "access": true
+   },
+   "oui.ui / khong_co_ham_nay": {
+    "access": true
+   },
+   "uci / get": {
+    "access": true
+   },
+   "data_repo.weboui / khong_co": {
+    "access": false
+   },
+   "khong_co_dt / get": {
+    "access": false
+   }
+  }
+ }
+}

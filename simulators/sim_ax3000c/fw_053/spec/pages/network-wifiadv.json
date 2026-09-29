@@ -1,0 +1,30 @@
+{
+ "trang": "Network >> Wi-Fi >> Wi-Fi Advanced",
+ "route": "#/network/wifiadv",
+ "view": "network/wifiadv",
+ "chunk_goc": "js/chunk-2d0c8817.9b4ab5b7.1726822665278.js",
+ "nguon_bang_chung": [
+  "reference/api/quet_doc_59_api.json",
+  "reference/api/hop_dong_ghi_nhom3.json",
+  "reference/api/hop_dong_ghi_lab7_easymesh.json"
+ ],
+ "doc_du_lieu": "data_repo.weboui.wifiadv_get + network.wireless.easymesh.get (Agent -> mat na)",
+ "ghi_du_lieu": {
+  "loi_goi": "data_repo.weboui.wifiadv_set {adv:{2G,5G}}",
+  "tra_ve": "[0,{status:true}]",
+  "ghi_chu": "trang gui country_code 'US', thiet bi giu 'US4'",
+  "da_do": true
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 44/44; mat na Agent trung (Lab 7)",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat (X)",
+  "4_trang_thai": "dat — Apply 200 / tra 100 tren giao dien gia lap, country_code giu US4"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "wifiadv_set -> wireless wifi0/wifi1 (htmode, channel+acs_bkscanen, beacon_int, rts, dtim_period) + iface host (wmm, beamforming, mu_mimo), wmm 5G ca guest 5G",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

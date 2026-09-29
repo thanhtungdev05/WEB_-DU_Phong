@@ -1,0 +1,105 @@
+{
+ "nguon": "AX3000CV2 that, fw 0.5.3, do 2026-09-25 (anh Huynn cho phep bat tam SSH co mat khau)",
+ "khung": {},
+ "chuoi": [
+  {
+   "ten": "get0",
+   "nhan": [
+    0,
+    {
+     "WANState": "0",
+     "LANState": "0",
+     "Password": ""
+    }
+   ]
+  },
+  {
+   "ten": "bat_LAN",
+   "gui": {
+    "WANState": "0",
+    "LANState": "1",
+    "Password": "Tmp#Sim2026A"
+   },
+   "nhan": [
+    0,
+    {
+     "WANState": "0",
+     "LANState": "1",
+     "Password": "Tmp#Sim2026A"
+    }
+   ],
+   "ms": 1371
+  },
+  {
+   "ten": "get1",
+   "nhan": [
+    0,
+    {
+     "WANState": "0",
+     "LANState": "1",
+     "Password": "Tmp#Sim2026A"
+    }
+   ]
+  },
+  {
+   "ten": "tat_nhu_trang_gui",
+   "gui": {
+    "WANState": "0",
+    "LANState": "0",
+    "Password": "Tmp#Sim2026A"
+   },
+   "nhan": [
+    0,
+    {
+     "WANState": "0",
+     "LANState": "0",
+     "Password": "Tmp#Sim2026A"
+    }
+   ],
+   "ms": 1333
+  },
+  {
+   "ten": "get2",
+   "nhan": [
+    0,
+    {
+     "WANState": "0",
+     "LANState": "0",
+     "Password": "Tmp#Sim2026A"
+    }
+   ]
+  },
+  {
+   "ten": "tra_ve_rong",
+   "gui": {
+    "WANState": "0",
+    "LANState": "0",
+    "Password": ""
+   },
+   "nhan": [
+    0,
+    {
+     "WANState": "0",
+     "LANState": "0",
+     "Password": ""
+    }
+   ]
+  },
+  {
+   "ten": "get3",
+   "nhan": [
+    0,
+    {
+     "WANState": "0",
+     "LANState": "0",
+     "Password": ""
+    }
+   ]
+  }
+ ],
+ "rut_ra": [
+  "ssh set tra TOAN trang thai; ssh get tra LAI MAT KHAU DANG CHU (khong ma hoa) — dung nhu the tren thiet bi",
+  "tat SSH qua trang: trang gui lai mat khau dang hien -> mat khau van luu",
+  "Da tra ve get y nhu ban dau (Password ''). Mat khau he thong ben duoi (neu ssh set doi mat khau root) KHONG kiem duoc tu web"
+ ]
+}

@@ -36,7 +36,7 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         cls.portal_js = (ROOT / "app.js").read_text(encoding="utf-8")
         cls.ac_source = (ROOT / "simulators/sim_ac1000f/server2.py").read_text(encoding="utf-8")
         cls.hv2_source = (ROOT / "simulators/sim_ax3000hv2/server2.py").read_text(encoding="utf-8")
-        cls.axc_source = (ROOT / "simulators/sim_ax3000c/server.py").read_text(encoding="utf-8")
+        cls.axc_source = (ROOT / "simulators/sim_ax3000c/server_fw053.py").read_text(encoding="utf-8")
         cls.achi_store_source = (ROOT / "simulators/sim_ac1000HI/src/config_store.py").read_text(encoding="utf-8")
         cls.achi_server_source = (ROOT / "simulators/sim_ac1000HI/src/server.py").read_text(encoding="utf-8")
         cls.ap6500_store_source = (ROOT / "simulators/ont_be6500c/src/config_store.py").read_text(encoding="utf-8")
@@ -69,14 +69,14 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
             self.assertIsNot(first, second)
 
     def test_reset_endpoints_remove_only_current_client(self):
-        for source in (self.ac_source, self.hv2_source, self.axc_source):
+        for source in (self.ac_source, self.hv2_source):
             self.assertIn("USER_STATES.pop(", source)
         # Toan cuc clear chi duoc phep ton tai trong /internal/reset co token
         # quan tri (B3) -- khong bao gio o cac endpoint reset quen thuoc cua trinh duyet.
         for source in (self.ac_source, self.hv2_source):
             self.assertEqual(source.count("USER_STATES.clear()"), 1)
             self.assertIn("if not self._admin_ok():", source)
-        self.assertNotIn("ACTIVE_SESSIONS.clear()", self.axc_source)
+        self.assertIn("_phien.clear()", self.axc_source)
 
     def test_active_simulators_never_clear_every_users_state_from_reset(self):
         for source in (

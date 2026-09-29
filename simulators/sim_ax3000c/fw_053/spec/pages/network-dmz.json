@@ -1,0 +1,32 @@
+{
+ "trang": "Network >> Access >> DMZ",
+ "route": "#/network/dmz",
+ "view": "network/dmz",
+ "chunk_goc": "js/chunk-93c79032.9b4ab5b7.1726822665278.js",
+ "nguon_bang_chung": [
+  "reference/api/quet_doc_59_api.json",
+  "reference/api/hop_dong_ghi_nhom2_access.json"
+ ],
+ "o": {
+  "enabled": "el-switch",
+  "Device/IP": "el-select tu dhcp_leases + arp_table (chi br*), bat buoc IPv4 hop le"
+ },
+ "doc_du_lieu": "data_repo.weboui.dmz_get + oui.network.dhcp_leases + arp_table + op-mode.get (bridge -> mat na)",
+ "ghi_du_lieu": {
+  "loi_goi": "data_repo.weboui.dmz_set {dmz_v4:{enabled,dest_ip}}",
+  "tra_ve": "[0,{status:true}]; dest_ip rong -> [8,{status:false}]",
+  "da_do": true
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 14/14 + danh sach chon trung",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat",
+  "4_trang_thai": "dat — bat/tai lai/tat tren giao dien gia lap"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "dmz_set -> firewall redirect 'dmz_v4' enabled, dest_ip",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

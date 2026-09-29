@@ -1,0 +1,327 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25 CO SU DONG Y cua anh Huynn (LAN IPv6, Wi-Fi Advanced)",
+ "cach_do": "Moc XHR trong trang, doi gia tri tren vm roi goi onSubmit(); doc lai sau moi buoc",
+ "lan6": {
+  "trang": "network/lan6 (chunk-16271a96)",
+  "ban_mau_doc": {
+   "network": {
+    "wan6": {
+     "ip6prefix": "2001:230::/48"
+    },
+    "globals": {
+     "ula_prefix": "fd00::/48"
+    }
+   },
+   "dhcp": {
+    "lan": {
+     "dhcpv6": "server",
+     "ra": "server",
+     "ra_flags": "",
+     "preferred_lifetime": "12h",
+     "dhcpv6_start": "2",
+     "dhcpv6_limit": "65535",
+     "ra_mininterval": "60",
+     "ra_maxinterval": "300"
+    }
+   }
+  },
+  "buoc": [
+   {
+    "ten": "max_ra_600",
+    "gui": [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "wan6": {
+        "ip6prefix": ""
+       },
+       "globals": {
+        "ula_prefix": "fd00:db80::/48"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "ra_flags": {
+         "mflag": "managed-config",
+         "oflag": "other-config"
+        },
+        "preferred_lifetime": "",
+        "ra": "server",
+        "ra_maxinterval": "600",
+        "ra_mininterval": "60",
+        "dhcpv6": "server",
+        "dhcpv6_start": "2",
+        "dhcpv6_limit": "65533"
+       },
+       "odhcpd": {
+        "maindhcp": "0"
+       }
+      }
+     }
+    ],
+    "ghi_chu_gui": "KHONG bat duoc goi tin nay (moc 'load' khong ghi nhan); noi dung suy tu goi tin buoc tra ve (chi khac ra_maxinterval) + ma onSubmit",
+    "doc_lai": [
+     0,
+     {
+      "network": {
+       "wan6": {
+        "ip6prefix": ""
+       },
+       "globals": {
+        "ula_prefix": "fd00:db80::/48"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "dhcpv6": "server",
+        "ra": "server",
+        "ra_flags": "managed-config other-config",
+        "preferred_lifetime": "",
+        "dhcpv6_start": "2",
+        "dhcpv6_limit": "65533",
+        "ra_mininterval": "60",
+        "ra_maxinterval": "600"
+       }
+      }
+     }
+    ]
+   },
+   {
+    "ten": "tra_ve_300",
+    "gui": [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "wan6": {
+        "ip6prefix": ""
+       },
+       "globals": {
+        "ula_prefix": "fd00:db80::/48"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "ra_flags": {
+         "mflag": "managed-config",
+         "oflag": "other-config"
+        },
+        "preferred_lifetime": "",
+        "ra": "server",
+        "ra_maxinterval": "300",
+        "ra_mininterval": "60",
+        "dhcpv6": "server",
+        "dhcpv6_start": "2",
+        "dhcpv6_limit": "65533"
+       },
+       "odhcpd": {
+        "maindhcp": "0"
+       }
+      }
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "network": {
+       "wan6": {
+        "ip6prefix": ""
+       },
+       "globals": {
+        "ula_prefix": "fd00:db80::/48"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "dhcpv6": "server",
+        "ra": "server",
+        "ra_flags": "managed-config other-config",
+        "preferred_lifetime": "",
+        "dhcpv6_start": "2",
+        "dhcpv6_limit": "65533",
+        "ra_mininterval": "60",
+        "ra_maxinterval": "300"
+       }
+      }
+     }
+    ]
+   }
+  ],
+  "sau_set": "trang doi 20 s (checkNetworkStatus) roi goi cigext get {network:{wan6:{ip6prefix}},dhcp:{lan:{dhcpv6}}} -> [0,{network:{wan6:{ip6prefix:''}},dhcp:{lan:{dhcpv6:'server'}}}] -> 'Configuration has been applied'",
+  "rut_ra": [
+   "ra_flags gui dang object {mflag,oflag} -> doc lai chuoi noi bang dau cach 'managed-config other-config' (dung quy tac cigext da do o Lab 1)",
+   "dhcp.odhcpd.maindhcp '0' gui kem moi lan"
+  ]
+ },
+ "wifiadv": {
+  "trang": "network/wifiadv (chunk-2d0c8817)",
+  "buoc": [
+   {
+    "ten": "beacon_2g_200",
+    "gui": [
+     "data_repo.weboui",
+     "wifiadv_set",
+     {
+      "adv": {
+       "2G": {
+        "enabled": true,
+        "country_code": "US",
+        "hwmode": "11axg",
+        "htmode": "HT20",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 200,
+        "rts": 2347,
+        "intercal_dtim": 1
+       },
+       "5G": {
+        "enabled": true,
+        "country_code": "US",
+        "hwmode": "11axa",
+        "htmode": "HT160",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       }
+      }
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "adv": {
+       "2G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axg",
+        "htmode": "HT20",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 200,
+        "rts": 2347,
+        "intercal_dtim": 1
+       },
+       "5G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axa",
+        "htmode": "HT160",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       }
+      }
+     }
+    ]
+   },
+   {
+    "ten": "tra_ve_100",
+    "gui": [
+     "data_repo.weboui",
+     "wifiadv_set",
+     {
+      "adv": {
+       "2G": {
+        "enabled": true,
+        "country_code": "US",
+        "hwmode": "11axg",
+        "htmode": "HT20",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       },
+       "5G": {
+        "enabled": true,
+        "country_code": "US",
+        "hwmode": "11axa",
+        "htmode": "HT160",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       }
+      }
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "adv": {
+       "2G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axg",
+        "htmode": "HT20",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       },
+       "5G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axa",
+        "htmode": "HT160",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       }
+      }
+     }
+    ]
+   }
+  ],
+  "rut_ra": [
+   "getRadios() doi moi country_code bat dau 'US' thanh 'US' de hien; onSubmit gui 'US'",
+   "thiet bi nhan 'US' VAN GIU 'US4' khi doc lai (ca 2 bang)",
+   "intercal_beacon/rts/intercal_dtim gui dang SO (parseInt)",
+   "doc lai sau tra ve: FNV fe18ef96 — trung khung goc"
+  ]
+ },
+ "trang_thai_thiet_bi_sau_do": "LAN IPv6 ra_maxinterval 300, Wi-Fi Advanced beacon 2G 100 — ca hai trung trang thai ban dau"
+}

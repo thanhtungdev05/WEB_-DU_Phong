@@ -1,0 +1,67 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25, CHI DOC",
+ "cach_do": "goi data_repo.cigext get voi DUNG ban mau trong getLan6() cua js/chunk-16271a96 (trang network/lan6)",
+ "ban_mau_trang_gui": {
+  "network": {
+   "wan6": {
+    "ip6prefix": "2001:230::/48"
+   },
+   "globals": {
+    "ula_prefix": "fd00::/48"
+   }
+  },
+  "dhcp": {
+   "lan": {
+    "dhcpv6": "server",
+    "ra": "server",
+    "ra_flags": "",
+    "preferred_lifetime": "12h",
+    "dhcpv6_start": "2",
+    "dhcpv6_limit": "65535",
+    "ra_mininterval": "60",
+    "ra_maxinterval": "300"
+   }
+  }
+ },
+ "dom_that": {
+  "o_so": {
+   "PD Mode": "Auto",
+   "Prefix": "",
+   "Preferred Lifetime": "",
+   "Max Ra Interval": "300",
+   "Min Ra Interval": "60",
+   "IPv6 Start Suffix": "2",
+   "IPv6 End Suffix": "ffff",
+   "ULA Prefix": "fd00:db80::/48"
+  },
+  "checkbox": "Enable RADVD, M Flag, O Flag, Enable DHCPv6 Server, Enable ULA: ca 5 deu checked"
+ },
+ "ghi_chu": "End Suffix = hex(limit + start) = hex(65533+2) = ffff — do ma trang tinh",
+ "khung": {
+  "data_repo.cigext.cay_cau_hinh": [
+   0,
+   {
+    "network": {
+     "wan6": {
+      "ip6prefix": ""
+     },
+     "globals": {
+      "ula_prefix": "fd00:db80::/48"
+     }
+    },
+    "dhcp": {
+     "lan": {
+      "dhcpv6": "server",
+      "ra": "server",
+      "ra_flags": "managed-config other-config",
+      "preferred_lifetime": "",
+      "dhcpv6_start": "2",
+      "dhcpv6_limit": "65533",
+      "ra_mininterval": "60",
+      "ra_maxinterval": "300"
+     }
+    }
+   }
+  ]
+ }
+}

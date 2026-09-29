@@ -1,0 +1,25 @@
+{
+ "trang": "Status >> EasyMesh Topo",
+ "route": "#/status/easymeshtopo",
+ "view": "status/easymeshtopo",
+ "chunk_goc": "js/chunk-60de137c.9b4ab5b7.1726822665278.js (vis-network)",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_status_topo.json",
+  "reference/api/quet_doc_59_api.json"
+ ],
+ "doc_du_lieu": {
+  "loi_goi": "data_repo.data_element.get + network.topology + system.board"
+ },
+ "nut": [
+  "refresh data",
+  "che do xem 1 (mac dinh)",
+  "che do xem 2 (co thiet bi con Admin-PC)"
+ ],
+ "ghi_du_lieu": null,
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — canvas 1726x725 trung TUNG PIXEL o ca 2 che do xem (getImageData: 15558 px / 15693 px, cung hash). Chu y: phai dua tab len truoc, tab nen canvas trong",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat",
+  "4_trang_thai": "khong co truong ghi"
+ }
+}

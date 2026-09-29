@@ -1,0 +1,20 @@
+{
+ "trang": "System >> Management >> SSH",
+ "route": "#/system/ssh",
+ "view": "network/sshncs",
+ "chunk_goc": "js/chunk-2d0ced27",
+ "doc": "ssh get",
+ "ghi": "ssh set -> tra toan trang thai (DO, ~1,3 s)",
+ "giao_dien": "17/17 trung (fnv 67d584d5)",
+ "ghi_chu": "Nhanh Password khac rong chua do",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom7_system.json",
+  "reference/api/hop_dong_ghi_nhom7_system.json"
+ ],
+ "ghi_uci_nhom11": {
+  "tac_dong": "ssh set -> dropbear enable '1' (khong tu ve 0) + firewall rule Reject-LAN/WAN-SSH target",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

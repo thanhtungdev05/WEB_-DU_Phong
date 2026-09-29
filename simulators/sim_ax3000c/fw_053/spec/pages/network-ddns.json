@@ -1,0 +1,31 @@
+{
+ "trang": "Network >> Access >> Dynamic DNS",
+ "route": "#/network/ddns",
+ "view": "network/ddns",
+ "chunk_goc": "js/chunk-2d0e5d9d.9b4ab5b7.1726822665278.js",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_uci.json",
+  "reference/api/hop_dong_ghi_nhom2_access.json"
+ ],
+ "o": {
+  "Dynamic DNS State": "uci-option-switch enabled 1/0 (ghi ca myddns_ipv4 + myddns_ipv6)",
+  "Select Dynamic Server": "service_name: dyndns|gnudip|tzo|ods|noip(NoIP.com)|changeip",
+  "Username": "username",
+  "Password": "password (8-64)",
+  "HostName": "lookup_host + domain"
+ },
+ "doc_du_lieu": {
+  "uci get {config:ddns}": "form",
+  "ddns get": "bang Dynamic DNS Reporting"
+ },
+ "ghi_du_lieu": {
+  "luong": "uci set x2 -> uci apply {rollback:true,timeout:10} -> uci confirm -> ddns set {enabled:'1'} -> ddns get",
+  "da_do": true
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 17/17 (tat), 26/26 (bat), dong Reporting trung toa do",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat — uci get trung tung byte ca thu tu khoa (V)",
+  "4_trang_thai": "dat — bat/tat qua giao dien gia lap, doc lai dung"
+ }
+}

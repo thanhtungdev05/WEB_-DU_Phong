@@ -1,0 +1,2265 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25 qua Chrome, CHI DOC (1 loi goi / 2 giay, trang status/lanstatus dang mo)",
+ "cach_do": "setInterval 2000 ms goi data_repo.weboui lanstatus, ghi performance.now() tung mau. Rut gon LAN1 thanh chuoi 't:rx:tx' (1433 ky tu), doi chieu FNV-1a voi tong tinh tren trang that (c5e03fe) -> trung. Bo mau dau (sot tu lan chay truoc, t khong lien mach).",
+ "do_them": "61 mau deu co: LAN2/LAN3 rx=tx=0, LAN1 status 1 / phyrate 1000 / loopstatus 0 / crc 0 khong doi — da kiem tren trang, nen dung lai 3 cong nhu duoi.",
+ "dung_de": "server.py phat lai VONG TRON cac gia so rx/tx giua 2 mau lien tiep (anh Huynn chon cach nay 2026-09-25)",
+ "mau": [
+  {
+   "t": 2913,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7242534,
+       "tx": 23902525,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 4958,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7246910,
+       "tx": 23907006,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 6919,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7251004,
+       "tx": 23911397,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 8929,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7254906,
+       "tx": 23915660,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 10932,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7260328,
+       "tx": 23920771,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 12908,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7264386,
+       "tx": 23925206,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 14910,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7268570,
+       "tx": 23929829,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 16900,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7272664,
+       "tx": 23934156,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 18902,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7276758,
+       "tx": 23938661,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 20912,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7280853,
+       "tx": 23942988,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 22901,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7285038,
+       "tx": 23947316,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 24897,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7289313,
+       "tx": 23951644,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 26900,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7294226,
+       "tx": 23956420,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 28911,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7298565,
+       "tx": 23960807,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 30962,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7303006,
+       "tx": 23965199,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 32896,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7306845,
+       "tx": 23993907,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 34912,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7310812,
+       "tx": 23998107,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 36908,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7314959,
+       "tx": 24002307,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 38904,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7319016,
+       "tx": 24006507,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 40922,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7323973,
+       "tx": 24011150,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 43049,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7328388,
+       "tx": 24016772,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 44907,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7332125,
+       "tx": 24019742,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 46917,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7336284,
+       "tx": 24024129,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 48906,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7340379,
+       "tx": 24028457,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 50902,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7344474,
+       "tx": 24032785,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 52905,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7348569,
+       "tx": 24037113,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 54908,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7352664,
+       "tx": 24041441,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 56911,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7357551,
+       "tx": 24046276,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 58900,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7361646,
+       "tx": 24050604,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 61009,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7365805,
+       "tx": 24054996,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 62913,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7369990,
+       "tx": 24083763,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 64909,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7374317,
+       "tx": 24088053,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 66912,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7378644,
+       "tx": 24092253,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 69006,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7383253,
+       "tx": 24096659,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 70911,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7388532,
+       "tx": 24101361,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 72907,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7392679,
+       "tx": 24105625,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 74910,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7396774,
+       "tx": 24109953,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 76893,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7400959,
+       "tx": 24114281,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 78909,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7405324,
+       "tx": 24118609,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 80899,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7409599,
+       "tx": 24122937,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 82922,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7414058,
+       "tx": 24127517,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 84911,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7418245,
+       "tx": 24132081,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 86900,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7423068,
+       "tx": 24136857,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 88924,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7427407,
+       "tx": 24141415,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 90921,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7431860,
+       "tx": 24146112,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 92958,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7436045,
+       "tx": 24174961,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 94899,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7440012,
+       "tx": 24179161,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 96916,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7444235,
+       "tx": 24183419,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 98905,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7448100,
+       "tx": 24187709,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 100908,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7452929,
+       "tx": 24192416,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 102904,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7457392,
+       "tx": 24196910,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 104914,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7461757,
+       "tx": 24201238,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 106896,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7466186,
+       "tx": 24205566,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 108913,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7470615,
+       "tx": 24209894,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 111049,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7475818,
+       "tx": 24216002,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 112898,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7480357,
+       "tx": 24219732,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 114908,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7484516,
+       "tx": 24224119,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 116904,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7489429,
+       "tx": 24228895,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 118914,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7494058,
+       "tx": 24233503,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 120917,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7498589,
+       "tx": 24237895,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "t": 122941,
+   "r": [
+    0,
+    {
+     "list": [
+      {
+       "ifname": "LAN1(eth1.5)",
+       "status": 1,
+       "phyrate": 1000,
+       "loopstatus": 0,
+       "rx": 7502428,
+       "tx": 24266603,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN2(eth1.6)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      },
+      {
+       "ifname": "LAN3(eth1.7)",
+       "status": 0,
+       "phyrate": 0,
+       "loopstatus": 0,
+       "rx": 0,
+       "tx": 0,
+       "crc": 0
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

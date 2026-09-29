@@ -1,0 +1,284 @@
+{
+ "nguon": "AX3000CV2 that, fw 0.5.3 — KHOI DONG LAI 1 LAN duy nhat, anh Huynn cho phep 2026-09-25. Bam Reboot tren thanh tren -> OK.",
+ "khung": {},
+ "system.reboot": {
+  "gui": [
+   "<sid>",
+   "system",
+   "reboot",
+   {}
+  ],
+  "nhan": "[0]",
+  "ms": 199
+ },
+ "man_hinh": {
+  "loading": "el-loading-mask is-fullscreen, 0,0 1521x639, nen rgba(0,0,0,0.7), chu 'Rebooting...' 14px rgb(64,158,255), spinner el-icon-loading",
+  "ma_goc": "$reconnect(text, t='/', n=160): 5 s sau goi oui.ui lang, loi thi thu lai sau 1 s; thanh cong -> router.push('/login'); qua 160 s -> window.location.href='/'"
+ },
+ "dong_thoi_gian_oui.ui_lang": [
+  {
+   "bat_dau_s": "0",
+   "thoi_gian_ms": "199",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "ok"
+  },
+  {
+   "bat_dau_s": "6",
+   "thoi_gian_ms": "16340",
+   "ket_thuc": "e",
+   "http": "0",
+   "ket_qua": "-"
+  },
+  {
+   "bat_dau_s": "24",
+   "thoi_gian_ms": "8561",
+   "ket_thuc": "e",
+   "http": "0",
+   "ket_qua": "-"
+  },
+  {
+   "bat_dau_s": "34",
+   "thoi_gian_ms": "11552",
+   "ket_thuc": "e",
+   "http": "0",
+   "ket_qua": "-"
+  },
+  {
+   "bat_dau_s": "47",
+   "thoi_gian_ms": "23274",
+   "ket_thuc": "e",
+   "http": "0",
+   "ket_qua": "-"
+  },
+  {
+   "bat_dau_s": "72",
+   "thoi_gian_ms": "9377",
+   "ket_thuc": "e",
+   "http": "0",
+   "ket_qua": "-"
+  },
+  {
+   "bat_dau_s": "83",
+   "thoi_gian_ms": "3129",
+   "ket_thuc": "e",
+   "http": "0",
+   "ket_qua": "-"
+  },
+  {
+   "bat_dau_s": "88",
+   "thoi_gian_ms": "3589",
+   "ket_thuc": "e",
+   "http": "0",
+   "ket_qua": "-"
+  },
+  {
+   "bat_dau_s": "93",
+   "thoi_gian_ms": "2479",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32000"
+  },
+  {
+   "bat_dau_s": "97",
+   "thoi_gian_ms": "1076",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32000"
+  },
+  {
+   "bat_dau_s": "100",
+   "thoi_gian_ms": "60",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32000"
+  },
+  {
+   "bat_dau_s": "102",
+   "thoi_gian_ms": "890",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "104",
+   "thoi_gian_ms": "1865",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "107",
+   "thoi_gian_ms": "3828",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "112",
+   "thoi_gian_ms": "1657",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "115",
+   "thoi_gian_ms": "3825",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "120",
+   "thoi_gian_ms": "1630",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "123",
+   "thoi_gian_ms": "876",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "125",
+   "thoi_gian_ms": "455",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "127",
+   "thoi_gian_ms": "305",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "129",
+   "thoi_gian_ms": "323",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "131",
+   "thoi_gian_ms": "306",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "133",
+   "thoi_gian_ms": "216",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "135",
+   "thoi_gian_ms": "223",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "137",
+   "thoi_gian_ms": "403",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "139",
+   "thoi_gian_ms": "328",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "141",
+   "thoi_gian_ms": "354",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "143",
+   "thoi_gian_ms": "210",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "145",
+   "thoi_gian_ms": "210",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "147",
+   "thoi_gian_ms": "376",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "149",
+   "thoi_gian_ms": "377",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "151",
+   "thoi_gian_ms": "396",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "153",
+   "thoi_gian_ms": "396",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "155",
+   "thoi_gian_ms": "334",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "157",
+   "thoi_gian_ms": "355",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  },
+  {
+   "bat_dau_s": "159",
+   "thoi_gian_ms": "295",
+   "ket_thuc": "l",
+   "http": "200",
+   "ket_qua": "-32002"
+  }
+ ],
+ "tom_tat": {
+  "loi_mang_toi": "~91,6-95,5 s (request 88 s loi luc 91,6 s; request 93 s co tra loi luc 95,5 s) -> chon 93 s",
+  "pha_-32000": "93 -> 100-102,9 s -> chon 101,5 s",
+  "sau_do": "-32002 (phien cu mat) cho toi 160 s -> trang tu chuyen '/' -> #/login (mat ?q=122)",
+  "uptime": "153 s khi do luc ~175 s sau lenh -> goc uptime ~22 s sau lenh",
+  "cau_hinh": "4 khung doc trung fnv truoc/sau (system_get cac7e3a5, wifi_get 3ad45cc7, lan_get c16c20a4, uci system 2b55a113)",
+  "rebootReason": [
+   "Normal",
+   "CLI"
+  ]
+ },
+ "gioi_han": "Do 1 lan: moc 93 s / 101,5 s co sai so vai giay. Trong pha sap, trinh duyet that bao loi sau 3-23 s (TCP); gia lap dong ket noi ngay -> vong thu lai nhanh hon, giao dien khong khac."
+}

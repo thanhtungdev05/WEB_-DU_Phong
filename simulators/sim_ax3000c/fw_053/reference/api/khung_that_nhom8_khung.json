@@ -1,0 +1,140 @@
+{
+ "nguon": "AX3000CV2 that, fw 0.5.3, do 2026-09-25 — chi doc / mo hop thoai roi DONG (khong bam OK). Khong reboot, khong reset.",
+ "khung": {},
+ "session.login": {
+  "sai_mat_khau": {
+   "gui": {
+    "username": "admin",
+    "password": "sai"
+   },
+   "nhan": "result [6]"
+  },
+  "admin_mat_khau_rong": {
+   "nhan": "result [6]"
+  },
+  "user_khong_ton_tai": {
+   "gui": [
+    {
+     "username": "",
+     "password": ""
+    },
+    {
+     "username": "",
+     "password": "x"
+    },
+    {
+     "username": "nobody",
+     "password": "x"
+    },
+    {
+     "username": "root",
+     "password": "x"
+    },
+    {
+     "username": "assist",
+     "password": "x"
+    },
+    {
+     "username": "Admin",
+     "password": "x"
+    },
+    {}
+   ],
+   "nhan": "error -32002 Access denied (7/7)"
+  },
+  "dung": {
+   "khoa_theo_thu_tu": [
+    "ubus_rpc_session",
+    "timeout",
+    "acls",
+    "data"
+   ],
+   "timeout": 300,
+   "data": {
+    "username": "admin"
+   },
+   "acls": "trung acl_that.json (3800 ky tu, fnv 49c0e213)",
+   "goi_tin_thay_sid_bang_<SID>": {
+    "do_dai": 3916,
+    "fnv": "49f74fa3"
+   },
+   "ghi_chu": "KHONG co khoa 'expires'"
+  }
+ },
+ "session.access_khong_tham_so": "[0, <ACL>] — 3838 ky tu, fnv cbe9129d",
+ "session.get": "[0,{\"values\":{\"username\":\"admin\"}}]",
+ "session.destroy": {
+  "lan_1": "[0]",
+  "lan_2": "error -32002",
+  "get_sau_destroy": "error -32002"
+ },
+ "het_phien": {
+  "timeout": 300,
+  "do": [
+   [
+    "nghi 280 s",
+    "access true"
+   ],
+   [
+    "nghi 290 s sau lan dung truoc",
+    "access true — moi loi goi lam moi moc"
+   ],
+   [
+    "nghi 305 s",
+    "-32002"
+   ],
+   [
+    "nghi 310 s",
+    "-32002"
+   ],
+   [
+    "nghi ~340 s",
+    "-32002"
+   ]
+  ]
+ },
+ "giao_dien": {
+  "login_ban_dau": {
+   "so_phan_tu": 8,
+   "fnv": "db1dbb84",
+   "khung_nhin": "1536x695"
+  },
+  "login_sai_mat_khau": {
+   "so_phan_tu": 13,
+   "fnv": "d22f662b",
+   "thong_bao": "Sorry, we could not find any accounts that match your input. Please try a different username or password."
+  },
+  "sidebar_thu": {
+   "so": 8,
+   "fnv": "97c725f1"
+  },
+  "sidebar_mo": {
+   "so": 10,
+   "fnv": "1a6a8858"
+  },
+  "sidebar_mo_nhom_System": {
+   "so": 23,
+   "fnv": "d93f64da"
+  },
+  "hop_thoai_reboot": {
+   "so": 8,
+   "fnv": "99022714",
+   "tieu_de": "Reboot",
+   "noi_dung": "Really reboot now?",
+   "nut": [
+    "Cancel",
+    "OK"
+   ],
+   "dong_bang": "nut X — uptime van tang (106435 s), KHONG reboot"
+  },
+  "hop_thoai_perform_reset": {
+   "so": 8,
+   "fnv": "a3414f83",
+   "tieu_de": "Really reset all changes?",
+   "dong_bang": "nut X/Cancel — KHONG reset"
+  },
+  "el_backtop": "x1441 y499 40x40, nen trang, mau rgb(64,158,255), cuon .el-main 400px",
+  "cua_so_hep": "khong thu nho duoc cua so Chrome (dang phong to) — chua do pixel; ma goc khong co bo cuc dien thoai rieng"
+ },
+ "chua_giai_thich": "Tab dang o #/login (da dang xuat) tu chuyen sang #/home trong luc cho do het phien (~14 phut, khong tai lai trang). Chua ro co che."
+}

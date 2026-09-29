@@ -1,0 +1,19 @@
+{
+ "trang": "System >> Management >> Change Password",
+ "route": "#/system/changepwd",
+ "view": "system/changepwd",
+ "chunk_goc": "js/chunk-2d22fc9b",
+ "doc": "loginpwd_get -> {login:{username:'admin'}}",
+ "ghi": "oui.ui crypt -> loginpwd_set {login:{password:<md5-crypt muoi rong>}} -> [0,{status:true}]; NGAY SAU DO moi phien bi huy (-32002), trang khong tu ve login. Quy tac 12 ky tu/ky hieu/chu hoa kiem o trang. DO THAT 2026-09-26 (anh Huynn bam tay).",
+ "giao_dien": "10/10 trung (fnv 5dc8b3b0)",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom7_system.json",
+  "reference/api/hop_dong_ghi_nhom7_system.json"
+ ],
+ "ghi_nhom13": {
+  "bang_chung": "reference/api/hop_dong_nhom13.json 'doi_mat_khau'",
+  "ma": "src/server.py (loginpwd_set, _mat_khau_dung, KHOA_MK_ADMIN)",
+  "kiem": "PW1, PW2",
+  "chua_mo_phong": "etc/shadow / uci rpcd khi doi mat khau (chua do tep) — Backup gia lap van mang shadow goc"
+ }
+}

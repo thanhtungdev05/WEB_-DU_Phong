@@ -1,0 +1,25 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-24",
+ "ghi_chu": "data_repo.cigext.get theo co che BAN MAU cho trang network/lan (view network/lanncs, js/chunk-7266f7c8...js, ham getLanNcs). Bai Lab 4 (DNS) + Lab 5 (DHCP).",
+ "trang": "network/lan (bai Lab 4 + 5)",
+ "canh_bao": "Gia tri trong 'ban_mau_gui_di' (start 100, limit 150, leasetime 80, dhcp_option 6,8.8.8.8,8.8.8.4) la MAC DINH CUA MA NGUON. KHONG phai cau hinh that.",
+ "ban_mau_gui_di": {
+  "network": { "lan": { "ipaddr": "192.168.100.1", "netmask": "255.255.255.0" } },
+  "dhcp": { "lan": { "start": "100", "limit": "150", "leasetime": "80", "dhcp_option": "6,8.8.8.8,8.8.8.4" } }
+ },
+ "ban_mau_tham_do_sau_apply": {
+  "ghi_chu": "Ban mau ham checkNetworkStatus dung de do xem mang da len lai chua sau Apply. Do kem de xac nhan: thiet bi CHI tra dung nhung khoa duoc hoi.",
+  "gui_di": { "network": { "lan": { "ipaddr": "192.168.100.1" } }, "dhcp": { "lan": { "start": "100" } } },
+  "tra_ve": [0, { "network": { "lan": { "ipaddr": "192.168.100.1" } }, "dhcp": { "lan": { "start": "192.168.100.2" } } }]
+ },
+ "khung": {
+  "data_repo.cigext.cay_cau_hinh": [
+   0,
+   {
+    "network": { "lan": { "ipaddr": "192.168.100.1", "netmask": "255.255.255.0" } },
+    "dhcp": { "lan": { "start": "192.168.100.2", "limit": "248", "leasetime": "720", "dhcp_option": "" } }
+   }
+  ]
+ },
+ "ghi_chu_khoa": "Cung khoa noi bo 'data_repo.cigext.cay_cau_hinh' voi khung_that_cigext_wan.json. Kho cau hinh GOP SAU hai tep lai thanh MOT cay duy nhat (network.wan/wan6/lan/wan64 + network.lan.ipaddr/netmask + dhcp.lan). Chu y: network.lan co ca 'ifname' (tu ban mau WAN) lan 'ipaddr/netmask' (tu ban mau LAN)."
+}

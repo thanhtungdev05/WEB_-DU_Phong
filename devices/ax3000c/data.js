@@ -1,6 +1,7 @@
 /**
- * devices/ax3000c/data.js — Cấu hình chung cho AX3000C
- * Các bài học chi tiết được quản lý độc lập trong thư mục devices/ax3000c/lessons/ (bai1.js .. bai5.js)
+ * devices/ax3000c/data.js — Cấu hình chung cho AX3000C (thiết bị AX3000CV2, firmware 0.5.3)
+ * Các bài học chi tiết được quản lý độc lập trong thư mục devices/ax3000c/lessons/ (bai1.js .. bai7.js)
+ * Giả lập: simulators/sim_ax3000c/server_fw053.py (giữ id 'ax3000c' và URL /sim_ax3000c/ như cũ)
  */
 
 window.DEVICE_AX3000C = {

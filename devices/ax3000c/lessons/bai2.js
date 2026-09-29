@@ -1,6 +1,6 @@
 /**
  * devices/ax3000c/lessons/bai2.js
- * Bài 2: Cấu hình WiFi trên AX3000C
+ * Bài 2: Cấu hình WiFi trên AX3000CV2 (firmware 0.5.3) — tab Host SSID
  */
 
 window.DEVICE_AX3000C_LESSONS = window.DEVICE_AX3000C_LESSONS || [];
@@ -16,17 +16,18 @@ window.DEVICE_AX3000C_LESSONS.push({
     '- WPA Key: <span class="val">fpt12345</span>',
   ],
   practiceUrl: '/sim_ax3000c/#/network/wifi',
-  clearFields: [
-    '.card .row input[type="text"]',
-    '#pp'
-  ],
+  onSimLoad: function (simWin) { FTC_AX3000C.datTrangThaiBai(simWin, 2); },
+  // Chỉ xoá ô đầu (2G) — ô 5G của chế độ "Use separate SSID" phải giữ mật khẩu sẵn có (xem ftc_chung.js)
+  customClear: function () {
+    FTC_AX3000C.xoaO(['#pane-hostssid ' + FTC_AX3000C.o('SSID'), '#pane-hostssid ' + FTC_AX3000C.o('Passphrase')], true);
+  },
   grading: {
-    description: 'Kiểm tra SSID và WPA Key trên AX3000C',
+    description: 'Kiểm tra SSID và WPA Key trên AX3000CV2',
     rules: [
       {
         id: 'wifi_ssid',
         name: 'Tên Wi-Fi (SSID)',
-        selector: '.card .row input[type="text"], input[value*="FPT"]',
+        selector: '#pane-hostssid ' + FTC_AX3000C.o('SSID'),
         expected: 'FPT Telecom',
         type: 'text_exact',
         trim: true,
@@ -35,56 +36,26 @@ window.DEVICE_AX3000C_LESSONS.push({
       {
         id: 'wifi_key',
         name: 'Mật khẩu Wi-Fi (WPA Key)',
-        selector: '#pp, input[type="password"]',
+        selector: '#pane-hostssid ' + FTC_AX3000C.o('Passphrase'),
         expected: 'fpt12345',
+        type: 'text_exact',
+        trim: true,
+        required: true
+      },
+      // Band Steering = 2G và 5G dùng chung SSID -> "Use separate SSID" phải TẮT (anh Huynn chốt
+      // 2026-09-28: chỉ bài 2 bắt lỗi công tắc này, bài 3 Wi-Fi IoT thì không).
+      // Công tắc bật -> "on", tắt -> "false" (cách bộ chấm đọc checkbox).
+      {
+        id: 'band_steering',
+        name: 'Use separate SSID',
+        selector: '#pane-hostssid .el-switch[data-ftc-cong-tac="Use separate SSID"] input',
+        expected: 'false',
+        valueLabels: { 'false': 'Tắt', 'on': 'Bật' },
         type: 'text_exact',
         trim: true,
         required: true
       }
     ]
   },
-  guidePopups: [
-    {
-      selector: 'li.el-submenu:not(.is-opened) .el-submenu__title:contains("Network")',
-      text: 'Chọn Network',
-      position: 'right',
-      hideOnPage: 'wifi'
-    },
-    {
-      selector: 'li.el-submenu.is-opened li.el-submenu:not(.is-opened) .el-submenu__title:contains("Wi-Fi"), li.el-submenu.is-opened li.el-submenu:not(.is-opened) .el-submenu__title:contains("WIFI")',
-      text: 'Chọn WIFI',
-      position: 'right',
-      hideOnPage: 'wifi'
-    },
-    {
-      selector: 'li.el-submenu.is-opened li.el-submenu.is-opened li.el-menu-item:contains("Wi-Fi"), li.el-submenu.is-opened li.el-menu-item:contains("Wi-Fi"), li.el-submenu.is-opened li.el-menu-item:contains("WIFI")',
-      text: 'Chọn WIFI',
-      position: 'right',
-      hideOnPage: 'wifi'
-    },
-    {
-      selector: '.tabs:not(:has(.tab.active[data-t="host"])) .tab[data-t="host"]',
-      text: 'Bước 1: Cấu hình mạng Host SSID',
-      position: 'top',
-      page: 'wifi'
-    },
-    {
-      selector: '.tabs:has(.tab.active[data-t="host"]) ~ .card .row input[type="text"]',
-      text: 'Bước 2: Đặt tên WIFI VD: FPT Telecom',
-      position: 'right',
-      page: 'wifi'
-    },
-    {
-      selector: '.tabs:has(.tab.active[data-t="host"]) ~ .card #pp',
-      text: 'Bước 3: Đặt mật khẩu WIFI VD: fpt12345',
-      position: 'right',
-      page: 'wifi'
-    },
-    {
-      selector: '.tabs:has(.tab.active[data-t="host"]) ~ .actions button.apply',
-      text: 'Bước 4: Chọn Apply',
-      position: 'right',
-      page: 'wifi'
-    }
-  ]
+  guidePopups: window.TOOLTIPS_AX3000C['LAB_AX3000CV2_02']
 });

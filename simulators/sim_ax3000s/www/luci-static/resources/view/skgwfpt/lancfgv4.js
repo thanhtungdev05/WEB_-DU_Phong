@@ -80,23 +80,58 @@ else if(dhcpmode==2)
 {if(isValidIpAddress(getValue("dhcpSrvAddr"))==false||isMulticastAddr(getValue("dhcpSrvAddr"))==true){warninfo_show(_("DHCP Server is invalid!"));return false;}}
 return true;}
 function jumpTonew()
-{var newhost=getValue("ethIpAddress");window.location.href="http://"+newhost+"/cgi-bin/luci/admin/network/lancfg/lancfgv4";}
+{console.log("[SIM] LAN IP changed:", getValue("ethIpAddress"));}
+function ftcNotifyPortalSaveLan(ip, mask, dhcpmode, start, end, lease) {
+  try {
+    var p = (window.parent && window.parent !== window) ? window.parent : ((window.top && window.top !== window) ? window.top : null);
+    if (!p) return;
+    var lessonKey = "ax3000s_LAB_AX3000S_05";
+    if (!p._sessionRuleCache) p._sessionRuleCache = {};
+    p._sessionRuleCacheScope = lessonKey;
+    p._sessionRuleCache["lan_ip"] = { actualValue: ip, isSaved: true, isMatch: (ip === "192.168.2.1") };
+    p._sessionRuleCache["lan_subnet"] = { actualValue: mask, isSaved: true, isMatch: (mask === "255.255.255.0") };
+    p._sessionRuleCache["lan_dhcp_enable"] = { actualValue: String(dhcpmode), isSaved: true, isMatch: (dhcpmode == 1) };
+    p._sessionRuleCache["lan_dhcp_start"] = { actualValue: start, isSaved: true, isMatch: (start === "192.168.2.2") };
+    p._sessionRuleCache["lan_dhcp_end"] = { actualValue: end, isSaved: true, isMatch: (end === "192.168.2.254") };
+    p._sessionRuleCache["lan_dhcp_lease"] = { actualValue: String(lease), isSaved: true, isMatch: (lease == 120) };
+    p._hasClickedSaveInGuide = true;
+    try {
+      document._ftcIsSaved = true;
+      document._ftcLastSaveInteraction = Date.now();
+    } catch(e) {}
+    if (typeof p.onSimulatorSave === "function") {
+      try { p.onSimulatorSave(window, "lancfgv4"); } catch(e) {}
+    }
+    try {
+      p.postMessage({
+        type: "FTC_SAVE_SUCCESS",
+        source: "ax3000s_lancfgv4",
+        data: { ip: ip, mask: mask, dhcpmode: dhcpmode, start: start, end: end, lease: lease }
+      }, "*");
+    } catch(e) {}
+  } catch(err) {
+    console.warn("[AX3000S] ftcNotifyPortalSaveLan error:", err);
+  }
+}
 function lancfg_apply()
 {if(lancfgv4_pageCheckValue()==true)
-{if(oldlanip!=getValue("ethIpAddress"))
-{setTimeout("jumpTonew()",15000);}
-loading_show();var dhcpmode=parseInt($("input[name='dhcpSrvType']:checked").val());var dhcpdata={"dhcpmode":dhcpmode};if(dhcpmode==1)
-{dhcpdata.startip=getValue("dhcpEthStart");dhcpdata.endip=getValue("dhcpEthEnd");dhcpdata.leasetime=parseInt(getValue("dhcpLeasedTime"));dhcpdata.dnsmode=parseInt($("input[name='dnsmode']:checked").val());if(dhcpdata.dnsmode==1)
+{var dhcpmode=parseInt($("input[name='dhcpSrvType']:checked").val());
+var ipVal=getValue("ethIpAddress");var maskVal=getValue("ethSubnetMask");
+var startVal=getValue("dhcpEthStart");var endVal=getValue("dhcpEthEnd");
+var leaseVal=parseInt(getValue("dhcpLeasedTime"));
+ftcNotifyPortalSaveLan(ipVal, maskVal, dhcpmode, startVal, endVal, leaseVal);
+loading_show();var dhcpdata={"dhcpmode":dhcpmode};if(dhcpmode==1)
+{dhcpdata.startip=startVal;dhcpdata.endip=endVal;dhcpdata.leasetime=leaseVal;dhcpdata.dnsmode=parseInt($("input[name='dnsmode']:checked").val());if(dhcpdata.dnsmode==1)
 {dhcpdata.pridns=getValue("dnsPrimary");if(checkNull(getValue("dnsSecondary"))==true)
 dhcpdata.secdns=getValue("dnsSecondary");}}
 else if(dhcpmode==2)
 {dhcpdata.relay=getValue("dhcpSrvAddr");}
-var lanparam=new Array("rtweb.lancfg","setLanCfg",{"ipaddr":getValue("ethIpAddress"),"netmask":getValue("ethSubnetMask")});var dhcpsparam=new Array("rtweb.dhcpserver","set",dhcpdata);if(calcSubNet(oldlanip,getValue("ethSubnetMask"))
-!=calcSubNet(getValue("ethIpAddress"),getValue("ethSubnetMask")))
+var lanparam=new Array("rtweb.lancfg","setLanCfg",{"ipaddr":ipVal,"netmask":maskVal});var dhcpsparam=new Array("rtweb.dhcpserver","set",dhcpdata);if(calcSubNet(oldlanip,maskVal)
+!=calcSubNet(ipVal,maskVal))
 {var destroyparam=new Array("rtweb.session","destroy",{});var jsonparam=[{"id":1,"params":lanparam},{"id":2,"params":dhcpsparam},{"id":3,"params":destroyparam}];}
 else
 {var jsonparam=[{"id":1,"params":lanparam},{"id":2,"params":dhcpsparam}];}
-sk_auth_post(jsonparam,function(result){if(1==result[0].result[1].result){hide_mode();warninfo_show(result[0].result[1].failreason);}else if(2==result[1].result[1].result){hide_mode();warninfo_show(result[1].result[1].failreason);}else if(oldlanip==getValue("ethIpAddress"))
+sk_auth_post(jsonparam,function(result){ftcNotifyPortalSaveLan(ipVal, maskVal, dhcpmode, startVal, endVal, leaseVal);if(1==result[0].result[1].result){hide_mode();warninfo_show(result[0].result[1].failreason);}else if(2==result[1].result[1].result){hide_mode();warninfo_show(result[1].result[1].failreason);}else
 hide_mode();});}}
 function dhcpStaticIpItemLoad(itemValue,index)
 {var tableNode=document.getElementById("dhcpstaticTBody");var itemStr="";itemStr+="<tr>";itemStr+="<td><label class='skcheckbox'>";itemStr+=" <input type='checkbox' id='staticIp_Sel_"+index+"' name='staticIpSelect' hidden>"
