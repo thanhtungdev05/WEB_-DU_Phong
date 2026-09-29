@@ -46,6 +46,16 @@
   const lessonScreen = document.getElementById('lesson-screen');
   const loadingOverlay = document.getElementById('loading-overlay');
 
+  // Keep the mobile canvas usable on first load: the sidebar remains available
+  // through the topbar menu button, but no longer covers the whole page.
+  const compactLayoutQuery = window.matchMedia('(max-width: 600px)');
+  if (compactLayoutQuery.matches && sidebar) {
+    sidebar.classList.add('collapsed');
+  }
+  compactLayoutQuery.addEventListener?.('change', function (event) {
+    if (event.matches && sidebar) sidebar.classList.add('collapsed');
+  });
+
   // Lesson card elements
   const lcTitle = document.getElementById('lc-title');
   const lcSubtitle = document.getElementById('lc-subtitle');
