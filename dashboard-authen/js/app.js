@@ -6874,8 +6874,11 @@ function renderClassMatrixReport() {
                     const cellClass = passRate === null
                         ? (cell.historicalPassCount > 0 ? 'report-cell-high' : 'report-cell-zero')
                         : (passRate >= 80 ? 'report-cell-high' : (passRate >= 50 ? 'report-cell-medium' : 'report-cell-low'));
-                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: ${cell.passCount}/${cell.attempts} lượt đạt${cell.historicalPassCount ? ` • ${cell.historicalPassCount} lượt đạt lịch sử` : ''}`;
-                    return `<td class="report-metric-cell ${cellClass}" title="${escapeHTML(tooltip)}"><strong>${cell.passCount}/${cell.attempts}</strong>${cell.historicalPassCount ? `<span>${cell.historicalPassCount} lịch sử</span>` : ''}</td>`;
+                    const tooltip = `${row.name} • ${cell.device} • ${cell.lab}: ${cell.passCount}/${cell.attempts} lượt đạt${passRate === null ? '' : ` • ${passRate}%`}${cell.historicalPassCount ? ` • ${cell.historicalPassCount} lượt đạt lịch sử` : ''}`;
+                    const rateDetail = passRate === null
+                        ? (cell.historicalPassCount ? `${cell.historicalPassCount} lịch sử` : '&nbsp;')
+                        : `${passRate}%${cell.historicalPassCount ? ` · ${cell.historicalPassCount} lịch sử` : ''}`;
+                    return `<td class="report-metric-cell ${cellClass}" title="${escapeHTML(tooltip)}"><strong>${cell.passCount}/${cell.attempts}</strong><span class="report-metric-rate" ${passRate === null && !cell.historicalPassCount ? 'aria-hidden="true"' : ''}>${rateDetail}</span></td>`;
                 }).join('')}
                 <td class="ktv-total-cell ${rateClass}">
                     <strong>${row.completed}/${row.assigned}</strong>
@@ -6902,6 +6905,7 @@ function renderClassMatrixReport() {
                 return `
                     <td class="report-metric-cell ${cellClass} ${col.isFirst ? 'group-start' : ''}" title="${escapeHTML(tooltip)}">
                         <strong>${stat.completed}/${stat.assigned}</strong>
+                        <span class="report-metric-rate" ${rate === null ? 'aria-hidden="true"' : ''}>${rate === null ? '&nbsp;' : `${rate}%`}</span>
                     </td>
                 `;
             }).join('')}

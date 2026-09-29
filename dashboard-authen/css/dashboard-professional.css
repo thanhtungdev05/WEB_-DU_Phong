@@ -2675,6 +2675,23 @@ body.report-export-open {
     color: #8392a8 !important;
 }
 
+#analytics .report-metric-cell > strong,
+#analytics .report-metric-cell > span,
+#classMatrix .report-metric-cell > strong,
+#classMatrix .report-metric-cell > span {
+    display: block !important;
+    width: 100%;
+    text-align: center;
+}
+
+#analytics .report-metric-cell > .report-metric-rate,
+#classMatrix .report-metric-cell > .report-metric-rate {
+    margin-top: 2px;
+    font-size: 8px;
+    font-weight: 720;
+    line-height: 1.1;
+}
+
 /* Desktop matrix density. This deliberately changes only matrix reports; using
    transform/zoom on the whole app would blur text and break sticky hit targets. */
 @media (min-width: 1280px) {

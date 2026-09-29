@@ -487,6 +487,12 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn('state.instructorSelectedDevices = getInstructorDeviceGroups(selectedClass)', reset_handler)
         self.assertIn('deviceFilterActive', self.javascript)
 
+    def test_class_matrix_percentage_stays_below_fraction(self):
+        self.assertIn('class="report-metric-rate"', self.javascript)
+        self.assertIn("`${passRate}%${cell.historicalPassCount", self.javascript)
+        self.assertIn('#classMatrix .report-metric-cell > strong', self.professional_css)
+        self.assertIn('#classMatrix .report-metric-cell > span', self.professional_css)
+
 
 if __name__ == "__main__":
     unittest.main()
