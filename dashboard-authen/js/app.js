@@ -24,6 +24,10 @@ let technicianSummaryRequest = null;
 let technicianDetailRequest = null;
 let technicianExportSessions = null;
 let technicianCatalogRequest = null;
+let technicianFilterCatalog = [];
+let technicianFilterCatalogRequest = null;
+const dashboardReportCache = new Map();
+const dashboardReportRequests = new Map();
 
 const DASHBOARD_SESSION_HEARTBEAT_INTERVAL_MS = 20 * 60 * 1000;
 const SESSION_HEARTBEAT_LAST_SUCCESS_KEY = 'ftc-session-heartbeat-last-success-v1';
@@ -151,6 +155,7 @@ const state = {
     dashboardDataLoaded: false,
     dashboardReportStatus: 'loading',
     technicianCatalogLoaded: false,
+    technicianFilterCatalogLoaded: false,
     lastSuccessfulRefreshAt: null,
     sessionHistoryDays: null,
     sessionHistoryFrom: '',
@@ -475,7 +480,7 @@ function sortRows(rows, sortState) {
 }
 
 function renderSortMarks() {
-    document.querySelectorAll('.sort-button').forEach(button => {
+    document.querySelectorAll('.sort-button[data-table="realtime"], .sort-button[data-table="sessions"]').forEach(button => {
         const table = button.dataset.table;
         const header = button.closest('th');
         if (table === 'realtime') {
@@ -1282,13 +1287,17 @@ function renderLearnerDetail(rows) {
     if (!state.detailDevicesTouched) {
         state.detailSelectedDevices = new Set(ktvDevices);
     }
-    populatePopoverOptions('detailDeviceOptions', ktvDevices, state.detailSelectedDevices, () => { state.detailDevicesTouched = true; }, state.detailSearchDevice);
+    populatePopoverOptions('detailDeviceOptions', ktvDevices, state.detailSelectedDevices, () => {
+        state.detailDevicesTouched = filterSelectionDiffersFromUniverse(state.detailSelectedDevices, ktvDevices);
+    }, state.detailSearchDevice);
 
     const ktvLabs = [...new Set(allLearnerRows.map(item => item.lab))].sort((a, b) => a.localeCompare(b, 'vi'));
     if (!state.detailLabsTouched) {
         state.detailSelectedLabs = new Set(ktvLabs);
     }
-    populatePopoverOptions('detailLabOptions', ktvLabs, state.detailSelectedLabs, () => { state.detailLabsTouched = true; }, state.detailSearchLab);
+    populatePopoverOptions('detailLabOptions', ktvLabs, state.detailSelectedLabs, () => {
+        state.detailLabsTouched = filterSelectionDiffersFromUniverse(state.detailSelectedLabs, ktvLabs);
+    }, state.detailSearchLab);
 
     let filteredHistory = [...allLearnerRows];
     filteredHistory = filteredHistory.filter(item => state.detailSelectedModes.has(item.mode || 'Thực hành'));
@@ -2758,6 +2767,9 @@ function rebuildLearnerNameMap() {
     technicianCatalog.forEach(item => {
         if (item.email) learnerNameMap.set(item.email, item.displayName || item.email);
     });
+    technicianFilterCatalog.forEach(item => {
+        if (item.email && !learnerNameMap.has(item.email)) learnerNameMap.set(item.email, item.displayName || item.email);
+    });
     sessions.forEach(item => {
         if (!item.learner || learnerNameMap.has(item.learner)) return;
         learnerNameMap.set(item.learner, item.technicianName || item.learner);
@@ -2949,10 +2961,19 @@ function dashboardViewNeedsTechnicianCatalog(viewName = activeDashboardView) {
 }
 
 async function fetchDashboardReport(query = dashboardReportQuery()) {
-    const response = await fetch(`${API_BASE_URL}/dashboard/report?${query}`);
-    if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
-    const payload = await response.json();
-    return payload.data || null;
+    const key = query.toString();
+    if (dashboardReportCache.has(key)) return dashboardReportCache.get(key);
+    if (dashboardReportRequests.has(key)) return dashboardReportRequests.get(key);
+    const request = (async () => {
+        const response = await fetch(`${API_BASE_URL}/dashboard/report?${query}`);
+        if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
+        const payload = await response.json();
+        const report = payload.data || null;
+        dashboardReportCache.set(key, report);
+        return report;
+    })().finally(() => dashboardReportRequests.delete(key));
+    dashboardReportRequests.set(key, request);
+    return request;
 }
 
 async function fetchDashboardVersion() {
@@ -2985,6 +3006,65 @@ async function fetchDashboardCatalog({ includeTechnicians = false } = {}) {
     return data;
 }
 
+async function fetchDashboardTechnicianFilterCatalog() {
+    const cacheKey = 'ftc-dashboard-technician-filter-catalog-v1';
+    const maxAgeMs = 6 * 60 * 60 * 1000;
+    try {
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+        const versionMatches = !lastDashboardVersion || cached?.version === lastDashboardVersion;
+        if (cached?.savedAt
+            && versionMatches
+            && Date.now() - cached.savedAt < maxAgeMs
+            && Array.isArray(cached.data)) {
+            return cached.data;
+        }
+    } catch (_error) {
+        // HTTP caching remains available when localStorage is disabled.
+    }
+    const versionQuery = lastDashboardVersion
+        ? `?v=${encodeURIComponent(lastDashboardVersion)}`
+        : '';
+    const response = await fetch(
+        `${API_BASE_URL}/dashboard/technician-filter-options${versionQuery}`,
+        { cache: 'force-cache' }
+    );
+    if (!response.ok) throw new Error(`API danh mục lọc KTV trả về HTTP ${response.status}`);
+    const data = (await response.json()).data?.items || [];
+    try {
+        localStorage.setItem(cacheKey, JSON.stringify({
+            savedAt: Date.now(),
+            version: lastDashboardVersion,
+            data
+        }));
+    } catch (_error) {
+        // Filter loading must not fail because browser storage is unavailable.
+    }
+    return data;
+}
+
+async function ensureDashboardTechnicianFilterCatalogLoaded() {
+    if (state.technicianFilterCatalogLoaded) return technicianFilterCatalog;
+    if (technicianFilterCatalogRequest) return technicianFilterCatalogRequest;
+    technicianFilterCatalogRequest = (async () => {
+        const items = await fetchDashboardTechnicianFilterCatalog();
+        technicianFilterCatalog = items
+            .map(item => ({
+                email: String(item.email || '').trim().toLowerCase(),
+                displayName: String(item.display_name || item.email || '').trim()
+            }))
+            .filter(item => item.email);
+        state.technicianFilterCatalogLoaded = true;
+        technicianFilterCatalog.forEach(item => learnerNameMap.set(item.email, item.displayName || item.email));
+        const allIdentities = getLearnerFilterIdentities();
+        if (!state.learnerKtvsTouched) state.learnerSelectedKtvs = new Set(allIdentities);
+        if (!state.learnerEmailsTouched) state.learnerSelectedEmails = new Set(allIdentities);
+        refreshFilterOptionLists();
+        renderAll();
+        return technicianFilterCatalog;
+    })().finally(() => { technicianFilterCatalogRequest = null; });
+    return technicianFilterCatalogRequest;
+}
+
 async function ensureDashboardTechnicianCatalogLoaded() {
     if (state.technicianCatalogLoaded) return technicianCatalog;
     if (technicianCatalogRequest) return technicianCatalogRequest;
@@ -2998,6 +3078,9 @@ async function ensureDashboardTechnicianCatalogLoaded() {
         state.technicianCatalogLoaded = true;
         rebuildTechnicianIndex();
         rebuildLearnerNameMap();
+        const allIdentities = getLearnerFilterIdentities();
+        if (!state.learnerKtvsTouched) state.learnerSelectedKtvs = new Set(allIdentities);
+        if (!state.learnerEmailsTouched) state.learnerSelectedEmails = new Set(allIdentities);
         refreshFilterOptionLists();
         renderAll();
         return technicianCatalog;
@@ -3304,10 +3387,7 @@ async function fetchDashboardData(versionHint = '') {
     allParams.set('include_sessions', sessionsRequested ? '1' : '0');
     const reportRequested = dashboardViewNeedsReport();
     const reportRequest = reportRequested
-        ? fetch(`${API_BASE_URL}/dashboard/report?${dashboardReportQuery()}`).then(async response => {
-            if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
-            return (await response.json()).data || null;
-        })
+        ? fetchDashboardReport()
         : Promise.resolve(undefined);
     const versionRequest = versionHint
         ? Promise.resolve(versionHint)
@@ -3479,7 +3559,11 @@ function getCanonicalLabList() {
 
 function getLearnerFilterIdentities() {
     const source = activeDashboardView === 'technicians'
-        ? technicianSummaries.map(item => item.learner)
+        ? (state.technicianFilterCatalogLoaded
+            ? technicianFilterCatalog.map(item => item.email)
+            : state.technicianCatalogLoaded
+            ? technicianCatalog.filter(item => !item.isTerminated).map(item => item.email)
+            : technicianSummaries.map(item => item.learner))
         : sessions.map(item => item.learner);
     return [...new Set(source.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
 }
@@ -3500,6 +3584,12 @@ function mergeUntouchedFilterSets(allKtvs, allDevices, allLabs, allRegions) {
     if (!state.learnerLabsTouched) state.learnerSelectedLabs = new Set(allLabs);
     if (!state.realtimeDevicesTouched) state.realtimeSelectedDevices = new Set(allDevices);
     if (!state.realtimeLabsTouched) state.realtimeSelectedLabs = new Set(allLabs);
+}
+
+function filterSelectionDiffersFromUniverse(selectedSet, values) {
+    if (!(selectedSet instanceof Set)) return false;
+    const universe = [...new Set((values || []).filter(Boolean))];
+    return selectedSet.size !== universe.length || universe.some(value => !selectedSet.has(value));
 }
 
 function mergeDefaultClassLearners() {
@@ -3526,14 +3616,30 @@ function refreshFilterOptionLists() {
         universes.allLabs.splice(0, universes.allLabs.length, ...allLabs);
         universes.allRegions.splice(0, universes.allRegions.length, ...allRegions);
     }
-    populatePopoverOptions('realtimeKtvOptions', allKtvs, state.realtimeSelectedKtvs, () => { state.realtimeKtvsTouched = true; }, state.realtimeSearchKtv, getLearnerName);
-    populatePopoverOptions('realtimeDeviceOptions', allDevices, state.realtimeSelectedDevices, () => { state.realtimeDevicesTouched = true; }, state.realtimeSearchDevice);
-    populatePopoverOptions('realtimeLabOptions', allLabs, state.realtimeSelectedLabs, () => { state.realtimeLabsTouched = true; }, state.realtimeSearchLab);
-    populatePopoverOptions('learnerKtvOptions', allKtvs, state.learnerSelectedKtvs, () => { state.learnerKtvsTouched = true; }, state.learnerSearchKtv, getLearnerName);
-    populatePopoverOptions('learnerEmailOptions', allKtvs, state.learnerSelectedEmails, () => { state.learnerEmailsTouched = true; });
-    populatePopoverOptions('learnerRegionOptions', allRegions, state.learnerSelectedRegions, () => { state.learnerRegionsTouched = true; });
-    populatePopoverOptions('learnerDeviceOptions', allDevices, state.learnerSelectedDevices, () => { state.learnerDevicesTouched = true; });
-    populatePopoverOptions('learnerLabOptions', allLabs, state.learnerSelectedLabs, () => { state.learnerLabsTouched = true; });
+    populatePopoverOptions('realtimeKtvOptions', allKtvs, state.realtimeSelectedKtvs, () => {
+        state.realtimeKtvsTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedKtvs, allKtvs);
+    }, state.realtimeSearchKtv, getLearnerName);
+    populatePopoverOptions('realtimeDeviceOptions', allDevices, state.realtimeSelectedDevices, () => {
+        state.realtimeDevicesTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedDevices, allDevices);
+    }, state.realtimeSearchDevice);
+    populatePopoverOptions('realtimeLabOptions', allLabs, state.realtimeSelectedLabs, () => {
+        state.realtimeLabsTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedLabs, allLabs);
+    }, state.realtimeSearchLab);
+    populatePopoverOptions('learnerKtvOptions', allKtvs, state.learnerSelectedKtvs, () => {
+        state.learnerKtvsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedKtvs, allKtvs);
+    }, state.learnerSearchKtv, getLearnerName);
+    populatePopoverOptions('learnerEmailOptions', allKtvs, state.learnerSelectedEmails, () => {
+        state.learnerEmailsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedEmails, allKtvs);
+    });
+    populatePopoverOptions('learnerRegionOptions', allRegions, state.learnerSelectedRegions, () => {
+        state.learnerRegionsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedRegions, allRegions);
+    });
+    populatePopoverOptions('learnerDeviceOptions', allDevices, state.learnerSelectedDevices, () => {
+        state.learnerDevicesTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedDevices, allDevices);
+    });
+    populatePopoverOptions('learnerLabOptions', allLabs, state.learnerSelectedLabs, () => {
+        state.learnerLabsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedLabs, allLabs);
+    });
 }
 
 async function refreshDashboardData({ force = false, announce = false } = {}) {
@@ -3554,6 +3660,18 @@ async function refreshDashboardData({ force = false, announce = false } = {}) {
             setDashboardSyncState('ready');
             if (announce) showToast('Dữ liệu dashboard đã là phiên bản mới nhất.', 'success');
             return false;
+        }
+        if (force || (version !== '' && version !== lastDashboardVersion)) {
+            dashboardReportCache.clear();
+        }
+        if (version !== '' && version !== lastDashboardVersion) {
+            technicianFilterCatalog = [];
+            state.technicianFilterCatalogLoaded = false;
+            try {
+                localStorage.removeItem('ftc-dashboard-technician-filter-catalog-v1');
+            } catch (_error) {
+                // In-memory invalidation is sufficient when browser storage is unavailable.
+            }
         }
         const data = await fetchDashboardData(version);
         const previousReportStatus = state.dashboardReportStatus;
@@ -4031,8 +4149,8 @@ function enhanceHeaderFilterPopovers(root = document) {
             state.realtimePage = 1;
             state.learnerTablePage = 1;
             state.learnerDetailPage = 1;
-            if (callback) callback();
-            renderAll();
+            const callbackHandledRender = callback ? callback() === true : false;
+            if (!callbackHandledRender) renderAll();
         });
         footer.appendChild(applyButton);
         dropdown.addEventListener('keydown', event => {
@@ -4146,10 +4264,14 @@ function initPopovers() {
         state.realtimeSelectedDevices = new Set(allDevices);
     }
     // 1. Realtime KTV Popover
-    populatePopoverOptions('realtimeKtvOptions', allKtvs, state.realtimeSelectedKtvs, () => { state.realtimeKtvsTouched = true; }, state.realtimeSearchKtv, getLearnerName);
+    populatePopoverOptions('realtimeKtvOptions', allKtvs, state.realtimeSelectedKtvs, () => {
+        state.realtimeKtvsTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedKtvs, allKtvs);
+    }, state.realtimeSearchKtv, getLearnerName);
     document.getElementById('realtimeKtvSearch')?.addEventListener('input', (e) => {
         state.realtimeSearchKtv = e.target.value;
-        populatePopoverOptions('realtimeKtvOptions', allKtvs, state.realtimeSelectedKtvs, () => { state.realtimeKtvsTouched = true; }, state.realtimeSearchKtv, getLearnerName);
+        populatePopoverOptions('realtimeKtvOptions', allKtvs, state.realtimeSelectedKtvs, () => {
+            state.realtimeKtvsTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedKtvs, allKtvs);
+        }, state.realtimeSearchKtv, getLearnerName);
     });
     document.getElementById('realtimeKtvClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -4158,7 +4280,9 @@ function initPopovers() {
         state.realtimeSearchKtv = '';
         const searchInput = document.getElementById('realtimeKtvSearch');
         if (searchInput) searchInput.value = '';
-        populatePopoverOptions('realtimeKtvOptions', allKtvs, state.realtimeSelectedKtvs, () => { state.realtimeKtvsTouched = true; }, undefined, getLearnerName);
+        populatePopoverOptions('realtimeKtvOptions', allKtvs, state.realtimeSelectedKtvs, () => {
+            state.realtimeKtvsTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedKtvs, allKtvs);
+        }, undefined, getLearnerName);
         renderAll();
     });
 
@@ -4182,10 +4306,14 @@ function initPopovers() {
     });
 
     // 3. Realtime Device Popover
-    populatePopoverOptions('realtimeDeviceOptions', allDevices, state.realtimeSelectedDevices, () => { state.realtimeDevicesTouched = true; }, state.realtimeSearchDevice);
+    populatePopoverOptions('realtimeDeviceOptions', allDevices, state.realtimeSelectedDevices, () => {
+        state.realtimeDevicesTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedDevices, allDevices);
+    }, state.realtimeSearchDevice);
     document.getElementById('realtimeDeviceSearch')?.addEventListener('input', (e) => {
         state.realtimeSearchDevice = e.target.value;
-        populatePopoverOptions('realtimeDeviceOptions', allDevices, state.realtimeSelectedDevices, () => { state.realtimeDevicesTouched = true; }, state.realtimeSearchDevice);
+        populatePopoverOptions('realtimeDeviceOptions', allDevices, state.realtimeSelectedDevices, () => {
+            state.realtimeDevicesTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedDevices, allDevices);
+        }, state.realtimeSearchDevice);
     });
     document.getElementById('realtimeDeviceClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -4194,12 +4322,16 @@ function initPopovers() {
         state.realtimeSearchDevice = '';
         const searchInput = document.getElementById('realtimeDeviceSearch');
         if (searchInput) searchInput.value = '';
-        populatePopoverOptions('realtimeDeviceOptions', allDevices, state.realtimeSelectedDevices, () => { state.realtimeDevicesTouched = true; });
+        populatePopoverOptions('realtimeDeviceOptions', allDevices, state.realtimeSelectedDevices, () => {
+            state.realtimeDevicesTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedDevices, allDevices);
+        });
         renderAll();
     });
 
     // 4. Realtime Lab Popover
-    populatePopoverOptions('realtimeLabOptions', allLabs, state.realtimeSelectedLabs, () => { state.realtimeLabsTouched = true; }, state.realtimeSearchLab);
+    populatePopoverOptions('realtimeLabOptions', allLabs, state.realtimeSelectedLabs, () => {
+        state.realtimeLabsTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedLabs, allLabs);
+    }, state.realtimeSearchLab);
     document.getElementById('realtimeLabClear')?.addEventListener('click', (e) => {
         e.stopPropagation();
         state.realtimeSelectedLabs = new Set(allLabs);
@@ -4207,7 +4339,9 @@ function initPopovers() {
         state.realtimeSearchLab = '';
         const searchInput = document.querySelector('#realtimeLabDropdown .header-filter-search');
         if (searchInput) searchInput.value = '';
-        populatePopoverOptions('realtimeLabOptions', allLabs, state.realtimeSelectedLabs, () => { state.realtimeLabsTouched = true; });
+        populatePopoverOptions('realtimeLabOptions', allLabs, state.realtimeSelectedLabs, () => {
+            state.realtimeLabsTouched = filterSelectionDiffersFromUniverse(state.realtimeSelectedLabs, allLabs);
+        });
         renderAll();
     });
 
@@ -4232,24 +4366,44 @@ function initPopovers() {
 
     // 5. Learner table header filters
     populatePopoverOptions('learnerKtvOptions', allKtvs, state.learnerSelectedKtvs, () => {
-        state.learnerKtvsTouched = true;
+        state.learnerKtvsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedKtvs, allKtvs);
         updatePopoverTriggerLabels();
     }, state.learnerSearchKtv, getLearnerName);
     populatePopoverOptions('learnerEmailOptions', allKtvs, state.learnerSelectedEmails, () => {
-        state.learnerEmailsTouched = true;
+        state.learnerEmailsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedEmails, allKtvs);
         updatePopoverTriggerLabels();
     });
     populatePopoverOptions('learnerRegionOptions', allRegions, state.learnerSelectedRegions, () => {
-        state.learnerRegionsTouched = true;
+        state.learnerRegionsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedRegions, allRegions);
         updatePopoverTriggerLabels();
     });
     populatePopoverOptions('learnerDeviceOptions', allDevices, state.learnerSelectedDevices, () => {
-        state.learnerDevicesTouched = true;
+        state.learnerDevicesTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedDevices, allDevices);
         updatePopoverTriggerLabels();
     });
     populatePopoverOptions('learnerLabOptions', allLabs, state.learnerSelectedLabs, () => {
-        state.learnerLabsTouched = true;
+        state.learnerLabsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedLabs, allLabs);
         updatePopoverTriggerLabels();
+    });
+    ['learnerKtvPopoverWrapper', 'learnerEmailPopoverWrapper'].forEach(wrapperId => {
+        document.querySelector(`#${wrapperId} .popover-trigger-btn`)?.addEventListener('click', async event => {
+            if (activeDashboardView !== 'technicians'
+                || state.technicianFilterCatalogLoaded) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            const trigger = event.currentTarget;
+            trigger.disabled = true;
+            try {
+                await ensureDashboardTechnicianFilterCatalogLoaded();
+                trigger.disabled = false;
+                trigger.click();
+            } catch (error) {
+                console.warn('Không tải được danh mục KTV cho bộ lọc.', error);
+                showToast('Chưa thể tải đầy đủ danh sách KTV để lọc.', 'error');
+            } finally {
+                trigger.disabled = false;
+            }
+        }, { capture: true });
     });
     document.getElementById('learnerKtvSearch')?.addEventListener('input', (e) => {
         state.learnerSearchKtv = e.target.value;
@@ -4261,11 +4415,21 @@ function initPopovers() {
         }, 250);
     });
     const repopulateLearnerFilters = () => {
-        populatePopoverOptions('learnerKtvOptions', allKtvs, state.learnerSelectedKtvs, () => { state.learnerKtvsTouched = true; }, undefined, getLearnerName);
-        populatePopoverOptions('learnerEmailOptions', allKtvs, state.learnerSelectedEmails, () => { state.learnerEmailsTouched = true; });
-        populatePopoverOptions('learnerRegionOptions', allRegions, state.learnerSelectedRegions, () => { state.learnerRegionsTouched = true; });
-        populatePopoverOptions('learnerDeviceOptions', allDevices, state.learnerSelectedDevices, () => { state.learnerDevicesTouched = true; });
-        populatePopoverOptions('learnerLabOptions', allLabs, state.learnerSelectedLabs, () => { state.learnerLabsTouched = true; });
+        populatePopoverOptions('learnerKtvOptions', allKtvs, state.learnerSelectedKtvs, () => {
+            state.learnerKtvsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedKtvs, allKtvs);
+        }, undefined, getLearnerName);
+        populatePopoverOptions('learnerEmailOptions', allKtvs, state.learnerSelectedEmails, () => {
+            state.learnerEmailsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedEmails, allKtvs);
+        });
+        populatePopoverOptions('learnerRegionOptions', allRegions, state.learnerSelectedRegions, () => {
+            state.learnerRegionsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedRegions, allRegions);
+        });
+        populatePopoverOptions('learnerDeviceOptions', allDevices, state.learnerSelectedDevices, () => {
+            state.learnerDevicesTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedDevices, allDevices);
+        });
+        populatePopoverOptions('learnerLabOptions', allLabs, state.learnerSelectedLabs, () => {
+            state.learnerLabsTouched = filterSelectionDiffersFromUniverse(state.learnerSelectedLabs, allLabs);
+        });
     };
     const clearHeaderSearch = (wrapperId) => {
         const searchInput = document.querySelector(`#${wrapperId} .header-filter-search`)
@@ -5563,7 +5727,13 @@ function renderInstructorClassProgress() {
         isFirst: labIndex === 0
     })));
 
-    const filtersActive = Boolean(state.instructorSearchKtv.trim()) || state.instructorCompletionFilter !== 'all';
+    const deviceFilterActive = filterSelectionDiffersFromUniverse(
+        new Set(state.instructorSelectedDevices),
+        availableDevices
+    );
+    const filtersActive = Boolean(state.instructorSearchKtv.trim())
+        || state.instructorCompletionFilter !== 'all'
+        || deviceFilterActive;
     if (filterReset) filterReset.hidden = !filtersActive;
     if (filterMeta) {
         filterMeta.textContent = filtersActive
@@ -5749,6 +5919,8 @@ function initInstructorWorkspace() {
     document.getElementById('instructorProgressFilterReset')?.addEventListener('click', () => {
         state.instructorSearchKtv = '';
         state.instructorCompletionFilter = 'all';
+        const selectedClass = state.instructorClasses.find(item => item.id === state.instructorActiveClassId);
+        state.instructorSelectedDevices = getInstructorDeviceGroups(selectedClass).map(item => item.device);
         renderInstructorClassProgress();
         document.getElementById('instructorKtvSearch')?.focus();
     });
@@ -6261,10 +6433,28 @@ function renderClassOverview(data) {
     });
 }
 
+function snapshotClassHeaderFilterDraft(wrapper) {
+    const dropdown = wrapper?._floatingDropdown || wrapper?.querySelector('.popover-dropdown');
+    if (!dropdown) return;
+    wrapper._classFilterSnapshot = new Map(
+        [...dropdown.querySelectorAll('input[type="checkbox"]')]
+            .map(checkbox => [checkbox, checkbox.checked])
+    );
+}
+
+function restoreClassHeaderFilterDraft(wrapper) {
+    if (!wrapper?._classFilterSnapshot) return;
+    wrapper._classFilterSnapshot.forEach((checked, checkbox) => {
+        if (checkbox.isConnected) checkbox.checked = checked;
+    });
+    wrapper._classFilterSnapshot = null;
+}
+
 function closeClassHeaderPopovers(except = null) {
     document.querySelectorAll('#classMatrix .ktv-header-filter.open').forEach(wrapper => {
         if (wrapper === except) return;
         const dropdown = wrapper._floatingDropdown || wrapper.querySelector('.popover-dropdown');
+        restoreClassHeaderFilterDraft(wrapper);
         wrapper.classList.remove('open');
         wrapper.querySelector('[aria-expanded]')?.setAttribute('aria-expanded', 'false');
         dropdown?.classList.remove('open', 'class-header-filter-floating');
@@ -6304,6 +6494,7 @@ function toggleClassHeaderPopover(wrapper, trigger) {
     wrapper.classList.toggle('open', shouldOpen);
     trigger.setAttribute('aria-expanded', String(shouldOpen));
     if (shouldOpen) {
+        snapshotClassHeaderFilterDraft(wrapper);
         positionClassHeaderPopover(wrapper, trigger);
         const dropdown = wrapper._floatingDropdown;
         window.requestAnimationFrame(() => dropdown?.querySelector('input, [role="menuitem"]')?.focus({ preventScroll: true }));
@@ -6777,7 +6968,7 @@ function bindClassMatrixSortButtonClick(button) {
         state.classMatrixPersonnelSortDirection = state.classMatrixPersonnelSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
         state.classMatrixPersonnelSort = target;
-        state.classMatrixPersonnelSortDirection = target === 'name_asc' ? 'asc' : 'desc';
+        state.classMatrixPersonnelSortDirection = target === 'completion_rate_asc' ? 'desc' : 'asc';
     }
     renderClassMatrixReport();
 }
@@ -6922,7 +7113,12 @@ function updatePopoverTriggerLabels() {
 }
 
 function initSort() {
-    document.querySelectorAll('.sort-button').forEach(button => {
+    document.querySelectorAll([
+        '.sort-button[data-table="realtime"]',
+        '.sort-button[data-table="sessions"]',
+        '#detailTimeSort',
+        '#detailDurationSort'
+    ].join(', ')).forEach(button => {
         button.addEventListener('click', () => {
             if (button.id === 'realtimeTimeSort') {
                 state.realtimeTimeSortDir = state.realtimeTimeSortDir === 'asc' ? 'desc' : 'asc';
@@ -8344,20 +8540,26 @@ function populatePopoverOptions(containerId, values, selectedSet, onCheckChange,
             } else {
                 selectedSet.delete(e.target.value);
             }
-            if (typeof onCheckChange === 'function') {
-                if (suppressFilterRender) deferredFilterCallback = onCheckChange;
-                else onCheckChange();
-            }
-            if (!suppressFilterRender) {
+            const filtersTechnicianSummary = activeDashboardView === 'technicians'
+                && ['learnerKtvOptions', 'learnerEmailOptions', 'learnerRegionOptions', 'learnerDeviceOptions', 'learnerLabOptions'].includes(containerId);
+            const commitFilterChange = () => {
+                if (typeof onCheckChange === 'function') onCheckChange();
                 state.realtimePage = 1;
                 state.learnerTablePage = 1;
                 state.learnerDetailPage = 1;
-                if (activeDashboardView === 'technicians'
-                    && ['learnerKtvOptions', 'learnerEmailOptions', 'learnerRegionOptions', 'learnerDeviceOptions', 'learnerLabOptions'].includes(containerId)) {
+                if (filtersTechnicianSummary) {
                     void reloadTechnicianSummaries({ resetPage: true });
                 } else {
                     renderAll();
                 }
+                return true;
+            };
+            if (suppressFilterRender) {
+                // Header filters stage many checkbox changes and commit them once.
+                // Preserve the server reload that would normally happen per change.
+                deferredFilterCallback = commitFilterChange;
+            } else {
+                commitFilterChange();
             }
         });
     });
@@ -8483,7 +8685,8 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
         if (!state.rosterLoaded) loadRosterList();
     } else if (activeDashboardView === 'classes') {
         setDataSourceLabel('Lớp học và bài giao từ cơ sở dữ liệu');
-        loadTrainingClasses();
+        if (state.classLoaded) renderTrainingClasses();
+        else loadTrainingClasses();
     } else if (state.isAdmin) {
         setDataSourceLabel(state.dashboardDataLoaded ? 'Dữ liệu vận hành đã đồng bộ' : 'Đang đồng bộ dữ liệu vận hành');
         if (!state.dashboardDataLoaded) {
@@ -8658,7 +8861,7 @@ function updateManagementSortIndicators(selector, activeKey, direction, dataKey)
         button.closest('th')?.setAttribute('aria-sort', isSorted
             ? (direction === 'asc' ? 'ascending' : 'descending')
             : 'none');
-        if (mark) mark.textContent = isSorted ? (direction === 'asc' ? '↑' : '↓') : '';
+        if (mark) mark.textContent = isSorted ? (direction === 'asc' ? '↑' : '↓') : '↕';
     });
 }
 
@@ -9476,7 +9679,10 @@ function activateClassTab(tabName) {
     Object.entries(panels).forEach(([name, panel]) => {
         if (panel) panel.hidden = name !== tabName;
     });
-    if (tabName === 'list') loadTrainingClasses();
+    if (tabName === 'list') {
+        if (state.classLoaded) renderTrainingClasses();
+        else loadTrainingClasses();
+    }
     if (tabName === 'create') loadTrainingClassCatalog();
 }
 

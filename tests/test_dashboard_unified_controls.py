@@ -450,6 +450,43 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertIn("background: transparent", self.professional_css)
         self.assertIn("box-shadow: none", self.professional_css)
 
+    def test_shared_sort_listener_is_scoped_to_its_owned_tables(self):
+        init_sort = self.javascript[
+            self.javascript.index('function initSort()'):
+            self.javascript.index('function populateCalendarSelects()', self.javascript.index('function initSort()'))
+        ]
+        self.assertNotIn("querySelectorAll('.sort-button')", init_sort)
+        self.assertIn('.sort-button[data-table="realtime"]', init_sort)
+        self.assertIn('.sort-button[data-table="sessions"]', init_sort)
+        self.assertIn("'#detailTimeSort'", init_sort)
+        self.assertIn("'#detailDurationSort'", init_sort)
+
+    def test_all_sortable_headers_use_consistent_direction_marks(self):
+        self.assertIn("isSorted ? (direction === 'asc' ? '↑' : '↓') : '↕'", self.javascript)
+        self.assertNotIn('data-matrix-sort="name_asc"', self.javascript)
+        self.assertNotIn('data-matrix-sort="code_asc"', self.javascript)
+        self.assertIn('<th class="ktv-code-head" scope="col" rowspan="2">Mã NV</th>', self.javascript)
+        self.assertIn('<span class="ktv-header-label">Kỹ thuật viên</span>', self.javascript)
+        self.assertIn(
+            "state.classMatrixPersonnelSortDirection = target === 'completion_rate_asc' ? 'desc' : 'asc';",
+            self.javascript,
+        )
+
+    def test_class_progress_filter_discards_unapplied_draft(self):
+        self.assertIn('function snapshotClassHeaderFilterDraft(wrapper)', self.javascript)
+        self.assertIn('function restoreClassHeaderFilterDraft(wrapper)', self.javascript)
+        self.assertIn('restoreClassHeaderFilterDraft(wrapper);', self.javascript)
+        self.assertIn('snapshotClassHeaderFilterDraft(wrapper);', self.javascript)
+
+    def test_instructor_reset_also_restores_every_device(self):
+        reset_start = self.javascript.index(
+            "document.getElementById('instructorProgressFilterReset')?.addEventListener"
+        )
+        reset_end = self.javascript.index("document.getElementById('instructorClassDelete')", reset_start)
+        reset_handler = self.javascript[reset_start:reset_end]
+        self.assertIn('state.instructorSelectedDevices = getInstructorDeviceGroups(selectedClass)', reset_handler)
+        self.assertIn('deviceFilterActive', self.javascript)
+
 
 if __name__ == "__main__":
     unittest.main()

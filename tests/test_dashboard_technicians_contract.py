@@ -58,6 +58,43 @@ class DashboardTechniciansContractTests(unittest.TestCase):
         )
         self.assertIn("activeDashboardView === 'technicians'", self.dashboard_js)
 
+    def test_staged_technician_filters_commit_one_server_reload(self):
+        self.assertIn('function filterSelectionDiffersFromUniverse(', self.dashboard_js)
+        self.assertIn('const commitFilterChange = () => {', self.dashboard_js)
+        self.assertIn('deferredFilterCallback = commitFilterChange;', self.dashboard_js)
+        self.assertIn('void reloadTechnicianSummaries({ resetPage: true });', self.dashboard_js)
+
+    def test_selecting_every_filter_value_restores_unfiltered_state(self):
+        for state_key in (
+            'learnerKtvsTouched',
+            'learnerEmailsTouched',
+            'learnerRegionsTouched',
+            'learnerDevicesTouched',
+            'learnerLabsTouched',
+        ):
+            self.assertRegex(
+                self.dashboard_js,
+                rf'state\.{state_key} = filterSelectionDiffersFromUniverse\(',
+            )
+
+    def test_identity_filters_lazy_load_the_complete_cached_catalog(self):
+        self.assertIn("['learnerKtvPopoverWrapper', 'learnerEmailPopoverWrapper']", self.dashboard_js)
+        self.assertIn('await ensureDashboardTechnicianFilterCatalogLoaded();', self.dashboard_js)
+        self.assertIn('/dashboard/technician-filter-options', self.dashboard_js)
+        self.assertIn("$action === 'technician-filter-options'", self.api)
+        self.assertIn("SELECT LOWER(email) AS email", self.api)
+        self.assertIn("COALESCE(NULLIF(display_name, ''), LOWER(email)) AS display_name", self.api)
+        identity_source = self.dashboard_js[
+            self.dashboard_js.index('function getLearnerFilterIdentities()'):
+            self.dashboard_js.index('function getLearnerFilterRegions()')
+        ]
+        self.assertIn('state.technicianFilterCatalogLoaded', identity_source)
+        self.assertIn('technicianFilterCatalog.map(item => item.email)', identity_source)
+        self.assertIn('state.technicianCatalogLoaded', identity_source)
+        self.assertIn('technicianCatalog.filter(item => !item.isTerminated).map(item => item.email)', identity_source)
+        self.assertIn('if (!state.learnerKtvsTouched) state.learnerSelectedKtvs = new Set(allIdentities);', self.dashboard_js)
+        self.assertIn('if (!state.learnerEmailsTouched) state.learnerSelectedEmails = new Set(allIdentities);', self.dashboard_js)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -2743,6 +2743,21 @@ function handle_dashboard(array $segments, string $method): void
         ]], env_int('DASHBOARD_CATALOG_CACHE_SECONDS', 21600, 300, 86400));
     }
 
+    if ($action === 'technician-filter-options') {
+        $items = db()->query(
+            <<<'SQL'
+            SELECT LOWER(email) AS email,
+                   COALESCE(NULLIF(display_name, ''), LOWER(email)) AS display_name
+              FROM v_ktv_directory
+             WHERE is_terminated = FALSE
+               AND NULLIF(email, '') IS NOT NULL
+             ORDER BY display_name NULLS LAST, email
+            SQL
+        )->fetchAll();
+        respond_private_cache(['data' => ['items' => array_values($items)]],
+            env_int('DASHBOARD_CATALOG_CACHE_SECONDS', 21600, 300, 86400));
+    }
+
     if (!in_array($action, ['all', 'technicians', 'technician-sessions'], true)) {
         fail(404, 'not-found', 'Dashboard endpoint not found.');
     }

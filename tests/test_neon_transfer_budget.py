@@ -101,6 +101,21 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn('DASHBOARD_TECHNICIAN_PAGE_SIZE=25', self.example_env)
         self.assertIn('idx_timer_sessions_dashboard_time', self.technician_index_migration)
 
+    def test_filter_catalog_and_reports_avoid_repeat_large_transfers(self):
+        self.assertIn('/dashboard/technician-filter-options', self.dashboard)
+        self.assertIn('?v=${encodeURIComponent(lastDashboardVersion)}', self.dashboard)
+        self.assertIn("SELECT LOWER(email) AS email", self.api)
+        self.assertIn("const dashboardReportCache = new Map();", self.dashboard)
+        self.assertIn("const dashboardReportRequests = new Map();", self.dashboard)
+        self.assertIn("if (dashboardReportCache.has(key))", self.dashboard)
+        self.assertIn("dashboardReportCache.clear();", self.dashboard)
+
+    def test_class_list_reuses_loaded_data_until_explicit_refresh(self):
+        self.assertGreaterEqual(
+            self.dashboard.count('if (state.classLoaded) renderTrainingClasses();'),
+            2,
+        )
+
     def test_overview_region_charts_use_compact_database_aggregates(self):
         self.assertIn('function dashboard_report_monthly_regions', self.report)
         self.assertIn("'monthly_regions' => $monthlyRegions", self.report)
