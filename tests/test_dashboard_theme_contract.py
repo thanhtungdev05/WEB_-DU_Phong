@@ -64,6 +64,25 @@ class DashboardThemeContractTests(unittest.TestCase):
             r"\.app-main \.brand,\s*\.top-actions\s*\{\s*width: 100%;",
         )
 
+    def test_dark_report_surfaces_do_not_reuse_light_chart_or_header_colors(self):
+        self.assertIn(':root[data-theme="dark"] #analytics .detail-report-header', self.theme_css)
+        self.assertIn(':root[data-theme="dark"] #classMatrix .detail-report-header', self.theme_css)
+        self.assertIn(':root[data-theme="dark"] #overview .region-usage-chart-wrap', self.theme_css)
+        self.assertIn(':root[data-theme="dark"] .region-usage-grid-line', self.theme_css)
+        self.assertIn(':root[data-theme="dark"] .region-usage-point', self.theme_css)
+        self.assertIn(':root[data-theme="dark"] .class-overview-row.is-selected th', self.theme_css)
+
+    def test_matrix_views_have_scoped_desktop_compact_density(self):
+        self.assertIn('@media (min-width: 1280px)', self.theme_css)
+        self.assertIn('body[data-dashboard-view="analytics"] .dashboard-master-container', self.theme_css)
+        self.assertIn('body[data-dashboard-view="class_matrix"] .dashboard-master-container', self.theme_css)
+        self.assertIn('--report-column-width: 70px', self.theme_css)
+        self.assertIn('--ktv-col-width: 70px', self.theme_css)
+        self.assertEqual(
+            self.javascript.count('document.body.dataset.dashboardView = activeDashboardView;'),
+            2,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

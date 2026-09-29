@@ -8631,6 +8631,7 @@ function switchDashboardView(viewName, { updateHistory = true, focusHeading = tr
     if (!Object.hasOwn(DASHBOARD_VIEWS, viewName)) return;
     document.querySelectorAll('.header-filter-popover.open').forEach(wrapper => closeHeaderFilterPopover(wrapper));
     activeDashboardView = viewName;
+    document.body.dataset.dashboardView = activeDashboardView;
     if (updateHistory) {
         const url = new URL(window.location.href);
         if (url.searchParams.get('view') !== viewName) {
@@ -8746,6 +8747,7 @@ function initDashboardViewRouting() {
     let requestedView = new URLSearchParams(window.location.search).get('view') || 'overview';
     if (requestedView === 'instructors') requestedView = 'class_matrix';
     activeDashboardView = Object.hasOwn(DASHBOARD_VIEWS, requestedView) ? requestedView : 'overview';
+    document.body.dataset.dashboardView = activeDashboardView;
 
     const masterContainer = document.querySelector('.dashboard-master-container');
     const masterViews = new Set(['overview', 'analytics', 'class_matrix']);

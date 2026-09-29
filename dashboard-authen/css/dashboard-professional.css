@@ -2126,8 +2126,8 @@ body.report-export-open {
     --ui-surface-soft: #18253d;
     --ui-text: #f1f5f9;
     --ui-muted: #94a3b8;
-    --ui-border: #24334a;
-    --ui-border-strong: #334664;
+    --ui-border: #2b3d58;
+    --ui-border-strong: #405575;
     --ui-primary: #5c82ff;
     --ui-primary-dark: #4369e8;
     --ui-primary-soft: #1c2b4e;
@@ -2529,6 +2529,252 @@ body.report-export-open {
     color: var(--ui-text) !important;
     background: #1d2d49 !important;
     border-color: var(--ui-border-strong) !important;
+}
+
+/* Dark report surfaces: remove the remaining light-theme islands and preserve
+   hierarchy without turning the dashboard into a flat navy canvas. */
+:root[data-theme="dark"] #analytics .detail-report-header,
+:root[data-theme="dark"] #classMatrix .detail-report-header {
+    color: #f8fafc !important;
+    background:
+        radial-gradient(circle at 84% 10%, rgba(96, 165, 250, .16), transparent 29%),
+        linear-gradient(120deg, #2d1854 0%, #20366f 54%, #16435a 100%) !important;
+    border-color: #46517a !important;
+}
+
+:root[data-theme="dark"] #analytics .detail-report-header p,
+:root[data-theme="dark"] #classMatrix .detail-report-header p {
+    color: #c5d1e3 !important;
+}
+
+:root[data-theme="dark"] .detail-report-period {
+    color: var(--ui-text) !important;
+    background: rgba(12, 22, 40, .78) !important;
+    border-color: #496080 !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .24) !important;
+}
+
+:root[data-theme="dark"] .detail-report-period span,
+:root[data-theme="dark"] .detail-report-period small {
+    color: #a8b6ca !important;
+}
+
+:root[data-theme="dark"] .detail-report-period strong {
+    color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .detail-report-quality-note {
+    color: #fcd98d !important;
+    background: #2b210d !important;
+    border-color: #73541a !important;
+}
+
+:root[data-theme="dark"] #overview .region-usage-card,
+:root[data-theme="dark"] #overview .region-race-card,
+:root[data-theme="dark"] #overview .region-usage-insights article,
+:root[data-theme="dark"] #overview .region-usage-chart-wrap {
+    color: var(--ui-text) !important;
+    background: #111b2f !important;
+    border-color: #30425f !important;
+}
+
+:root[data-theme="dark"] #overview .region-usage-insights article {
+    background: linear-gradient(135deg, #17243b, #132036) !important;
+}
+
+:root[data-theme="dark"] #overview .region-usage-insights strong {
+    color: #f1f5f9 !important;
+}
+
+:root[data-theme="dark"] #overview .region-usage-insights span,
+:root[data-theme="dark"] #overview .region-usage-insights small,
+:root[data-theme="dark"] .region-usage-axis-label,
+:root[data-theme="dark"] .region-usage-month-label,
+:root[data-theme="dark"] .region-usage-y-title {
+    color: #9fb0c7 !important;
+    fill: #9fb0c7 !important;
+}
+
+:root[data-theme="dark"] .region-usage-grid-line {
+    stroke: #2b3d58 !important;
+}
+
+:root[data-theme="dark"] .region-usage-point {
+    fill: #111b2f !important;
+}
+
+:root[data-theme="dark"] .class-overview-row.is-selected th,
+:root[data-theme="dark"] .class-overview-row.is-selected td,
+:root[data-theme="dark"] .class-overview-row.is-selected:hover th,
+:root[data-theme="dark"] .class-overview-row.is-selected:hover td {
+    background: #1b3153 !important;
+}
+
+:root[data-theme="dark"] .class-overview-table tbody th {
+    color: var(--ui-text) !important;
+    background: var(--ui-surface) !important;
+    border-color: var(--ui-border) !important;
+}
+
+:root[data-theme="dark"] .class-overview-link strong,
+:root[data-theme="dark"] .class-overview-number {
+    color: #e5edf8 !important;
+}
+
+:root[data-theme="dark"] .class-overview-link span,
+:root[data-theme="dark"] .class-overview-achieved span {
+    color: var(--ui-muted) !important;
+}
+
+:root[data-theme="dark"] .class-overview-row.is-selected .class-overview-link strong {
+    color: #93c5fd !important;
+}
+
+:root[data-theme="dark"] .class-overview-action {
+    color: #bfdbfe !important;
+    background: #17243b !important;
+    border-color: #3d5272 !important;
+}
+
+:root[data-theme="dark"] .class-overview-action:hover,
+:root[data-theme="dark"] .class-overview-row.is-selected .class-overview-action {
+    color: #dbeafe !important;
+    background: #24436d !important;
+    border-color: #5577a6 !important;
+}
+
+:root[data-theme="dark"] .class-overview-progress-track {
+    background: #2b3d58 !important;
+}
+
+:root[data-theme="dark"] .class-overview-completion:hover,
+:root[data-theme="dark"] .class-overview-completion:focus-visible {
+    background: #15382f !important;
+}
+
+:root[data-theme="dark"] #overview .region-race-rank {
+    color: #c2cede !important;
+    background: #263955 !important;
+}
+
+:root[data-theme="dark"] #overview .region-race-track {
+    background: #2b3d58 !important;
+}
+
+:root[data-theme="dark"] .report-device-group {
+    background: linear-gradient(135deg, #24446f, #31598c) !important;
+}
+
+:root[data-theme="dark"] .report-device-group.report-device-tone-1 { background: linear-gradient(135deg, #432f64, #5a417e) !important; }
+:root[data-theme="dark"] .report-device-group.report-device-tone-2 { background: linear-gradient(135deg, #194657, #246477) !important; }
+:root[data-theme="dark"] .report-device-group.report-device-tone-3 { background: linear-gradient(135deg, #293f61, #395a87) !important; }
+:root[data-theme="dark"] .report-device-group.report-device-tone-4 { background: linear-gradient(135deg, #49304f, #65436e) !important; }
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+    color: #8392a8 !important;
+}
+
+/* Desktop matrix density. This deliberately changes only matrix reports; using
+   transform/zoom on the whole app would blur text and break sticky hit targets. */
+@media (min-width: 1280px) {
+    body[data-dashboard-view="analytics"] .content,
+    body[data-dashboard-view="class_matrix"] .content {
+        padding: 14px 12px 20px;
+    }
+
+    body[data-dashboard-view="analytics"] .dashboard-master-container,
+    body[data-dashboard-view="class_matrix"] .dashboard-master-container {
+        max-width: none;
+        padding: 12px;
+    }
+
+    #analytics .detail-report-shell,
+    #classMatrix .detail-report-shell {
+        gap: 12px;
+    }
+
+    #analytics .detail-report-header,
+    #classMatrix .detail-report-header {
+        padding: 13px 16px;
+    }
+
+    #analytics .detail-report-summary {
+        margin-block: 10px;
+    }
+
+    #analytics .detail-report-stat {
+        min-height: 68px;
+        padding: 10px 12px;
+    }
+
+    #analytics .detail-report-table-header,
+    #classMatrix .detail-report-table-header {
+        padding: 10px 13px;
+    }
+
+    #analytics .detail-report-table {
+        --report-region-width: 154px;
+        --report-column-width: 70px;
+        --report-total-width: 72px;
+        --report-device-head-height: 34px;
+        --report-row-height: 32px;
+    }
+
+    #analytics .branch-matrix-table .report-region-head,
+    #analytics .branch-matrix-table .report-region-cell {
+        width: var(--report-region-width);
+        min-width: var(--report-region-width);
+    }
+
+    #analytics .detail-report-table .report-lab-head,
+    #analytics .detail-report-table .report-metric-cell {
+        width: var(--report-column-width);
+        min-width: var(--report-column-width);
+        font-size: 9px;
+    }
+
+    #analytics .report-region-toggle,
+    #analytics .report-region-label {
+        font-size: 10.5px;
+    }
+
+    #classMatrix .class-matrix-table {
+        --ktv-stt-width: 32px;
+        --ktv-code-width: 70px;
+        --ktv-info-width: 180px;
+        --ktv-col-width: 70px;
+        --ktv-total-width: 80px;
+        --ktv-rate-width: 58px;
+        --report-device-head-height: 34px;
+        --report-row-height: 36px;
+    }
+
+    #classMatrix .class-matrix-table .report-lab-head,
+    #classMatrix .class-matrix-table tbody .report-metric-cell,
+    #classMatrix .class-matrix-table tfoot .report-metric-cell {
+        width: var(--ktv-col-width) !important;
+        min-width: var(--ktv-col-width) !important;
+        max-width: var(--ktv-col-width) !important;
+    }
+
+    #classMatrix .class-matrix-table .report-lab-head {
+        font-size: 8.5px !important;
+    }
+
+    #classMatrix .ktv-info-name {
+        font-size: 11.5px;
+    }
+
+    #classMatrix .ktv-info-meta,
+    #classMatrix .class-matrix-table tbody .ktv-code-cell {
+        font-size: 9.5px;
+    }
+
+    #classMatrix .class-matrix-scroll,
+    #analytics .detail-report-scroll {
+        max-height: calc(100dvh - 238px);
+    }
 }
 
 :root[data-theme="dark"] .dashboard-loading {
