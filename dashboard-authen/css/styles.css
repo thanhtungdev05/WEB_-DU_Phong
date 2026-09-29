@@ -10368,6 +10368,12 @@ select:not(.searchable-select-source):focus-visible {
     background: var(--class-rate-fill);
 }
 
+/* Keep the empty fill element block-level after unified table cell rules are applied. */
+table.class-overview-table .class-overview-progress-track > span {
+    display: block;
+    max-width: none;
+}
+
 .class-overview-progress strong {
     color: var(--class-rate-text);
     font-size: 11.5px;

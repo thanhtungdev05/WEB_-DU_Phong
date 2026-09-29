@@ -287,6 +287,11 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         track_fill = self.css.split(".class-overview-progress-track span {", 1)[1].split("}", 1)[0]
         self.assertIn("background: var(--class-rate-fill)", track_fill)
         self.assertNotIn("gradient", track_fill)
+        table_fill_override = self.css.split(
+            "table.class-overview-table .class-overview-progress-track > span {", 1
+        )[1].split("}", 1)[0]
+        self.assertIn("display: block", table_fill_override)
+        self.assertIn("max-width: none", table_fill_override)
         self.assertIn("color: var(--class-rate-text)", self.css)
         for level in ("high", "medium", "low", "zero"):
             self.assertIn(f".class-overview-progress.is-{level}", self.css)
