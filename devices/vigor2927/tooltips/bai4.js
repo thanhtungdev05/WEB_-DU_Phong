@@ -39,7 +39,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai4'] = [
   },
   {
     selector: 'input[name="btnOK"], input[value="OK"]',
-    text: 'Bước 5: chọn OK',
+    text: 'Bước 6: chọn OK',
     position: 'top',
     page: 'sht'
   }

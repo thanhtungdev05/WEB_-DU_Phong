@@ -40,25 +40,25 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai6'] = [
      trong "mwangen1.htm" vì có số 1 chen giữa). */
   {
     selector: 'input[name="sBwWanDisName"]',
-    text: 'Bước 1: nhập ISP-1',
+    text: 'Bước 6: nhập ISP-1',
     position: 'right',
     page: 'mwangen.htm'
   },
   {
     selector: 'select[name="uilBwLBInRateUnit"]',
-    text: 'Bước 2: nhập 80 Mbps',
+    text: 'Bước 7: nhập 80 Mbps',
     position: 'right',
     page: 'mwangen.htm'
   },
   {
     selector: 'select[name="uilBwLBOutRateUnit"]',
-    text: 'Bước 3: nhập 80 Mbps',
+    text: 'Bước 8: nhập 80 Mbps',
     position: 'right',
     page: 'mwangen.htm'
   },
   {
     selector: 'input[name="submit"], input[value="OK"]',
-    text: 'Bước 4: chọn OK',
+    text: 'Bước 9: chọn OK',
     position: 'top',
     page: 'mwangen.htm'
   },
@@ -69,25 +69,25 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai6'] = [
      URL này), nên dùng "wan.cgi" làm chuỗi lọc là an toàn, không lẫn sang 2 trang kia. */
   {
     selector: 'input[name="sBwWanDisName"]',
-    text: 'Bước 1: nhập ISP-2',
+    text: 'Bước 10: nhập ISP-2',
     position: 'right',
     page: 'wan.cgi'
   },
   {
     selector: 'select[name="uilBwLBInRateUnit"]',
-    text: 'Bước 2: nhập 80 Mbps',
+    text: 'Bước 11: nhập 80 Mbps',
     position: 'right',
     page: 'wan.cgi'
   },
   {
     selector: 'select[name="uilBwLBOutRateUnit"]',
-    text: 'Bước 3: nhập 80 Mbps',
+    text: 'Bước 12: nhập 80 Mbps',
     position: 'right',
     page: 'wan.cgi'
   },
   {
     selector: 'input[name="submit"], input[value="OK"]',
-    text: 'Bước 4: chọn OK',
+    text: 'Bước 13: chọn OK',
     position: 'top',
     page: 'wan.cgi'
   }

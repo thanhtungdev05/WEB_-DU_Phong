@@ -12,14 +12,9 @@ var lessonData = {
   subtitle: 'Cấu hình mạng Wi-Fi IoT (SSID2)',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình mạng Wi-Fi IoT (SSID2) trên thiết bị ONT BE12000 tại menu <b>Local Network > WLAN > WLAN Basic > WLAN SSID Configuration</b> theo các thông số sau:',
-    '- Kích hoạt SSID2: <span class="val">On</span>',
-    '- Mở cấu hình <b>SSID2 (2.4GHz)</b>',
     '- SSID Name: <span class="val">FPT Telecom-IoT</span>',
-    '- SSID Hide: <span class="val">Off</span>',
     '- Encryption Type: <span class="val">WPA2-PSK-AES</span>',
-    '- WPA Passphrase: <span class="val">19006600</span>',
-    'Nhấn <b>Apply</b> để lưu cấu hình'
+    '- WPA Passphrase: <span class="val">19006600</span>'
   ],
   practiceUrl: '/sim_be12000/login',
   onSimLoad: function (simWin) {

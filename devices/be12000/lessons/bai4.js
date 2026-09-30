@@ -12,14 +12,8 @@ var lessonData = {
   subtitle: 'Cấu hình DNS Server trên BE12000',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình máy chủ DNS tại menu <b>Local Network > DNS</b> trong mục <b>DNS</b> theo các thông số sau:',
-    '- IPv4 DNS Server 1: <span class="val">210.245.31.220</span> (hoặc 8.8.8.8)',
-    '- IPv4 DNS Server 2: <span class="val">8.8.8.8</span> (hoặc 8.8.4.4)',
-    'Nhấn <b>Apply</b> để lưu cấu hình DNS',
-    '<br>',
-    '<i>Gợi ý DNS FPT: 210.245.31.220, 210.245.31.221</i>',
-    '<i>Gợi ý DNS Google: 8.8.8.8, 8.8.4.4</i>',
-    '<i>Gợi ý DNS Cloudflare: 1.1.1.1</i>'
+    '- IPv4 DNS Server 1: <span class="val">210.245.31.220</span>',
+    '- IPv4 DNS Server 2: <span class="val">8.8.8.8</span>'
   ],
   practiceUrl: '/sim_be12000/login',
   onSimLoad: function (simWin) {

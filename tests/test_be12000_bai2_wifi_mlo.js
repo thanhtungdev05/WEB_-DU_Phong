@@ -12,8 +12,8 @@ console.log('--- TEST BE12000 LAB 2 (WI-FI MLO) STANDARDIZATION ---');
 // 1. Kiểm tra portal.html đã cập nhật cachebuster
 const portalPath = path.join(root, 'portal.html');
 const portalContent = fs.readFileSync(portalPath, 'utf8');
-assert.ok(portalContent.includes('devices/be12000/tooltips/bai2.js?v=20260928103500'), 'portal.html must include bumped version of bai2 tooltips');
-assert.ok(portalContent.includes('devices/be12000/lessons/bai2.js?v=20260928103500'), 'portal.html must include bumped version of bai2 lessons');
+assert.ok(/devices\/be12000\/tooltips\/bai2\.js\?v=\d+/.test(portalContent), 'portal.html must include bumped version of bai2 tooltips');
+assert.ok(/devices\/be12000\/lessons\/bai2\.js\?v=\d+/.test(portalContent), 'portal.html must include bumped version of bai2 lessons');
 console.log('✓ portal.html cachebuster verified');
 
 // 2. Kiểm tra tooltips/bai2.js
@@ -32,17 +32,17 @@ vm.runInContext(tooltipCode, context);
 const tooltips = context.window.TOOLTIPS_BE12000['LAB_BE12000_02'];
 assert.ok(tooltips, 'Tooltips for LAB_BE12000_02 must exist');
 
-// Kiểm tra các bước 1 -> 4
-const step1 = tooltips.find(t => t.text && t.text.includes('Bước 1: Nhập SSID Name: FPT Telecom'));
-const step2 = tooltips.find(t => t.text && t.text.includes('Bước 2: Chọn WPA2-PSK-AES hoặc WPA3'));
-const step3 = tooltips.find(t => t.text && t.text.includes('Bước 3: Nhập WPA Passphrase: 19006600'));
-const step4 = tooltips.find(t => t.text && t.text.includes('Bước 4: Nhấn Apply để lưu cấu hình Wi-Fi'));
+// Kiểm tra các bước cấu hình tuần tự Option 1
+const step6 = tooltips.find(t => t.text && t.text.includes('Bước 6: Nhập SSID Name: FPT Telecom'));
+const step7 = tooltips.find(t => t.text && t.text.includes('Bước 7: Chọn WPA2-PSK-AES hoặc WPA3'));
+const step8 = tooltips.find(t => t.text && t.text.includes('Bước 8: Nhập WPA Passphrase: 19006600'));
+const step9 = tooltips.find(t => t.text && t.text.includes('Bước 9: Nhấn Apply để lưu cấu hình Wi-Fi'));
 
-assert.ok(step1, 'Step 1 must be SSID Name');
-assert.ok(step2, 'Step 2 must be Encryption Type');
-assert.ok(step3, 'Step 3 must be WPA Passphrase');
-assert.ok(step4, 'Step 4 must be Apply at SSID1');
-console.log('✓ tooltips/bai2.js clean 4-step workflow verified');
+assert.ok(step6, 'Step 6 must be SSID Name');
+assert.ok(step7, 'Step 7 must be Encryption Type');
+assert.ok(step8, 'Step 8 must be WPA Passphrase');
+assert.ok(step9, 'Step 9 must be Apply at SSID1');
+console.log('✓ tooltips/bai2.js sequential Option 1 workflow verified');
 
 // 3. Kiểm tra lessons/bai2.js
 const lessonPath = path.join(root, 'devices/be12000/lessons/bai2.js');
@@ -58,7 +58,10 @@ vm.runInContext(lessonCode, lCtx);
 const lesson = lCtx.window.DEVICE_BE12000_LESSONS.find(l => l.id === 'LAB_BE12000_02');
 assert.ok(lesson, 'Lesson LAB_BE12000_02 must exist');
 assert.strictEqual(lesson.guidePopups.length, tooltips.length, 'guidePopups must match tooltips length');
-console.log('✓ lessons/bai2.js verified');
+assert.strictEqual(lesson.grading.rules.length, 3, 'Grading rules must strictly have 3 rules for SSID1 (MLO)');
+assert.ok(!lessonCode.includes('wifi_ssid_5'), 'Lesson grading must NOT require SSID5');
+assert.ok(!tooltipCode.includes('(2.4GHz)'), 'Tooltip must NOT contain (2.4GHz) suffix');
+console.log('✓ lessons/bai2.js verified (3 MLO rules, no 5GHz error, no 2.4GHz suffix)');
 
 // 4. Kiểm tra Giải pháp 2 (Option 2) chống văng trang và giật cuộn khi xem các SSID
 const srcIndexPath = path.join(root, 'simulators/sim_be12000/src/www/index.html');

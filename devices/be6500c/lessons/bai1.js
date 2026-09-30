@@ -54,32 +54,32 @@ var bai1 = {
   guidePopups: [
     {
       "selector": ".MuiTypography-subtitle2:contains(\"Advanced\"), svg[data-testid=\"TuneTwoToneIcon\"], svg[data-testid=\"TuneOutlinedIcon\"]",
-      "text": "Chọn Advanced",
+      "text": "Bước 1: Chọn Advanced",
       "position": "right"
     },
     {
       "selector": ".MuiTypography-subtitle1:contains(\"IPv4 Connection Type\")",
-      "text": "Chọn IPv4 Connection Type",
+      "text": "Bước 2: Chọn IPv4 Connection Type",
       "position": "top"
     },
     {
       "selector": "div[id*=\"ipv4Settings.protocol\"]",
-      "text": "Chọn PPPoE của phần Connection Type",
+      "text": "Bước 3: Chọn PPPoE của phần Connection Type",
       "position": "right"
     },
     {
       "selector": "input[name=\"ipv4Settings.pppoe.username\"]",
-      "text": "Bước 1: nhập hnfdl-123456-789",
+      "text": "Bước 4: Nhập Username: hnfdl-123456-789",
       "position": "right"
     },
     {
       "selector": "input[name=\"ipv4Settings.pppoe.password\"]",
-      "text": "Bước 2: nhập d123456",
+      "text": "Bước 5: Nhập Password: d123456",
       "position": "right"
     },
     {
       "selector": "button.alternative-layout--submit, .formActionButton.submit, body:has(input[name=\"ipv4Settings.pppoe.username\"]) button.alternative-layout--submit",
-      "text": "Bước 3 chọn Save để lưu cấu hình",
+      "text": "Bước 6: Chọn Save để lưu cấu hình",
       "position": "bottom"
     }
   ]

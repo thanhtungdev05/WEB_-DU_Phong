@@ -6576,16 +6576,16 @@
         {
           "_InstID": "IGD",
           "SubMask": "255.255.255.0",
-          "DNSServer1": "v+gRyWEsI6fw+S5uQBexYw==",
-          "DNSServer2": "oJ5ScOlEXVnKJjfQWsE0Fw==",
+          "DNSServer1": "192.168.1.1",
+          "DNSServer2": "0.0.0.0",
           "LeaseTime": "86400",
-          "MaxAddress": "FooFvpTwQFFQwqKCpoyCFw==",
+          "MaxAddress": "192.168.1.254",
           "SubnetMask": "255.255.255.0",
           "DnsServerSource": "0",
           "DomainName": "ehome",
-          "IPAddr": "v+gRyWEsI6fw+S5uQBexYw==",
+          "IPAddr": "192.168.1.1",
           "ServerEnable": "1",
-          "MinAddress": "RmXkJyZdHwuSbsRuq3Gf2w=="
+          "MinAddress": "192.168.1.2"
         }
       ],
       "paraOrder": [

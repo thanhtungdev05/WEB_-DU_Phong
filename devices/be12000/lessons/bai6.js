@@ -12,15 +12,10 @@ var lessonData = {
   subtitle: 'Cấu hình mở cổng (NAT / Port Forwarding) trên BE12000',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình mở cổng dịch vụ tại menu <b>Internet > Security > Port Forwarding</b> bằng cách nhấn <b>Create New Item</b> và nhập đầy đủ 5 tiêu chí sau:',
-    '- 1. Name: <span class="val">NAT FPT</span> (hoặc Camera, Web Server)',
-    '- 2. Protocol: <span class="val">TCP</span> (hoặc UDP, TCP And UDP)',
-    '- 3. LAN Host: <span class="val">192.168.1.100</span>',
-    '- 4. WAN Port: <span class="val">8080</span>',
-    '- 5. LAN Host Port: <span class="val">8080</span>',
-    'Nhấn <b>Apply</b> để lưu cấu hình rule.',
-    '<br>',
-    '<i>Gợi ý: Nếu cấu hình mở 1 port đơn, nhập 8080 vào ô WAN Port và LAN Host Port.</i>'
+    '- Name: <span class="val">NAT FPT</span>',
+    '- LAN Host: <span class="val">192.168.1.100</span>',
+    '- WAN Port: <span class="val">8080</span>',
+    '- LAN Host Port: <span class="val">8080</span>'
   ],
   practiceUrl: '/sim_be12000/login',
   onSimLoad: function (simWin) {

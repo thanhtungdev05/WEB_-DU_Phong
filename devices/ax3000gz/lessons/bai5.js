@@ -45,38 +45,38 @@ var lessonObj = {
   guidePopups: [
     {
       selector: '#topmenu a[href*="localnetwork"]',
-      text: 'Chọn Local Network',
+      text: 'Bước 1: Chọn Local Network',
       position: 'bottom',
       hideOnPage: 'localnetwork'
     },
     {
       selector: '#sidebarmenu a[href*="/localnetwork/lan"]',
-      text: 'Chọn LAN',
+      text: 'Bước 2: Chọn LAN',
       position: 'right',
       page: 'localnetwork',
       hideOnPage: 'lan'
     },
     {
       selector: '#cbi-network h3',
-      text: 'Chọn DHCP Server',
+      text: 'Bước 3: Chọn DHCP Server',
       position: 'right',
       page: 'lan'
     },
     {
       selector: 'label[for="widget.cbid.network.lan.ignore.0"] + span, [id="widget.cbid.network.lan.ignore.0"]',
-      text: 'Bước 1: Chọn Enable: On',
+      text: 'Bước 4: Chọn Enable: On',
       position: 'right',
       page: 'lan'
     },
     {
       selector: '[id="widget.cbid.network.lan.ipaddr"]',
-      text: 'Bước 2: Nhập LAN IP Address: 192.168.10.1',
+      text: 'Bước 5: Nhập LAN IP Address: 192.168.10.1',
       position: 'right',
       page: 'lan'
     },
     {
       selector: '.cbi-page-actions .cbi-button-save',
-      text: 'Bước 3: Chọn Apply để lưu cấu hình',
+      text: 'Bước 6: Chọn Apply để lưu cấu hình',
       position: 'top',
       page: 'lan'
     }

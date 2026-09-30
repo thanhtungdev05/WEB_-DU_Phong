@@ -1,44 +1,44 @@
 /**
- * devices/ac1000HI/tooltips/bai10.js - Tooltip Hng dn cho Bi 10: Chn Web (URL Filter)
+ * devices/ac1000HI/tooltips/bai10.js - Tooltip Hướng dẫn cho Bài 10: Chặn Web (URL Filter)
  */
 
 if (!window.TOOLTIPS_AC1000HI) window.TOOLTIPS_AC1000HI = {};
 
 window.TOOLTIPS_AC1000HI['LAB_AC1000HI_10'] = [
-  // Bc 1: Chn Access  Header
+  // Bước 1: Chọn Access ở Header
   {
     selector: 'a[onclick*="change_access"]',
-    text: 'Bc 1: chn Access',
+    text: 'Bước 1: chọn Access',
     position: 'top'
   },
-  // Bc 2: Chn Filter  Menu bn tri (Nav frame)
+  // Bước 2: Chọn Filter ở Menu bên trái (Nav frame)
   {
     selector: 'a[href*="access_URLfilter.asp"], a[href*="access_ipfilter.asp"]',
-    text: 'Bc 2: chn Filter',
+    text: 'Bước 2: chọn Filter',
     position: 'top'
   },
-  // Bc 3: Chn URL Filter  Filter Type Selection
+  // Bước 3: Chọn URL Filter ở Filter Type Selection
   {
     selector: 'select[name="FILTERTYPE_index"]',
-    text: 'Bc 3: chn URL Filter',
+    text: 'Bước 3: chọn URL Filter',
     position: 'right'
   },
-  // Bc 4: Chn Enable  mc URL Filter Editing Individual active
+  // Bước 4: Chọn Enable ở mục URL Filter Editing Individual active
   {
     selector: 'input[name="SingleRule_active"][value="1"], input[name="SingleRule_active"]',
-    text: 'Bc 4: chn Enable',
+    text: 'Bước 4: chọn Enable',
     position: 'top'
   },
-  // Bc 5: in a ch Web mun chn
+  // Bước 5: Điền địa chỉ Web muốn chặn
   {
     selector: 'input[name="UrlFilter_URL"]',
-    text: 'Bc 5: in a ch Web mun chn v d: https://facebook.com',
+    text: 'Bước 5: điền địa chỉ Web muốn chặn ví dụ: https://facebook.com',
     position: 'right'
   },
-  // Bc 6: Chn Save lu cu hnh
+  // Bước 6: Chọn Save lưu cấu hình
   {
     selector: 'input[name="UrlFilterApply"], input[value="Save"], input[onclick*="doSubmit"], #save, #btnSave, .button1',
-    text: 'Bc 6: chn Save lu cu hnh',
+    text: 'Bước 6: chọn Save lưu cấu hình',
     position: 'right'
   }
 ];

@@ -11,14 +11,9 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình giới hạn băng thông (Bandwidth Limit)',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình giới hạn băng thông trên thiết bị DrayTek Vigor2927 theo các tiêu chí sau:',
-    '- Kích hoạt Bandwidth Limit: chọn <span class="val">Enable</span>',
-    '- Giới hạn mặc định: TX Limit: <span class="val">20 Mbps</span>, RX Limit: <span class="val">25 Mbps</span>',
-    '- Thêm giới hạn dải IP cụ thể: Start IP: <span class="val">192.168.1.10</span>, End IP: <span class="val">192.168.1.20</span>',
-    '- Chọn Option <span class="val">Each</span>, TX Limit: <span class="val">20 Mbps</span>, RX Limit: <span class="val">25 Mbps</span>',
-    '- Nhấn nút <span class="val">Add</span> để lưu dải IP vào danh sách giới hạn',
-    '- Giữ nguyên các giá trị mặc định của <span class="val">Auto-Adjustment</span>, <span class="val">Smart Bandwidth Limit</span> và <span class="val">Time Schedule</span> (không thay đổi)',
-    '- Nhấn nút <span class="val">OK</span> để lưu cấu hình',
+    '- Default TX Limit: <span class="val">20 Mbps</span>, RX Limit: <span class="val">25 Mbps</span>',
+    '- Start IP: <span class="val">192.168.1.10</span>, End IP: <span class="val">192.168.1.20</span>',
+    '- Option: <span class="val">Each</span>, TX Limit: <span class="val">20 Mbps</span>, RX Limit: <span class="val">25 Mbps</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
   grading: {
@@ -121,7 +116,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         required: true
       }
     ],
-    customGrading: function(allDocs) {
+    customGrading: function (allDocs) {
       let docLimit = null;
       for (const d of allDocs) {
         try {
@@ -129,7 +124,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
             docLimit = d;
             break;
           }
-        } catch(e) {}
+        } catch (e) { }
       }
 
       if (!docLimit) {
@@ -256,10 +251,10 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       const inputRxUnit = (rxUnitSelect && rxUnitSelect.value === '0') ? 'Kbps' : 'Mbps';
 
       // Kiểm tra thao tác đã bấm nút Add
-      const hasClickedAdd = hasAddedEntry || 
-                            !!docLimit._ftcHasClickedAdd || 
-                            (win && !!win._ftcHasClickedAdd) || 
-                            !!window._ftcHasClickedAdd;
+      const hasClickedAdd = hasAddedEntry ||
+        !!docLimit._ftcHasClickedAdd ||
+        (win && !!win._ftcHasClickedAdd) ||
+        !!window._ftcHasClickedAdd;
 
       const finalStartIp = entryStartIp || docLimit._ftcLastAddFrom || (win && win._ftcLastAddFrom) || window._ftcLastAddFrom || inputFromVal;
       const finalEndIp = entryEndIp || docLimit._ftcLastAddTo || (win && win._ftcLastAddTo) || window._ftcLastAddTo || inputToVal;
@@ -402,18 +397,18 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         }
       ];
 
-      const passedCount = (enablePassed ? 1 : 0) + 
-                          (txPassed ? 1 : 0) + 
-                          (rxPassed ? 1 : 0) + 
-                          (startIpPassed ? 1 : 0) + 
-                          (endIpPassed ? 1 : 0) + 
-                          (modePassed ? 1 : 0) + 
-                          (entryTxPassed ? 1 : 0) + 
-                          (entryRxPassed ? 1 : 0) + 
-                          (addBtnPassed ? 1 : 0) + 
-                          (autoAdjustPassed ? 1 : 0) + 
-                          (smartLimitPassed ? 1 : 0) + 
-                          (schedulePassed ? 1 : 0);
+      const passedCount = (enablePassed ? 1 : 0) +
+        (txPassed ? 1 : 0) +
+        (rxPassed ? 1 : 0) +
+        (startIpPassed ? 1 : 0) +
+        (endIpPassed ? 1 : 0) +
+        (modePassed ? 1 : 0) +
+        (entryTxPassed ? 1 : 0) +
+        (entryRxPassed ? 1 : 0) +
+        (addBtnPassed ? 1 : 0) +
+        (autoAdjustPassed ? 1 : 0) +
+        (smartLimitPassed ? 1 : 0) +
+        (schedulePassed ? 1 : 0);
 
       const totalRules = 12;
       const passed = (passedCount === totalRules) && isSaved;
@@ -444,7 +439,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       text: 'Bước 3: chọn Enable',
       position: 'right',
       offsetX: 8,
-      condition: function(doc) {
+      condition: function (doc) {
         if (!doc) return false;
         var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
         var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
@@ -462,7 +457,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       selector: '#opt-bandwidth-tx-limit, input[name="sIpBandwDefTx"]',
       text: 'Bước 4: nhập giới hạn tốc độ truyền cho tất cả thiết bị, ví dụ 20 Mbps',
       position: 'bottom',
-      condition: function(doc) {
+      condition: function (doc) {
         if (!doc) return false;
         var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
         var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
@@ -480,7 +475,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       selector: '#opt-bandwidth-rx-limit, input[name="sIpBandwDefRx"]',
       text: 'Bước 5: nhập giới hạn tốc độ nhận cho tất cả thiết bị, ví dụ 25 Mbps',
       position: 'top',
-      condition: function(doc) {
+      condition: function (doc) {
         if (!doc) return false;
         var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
         var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
@@ -498,7 +493,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       selector: 'text:End IP',
       text: 'Bước 6: thay đổi băng thông cho một dãy hay một IP cụ thể (cao hơn hoặc thấp hơn)<br>ví dụ: điền vào Start IP: 192.168.1.10 và End IP: 192.168.1.20, đồng thời gán tốc độ TX,<br>ví dụ: 20 Mbps và RX, ví dụ: 25 Mbps cho thiết bị (hoặc dãy thiết bị) đó.<br>- Trong đó, “Each” là mỗi IP trong dãy đều được sử dụng tối đa băng thông quy định;<br>“Share” là tất cả IP trong dãy sử dụng tổng băng thông quy định. Ở đây chọn "Each"<br>==> Sau đó chọn Add để lưu',
       position: 'top',
-      condition: function(doc) {
+      condition: function (doc) {
         if (!doc) return false;
         var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
         var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
@@ -516,7 +511,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       selector: 'select[name="nSch1"]',
       text: 'Bước 7: Bạn có thể quy định thời gian để chức năng Bandwidth Limit<br>có hiệu lực bằng cách chỉnh Time Schedule. Ở đây chọn None.',
       position: 'bottom',
-      condition: function(doc) {
+      condition: function (doc) {
         if (!doc) return false;
         var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
         var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
@@ -534,7 +529,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       selector: 'input[name="btnOk"], input[value="OK"]',
       text: 'Bước 8: chọn OK',
       position: 'top',
-      condition: function(doc) {
+      condition: function (doc) {
         if (!doc) return false;
         var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
         var rx = doc.querySelector('input[name="sIpBandwDefRx"]');

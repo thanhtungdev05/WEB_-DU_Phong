@@ -1,4 +1,4 @@
-﻿/**
+/**
  * devices/be12000/lessons/bai7.js
  * Bài 7 - Khởi Động Lại & Khôi Phục Cài Đặt Gốc trên BE12000
  */
@@ -10,9 +10,8 @@ window.DEVICE_BE12000_LESSONS.push({
   title: 'Bài 7 - Khởi Động Lại & Khôi Phục Cài Đặt Gốc',
   subtitle: 'Reboot thiết bị hoặc Reset Factory',
   instructions: [
-    'Chọn menu <b>Management > Reboot & Reset</b>',
-    '- Reboot: Bấm <b>Restart</b>',
-    '- Factory Reset: Bấm <b>Restore Factory Default</b>',
+    '<b>Yêu cầu:</b>',
+    '- Thực hiện Reboot thiết bị (Restart) hoặc Khôi phục cài đặt gốc (Restore Factory Default)'
   ],
   practiceUrl: '/sim_be12000/login',
   grading: {

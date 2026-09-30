@@ -52,31 +52,31 @@ window.DEVICE_AX3000GZ_LESSONS.push({
   guidePopups: [
     {
       selector: '#topmenu a[href*="internet"]',
-      text: 'Chọn Internet',
+      text: 'Bước 1: Chọn Internet',
       position: 'bottom',
       page: 'home'
     },
     {
       selector: '#WANUrl, #sidebarmenu a[href*="/internet/wan"]',
-      text: 'Chọn WAN',
+      text: 'Bước 2: Chọn WAN',
       position: 'right',
       hideOnPage: 'wan'
     },
     {
       selector: '[id="widget.cbid.network.wan.username"], [name="cbid.network.wan.username"]',
-      text: 'Bước 1: Nhập Username: sgfdl-123456-789',
+      text: 'Bước 3: Nhập Username: sgfdl-123456-789',
       position: 'right',
       page: 'wan'
     },
     {
       selector: '[id="widget.cbid.network.wan.password"], [name="cbid.network.wan.password"]',
-      text: 'Bước 2: Nhập Password: fpt12345',
+      text: 'Bước 4: Nhập Password: fpt12345',
       position: 'right',
       page: 'wan'
     },
     {
       selector: '.cbi-button-save',
-      text: 'Bước 3: Chọn Apply',
+      text: 'Bước 5: Chọn Apply',
       position: 'bottom',
       page: 'wan'
     }

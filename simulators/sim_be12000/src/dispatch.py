@@ -253,6 +253,12 @@ class Dispatcher:
                 ghi_chu = "tao instance moi: %s" % (moi_id or "that bai")
             else:
                 da_doi, khong_biet = self.store.ghi_theo_instid(ten_obj, inst_id_gui, thuoc_obj)
+                # MLO Wi-Fi 7: Tự động map cấu hình từ AP1 (2.4GHz) sang AP5 (5GHz)
+                if ten_obj == "OBJ_WLANAP_ID" and inst_id_gui == "DEV.WIFI.AP1":
+                    self.store.ghi_theo_instid("OBJ_WLANAP_ID", "DEV.WIFI.AP5", thuoc_obj)
+                elif ten_obj == "OBJ_WLANPSK_ID" and "AP1" in inst_id_gui:
+                    inst_id_5g = inst_id_gui.replace("AP1", "AP5")
+                    self.store.ghi_theo_instid("OBJ_WLANPSK_ID", inst_id_5g, thuoc_obj)
                 ghi_chu = "sua instance %s: doi %s" % (inst_id_gui, ", ".join(da_doi) or "khong co gi")
             self.store.luu()
             self.session.doi_token()
@@ -337,6 +343,25 @@ class Dispatcher:
             # Object khong khai bao "chonTheoTruong" van tra ve 0 nhu cu.
             vi_tri = self.store.chi_so_ghi_mac_dinh(ten_obj, tham_so)
             da_doi, khong_biet = self.store.ghi(ten_obj, thuoc_obj, inst=vi_tri)
+            # MLO Wi-Fi 7: Tự động map cấu hình từ AP1 (2.4GHz) sang AP5 (5GHz)
+            if vi_tri == 0 and ("wlan" in data_tag.lower() or "ssid" in data_tag.lower()):
+                if ten_obj == "OBJ_WLANAP_ID":
+                    self.store.ghi_theo_instid("OBJ_WLANAP_ID", "DEV.WIFI.AP5", thuoc_obj)
+                elif ten_obj == "OBJ_WLANPSK_ID":
+                    self.store.ghi_theo_instid("OBJ_WLANPSK_ID", "DEV.WIFI.AP5.PSK1", thuoc_obj)
+            # DHCP: Tự động đồng bộ dải MinAddress & MaxAddress theo IPAddr
+            elif vi_tri == 0 and "dhcpbasiccfg" in data_tag.lower() and ten_obj == "OBJ_Br0AndDhcpsHosCfg_ID":
+                lan_ip = thuoc_obj.get("IPAddr", "")
+                if lan_ip and "." in lan_ip:
+                    parts = lan_ip.split(".")
+                    if len(parts) == 4:
+                        prefix = f"{parts[0]}.{parts[1]}.{parts[2]}"
+                        min_ip = thuoc_obj.get("MinAddress", "")
+                        max_ip = thuoc_obj.get("MaxAddress", "")
+                        if not min_ip or not min_ip.startswith(prefix):
+                            self.store.ghi(ten_obj, {"MinAddress": f"{prefix}.2"}, inst=vi_tri)
+                        if not max_ip or not max_ip.startswith(prefix):
+                            self.store.ghi(ten_obj, {"MaxAddress": f"{prefix}.254"}, inst=vi_tri)
             tat_ca_doi += ["%s.%s" % (ten_obj, x) for x in da_doi]
             tat_ca_la += khong_biet
 

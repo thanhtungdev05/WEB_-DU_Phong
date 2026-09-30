@@ -391,20 +391,16 @@ const LESSON_TEST_SPECS = [
     file: 'devices/be12000/lessons/bai2.js',
     globalVar: 'DEVICE_BE12000_LESSONS',
     id: 'LAB_BE12000_02',
-    name: 'Bài 2: Cấu hình Wi-Fi 2.4GHz & 5GHz',
+    name: 'Bài 2: Cấu hình Wi-Fi MLO (Wi-Fi 7)',
     correctElements: {
       '[id="ESSID:0"], #ESSID\\:0, input[id="ESSID:0"]': [{ value: 'FPT Telecom' }],
       '[id="EncryptionType:0"], #EncryptionType\\:0, select[id="EncryptionType:0"]': [{ value: 'WPA2-PSK-AES' }],
-      '[id="KeyPassphrase:0"], #KeyPassphrase\\:0, input[id="KeyPassphrase:0"]': [{ value: '19006600' }],
-      '[id="ESSID:4"], #ESSID\\:4, input[id="ESSID:4"]': [{ value: 'FPT Telecom' }],
-      '[id="KeyPassphrase:4"], #KeyPassphrase\\:4, input[id="KeyPassphrase:4"]': [{ value: '19006600' }]
+      '[id="KeyPassphrase:0"], #KeyPassphrase\\:0, input[id="KeyPassphrase:0"]': [{ value: '19006600' }]
     },
     wrongElements: {
       '[id="ESSID:0"], #ESSID\\:0, input[id="ESSID:0"]': [{ value: 'Wrong_SSID' }],
       '[id="EncryptionType:0"], #EncryptionType\\:0, select[id="EncryptionType:0"]': [{ value: 'Open' }],
-      '[id="KeyPassphrase:0"], #KeyPassphrase\\:0, input[id="KeyPassphrase:0"]': [{ value: '00000000' }],
-      '[id="ESSID:4"], #ESSID\\:4, input[id="ESSID:4"]': [{ value: 'Wrong_SSID' }],
-      '[id="KeyPassphrase:4"], #KeyPassphrase\\:4, input[id="KeyPassphrase:4"]': [{ value: '00000000' }]
+      '[id="KeyPassphrase:0"], #KeyPassphrase\\:0, input[id="KeyPassphrase:0"]': [{ value: '00000000' }]
     }
   },
   {
@@ -467,7 +463,7 @@ const LESSON_TEST_SPECS = [
       '#ServerEnable1, input[name="ServerEnable"][value="1"]': [{ checked: true, value: '1' }],
       '#sub_IPAddr0:DHCPBasicCfg': [{ value: '192' }],
       '#sub_IPAddr1:DHCPBasicCfg': [{ value: '168' }],
-      '#sub_IPAddr2:DHCPBasicCfg': [{ value: '1' }],
+      '#sub_IPAddr2:DHCPBasicCfg': [{ value: '10' }],
       '#sub_IPAddr3:DHCPBasicCfg': [{ value: '1' }],
       '#sub_SubMask0': [{ value: '255' }],
       '#sub_SubMask1': [{ value: '255' }],
@@ -475,11 +471,11 @@ const LESSON_TEST_SPECS = [
       '#sub_SubMask3': [{ value: '0' }],
       '#sub_MinAddress0:DHCPBasicCfg': [{ value: '192' }],
       '#sub_MinAddress1:DHCPBasicCfg': [{ value: '168' }],
-      '#sub_MinAddress2:DHCPBasicCfg': [{ value: '1' }],
+      '#sub_MinAddress2:DHCPBasicCfg': [{ value: '10' }],
       '#sub_MinAddress3:DHCPBasicCfg': [{ value: '2' }],
       '#sub_MaxAddress0:DHCPBasicCfg': [{ value: '192' }],
       '#sub_MaxAddress1:DHCPBasicCfg': [{ value: '168' }],
-      '#sub_MaxAddress2:DHCPBasicCfg': [{ value: '1' }],
+      '#sub_MaxAddress2:DHCPBasicCfg': [{ value: '10' }],
       '#sub_MaxAddress3:DHCPBasicCfg': [{ value: '254' }]
     },
     wrongElements: {

@@ -99,75 +99,75 @@ var lessonObj = {
   guidePopups: [
     {
       selector: '#topmenu a[href*="internet"]',
-      text: 'Chọn Internet',
+      text: 'Bước 1: Chọn Internet',
       position: 'bottom',
       hideOnPage: 'internet'
     },
     {
       selector: '#sidebarmenu a[href*="/internet/security"]',
-      text: 'Chọn Security',
+      text: 'Bước 2: Chọn Security',
       position: 'right',
       page: 'internet',
       hideOnPage: 'security'
     },
     {
       selector: '.tabs a[href*="forwards"]',
-      text: 'Chọn tab Port Forwards',
+      text: 'Bước 3: Chọn tab Port Forwards',
       position: 'bottom',
       page: 'security',
       hideOnPage: 'forwards'
     },
     {
       selector: '.cbi-button-add',
-      text: 'Bấm Add để thêm Port Forwarding',
+      text: 'Bước 4: Bấm Add để thêm Port Forwarding',
       position: 'top',
       page: 'forwards'
     },
     {
       selector: '[id="modal_field_name"]',
-      text: 'Nhập Name: FPT Telecom',
+      text: 'Bước 5: Nhập Name: FPT Telecom',
       position: 'right',
       page: 'forwards'
     },
     {
       selector: '[id="modal_field_enabled"] label:nth-child(2)',
-      text: 'Chọn Enable: On',
+      text: 'Bước 6: Chọn Enable: On',
       position: 'right',
       page: 'forwards'
     },
     {
       selector: '[id="modal_field_proto"]',
-      text: 'Chọn Protocol: TCP/UDP',
+      text: 'Bước 7: Chọn Protocol: TCP/UDP',
       position: 'right',
       page: 'forwards'
     },
     {
       selector: '[id="modal_field_src_ip"]',
-      text: 'Nhập WAN Host IP Address: 0.0.0.0/0',
+      text: 'Bước 8: Nhập WAN Host IP Address: 0.0.0.0/0',
       position: 'right',
       page: 'forwards'
     },
     {
       selector: '[id="modal_field_dest_ip"]',
-      text: 'Nhập LAN Host: 192.168.1.254',
+      text: 'Bước 9: Nhập LAN Host: 192.168.1.254',
       position: 'right',
       page: 'forwards'
     },
     {
       selector: '[id="modal_field_src_dport"]',
-      text: 'Nhập WAN Port: 8080',
+      text: 'Bước 10: Nhập WAN Port: 8080',
       position: 'right',
       page: 'forwards'
     },
     {
       selector: '[id="modal_field_dest_port"]',
-      text: 'Nhập LAN Host Port: 8080',
+      text: 'Bước 11: Nhập LAN Host Port: 8080',
       position: 'right',
       page: 'forwards'
     },
     {
       selector: '#modal_overlay .cbi-button-save, .modal .cbi-button-save',
-      text: 'Chọn Apply để lưu',
+      text: 'Bước 12: Chọn Apply để lưu',
       position: 'bottom',
       page: 'forwards'
     }

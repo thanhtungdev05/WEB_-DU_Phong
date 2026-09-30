@@ -70,52 +70,52 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   guidePopups: [
     {
       "selector": ".MuiTypography-subtitle2:contains(\"Network\")",
-      "text": "Chọn Network",
+      "text": "Bước 1: Chọn Network",
       "position": "right"
     },
     {
       "selector": ".MuiTypography-subtitle2:contains(\"Port Forwarding\")",
-      "text": "Chọn Port Forwarding",
+      "text": "Bước 2: Chọn Port Forwarding",
       "position": "right"
     },
     {
       "selector": "button:contains(\"Add New\")",
-      "text": "Thêm Rule mới",
+      "text": "Bước 3: Thêm Rule mới",
       "position": "right"
     },
     {
       "selector": "input[name=\"name\"]",
-      "text": "Nhập tên rule (VD: Camera)",
+      "text": "Bước 4: Nhập tên rule (VD: Camera)",
       "position": "right",
       "expected": "Camera"
     },
     {
       "selector": "#mui-component-select-protocol",
-      "text": "Chọn Protocol (VD: TCP_UDP)",
+      "text": "Bước 5: Chọn Protocol (VD: TCP_UDP)",
       "position": "left",
       "expected": ["TCP_UDP", "TCP + UDP"]
     },
     {
       "selector": "input[name=\"source.portRange\"]",
-      "text": "Nhập External Port (VD: 8080)",
+      "text": "Bước 6: Nhập External Port (VD: 8080)",
       "position": "right",
       "expected": "8080"
     },
     {
       "selector": ".MuiAutocomplete-input",
-      "text": "Nhập Internal IP (VD: 192.168.1.20)",
+      "text": "Bước 7: Nhập Internal IP (VD: 192.168.1.20)",
       "position": "left",
       "expected": "192.168.1.20"
     },
     {
       "selector": "input[name=\"destination.portRange\"]",
-      "text": "Nhập Internal Port (VD: 80)",
+      "text": "Bước 8: Nhập Internal Port (VD: 80)",
       "position": "right",
       "expected": "80"
     },
     {
       "selector": "button.dlg-luu",
-      "text": "Lưu cấu hình",
+      "text": "Bước 9: Lưu cấu hình",
       "position": "bottom"
     }
   ]

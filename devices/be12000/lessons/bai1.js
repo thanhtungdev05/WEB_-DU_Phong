@@ -12,10 +12,9 @@ var lessonData = {
   subtitle: 'Cấu hình PPPoE',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình kết nối WAN/Internet trên thiết bị và thiết lập kết nối PPPoE theo các thông số được cung cấp dưới đây:',
     '- Connection Name: <span class="val">FPT</span>',
     '- Username: <span class="val">hnfdl-123456-789</span>',
-    '- Password: <span class="val">d123456</span>',
+    '- Password: <span class="val">d123456</span>'
   ],
   practiceUrl: '/sim_be12000/login',
   onSimLoad: function (simWin) {

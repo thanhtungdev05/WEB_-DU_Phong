@@ -3599,18 +3599,20 @@
 
       let calcLeft = 0;
       let calcTop = 0;
+      const targetW = (pop.targetWidth !== undefined) ? pop.targetWidth : rect.width;
+      const targetH = (pop.targetHeight !== undefined) ? pop.targetHeight : rect.height;
 
       if (pos === 'right') {
-        calcLeft = targetLeft + rect.width + 10;
-        calcTop = targetTop + (rect.height / 2) - (bHeight / 2);
+        calcLeft = targetLeft + targetW + 10;
+        calcTop = targetTop + (targetH / 2) - (bHeight / 2);
       } else if (pos === 'left') {
         calcLeft = targetLeft - bWidth - 10;
-        calcTop = targetTop + (rect.height / 2) - (bHeight / 2);
+        calcTop = targetTop + (targetH / 2) - (bHeight / 2);
       } else if (pos === 'bottom') {
-        calcLeft = targetLeft + (rect.width / 2) - (bWidth / 2);
-        calcTop = targetTop + rect.height + 8;
+        calcLeft = targetLeft + (targetW / 2) - (bWidth / 2);
+        calcTop = targetTop + targetH + 8;
       } else if (pos === 'top') {
-        calcLeft = targetLeft + (rect.width / 2) - (bWidth / 2);
+        calcLeft = targetLeft + (targetW / 2) - (bWidth / 2);
         calcTop = targetTop - bHeight - 8;
       }
 
@@ -3637,7 +3639,9 @@
       bubble.style.top = Math.round(calcTop) + 'px';
 
       if (pos === 'bottom' || pos === 'top') {
-        const arrowX = Math.max(12, Math.min(bWidth - 12, (targetLeft + rect.width / 2) - calcLeft));
+        const arrowX = (pop.arrowLeft !== undefined)
+          ? pop.arrowLeft
+          : Math.max(12, Math.min(bWidth - 12, (targetLeft + targetW / 2) - calcLeft));
         bubble.style.setProperty('--arrow-left', Math.round(arrowX) + 'px');
       }
     });
