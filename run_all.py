@@ -21,6 +21,12 @@ import gzip
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlparse
 
+# Guardian: monitor Neon storage + cleanup sessions + giữ Render alive
+try:
+    import db_guardian  # noqa: E402
+except ImportError:
+    db_guardian = None
+
 # Reconfigure stdout cho UTF-8 trên Windows
 if hasattr(sys.stdout, 'reconfigure'):
     try:
@@ -943,9 +949,12 @@ def start_server():
     print(f"   Admin (/admin/*)    ->  Django (127.0.0.1:{DJANGO_PORT})")
     print(f"   TCP Queue Backlog:      4096 ket noi cho")
     print("=" * 65)
-    
 
-    
+    # Khởi động DB Guardian: monitor Neon storage, dọn session, giữ Render alive
+    if db_guardian is not None:
+        _guardian_enabled = os.environ.get('DB_GUARDIAN_ENABLED', '1').strip() != '0'
+        db_guardian.start(enabled=_guardian_enabled)
+
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
