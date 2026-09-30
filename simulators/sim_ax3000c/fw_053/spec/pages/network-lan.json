@@ -1,0 +1,74 @@
+{
+ "trang": "Network >> LAN >> LAN",
+ "route": "#/network/lan",
+ "view": "network/lanncs",
+ "chunk_goc": "js/chunk-7266f7c8.9b4ab5b7.1726822665278.js",
+ "bai_lab": [
+  4,
+  5
+ ],
+ "nguon_bang_chung": [
+  "reference/api/khung_that_cigext_lan.json",
+  "reference/api/dom_that_lab4_5.json",
+  "reference/api/lab4_5_lan_dns_dhcp.json"
+ ],
+ "doc_du_lieu": {
+  "loi_goi": "data_repo.cigext.get (ban mau)",
+  "ham": "getLanNcs",
+  "ban_mau": {
+   "network": {
+    "lan": {
+     "ipaddr": "",
+     "netmask": ""
+    }
+   },
+   "dhcp": {
+    "lan": {
+     "start": "",
+     "limit": "",
+     "leasetime": "",
+     "dhcp_option": ""
+    }
+   }
+  },
+  "canh_bao": "gia tri trong ban mau cua ma nguon la mac dinh, khong phai du lieu"
+ },
+ "anh_xa_o": {
+  "Router LAN IPv4 Address": "network.lan.ipaddr",
+  "Subnet mask": "network.lan.netmask",
+  "DHCP start address": "dhcp.lan.start (la DIA CHI IP day du, khong phai so thu tu)",
+  "DHCP end address": "tinh: calDHCPEndAddress(start, limit, netmask) — 192.168.100.2 + 248 - 1 = .249",
+  "Leasetime": "dhcp.lan.leasetime (phut) -> 3 o Day/Hours/Minutes qua formatMinutes; 720 -> 0/12/0",
+  "Define custom servers": "'1' (Enable) neu dhcp_option co muc bat dau '6,'; nguoc lai '0' (Disable)",
+  "DNS Server 1/2": "muc '6,a,b' trong dhcp_option (chuoi cach nhau dau cach) -> a / b"
+ },
+ "ghi_du_lieu": {
+  "loi_goi": "data_repo.cigext.set",
+  "ham": "onSubmit",
+  "hinh_dang_gui": "{network:{lan:{ipaddr,netmask}}, dhcp:{lan:{start, limit, netmask, leasetime:'<phut>m', dhcp_option:{lan0:'...', lan1:'...'}}}}",
+  "lech_doc_ghi": "GUI dhcp_option dang OBJECT lan0..N, DOC ve dang CHUOI cach nhau dau cach",
+  "tra_ve_mong_doi_tu_ma": "object co truong status; status===false -> '1:Configuration applied fail'",
+  "sau_ghi": "checkNetworkStatus: cho 20 giay roi tham do cigext.get moi 3 giay",
+  "da_do": true,
+  "trong_gia_lap": "theo DUNG hop dong do that (phep kiem J)",
+  "bang_chung": "reference/api/hop_dong_ghi_lab1_4_5.json",
+  "tra_ve": [
+   0,
+   {
+    "status": true
+   }
+  ]
+ },
+ "muc_dat_duoc": {
+  "2_cau_truc": "dat — 8/8 o dung nhan/thu tu (do DOM that)",
+  "3_giao_tiep": "dat chieu doc (I1, I2); chieu ghi CHUA DO",
+  "4_trang_thai": "co che dat (I4-I7) nhung phep bien doi dhcp_option la suy doan",
+  "1_hinh_anh": "cho khoi dong lai may chu de do"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "data_repo.cigext set -> ghi thang uci (dhcp.lan start/limit/..., list dhcp_option)",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

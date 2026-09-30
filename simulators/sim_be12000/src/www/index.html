@@ -4271,8 +4271,8 @@
                      return 0;
                   }
                   else if (ErrorString == "SessionTimeout") {
-                     top.location.href = top.location.href;
-                     return 1;
+                     console.warn("[hasError] Ignored SessionTimeout reload to preserve practice state");
+                     return 0;
                   }
                   else {
                      var cmapiErrorContainerHtml = "";
@@ -6312,7 +6312,6 @@
                            ChangeArea.hide();
                            collapsibleInst.removeClass("instNameExp");
                            ChangeArea.attr("aria-live", "off");
-                           $(".Btn_cancel", ChangeArea).click();
                         }
                      });
                      collapsibleInstObj.attr("tabindex", 0);

@@ -1,0 +1,32 @@
+{
+ "trang": "Status >> Networks & Devices",
+ "route": "#/status/topology",
+ "view": "status/topology",
+ "chunk_goc": "js/chunk-2d0d0215.9b4ab5b7.1726822665278.js",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_status_topo.json",
+  "reference/api/quet_doc_59_api.json"
+ ],
+ "cot_bang": [
+  "Node",
+  "Radio",
+  "SSID",
+  "STA MAC",
+  "RSSI",
+  "PHY Rate up/down",
+  "Hostname",
+  "IP"
+ ],
+ "doc_du_lieu": {
+  "created": "callBatch [network.wireless.easymesh.get, op-mode.get]",
+  "neu_Agent_hoac_tat": "KHONG goi gi them; hien mat na v-loading 'Currently in agent mode or EasyMesh is disabled can not show Networks & Devices ' (ma trang tu quyet)",
+  "nguoc_lai": "callBatch [data_repo.data_element.get, network.topology] -> buildToprTable(); mot loi goi hong -> ca batch hong -> 'No Data'"
+ },
+ "ghi_du_lieu": null,
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 73/73 phan tu la trong main trung chu + toa do (1536x695), 2026-09-25",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat — N1-N3",
+  "4_trang_thai": "dat — doc easymesh tu kho: tat Easymesh tren gia lap -> mat na dung chu (nhanh nay chua doi chieu tren thiet bi that vi phai tat Easymesh that)"
+ }
+}

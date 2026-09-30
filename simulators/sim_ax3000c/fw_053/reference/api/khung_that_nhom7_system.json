@@ -1,0 +1,88 @@
+{
+ "nguon": "AX3000CV2 that, fw 0.5.3, do 2026-09-25, CHI DOC (khong ghi gi)",
+ "khung": {
+  "data_repo.weboui.system_get": [
+   0,
+   {
+    "system": {
+     "hostname": "AP-AX3000CV2-0A91",
+     "zonename": "Asia/Ho Chi Minh",
+     "timezone": "ICT-7"
+    },
+    "ntp": {
+     "list": [
+      "0.openwrt.pool.ntp.org",
+      "1.openwrt.pool.ntp.org"
+     ]
+    }
+   }
+  ],
+  "data_repo.weboui.loginpwd_get": [
+   0,
+   {
+    "login": {
+     "username": "admin"
+    }
+   }
+  ],
+  "ssh.get": [
+   0,
+   {
+    "WANState": "0",
+    "LANState": "0",
+    "Password": ""
+   }
+  ],
+  "remote-gui.get": [
+   0,
+   {
+    "State": "0",
+    "Username": "assist",
+    "Password": ""
+   }
+  ]
+ },
+ "doc_lai_khop_quet_22_09": {
+  "data_repo.weboui.system_get": "cac7e3a5/197",
+  "data_repo.weboui.loginpwd_get": "2666e255/68",
+  "ssh.get": "701594bf/83",
+  "remote-gui.get": "da8dcdf0/85",
+  "ghi_chu": "FNV ca goi tin JSON-RPC; noi dung trung quet_doc_59_api.json"
+ },
+ "oui.ui.crypt": {
+  "co_che": "md5-crypt $1$ voi MUOI RONG, tat dinh (goi 2 lan cung ket qua)",
+  "mau": [
+   {
+    "gui": {
+     "data": "Abcdefgh!234"
+    },
+    "nhan": [
+     0,
+     {
+      "crypt": "$1$$FRurQi53/cpZJ57atMeRc1"
+     }
+    ]
+   },
+   {
+    "gui": {
+     "data": ""
+    },
+    "nhan": [
+     0,
+     {
+      "crypt": "$1$$qRPK7m23GJusamGpoGLby/"
+     }
+    ]
+   }
+  ]
+ },
+ "route_that": {
+  "system/system": "#/system/system",
+  "system/upgrade": "#/system/upgrade",
+  "system/wifitimer": "#/system/wifitimer",
+  "system/reboottimer": "#/system/reboottimer",
+  "system/management/changepwd": "#/system/changepwd",
+  "system/management/ssh": "#/system/ssh",
+  "system/management/remote": "#/system/remote"
+ }
+}

@@ -60,7 +60,7 @@
   var LAN = {
     ipaddr: "192.168.1.1",
     netmask: "255.255.255.0",
-    dhcp_enable: 0,
+    dhcp_enable: 1,
     dhcp_start: "192.168.1.2",
     dhcp_end: "192.168.1.254",
     dhcp_lease: 86400,
@@ -277,7 +277,15 @@
         sta: CLIENTS
       };
     },
-    "rtweb.dhcpserver.set": function () { return { result: "ok" }; },
+    "rtweb.dhcpserver.set": function (a) {
+      if (a) {
+        if (typeof a.dhcpmode !== "undefined") LAN.dhcp_enable = a.dhcpmode;
+        if (a.startip) LAN.dhcp_start = a.startip;
+        if (a.endip) LAN.dhcp_end = a.endip;
+        if (a.leasetime) LAN.dhcp_lease = a.leasetime;
+      }
+      return { result: "ok" };
+    },
 
     // wlanRadioGet: khong co band -> tra ca 2 radio (trang Device Info);
     // co band -> tra dung radio do lam radios[0] (trang WiFi 2.4G/5G).

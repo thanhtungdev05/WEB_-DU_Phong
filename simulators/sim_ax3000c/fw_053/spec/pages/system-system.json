@@ -1,0 +1,20 @@
+{
+ "trang": "System >> System",
+ "route": "#/system/system",
+ "view": "system/system",
+ "chunk_goc": "js/chunk-b9e44e90",
+ "doc": "data_repo.weboui.system_get + system.info (Local Time)",
+ "ghi": "system_set {system:{hostname,zonename,timezone}} | {ntp:{list}} -> [0,{status:true}]",
+ "ghi_chu": "Hostname chi HIEN THI (khong sua duoc tren giao dien). Apply gui timezone LAY TU BANG cua trang ('Asia/Ho Chi Minh' -> '<+07>-7'), khac 'ICT-7' goc may. Doi hostname (qua API) lan sang system.board, network.topology, uci system, tieu de tab.",
+ "giao_dien": "tab General 10/10 + tab NTP 6/6 + 2 the NTP trung toa do; chi lech dong Local Time (dong ho thiet bi that dang o 12/2025 vi khong co NTP)",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom7_system.json",
+  "reference/api/hop_dong_ghi_nhom7_system.json"
+ ],
+ "ghi_uci_nhom11": {
+  "tac_dong": "system_set -> system (hostname, zonename, timezone) + timeserver ntp list server",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

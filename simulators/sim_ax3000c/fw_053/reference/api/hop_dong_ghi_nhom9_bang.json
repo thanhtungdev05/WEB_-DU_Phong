@@ -1,0 +1,300 @@
+{
+ "nguon": "AX3000CV2 that, fw 0.5.3, do 2026-09-25 (anh Huynn cho phep) — goi API dung dang trang gui; da don sach (ca 2 bang rong)",
+ "khung": {},
+ "moi_lan_set_tra": [
+  0,
+  {
+   "status": true
+  }
+ ],
+ "parentctrl_set": {
+  "chuoi": [
+   {
+    "ten": "addA",
+    "gui": [
+     {
+      "name": "simA",
+      "mac": "d8:43:ae:2e:65:45",
+      "start": "01:00",
+      "stop": "01:01",
+      "weekdays": [
+       "Mon"
+      ],
+      "enabled": false,
+      "_idx": "",
+      "_method": "add"
+     }
+    ],
+    "doc_lai": [
+     {
+      "_idx": "1",
+      "mac": "d8:43:ae:2e:65:45",
+      "name": "simA",
+      "enabled": false,
+      "start": "01:00",
+      "stop": "01:01",
+      "weekdays": [
+       "Mon"
+      ]
+     }
+    ]
+   },
+   {
+    "ten": "addB",
+    "gui": [
+     {
+      "name": "simB",
+      "mac": "d8:43:ae:2e:65:45",
+      "start": "02:00",
+      "stop": "02:01",
+      "weekdays": [
+       "Tue"
+      ],
+      "enabled": false,
+      "_idx": "",
+      "_method": "add"
+     }
+    ],
+    "doc_lai": [
+     {
+      "_idx": "1",
+      "mac": "d8:43:ae:2e:65:45",
+      "name": "simA",
+      "enabled": false,
+      "start": "01:00",
+      "stop": "01:01",
+      "weekdays": [
+       "Mon"
+      ]
+     },
+     {
+      "_idx": "2",
+      "mac": "d8:43:ae:2e:65:45",
+      "name": "simB",
+      "enabled": false,
+      "start": "02:00",
+      "stop": "02:01",
+      "weekdays": [
+       "Tue"
+      ]
+     }
+    ]
+   },
+   {
+    "ten": "updA",
+    "gui": [
+     {
+      "_idx": "1",
+      "mac": "d8:43:ae:2e:65:45",
+      "name": "simA",
+      "enabled": false,
+      "start": "01:00",
+      "stop": "01:05",
+      "weekdays": [
+       "Mon"
+      ],
+      "_method": "update"
+     }
+    ],
+    "doc_lai": [
+     {
+      "_idx": "1",
+      "mac": "d8:43:ae:2e:65:45",
+      "name": "simA",
+      "enabled": false,
+      "start": "01:00",
+      "stop": "01:05",
+      "weekdays": [
+       "Mon"
+      ]
+     },
+     {
+      "_idx": "2",
+      "mac": "d8:43:ae:2e:65:45",
+      "name": "simB",
+      "enabled": false,
+      "start": "02:00",
+      "stop": "02:01",
+      "weekdays": [
+       "Tue"
+      ]
+     }
+    ]
+   },
+   {
+    "ten": "delA",
+    "gui": [
+     {
+      "_idx": "1",
+      "mac": "d8:43:ae:2e:65:45",
+      "name": "simA",
+      "enabled": false,
+      "start": "01:00",
+      "stop": "01:05",
+      "weekdays": [
+       "Mon"
+      ],
+      "_method": "del"
+     }
+    ],
+    "doc_lai": [
+     {
+      "_idx": "2",
+      "mac": "d8:43:ae:2e:65:45",
+      "name": "simB",
+      "enabled": false,
+      "start": "02:00",
+      "stop": "02:01",
+      "weekdays": [
+       "Tue"
+      ]
+     }
+    ]
+   },
+   {
+    "ten": "delB",
+    "gui": [
+     {
+      "_idx": "2",
+      "mac": "d8:43:ae:2e:65:45",
+      "name": "simB",
+      "enabled": false,
+      "start": "02:00",
+      "stop": "02:01",
+      "weekdays": [
+       "Tue"
+      ],
+      "_method": "del"
+     }
+    ],
+    "doc_lai": []
+   }
+  ],
+  "them_sau_khi_xoa": {
+   "mo_ta": "them A,B; xoa A; them C -> C='1' dung DAU; them D,E 1 lan -> 3,4",
+   "ket_qua": [
+    "simC=1,simB=2",
+    "simC=1,simB=2,simD=3,simE=4"
+   ]
+  },
+  "rut_ra": [
+   "_idx = so nho nhat con trong; danh sach xep theo so",
+   "update: gui ca dong + _method update, giu _idx"
+  ]
+ },
+ "dhcp_reservation_set": {
+  "chuoi": [
+   {
+    "ten": "addA",
+    "gui": [
+     {
+      "mac": "d8:43:ae:2e:65:45",
+      "ip": "192.168.100.109",
+      "_idx": "",
+      "_method": "add"
+     }
+    ],
+    "doc_lai": [
+     {
+      "_idx": "cfg04fe63",
+      "mac": "d8:43:ae:2e:65:45",
+      "ip": "192.168.100.109"
+     }
+    ]
+   },
+   {
+    "ten": "addB",
+    "gui": [
+     {
+      "mac": "02:00:00:00:00:01",
+      "ip": "192.168.100.120",
+      "_idx": "",
+      "_method": "add"
+     }
+    ],
+    "doc_lai": [
+     {
+      "_idx": "cfg04fe63",
+      "mac": "d8:43:ae:2e:65:45",
+      "ip": "192.168.100.109"
+     },
+     {
+      "_idx": "cfg05fe63",
+      "mac": "02:00:00:00:00:01",
+      "ip": "192.168.100.120"
+     }
+    ]
+   },
+   {
+    "ten": "updA",
+    "gui": [
+     {
+      "_idx": "cfg04fe63",
+      "mac": "d8:43:ae:2e:65:45",
+      "ip": "192.168.100.110",
+      "_method": "update"
+     }
+    ],
+    "doc_lai": [
+     {
+      "_idx": "cfg04fe63",
+      "mac": "d8:43:ae:2e:65:45",
+      "ip": "192.168.100.110"
+     },
+     {
+      "_idx": "cfg05fe63",
+      "mac": "02:00:00:00:00:01",
+      "ip": "192.168.100.120"
+     }
+    ]
+   },
+   {
+    "ten": "delA",
+    "gui": [
+     {
+      "_idx": "cfg04fe63",
+      "mac": "d8:43:ae:2e:65:45",
+      "ip": "192.168.100.110",
+      "_method": "del"
+     }
+    ],
+    "doc_lai": [
+     {
+      "_idx": "cfg04fe63",
+      "mac": "02:00:00:00:00:01",
+      "ip": "192.168.100.120"
+     }
+    ]
+   },
+   {
+    "ten": "addC",
+    "gui": [
+     {
+      "mac": "d8:43:ae:2e:65:45",
+      "ip": "192.168.100.111",
+      "_idx": "",
+      "_method": "add"
+     }
+    ],
+    "doc_lai": [
+     {
+      "_idx": "cfg04fe63",
+      "mac": "02:00:00:00:00:01",
+      "ip": "192.168.100.120"
+     },
+     {
+      "_idx": "cfg05fe63",
+      "mac": "d8:43:ae:2e:65:45",
+      "ip": "192.168.100.111"
+     }
+    ]
+   }
+  ],
+  "rut_ra": [
+   "_idx = 'cfg' + %02x(vi tri section trong goi dhcp, dong dau = 04) + %04x(djb('host')%65536 = fe63)",
+   "ten DANH LAI khi doc: xoa dong dau thi dong sau cfg05fe63 -> cfg04fe63",
+   "portfwd cfg303837 khop cung cong thuc: vi tri 0x30, djb('redirect')%65536 = 0x3837",
+   "CAM BAY da vap: xoa nhieu dong bang _idx cu trong NHIEU lan goi -> xoa nham/sot (ten da doi); trang that gui ca lo trong 1 lan"
+  ]
+ }
+}

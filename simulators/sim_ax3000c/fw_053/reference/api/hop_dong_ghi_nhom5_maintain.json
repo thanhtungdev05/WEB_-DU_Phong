@@ -1,0 +1,212 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25 CO SU DONG Y cua anh Huynn (System Log, Speed test, TCPDump, Tech Support Info)",
+ "cach_do": "Goi dung loi goi trang gui (doc tu ma chunk), khong tai tep nao ve may",
+ "speedtest": {
+  "set": {
+   "gui": [
+    "data_repo.weboui",
+    "speedtest_set",
+    {
+     "auto": false,
+     "schedule": "11:33",
+     "Mon": false,
+     "Tue": true,
+     "Wed": true,
+     "Thu": true,
+     "Fri": true,
+     "Sat": false,
+     "Sun": false
+    }
+   ],
+   "nhan": [
+    0
+   ],
+   "ms": 190,
+   "doc_lai": [
+    0,
+    {
+     "auto": false,
+     "schedule": "11:33",
+     "Mon": false,
+     "Tue": true,
+     "Wed": true,
+     "Thu": true,
+     "Fri": true,
+     "Sat": false,
+     "Sun": false,
+     "file": "/speedtest_res"
+    }
+   ],
+   "tra_ve": "schedule 11:32, doc lai trung goc"
+  },
+  "start": {
+   "gui": [
+    "speedtest",
+    "start",
+    {
+     "url": "http://example.invalid/test"
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "ms": 51
+  },
+  "running_sau_start": {
+   "res1_trong_ms": 5000,
+   "res1": [
+    0,
+    {
+     "sv": "",
+     "res": 1,
+     "dn": 0,
+     "up": 0
+    }
+   ],
+   "sau_do": [
+    0,
+    {
+     "up": "0.00",
+     "sv": "",
+     "res": 4,
+     "lat": 0,
+     "dn": "0.00"
+    }
+   ],
+   "ghi_chu": "res 4 KHONG co trong ma trang (chi 0-3); trang dung timer vi res!=1, khong hien chu trang thai. Sau lan chay thiet bi GIU res 4 (truoc do res 1)",
+   "do_lan_2_qua_trang": "bam Start tu trang (server 'example.invalid'): trang dem 5 lan hoi ~1 s moi het res 1 (lan do API truoc: ~2 s). Dao dong 2-5 s; chon 5 s — khop thoi gian cho DNS da do (ping ten mien 5,06 s)"
+  },
+  "history_sau_chay": [
+   0
+  ]
+ },
+ "tcpdump": {
+  "start": {
+   "gui": [
+    "data_repo.weboui",
+    "tcpdump_start",
+    {
+     "wanlanlist": "lan",
+     "packets_number": "10"
+    }
+   ],
+   "nhan": [
+    0
+   ],
+   "ms": 6288,
+   "ghi_chu": "tra ve khi bat du so goi"
+  },
+  "stop": {
+   "gui": [
+    "data_repo.weboui",
+    "tcpdump_stop",
+    {
+     "wanlanlist": "lan"
+    }
+   ],
+   "nhan": [
+    0
+   ]
+  },
+  "save": {
+   "gui": [
+    "data_repo.weboui",
+    "tcpdump_save",
+    {
+     "wanlanlist": "lan"
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "dumpfile": "/packet_lan.pcap"
+    }
+   ]
+  },
+  "tai_tep_sau_stop": "GET /packet_lan.pcap -> 404 '<h1>Not Found</h1>...' (trang goi tcpdump_stop ngay sau save)"
+ },
+ "techsupport": {
+  "truoc": [
+   0,
+   {
+    "status": 0,
+    "logfile": ""
+   }
+  ],
+  "collect": {
+   "gui": [
+    "data_repo.weboui",
+    "techsupportinfo_collect",
+    {}
+   ],
+   "nhan": [
+    0,
+    {
+     "status": 2001,
+     "logfile": ""
+    }
+   ],
+   "ms": 106
+  },
+  "get_dang_thu": [
+   0,
+   {
+    "status": 2001,
+    "logfile": ""
+   }
+  ],
+  "thoi_gian_thu_s": 30,
+  "get_xong": [
+   0,
+   {
+    "status": 0,
+    "logfile": "logpull-94F717240A91_FPTT24C1E15F_20251212_221904.en"
+   }
+  ],
+  "mau_ten": "logpull-<MAC khong dau hai cham>_<so seri>_<YYYYMMDD_HHMMSS gio thiet bi>.en",
+  "ghi_chu": "thiet bi GIU tep log sau khi thu (truoc do logfile rong) — khong co API xoa"
+ },
+ "systemlog": {
+  "set": {
+   "gui": [
+    "data_repo.weboui",
+    "systemlog_set",
+    {
+     "level": 4,
+     "server_state": "0",
+     "server": "",
+     "protocol": "",
+     "port": 0
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "ms": 57,
+   "ghi_chu": "gui DUNG gia tri 22/09 (khong doi muc log) vi systemlog_get hom nay treo -> khong doc lai duoc"
+  }
+ },
+ "http_404": {
+  "GET /khongco_xyz.txt": {
+   "status": 404,
+   "content_type": "text/html",
+   "than": "<h1>Not Found</h1>The requested URL /khongco_xyz.txt was not found on this server."
+  }
+ },
+ "rut_ra_chung": [
+  "speedtest_set tra [0] tron — KHAC upnpd/dmz/firewall/systemlog_set tra [0,{status:true}] -> quy tac chung 'moi data_repo *_set tra status:true' la SAI, phai theo tung ham",
+  "duong dan tinh khong ton tai -> 404 HTML cua uhttpd, KHONG phai trang SPA"
+ ],
+ "trang_thai_thiet_bi_sau_do": {
+  "speedtest": "lich 11:32 nhu goc; running giu res 4 (dau vet)",
+  "tcpdump": "da dung",
+  "techsupport": "con tep log logpull-...221904.en",
+  "systemlog": "khong doi (gui lai gia tri cu)"
+ }
+}

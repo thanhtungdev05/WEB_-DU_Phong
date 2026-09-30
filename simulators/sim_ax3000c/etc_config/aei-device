@@ -1,2 +1,0 @@
-config devices 'config'
-	option names 'ONT-AP-'

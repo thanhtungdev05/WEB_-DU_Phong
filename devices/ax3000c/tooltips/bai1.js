@@ -1,57 +1,37 @@
 /**
- * devices/ax3000c/tooltips/bai1.js — Tooltip Hướng dẫn cho Bài 1: Cấu hình PPPoE (AX3000C)
+ * devices/ax3000c/tooltips/bai1.js — Tooltip Hướng dẫn cho Bài 1: Cấu hình PPPoE (AX3000CV2, firmware 0.5.3)
+ * Trang Network >> WAN >> WAN (#/network/wan). Selector theo nhãn data-ftc-* (xem ftc_chung.js).
  */
 
 if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
 
-window.TOOLTIPS_AX3000C['LAB_AX3000CV2_01'] = [
-  // 1. Chọn Network ở Menu bên trái (chỉ hiện khi chưa ở trang WAN)
-  {
-    selector: 'li.el-submenu:not(.is-opened):contains("Network") .el-submenu__title',
-    text: 'Chọn Network',
-    position: 'right',
-    hideOnPage: 'wan'
-  },
-  // 2. Chọn WAN ở Menu bên trái cấp 1 (chỉ hiện khi chưa ở trang WAN)
-  {
-    selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu:not(.is-opened):contains("WAN") .el-submenu__title',
-    text: 'Chọn WAN',
-    position: 'right',
-    hideOnPage: 'wan'
-  },
-  // 3. Chọn WAN ở Submenu bên trái cấp 2 (chỉ hiện khi chưa ở trang WAN)
-  {
-    selector: 'li.el-submenu.is-opened:contains("Network") li.el-submenu.is-opened:contains("WAN") li.el-menu-item:contains("WAN")',
-    text: 'Chọn WAN',
-    position: 'right',
-    hideOnPage: 'wan'
-  },
-  // Bước 1: Chọn PPPOE (chỉ hiện khi đã vào trang WAN)
-  {
-    selector: 'select#ctype, select[name="proto"]',
-    text: 'Bước 1: Chọn PPPOE',
-    position: 'right',
-    page: 'wan'
-  },
-  // Bước 2: Nhập tên VD: sgfdl-123456-789 (chỉ hiện khi đã vào trang WAN)
-  {
-    selector: '.grp[data-t="PPPoE"] input[type="text"], input[name="username"], #username',
-    text: 'Bước 2: nhập tên VD: sgfdl-123456-789',
-    position: 'right',
-    page: 'wan'
-  },
-  // Bước 3: Nhập mật khẩu VD: d123456 (chỉ hiện khi đã vào trang WAN)
-  {
-    selector: '#pppw, .grp[data-t="PPPoE"] input[type="password"], input[name="password"]',
-    text: 'Bước 3: Nhập mật khẩu VD: d123456',
-    position: 'right',
-    page: 'wan'
-  },
-  // Bước 4: Chọn SAVE (chỉ hiện khi đã vào trang WAN)
-  {
-    selector: 'button.apply, button.btn.apply, button[onclick*="save"], input[type="submit"], #save, .btn-save',
-    text: 'Bước 4: Chọn SAVE',
-    position: 'right',
-    page: 'wan'
-  }
-];
+(function (F) {
+  window.TOOLTIPS_AX3000C['LAB_AX3000CV2_01'] = F.menu('WAN', 'WAN', 'network/wan').concat([
+    // Bước 1: Chọn PPPOE ở ô Connection Type (chỉ hiện khi đã vào trang WAN)
+    {
+      selector: F.o('Connection Type'),
+      text: 'Bước 1: Chọn PPPOE',
+      position: 'right',
+      page: 'network/wan'
+    },
+    {
+      selector: F.o('PPP Username'),
+      text: 'Bước 2: nhập tên VD: sgfdl-123456-789',
+      position: 'right',
+      page: 'network/wan'
+    },
+    {
+      selector: F.o('PPP Password'),
+      text: 'Bước 3: Nhập mật khẩu VD: d123456',
+      position: 'right',
+      page: 'network/wan'
+    },
+    // Firmware 0.5.3 dùng nút Apply (bản cũ ghi "SAVE")
+    {
+      selector: F.nut('Apply'),
+      text: 'Bước 4: Chọn Apply',
+      position: 'left',
+      page: 'network/wan'
+    }
+  ]);
+})(window.FTC_AX3000C);

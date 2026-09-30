@@ -1,0 +1,21 @@
+{
+ "trang": "Network >> Maintain >> Diagnostics",
+ "route": "#/network/diagnostics",
+ "view": "network/diagnostics",
+ "chunk_goc": "js/chunk-a30460e6",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom5_maintain.json",
+  "reference/api/hop_dong_ghi_nhom5_maintain.json"
+ ],
+ "doc_du_lieu": "khi mo: do 5 cong cu voi name '?' — thiet bi tra TUAN TU moi ~5 s",
+ "hanh_dong": {
+  "selftest": "{ping_ip_enable:'0'} -> eth_lan_conn 0 / ping_ip 2 / ping_dhcp_pridns 2 / ping_google 1 (~5 s)",
+  "ping": "phat lai that: 192.168.100.1/.109, openwrt.org (bad address), 8.8.8.8 (unreachable); ten mien khac -> bad address; IP ngoai LAN -> unreachable; con lai CHUA DO -> loi"
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 6 cong cu, ket qua ping 11 dong dung dinh dang",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat (Z3-Z9)",
+  "4_trang_thai": "khong co truong ghi"
+ }
+}

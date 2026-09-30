@@ -1,0 +1,78 @@
+{
+ "nguon": "DOM THAT do tren 192.168.100.1, fw 0.5.3, 2026-09-24, khung nhin 1536x695",
+ "cach_do": "moi .el-form-item: nhan / gia tri (radio doc .is-checked; o nhieu input noi bang '/') / an-hien + getBoundingClientRect",
+ "network/lan": [
+  [
+   "Router LAN IPv4 Address",
+   "192.168.100.1",
+   "hien@126,178,700,41"
+  ],
+  [
+   "Subnet mask",
+   "255.255.255.0",
+   "hien@126,240,700,41"
+  ],
+  [
+   "DHCP start address",
+   "192.168.100.2",
+   "hien@126,303,700,41"
+  ],
+  [
+   "DHCP end address",
+   "192.168.100.249",
+   "hien@126,366,700,41"
+  ],
+  [
+   "Leasetime",
+   "0/12/0",
+   "hien@126,429,700,120"
+  ],
+  [
+   "Define custom servers",
+   "radio:Disable",
+   "hien@126,571,700,40"
+  ],
+  [
+   "DNS Server 1",
+   "",
+   "AN"
+  ],
+  [
+   "DNS Server 2",
+   "",
+   "AN"
+  ]
+ ],
+ "network/dhcp": {
+  "tieu_de_cot": [
+   "Device/MAC",
+   "Device/IP"
+  ],
+  "so_dong": 0,
+  "chu_rong": "No Data",
+  "nut": [
+   "Add",
+   "Apply",
+   "Undo"
+  ],
+  "bang": [
+   126,
+   178,
+   1353,
+   108
+  ],
+  "sau_khi_bam_Add": {
+   "so_dong": 1,
+   "bang": [
+    126,
+    178,
+    1353,
+    113
+   ],
+   "lua_chon_Device_MAC": [
+    "Admin-PC (d8:43:ae:2e:65:45)"
+   ],
+   "ghi_chu": "Da bam Undo tra ve 0 dong, KHONG bam Apply."
+  }
+ }
+}

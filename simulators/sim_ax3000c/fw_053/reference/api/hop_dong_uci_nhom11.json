@@ -1,0 +1,5401 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25 (nhom 11) — anh Huynn cho phep: moi loai ghi mot lan roi TRA VE",
+ "khung": {},
+ "cach_do": "Trong tab da dang nhap: chup tep Backup (POST /cgi-bin/cgi-backup, giai nen trong trang) TRUOC va SAU moi buoc, so tung dong moi tep etc/config/* + etc/crontabs/root (LCS). diff_that = dong them (+) / bot (-) kem so dong va section; bo qua thay doi chi mtime, tep nhay cam (shadow/passwd/khoa), cron.update (tam thoi). fnv_diff_that = FNV-1a 32 bit cua JSON diff tinh TRONG TRANG THIET BI. 108/109 diff_that duoc chung minh TRUNG TUNG BYTE voi ban gia lap phat lai (cung FNV); sl_doi ghep them phan vendor_log_file doc tu thiet bi, FNV kiem lai trung. nhan = goi tra loi; TRUNG FNV goi tra loi cua thiet bi (fnv_nhan_that) cho 108/109 (adv_A_tv: trang mat ket noi luc chup nen thiet bi khong co ban ghi).",
+ "trang_thai_dau_fnv": {
+  "aei-device": "49830388",
+  "aei-failsafe": "9ec16665",
+  "aei-monitor": "a137ce35",
+  "aei-network": "2bf53ee8",
+  "aeiMQTT": "683f21f0",
+  "aeiRebootTimer": "74b54d63",
+  "aeiWiFiTimer": "1c3eb58e",
+  "aeidebug": "148f7d4f",
+  "aeifirmware": "fb513bf2",
+  "aeilogpull": "7208a5d2",
+  "alg": "2ea807e6",
+  "autorole": "26522b12",
+  "bulkdata": "91e8b5d0",
+  "cnss_diag": "d8d8b6f2",
+  "collectd": "1bc576ff",
+  "crash_dump": "31cf00a5",
+  "data_repository": "7885d74f",
+  "ddns": "35677f91",
+  "default_network": "cc04eddf",
+  "dhcp": "67496700",
+  "dhcrelay": "384ee28c",
+  "dmmap": "bd3e6cb9",
+  "dropbear": "80496af4",
+  "easycwmp": "2e7c18f9",
+  "ecm": "0513319a",
+  "ezlbd": "110e7b2b",
+  "ezmesh": "3265c6a6",
+  "firewall": "0031011d",
+  "ipsec": "cb38448d",
+  "lldpd": "32175231",
+  "lxc-auto": "3e42f019",
+  "macsec": "c8a1748b",
+  "mcproxy": "76769921",
+  "mcsd": "bc785987",
+  "mesh_app": "30dc0a03",
+  "network": "6a7a37a2",
+  "nss": "4616b4d7",
+  "openssl": "811c9dc5",
+  "openvpn": "ff666df5",
+  "optim-launcher": "6cca5b7f",
+  "oui": "468b04de",
+  "oui-bwm": "f296a0e0",
+  "pppoe": "1ced2e9b",
+  "qcacfg80211": "eddde550",
+  "repacd": "f855baf9",
+  "rpcd": "208442ab",
+  "rstp": "ced63355",
+  "rtty": "ee4211e1",
+  "skb_recycler": "557a8e04",
+  "speedtest": "3f2d054f",
+  "ssid-steering": "587d1dc5",
+  "sysstat": "946cebf1",
+  "system": "6e8ca150",
+  "thermal": "c2f15dad",
+  "thermal_sensor": "ad13c82c",
+  "tr069_stun": "baa218cf",
+  "tr069_udp": "004d4ce3",
+  "tr069_udpecho_client": "5ed9921b",
+  "ubootenv": "811c9dc5",
+  "uhttpd": "adb50d53",
+  "upnpd": "3235b42b",
+  "vendor_log_file": "93211506",
+  "wireless": "71c7b61b",
+  "wsplcd": "ce063abe",
+  "etc/crontabs/root": "30f4e395"
+ },
+ "trang_thai_cuoi_fnv": {
+  "aei-device": "49830388",
+  "aei-failsafe": "9ec16665",
+  "aei-monitor": "a137ce35",
+  "aei-network": "2bf53ee8",
+  "aeiMQTT": "683f21f0",
+  "aeiRebootTimer": "74b54d63",
+  "aeiWiFiTimer": "1c3eb58e",
+  "aeidebug": "148f7d4f",
+  "aeifirmware": "fb513bf2",
+  "aeilogpull": "7208a5d2",
+  "alg": "b20dc716",
+  "autorole": "26522b12",
+  "bulkdata": "91e8b5d0",
+  "cnss_diag": "d8d8b6f2",
+  "collectd": "1bc576ff",
+  "crash_dump": "31cf00a5",
+  "data_repository": "7885d74f",
+  "ddns": "35677f91",
+  "default_network": "cc04eddf",
+  "dhcp": "758fe574",
+  "dhcrelay": "384ee28c",
+  "dmmap": "bd3e6cb9",
+  "dropbear": "80496af4",
+  "easycwmp": "2e7c18f9",
+  "ecm": "0513319a",
+  "ezlbd": "110e7b2b",
+  "ezmesh": "18730e06",
+  "firewall": "60d65025",
+  "ipsec": "cb38448d",
+  "lldpd": "32175231",
+  "lxc-auto": "3e42f019",
+  "macsec": "c8a1748b",
+  "mcproxy": "76769921",
+  "mcsd": "bc785987",
+  "mesh_app": "30dc0a03",
+  "network": "ae14d84e",
+  "nss": "4616b4d7",
+  "openssl": "811c9dc5",
+  "openvpn": "ff666df5",
+  "optim-launcher": "6cca5b7f",
+  "oui": "468b04de",
+  "oui-bwm": "f296a0e0",
+  "pppoe": "1ced2e9b",
+  "qcacfg80211": "eddde550",
+  "repacd": "085b27af",
+  "rpcd": "208442ab",
+  "rstp": "ced63355",
+  "rtty": "ee4211e1",
+  "skb_recycler": "557a8e04",
+  "speedtest": "571be727",
+  "ssid-steering": "587d1dc5",
+  "sysstat": "946cebf1",
+  "system": "3229ffa0",
+  "thermal": "c2f15dad",
+  "thermal_sensor": "ad13c82c",
+  "tr069_stun": "baa218cf",
+  "tr069_udp": "004d4ce3",
+  "tr069_udpecho_client": "5ed9921b",
+  "ubootenv": "811c9dc5",
+  "uhttpd": "adb50d53",
+  "upnpd": "3235b42b",
+  "vendor_log_file": "4ecca539",
+  "wireless": "7fb29ede",
+  "wsplcd": "53918456",
+  "etc/crontabs/root": "30f4e395"
+ },
+ "chuoi_do": {
+  "khong_lam_gi": {
+   "buoc": [],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [],
+   "fnv_nhan_that": "741638a5"
+  },
+  "upnp_tat": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "upnpd_set",
+     {
+      "config": {
+       "enabled": false
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "5b1a8426",
+   "diff_that": {
+    "upnpd": [
+     "@config upnpd 'config'",
+     "+15 o enabled '0'",
+     "-15 o enabled '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "upnp_bat": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "upnpd_set",
+     {
+      "config": {
+       "enabled": true
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "b62ddffe",
+   "diff_that": {
+    "upnpd": [
+     "@config upnpd 'config'",
+     "+15 o enabled '1'",
+     "-15 o enabled '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "dmz_bat": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": true,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "29a929b0",
+   "diff_that": {
+    "firewall": [
+     "@config redirect 'dmz_v4'",
+     "+412 o enabled '1'",
+     "-412 o enabled '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "dmz_tat": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": false,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "8257926e",
+   "diff_that": {
+    "firewall": [
+     "@config redirect 'dmz_v4'",
+     "+412 o enabled '0'",
+     "-412 o enabled '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "alg_tftp_tat": {
+   "buoc": [
+    [
+     "alg",
+     "set",
+     {
+      "ftp": "1",
+      "tftp": false,
+      "sip": "1",
+      "h323": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_diff_that": "febf9100",
+   "diff_that": {
+    "alg": [
+     "@config alg 'config'",
+     "+8 o tftp '0'",
+     "-8 o tftp '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "sip": "1",
+      "tftp": "0",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "7af78a0f"
+  },
+  "alg_tftp_bat": {
+   "buoc": [
+    [
+     "alg",
+     "set",
+     {
+      "ftp": "1",
+      "tftp": true,
+      "sip": "1",
+      "h323": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_diff_that": "ef2aa5f0",
+   "diff_that": {
+    "alg": [
+     "@config alg 'config'",
+     "+8 o tftp '1'",
+     "-8 o tftp '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "sip": "1",
+      "tftp": "1",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "1085c4f4"
+  },
+  "dmz_ip_110": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": false,
+       "dest_ip": "192.168.100.110"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "ce046000",
+   "diff_that": {
+    "firewall": [
+     "@config redirect 'dmz_v4'",
+     "-411 o dest_ip '192.168.100.109'",
+     "+412 o dest_ip '192.168.100.110'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "dmz_ip_109": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": false,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "141b2f99",
+   "diff_that": {
+    "firewall": [
+     "@config redirect 'dmz_v4'",
+     "+412 o dest_ip '192.168.100.109'",
+     "-412 o dest_ip '192.168.100.110'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "alg_ftp_tat": {
+   "buoc": [
+    [
+     "alg",
+     "set",
+     {
+      "ftp": false,
+      "tftp": "1",
+      "sip": "1",
+      "h323": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_diff_that": "c1d54842",
+   "diff_that": {
+    "alg": [
+     "@config alg 'config'",
+     "-4 o ftp '1'",
+     "+8 o ftp '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "sip": "1",
+      "tftp": "1",
+      "h323": "1",
+      "ftp": "0",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d69dd821"
+  },
+  "alg_ftp_bat": {
+   "buoc": [
+    [
+     "alg",
+     "set",
+     {
+      "ftp": true,
+      "tftp": "1",
+      "sip": "1",
+      "h323": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_diff_that": "91abe8de",
+   "diff_that": {
+    "alg": [
+     "@config alg 'config'",
+     "+8 o ftp '1'",
+     "-8 o ftp '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "sip": "1",
+      "tftp": "1",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "1085c4f4"
+  },
+  "alg_l2tp_tat": {
+   "buoc": [
+    [
+     "alg",
+     "set",
+     {
+      "ftp": "1",
+      "tftp": "1",
+      "sip": "1",
+      "h323": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": false,
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_diff_that": "9f8c8e1d",
+   "diff_that": {
+    "firewall": [
+     "@config include 'alg'",
+     "-115 o l2tp '1'",
+     "+116 o l2tp '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "sip": "1",
+      "tftp": "1",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "0",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "dd3c98fb"
+  },
+  "alg_l2tp_bat": {
+   "buoc": [
+    [
+     "alg",
+     "set",
+     {
+      "ftp": "1",
+      "tftp": "1",
+      "sip": "1",
+      "h323": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": true,
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_diff_that": "b54f123c",
+   "diff_that": {
+    "firewall": [
+     "@config include 'alg'",
+     "+116 o l2tp '1'",
+     "-116 o l2tp '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "sip": "1",
+      "tftp": "1",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "1085c4f4"
+  },
+  "dmz_ca_hai": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": true,
+       "dest_ip": "192.168.100.110"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "9a319a0c",
+   "diff_that": {
+    "firewall": [
+     "@config redirect 'dmz_v4'",
+     "+411 o enabled '1'",
+     "+412 o dest_ip '192.168.100.110'",
+     "-411 o enabled '0'",
+     "-412 o dest_ip '192.168.100.109'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "dmz_tra_ve": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": false,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "3cdb31b4",
+   "diff_that": {
+    "firewall": [
+     "@config redirect 'dmz_v4'",
+     "+411 o enabled '0'",
+     "+412 o dest_ip '192.168.100.109'",
+     "-411 o enabled '1'",
+     "-412 o dest_ip '192.168.100.110'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw_A": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": false,
+      "client_isolation": true,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 26,
+      "syn_timeout": 51,
+      "udp_defense": true,
+      "udp_threshold": 151,
+      "udp_timeout": 11,
+      "icmp_defense": true,
+      "icmp_threshold": 101,
+      "icmp_timeout": 6,
+      "port_detection": true,
+      "port_threshold": 151,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "74991b31",
+   "diff_that": {
+    "firewall": [
+     "@config rule",
+     "+41 o target 'REJECT'",
+     "-41 o target 'ACCEPT'",
+     "+129 o target 'REJECT'",
+     "-129 o target 'ACCEPT'",
+     "@config include 'ddos'",
+     "-319 o client_isolation '0'",
+     "-322 o tcpsynflood_rate '25'",
+     "-323 o tcpsynflood_timeout '50'",
+     "-324 o udpflood_detect '0'",
+     "-325 o udpflood_rate '150'",
+     "-326 o udpflood_timeout '10'",
+     "-328 o icmpflood_rate '100'",
+     "-329 o icmpflood_timeout '5'",
+     "-330 o portscan_detect '0'",
+     "-331 o portscan_rate '150'",
+     "+333 o client_isolation '1'",
+     "+334 o tcpsynflood_rate '26'",
+     "+335 o tcpsynflood_timeout '51'",
+     "+336 o udpflood_detect '1'",
+     "+337 o udpflood_rate '151'",
+     "+338 o udpflood_timeout '11'",
+     "+339 o icmpflood_rate '101'",
+     "+340 o icmpflood_timeout '6'",
+     "+341 o portscan_detect '1'",
+     "+342 o portscan_rate '151'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw_A_tra_ve": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "5077e8ee",
+   "diff_that": {
+    "firewall": [
+     "@config rule",
+     "+41 o target 'ACCEPT'",
+     "-41 o target 'REJECT'",
+     "+129 o target 'ACCEPT'",
+     "-129 o target 'REJECT'",
+     "@config include 'ddos'",
+     "-333 o client_isolation '1'",
+     "-334 o tcpsynflood_rate '26'",
+     "-335 o tcpsynflood_timeout '51'",
+     "-336 o udpflood_detect '1'",
+     "-339 o icmpflood_rate '101'",
+     "-340 o icmpflood_timeout '6'",
+     "-341 o portscan_detect '1'",
+     "+336 o client_isolation '0'",
+     "+337 o tcpsynflood_rate '25'",
+     "+338 o tcpsynflood_timeout '50'",
+     "+339 o udpflood_detect '0'",
+     "+340 o icmpflood_rate '100'",
+     "+341 o icmpflood_timeout '5'",
+     "+342 o portscan_detect '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw_B": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": false,
+      "syn_defense": false,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": false,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": true,
+      "block_tcp": false,
+      "block_land": true,
+      "block_teardrop": true,
+      "block_smurf": true,
+      "block_ping": true,
+      "block_traceroute": true,
+      "block_icmp": true,
+      "block_syn": true,
+      "block_unknownprotocol": false,
+      "block_fraggleattack": true
+     }
+    ]
+   ],
+   "fnv_diff_that": "457a8bbf",
+   "diff_that": {
+    "firewall": [
+     "@config defaults",
+     "-6 o forward 'REJECT'",
+     "+8 o forward 'ACCEPT'",
+     "@config zone",
+     "-23 o input 'REJECT'",
+     "+28 o input 'ACCEPT'",
+     "@config include 'ddos'",
+     "-319 o en_ddos '1'",
+     "+342 o en_ddos '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw_B_tra_ve": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "93f62ce0",
+   "diff_that": {
+    "firewall": [
+     "@config defaults",
+     "+8 o forward 'REJECT'",
+     "-8 o forward 'ACCEPT'",
+     "@config zone",
+     "+28 o input 'REJECT'",
+     "-28 o input 'ACCEPT'",
+     "@config include 'ddos'",
+     "+342 o en_ddos '1'",
+     "-342 o en_ddos '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw_sua_rate_1": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": true,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": true,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "4d0c70a0",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-332 o udpflood_rate '151'",
+     "-333 o udpflood_timeout '11'",
+     "-334 o portscan_rate '151'",
+     "-338 o udpflood_detect '0'",
+     "-341 o portscan_detect '0'",
+     "+338 o udpflood_detect '1'",
+     "+339 o udpflood_rate '150'",
+     "+340 o udpflood_timeout '10'",
+     "+341 o portscan_detect '1'",
+     "+342 o portscan_rate '150'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw_sua_rate_2": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "57ce4804",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-338 o udpflood_detect '1'",
+     "-341 o portscan_detect '1'",
+     "+341 o udpflood_detect '0'",
+     "+342 o portscan_detect '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_dos_defense": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": false,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "dd16927e",
+   "diff_that": {
+    "firewall": [
+     "@config defaults",
+     "+8 o forward 'ACCEPT'",
+     "-8 o forward 'REJECT'",
+     "@config zone",
+     "+28 o input 'ACCEPT'",
+     "-28 o input 'REJECT'",
+     "@config include 'ddos'",
+     "-337 o en_ddos '1'",
+     "+342 o en_ddos '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_dos_defense_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "93f62ce0",
+   "diff_that": {
+    "firewall": [
+     "@config defaults",
+     "+8 o forward 'REJECT'",
+     "-8 o forward 'ACCEPT'",
+     "@config zone",
+     "+28 o input 'REJECT'",
+     "-28 o input 'ACCEPT'",
+     "@config include 'ddos'",
+     "+342 o en_ddos '1'",
+     "-342 o en_ddos '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_syn_defense": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": false,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "26173ac0",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-319 o tcpsynflood_detect '1'",
+     "+342 o tcpsynflood_detect '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_syn_defense_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "afcdd7bc",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o tcpsynflood_detect '1'",
+     "-342 o tcpsynflood_detect '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_icmp_defense": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": false,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "db938a00",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-319 o icmpflood_detect '1'",
+     "+342 o icmpflood_detect '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_icmp_defense_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "c56dadc8",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o icmpflood_detect '1'",
+     "-342 o icmpflood_detect '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_spi_firewall": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": false,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "aed89b5b",
+   "diff_that": {
+    "firewall": [
+     "@config defaults",
+     "+8 o forward 'ACCEPT'",
+     "-8 o forward 'REJECT'",
+     "@config zone",
+     "+28 o input 'ACCEPT'",
+     "-28 o input 'REJECT'",
+     "@config include 'ddos'",
+     "-318 o en_spi '1'",
+     "-340 o en_ddos '1'",
+     "+341 o en_spi '0'",
+     "+342 o en_ddos '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_spi_firewall_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "06e77055",
+   "diff_that": {
+    "firewall": [
+     "@config defaults",
+     "+8 o forward 'REJECT'",
+     "-8 o forward 'ACCEPT'",
+     "@config zone",
+     "+28 o input 'REJECT'",
+     "-28 o input 'ACCEPT'",
+     "@config include 'ddos'",
+     "+341 o en_spi '1'",
+     "+342 o en_ddos '1'",
+     "-341 o en_spi '0'",
+     "-342 o en_ddos '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_res_pings_from_lan": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": false,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "1a148747",
+   "diff_that": {
+    "firewall": [
+     "@config rule 'Allow_LAN_Ping'",
+     "+304 o target 'REJECT'",
+     "-304 o target 'ACCEPT'",
+     "@config rule 'Allow_IPv6_LAN_Ping'",
+     "+312 o target 'REJECT'",
+     "-312 o target 'ACCEPT'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_res_pings_from_lan_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "4f483c47",
+   "diff_that": {
+    "firewall": [
+     "@config rule 'Allow_LAN_Ping'",
+     "+304 o target 'ACCEPT'",
+     "-304 o target 'REJECT'",
+     "@config rule 'Allow_IPv6_LAN_Ping'",
+     "+312 o target 'ACCEPT'",
+     "-312 o target 'REJECT'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_ip": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": true,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "d7236067",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-318 o block_ip '0'",
+     "+342 o block_ip '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_ip_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "2592bed0",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_ip '0'",
+     "-342 o block_ip '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_tcp": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": false,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "638b2fc5",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-323 o block_tcpflag_scan '1'",
+     "+342 o block_tcpflag_scan '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_tcp_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "b7c93eec",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_tcpflag_scan '1'",
+     "-342 o block_tcpflag_scan '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_land": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": true,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "e5b2081f",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-318 o block_land '0'",
+     "+342 o block_land '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_land_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "2730f734",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_land '0'",
+     "-342 o block_land '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_teardrop": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": true,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "4f6e1bce",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-322 o block_teardrop '0'",
+     "+342 o block_teardrop '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_teardrop_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "86d721dc",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_teardrop '0'",
+     "-342 o block_teardrop '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_smurf": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": true,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "b87835ef",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-318 o block_smurf '0'",
+     "+342 o block_smurf '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_smurf_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "d2b14fbc",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_smurf '0'",
+     "-342 o block_smurf '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_ping": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": true,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "d09915ed",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-321 o block_pingdeath '0'",
+     "+342 o block_pingdeath '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_ping_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "989d9c2a",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_pingdeath '0'",
+     "-342 o block_pingdeath '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_traceroute": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": true,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "aa95a56f",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-318 o block_tracert '0'",
+     "+342 o block_tracert '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_traceroute_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "5d073bec",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_tracert '0'",
+     "-342 o block_tracert '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_icmp": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": true,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "53fdf1b8",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-320 o block_icmpfrag '0'",
+     "+342 o block_icmpfrag '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_icmp_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "9750ccc8",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_icmpfrag '0'",
+     "-342 o block_icmpfrag '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_syn": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": true,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "fed70961",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-318 o block_synfrag '0'",
+     "+342 o block_synfrag '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_syn_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "c666bf4e",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_synfrag '0'",
+     "-342 o block_synfrag '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_unknownprotocol": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": false,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "3069b6be",
+   "diff_that": {
+    "firewall": [
+     "@config defaults",
+     "+8 o forward 'ACCEPT'",
+     "-8 o forward 'REJECT'",
+     "@config zone",
+     "+28 o input 'ACCEPT'",
+     "-28 o input 'REJECT'",
+     "@config include 'ddos'",
+     "-319 o block_unknownproto '1'",
+     "+342 o block_unknownproto '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_unknownprotocol_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "5ef11fb4",
+   "diff_that": {
+    "firewall": [
+     "@config defaults",
+     "+8 o forward 'REJECT'",
+     "-8 o forward 'ACCEPT'",
+     "@config zone",
+     "+28 o input 'REJECT'",
+     "-28 o input 'ACCEPT'",
+     "@config include 'ddos'",
+     "+342 o block_unknownproto '1'",
+     "-342 o block_unknownproto '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_fraggleattack": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": true
+     }
+    ]
+   ],
+   "fnv_diff_that": "03f09a01",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "-318 o block_fraggle '0'",
+     "+342 o block_fraggle '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "fw1_block_fraggleattack_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "67e19cc6",
+   "diff_that": {
+    "firewall": [
+     "@config include 'ddos'",
+     "+342 o block_fraggle '0'",
+     "-342 o block_fraggle '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wifi_host0": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifi_set",
+     {
+      "host": {
+       "2G": {
+        "disabled": false,
+        "vap_diff_mode": false,
+        "ssid": "FPT-LAB2-TEST",
+        "encryption": "psk2+ccmp",
+        "sae": "0",
+        "key": "labtest123"
+       },
+       "5G": {
+        "disabled": false,
+        "key": "labtest123",
+        "ssid": "FPT-LAB2-TEST",
+        "encryption": "psk2+ccmp",
+        "sae": "0"
+       },
+       "6G": {
+        "disabled": false,
+        "key": "labtest123",
+        "ssid": "FPT-LAB2-TEST",
+        "encryption": "psk2+ccmp",
+        "sae": "0"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "2f33d432",
+   "diff_that": {
+    "wireless": [
+     "@config wifi-iface",
+     "-90 o ssid 'FPT Telecom-0A91'",
+     "-91 o key '24c1e15f'",
+     "+107 o vap_diff_mode '0'",
+     "+108 o ssid 'FPT-LAB2-TEST'",
+     "+109 o key 'labtest123'",
+     "-133 o ssid 'FPT Telecom-0A91'",
+     "-134 o key '24c1e15f'",
+     "+151 o ssid 'FPT-LAB2-TEST'",
+     "+152 o key 'labtest123'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wifi_host1": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifi_set",
+     {
+      "host": {
+       "2G": {
+        "disabled": false,
+        "vap_diff_mode": false,
+        "ssid": "FPT Telecom-0A91",
+        "encryption": "psk2+ccmp",
+        "sae": "0",
+        "key": "24c1e15f"
+       },
+       "5G": {
+        "disabled": false,
+        "key": "24c1e15f",
+        "ssid": "FPT Telecom-0A91",
+        "encryption": "psk2+ccmp",
+        "sae": "0"
+       },
+       "6G": {
+        "disabled": false,
+        "key": "24c1e15f",
+        "ssid": "FPT Telecom-0A91",
+        "encryption": "psk2+ccmp",
+        "sae": "0"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "23c5fdf7",
+   "diff_that": {
+    "wireless": [
+     "@config wifi-iface",
+     "+108 o ssid 'FPT Telecom-0A91'",
+     "+109 o key '24c1e15f'",
+     "-108 o ssid 'FPT-LAB2-TEST'",
+     "-109 o key 'labtest123'",
+     "+151 o ssid 'FPT Telecom-0A91'",
+     "+152 o key '24c1e15f'",
+     "-151 o ssid 'FPT-LAB2-TEST'",
+     "-152 o key 'labtest123'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wifi_spec0": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifi_set",
+     {
+      "specific": {
+       "2G": {
+        "disabled": false,
+        "vap_diff_mode": "1",
+        "ssid": "FPT Telecom-0A91-IOT",
+        "encryption": "psk2+ccmp",
+        "sae": "0",
+        "key": "24c1e15f"
+       },
+       "5G": {
+        "disabled": false,
+        "key": "24c1e15f",
+        "ssid": "FPT Telecom-0A91-IOT",
+        "vap_diff_mode": "1",
+        "encryption": "psk2+ccmp",
+        "sae": "0"
+       },
+       "6G": {
+        "disabled": false,
+        "key": "24c1e15f",
+        "ssid": "FPT Telecom-0A91-IOT",
+        "vap_diff_mode": "1",
+        "encryption": "psk2+ccmp",
+        "sae": "0"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "38dc0db0",
+   "diff_that": {
+    "wireless": [
+     "@config wifi-iface 'specific2'",
+     "-399 o disabled '1'",
+     "+411 o disabled '0'",
+     "@config wifi-iface 'specific5'",
+     "-428 o disabled '1'",
+     "+441 o disabled '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wifi_spec1": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifi_set",
+     {
+      "specific": {
+       "2G": {
+        "disabled": true
+       },
+       "5G": {
+        "disabled": true
+       },
+       "6G": {
+        "disabled": true
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "bd2edc5e",
+   "diff_that": {
+    "wireless": [
+     "@config wifi-iface 'specific2'",
+     "+411 o disabled '1'",
+     "-411 o disabled '0'",
+     "@config wifi-iface 'specific5'",
+     "+441 o disabled '1'",
+     "-441 o disabled '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wifi_guest0": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifi_set",
+     {
+      "guest": {
+       "2G": {
+        "disabled": false,
+        "vap_diff_mode": false,
+        "ssid": "OpenWRT-2G.guest",
+        "encryption": "psk2+ccmp",
+        "sae": 0,
+        "key": "1234567890"
+       },
+       "5G": {
+        "disabled": false,
+        "vap_diff_mode": false,
+        "ssid": "OpenWRT-5G.guest",
+        "encryption": "psk2+ccmp",
+        "sae": 0,
+        "key": "1234567890"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "bcc81c01",
+   "diff_that": {
+    "wireless": [
+     "@config wifi-iface",
+     "-158 o disabled '1'",
+     "+183 o disabled '0'",
+     "+184 o vap_diff_mode '0'",
+     "-187 o disabled '1'",
+     "+215 o disabled '0'",
+     "+216 o vap_diff_mode '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wifi_guest1": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifi_set",
+     {
+      "guest": {
+       "2G": {
+        "disabled": true,
+        "vap_diff_mode": false
+       },
+       "5G": {
+        "disabled": true,
+        "vap_diff_mode": false
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "c485c52b",
+   "diff_that": {
+    "wireless": [
+     "@config wifi-iface",
+     "-183 o disabled '0'",
+     "+184 o disabled '1'",
+     "-215 o disabled '0'",
+     "+216 o disabled '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "adv_A": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifiadv_set",
+     {
+      "adv": {
+       "2G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axg",
+        "htmode": "HT40",
+        "channel": "6",
+        "beamforming": false,
+        "mu_mimo": true,
+        "wmm": true,
+        "intercal_beacon": 200,
+        "rts": 2346,
+        "intercal_dtim": 2
+       },
+       "5G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axa",
+        "htmode": "HT160",
+        "channel": "36",
+        "beamforming": false,
+        "mu_mimo": true,
+        "wmm": false,
+        "intercal_beacon": 300,
+        "rts": 2345,
+        "intercal_dtim": 3
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "c6f19e2d",
+   "diff_that": {
+    "wireless": [
+     "@config wifi-device 'wifi0'",
+     "-8 o htmode 'HT20'",
+     "-9 o channel 'auto'",
+     "-10 o acs_bkscanen '1'",
+     "-15 o dtim_period '1'",
+     "-16 o rts '2347'",
+     "+18 o htmode 'HT40'",
+     "+19 o channel '6'",
+     "+20 o acs_bkscanen '0'",
+     "+21 o beacon_int '200'",
+     "+22 o rts '2346'",
+     "+23 o dtim_period '2'",
+     "-23 o beacon_int '100'",
+     "@config wifi-device 'wifi1'",
+     "-32 o channel 'auto'",
+     "-33 o acs_bkscanen '1'",
+     "-38 o dtim_period '1'",
+     "-39 o rts '2347'",
+     "+47 o channel '36'",
+     "+48 o acs_bkscanen '0'",
+     "+49 o beacon_int '300'",
+     "+50 o rts '2345'",
+     "+51 o dtim_period '3'",
+     "-51 o beacon_int '100'",
+     "@config wifi-iface",
+     "-102 o beamforming '1'",
+     "-103 o mu_mimo '0'",
+     "+108 o beamforming '0'",
+     "+109 o mu_mimo '1'",
+     "-145 o wmm '1'",
+     "-146 o beamforming '1'",
+     "-147 o mu_mimo '0'",
+     "+150 o wmm '0'",
+     "+151 o beamforming '0'",
+     "+152 o mu_mimo '1'",
+     "-211 o wmm '1'",
+     "+216 o wmm '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "adv_A_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifiadv_set",
+     {
+      "adv": {
+       "2G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axg",
+        "htmode": "HT20",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       },
+       "5G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axa",
+        "htmode": "HT160",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "0b16de34",
+   "diff_that": {
+    "wireless": [
+     "@config wifi-device 'wifi0'",
+     "+18 o htmode 'HT20'",
+     "+19 o channel 'auto'",
+     "+20 o acs_bkscanen '1'",
+     "+21 o beacon_int '100'",
+     "+22 o rts '2347'",
+     "+23 o dtim_period '1'",
+     "-18 o htmode 'HT40'",
+     "-19 o channel '6'",
+     "-20 o acs_bkscanen '0'",
+     "-21 o beacon_int '200'",
+     "-22 o rts '2346'",
+     "-23 o dtim_period '2'",
+     "@config wifi-device 'wifi1'",
+     "+47 o channel 'auto'",
+     "+48 o acs_bkscanen '1'",
+     "+49 o beacon_int '100'",
+     "+50 o rts '2347'",
+     "+51 o dtim_period '1'",
+     "-47 o channel '36'",
+     "-48 o acs_bkscanen '0'",
+     "-49 o beacon_int '300'",
+     "-50 o rts '2345'",
+     "-51 o dtim_period '3'",
+     "@config wifi-iface",
+     "+108 o beamforming '1'",
+     "+109 o mu_mimo '0'",
+     "-108 o beamforming '0'",
+     "-109 o mu_mimo '1'",
+     "+150 o wmm '1'",
+     "+151 o beamforming '1'",
+     "+152 o mu_mimo '0'",
+     "-150 o wmm '0'",
+     "-151 o beamforming '0'",
+     "-152 o mu_mimo '1'",
+     "+216 o wmm '1'",
+     "-216 o wmm '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": null
+  },
+  "lan_dns_bat": {
+   "buoc": [
+    [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "lan": {
+        "ipaddr": "192.168.100.1",
+        "netmask": "255.255.255.0"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "dhcp_option": {
+         "lan0": "6,8.8.8.8,8.8.4.4"
+        },
+        "start": "192.168.100.2",
+        "limit": "248",
+        "netmask": "255.255.255.0",
+        "leasetime": "720m"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "3136c6fa",
+   "diff_that": {
+    "dhcp": [
+     "@config dhcp 'lan'",
+     "+46 l dhcp_option '6,8.8.8.8,8.8.4.4'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "lan_dns_tat": {
+   "buoc": [
+    [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "lan": {
+        "ipaddr": "192.168.100.1",
+        "netmask": "255.255.255.0"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "dhcp_option": {},
+        "start": "192.168.100.2",
+        "limit": "248",
+        "netmask": "255.255.255.0",
+        "leasetime": "720m"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "aef25598",
+   "diff_that": {
+    "dhcp": [
+     "@config dhcp 'lan'",
+     "-46 l dhcp_option '6,8.8.8.8,8.8.4.4'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "lan_start_3": {
+   "buoc": [
+    [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "lan": {
+        "ipaddr": "192.168.100.1",
+        "netmask": "255.255.255.0"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "dhcp_option": {},
+        "start": "192.168.100.3",
+        "limit": "248",
+        "netmask": "255.255.255.0",
+        "leasetime": "720m"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "c63f1a59",
+   "diff_that": {
+    "dhcp": [
+     "@config dhcp 'lan'",
+     "-43 o start '192.168.100.2'",
+     "+45 o start '192.168.100.3'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "lan_start_2": {
+   "buoc": [
+    [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "lan": {
+        "ipaddr": "192.168.100.1",
+        "netmask": "255.255.255.0"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "dhcp_option": {},
+        "start": "192.168.100.2",
+        "limit": "248",
+        "netmask": "255.255.255.0",
+        "leasetime": "720m"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "d825d1bb",
+   "diff_that": {
+    "dhcp": [
+     "@config dhcp 'lan'",
+     "+45 o start '192.168.100.2'",
+     "-45 o start '192.168.100.3'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "lan6_600": {
+   "buoc": [
+    [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "wan6": {
+        "ip6prefix": ""
+       },
+       "globals": {
+        "ula_prefix": "fd00:db80::/48"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "ra_flags": {
+         "mflag": "managed-config",
+         "oflag": "other-config"
+        },
+        "preferred_lifetime": "",
+        "ra": "server",
+        "ra_maxinterval": "600",
+        "ra_mininterval": "60",
+        "dhcpv6": "server",
+        "dhcpv6_start": "2",
+        "dhcpv6_limit": "65533"
+       },
+       "odhcpd": {
+        "maindhcp": "0"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "68f19cbc",
+   "diff_that": {
+    "dhcp": [
+     "@config dhcp 'lan'",
+     "-44 o ra_maxinterval '300'",
+     "+45 o ra_maxinterval '600'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "lan6_300": {
+   "buoc": [
+    [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "wan6": {
+        "ip6prefix": ""
+       },
+       "globals": {
+        "ula_prefix": "fd00:db80::/48"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "ra_flags": {
+         "mflag": "managed-config",
+         "oflag": "other-config"
+        },
+        "preferred_lifetime": "",
+        "ra": "server",
+        "ra_maxinterval": "300",
+        "ra_mininterval": "60",
+        "dhcpv6": "server",
+        "dhcpv6_start": "2",
+        "dhcpv6_limit": "65533"
+       },
+       "odhcpd": {
+        "maindhcp": "0"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "771b98c1",
+   "diff_that": {
+    "dhcp": [
+     "@config dhcp 'lan'",
+     "+45 o ra_maxinterval '300'",
+     "-45 o ra_maxinterval '600'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wan_khong_doi": {
+   "buoc": [
+    [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "wan": {
+        "dns": {},
+        "disabled": "0",
+        "proto": "pppoe",
+        "ifname": "eth0",
+        "mtu": "1500",
+        "ipaddr": "",
+        "netmask": "",
+        "gateway": "",
+        "username": "fpt",
+        "password": "fpt",
+        "demand": "",
+        "peerdns": "1"
+       },
+       "wan6": {
+        "dns": {
+         "dns1": "2001:4860:4860::8888",
+         "dns2": "2001:4860:4860::8844"
+        },
+        "disabled": "0",
+        "ifname": "@wan",
+        "peerdns": "0",
+        "reqaddress": "none",
+        "enableslaac": "1",
+        "proto": "dhcpv6",
+        "reqprefix": "auto",
+        "ip6prefix": "",
+        "ip6gw": ""
+       },
+       "wan64": {},
+       "lan": {
+        "ifname": "eth1.5 eth1.6 eth1.7",
+        "proto": "static"
+       },
+       "lan6": {},
+       "globals": {}
+      },
+      "upnpd": {
+       "config": {
+        "enabled": "1"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "ignore": "0"
+       }
+      },
+      "aei-network": {
+       "config": {
+        "mode": "router"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wan_user_test": {
+   "buoc": [
+    [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "wan": {
+        "dns": {},
+        "disabled": "0",
+        "proto": "pppoe",
+        "ifname": "eth0",
+        "mtu": "1500",
+        "ipaddr": "",
+        "netmask": "",
+        "gateway": "",
+        "username": "fpttest",
+        "password": "fpt",
+        "demand": "",
+        "peerdns": "1"
+       },
+       "wan6": {
+        "dns": {
+         "dns1": "2001:4860:4860::8888",
+         "dns2": "2001:4860:4860::8844"
+        },
+        "disabled": "0",
+        "ifname": "@wan",
+        "peerdns": "0",
+        "reqaddress": "none",
+        "enableslaac": "1",
+        "proto": "dhcpv6",
+        "reqprefix": "auto",
+        "ip6prefix": "",
+        "ip6gw": ""
+       },
+       "wan64": {},
+       "lan": {
+        "ifname": "eth1.5 eth1.6 eth1.7",
+        "proto": "static"
+       },
+       "lan6": {},
+       "globals": {}
+      },
+      "upnpd": {
+       "config": {
+        "enabled": "1"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "ignore": "0"
+       }
+      },
+      "aei-network": {
+       "config": {
+        "mode": "router"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "d3be8154",
+   "diff_that": {
+    "network": [
+     "@config interface 'wan'",
+     "-32 o username 'fpt'",
+     "+45 o username 'fpttest'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wan_user_fpt": {
+   "buoc": [
+    [
+     "data_repo.cigext",
+     "set",
+     {
+      "network": {
+       "wan": {
+        "dns": {},
+        "disabled": "0",
+        "proto": "pppoe",
+        "ifname": "eth0",
+        "mtu": "1500",
+        "ipaddr": "",
+        "netmask": "",
+        "gateway": "",
+        "username": "fpt",
+        "password": "fpt",
+        "demand": "",
+        "peerdns": "1"
+       },
+       "wan6": {
+        "dns": {
+         "dns1": "2001:4860:4860::8888",
+         "dns2": "2001:4860:4860::8844"
+        },
+        "disabled": "0",
+        "ifname": "@wan",
+        "peerdns": "0",
+        "reqaddress": "none",
+        "enableslaac": "1",
+        "proto": "dhcpv6",
+        "reqprefix": "auto",
+        "ip6prefix": "",
+        "ip6gw": ""
+       },
+       "wan64": {},
+       "lan": {
+        "ifname": "eth1.5 eth1.6 eth1.7",
+        "proto": "static"
+       },
+       "lan6": {},
+       "globals": {}
+      },
+      "upnpd": {
+       "config": {
+        "enabled": "1"
+       }
+      },
+      "dhcp": {
+       "lan": {
+        "ignore": "0"
+       }
+      },
+      "aei-network": {
+       "config": {
+        "mode": "router"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "c2b93e52",
+   "diff_that": {
+    "network": [
+     "@config interface 'wan'",
+     "+45 o username 'fpt'",
+     "-45 o username 'fpttest'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "rsv_them": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dhcp_reservation_set",
+     {
+      "host": [
+       {
+        "mac": "d8:43:ae:2e:65:45",
+        "ip": "192.168.100.109",
+        "_idx": "",
+        "_method": "add"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "11e7f55c",
+   "diff_that": {
+    "dhcp": [
+     "@config odhcpd 'odhcpd'",
+     "+53 config host",
+     "+54 o dhcp_pool 'lan'",
+     "+55 o mac 'd8:43:ae:2e:65:45'",
+     "+56 o ip '192.168.100.109'",
+     "+58 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "rsv_sua": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dhcp_reservation_set",
+     {
+      "host": [
+       {
+        "_idx": "cfg04fe63",
+        "mac": "d8:43:ae:2e:65:45",
+        "ip": "192.168.100.108",
+        "_method": "update"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "a517a83d",
+   "diff_that": {
+    "dhcp": [
+     "@config host",
+     "+56 o ip '192.168.100.108'",
+     "-56 o ip '192.168.100.109'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "rsv_xoa": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dhcp_reservation_set",
+     {
+      "host": [
+       {
+        "_idx": "cfg04fe63",
+        "mac": "d8:43:ae:2e:65:45",
+        "ip": "192.168.100.108",
+        "_method": "del"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "33d1bfdb",
+   "diff_that": {
+    "dhcp": [
+     "@config odhcpd 'odhcpd'",
+     "-53 config host",
+     "-54 o dhcp_pool 'lan'",
+     "-55 o mac 'd8:43:ae:2e:65:45'",
+     "-56 o ip '192.168.100.108'",
+     "-58 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "pf_them": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "portfwd_set",
+     {
+      "redirect": [
+       {
+        "enabled": true,
+        "proto": "tcp udp",
+        "src_dport": "8080",
+        "dest_ip": "192.168.100.109",
+        "dest_port": "80",
+        "_idx": "",
+        "_method": "add",
+        "name": "1790219099640_8218843"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "900ef893",
+   "diff_that": {
+    "firewall": [
+     "@config include 'qcanssecm'",
+     "+425 config redirect",
+     "+426 o reflection '1'",
+     "+427 o src 'wan'",
+     "+428 o dest 'lan'",
+     "+429 o target 'DNAT'",
+     "+430 o enabled '1'",
+     "+431 o name '1790219099640_8218843'",
+     "+432 o proto 'tcp udp'",
+     "+433 o src_dport '8080'",
+     "+434 o dest_port '80'",
+     "+435 o dest_ip '192.168.100.109'",
+     "+437 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "pf_sua": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "portfwd_set",
+     {
+      "redirect": [
+       {
+        "_idx": "cfg303837",
+        "enabled": false,
+        "name": "1790219099640_8218843",
+        "proto": "tcp udp",
+        "src_dport": "8080",
+        "dest_port": "8081",
+        "dest_ip": "192.168.100.109",
+        "_method": "update"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "94427376",
+   "diff_that": {
+    "firewall": [
+     "@config redirect",
+     "-430 o enabled '1'",
+     "-434 o dest_port '80'",
+     "+434 o enabled '0'",
+     "+435 o dest_port '8081'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "pf_xoa": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "portfwd_set",
+     {
+      "redirect": [
+       {
+        "_idx": "cfg303837",
+        "enabled": false,
+        "name": "1790219099640_8218843",
+        "proto": "tcp udp",
+        "src_dport": "8080",
+        "dest_port": "8081",
+        "dest_ip": "192.168.100.109",
+        "_method": "del"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "dc80d7e5",
+   "diff_that": {
+    "firewall": [
+     "@config include 'qcanssecm'",
+     "-425 config redirect",
+     "-426 o reflection '1'",
+     "-427 o src 'wan'",
+     "-428 o dest 'lan'",
+     "-429 o target 'DNAT'",
+     "-430 o name '1790219099640_8218843'",
+     "-431 o proto 'tcp udp'",
+     "-432 o src_dport '8080'",
+     "-433 o dest_ip '192.168.100.109'",
+     "-434 o enabled '0'",
+     "-435 o dest_port '8081'",
+     "-437 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "pc_them": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "parentctrl_set",
+     {
+      "blocking_list": [
+       {
+        "name": "simtest",
+        "mac": "d8:43:ae:2e:65:45",
+        "start": "01:00",
+        "stop": "01:01",
+        "weekdays": [
+         "Mon"
+        ],
+        "enabled": false,
+        "_idx": "",
+        "_method": "add"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "b4b3666a",
+   "diff_that": {
+    "firewall": [
+     "@config include 'qcanssecm'",
+     "+425 config rule 'AEI_PC_1'",
+     "+426 o utc_time '1'",
+     "+427 o src 'lan'",
+     "+428 o dest 'wan'",
+     "+429 o target 'REJECT'",
+     "+430 o proto 'all'",
+     "+431 o enabled '0'",
+     "+432 o src_mac 'd8:43:ae:2e:65:45'",
+     "+433 o start_time '01:00'",
+     "+434 o stop_time '01:01'",
+     "+435 o weekdays 'Mon'",
+     "+436 o name 'AEI_PC_simtest'",
+     "+438 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "pc_sua": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "parentctrl_set",
+     {
+      "blocking_list": [
+       {
+        "_idx": "1",
+        "mac": "d8:43:ae:2e:65:45",
+        "name": "simtest",
+        "enabled": false,
+        "start": "01:00",
+        "stop": "01:02",
+        "weekdays": [
+         "Mon",
+         "Tue"
+        ],
+        "_method": "update"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "74c5d493",
+   "diff_that": {
+    "firewall": [
+     "@config rule 'AEI_PC_1'",
+     "-434 o stop_time '01:01'",
+     "-435 o weekdays 'Mon'",
+     "+435 o stop_time '01:02'",
+     "+436 o weekdays 'Mon Tue'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "pc_xoa": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "parentctrl_set",
+     {
+      "blocking_list": [
+       {
+        "_idx": "1",
+        "mac": "d8:43:ae:2e:65:45",
+        "name": "simtest",
+        "enabled": false,
+        "start": "01:00",
+        "stop": "01:02",
+        "weekdays": [
+         "Mon",
+         "Tue"
+        ],
+        "_method": "del"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "213e1b47",
+   "diff_that": {
+    "firewall": [
+     "@config include 'qcanssecm'",
+     "-425 config rule 'AEI_PC_1'",
+     "-426 o utc_time '1'",
+     "-427 o src 'lan'",
+     "-428 o dest 'wan'",
+     "-429 o target 'REJECT'",
+     "-430 o proto 'all'",
+     "-431 o enabled '0'",
+     "-432 o src_mac 'd8:43:ae:2e:65:45'",
+     "-433 o start_time '01:00'",
+     "-434 o name 'AEI_PC_simtest'",
+     "-435 o stop_time '01:02'",
+     "-436 o weekdays 'Mon Tue'",
+     "-438 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wf_them": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "websitefilter_set",
+     {
+      "blocking_list": [
+       {
+        "website": "example.invalid",
+        "ip": [
+         "192.168.100.109"
+        ],
+        "_method": "add"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "eb03debc",
+   "diff_that": {
+    "dhcp": [
+     "@config dnsmasq",
+     "+20 l ipset '/example.invalid/website_block_example_invalid'"
+    ],
+    "firewall": [
+     "@config include 'qcanssecm'",
+     "+425 config ipset 'ipset_block_example_invalid'",
+     "+426 o enabled '1'",
+     "+427 o name 'website_block_example_invalid'",
+     "+428 o family 'ipv4'",
+     "+429 o storage 'hash'",
+     "+430 o match 'dest_ip'",
+     "+431 o maxelem '256'",
+     "+433 config rule 'rule_block_example_invalid'",
+     "+434 o enabled '1'",
+     "+435 o name 'website_block_example_invalid'",
+     "+436 o family 'ipv4'",
+     "+437 o proto 'tcp'",
+     "+438 o src 'lan'",
+     "+439 o dest 'wan'",
+     "+440 o src_ip '192.168.100.109'",
+     "+441 o dest_port '80 443'",
+     "+442 o ipset 'website_block_example_invalid'",
+     "+443 o target 'REJECT'",
+     "+444 ",
+     "+445 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "wf_xoa": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "websitefilter_set",
+     {
+      "blocking_list": [
+       {
+        "website": "example.invalid",
+        "ip": [
+         "192.168.100.109"
+        ],
+        "_method": "del"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "d18599b6",
+   "diff_that": {
+    "dhcp": [
+     "@config dnsmasq",
+     "-20 l ipset '/example.invalid/website_block_example_invalid'"
+    ],
+    "firewall": [
+     "@config include 'qcanssecm'",
+     "-425 config ipset 'ipset_block_example_invalid'",
+     "-426 o enabled '1'",
+     "-427 o name 'website_block_example_invalid'",
+     "-428 o family 'ipv4'",
+     "-429 o storage 'hash'",
+     "-430 o match 'dest_ip'",
+     "-431 o maxelem '256'",
+     "-433 config rule 'rule_block_example_invalid'",
+     "-434 o enabled '1'",
+     "-435 o name 'website_block_example_invalid'",
+     "-436 o family 'ipv4'",
+     "-437 o proto 'tcp'",
+     "-438 o src 'lan'",
+     "-439 o dest 'wan'",
+     "-440 o src_ip '192.168.100.109'",
+     "-441 o dest_port '80 443'",
+     "-442 o ipset 'website_block_example_invalid'",
+     "-443 o target 'REJECT'",
+     "-444 ",
+     "-445 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "rt_them": {
+   "buoc": [
+    [
+     "aei-route",
+     "set",
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "10.99.99.0",
+        "Netmask": "255.255.255.0",
+        "Gateway": "192.168.100.254"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "c267785a",
+   "diff_that": {
+    "network": [
+     "@config interface 'wan64'",
+     "+100 config route",
+     "+101 o target '10.99.99.0'",
+     "+102 o netmask '255.255.255.0'",
+     "+103 o gateway '192.168.100.254'",
+     "+104 o interface 'lan'",
+     "+105 o status 'true'",
+     "+107 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "10.99.99.0",
+        "Netmask": "255.255.255.0",
+        "Gateway": "192.168.100.254",
+        "Status": "true"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_nhan_that": "7784271b"
+  },
+  "rt_xoa": {
+   "buoc": [
+    [
+     "aei-route",
+     "set",
+     {
+      "data": []
+     }
+    ]
+   ],
+   "fnv_diff_that": "7bdaddbc",
+   "diff_that": {
+    "network": [
+     "@config interface 'wan64'",
+     "-100 config route",
+     "-101 o target '10.99.99.0'",
+     "-102 o netmask '255.255.255.0'",
+     "-103 o gateway '192.168.100.254'",
+     "-104 o interface 'lan'",
+     "-105 o status 'true'",
+     "-107 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "data": []
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d9ceeff3"
+  },
+  "rt6_them": {
+   "buoc": [
+    [
+     "aei-route6",
+     "set",
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "fd99::/64",
+        "Gateway": "fd00:db80::99"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_diff_that": "5e5a4846",
+   "diff_that": {
+    "network": [
+     "@config interface 'wan64'",
+     "+100 config route6",
+     "+101 o interface 'wan6'",
+     "+102 o target 'fd99::/64'",
+     "+103 o gateway 'fd00:db80::99'",
+     "+104 o status 'true'",
+     "+106 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "fd99::/64",
+        "Gateway": "fd00:db80::99"
+       }
+      ]
+     }
+    ]
+   ],
+   "fnv_nhan_that": "202f9465"
+  },
+  "rt6_xoa": {
+   "buoc": [
+    [
+     "aei-route6",
+     "set",
+     {
+      "data": []
+     }
+    ]
+   ],
+   "fnv_diff_that": "bd7a207a",
+   "diff_that": {
+    "network": [
+     "@config interface 'wan64'",
+     "-100 config route6",
+     "-101 o interface 'wan6'",
+     "-102 o target 'fd99::/64'",
+     "-103 o gateway 'fd00:db80::99'",
+     "-104 o status 'true'",
+     "-106 "
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "data": []
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d9ceeff3"
+  },
+  "sp_doi": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "speedtest_set",
+     {
+      "auto": true,
+      "schedule": "11:40",
+      "Mon": true,
+      "Tue": true,
+      "Wed": true,
+      "Thu": true,
+      "Fri": true,
+      "Sat": false,
+      "Sun": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "dbd7633f",
+   "diff_that": {
+    "speedtest": [
+     "@config speedtest 'option'",
+     "-8 o auto '0'",
+     "-9 o Mon '0'",
+     "+14 o auto '1'",
+     "+15 o sched '11:40'",
+     "+16 o Mon '1'",
+     "-16 o sched '11:32'"
+    ],
+    "etc/crontabs/root": [
+     "@",
+     "+6 40 11 * * 1,2,3,4,5 ubus call speedtest start"
+    ]
+   },
+   "nhan": [
+    [
+     0
+    ]
+   ],
+   "fnv_nhan_that": "e17b11a3"
+  },
+  "sp_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "speedtest_set",
+     {
+      "auto": false,
+      "schedule": "11:32",
+      "Mon": false,
+      "Tue": true,
+      "Wed": true,
+      "Thu": true,
+      "Fri": true,
+      "Sat": false,
+      "Sun": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "9cba6c6f",
+   "diff_that": {
+    "speedtest": [
+     "@config speedtest 'option'",
+     "+14 o auto '0'",
+     "+15 o sched '11:32'",
+     "+16 o Mon '0'",
+     "-14 o auto '1'",
+     "-15 o sched '11:40'",
+     "-16 o Mon '1'"
+    ],
+    "etc/crontabs/root": [
+     "@",
+     "-6 40 11 * * 1,2,3,4,5 ubus call speedtest start"
+    ]
+   },
+   "nhan": [
+    [
+     0
+    ]
+   ],
+   "fnv_nhan_that": "e17b11a3"
+  },
+  "sl_doi": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "systemlog_set",
+     {
+      "level": 5,
+      "server_state": "1",
+      "server": "192.168.100.109",
+      "protocol": "udp",
+      "port": 514
+     }
+    ]
+   ],
+   "fnv_diff_that": "f0e8fb6f",
+   "diff_that": {
+    "system": [
+     "@config system",
+     "-9 o conloglevel '4'",
+     "-10 o log_remote '0'",
+     "-11 o log_port '0'",
+     "+10 o conloglevel '5'",
+     "+11 o log_remote '1'",
+     "+12 o log_ip '192.168.100.109'",
+     "+13 o log_port '514'",
+     "+14 o log_proto 'udp'"
+    ],
+    "vendor_log_file": [
+     "@config log 'syslog'",
+     "-7 o cwmp_VendorFileLog_instance '1'",
+     "@config log 'old_syslog'",
+     "-14 o cwmp_VendorFileLog_instance '2'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "sl_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "systemlog_set",
+     {
+      "level": 4,
+      "server_state": "0",
+      "server": "",
+      "protocol": "",
+      "port": 0
+     }
+    ]
+   ],
+   "fnv_diff_that": "6fd2e046",
+   "diff_that": {
+    "system": [
+     "@config system",
+     "+10 o conloglevel '4'",
+     "+11 o log_remote '0'",
+     "+12 o log_port '0'",
+     "-10 o conloglevel '5'",
+     "-11 o log_remote '1'",
+     "-12 o log_ip '192.168.100.109'",
+     "-13 o log_port '514'",
+     "-14 o log_proto 'udp'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "ntp_doi": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "system_set",
+     {
+      "ntp": {
+       "list": [
+        "0.openwrt.pool.ntp.org",
+        "1.openwrt.pool.ntp.org",
+        "time.google.com"
+       ]
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "a547f349",
+   "diff_that": {
+    "system": [
+     "@config timeserver 'ntp'",
+     "+19 l server 'time.google.com'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "ntp_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "system_set",
+     {
+      "ntp": {
+       "list": [
+        "0.openwrt.pool.ntp.org",
+        "1.openwrt.pool.ntp.org"
+       ]
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "fad0b117",
+   "diff_that": {
+    "system": [
+     "@config timeserver 'ntp'",
+     "-19 l server 'time.google.com'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "tz_doi": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "system_set",
+     {
+      "system": {
+       "hostname": "AP-AX3000CV2-0A91",
+       "zonename": "Asia/Bangkok",
+       "timezone": "<+07>-7"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "e288ef3d",
+   "diff_that": {
+    "system": [
+     "@config system",
+     "-7 o zonename 'Asia/Ho Chi Minh'",
+     "-8 o timezone 'ICT-7'",
+     "+11 o zonename 'Asia/Bangkok'",
+     "+12 o timezone '<+07>-7'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "tz_tv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "system_set",
+     {
+      "system": {
+       "hostname": "AP-AX3000CV2-0A91",
+       "zonename": "Asia/Ho Chi Minh",
+       "timezone": "ICT-7"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "9d30b64d",
+   "diff_that": {
+    "system": [
+     "@config system",
+     "+11 o zonename 'Asia/Ho Chi Minh'",
+     "+12 o timezone 'ICT-7'",
+     "-11 o zonename 'Asia/Bangkok'",
+     "-12 o timezone '<+07>-7'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "ssh_lan": {
+   "buoc": [
+    [
+     "ssh",
+     "set",
+     {
+      "WANState": "0",
+      "LANState": "1",
+      "Password": ""
+     }
+    ]
+   ],
+   "fnv_diff_that": "972ae4dd",
+   "diff_that": {
+    "dropbear": [
+     "@config dropbear",
+     "+6 o enable '1'",
+     "-6 o enable '0'"
+    ],
+    "firewall": [
+     "@config rule",
+     "+176 o target 'ACCEPT'",
+     "-176 o target 'REJECT'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "WANState": "0",
+      "LANState": "1",
+      "Password": ""
+     }
+    ]
+   ],
+   "fnv_nhan_that": "29f7e59a"
+  },
+  "ssh_wan": {
+   "buoc": [
+    [
+     "ssh",
+     "set",
+     {
+      "WANState": "1",
+      "LANState": "1",
+      "Password": ""
+     }
+    ]
+   ],
+   "fnv_diff_that": "48805f4d",
+   "diff_that": {
+    "firewall": [
+     "@config rule",
+     "-165 o target 'REJECT'",
+     "+166 o target 'ACCEPT'",
+     "+167 o enabled '1'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "WANState": "1",
+      "LANState": "1",
+      "Password": ""
+     }
+    ]
+   ],
+   "fnv_nhan_that": "99c39333"
+  },
+  "ssh_tat": {
+   "buoc": [
+    [
+     "ssh",
+     "set",
+     {
+      "WANState": "0",
+      "LANState": "0",
+      "Password": ""
+     }
+    ]
+   ],
+   "fnv_diff_that": "e89e3cc0",
+   "diff_that": {
+    "firewall": [
+     "@config rule",
+     "-166 o target 'ACCEPT'",
+     "+167 o target 'REJECT'",
+     "+177 o target 'REJECT'",
+     "-177 o target 'ACCEPT'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "WANState": "0",
+      "LANState": "0",
+      "Password": ""
+     }
+    ]
+   ],
+   "fnv_nhan_that": "5917c405"
+  },
+  "em_tat": {
+   "buoc": [
+    [
+     "network.wireless.easymesh",
+     "set",
+     {
+      "MeshEnabled": false,
+      "MeshRole": "Controller",
+      "MeshBand": "5G",
+      "MeshBSS": "FPT TelecomBH-0A91"
+     }
+    ]
+   ],
+   "fnv_diff_that": "744b4813",
+   "diff_that": {
+    "ezmesh": [
+     "@config config 'config'",
+     "-14 o Enable '1'",
+     "+15 o Enable '0'"
+    ],
+    "mesh_app": [
+     "@config config 'config'",
+     "+4 o EnableDataElements '0'",
+     "-4 o EnableDataElements '1'"
+    ],
+    "repacd": [
+     "@config config 'repacd'",
+     "-27 o Enable '1'",
+     "+30 o Enable '0'",
+     "@config MAPConfig 'MAPConfig'",
+     "-75 o Enable '1'",
+     "+118 o Enable '0'"
+    ],
+    "wireless": [
+     "@config aeimap 'aeimap'",
+     "-59 o map_enable '1'",
+     "+67 o map_enable '0'"
+    ],
+    "wsplcd": [
+     "@config wsplcd 'config'",
+     "-48 o HyFiSecurity '1'",
+     "+54 o HyFiSecurity '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "MeshEnabled": true,
+      "MeshRole": "Controller",
+      "MeshBand": "5G",
+      "MeshBSS": "FPT TelecomBH-0A91"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "e6675ad0"
+  },
+  "em_bat": {
+   "buoc": [
+    [
+     "network.wireless.easymesh",
+     "set",
+     {
+      "MeshEnabled": true,
+      "MeshRole": "Controller",
+      "MeshBand": "5G",
+      "MeshBSS": "FPT TelecomBH-0A91"
+     }
+    ]
+   ],
+   "fnv_diff_that": "c8f78d50",
+   "diff_that": {
+    "ezmesh": [
+     "@config config 'config'",
+     "+15 o Enable '1'",
+     "-15 o Enable '0'"
+    ],
+    "mesh_app": [
+     "@config config 'config'",
+     "+4 o EnableDataElements '1'",
+     "-4 o EnableDataElements '0'"
+    ],
+    "repacd": [
+     "@config config 'repacd'",
+     "+30 o Enable '1'",
+     "-30 o Enable '0'",
+     "@config MAPConfig 'MAPConfig'",
+     "+118 o Enable '1'",
+     "-118 o Enable '0'"
+    ],
+    "wireless": [
+     "@config aeimap 'aeimap'",
+     "+67 o map_enable '1'",
+     "-67 o map_enable '0'"
+    ],
+    "wsplcd": [
+     "@config wsplcd 'config'",
+     "+54 o HyFiSecurity '1'",
+     "-54 o HyFiSecurity '0'"
+    ]
+   },
+   "nhan": [
+    [
+     0,
+     {
+      "MeshEnabled": false,
+      "MeshRole": "Controller",
+      "MeshBand": "5G",
+      "MeshBSS": "FPT TelecomBH-0A91"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d7323e9b"
+  },
+  "nc_firewall": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "nc_dmz": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "dmz_set",
+     {
+      "dmz_v4": {
+       "enabled": false,
+       "dest_ip": "192.168.100.109"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "nc_upnp": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "upnpd_set",
+     {
+      "config": {
+       "enabled": true
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "nc_alg": {
+   "buoc": [
+    [
+     "alg",
+     "set",
+     {
+      "ftp": "1",
+      "tftp": "1",
+      "sip": "1",
+      "h323": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "sip": "1",
+      "tftp": "1",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "1085c4f4"
+  },
+  "nc_wifi": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifi_set",
+     {
+      "host": {
+       "2G": {
+        "disabled": false,
+        "vap_diff_mode": false,
+        "ssid": "FPT Telecom-0A91",
+        "encryption": "psk2+ccmp",
+        "sae": "0",
+        "key": "24c1e15f"
+       },
+       "5G": {
+        "disabled": false,
+        "key": "24c1e15f",
+        "ssid": "FPT Telecom-0A91",
+        "encryption": "psk2+ccmp",
+        "sae": "0"
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "nc_wifiadv": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "wifiadv_set",
+     {
+      "adv": {
+       "2G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axg",
+        "htmode": "HT20",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       },
+       "5G": {
+        "enabled": true,
+        "country_code": "US4",
+        "hwmode": "11axa",
+        "htmode": "HT160",
+        "channel": "auto",
+        "beamforming": true,
+        "mu_mimo": false,
+        "wmm": true,
+        "intercal_beacon": 100,
+        "rts": 2347,
+        "intercal_dtim": 1
+       }
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "nc_speedtest": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "speedtest_set",
+     {
+      "auto": false,
+      "schedule": "11:32",
+      "Mon": false,
+      "Tue": true,
+      "Wed": true,
+      "Thu": true,
+      "Fri": true,
+      "Sat": false,
+      "Sun": false
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0
+    ]
+   ],
+   "fnv_nhan_that": "e17b11a3"
+  },
+  "nc_systemlog": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "systemlog_set",
+     {
+      "level": 4,
+      "server_state": "0",
+      "server": "",
+      "protocol": "",
+      "port": 0
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "nc_system": {
+   "buoc": [
+    [
+     "data_repo.weboui",
+     "system_set",
+     {
+      "system": {
+       "hostname": "AP-AX3000CV2-0A91",
+       "zonename": "Asia/Ho Chi Minh",
+       "timezone": "ICT-7"
+      }
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "status": true
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d458eeb9"
+  },
+  "nc_route": {
+   "buoc": [
+    [
+     "aei-route",
+     "set",
+     {
+      "data": []
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "data": []
+     }
+    ]
+   ],
+   "fnv_nhan_that": "d9ceeff3"
+  },
+  "nc_mesh": {
+   "buoc": [
+    [
+     "network.wireless.easymesh",
+     "set",
+     {
+      "MeshEnabled": true,
+      "MeshRole": "Controller",
+      "MeshBand": "5G",
+      "MeshBSS": "FPT TelecomBH-0A91"
+     }
+    ]
+   ],
+   "fnv_diff_that": "5465b825",
+   "diff_that": {},
+   "nhan": [
+    [
+     0,
+     {
+      "MeshEnabled": true,
+      "MeshRole": "Controller",
+      "MeshBand": "5G",
+      "MeshBSS": "FPT TelecomBH-0A91"
+     }
+    ]
+   ],
+   "fnv_nhan_that": "e6675ad0"
+  }
+ },
+ "cham_mtime_khi_khong_doi": {
+  "dmz_set": [
+   "firewall"
+  ],
+  "upnpd_set": [
+   "upnpd"
+  ],
+  "data_repo.cigext set": [
+   "moi config trong goi gui"
+  ],
+  "speedtest_set": [
+   "etc/crontabs/root"
+  ],
+  "network.wireless.easymesh set": [
+   "etc/crontabs/root"
+  ],
+  "systemlog_set": [
+   "vendor_log_file"
+  ],
+  "firewall_set/alg/wifi_set/wifiadv_set/system_set/aei-route": []
+ },
+ "dau_vet_con_lai_tren_thiet_bi": [
+  "wireless: iface host 2G, guest 2G, guest 5G THEM option vap_diff_mode '0' (trang gui vap_diff_mode:false)",
+  "firewall: rule 'Reject-WAN-SSH' THEM enabled '1' (bat SSH WAN)",
+  "vendor_log_file: mat 2 option cwmp_VendorFileLog_instance (systemlog_set doi gia tri)",
+  "thu tu option trong nhieu section doi (gia tri da tra ve het)"
+ ],
+ "phat_hien_khac": [
+  "ssh set LUON ghi lai etc/shadow (bam lai mat khau root voi muoi moi); sau cung mat khau root van la 6455147589 (kiem md5-crypt)",
+  "tat SSH khong dua dropbear enable ve '0' -> da tra bang uci set dropbear enable '0' + apply + confirm; tien trinh dropbear da dung",
+  "easymesh set tra ve TRANG THAI CU (truoc khi ghi)",
+  "wifiadv_set / uci apply lam trang mat ket noi vai giay (fetch loi) — gia tri van ap dung",
+  "etc/crontabs/cron.update xuat hien/bien mat trong tep Backup tuy luc chup (tam thoi)",
+  "LOI CUA EM: goi data_repo.weboui.systemlog_get 1 lan (trai rang buoc tranh goi) — tra ve binh thuong"
+ ],
+ "buoc_truoc_tat_ca": {
+  "ghi_chu": "Trang thai dau = tep Backup that (reference/backup) + buoc tra ve dropbear (khung_that_nhom10_backup.json tra_ve_dropbear)",
+  "buoc": [
+   [
+    "uci",
+    "set",
+    {
+     "config": "dropbear",
+     "section": "cfg014dd4",
+     "values": {
+      "enable": "0"
+     }
+    }
+   ]
+  ]
+ },
+ "chen_truoc": {
+  "em_tat": {
+   "ghi_chu": "sau ssh_tat: tra ve dropbear enable '0' (uci set + apply + confirm; lan chup sau bi loi mang nen khong co diff rieng)",
+   "buoc": [
+    [
+     "uci",
+     "set",
+     {
+      "config": "dropbear",
+      "section": "cfg014dd4",
+      "values": {
+       "enable": "0"
+      }
+     }
+    ]
+   ]
+  }
+ }
+}

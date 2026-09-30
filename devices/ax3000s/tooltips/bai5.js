@@ -45,42 +45,34 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_05'] = [
     page: 'lancfgv4',
     expected: '255.255.255.0'
   },
-  // Bước 4: Chọn Enable DHCP Server
-  {
-    selector: '#Sky_DHCP_Enable, label[for="dhcpSrvType2"]',
-    text: 'Bước 6: Chọn Enable DHCP Server',
-    position: 'top',
-    page: 'lancfgv4',
-    expected: '1' // radio value
-  },
-  // Bước 5: Đặt Start IP 192.168.2.2
+  // Đặt Start IP 192.168.2.2
   {
     selector: '#dhcpEthStart',
-    text: 'Bước 7: Đặt Start IP 192.168.2.2',
+    text: 'Bước 6: Đặt Start IP 192.168.2.2',
     position: 'right',
     page: 'lancfgv4',
     expected: '192.168.2.2'
   },
-  // Bước 6: Đặt End IP 192.168.2.254
+  // Đặt End IP 192.168.2.254
   {
     selector: '#dhcpEthEnd',
-    text: 'Bước 8: Đặt End IP 192.168.2.254',
+    text: 'Bước 7: Đặt End IP 192.168.2.254',
     position: 'right',
     page: 'lancfgv4',
     expected: '192.168.2.254'
   },
-  // Bước 7: Chọn Lease Time 2 minute
+  // Chọn Lease Time 2 minute
   {
     selector: '#dhcpLeasedTime',
-    text: 'Bước 9: Chọn Lease Time 2 minute',
+    text: 'Bước 8: Chọn Lease Time 2 minute',
     position: 'right',
     page: 'lancfgv4',
     expected: '120' // 120 means 2 minutes in the select option
   },
-  // Bước 8: Nhấn Save & Apply
+  // Nhấn Save & Apply
   {
-    selector: 'html:has(#dhcpSrvType2:checked) #Sky_Apply',
-    text: 'Bước 10: Nhấn Save & Apply',
+    selector: '#Sky_Apply',
+    text: 'Bước 9: Nhấn Save & Apply',
     position: 'top',
     page: 'lancfgv4'
   }

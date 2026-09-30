@@ -1,0 +1,18 @@
+{
+ "trang": "System >> Management >> Remote Web",
+ "route": "#/system/remote",
+ "view": "network/remote",
+ "chunk_goc": "js/chunk-2d0df482",
+ "doc": "remote-gui get",
+ "ghi": "oui.ui crypt -> remote-gui set {State,Username,Password:<crypt>,PlainPasswd} -> [0,{State,Username,Password:<dang chu>}]; get y vay; phien con song. DO THAT 2026-09-26 (nhanh bat). Nhanh tat: chua do rieng (cung ham).",
+ "giao_dien": "10/10 trung (fnv 21ed49e)",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom7_system.json",
+  "reference/api/hop_dong_ghi_nhom7_system.json"
+ ],
+ "ghi_nhom13": {
+  "bang_chung": "reference/api/hop_dong_nhom13.json 'remote_web'",
+  "kiem": "T11, UP10 (nap Backup goc -> ve State '0')",
+  "chua_do": "tep uci/firewall doi theo; remotegui.get, webinfo.remoteGuiInfo"
+ }
+}

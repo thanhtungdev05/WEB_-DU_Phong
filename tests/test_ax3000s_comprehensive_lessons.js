@@ -18,6 +18,7 @@ assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai3.js?v='), 'portal
 assert.ok(portalContent.includes('devices/ax3000s/lessons/bai3.js?v='), 'portal.html must include ax3000s bai3 lessons with bumped version');
 assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai4.js?v='), 'portal.html must include ax3000s bai4 tooltips with bumped version');
 assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai5.js?v='), 'portal.html must include ax3000s bai5 tooltips with bumped version');
+assert.ok(portalContent.includes('devices/ax3000s/lessons/bai5.js?v='), 'portal.html must include ax3000s bai5 lessons with bumped version');
 assert.ok(portalContent.includes('devices/ax3000s/tooltips/bai6.js?v='), 'portal.html must include ax3000s bai6 tooltips with bumped version');
 
 // 2. Setup VM environment and load all AX3000S files

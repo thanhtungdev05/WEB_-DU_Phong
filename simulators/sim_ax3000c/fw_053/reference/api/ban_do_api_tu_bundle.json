@@ -1,0 +1,196 @@
+{
+ "nguon": "rut tu 85 tep JS goc trong reference/www bang regex .call(\"dt\",\"ham\"",
+ "so_cap": 133,
+ "so_doi_tuong": 28,
+ "doi_tuong": {
+  "aei-route": [
+   "get",
+   "set"
+  ],
+  "aei-route6": [
+   "get",
+   "set"
+  ],
+  "alg": [
+   "get",
+   "set"
+  ],
+  "data_repo.cigext": [
+   "get",
+   "set"
+  ],
+  "data_repo.webinfo": [
+   "devices",
+   "remoteGuiEnable",
+   "remoteGuiInfo",
+   "system",
+   "wireless"
+  ],
+  "data_repo.weboui": [
+   "dhcp_reservation_get",
+   "dhcp_reservation_set",
+   "dmz_get",
+   "dmz_set",
+   "firewall_get",
+   "firewall_set",
+   "hosts_get",
+   "interface_get",
+   "lan_get",
+   "lan_set",
+   "lanstatus",
+   "loginpwd_get",
+   "loginpwd_set",
+   "multiwan_get",
+   "multiwan_set",
+   "nattable",
+   "parentctrl_get",
+   "parentctrl_set",
+   "portfwd_get",
+   "portfwd_set",
+   "public_lan_set",
+   "reconnect_pppoe",
+   "selftest",
+   "speedtest_get",
+   "speedtest_set",
+   "system_get",
+   "system_set",
+   "systemlog_get",
+   "systemlog_set",
+   "tcpdump_get",
+   "tcpdump_save",
+   "tcpdump_start",
+   "tcpdump_stop",
+   "techsupportinfo_collect",
+   "techsupportinfo_get",
+   "upnpd_get",
+   "upnpd_set",
+   "wan_get",
+   "wan_set",
+   "wan_set_bridge",
+   "wanstatus",
+   "websitefilter_get",
+   "websitefilter_set",
+   "wifi_get",
+   "wifi_set",
+   "wifiadv_get",
+   "wifiadv_set"
+  ],
+  "ddns": [
+   "get",
+   "set"
+  ],
+  "ecm": [
+   "status"
+  ],
+  "iwinfo": [
+   "devices"
+  ],
+  "network": [
+   "topology"
+  ],
+  "network.device": [
+   "status"
+  ],
+  "network.interface": [
+   "dump"
+  ],
+  "network.interface.wan": [
+   "renew"
+  ],
+  "network.wireless": [
+   "init_status"
+  ],
+  "network.wireless.easymesh": [
+   "get",
+   "set"
+  ],
+  "op-mode": [
+   "get"
+  ],
+  "oui.network": [
+   "arp_table",
+   "dhcp6_leases",
+   "dhcp_leases",
+   "get_dns_servers",
+   "ifdown",
+   "ifup",
+   "modem_list",
+   "nslookup",
+   "ping",
+   "ping6",
+   "set_dns_servers",
+   "set_ssh_password",
+   "traceroute",
+   "traceroute6"
+  ],
+  "oui.opkg": [
+   "update"
+  ],
+  "oui.system": [
+   "backup_clean",
+   "backup_restore",
+   "cpu_time",
+   "crontab_get",
+   "crontab_set",
+   "diskfree",
+   "dmesg",
+   "drop_caches",
+   "init_action",
+   "init_list",
+   "led_list",
+   "new_file",
+   "process_list",
+   "read_dir",
+   "syslog"
+  ],
+  "oui.ui": [
+   "acls",
+   "crypt",
+   "lang",
+   "menu"
+  ],
+  "remote-gui": [
+   "get",
+   "set"
+  ],
+  "remotegui": [
+   "get",
+   "set"
+  ],
+  "rpc-sys": [
+   "factory",
+   "password_set",
+   "upgrade_clean",
+   "upgrade_start",
+   "upgrade_test"
+  ],
+  "session": [
+   "access",
+   "destroy",
+   "get",
+   "login"
+  ],
+  "speedtest": [
+   "history",
+   "running",
+   "servers",
+   "start"
+  ],
+  "ssh": [
+   "get",
+   "set"
+  ],
+  "system": [
+   "board",
+   "info",
+   "partial_restore_default",
+   "reboot",
+   "signal"
+  ],
+  "uci": [
+   "apply",
+   "confirm",
+   "get"
+  ]
+ }
+}

@@ -1,33 +1,36 @@
 /**
  * devices/ax3000c/lessons/bai6.js
- * Bài 6: Cấu hình Port Forwarding trên AX3000C
+ * Bài 6: Cấu hình Port Forwarding trên AX3000CV2 (firmware 0.5.3)
+ * Firmware 0.5.3 không có cột Rule Name -> anh Huynn chọn bỏ, thêm tiêu chí Enable (2026-09-26).
+ * Dòng mới do Add tạo có Enable TẮT (mã firmware) -> học viên phải tự bật (anh Huynn chốt).
+ * Công tắc Enable: bật -> "on", tắt -> "false" (cách bộ chấm đọc checkbox).
  */
 
 window.DEVICE_AX3000C_LESSONS = window.DEVICE_AX3000C_LESSONS || [];
 
-var idx = window.DEVICE_AX3000C_LESSONS.findIndex(function (l) { return l.id === 'LAB_AX3000CV2_06'; });
-var lessonObj = {
+window.DEVICE_AX3000C_LESSONS.push({
   id: 'LAB_AX3000CV2_06',
   title: 'Cấu hình Port Forwarding',
   subtitle: 'Cấu hình Port Forwarding',
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình Mở Port trên thiết bị theo các thông số được cung cấp dưới đây.',
-    '- Rule Name: <span class="val">Camera</span>',
+    '- Enable: <span class="val">Bật</span>',
     '- Protocol: <span class="val">TCP+UDP</span>',
     '- External Port: <span class="val">8080</span>',
-    '- Internal IP: <span class="val">192.168.100.55</span>',
+    '- Device/IP: <span class="val">Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45)</span>',
     '- Internal Port: <span class="val">80</span>'
   ],
   practiceUrl: '/sim_ax3000c/#/network/portfwd',
   grading: {
-    description: 'Kiểm tra Port Forwarding Rules trên AX3000C',
+    description: 'Kiểm tra Port Forwarding Rules trên AX3000CV2',
     rules: [
       {
-        id: 'rule_name',
-        name: 'Rule Name',
-        selector: 'table tr td:nth-child(1) input, input[placeholder*="rule name"]',
-        expected: 'Camera',
+        id: 'enable',
+        name: 'Enable',
+        selector: FTC_AX3000C.cot('Enable'),
+        expected: 'on',
+        valueLabels: { 'on': 'Bật', 'false': 'Tắt' },
         type: 'text_exact',
         trim: true,
         required: true
@@ -35,7 +38,7 @@ var lessonObj = {
       {
         id: 'protocol',
         name: 'Protocol',
-        selector: 'table tr td:nth-child(2) select',
+        selector: FTC_AX3000C.cot('Protocol'),
         expected: 'TCP+UDP',
         type: 'text_exact',
         trim: true,
@@ -44,7 +47,7 @@ var lessonObj = {
       {
         id: 'ext_port',
         name: 'External Port',
-        selector: 'table tr td:nth-child(3) input, input[placeholder*="8080"]',
+        selector: FTC_AX3000C.cot('External port'),
         expected: '8080',
         type: 'text_exact',
         trim: true,
@@ -52,17 +55,24 @@ var lessonObj = {
       },
       {
         id: 'int_ip',
-        name: 'Internal IP',
-        selector: 'table tr td:nth-child(4) input, input[placeholder*="192.168.100"]',
-        expected: '192.168.100.55',
-        type: 'text_exact',
+        name: 'Internal IP (Device/IP)',
+        selector: FTC_AX3000C.cot('Device/IP'),
+        // Đã đo: chọn Admin-PC thì ô chứa nguyên dòng này (trước và sau Apply), gửi dest_ip 192.168.100.109.
+        // Anh Huynn chốt: gõ tay 192.168.100.109 cũng chấm ĐÚNG -> chấp nhận cả hai.
+        expected: ['Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45)', '192.168.100.109'],
+        // any_of: bảng chấm hiện String(expected) (nối bằng dấu phẩy) -> đổi thành chữ dễ đọc
+        valueLabels: {
+          'Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45),192.168.100.109':
+            'Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45) hoặc 192.168.100.109'
+        },
+        type: 'any_of',
         trim: true,
         required: true
       },
       {
         id: 'int_port',
         name: 'Internal Port',
-        selector: 'table tr td:nth-child(5) input, input[placeholder*="80"]',
+        selector: FTC_AX3000C.cot('Internal port'),
         expected: '80',
         type: 'text_exact',
         trim: true,
@@ -70,72 +80,5 @@ var lessonObj = {
       }
     ]
   },
-  guidePopups: (window.TOOLTIPS_AX3000C && window.TOOLTIPS_AX3000C['LAB_AX3000CV2_06']) ? window.TOOLTIPS_AX3000C['LAB_AX3000CV2_06'] : [
-    {
-      selector: '.el-submenu[index="/network"]:not(.is-opened) .el-submenu__title, li.el-submenu:not(.is-opened) .el-submenu__title:contains("Network")',
-      text: 'Chọn Network',
-      position: 'right',
-      hideOnPage: 'portfwd'
-    },
-    {
-      selector: 'li.el-submenu.is-opened li.el-submenu:not(.is-opened) .el-submenu__title:contains("Access"), .el-submenu[index="/network/access"]:not(.is-opened) .el-submenu__title',
-      text: 'Chọn Access',
-      position: 'right',
-      hideOnPage: 'portfwd'
-    },
-    {
-      selector: 'li.el-submenu.is-opened li.el-submenu.is-opened li.el-menu-item:contains("Port Forwarding"), li.el-submenu.is-opened li.el-menu-item:contains("Port"), .el-menu-item[index="/network/access/portfwd"]',
-      text: 'Chọn Port Forwarding',
-      position: 'right',
-      hideOnPage: 'portfwd'
-    },
-    {
-      selector: 'button[onclick*="simAdd"], .card .bd button:contains("Add"), button.btn-sm',
-      text: 'Bước 1: chọn Add để thêm rule',
-      position: 'left',
-      page: 'portfwd'
-    },
-    {
-      selector: 'table tr td:nth-child(1) input, input[placeholder*="rule name"]',
-      text: 'Bước 2: nhập Rule name ví dụ: Camera',
-      position: 'bottom',
-      page: 'portfwd'
-    },
-    {
-      selector: 'table tr td:nth-child(2) select',
-      text: 'Bước 3: chọn Protocol TCP+UDP',
-      position: 'top',
-      page: 'portfwd'
-    },
-    {
-      selector: 'table tr td:nth-child(3) input, input[placeholder*="8080"]',
-      text: 'Bước 4: nhập External port ví dụ: 8080',
-      position: 'bottom',
-      page: 'portfwd'
-    },
-    {
-      selector: 'table tr td:nth-child(4) input, input[placeholder*="192.168.100"]',
-      text: 'Bước 5: nhập Internal IP ví dụ: 192.168.100.55',
-      position: 'top',
-      page: 'portfwd'
-    },
-    {
-      selector: 'table tr td:nth-child(5) input, input[placeholder*="80"]',
-      text: 'Bước 6: nhập Internal port ví dụ: 80',
-      position: 'bottom',
-      page: 'portfwd'
-    },
-    {
-      selector: '.actions button.apply, button[onclick*="simState.save"], button.apply',
-      text: 'Bước 7: chọn Apply để lưu cấu hình',
-      position: 'bottom',
-      page: 'portfwd'
-    }
-  ]
-};
-
-if (idx !== -1) {
-  window.DEVICE_AX3000C_LESSONS[idx] = lessonObj;
-} else {
-  window.DEVICE_AX3000C_LESSONS.push(lessonObj);
-}
+  guidePopups: window.TOOLTIPS_AX3000C['LAB_AX3000CV2_06']
+});

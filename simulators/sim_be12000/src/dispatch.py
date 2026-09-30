@@ -150,6 +150,8 @@ class Dispatcher:
             return self.store.json_tho_cho(data_tag), kieu, 200
 
         if not self._dung_ngu_canh(data_tag):
+            if self.session.da_dang_nhap and self.session.con_han():
+                return self.store.xml_cho(data_tag), "text/xml; charset=utf-8", 200
             return (self.store.xml_cho(data_tag, ma_loi="SessionTimeout"),
                     "text/xml; charset=utf-8", 200)
 

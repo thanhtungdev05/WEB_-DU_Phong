@@ -1,0 +1,86 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-24 02:41-02:46 UTC, CO SU DONG Y cua anh Huynn",
+ "cach_do": "Goi CHINH ham onSubmit() cua component trang (khong tu dung yeu cau) -> yeu cau gui di la dung nhu nguoi dung bam Apply. Moc XHR luu vao sessionStorage de song qua location.reload(). Moi lan doi deu da TRA VE nguyen trang va doc lai xac nhan.",
+ "ket_qua_chung": {
+  "tra_ve_set_thanh_cong": [0, { "status": true }],
+  "do_o": ["data_repo.cigext.set (trang LAN, 2 lan)", "data_repo.cigext.set (trang WAN, 1 lan)", "data_repo.weboui.dhcp_reservation_set (2 lan: add, del)"],
+  "mat_ket_noi_khi_apply_LAN": "2 yeu cau bi dut (HTTP 0) trong luc mang khoi dong lai; trang tu tham do lai va bao thanh cong sau khoang 50 giay"
+ },
+ "lan_1_bat_dns": {
+  "trang": "network/lan",
+  "gui": ["data_repo.cigext", "set", {
+   "network": { "lan": { "ipaddr": "192.168.100.1", "netmask": "255.255.255.0" } },
+   "dhcp": { "lan": { "dhcp_option": { "lan0": "6,8.8.8.8,8.8.4.4" }, "start": "192.168.100.2", "limit": "248", "netmask": "255.255.255.0", "leasetime": "720m" } } }],
+  "nhan": [0, { "status": true }],
+  "doc_lai": [0, {
+   "network": { "lan": { "ipaddr": "192.168.100.1", "netmask": "255.255.255.0" } },
+   "dhcp": { "lan": { "start": "192.168.100.2", "limit": "248", "leasetime": "720", "dhcp_option": "6,8.8.8.8,8.8.4.4", "netmask": "255.255.255.0" } } }],
+  "rut_ra": [
+   "dhcp_option gui dang OBJECT {lan0:'6,a,b'} -> doc ve CHUOI '6,a,b'",
+   "leasetime gui '720m' -> doc ve '720' (bo chu m)",
+   "trang doc lai hien dung: Define custom servers = Enable, DNS1 8.8.8.8, DNS2 8.8.4.4"
+  ]
+ },
+ "lan_2_tat_dns_tra_ve": {
+  "gui": ["data_repo.cigext", "set", {
+   "network": { "lan": { "ipaddr": "192.168.100.1", "netmask": "255.255.255.0" } },
+   "dhcp": { "lan": { "dhcp_option": {}, "start": "192.168.100.2", "limit": "248", "netmask": "255.255.255.0", "leasetime": "720m" } } }],
+  "nhan": [0, { "status": true }],
+  "doc_lai": [0, {
+   "network": { "lan": { "ipaddr": "192.168.100.1", "netmask": "255.255.255.0" } },
+   "dhcp": { "lan": { "start": "192.168.100.2", "limit": "248", "leasetime": "720", "dhcp_option": "", "netmask": "255.255.255.0" } } }],
+  "rut_ra": ["dhcp_option {} -> ''", "da tra ve nguyen trang"]
+ },
+ "reserved_ip_1_them": {
+  "trang": "network/dhcp",
+  "gui": ["data_repo.weboui", "dhcp_reservation_set", { "host": [ { "mac": "d8:43:ae:2e:65:45", "ip": "192.168.100.109", "_idx": "", "_method": "add" } ] }],
+  "nhan": [0, { "status": true }],
+  "doc_lai": [0, { "host": [ { "_idx": "cfg04fe63", "mac": "d8:43:ae:2e:65:45", "ip": "192.168.100.109" } ] }],
+  "rut_ra": [
+   "dong moi duoc cap _idx dang 'cfg' + 6 chu so hex thuong (ten section an danh cua UCI)",
+   "thu tu khoa khi doc ve: _idx, mac, ip; KHONG con _method",
+   "trang tu location.reload() sau khi thanh cong; bang hien 1 dong"
+  ]
+ },
+ "reserved_ip_2_xoa_tra_ve": {
+  "gui": ["data_repo.weboui", "dhcp_reservation_set", { "host": [ { "_idx": "cfg04fe63", "mac": "d8:43:ae:2e:65:45", "ip": "192.168.100.109", "_method": "del" } ] }],
+  "nhan": [0, { "status": true }],
+  "doc_lai": [0, { "host": [] }],
+  "rut_ra": ["xoa theo _idx", "da tra ve nguyen trang"]
+ },
+ "wan_apply_khong_doi": {
+  "trang": "network/wan",
+  "gui": ["data_repo.cigext", "set", {
+   "network": {
+    "wan": { "dns": {}, "disabled": "0", "proto": "pppoe", "ifname": "eth0", "mtu": "1500", "ipaddr": "", "netmask": "", "gateway": "", "username": "fpt", "password": "fpt", "demand": "", "peerdns": "1" },
+    "wan6": { "dns": { "dns1": "2001:4860:4860::8888", "dns2": "2001:4860:4860::8844" }, "disabled": "0", "ifname": "@wan", "peerdns": "0", "reqaddress": "none", "enableslaac": "1", "proto": "dhcpv6", "reqprefix": "auto", "ip6prefix": "", "ip6gw": "" },
+    "wan64": {}, "lan": { "ifname": "eth1.5 eth1.6 eth1.7", "proto": "static" }, "lan6": {}, "globals": {} },
+   "upnpd": { "config": { "enabled": "1" } },
+   "dhcp": { "lan": { "ignore": "0" } },
+   "aei-network": { "config": { "mode": "router" } } }],
+  "nhan": [0, { "status": true }],
+  "doc_lai_mau_mo_rong": [0, {
+   "network": {
+    "wan": { "disabled": "0", "proto": "pppoe", "mtu": "1500", "peerdns": "1", "dns": "", "username": "fpt", "password": "fpt", "demand": "", "ipaddr": "", "netmask": "", "gateway": "", "ifname": "eth0" },
+    "wan6": { "disabled": "0", "proto": "dhcpv6", "ip6addr": "", "ip6gw": "", "ip6prefix": "", "peerdns": "0", "dns": "2001:4860:4860::8888 2001:4860:4860::8844", "defaultroute": "1", "reqaddress": "none", "reqprefix": "auto", "enableslaac": "1", "ifname": "@wan" },
+    "lan": { "ifname": "eth1.5 eth1.6 eth1.7", "proto": "static" },
+    "wan64": { "disabled": "1", "iface_dslite": "1", "peeraddr": " " } },
+   "upnpd": { "config": { "enabled": "1" } },
+   "dhcp": { "lan": { "ignore": "0" } },
+   "aei-network": { "config": { "mode": "router" } } }],
+  "rut_ra": [
+   "wan6.dns gui OBJECT {dns1,dns2} -> doc ve CHUOI 'a b' (noi bang dau cach)",
+   "wan.dns gui {} -> ''",
+   "section rong (wan64:{}, lan6:{}, globals:{}) KHONG doi gi — wan64 van giu disabled/iface_dslite/peeraddr",
+   "=> quy tac chung DO DUOC: o tang THU 3 (config.section.option), gia tri object -> noi cac gia tri bang dau cach; o tang 1-2, object la config/section"
+  ]
+ },
+ "khung": {
+  "data_repo.cigext.cay_cau_hinh": [0, {
+   "network": { "wan6": { "ifname": "@wan" }, "lan": { "proto": "static" } },
+   "dhcp": { "lan": { "netmask": "255.255.255.0", "ignore": "0" } },
+   "upnpd": { "config": { "enabled": "1" } },
+   "aei-network": { "config": { "mode": "router" } } }]
+ },
+ "ghi_chu_khoa": "Khung tren chi chua cac nhanh MOI do duoc trong dot nay (doc lai sau Apply); kho gop sau vao cung cay cigext."
+}

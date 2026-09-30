@@ -28,6 +28,8 @@ node_modules/
 scratch/
 sim_state.json
 **/sim_state.json
+# trang thai cau hinh luu ben cua gia lap AX3000CV2 firmware 0.5.3
+simulators/sim_ax3000c/fw_053/src/cau_hinh.json
 simulators/sim_be12000/src/state/user-*.json
 simulators/mikrotik_hexs/src/cau_hinh.json
 **/cau_hinh.json

@@ -1,0 +1,647 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25 CO SU DONG Y cua anh Huynn (Firewall, ALG, IPv4/IPv6 Static Routing, Parental Control, Website Filtering)",
+ "cach_do": "Moc XHR (log luu sessionStorage cho trang tu tai lai); doi gia tri tren vm roi goi onSubmit/addRouting/deleteRow/handleAdd.../handleDelete...; doc lai sau moi buoc",
+ "firewall": {
+  "truoc": [
+   0,
+   {
+    "spi_firewall": true,
+    "res_pings_from_lan": true,
+    "res_pings_from_wan": true,
+    "client_isolation": false,
+    "dos_defense": true,
+    "syn_defense": true,
+    "syn_threshold": 25,
+    "syn_timeout": 50,
+    "udp_defense": false,
+    "udp_threshold": 150,
+    "udp_timeout": 10,
+    "icmp_defense": true,
+    "icmp_threshold": 100,
+    "icmp_timeout": 5,
+    "port_detection": false,
+    "port_threshold": 150,
+    "block_ip": false,
+    "block_tcp": true,
+    "block_land": false,
+    "block_teardrop": false,
+    "block_smurf": false,
+    "block_ping": false,
+    "block_traceroute": false,
+    "block_icmp": false,
+    "block_syn": false,
+    "block_unknownprotocol": true,
+    "block_fraggleattack": false
+   }
+  ],
+  "buoc": [
+   {
+    "ten": "tat_res_pings_from_wan",
+    "gui": [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": false,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": false,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   },
+   {
+    "ten": "tra_ve",
+    "gui": [
+     "data_repo.weboui",
+     "firewall_set",
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "spi_firewall": true,
+      "res_pings_from_lan": true,
+      "res_pings_from_wan": true,
+      "client_isolation": false,
+      "dos_defense": true,
+      "syn_defense": true,
+      "syn_threshold": 25,
+      "syn_timeout": 50,
+      "udp_defense": false,
+      "udp_threshold": 150,
+      "udp_timeout": 10,
+      "icmp_defense": true,
+      "icmp_threshold": 100,
+      "icmp_timeout": 5,
+      "port_detection": false,
+      "port_threshold": 150,
+      "block_ip": false,
+      "block_tcp": true,
+      "block_land": false,
+      "block_teardrop": false,
+      "block_smurf": false,
+      "block_ping": false,
+      "block_traceroute": false,
+      "block_icmp": false,
+      "block_syn": false,
+      "block_unknownprotocol": true,
+      "block_fraggleattack": false
+     }
+    ]
+   }
+  ],
+  "rut_ra": [
+   "gui CA object 27 truong, cung thu tu khoa voi doc; doc lai = dung gia tri gui"
+  ]
+ },
+ "alg": {
+  "truoc": [
+   0,
+   {
+    "sip": "1",
+    "tftp": "1",
+    "h323": "1",
+    "ftp": "1",
+    "pptp": "1",
+    "rtsp": "1",
+    "l2tp": "1",
+    "ipsec": "1"
+   }
+  ],
+  "buoc": [
+   {
+    "ten": "tat_tftp",
+    "gui": [
+     "alg",
+     "set",
+     {
+      "ftp": "1",
+      "tftp": false,
+      "sip": "1",
+      "h323": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "sip": "1",
+      "tftp": "0",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "sip": "1",
+      "tftp": "0",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   },
+   {
+    "ten": "bat_lai",
+    "gui": [
+     "alg",
+     "set",
+     {
+      "ftp": "1",
+      "tftp": true,
+      "sip": "1",
+      "h323": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "sip": "1",
+      "tftp": "1",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "sip": "1",
+      "tftp": "1",
+      "h323": "1",
+      "ftp": "1",
+      "pptp": "1",
+      "rtsp": "1",
+      "l2tp": "1",
+      "ipsec": "1"
+     }
+    ]
+   }
+  ],
+  "rut_ra": [
+   "o vua bat/tat gui dang BOOLEAN, o khac giu CHUOI '1'; thiet bi luu chuoi '1'/'0'",
+   "alg set tra ve TOAN BO trang thai SAU khi ghi (thu tu khoa cua thiet bi), phan hoi cham > 5 s"
+  ]
+ },
+ "ipv4routing": {
+  "truoc": [
+   0,
+   {
+    "data": []
+   }
+  ],
+  "buoc": [
+   {
+    "ten": "them",
+    "gui": [
+     "aei-route",
+     "set",
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "10.99.99.0",
+        "Netmask": "255.255.255.0",
+        "Gateway": "192.168.100.254"
+       }
+      ]
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "10.99.99.0",
+        "Netmask": "255.255.255.0",
+        "Gateway": "192.168.100.254",
+        "Status": "true"
+       }
+      ]
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "10.99.99.0",
+        "Netmask": "255.255.255.0",
+        "Gateway": "192.168.100.254",
+        "Status": "true"
+       }
+      ]
+     }
+    ],
+    "dom": [
+     "10.99.99.0@126,585,180,56",
+     "255.255.255.0@306,585,180,56",
+     "192.168.100.254@486,585,180,56",
+     "remove@666,585,798,56"
+    ]
+   },
+   {
+    "ten": "xoa",
+    "gui": [
+     "aei-route",
+     "set",
+     {
+      "data": []
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "data": []
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "data": []
+     }
+    ]
+   }
+  ],
+  "rut_ra": [
+   "gui TOAN BANG (khong co _method); thiet bi them Status:'true' vao cuoi moi dong; set tra ve toan bang sau ghi",
+   "trang chi hien dong co Status=='true'"
+  ]
+ },
+ "ipv6routing": {
+  "truoc": [
+   0,
+   {
+    "data": []
+   }
+  ],
+  "buoc": [
+   {
+    "ten": "them",
+    "gui": [
+     "aei-route6",
+     "set",
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "fd99::/64",
+        "Gateway": "fd00:db80::99"
+       }
+      ]
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "fd99::/64",
+        "Gateway": "fd00:db80::99"
+       }
+      ]
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "data": [
+       {
+        "index": "1",
+        "Network": "fd99::/64",
+        "Gateway": "fd00:db80::99"
+       }
+      ]
+     }
+    ],
+    "dom": [
+     "fd99::@126,585,250,56",
+     "64@376,585,250,56",
+     "fd00:db80::99@626,585,250,56",
+     "remove@876,585,588,56"
+    ]
+   },
+   {
+    "ten": "xoa",
+    "gui": [
+     "aei-route6",
+     "set",
+     {
+      "data": []
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "data": []
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "data": []
+     }
+    ]
+   }
+  ],
+  "rut_ra": [
+   "giong IPv4 nhung KHONG them Status; Network dang 'dia_chi/prefix'",
+   "1 lan doc ngay sau set bi 'Failed to fetch' (tam thoi), doc lai sau vai giay binh thuong"
+  ]
+ },
+ "parental": {
+  "truoc": [
+   0,
+   {
+    "blocking_list": []
+   }
+  ],
+  "buoc": [
+   {
+    "ten": "them_quy_tac_TAT",
+    "gui": [
+     "data_repo.weboui",
+     "parentctrl_set",
+     {
+      "blocking_list": [
+       {
+        "name": "simtest",
+        "mac": "d8:43:ae:2e:65:45",
+        "start": "01:00",
+        "stop": "01:01",
+        "weekdays": [
+         "Mon"
+        ],
+        "enabled": false,
+        "_idx": "",
+        "_method": "add"
+       }
+      ]
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "blocking_list": [
+       {
+        "_idx": "1",
+        "mac": "d8:43:ae:2e:65:45",
+        "name": "simtest",
+        "enabled": false,
+        "start": "01:00",
+        "stop": "01:01",
+        "weekdays": [
+         "Mon"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "ten": "xoa",
+    "gui": [
+     "data_repo.weboui",
+     "parentctrl_set",
+     {
+      "blocking_list": [
+       {
+        "_idx": "1",
+        "mac": "d8:43:ae:2e:65:45",
+        "name": "simtest",
+        "enabled": false,
+        "start": "01:00",
+        "stop": "01:01",
+        "weekdays": [
+         "Mon"
+        ],
+        "_method": "del"
+       }
+      ]
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "blocking_list": []
+     }
+    ]
+   }
+  ],
+  "rut_ra": [
+   "_idx do thiet bi cap = '1' (bang rong) — KHAC portfwd/reserved IP (cfg+6hex); cach cap cho dong thu 2 tro di CHUA DO",
+   "thu tu khoa doc ve: _idx, mac, name, enabled, start, stop, weekdays",
+   "sau set trang tu location.reload()",
+   "update (sua dong) CHUA DO"
+  ]
+ },
+ "websitefilter": {
+  "truoc": [
+   0,
+   {
+    "blocking_list": []
+   }
+  ],
+  "buoc": [
+   {
+    "ten": "them",
+    "gui": [
+     "data_repo.weboui",
+     "websitefilter_set",
+     {
+      "blocking_list": [
+       {
+        "website": "example.invalid",
+        "ip": [
+         "192.168.100.109"
+        ],
+        "_method": "add"
+       }
+      ]
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "blocking_list": [
+       {
+        "website": "example.invalid",
+        "ip": [
+         "192.168.100.109"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "ten": "xoa",
+    "gui": [
+     "data_repo.weboui",
+     "websitefilter_set",
+     {
+      "blocking_list": [
+       {
+        "website": "example.invalid",
+        "ip": [
+         "192.168.100.109"
+        ],
+        "_method": "del"
+       }
+      ]
+     }
+    ],
+    "nhan": [
+     0,
+     {
+      "status": true
+     }
+    ],
+    "doc_lai": [
+     0,
+     {
+      "blocking_list": []
+     }
+    ]
+   }
+  ],
+  "rut_ra": [
+   "KHONG co _idx o ca chieu gui lan chieu doc: trang tu danh _idx=i+1 roi XOA truoc khi gui; del gui lai noi dung dong (website+ip)",
+   "sau set trang tu location.reload()"
+  ]
+ },
+ "trang_thai_thiet_bi_sau_do": "ca 6 trang trung trang thai ban dau"
+}

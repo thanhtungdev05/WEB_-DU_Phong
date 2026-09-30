@@ -1,7 +1,0 @@
-config alg 'config'
-    option sip '1'
-    option tftp '1'
-    option ftp '1'
-    option h323 '1'
-    option pptp '1'
-    option rtsp '1'

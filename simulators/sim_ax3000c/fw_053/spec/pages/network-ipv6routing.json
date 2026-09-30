@@ -1,0 +1,28 @@
+{
+ "trang": "Network >> Advanced >> IPv6 Static Routing",
+ "route": "#/network/ipv6routing",
+ "view": "network/ipv6routing",
+ "chunk_goc": "js/chunk-2d0baaa6",
+ "nguon_bang_chung": [
+  "reference/api/quet_doc_59_api.json",
+  "reference/api/hop_dong_ghi_nhom4_advanced.json"
+ ],
+ "doc_du_lieu": "aei-route6.get (Network 'addr/prefix')",
+ "ghi_du_lieu": {
+  "loi_goi": "aei-route6 set {data:[toan bang]}",
+  "tra_ve": "toan bang",
+  "da_do": true
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 21/21 + dong moi trung toa do",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat (Y)",
+  "4_trang_thai": "dat — Apply tren giao dien gia lap, doc lai / tai lai dung"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "aei-route6 set -> network section route6 (interface 'wan6', target, gateway, status 'true')",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

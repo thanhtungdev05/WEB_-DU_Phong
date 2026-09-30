@@ -67,7 +67,8 @@ API_PROXY_TIMEOUT_SECONDS = max(10, min(API_PROXY_TIMEOUT_SECONDS, 300))
 
 # Import các Handler của từng thiết bị
 import simulators.sim_ac1000f.server2 as ac1000f
-import simulators.sim_ax3000c.server as ax3000c
+# AX3000CV2 firmware 0.5.3 (fw_053/)
+import simulators.sim_ax3000c.server_fw053 as ax3000c
 import simulators.sim_ax3000gz.server as ax3000gz
 import simulators.sim_ax3000hv2.server2 as ax3000hv2
 import simulators.sim_ax3000s.server as ax3000s
@@ -578,6 +579,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             original_directory = getattr(self, 'directory', None)
             original_send_header = self.send_header
             original_end_headers = self.end_headers
+            cache_control_sent = False
             try:
                 handler_class = SIM_HANDLERS[sim_id]
                 self.__class__ = handler_class
@@ -598,6 +600,9 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                             break
 
                 def custom_send_header(keyword, value):
+                    nonlocal cache_control_sent
+                    if keyword.lower() == 'cache-control':
+                        cache_control_sent = True
                     if keyword.lower() == 'location':
                         if value.startswith('/') and not value.startswith('/' + sim_id + '/') and value != '/' + sim_id:
                             value = '/' + sim_id + value
@@ -613,7 +618,25 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
 
                 def custom_end_headers():
                     original_send_header('Set-Cookie', f'current_sim={sim_id}; Path=/; SameSite=Lax')
-                    original_send_header('Cache-Control', 'no-cache, must-revalidate')
+                    if not cache_control_sent:
+                        response_path = self.path.split('?', 1)[0].lower()
+                        extension = os.path.splitext(response_path)[1]
+                        static_extensions = {
+                            '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg',
+                            '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.map',
+                        }
+                        if method in ('GET', 'HEAD') and extension in static_extensions:
+                            filename = os.path.basename(response_path)
+                            if re.search(r'(?:^|[._-])[a-f0-9]{8,}(?:[._-]|$)', filename):
+                                cache_value = 'public, max-age=31536000, immutable'
+                            else:
+                                cache_value = 'public, max-age=3600, stale-while-revalidate=86400'
+                        elif response_path in ('/ubus', '/sim-reset-session', '/api/reset', '/ftc-dat-bai') \
+                                or response_path.startswith('/api/'):
+                            cache_value = 'no-store'
+                        else:
+                            cache_value = 'no-cache, must-revalidate'
+                        original_send_header('Cache-Control', cache_value)
                     original_end_headers()
                 self.end_headers = custom_end_headers
 

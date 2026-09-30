@@ -1,0 +1,177 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25, CHI DOC",
+ "cach_do": "goi /ubus uci get {config:X} tu trang that; JSON.stringify ket qua doi chieu FNV-1a: ddns 4f39e7bc (861 ky tu), system 11420e21 (576 ky tu) — trung; 2026-09-25 them upnpd (FNV 2bdd91f7, 773 ky tu) cho plugin services/rtty + services/upnp; 2026-09-25 them aeiWiFiTimer (FNV ca goi tin cb4c82d1, 254) va aeiRebootTimer (c6b485d4, 233) cho nhom 7",
+ "hop_dong": {
+  "uci.get {config} ton tai": "[0,{values:{<section>:{.anonymous,.type,.name,.index,...options}}}]",
+  "uci.get {config} KHONG ton tai": "result [6] — KHONG phai khoi error (do voi config 'khongco_xyz')"
+ },
+ "dung_boi": {
+  "ddns": "network/ddns (uci-form config=ddns)",
+  "system": "home.vue: Local Time = toUTCString(localtime) + ' ' + zonename"
+ },
+ "khung": {
+  "uci.cay_cau_hinh": [
+   0,
+   {
+    "ddns": {
+     "global": {
+      ".anonymous": false,
+      ".type": "ddns",
+      ".name": "global",
+      ".index": 0,
+      "ddns_dateformat": "%F %R",
+      "ddns_loglines": "250",
+      "upd_privateip": "0"
+     },
+     "myddns_ipv4": {
+      ".anonymous": false,
+      ".type": "service",
+      ".name": "myddns_ipv4",
+      ".index": 1,
+      "enabled": "0",
+      "service_name": "noip",
+      "lookup_host": "yourhost.example.com",
+      "domain": "yourhost.example.com",
+      "username": "your_username",
+      "password": "your_password",
+      "interface": "wan",
+      "ip_source": "network",
+      "ip_network": "wan"
+     },
+     "myddns_ipv6": {
+      ".anonymous": false,
+      ".type": "service",
+      ".name": "myddns_ipv6",
+      ".index": 2,
+      "enabled": "0",
+      "update_url": "http://[USERNAME]:[PASSWORD]@your.provider.net/nic/update?hostname=[DOMAIN]&myip=[IP]",
+      "lookup_host": "yourhost.example.com",
+      "domain": "yourhost.example.com",
+      "username": "your_username",
+      "password": "your_password",
+      "use_ipv6": "1",
+      "interface": "wan6",
+      "ip_source": "network",
+      "ip_network": "wan6"
+     }
+    },
+    "system": {
+     "cfg01e48a": {
+      ".anonymous": true,
+      ".type": "system",
+      ".name": "cfg01e48a",
+      ".index": 0,
+      "ttylogin": "0",
+      "log_file": "/var/log/messages",
+      "log_size": "2048",
+      "urandom_seed": "0",
+      "zonename": "Asia/Ho Chi Minh",
+      "timezone": "ICT-7",
+      "conloglevel": "4",
+      "log_remote": "0",
+      "hostname": "AP-AX3000CV2-0A91"
+     },
+     "ntp": {
+      ".anonymous": false,
+      ".type": "timeserver",
+      ".name": "ntp",
+      ".index": 1,
+      "enabled": "1",
+      "enable_server": "0",
+      "server": [
+       "0.openwrt.pool.ntp.org",
+       "1.openwrt.pool.ntp.org"
+      ]
+     },
+     "cfg037450": {
+      ".anonymous": true,
+      ".type": "rngd",
+      ".name": "cfg037450",
+      ".index": 2,
+      "enabled": "1",
+      "device": "/dev/hwrng"
+     }
+    },
+    "upnpd": {
+     "config": {
+      ".anonymous": false,
+      ".type": "upnpd",
+      ".name": "config",
+      ".index": 0,
+      "enable_natpmp": "0",
+      "enable_upnp": "1",
+      "secure_mode": "1",
+      "log_output": "0",
+      "download": "1024",
+      "upload": "512",
+      "internal_iface": "lan",
+      "port": "5000",
+      "upnp_lease_file": "/var/run/miniupnpd.leases",
+      "igdv1": "1",
+      "ext_ip_reserved_ignore": "1",
+      "uuid": "6dab0b66-bc26-4bff-8632-18643762cb4d",
+      "enabled": "1"
+     },
+     "cfg02ed70": {
+      ".anonymous": true,
+      ".type": "perm_rule",
+      ".name": "cfg02ed70",
+      ".index": 1,
+      "action": "allow",
+      "ext_ports": "1024-65535",
+      "int_addr": "0.0.0.0/0",
+      "int_ports": "1024-65535",
+      "comment": "Allow high ports"
+     },
+     "cfg03ed70": {
+      ".anonymous": true,
+      ".type": "perm_rule",
+      ".name": "cfg03ed70",
+      ".index": 2,
+      "action": "deny",
+      "ext_ports": "0-65535",
+      "int_addr": "0.0.0.0/0",
+      "int_ports": "0-65535",
+      "comment": "Default deny"
+     }
+    },
+    "aeiWiFiTimer": {
+     "cfg010455": {
+      ".anonymous": true,
+      ".type": "WiFiTimer",
+      ".name": "cfg010455",
+      ".index": 0,
+      "Enable": "0",
+      "StartTime": "06:00",
+      "EndTime": "23:00",
+      "Mon": "1",
+      "Tue": "1",
+      "Wed": "1",
+      "Thu": "1",
+      "Fri": "1",
+      "Sat": "1",
+      "Sun": "1"
+     }
+    },
+    "aeiRebootTimer": {
+     "cfg01e491": {
+      ".anonymous": true,
+      ".type": "RebootTimer",
+      ".name": "cfg01e491",
+      ".index": 0,
+      "Enable": "0",
+      "Time": "06:00",
+      "Mon": "1",
+      "Tue": "1",
+      "Wed": "1",
+      "Thu": "1",
+      "Fri": "1",
+      "Sat": "1",
+      "Sun": "1"
+     }
+    }
+   }
+  ]
+ },
+ "ghi_chu_dinh_dang": "khung theo quy uoc kho: [0, du_lieu]; du_lieu = {config: values}"
+}

@@ -1,3 +1,0 @@
-config failsafe
-	option Enable '1'
-	option MaxTryCnt '5'

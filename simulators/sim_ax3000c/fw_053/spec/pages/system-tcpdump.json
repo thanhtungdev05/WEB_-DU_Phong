@@ -1,0 +1,22 @@
+{
+ "trang": "Network >> Maintain >> TCPDump",
+ "route": "#/network/tcpdump",
+ "view": "system/tcpdump",
+ "chunk_goc": "js/chunk-2d0f003e",
+ "nguon_bang_chung": [
+  "reference/api/khung_that_nhom5_maintain.json",
+  "reference/api/hop_dong_ghi_nhom5_maintain.json"
+ ],
+ "doc_du_lieu": "tcpdump_get {wanlanlist}",
+ "hanh_dong": {
+  "start": "{wanlanlist,packets_number} -> [0] khi bat du goi (~6,3 s voi 10 goi lan)",
+  "stop": "[0]",
+  "save": "{dumpfile:'/packet_<wanlanlist>.pcap'}; GET sau stop -> 404"
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 13/13",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat (Z16-Z17)",
+  "4_trang_thai": "khong co truong ghi; tep pcap khong mo phong (404)"
+ }
+}

@@ -1,59 +1,47 @@
 /**
- * devices/ax3000c/tooltips/bai3.js — Tooltip Hướng dẫn cho Bài 3: Cấu hình WiFi IoT (AX3000C)
+ * devices/ax3000c/tooltips/bai3.js — Tooltip Hướng dẫn cho Bài 3: Cấu hình WiFi IoT (AX3000CV2, firmware 0.5.3)
+ * Firmware 0.5.3: mạng IoT là tab Specific SSID (tên mặc định "...-IOT", mặc định TẮT) —
+ * anh Huynn chọn làm ở tab này (bản cũ làm ở Guest SSID). Phải bật SSID Enabled thì mới
+ * hiện các ô SSID / Encryption / Passphrase.
  */
 
 if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
 
-window.TOOLTIPS_AX3000C['LAB_AX3000CV2_03'] = [
-  // 1. Chọn Network ở Menu bên trái (chỉ hiện khi chưa ở trang Wi-Fi)
-  {
-    selector: '.el-submenu__title:contains("Network"), .el-submenu:contains("Network")',
-    text: 'Chọn Network',
-    position: 'right',
-    hideOnPage: 'wifi'
-  },
-  // 2. Chọn WIFI ở Menu bên trái cấp 1 (chỉ hiện khi chưa ở trang Wi-Fi)
-  {
-    selector: '.el-submenu:contains("Network") .el-submenu__title:contains("Wi-Fi"), .el-submenu:contains("Network") .el-submenu__title:contains("WIFI")',
-    text: 'Chọn WIFI',
-    position: 'right',
-    hideOnPage: 'wifi'
-  },
-  // 3. Chọn WIFI ở Submenu bên trái cấp 2 (chỉ hiện khi chưa ở trang Wi-Fi)
-  {
-    selector: '.el-menu-item:contains("Wi-Fi"), .el-menu-item:contains("WIFI"), .el-menu-item[index*="/network/wifi"]',
-    text: 'Chọn WIFI',
-    position: 'right',
-    hideOnPage: 'wifi'
-  },
-  // Bước 1: Chọn tab Specific SSID (cho IoT)
-  {
-    selector: '.tab[data-t="specific"]',
-    text: 'Bước 1: chọn tab Specific SSID',
-    position: 'top',
-    page: 'wifi'
-  },
-  // Bước 2: Đặt tên WIFI IoT (chỉ hiện khi đang ở tab Specific SSID)
-  {
-    selector: 'body[data-active-tab="specific"] .card .row input[type="text"], .tabs:has(.tab.active[data-t="specific"]) ~ .card .row input[type="text"]',
-    text: 'Bước 2: đặt tên WIFI IoT ví dụ: FPT IoT',
-    position: 'right',
-    expected: 'FPT IoT',
-    page: 'wifi'
-  },
-  // Bước 3: Đặt mật khẩu WIFI IoT (chỉ hiện khi đang ở tab Specific SSID)
-  {
-    selector: 'body[data-active-tab="specific"] .card #pp, .tabs:has(.tab.active[data-t="specific"]) ~ .card #pp',
-    text: 'Bước 3: đặt mật khẩu WIFI IoT ví dụ: fptiot123',
-    position: 'right',
-    expected: 'fptiot123',
-    page: 'wifi'
-  },
-  // Bước 4: Chọn Apply (chỉ hiện khi đang ở tab Specific SSID)
-  {
-    selector: 'body[data-active-tab="specific"] .actions button.apply, .tabs:has(.tab.active[data-t="specific"]) ~ .actions button.apply',
-    text: 'Bước 4: chọn Apply để lưu cấu hình',
-    position: 'bottom',
-    page: 'wifi'
-  }
-];
+(function (F) {
+  function dangOTabSpecific(doc) { return !!doc.querySelector('#tab-specificssid.is-active'); }
+
+  window.TOOLTIPS_AX3000C['LAB_AX3000CV2_03'] = F.menu('Wi-Fi', 'Wi-Fi', 'network/wifi', 'WIFI', 'WIFI').concat([
+    {
+      selector: '#tab-specificssid:not(.is-active)',
+      text: 'Bước 1: Cấu hình mạng Specific SSID (cho IoT)',
+      position: 'top',
+      page: 'network/wifi'
+    },
+    // Bước 2: chỉ hiện khi công tắc còn tắt
+    {
+      selector: '#pane-specificssid .el-form-item[data-ftc-nhan="SSID Enabled"] .el-switch:not(.is-checked)',
+      text: 'Bước 2: Bật SSID Enabled',
+      position: 'right',
+      page: 'network/wifi'
+    },
+    {
+      selector: '#pane-specificssid ' + F.o('SSID'),
+      text: 'Bước 3: Đặt tên WIFI IoT VD: FPT IoT',
+      position: 'right',
+      page: 'network/wifi'
+    },
+    {
+      selector: '#pane-specificssid ' + F.o('Passphrase'),
+      text: 'Bước 4: Đặt mật khẩu WIFI IoT VD: fptiot123',
+      position: 'right',
+      page: 'network/wifi'
+    },
+    {
+      selector: F.nut('Apply'),
+      text: 'Bước 5: Chọn Apply',
+      position: 'left',
+      page: 'network/wifi',
+      condition: dangOTabSpecific
+    }
+  ]);
+})(window.FTC_AX3000C);

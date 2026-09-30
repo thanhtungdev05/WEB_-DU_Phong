@@ -33,7 +33,7 @@ window.TOOLTIPS_BE12000['LAB_BE12000_02'] = [
   },
   {
     selector: '[id="ESSID:0"]:not(:disabled), input[id="ESSID:0"]:not(:disabled)',
-    text: 'Bước 1: Nhập SSID Name: FPT Telecom (2.4GHz)',
+    text: 'Bước 1: Nhập SSID Name: FPT Telecom',
     position: 'right',
     expected: 'FPT Telecom'
   },
@@ -44,35 +44,13 @@ window.TOOLTIPS_BE12000['LAB_BE12000_02'] = [
   },
   {
     selector: '[id="KeyPassphrase:0"]:not(:disabled), input[id="KeyPassphrase:0"]:not(:disabled)',
-    text: 'Bước 3: Nhập WPA Passphrase: 19006600 (2.4GHz)',
+    text: 'Bước 3: Nhập WPA Passphrase: 19006600',
     position: 'right',
     expected: '19006600'
   },
   {
     selector: '[id="Btn_apply_WLANSSIDConf:0"]:not(.disableBtn)',
-    text: 'Lưu ý: Nhấn Apply lưu cấu hình 2.4GHz trước khi qua 5GHz',
-    position: 'top'
-  },
-  {
-    selector: '#template_WLANSSIDConf_4 .instName:not(.instNameExp), [id="instName_WLANSSIDConf:4"]:not(.instNameExp), #topLine_WLANSSIDConf_4:not(.instNameExp)',
-    text: 'Bước 4: Mở mục SSID5 (5GHz)',
-    position: 'top'
-  },
-  {
-    selector: '[id="ESSID:4"]:not(:disabled), input[id="ESSID:4"]:not(:disabled)',
-    text: 'Kiểm tra SSID Name: FPT Telecom (5GHz)',
-    position: 'right',
-    expected: 'FPT Telecom'
-  },
-  {
-    selector: '[id="KeyPassphrase:4"]:not(:disabled), input[id="KeyPassphrase:4"]:not(:disabled)',
-    text: 'Kiểm tra WPA Passphrase: 19006600 (5GHz)',
-    position: 'right',
-    expected: '19006600'
-  },
-  {
-    selector: '[id="Btn_apply_WLANSSIDConf:4"]:not(.disableBtn)',
-    text: 'Bước 5: Nhấn Apply tại SSID5 (5GHz) để hoàn thành',
+    text: 'Bước 4: Nhấn Apply để lưu cấu hình Wi-Fi',
     position: 'top'
   }
 ];

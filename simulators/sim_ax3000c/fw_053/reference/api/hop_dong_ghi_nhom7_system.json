@@ -1,0 +1,111 @@
+{
+ "nguon": "AX3000CV2 that, fw 0.5.3, do 2026-09-25 voi su dong y cua anh Huynn. Moi thao tac tra ve nguyen trang.",
+ "system_set": {
+  "general_giu_nguyen": {
+   "gui": [
+    "data_repo.weboui",
+    "system_set",
+    {
+     "system": {
+      "hostname": "AP-AX3000CV2-0A91",
+      "zonename": "Asia/Ho Chi Minh",
+      "timezone": "ICT-7"
+     }
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "ms": 51,
+   "sau": "system_get trung (cac7e3a5/197); uci system trung (a4c4b6f7/625) — GIA TRI KHONG DOI THI KHONG DOI THU TU option"
+  },
+  "ntp_giu_nguyen": {
+   "gui": [
+    "data_repo.weboui",
+    "system_set",
+    {
+     "ntp": {
+      "list": [
+       "0.openwrt.pool.ntp.org",
+       "1.openwrt.pool.ntp.org"
+      ]
+     }
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "ms": 49,
+   "sau": "system_get, uci system trung"
+  },
+  "doi_hostname_tam": {
+   "gui": [
+    "data_repo.weboui",
+    "system_set",
+    {
+     "system": {
+      "hostname": "AP-AX3000CV2-TEST",
+      "zonename": "Asia/Ho Chi Minh",
+      "timezone": "ICT-7"
+     }
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "sau_3s": {
+    "system_get.system.hostname": "AP-AX3000CV2-TEST",
+    "uci system (section .type=system)": "hostname DOI GIA TRI va CHUYEN XUONG CUOI section (sau log_port); zonename/timezone gui cung gia tri -> giu cho",
+    "system.board.hostname": "AP-AX3000CV2-TEST",
+    "network.topology[94:F7:17:24:0A:90].hostname": "AP-AX3000CV2-TEST",
+    "tieu_de_tab_sau_tai_lai": "AP-AX3000CV2-TEST - oui",
+    "trang_home_Hostname": "AP-AX3000CV2-TEST"
+   },
+   "tra_ve": "gui lai AP-AX3000CV2-0A91 -> [0,{status:true}]; system_get + board tro lai; DAU VET: uci system nay co hostname o CUOI section (fnv 2b55a113, truoc do a4c4b6f7) — noi dung khong doi"
+  }
+ },
+ "ssh_set": {
+  "gui": [
+   "ssh",
+   "set",
+   {
+    "WANState": "0",
+    "LANState": "0",
+    "Password": ""
+   }
+  ],
+  "nhan": [
+   0,
+   {
+    "WANState": "0",
+    "LANState": "0",
+    "Password": ""
+   }
+  ],
+  "ms": 1334,
+  "ghi_chu": "tra TOAN TRANG THAI (khong phai {status}); ~1,3 s. Nhanh Password khac rong CHUA DO (get co tra lai mat khau khong: chua biet)"
+ },
+ "uci_form_apply_khong_doi": {
+  "trang": [
+   "#/system/wifitimer",
+   "#/system/reboottimer"
+  ],
+  "ket_qua": "KHONG gui loi goi uci nao; hien el-message warning 'There are no changes to apply' (x 570, rong 380)"
+ },
+ "khong_do": {
+  "loginpwd_set": "doi mat khau admin that — anh Huynn chon: gia lap BAO LOI",
+  "remote-gui set": "ghi de mat khau tai khoan assist cua FPT — gia lap BAO LOI",
+  "rpc-sys upgrade_*/factory/reboot, oui.system backup_*": "cam",
+  "cgi-backup (Generate archive)": "tai tep ve may — chua xin phep",
+  "cgi-upload": "cam"
+ }
+}

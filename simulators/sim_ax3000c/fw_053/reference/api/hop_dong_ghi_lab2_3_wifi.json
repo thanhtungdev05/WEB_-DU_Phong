@@ -1,0 +1,671 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-24 03:16-03:20 UTC, CO SU DONG Y cua anh Huynn",
+ "cach_do": "Goi chinh onSubmit() cua component network/wifi (js/chunk-2d237504...js), dat activeName theo tab. Moi buoc doc lai wifi_get; ket thuc da so wifi_get == luc dau (true).",
+ "trang": "network/wifi (bai Lab 2, 3)",
+ "phat_hien_lab3": "Bai 3 'Wi-Fi IoT' chinh la tab SPECIFIC SSID: ssid mac dinh 'FPT Telecom-0A91-IOT', mac dinh TAT, vap_diff_mode true. (Tab Guest SSID la mang khach rieng.)",
+ "truoc_khi_do": [
+  0,
+  {
+   "host": {
+    "2G": {
+     "disabled": false,
+     "vap_diff_mode": false,
+     "ssid": "FPT Telecom-0A91",
+     "encryption": "psk2+ccmp",
+     "sae": "0",
+     "key": "24c1e15f"
+    },
+    "5G": {
+     "disabled": false,
+     "vap_diff_mode": false,
+     "ssid": "FPT Telecom-0A91",
+     "encryption": "psk2+ccmp",
+     "sae": "0",
+     "key": "24c1e15f"
+    }
+   },
+   "guest": {
+    "2G": {
+     "disabled": true,
+     "vap_diff_mode": false,
+     "ssid": "OpenWRT-2G.guest",
+     "encryption": "psk2+ccmp",
+     "sae": "0",
+     "key": "1234567890"
+    },
+    "5G": {
+     "disabled": true,
+     "vap_diff_mode": false,
+     "ssid": "OpenWRT-5G.guest",
+     "encryption": "psk2+ccmp",
+     "sae": "0",
+     "key": "1234567890"
+    }
+   },
+   "specific": {
+    "2G": {
+     "disabled": true,
+     "vap_diff_mode": true,
+     "ssid": "FPT Telecom-0A91-IOT",
+     "encryption": "psk2+ccmp",
+     "sae": "0",
+     "key": "24c1e15f"
+    },
+    "5G": {
+     "disabled": true,
+     "vap_diff_mode": true,
+     "ssid": "FPT Telecom-0A91-IOT",
+     "encryption": "psk2+ccmp",
+     "sae": "0",
+     "key": "24c1e15f"
+    }
+   }
+  }
+ ],
+ "buoc": [
+  {
+   "ten": "lab2_doi_ssid_host",
+   "tab": "hostssid",
+   "che_do": "gop (separateSSID false)",
+   "gui": [
+    "data_repo.weboui",
+    "wifi_set",
+    {
+     "host": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT-LAB2-TEST",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "labtest123"
+      },
+      "5G": {
+       "disabled": false,
+       "key": "labtest123",
+       "ssid": "FPT-LAB2-TEST",
+       "encryption": "psk2+ccmp",
+       "sae": "0"
+      },
+      "6G": {
+       "disabled": false,
+       "key": "labtest123",
+       "ssid": "FPT-LAB2-TEST",
+       "encryption": "psk2+ccmp",
+       "sae": "0"
+      }
+     }
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "doc_lai": [
+    0,
+    {
+     "host": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT-LAB2-TEST",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "labtest123"
+      },
+      "5G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT-LAB2-TEST",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "labtest123"
+      }
+     },
+     "guest": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-2G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-5G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      }
+     },
+     "specific": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "ten": "lab2_tra_ve",
+   "tab": "hostssid",
+   "gui": [
+    "data_repo.weboui",
+    "wifi_set",
+    {
+     "host": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": false,
+       "key": "24c1e15f",
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0"
+      },
+      "6G": {
+       "disabled": false,
+       "key": "24c1e15f",
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0"
+      }
+     }
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "doc_lai": [
+    0,
+    {
+     "host": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     },
+     "guest": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-2G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-5G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      }
+     },
+     "specific": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "ten": "lab3_bat_iot_specific",
+   "tab": "specificssid",
+   "che_do": "gop",
+   "gui": [
+    "data_repo.weboui",
+    "wifi_set",
+    {
+     "specific": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": "1",
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": false,
+       "key": "24c1e15f",
+       "ssid": "FPT Telecom-0A91-IOT",
+       "vap_diff_mode": "1",
+       "encryption": "psk2+ccmp",
+       "sae": "0"
+      },
+      "6G": {
+       "disabled": false,
+       "key": "24c1e15f",
+       "ssid": "FPT Telecom-0A91-IOT",
+       "vap_diff_mode": "1",
+       "encryption": "psk2+ccmp",
+       "sae": "0"
+      }
+     }
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "doc_lai": [
+    0,
+    {
+     "host": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     },
+     "guest": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-2G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-5G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      }
+     },
+     "specific": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": false,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     }
+    }
+   ],
+   "dom_tab_khi_bat": {
+    "khung_nhin": "1536x639",
+    "chu": "Use separate SSID Wi-Fi SSID Enabled SSID Encryption Passphrase",
+    "o_hien": [
+     "SSID Enabled~switch:true@126,321,700,40",
+     "SSID~FPT Telecom-0A91-IOT@126,383,700,41",
+     "Encryption~WPA2-Personal@126,446,700,41",
+     "Passphrase~24c1e15f@126,508,700,41"
+    ]
+   }
+  },
+  {
+   "ten": "lab3_tat_iot_tra_ve",
+   "tab": "specificssid",
+   "gui": [
+    "data_repo.weboui",
+    "wifi_set",
+    {
+     "specific": {
+      "2G": {
+       "disabled": true
+      },
+      "5G": {
+       "disabled": true
+      },
+      "6G": {
+       "disabled": true
+      }
+     }
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "doc_lai": [
+    0,
+    {
+     "host": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     },
+     "guest": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-2G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-5G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      }
+     },
+     "specific": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "ten": "guest_bat",
+   "tab": "guestssid",
+   "che_do": "tach (guestSeparateSSID true)",
+   "gui": [
+    "data_repo.weboui",
+    "wifi_set",
+    {
+     "guest": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-2G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": 0,
+       "key": "1234567890"
+      },
+      "5G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-5G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": 0,
+       "key": "1234567890"
+      }
+     }
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "doc_lai": [
+    0,
+    {
+     "host": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     },
+     "guest": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-2G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      },
+      "5G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-5G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      }
+     },
+     "specific": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     }
+    }
+   ],
+   "dom_tab_khi_bat": {
+    "chu": "Use separate SSID 2G SSID Enabled SSID Encryption Passphrase 5G SSID Enabled SSID Encryption Passphrase"
+   }
+  },
+  {
+   "ten": "guest_tat_tra_ve",
+   "tab": "guestssid",
+   "gui": [
+    "data_repo.weboui",
+    "wifi_set",
+    {
+     "guest": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": false
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": false
+      }
+     }
+    }
+   ],
+   "nhan": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "doc_lai": [
+    0,
+    {
+     "host": {
+      "2G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": false,
+       "vap_diff_mode": false,
+       "ssid": "FPT Telecom-0A91",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     },
+     "guest": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-2G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": false,
+       "ssid": "OpenWRT-5G.guest",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "1234567890"
+      }
+     },
+     "specific": {
+      "2G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      },
+      "5G": {
+       "disabled": true,
+       "vap_diff_mode": true,
+       "ssid": "FPT Telecom-0A91-IOT",
+       "encryption": "psk2+ccmp",
+       "sae": "0",
+       "key": "24c1e15f"
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "rut_ra": [
+  "set thanh cong tra [0,{status:true}]; trang KHONG tai lai, chi hien thong bao",
+  "nhanh 6G gui kem nhung thiet bi KHONG co 6G -> bo qua, doc ve chi 2G/5G",
+  "gia tri duoc EP VE KIEU dang luu: vap_diff_mode '1' -> true; sae so 0 -> chuoi '0'",
+  "khi tat (disabled true) trang chi gui co disabled -> ssid/key/encryption giu nguyen",
+  "doi o 2G che do gop -> trang tu chep ssid/key/encryption sang 5G (va 6G)"
+ ],
+ "ghi_chu_trung_thuc": "doc_lai cua tung buoc duoc GHEP tu khung goc + phan da DO THAY DOI. Da do truc tiep: lab2 -> toan bo nhanh host; bat IoT -> nhanh specific + xac nhan host khong doi; bat guest -> nhanh guest; ba buoc tra ve -> so TOAN BO wifi_get == luc dau (true). Rieng buoc lab2: nhanh guest/specific KHONG duoc so rieng luc do (chi so lai sau buoc tra ve).",
+ "dom_that_mac_dinh": {
+  "khung_nhin": "1536x639",
+  "cach_do": "moi tab: o dang hien -> nhan~gia tri@toa do",
+  "hostssid": [
+   "SSID Enabled~sw:true@126,321,700,40",
+   "SSID~FPT Telecom-0A91@126,383,700,41",
+   "Encryption~WPA2-Personal@126,446,700,41",
+   "Passphrase~24c1e15f@126,508,700,41"
+  ],
+  "guestssid": [
+   "SSID Enabled~sw:false@126,321,700,40",
+   "SSID Enabled~sw:false@126,490,700,40"
+  ],
+  "specificssid": [
+   "SSID Enabled~sw:false@126,321,700,40"
+  ]
+ }
+}

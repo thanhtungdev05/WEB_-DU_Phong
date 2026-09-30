@@ -1,8 +1,0 @@
-config config 'config'
-    option enable_livedump '0'
-
-config livedump 'livedump'
-    option path '/aeimnt/rt_app/crash_dump/'
-    option dump_count '10'
-    option tftp '1'
-    option save_dump '1'

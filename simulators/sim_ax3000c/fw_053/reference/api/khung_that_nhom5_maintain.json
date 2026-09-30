@@ -1,0 +1,178 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-25 (nhom 5 Maintain + Speed test), CHI DOC + chay cong cu vo hai (ping/selftest)",
+ "khung": {
+  "speedtest.running": [
+   0,
+   {
+    "sv": "",
+    "res": 1,
+    "dn": 0,
+    "up": 0
+   }
+  ],
+  "speedtest.servers": [
+   0,
+   {}
+  ]
+ },
+ "khung_chi_ma": {
+  "speedtest.history": [
+   0
+  ]
+ },
+ "ghi_chu_khung_chi_ma": "speedtest history tra result [0] TRON (khong co doi tuong du lieu)",
+ "cong_cu": {
+  "do_cong_cu_ten_hoi_cham": {
+   "ping": [
+    0,
+    {
+     "stderr": "ping: bad address '?'\n",
+     "code": 1
+    }
+   ],
+   "ping6": [
+    0,
+    {
+     "stderr": "ping6: bad address '?'\n",
+     "code": 1
+    }
+   ],
+   "traceroute": [
+    0,
+    {
+     "stderr": "traceroute: bad address '?'\n",
+     "code": 1
+    }
+   ],
+   "traceroute6": [
+    0,
+    {
+     "stderr": "traceroute6: bad address '?'\n",
+     "code": 1
+    }
+   ],
+   "nslookup": [
+    0,
+    {
+     "stderr": ";; connection timed out; no servers could be reached\n\n",
+     "code": 1
+    }
+   ]
+  },
+  "thoi_gian_ms": {
+   "ten_mien_khong_phan_giai": 5060,
+   "ping_lan": 4068,
+   "ping_ip_ngoai_lan": 49
+  },
+  "ping": {
+   "openwrt.org": [
+    0,
+    {
+     "stderr": "ping: bad address 'openwrt.org'\n",
+     "code": 1
+    }
+   ],
+   "192.168.100.109": [
+    0,
+    {
+     "stdout": "PING 192.168.100.109 (192.168.100.109): 56 data bytes\n64 bytes from 192.168.100.109: seq=0 ttl=128 time=2.614 ms\n64 bytes from 192.168.100.109: seq=1 ttl=128 time=0.943 ms\n64 bytes from 192.168.100.109: seq=2 ttl=128 time=0.972 ms\n64 bytes from 192.168.100.109: seq=3 ttl=128 time=1.133 ms\n64 bytes from 192.168.100.109: seq=4 ttl=128 time=0.792 ms\n\n--- 192.168.100.109 ping statistics ---\n5 packets transmitted, 5 packets received, 0% packet loss\nround-trip min/avg/max = 0.792/1.290/2.614 ms\n",
+     "code": 0
+    }
+   ],
+   "192.168.100.1": [
+    0,
+    {
+     "stdout": "PING 192.168.100.1 (192.168.100.1): 56 data bytes\n64 bytes from 192.168.100.1: seq=0 ttl=64 time=0.423 ms\n64 bytes from 192.168.100.1: seq=1 ttl=64 time=0.389 ms\n64 bytes from 192.168.100.1: seq=2 ttl=64 time=1.090 ms\n64 bytes from 192.168.100.1: seq=3 ttl=64 time=0.410 ms\n64 bytes from 192.168.100.1: seq=4 ttl=64 time=0.381 ms\n\n--- 192.168.100.1 ping statistics ---\n5 packets transmitted, 5 packets received, 0% packet loss\nround-trip min/avg/max = 0.381/0.538/1.090 ms\n",
+     "code": 0
+    }
+   ],
+   "8.8.8.8": [
+    0,
+    {
+     "stdout": "PING 8.8.8.8 (8.8.8.8): 56 data bytes\n",
+     "stderr": "ping: sendto: Network unreachable\n",
+     "code": 1
+    }
+   ]
+  },
+  "rut_ra": [
+   "thiet bi KHONG co DNS (nslookup: no servers could be reached) -> moi ten mien loi 'bad address' sau ~5 s",
+   "thiet bi KHONG co tuyen WAN -> ping IP ngoai LAN: 'sendto: Network unreachable' ngay lap tuc",
+   "traceroute 192.168.100.109 > 30 s (chua do xong); trong luc do 1 loi goi ping6 khac tra -32000 tam thoi — ghi nhan, KHONG mo hinh"
+  ],
+  "tuan_tu": {
+   "moc_ms_xuat_hien_muc": [
+    [
+     2020,
+     1,
+     "selftest"
+    ],
+    [
+     7966,
+     2,
+     "runPing"
+    ],
+    [
+     12966,
+     3,
+     "runPing6"
+    ],
+    [
+     17967,
+     4,
+     "runTraceroute"
+    ],
+    [
+     22968,
+     5,
+     "runTraceroute6"
+    ],
+    [
+     27961,
+     6,
+     "runNslookup"
+    ]
+   ],
+   "rut_ra": "5 loi do gui dong thoi nhung thiet bi tra lan luot moi ~5 s -> xu ly tuan tu (selftest do trang tu them ngay)"
+  }
+ },
+ "selftest": {
+  "gui": [
+   "data_repo.weboui",
+   "selftest",
+   {
+    "ping_ip_enable": "0",
+    "ip": ""
+   }
+  ],
+  "nhan": [
+   0,
+   {
+    "eth_lan_conn": 0,
+    "ping_ip": 2,
+    "ping_dhcp_pridns": 2,
+    "ping_google": 1
+   }
+  ],
+  "ms": 5131,
+  "nghia_tu_ma_trang": {
+   "0": "PASS",
+   "1": "Fail",
+   "2": "Skipped"
+  }
+ },
+ "systemlog": {
+  "2026-09-22": "systemlog_get tra 348 KB (khung trong quet_doc_59_api.json)",
+  "2026-09-25": {
+   "ket_qua": {
+    "error": {
+     "code": -32003,
+     "message": "ubus request timed out"
+    }
+   },
+   "ms": 60054,
+   "dom_that": "Log Level 'Debug' (mac dinh cua trang khi khong nap duoc), bang 'No Data'"
+  },
+  "hop_dong_loi_moi": "-32003 'ubus request timed out' sau ~60 s"
+ }
+}

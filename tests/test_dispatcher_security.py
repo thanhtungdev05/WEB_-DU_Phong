@@ -242,6 +242,26 @@ class DispatcherSecurityTests(unittest.TestCase):
         self.assertEqual(status, 304)
         self.assertEqual(body, b'')
 
+    def test_ax3000cv2_static_assets_are_cacheable_but_state_endpoints_are_not(self):
+        cookie = {'Cookie': 'ftc_session=cache-test-technician'}
+        status, headers, body = self.request(
+            '/sim_ax3000c/js/chunk-vendors.9b4ab5b7.1726822665278.js',
+            headers=cookie,
+        )
+        normalized_headers = {key.lower(): value for key, value in headers.items()}
+        self.assertEqual(status, 200)
+        self.assertTrue(body)
+        self.assertIn('immutable', normalized_headers.get('cache-control', ''))
+        self.assertNotIn('no-store', normalized_headers.get('cache-control', ''))
+
+        status, headers, _ = self.request(
+            '/sim_ax3000c/ftc-dat-bai?bai=2',
+            headers=cookie,
+        )
+        normalized_headers = {key.lower(): value for key, value in headers.items()}
+        self.assertEqual(status, 200)
+        self.assertEqual(normalized_headers.get('cache-control'), 'no-store')
+
     def test_large_json_response_supports_gzip_without_compressing_workbooks(self):
         source = b'{"data":"' + (b'x' * 4096) + b'"}'
         encoded, compressed = run_all.encode_api_response(

@@ -18,8 +18,8 @@ window.TOOLTIPS_AC1000HI['LAB_AC1000HI_04'] = [
   {
     page: 'home_lan.asp',
     selector: 'input[name="dnsTypeRadio"][value="1"]',
-    text: 'Bước 3: Chọn Manually (hoặc Use User Discovered DNS)',
-    position: 'right'
+    text: 'Bước 3: Chọn Manually',
+    position: 'top'
   },
   {
     page: 'home_lan.asp',

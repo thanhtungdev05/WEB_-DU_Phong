@@ -1,0 +1,53 @@
+{
+ "trang": "Network >> Wi-Fi >> Wi-Fi",
+ "route": "#/network/wifi",
+ "view": "network/wifi",
+ "chunk_goc": "js/chunk-2d237504.9b4ab5b7.1726822665278.js",
+ "bai_lab": [
+  2,
+  3
+ ],
+ "nguon_bang_chung": [
+  "reference/api/hop_dong_ghi_lab2_3_wifi.json",
+  "reference/api/lab2_3_wifi.json"
+ ],
+ "tab": {
+  "Host SSID": "host — bai 2",
+  "Guest SSID": "guest — mang khach",
+  "Specific SSID": "specific — bai 3 Wi-Fi IoT (ssid mac dinh '...-IOT', mac dinh TAT)"
+ },
+ "doc_du_lieu": {
+  "thu_tu": [
+   "network.wireless.easymesh.get (neu MeshRole=Agent -> KHOA trang)",
+   "data_repo.weboui.wifi_get",
+   "network.wireless.init_status"
+  ],
+  "hien_thi_encryption": "psk2+ccmp & sae '0' -> hien 'psk2' (WPA2-Personal)",
+  "che_do_gop_tach": "needSeparateSSID: neu 2G va 5G khac nhau (disabled|ssid|key|encryption) -> che do TACH"
+ },
+ "ghi_du_lieu": {
+  "loi_goi": "data_repo.weboui.wifi_set",
+  "da_do": true,
+  "tra_ve": [
+   0,
+   {
+    "status": true
+   }
+  ],
+  "che_do_gop": "trang gui 2G day du + chep ssid/key/encryption/sae sang 5G VA 6G",
+  "khi_tat": "chi gui disabled (va vap_diff_mode o che do tach)",
+  "thiet_bi": "bo qua 6G; ep kieu ve kieu dang luu; khong tai lai trang"
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — 3 tab trung gia tri + toa do voi thiet bi that",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat — doc + ghi do that",
+  "4_trang_thai": "dat — phat lai 6 buoc trung (nhom L)"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "wifi_set -> wireless wifi-iface (host 2G/5G = iface an danh #0/#1, guest #2/#3, specific2/5); thu tu co dinh disabled, vap_diff_mode, ssid, encryption, sae, key",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

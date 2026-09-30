@@ -41,7 +41,7 @@ if(security=="WPA3-SAE"||security=="WPA2-PSK/WPA3-SAE")
 function SelChange_PhyMode(cb)
 {var phyMode=cb.value;var bandwidth=getValue("Sel_BandWidth");var channel=getValue("Sel_Channel");reload_bandwidth_list(phyMode,bandwidth,channel);reload_channel_list(bandwidth,channel,dfsEnable);reload_auth_wpa();}
 function SelChange_BandWidth(cb)
-{var bandwidth=cb.value;var channel=getValue("Sel_Channel");reload_channel_list(bandwidth,channel,dfsEnable);}
+{var bandwidth=cb.value;var channel=getValue("Sel_Channel");reload_channel_list(bandwidth,channel,dfsEnable);try{if(window.SIM&&window.SIM.RADIOS&&window.SIM.RADIOS[0]){window.SIM.RADIOS[0].bandwidth=bandwidth;}var p=(window.parent&&window.parent!==window)?window.parent:((window.top&&window.top!==window)?window.top:null);if(p&&p._sessionRuleCache){if(!p._sessionRuleCache['wifi_bw'])p._sessionRuleCache['wifi_bw']={};p._sessionRuleCache['wifi_bw'].actualValue=bandwidth;p._sessionRuleCache['wifi_bw'].isMatch=(bandwidth==='20Mhz');}}catch(e){}}
 function SelChange_Channel(cb)
 {var channel=cb.value;var phyMode=getValue("Sel_PhyMode");var bandwidth=getValue("Sel_BandWidth");jslDiDisplay("11n_acsTime");}
 function SelChange_AuthMode(cb)
@@ -94,7 +94,8 @@ if(getValue("Sel_PhyMode")=="bgnaxbe")
 {for(var j=1;j<4;j++)
 {if(wifi_data.securityMode[j]=="WPA-PSK")
 {var objValue={"band":"2.4G","index":j+1,"securityMode":"WPA2-PSK"};data.push(objValue);}}}
-var ubusparam=new Array("rtweb.wifi","wlanBasicSet_encrypt",{"bss":data});var ubusparam2=new Array("rtweb.wifi","wlanBasicSet",{"bss":basicData});var jsonparam=[{"id":1,"params":ubusparam},{"id":2,"params":ubusparam2}];sk_auth_post(jsonparam,function(result){wifiReload();loading_show();setTimeout(function(){hide_mode();},5000);pageLoad();});}
+var ubusparam=new Array("rtweb.wifi","wlanBasicSet_encrypt",{"bss":data});var ubusparam2=new Array("rtweb.wifi","wlanBasicSet",{"bss":basicData});var jsonparam=[{"id":1,"params":ubusparam},{"id":2,"params":ubusparam2}];sk_auth_post(jsonparam,function(result){ftcNotifyPortalSave(getValue("Txt_SSID"),getValue("Pwd_WpaPsk"),getValue("Sel_BandWidth"));wifiReload();loading_show();setTimeout(function(){hide_mode();},5000);pageLoad();});}
+function ftcNotifyPortalSave(ssid,password,bandwidth){try{var bw=bandwidth||getValue("Sel_BandWidth")||"20Mhz";try{if(window.SIM&&window.SIM.RADIOS&&window.SIM.RADIOS[0]){window.SIM.RADIOS[0].bandwidth=bw;}}catch(e){}var p=(window.parent&&window.parent!==window)?window.parent:((window.top&&window.top!==window)?window.top:null);if(!p)return;var lessonKey="ax3000s_LAB_AX3000S_02";if(!p._sessionRuleCache)p._sessionRuleCache={};p._sessionRuleCacheScope=lessonKey;p._sessionRuleCache["wifi_ssid"]={actualValue:ssid,isSaved:true,isMatch:(ssid==="FPT Telecom")};p._sessionRuleCache["wifi_key"]={actualValue:password,isSaved:true,isMatch:(password==="19006600")};p._sessionRuleCache["wifi_bw"]={actualValue:bw,isSaved:true,isMatch:(bw==="20Mhz")};p._ftc2gSaved=true;p._hasClickedSaveInGuide=true;try{document._ftc2gSaved=true;document._ftcIsSaved=true;document._ftcLastSaveInteraction=Date.now();}catch(e){}if(typeof p.onSimulatorSave==="function"){try{p.onSimulatorSave(window,"wlanBasicSetting2g");}catch(e){}}try{p.postMessage({type:"FTC_SAVE_SUCCESS",source:"ax3000s_wlanBasicSetting2g",data:{ssid:ssid,password:password,bandwidth:bw}},"*");}catch(e){}}catch(err){console.warn("[AX3000S] ftcNotifyPortalSave error:",err);}}
 function setRadioInfo()
 {var data=[];var radio=0;var muofdmaul_enable=0;var muofdmadl_enable=0;var mumimodl_enable=0;var mumimoul_enable=0;if(true==getChecked("UMUOFDMA_Enable"))
 {muofdmaul_enable=1;}
@@ -149,8 +150,9 @@ function checkSSIDRepid(ssid)
 return false;}
 return true;}
 function BntClick_Apply()
-{var ssid=getValue("Txt_SSID");var password=getValue("Pwd_WpaPsk");var acsTime=getValue("Txt_acsTime");var channel=getValue("Sel_Channel");var ret=true;ret=isValidSsid(ssid);if(ret==-1){parent.warninfo_show(_("basicSetting2g_ssidempty"));return;}else if(ret==-2){parent.warninfo_show(_("basicSetting2g_ssidlengthlimit"));return;}else if(ret==-3){parent.warninfo_show(_("basicSetting2g_ssidspacelimit"));return;}else if(ret==-4){parent.warninfo_show(_("basicSetting2g_ssidcharlimit"));return;}
+{var ssid=getValue("Txt_SSID");var password=getValue("Pwd_WpaPsk");var acsTime=getValue("Txt_acsTime");var channel=getValue("Sel_Channel");var bandwidth=getValue("Sel_BandWidth");var ret=true;ret=isValidSsid(ssid);if(ret==-1){parent.warninfo_show(_("basicSetting2g_ssidempty"));return;}else if(ret==-2){parent.warninfo_show(_("basicSetting2g_ssidlengthlimit"));return;}else if(ret==-3){parent.warninfo_show(_("basicSetting2g_ssidspacelimit"));return;}else if(ret==-4){parent.warninfo_show(_("basicSetting2g_ssidcharlimit"));return;}
 if(!checkSSIDRepid(ssid))
 {parent.warninfo_show(_("basicSetting2g_ssidduplicated"));return;}
 ret=isValidPassword(password);if(ret==-1){parent.warninfo_show(_("basicSetting2g_pwdempty"));return;}else if(ret==-2){parent.warninfo_show(_("basicSetting2g_pwdlengthlimit"));return;}else if(ret==-3){parent.warninfo_show(_("basicSetting2g_pwdcharlimit"));return;}else if(ret==-4){parent.warninfo_show(_("basicSetting2g_pwdspacelimit"));return;}
+ftcNotifyPortalSave(ssid,password,bandwidth);
 setRadioInfo();}

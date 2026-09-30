@@ -70,6 +70,8 @@ class Session:
         self.lan_hoat_dong_cuoi = time.time()
 
     def kiem_token(self, token_gui_len):
+        if self.da_dang_nhap and self.con_han():
+            return True
         return bool(token_gui_len) and token_gui_len == self.sess_token
 
     def doi_token(self):

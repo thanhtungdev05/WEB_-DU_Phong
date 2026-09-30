@@ -1,0 +1,44 @@
+{
+ "trang": "Network >> Wi-Fi >> Easymesh",
+ "route": "#/network/easymesh",
+ "view": "network/easymesh",
+ "chunk_goc": "js/chunk-2d0a387e.9b4ab5b7.1726822665278.js",
+ "bai_lab": [
+  7
+ ],
+ "nguon_bang_chung": [
+  "reference/api/hop_dong_ghi_lab7_easymesh.json",
+  "reference/api/lab7_easymesh.json"
+ ],
+ "o": {
+  "Enabled": "el-switch true/false -> MeshEnabled",
+  "MeshRole": "el-select Agent|Controller (chi hien khi Enabled)",
+  "MeshBSS": "el-input readonly (chi hien khi Enabled)"
+ },
+ "doc_du_lieu": {
+  "loi_goi": "network.wireless.easymesh.get",
+  "tra_ve": "{MeshEnabled, MeshRole, MeshBand, MeshBSS}"
+ },
+ "ghi_du_lieu": {
+  "loi_goi": "network.wireless.easymesh.set",
+  "gui": "ca 4 truong",
+  "da_do": true,
+  "tra_ve": "[0, {4 truong}] — gia tri KHONG nhat quan tren thiet bi, trang chi xet .status (undefined -> thanh cong)"
+ },
+ "rang_buoc_giua_trang": {
+  "MeshRole=Agent": "network/wifi va network/wifiadv hien mat na 'Currently in agent mode, can not configure wifi parameters' (ma trang tu doc easymesh.get); wifi_get/wifiadv_get KHONG doi",
+  "tra_ve_Controller": "doi duoc ngay tu trang Easymesh, khong bi khoa"
+ },
+ "muc_dat_duoc": {
+  "1_hinh_anh": "dat — trang Easymesh trung toa do; mat na khoa 2 trang Wi-Fi trung chu + toa do",
+  "2_cau_truc": "dat",
+  "3_giao_tiep": "dat (gia tri tra ve cua set ghi ro la khong nhat quan)",
+  "4_trang_thai": "dat — phat lai 4 buoc (M) + rang buoc giua trang kiem tren giao dien"
+ },
+ "ghi_uci_nhom11": {
+  "tac_dong": "easymesh set -> ezmesh/mesh_app/repacd/wireless aeimap/wsplcd Enable* '1'/'0'",
+  "bang_chung": "reference/api/hop_dong_uci_nhom11.json",
+  "ma": "src/uci_tac_dong.py",
+  "kiem": "UC1 (tung dong trung thiet bi)"
+ }
+}

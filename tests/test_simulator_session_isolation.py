@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import sys
+import threading
 import time
 import unittest
 from pathlib import Path
@@ -36,7 +37,10 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         cls.portal_js = (ROOT / "app.js").read_text(encoding="utf-8")
         cls.ac_source = (ROOT / "simulators/sim_ac1000f/server2.py").read_text(encoding="utf-8")
         cls.hv2_source = (ROOT / "simulators/sim_ax3000hv2/server2.py").read_text(encoding="utf-8")
-        cls.axc_source = (ROOT / "simulators/sim_ax3000c/server.py").read_text(encoding="utf-8")
+        cls.axc_source = (ROOT / "simulators/sim_ax3000c/server_fw053.py").read_text(encoding="utf-8")
+        cls.axc_core_source = (
+            ROOT / "simulators/sim_ax3000c/fw_053/src/server.py"
+        ).read_text(encoding="utf-8")
         cls.achi_store_source = (ROOT / "simulators/sim_ac1000HI/src/config_store.py").read_text(encoding="utf-8")
         cls.achi_server_source = (ROOT / "simulators/sim_ac1000HI/src/server.py").read_text(encoding="utf-8")
         cls.ap6500_store_source = (ROOT / "simulators/ont_be6500c/src/config_store.py").read_text(encoding="utf-8")
@@ -69,14 +73,53 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
             self.assertIsNot(first, second)
 
     def test_reset_endpoints_remove_only_current_client(self):
-        for source in (self.ac_source, self.hv2_source, self.axc_source):
+        for source in (self.ac_source, self.hv2_source):
             self.assertIn("USER_STATES.pop(", source)
         # Toan cuc clear chi duoc phep ton tai trong /internal/reset co token
         # quan tri (B3) -- khong bao gio o cac endpoint reset quen thuoc cua trinh duyet.
         for source in (self.ac_source, self.hv2_source):
             self.assertEqual(source.count("USER_STATES.clear()"), 1)
             self.assertIn("if not self._admin_ok():", source)
-        self.assertNotIn("ACTIVE_SESSIONS.clear()", self.axc_source)
+        self.assertNotIn("_goc._phien.clear()", self.axc_source)
+        self.assertNotIn("_phien.clear()", self.axc_core_source)
+        self.assertIn('session.get("client_key") == client_key', self.axc_source)
+        self.assertIn("_goc.KHO.reset(client_key)", self.axc_source)
+
+    def test_ax3000cv2_parallel_technicians_keep_independent_configuration(self):
+        module = load_server("simulators/sim_ax3000c/server_fw053.py", "test_ax3000c_fw053_isolation")
+        store = module._goc.KHO
+        barrier = threading.Barrier(2)
+        failures = []
+
+        def configure(client_key, value):
+            try:
+                store.bind(client_key)
+                barrier.wait(timeout=5)
+                for attempt in range(20):
+                    store.ghi("ftc.test.concurrent", {"owner": value, "attempt": attempt})
+                    self.assertEqual(store.doc("ftc.test.concurrent")["owner"], value)
+            except Exception as exc:  # pragma: no cover - surfaced below
+                failures.append(exc)
+
+        first = threading.Thread(target=configure, args=("cookie:ktv-a", "A"))
+        second = threading.Thread(target=configure, args=("cookie:ktv-b", "B"))
+        first.start()
+        second.start()
+        first.join(timeout=10)
+        second.join(timeout=10)
+
+        self.assertFalse(first.is_alive() or second.is_alive(), "parallel configuration threads must finish")
+        self.assertEqual(failures, [])
+        store.bind("cookie:ktv-a")
+        self.assertEqual(store.doc("ftc.test.concurrent")["owner"], "A")
+        store.bind("cookie:ktv-b")
+        self.assertEqual(store.doc("ftc.test.concurrent")["owner"], "B")
+
+        module.dat_lai_thiet_bi("cookie:ktv-a")
+        store.bind("cookie:ktv-a")
+        self.assertIsNone(store.doc("ftc.test.concurrent"))
+        store.bind("cookie:ktv-b")
+        self.assertEqual(store.doc("ftc.test.concurrent")["owner"], "B")
 
     def test_active_simulators_never_clear_every_users_state_from_reset(self):
         for source in (

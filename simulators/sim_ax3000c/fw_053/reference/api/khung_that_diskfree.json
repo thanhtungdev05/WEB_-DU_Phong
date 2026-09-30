@@ -1,0 +1,21 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-22",
+ "ghi_chu": "oui.system/diskfree — khoi System information tren trang Home",
+ "khung": {
+  "oui.system.diskfree": [
+   0,
+   {
+    "root": {
+     "used": 720896,
+     "total": 219955200,
+     "free": 219234304
+    },
+    "tmp": {
+     "used": 2797568,
+     "total": 219955200,
+     "free": 217157632
+    }
+   }
+  ]
+ }
+}

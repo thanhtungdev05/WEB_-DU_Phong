@@ -1,0 +1,328 @@
+{
+ "nguon": "AX3000CV2 that 192.168.100.1, fw 0.5.3, do 2026-09-26 (gio thiet bi 2025-12-13 14:27-14:43, thu Bay). Goi thang /ubus + /cgi-bin bang fetch trong tab Chrome (phien admin rieng). Moi thao tac ghi da tra ve; cuoi phien nap lai tep Backup chup DAU phien -> 102 muc trung TUNG BYTE ca mtime (khong can khoi dong lai).",
+ "trang_thai_dau": "tep Backup dau phien (37956 B) = reference/backup tru dropbear enable '0' (da tat nhom 12), shadow bam lai, mtime vendor_log_file/crontab/passwd (khoi dong lai sau nap Backup nhom 12)",
+ "cgi_io": {
+  "chung": "moi tra loi cgi-backup/cgi-upload: header Connection: Keep-Alive, Keep-Alive: timeout=20, Transfer-Encoding: chunked (khong co Content-Length)",
+  "backup_phien_sai": {
+   "gui": "POST /cgi-bin/cgi-backup sessionid=<sid sai> hoac rong",
+   "status": 403,
+   "content_type": "text/plain",
+   "than": "Backup permission denied\n",
+   "do_dai": 25
+  },
+  "backup_dung": {
+   "status": 200,
+   "content_type": "application/x-targz",
+   "content_disposition": "attachment; filename=\"backup-<host>-<ngay>.tar.gz\""
+  },
+  "upload_phien_sai": {
+   "gui": "multipart filename=/tmp/backup.tar.gz, sessionid=<sai>|'' , file",
+   "status": 200,
+   "content_type": "text/plain",
+   "than": "{\n\t\"message\": \"Upload permission denied\",\n\t\"failure\": [ 1, \"Operation not permitted\" ]\n}\n",
+   "do_dai": 89
+  },
+  "upload_ten_ngoai_acl": {
+   "gui": "filename=/tmp/khongcho.bin (sid dung)",
+   "status": 200,
+   "than": "{\n\t\"message\": \"Access to path denied by ACL\",\n\t\"failure\": [ 0, \"No error information\" ]\n}\n",
+   "do_dai": 90
+  },
+  "upload_dung": {
+   "status": 200,
+   "content_type": "text/plain",
+   "mau": "{\n\t\"size\": <N>,\n\t\"checksum\": \"<md5>\",\n\t\"sha256sum\": \"<sha256>\"\n}\n",
+   "mau_do": [
+    {
+     "tep": "tep Backup 37956 B",
+     "do_dai_than": 150,
+     "checksum": "713ea4b4402e80a850f128f7cb599c5f",
+     "sha256sum": "0277bfa61f0994931bef778425a94d9a7cf8230236387901f844495ceb35ddc7"
+    },
+    {
+     "tep": "'khong phai tep backup\\n' (22 B)",
+     "do_dai_than": 147,
+     "checksum": "9e4f3f772978ce1cbf6dc09c7c8d1f8f",
+     "sha256sum": "4d9b384a6e678f052613854903e8fa2f73a60a3e4693c9b269308b208d1e69df",
+     "kiem": "md5/sha256 tinh lai bang Python trung"
+    },
+    {
+     "tep": "gzip cua 22 B tren (42 B)",
+     "do_dai_than": 147,
+     "checksum": "37b5c4dac8b062da9d8bacae777bcd43"
+    }
+   ]
+  }
+ },
+ "oui_system": {
+  "drop_caches": [
+   0,
+   {
+    "status": true
+   }
+  ],
+  "backup_clean": [
+   0
+  ],
+  "backup_clean_lan_2": [
+   0
+  ],
+  "backup_restore_tep_khong_phai_gzip": [
+   0,
+   {
+    "code": 1,
+    "stderr": "tar: invalid magic\ntar: short read\n"
+   }
+  ],
+  "backup_restore_gzip_khong_phai_tar_22B": [
+   0,
+   {
+    "code": 1,
+    "stderr": "tar: short read\n"
+   }
+  ],
+  "backup_restore_khong_co_tep": [
+   0,
+   {
+    "code": 1,
+    "stderr": "Backup archive '/tmp/backup.tar.gz' not found.\n"
+   }
+  ],
+  "backup_restore_tep_dung": [
+   0,
+   {
+    "code": 0
+   }
+  ],
+  "sau_restore_tep_dung": "NGAY sau backup_restore (truoc khoi dong lai): 102 muc tep Backup trung tung byte tep nap vao, KE CA mtime (tar giu mtime). 20 s sau van trung.",
+  "sau_restore_tep_sai": "khong tep nao doi (so 102 muc noi dung + mtime)"
+ },
+ "doc_tu_uci": {
+  "y_nghia": "cac ham *_get DOC THANG tep uci (khong luu gia tri trang gui rieng)",
+  "firewall_udp_tat_nguong": {
+   "gui": "firewall_set nhu hien tai + udp_defense false, udp_threshold 152, udp_timeout 12",
+   "set": [
+    0,
+    {
+     "status": true
+    }
+   ],
+   "get_sau": "trung ban dau (udp_threshold 150, udp_timeout 10) — nguong khong ghi khi detect tat"
+  },
+  "firewall_dos_tat_block": {
+   "gui": "+ dos_defense false, block_ip true, syn_threshold 27",
+   "get_sau": "chi dos_defense false; block_ip false, syn_threshold 25 (khong ghi)"
+  },
+  "firewall_spi_tat": {
+   "gui": "+ spi_firewall false",
+   "get_sau": "spi_firewall false VA dos_defense false (en_ddos = spi && dos)"
+  },
+  "firewall_cuoi": "firewall_set lai gia tri dau -> get trung ban dau",
+  "cigext_upnpd": {
+   "truoc": "[0,{\"upnpd\":{\"config\":{\"enabled\":\"1\"}}}]",
+   "sau_upnpd_set_tat": "[0,{\"upnpd\":{\"config\":{\"enabled\":\"0\"}}}]",
+   "sau_bat_lai": "[0,{\"upnpd\":{\"config\":{\"enabled\":\"1\"}}}]"
+  }
+ },
+ "wifi_timer": {
+  "cach": "uci set aeiWiFiTimer cfg010455 {values} -> uci apply {rollback:true,timeout:10} -> 1 s -> uci confirm (nhu uci-form cua trang)",
+  "dong_crontab": [
+   "<mm> <hh> * * <ngay> uci set wireless.wifi0.disabled=0 && uci set wireless.wifi1.disabled=0 && uci commit wireless && /sbin/wifi &",
+   "<mm> <hh> * * <ngay> uci set wireless.wifi0.disabled=1 && uci set wireless.wifi1.disabled=1 && uci commit wireless && /sbin/wifi &"
+  ],
+  "quy_tac_crontab": "dong 1 = StartTime (BAT), dong 2 = EndTime (TAT), noi CUOI etc/crontabs/root; <mm> <hh> giu NGUYEN chuoi ('09:05' -> '05 09'); <ngay> = cac ngay bat theo so Sun 0..Sat 6 tang dan ('0,1,6' khi Sun+Mon+Sat; ca tuan '0,1,2,3,4,5,6'). Enable '0' -> xoa 2 dong.",
+  "khi_ap_dung": "Enable '1': trong khung gio (Start <= gio < End) VA hom nay nam trong ngay bat -> wireless wifi0/wifi1 disabled '0', nguoc lai '1' (uci set: doi gia tri thi option xuong cuoi section, mtime wireless = luc ap dung; khong doi -> tep khong ghi). Enable '0' -> disabled '0' (bat lai Wi-Fi).",
+  "cron_chay": "14:30:00 -> wireless disabled '0' ca 2 radio (mtime dung 14:30:00), song len sau ~42 s; 14:33:00 -> disabled '1', song tat. wifiadv_get enabled doi theo (false khi tat).",
+  "chuoi_do": [
+   {
+    "buoc": "T1",
+    "luc": "14:27:32",
+    "values": {
+     "Enable": "1",
+     "StartTime": "14:30",
+     "EndTime": "14:33"
+    },
+    "ket_qua": "xu ly +1 s: crontab 30 14 / 33 14 * * 0,1,2,3,4,5,6; ngoai khung -> disabled '1'"
+   },
+   {
+    "buoc": "T2",
+    "luc": "14:33:09",
+    "values": {
+     "StartTime": "09:05",
+     "EndTime": "14:50",
+     "Tue": "0",
+     "Wed": "0",
+     "Thu": "0",
+     "Fri": "0"
+    },
+    "ket_qua": "xu ly +1 s: '05 09 * * 0,1,6' / '50 14 * * 0,1,6'; trong khung + thu Bay -> disabled '0'"
+   },
+   {
+    "buoc": "T2b",
+    "luc": "14:33:21",
+    "values": {
+     "Sat": "0"
+    },
+    "ket_qua": "KHONG xu ly (crontab, wireless giu nguyen)"
+   },
+   {
+    "buoc": "T2c",
+    "luc": "14:33:52",
+    "values": {
+     "EndTime": "14:51"
+    },
+    "ket_qua": "KHONG xu ly"
+   },
+   {
+    "buoc": "T2d",
+    "luc": "14:34:56",
+    "values": {
+     "EndTime": "14:52"
+    },
+    "ket_qua": "KHONG xu ly"
+   },
+   {
+    "buoc": "T2e",
+    "luc": "14:35:17",
+    "values": {
+     "StartTime": "09:06"
+    },
+    "ket_qua": "xu ly TRE +21 s (14:35:38) voi cau hinh luc do: '06 09'/'52 14' * * 0,1; khong co thu Bay -> disabled '1'"
+   },
+   {
+    "buoc": "T2g",
+    "luc": "14:35:39",
+    "values": {
+     "EndTime": "14:35"
+    },
+    "ket_qua": "KHONG xu ly (>70 s sau van '52 14')"
+   },
+   {
+    "buoc": "E1",
+    "luc": "14:37:09",
+    "values": {
+     "Enable": "0"
+    },
+    "ket_qua": "xu ly +1 s: xoa 2 dong crontab, disabled '0'"
+   },
+   {
+    "buoc": "E2",
+    "luc": "14:38:04",
+    "values": {
+     "Enable": "1"
+    },
+    "ket_qua": "xu ly TRE +20 s: '06 09'/'35 14' * * 0,1; ngoai khung -> disabled '1'"
+   },
+   {
+    "buoc": "E3",
+    "luc": "14:38:52",
+    "values": {
+     "Sat": "1"
+    },
+    "ket_qua": "KHONG xu ly (>=48 s)"
+   },
+   {
+    "buoc": "E4",
+    "luc": "14:39:44",
+    "values": {
+     "StartTime": "09:07"
+    },
+    "ket_qua": "xu ly +1 s: '07 09'/'35 14' * * 0,1,6; ngoai khung -> giu '1' (tep wireless khong ghi)"
+   },
+   {
+    "buoc": "E5",
+    "luc": "14:40:24",
+    "values": {
+     "EndTime": "15:10"
+    },
+    "ket_qua": "xu ly +1 s: '07 09'/'10 15' * * 0,1,6; trong khung -> disabled '0'"
+   },
+   {
+    "buoc": "E6",
+    "luc": "14:42:10",
+    "values": {
+     "Enable": "0"
+    },
+    "ket_qua": "xu ly +1 s: xoa 2 dong; wireless da '0' -> khong ghi"
+   }
+  ],
+  "rut_ra_co_che_ban": "12/13 lan khop mo hinh: lan xu ly lam DOI trang thai Wi-Fi giu 'khoa' ~74 s (E1 14:37:10 -> E2 duoc xu ly 14:38:24); apply trong luc khoa: khoa het trong <=20 s thi xu ly khi het khoa (T2e, E2), con lai BO QUA (T2b, T2c, T2g, E3). Lech: T2d (106 s sau T2) van bi bo qua — T2 trung luc cron 14:33 dang tat song nen lan nap Wi-Fi keo dai (song on dinh ~14:34:53). CO CHE BEN TRONG KHONG DOC DUOC (script ngoai ACL) — day la mo hinh rut tu thoi gian do.",
+  "tac_dong_khac_khong_mo_phong": "repacd MAPConfig FHOverrideEnabled2G/5G, BackhaulEnabled -> '0' khi song tat (~23 s sau), ve '1' sau khi bat lai (repacd ngoai ACL uci, chi thay trong Backup); etc/crontabs/cron.update (15 B 'root\\n' x3) xuat hien roi mat",
+  "ghi_chu_tep": "etc/config/aeiWiFiTimer nguyen ban (thut le 4 dau cach, khong co dong trong dau) -> sau lan ghi dau la dang uci commit chuan"
+ },
+ "doi_mat_khau": {
+  "nguon": "anh Huynn bam tay trang System > Management > Change Password (2026-09-26, gio thiet bi ~23:46 theo dong ho may tinh); em ghi XHR trong tab, MAT KHAU DA CHE (chi giu do dai / dang)",
+  "chuoi": [
+   [
+    "oui.ui",
+    "crypt",
+    {
+     "data": "<12 ky tu>"
+    }
+   ],
+   "-> [0,{crypt:'$1$$...'(26 ky tu, md5-crypt muoi rong)}] 52 ms",
+   [
+    "data_repo.weboui",
+    "loginpwd_set",
+    {
+     "login": {
+      "password": "<crypt 26 ky tu>"
+     }
+    }
+   ],
+   "-> [0,{status:true}] 159 ms"
+  ],
+  "sau_do": "+0,6 s moi loi goi bang phien cu -> error -32002 'Access denied' (MOI phien bi huy); trang KHONG tu ve man dang nhap, van goi lo system.info/system.board/oui.system.diskfree moi 1 s; Log out -> session.destroy -32002",
+  "quy_tac_mat_khau": "trang kiem truoc khi gui: 'Password must 12 characters, at least include 1 symbol(!@#$%^&*) and at least 1 capital letter.' -> KHONG dat lai duoc mat khau goc 6455147589 bang trang nay",
+  "tra_ve": "nap tep Backup goc (reference/backup) bang Upload archive + Reboot now -> dang nhap bang mat khau goc duoc"
+ },
+ "remote_web": {
+  "nguon": "anh Huynn bam tay, chi lam buoc BAT (khong lam buoc tat)",
+  "chuoi": [
+   [
+    "remote-gui",
+    "get",
+    {}
+   ],
+   "-> [0,{State:'0',Username:'assist',Password:''}]",
+   [
+    "oui.ui",
+    "crypt",
+    {
+     "data": "<12 ky tu>"
+    }
+   ],
+   "-> crypt 26 ky tu",
+   [
+    "remote-gui",
+    "set",
+    {
+     "State": "1",
+     "Username": "assist",
+     "Password": "<crypt>",
+     "PlainPasswd": "<12 ky tu>"
+    }
+   ],
+   "-> [0,{State:'1',Username:'assist',Password:<MAT KHAU DANG CHU 12 ky tu>}] 687 ms",
+   [
+    "remote-gui",
+    "get",
+    {}
+   ],
+   "-> y nhu tra loi set (mat khau dang chu)"
+  ],
+  "phien": "phien KHONG bi huy",
+  "chua_do": "State '0' (tat); tep uci/firewall nao doi; remotegui.get / webinfo.remoteGuiInfo co doi theo khong",
+  "tra_ve": "sau nap Backup goc + khoi dong lai: remote-gui get {State:'0',Username:'assist',Password:''}"
+ },
+ "nap_backup_lan_3": {
+  "nguon": "anh Huynn bam tay: Upload archive tep reference/backup (37952 B) -> OK -> Reboot now",
+  "chuoi": [
+   "POST /cgi-bin/cgi-upload -> {size:37952, checksum md5, sha256sum} 89 ms",
+   "oui.system drop_caches -> [0,{status:true}] 121 ms",
+   "oui.system backup_restore -> [0,{code:0}] 2062 ms",
+   "system reboot -> [0] 53 ms"
+  ],
+  "sau_khoi_dong": "102 muc tep Backup: 97 trung tung byte + mtime tep goc; lech dropbear (em tat lai SSH: uci set enable '0' -> tien trinh dropbear dung), shadow (bam lai), mtime vendor_log_file/crontab/passwd (khoi dong) — y nhu lan nap nhom 12"
+ }
+}

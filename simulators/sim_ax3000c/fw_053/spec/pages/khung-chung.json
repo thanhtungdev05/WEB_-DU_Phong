@@ -1,0 +1,21 @@
+{
+ "trang": "Khung chung: login, sidebar, thanh tren, chan trang, hop thoai, phien",
+ "chunk_goc": {"layout": "js/chunk-47368b9a (Aside + Header + footer + el-backtop)", "login": "js/chunk-44bc1f1e"},
+ "nguon_bang_chung": ["reference/api/khung_that_nhom8_khung.json", "reference/api/acl_that.json"],
+ "thanh_phan": {
+  "login": "el-form: Username/Password + nut 'Log in'; sai -> el-alert 'Sorry, we could not find any accounts...'. created(): session.login() rong (-32002) roi session.destroy + do oui.ui lang",
+  "sidebar": "thu gon 60px (logo 60px, 4 bieu tuong); mouseover -> mo 200px (logo 180px, 'admin', 'Log out'); mouseleave -> thu. Nhom menu mo khi bam (unique-opened). Services KHONG co bieu tuong (menu thieu muc cha)",
+  "thanh_tren": "breadcrumb + chu 'Reboot' -> $confirm 'Really reboot now?' -> system reboot -> $reconnect('Rebooting...')",
+  "log_out": "router.push('/login') -> trang login goi session.destroy",
+  "chan_trang": "Firmware version / Current time / Uptime / Powered by Actiontec",
+  "el_backtop": "hien khi .el-main cuon > 200px, o (1441,499) 40x40",
+  "ma_chet_khong_hien": "onLangCommand, onUserCommand, fullScreen co trong ma nhung KHONG co trong template -> khong co menu ngon ngu / menu nguoi dung tren giao dien",
+  "cua_so_hep": "khong co bo cuc dien thoai rieng: CSS rieng khong co @media; @media chi trong element-ui (lop el-col-xs...), khong view nao dung xs/sm/md"
+ },
+ "giao_tiep": {
+  "session.login": "admin+sai/rong -> [6]; user khac/rong/thieu -> -32002; dung -> {ubus_rpc_session,timeout:300,acls,data} (khong 'expires')",
+  "session.destroy": "[0]; lan 2 -> -32002",
+  "het_phien": "300 s khong dung -> -32002; moi loi goi lam moi moc",
+  "system.reboot": "KHONG DO (cam reboot) -> gia lap -32000"
+ }
+}
