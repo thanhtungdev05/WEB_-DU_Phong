@@ -3431,6 +3431,106 @@ function handle_dashboard(array $segments, string $method): void
     ]]);
 }
 
+function handle_system(array $segments, string $method): void
+{
+    require_admin();
+    $action = $segments[1] ?? '';
+
+    if ($action === 'usage') {
+        if ($method !== 'GET') {
+            fail(405, 'method-not-allowed', 'Usage endpoint only supports GET.');
+        }
+        $pdo = db();
+        try {
+            $dbSizeBytes = (int)$pdo->query('SELECT pg_database_size(current_database())')->fetchColumn();
+            $dbSizeMb = round($dbSizeBytes / 1024 / 1024, 2);
+            $neonFreeLimitMb = 512.0;
+            $usagePct = round(($dbSizeMb / $neonFreeLimitMb) * 100, 1);
+
+            $status = 'OK';
+            if ($usagePct >= 92) {
+                $status = 'CRITICAL';
+            } elseif ($usagePct >= 80) {
+                $status = 'WARNING';
+            }
+
+            $tableSizes = $pdo->query(<<<'SQL'
+                SELECT schemaname || '.' || tablename AS table_name,
+                       pg_total_relation_size(schemaname || '.' || tablename) AS size_bytes,
+                       pg_size_pretty(pg_total_relation_size(schemaname || '.' || tablename)) AS size_pretty
+                  FROM pg_tables
+                 WHERE schemaname = 'public'
+                 ORDER BY size_bytes DESC
+                 LIMIT 10
+            SQL)->fetchAll(PDO::FETCH_ASSOC);
+
+            $phpSessions = 0;
+            $djangoSessions = 0;
+            try {
+                $phpSessions = (int)$pdo->query('SELECT COUNT(*) FROM app_sessions')->fetchColumn();
+            } catch (Throwable) {}
+            try {
+                $djangoSessions = (int)$pdo->query('SELECT COUNT(*) FROM django_session')->fetchColumn();
+            } catch (Throwable) {}
+
+            respond([
+                'data' => [
+                    'activeTier' => get_active_database_tier(),
+                    'isRender' => (bool)(env_value('RENDER') === 'true' || env_value('IS_RENDER') === 'true'),
+                    'storage' => [
+                        'databaseSizeBytes' => $dbSizeBytes,
+                        'databaseSizeMb' => $dbSizeMb,
+                        'neonLimitMb' => $neonFreeLimitMb,
+                        'usagePercent' => $usagePct,
+                        'status' => $status,
+                    ],
+                    'tables' => $tableSizes,
+                    'sessions' => [
+                        'phpSessions' => $phpSessions,
+                        'djangoSessions' => $djangoSessions,
+                    ],
+                    'checkedAt' => gmdate('c'),
+                ],
+            ]);
+        } catch (Throwable $exception) {
+            report_exception($exception, 'system-usage');
+            fail(500, 'system-usage-failed', 'Unable to retrieve system usage data.');
+        }
+    }
+
+    if ($action === 'cleanup') {
+        if ($method !== 'POST') {
+            fail(405, 'method-not-allowed', 'Cleanup endpoint only supports POST.');
+        }
+        $pdo = db();
+        try {
+            $hasFunction = (bool)$pdo->query("SELECT 1 FROM pg_proc WHERE proname = 'cleanup_expired_sessions'")->fetchColumn();
+            if ($hasFunction) {
+                $result = $pdo->query('SELECT * FROM cleanup_expired_sessions()')->fetch(PDO::FETCH_ASSOC);
+                respond(['data' => ['success' => true, 'result' => $result]]);
+            } else {
+                $deletedPhp = $pdo->exec('DELETE FROM app_sessions WHERE expires_at < NOW()');
+                $deletedDjango = 0;
+                try {
+                    $deletedDjango = $pdo->exec('DELETE FROM django_session WHERE expire_date < NOW()');
+                } catch (Throwable) {}
+                respond([
+                    'data' => [
+                        'success' => true,
+                        'phpSessionsDeleted' => $deletedPhp,
+                        'djangoSessionsDeleted' => $deletedDjango,
+                    ],
+                ]);
+            }
+        } catch (Throwable $exception) {
+            report_exception($exception, 'system-cleanup');
+            fail(500, 'system-cleanup-failed', 'Unable to run database cleanup.');
+        }
+    }
+
+    fail(404, 'not-found', 'System endpoint not found.');
+}
+
 function respond_private_cache(array $payload, int $maxAge = 21600): void
 {
     header_remove('Cache-Control');
@@ -3464,6 +3564,8 @@ try {
         handle_reports($segments, $method);
     } elseif ($resource === 'dashboard') {
         handle_dashboard($segments, $method);
+    } elseif ($resource === 'system') {
+        handle_system($segments, $method);
     } elseif ($resource === 'health') {
         handle_health($method);
     } elseif (is_root_iam_callback($resource, $method)) {

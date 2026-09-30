@@ -2805,3 +2805,194 @@ body.report-export-open {
         transition: none !important;
     }
 }
+
+/* ============================================================
+   System Resource Usage Monitor Widget (Neon DB & Render)
+   ============================================================ */
+.system-usage-widget {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.system-usage-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 11px;
+    background: var(--ui-panel, #ffffff);
+    border: 1px solid var(--ui-border, #e2e8f0);
+    border-radius: 8px;
+    color: var(--ui-text, #1e293b);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.system-usage-trigger:hover,
+.system-usage-trigger:focus-visible {
+    border-color: #3b82f6;
+    background: var(--ui-bg-subtle, #f8fafc);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.system-status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    display: inline-block;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.system-status-indicator.is-warning {
+    background: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+.system-status-indicator.is-critical {
+    background: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+    animation: pulseCritical 1.5s infinite;
+}
+
+@keyframes pulseCritical {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+.system-usage-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 290px;
+    background: var(--ui-panel, #ffffff);
+    border: 1px solid var(--ui-border, #e2e8f0);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    z-index: 1050;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.system-usage-popover[hidden] {
+    display: none !important;
+}
+
+@keyframes popoverFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.system-usage-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--ui-border, #f1f5f9);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.system-tier-badge {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.system-tier-badge.is-fallback {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.system-usage-popover-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.system-metric-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.system-metric-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.system-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--ui-bg-subtle, #e2e8f0);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.system-progress-fill {
+    height: 100%;
+    background: #3b82f6;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.system-progress-fill.is-warning { background: #f59e0b; }
+.system-progress-fill.is-critical { background: #ef4444; }
+
+.system-metric-subtext {
+    font-size: 11px;
+    color: var(--ui-muted, #64748b);
+    line-height: 1.35;
+}
+
+.system-usage-popover-footer {
+    display: flex;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--ui-border, #f1f5f9);
+}
+
+.system-usage-popover-footer button {
+    flex: 1;
+    font-size: 11.5px;
+    padding: 5px 8px;
+    border-radius: 6px;
+}
+
+:root[data-theme="dark"] .system-usage-trigger {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+:root[data-theme="dark"] .system-usage-popover {
+    background: #0f172a;
+    border-color: #334155;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="dark"] .system-tier-badge {
+    background: #075985;
+    color: #e0f2fe;
+}
+
+:root[data-theme="dark"] .system-tier-badge.is-fallback {
+    background: #78350f;
+    color: #fef3c7;
+}
+
+:root[data-theme="dark"] .system-progress-bar {
+    background: #334155;
+}

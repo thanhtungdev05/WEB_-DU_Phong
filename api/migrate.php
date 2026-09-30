@@ -11,7 +11,7 @@ require_once __DIR__ . '/lib/runtime.php';
 load_app_environment($root);
 
 $arguments = array_slice($argv, 1);
-$unknownArguments = array_values(array_diff($arguments, ['--dry-run', '--status']));
+$unknownArguments = array_values(array_diff($arguments, ['--dry-run', '--status', '--fallback']));
 if ($unknownArguments) {
     fwrite(STDERR, '[migration-error] Unknown option: ' . implode(', ', $unknownArguments) . PHP_EOL);
     exit(2);
@@ -19,6 +19,12 @@ if ($unknownArguments) {
 
 $dryRun = in_array('--dry-run', $arguments, true);
 $statusOnly = in_array('--status', $arguments, true);
+$targetFallback = in_array('--fallback', $arguments, true);
+if ($targetFallback) {
+    putenv('DATABASE_FORCE_FALLBACK=1');
+    $_ENV['DATABASE_FORCE_FALLBACK'] = '1';
+    fwrite(STDOUT, "[migration] Targeting FALLBACK_DATABASE_URL.\n");
+}
 if ($dryRun && $statusOnly) {
     fwrite(STDERR, "[migration-error] Use either --dry-run or --status, not both.\n");
     exit(2);

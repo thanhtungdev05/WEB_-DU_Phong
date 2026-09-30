@@ -41,19 +41,23 @@ log.setLevel(logging.INFO)
 
 # ── Database helper ─────────────────────────────────────────────
 
-def _get_db_connection():
-    """Lấy kết nối psycopg từ DATABASE_URL env var."""
+def _get_db_connection(db_url: str | None = None):
+    """Lấy kết nối psycopg từ DATABASE_URL hoặc connection string được chỉ định."""
     import psycopg  # type: ignore
-    db_url = os.environ.get("DATABASE_URL", "")
-    if not db_url:
+    target_url = db_url or os.environ.get("DATABASE_URL", "")
+    if not target_url:
         raise RuntimeError("DATABASE_URL chưa được cấu hình.")
-    return psycopg.connect(db_url, autocommit=True)
+    return psycopg.connect(target_url, autocommit=True)
 
 
 def check_storage() -> float:
-    """Trả về kích thước DB (MB) và in cảnh báo nếu cần."""
+    """Trả về kích thước DB chính (MB) và in cảnh báo nếu cần."""
+    primary_url = os.environ.get("DATABASE_URL", "")
+    fallback_url = os.environ.get("FALLBACK_DATABASE_URL", "")
+    size_mb = 0.0
+
     try:
-        with _get_db_connection() as conn:
+        with _get_db_connection(primary_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT pg_database_size(current_database()) / 1024.0 / 1024.0"
@@ -65,16 +69,16 @@ def check_storage() -> float:
         ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
         if pct >= CRITICAL_THRESHOLD_PCT:
+            fallback_msg = " [Fallback DB đã sẵn sàng auto-failover]" if fallback_url else " [CHƯA cấu hình FALLBACK_DATABASE_URL]"
             log.error(
                 "[%s] NGUY HIEM Neon storage: %.2f MB / %d MB (%.1f%%). "
-                "DB se chuyen sang read-only neu vuot 100%%! "
-                "Hay don dep hoac nang Neon Launch ngay!",
-                ts, size_mb, NEON_FREE_LIMIT_MB, pct,
+                "DB se chuyen sang read-only neu vuot 100%%!%s",
+                ts, size_mb, NEON_FREE_LIMIT_MB, pct, fallback_msg
             )
         elif pct >= WARN_THRESHOLD_PCT:
             log.warning(
                 "[%s] CANH BAO Neon storage: %.2f MB / %d MB (%.1f%%). "
-                "Can don dep session/log hoac nang plan.",
+                "Can don dep session/log hoac dong bo sang DB du phong.",
                 ts, size_mb, NEON_FREE_LIMIT_MB, pct,
             )
         else:
@@ -82,6 +86,19 @@ def check_storage() -> float:
                 "[%s] Neon storage OK: %.2f MB / %d MB (%.1f%%).",
                 ts, size_mb, NEON_FREE_LIMIT_MB, pct,
             )
+
+        # Kiểm tra thêm trạng thái kết nối DB dự phòng nếu có
+        if fallback_url:
+            try:
+                with _get_db_connection(fallback_url) as fb_conn:
+                    with fb_conn.cursor() as fb_cur:
+                        fb_cur.execute("SELECT pg_database_size(current_database()) / 1024.0 / 1024.0")
+                        fb_row = fb_cur.fetchone()
+                        fb_size_mb = float(fb_row[0]) if fb_row else 0.0
+                        log.info("[%s] Fallback Neon storage: %.2f MB / %d MB (Standby OK).", ts, fb_size_mb, NEON_FREE_LIMIT_MB)
+            except Exception as fb_exc:
+                log.warning("[%s] Khong the ket noi Fallback DB: %s", ts, fb_exc)
+
         return size_mb
     except Exception as exc:
         log.warning("Khong the kiem tra storage Neon: %s", exc)

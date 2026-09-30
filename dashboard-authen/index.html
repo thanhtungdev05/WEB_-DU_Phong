@@ -129,6 +129,50 @@
                             <small id="dashboardSyncDetail">Đang kiểm tra dữ liệu mới nhất</small>
                         </span>
                     </div>
+                    <div class="system-usage-widget" id="systemUsageWidget" role="region" aria-label="Giám sát tài nguyên hệ thống">
+                        <button type="button" class="system-usage-trigger" id="systemUsageTrigger" aria-expanded="false" title="Nhấn để xem chi tiết tài nguyên Neon & Render">
+                            <span class="system-status-indicator" id="systemStatusDot" aria-hidden="true"></span>
+                            <span class="system-usage-summary">
+                                <span class="system-usage-label" id="systemUsageTier">DB: Đang tải...</span>
+                            </span>
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="system-usage-popover" id="systemUsagePopover" hidden>
+                            <div class="system-usage-popover-header">
+                                <strong>Giám sát tài nguyên</strong>
+                                <span class="system-tier-badge" id="systemTierBadge">Neon DB</span>
+                            </div>
+                            <div class="system-usage-popover-body">
+                                <div class="system-metric-row">
+                                    <div class="system-metric-label">
+                                        <span>Lưu trữ Neon DB</span>
+                                        <strong id="systemStorageText">-- / 512 MB</strong>
+                                    </div>
+                                    <div class="system-progress-bar">
+                                        <div class="system-progress-fill" id="systemStorageProgress" style="width: 0%;"></div>
+                                    </div>
+                                    <small class="system-metric-subtext" id="systemStorageStatusText">Đang kiểm tra dung lượng...</small>
+                                </div>
+                                <div class="system-metric-row">
+                                    <div class="system-metric-label">
+                                        <span>Web Hosting Render</span>
+                                        <strong class="text-success" style="color:#10b981;">Hoạt động (750h)</strong>
+                                    </div>
+                                    <small class="system-metric-subtext">1 URL duy nhất (Khớp IAM SSO) • Keepalive: Bật</small>
+                                </div>
+                                <div class="system-metric-row">
+                                    <div class="system-metric-label">
+                                        <span>Phiên đăng nhập</span>
+                                        <span id="systemSessionCount">PHP: -- • Django: --</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="system-usage-popover-footer">
+                                <button type="button" class="button secondary small" id="systemRefreshUsageBtn">Làm mới</button>
+                                <button type="button" class="button secondary small" id="systemCleanupBtn">Dọn session</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="theme-switcher-control" id="themeSwitcher" role="group" aria-label="Tùy chọn giao diện">
                         <button type="button" class="theme-btn" data-theme-value="light" title="Chế độ Sáng" aria-label="Chế độ Sáng" aria-pressed="false">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
@@ -1621,6 +1665,7 @@
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
     <script src="js/app.js?v=92fb54903c7eac97"></script>
+    <script src="js/system_monitor.js"></script>
 </body>
 
 </html>

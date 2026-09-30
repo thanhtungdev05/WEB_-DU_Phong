@@ -142,50 +142,59 @@ function normalize_neon_options(string $host, ?string $options): ?string
     return trim($options . ' endpoint=' . $hostLabel);
 }
 
-function create_database_connection(): PDO
+function get_active_database_tier(): string
 {
-    $databaseUrl = env_value('DATABASE_URL');
-    if ($databaseUrl) {
-        $parts = parse_url($databaseUrl);
-        if (!$parts || empty($parts['host']) || empty($parts['path'])) {
-            throw new RuntimeException('DATABASE_URL is invalid.');
-        }
+    return (string)($GLOBALS['active_database_tier'] ?? 'primary');
+}
 
-        $host = (string)$parts['host'];
-        $port = (string)($parts['port'] ?? 5432);
-        $dbname = rawurldecode(ltrim((string)$parts['path'], '/'));
-        $user = rawurldecode((string)($parts['user'] ?? ''));
-        $password = rawurldecode((string)($parts['pass'] ?? ''));
-        $query = [];
-        parse_str((string)($parts['query'] ?? ''), $query);
-        $sslmode = env_value('PGSSLMODE', (string)($query['sslmode'] ?? 'prefer'));
-        $connectTimeout = env_value('PGCONNECT_TIMEOUT', isset($query['connect_timeout']) ? (string)$query['connect_timeout'] : null);
-        $options = env_value('PGOPTIONS', isset($query['options']) ? (string)$query['options'] : null);
-    } else {
-        $host = env_value('PGHOST', '127.0.0.1');
-        $port = env_value('PGPORT', '5432');
-        $dbname = env_value('PGDATABASE');
-        $user = env_value('PGUSER');
-        $password = env_value('PGPASSWORD', '');
-        $sslmode = env_value('PGSSLMODE', 'prefer');
-        $connectTimeout = env_value('PGCONNECT_TIMEOUT');
-        $options = env_value('PGOPTIONS');
-
-        if (!$dbname || !$user) {
-            throw new RuntimeException('PostgreSQL config is missing. Set DATABASE_URL or PG* variables.');
-        }
+function parse_database_url_to_pdo_params(string $databaseUrl): array
+{
+    $parts = parse_url($databaseUrl);
+    if (!$parts || empty($parts['host']) || empty($parts['path'])) {
+        throw new RuntimeException('DATABASE_URL is invalid.');
     }
 
-    $options = normalize_neon_options((string)$host, $options ?? null);
-    $dsn = sprintf('pgsql:host=%s;port=%s;dbname=%s;sslmode=%s', $host, $port, $dbname, $sslmode);
-    if ($connectTimeout) {
-        $dsn .= ';connect_timeout=' . $connectTimeout;
+    $host = (string)$parts['host'];
+    $port = (string)($parts['port'] ?? 5432);
+    $dbname = rawurldecode(ltrim((string)$parts['path'], '/'));
+    $user = rawurldecode((string)($parts['user'] ?? ''));
+    $password = rawurldecode((string)($parts['pass'] ?? ''));
+    $query = [];
+    parse_str((string)($parts['query'] ?? ''), $query);
+    $sslmode = env_value('PGSSLMODE', (string)($query['sslmode'] ?? 'prefer'));
+    $connectTimeout = env_value('PGCONNECT_TIMEOUT', isset($query['connect_timeout']) ? (string)$query['connect_timeout'] : null);
+    $options = env_value('PGOPTIONS', isset($query['options']) ? (string)$query['options'] : null);
+
+    return [
+        'host' => $host,
+        'port' => $port,
+        'dbname' => $dbname,
+        'user' => $user,
+        'password' => $password,
+        'sslmode' => $sslmode,
+        'connectTimeout' => $connectTimeout,
+        'options' => $options,
+    ];
+}
+
+function connect_pdo_from_params(array $params): PDO
+{
+    $options = normalize_neon_options((string)$params['host'], $params['options'] ?? null);
+    $dsn = sprintf(
+        'pgsql:host=%s;port=%s;dbname=%s;sslmode=%s',
+        $params['host'],
+        $params['port'],
+        $params['dbname'],
+        $params['sslmode']
+    );
+    if (!empty($params['connectTimeout'])) {
+        $dsn .= ';connect_timeout=' . $params['connectTimeout'];
     }
     if ($options) {
         $dsn .= ';options=' . $options;
     }
 
-    $pdo = new ObservedPDO($dsn, (string)$user, (string)$password, [
+    $pdo = new ObservedPDO($dsn, (string)$params['user'], (string)$params['password'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => env_bool('DB_EMULATE_PREPARES', true),
@@ -198,4 +207,75 @@ function create_database_connection(): PDO
     ]);
 
     return $pdo;
+}
+
+function create_database_connection(): PDO
+{
+    $primaryUrl = env_value('DATABASE_URL');
+    $fallbackUrl = env_value('FALLBACK_DATABASE_URL');
+    $forceFallback = env_bool('DATABASE_FORCE_FALLBACK', false);
+
+    if ($forceFallback && $fallbackUrl) {
+        try {
+            $params = parse_database_url_to_pdo_params($fallbackUrl);
+            $pdo = connect_pdo_from_params($params);
+            $GLOBALS['active_database_tier'] = 'fallback';
+            return $pdo;
+        } catch (Throwable $exception) {
+            error_log('[db-failover] Forced fallback connection failed: ' . $exception->getMessage());
+        }
+    }
+
+    // Attempt connection to Primary Database
+    try {
+        if ($primaryUrl) {
+            $params = parse_database_url_to_pdo_params($primaryUrl);
+        } else {
+            $host = env_value('PGHOST', '127.0.0.1');
+            $port = env_value('PGPORT', '5432');
+            $dbname = env_value('PGDATABASE');
+            $user = env_value('PGUSER');
+            $password = env_value('PGPASSWORD', '');
+            $sslmode = env_value('PGSSLMODE', 'prefer');
+            $connectTimeout = env_value('PGCONNECT_TIMEOUT');
+            $options = env_value('PGOPTIONS');
+
+            if (!$dbname || !$user) {
+                throw new RuntimeException('PostgreSQL config is missing. Set DATABASE_URL or PG* variables.');
+            }
+
+            $params = [
+                'host' => $host,
+                'port' => $port,
+                'dbname' => $dbname,
+                'user' => $user,
+                'password' => $password,
+                'sslmode' => $sslmode,
+                'connectTimeout' => $connectTimeout,
+                'options' => $options,
+            ];
+        }
+
+        $pdo = connect_pdo_from_params($params);
+        $GLOBALS['active_database_tier'] = 'primary';
+        return $pdo;
+    } catch (Throwable $primaryException) {
+        if ($fallbackUrl) {
+            error_log(sprintf(
+                '[db-failover] Primary DB connection failed (%s). Auto-failing over to FALLBACK_DATABASE_URL...',
+                $primaryException->getMessage()
+            ));
+            try {
+                $fallbackParams = parse_database_url_to_pdo_params($fallbackUrl);
+                $pdo = connect_pdo_from_params($fallbackParams);
+                $GLOBALS['active_database_tier'] = 'fallback';
+                error_log('[db-failover] Successfully connected to FALLBACK_DATABASE_URL.');
+                return $pdo;
+            } catch (Throwable $fallbackException) {
+                error_log('[db-failover] Fallback DB connection also failed: ' . $fallbackException->getMessage());
+            }
+        }
+
+        throw $primaryException;
+    }
 }

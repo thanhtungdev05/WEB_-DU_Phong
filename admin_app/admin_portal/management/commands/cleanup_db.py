@@ -12,7 +12,16 @@ Chạy định kỳ (khuyến nghị): mỗi 6 giờ qua scheduler trong run_all
 """
 from __future__ import annotations
 
+import sys
 import time
+
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 from django.core.management.base import BaseCommand
 from django.db import connection
 

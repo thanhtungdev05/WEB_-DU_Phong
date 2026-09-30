@@ -121,19 +121,32 @@ TEMPLATES = [
 WSGI_APPLICATION = 'admin_site.wsgi.application'
 
 # ===========================================================
-# Database — kết nối vào Neon PostgreSQL dùng chung với PHP
+# Database — kết nối vào Neon PostgreSQL (hỗ trợ Auto-Failover)
 # ===========================================================
 _db_url = os.environ.get('DATABASE_URL', '')
-if _db_url:
+_fallback_db_url = os.environ.get('FALLBACK_DATABASE_URL', '')
+_target_url = _db_url
+
+if os.environ.get('DATABASE_FORCE_FALLBACK', '0').strip() == '1' and _fallback_db_url:
+    _target_url = _fallback_db_url
+elif _db_url and _fallback_db_url:
+    try:
+        import psycopg
+        with psycopg.connect(_db_url, connect_timeout=3):
+            pass
+    except Exception:
+        _target_url = _fallback_db_url
+
+if _target_url:
     _ssl_require = (
-        'sslmode=disable' not in _db_url
-        and '127.0.0.1' not in _db_url
-        and 'localhost' not in _db_url
+        'sslmode=disable' not in _target_url
+        and '127.0.0.1' not in _target_url
+        and 'localhost' not in _target_url
         and os.environ.get('PGSSLMODE', '').lower() != 'disable'
     )
     DATABASES = {
         'default': dj_database_url.parse(
-            _db_url,
+            _target_url,
             conn_max_age=60,
             conn_health_checks=True,
             ssl_require=_ssl_require,
