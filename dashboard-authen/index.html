@@ -116,63 +116,10 @@
                     <div>
                         <div class="page-eyebrow" id="pageEyebrow">Tổng quan</div>
                         <h1 id="pageTitle" tabindex="-1">Tổng quan thực hành KTV</h1>
-                        <div class="subtitle" id="pageSubtitle">Hoạt động và kết quả thực hành trong tháng
-                        </div>
+                        <div class="subtitle" id="pageSubtitle">Hoạt động và kết quả thực hành trong tháng</div>
                     </div>
                 </div>
                 <div class="top-actions">
-                    <div class="dashboard-sync-status is-syncing" id="dashboardSyncStatus" role="status"
-                        aria-live="polite" aria-atomic="true">
-                        <span class="dashboard-sync-dot" aria-hidden="true"></span>
-                        <span class="dashboard-sync-copy">
-                            <strong id="dashboardSyncTitle">Đang đồng bộ</strong>
-                            <small id="dashboardSyncDetail">Đang kiểm tra dữ liệu mới nhất</small>
-                        </span>
-                    </div>
-                    <div class="system-usage-widget" id="systemUsageWidget" role="region" aria-label="Giám sát tài nguyên hệ thống">
-                        <button type="button" class="system-usage-trigger" id="systemUsageTrigger" aria-expanded="false" title="Nhấn để xem chi tiết tài nguyên Neon & Render">
-                            <span class="system-status-indicator" id="systemStatusDot" aria-hidden="true"></span>
-                            <span class="system-usage-summary">
-                                <span class="system-usage-label" id="systemUsageTier">DB: Đang tải...</span>
-                            </span>
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        </button>
-                        <div class="system-usage-popover" id="systemUsagePopover" hidden>
-                            <div class="system-usage-popover-header">
-                                <strong>Giám sát tài nguyên</strong>
-                                <span class="system-tier-badge" id="systemTierBadge">Neon DB</span>
-                            </div>
-                            <div class="system-usage-popover-body">
-                                <div class="system-metric-row">
-                                    <div class="system-metric-label">
-                                        <span>Lưu trữ Neon DB</span>
-                                        <strong id="systemStorageText">-- / 512 MB</strong>
-                                    </div>
-                                    <div class="system-progress-bar">
-                                        <div class="system-progress-fill" id="systemStorageProgress" style="width: 0%;"></div>
-                                    </div>
-                                    <small class="system-metric-subtext" id="systemStorageStatusText">Đang kiểm tra dung lượng...</small>
-                                </div>
-                                <div class="system-metric-row">
-                                    <div class="system-metric-label">
-                                        <span>Web Hosting Render</span>
-                                        <strong class="text-success" style="color:#10b981;">Hoạt động (750h)</strong>
-                                    </div>
-                                    <small class="system-metric-subtext">1 URL duy nhất (Khớp IAM SSO) • Keepalive: Bật</small>
-                                </div>
-                                <div class="system-metric-row">
-                                    <div class="system-metric-label">
-                                        <span>Phiên đăng nhập</span>
-                                        <span id="systemSessionCount">PHP: -- • Django: --</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="system-usage-popover-footer">
-                                <button type="button" class="button secondary small" id="systemRefreshUsageBtn">Làm mới</button>
-                                <button type="button" class="button secondary small" id="systemCleanupBtn">Dọn session</button>
-                            </div>
-                        </div>
-                    </div>
                     <div class="theme-switcher-control" id="themeSwitcher" role="group" aria-label="Tùy chọn giao diện">
                         <button type="button" class="theme-btn" data-theme-value="light" title="Chế độ Sáng" aria-label="Chế độ Sáng" aria-pressed="false">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
@@ -202,6 +149,65 @@
                             </svg>
                             <span class="theme-btn-label">Tự động</span>
                         </button>
+                    </div>
+                    <div class="system-usage-widget" id="systemUsageWidget" role="region" aria-label="Giám sát tài nguyên hệ thống">
+                        <button type="button" class="system-usage-trigger" id="systemUsageTrigger" aria-expanded="false" title="Nhấn để xem chi tiết tài nguyên Neon & Render">
+                            <span class="system-status-indicator" id="systemStatusDot" aria-hidden="true"></span>
+                            <span class="system-usage-summary">
+                                <span class="system-usage-label" id="systemUsageTier">DB: 16 MB (3%)</span>
+                            </span>
+                            <svg class="system-chevron-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="system-usage-popover" id="systemUsagePopover" hidden>
+                            <div class="system-usage-popover-header">
+                                <div class="system-popover-title">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                                    <strong>Tài nguyên & Hạ tầng</strong>
+                                </div>
+                                <span class="system-tier-badge is-fallback" id="systemTierBadge">Neon Dự phòng</span>
+                            </div>
+                            <div class="system-usage-popover-body">
+                                <div class="system-metric-card">
+                                    <div class="system-metric-label">
+                                        <span>Lưu trữ Neon PostgreSQL</span>
+                                        <strong id="systemStorageText">15.98 MB / 512 MB</strong>
+                                    </div>
+                                    <div class="system-progress-bar">
+                                        <div class="system-progress-fill" id="systemStorageProgress" style="width: 3.1%;"></div>
+                                    </div>
+                                    <div class="system-metric-footer">
+                                        <small id="systemStorageStatusText" class="text-success">Trạng thái: An toàn (3.1%)</small>
+                                        <small class="system-failover-hint">Auto-failover khi &gt; 92%</small>
+                                    </div>
+                                </div>
+                                <div class="system-metric-card">
+                                    <div class="system-metric-label">
+                                        <span>Web Hosting Render</span>
+                                        <span class="system-render-badge">
+                                            <span class="render-pulse-dot"></span>
+                                            Đang chạy
+                                        </span>
+                                    </div>
+                                    <small class="system-metric-subtext">1 URL cố định (Khớp IAM SSO) • Keepalive 10m</small>
+                                </div>
+                                <div class="system-metric-card system-session-card">
+                                    <div class="system-metric-label">
+                                        <span>Phiên làm việc</span>
+                                        <span id="systemSessionCount" class="system-session-badges">PHP: 5 • Django: 0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="system-usage-popover-footer">
+                                <button type="button" class="button secondary small" id="systemRefreshUsageBtn">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6v5h-5M4 18v-5h5M18.5 9A7 7 0 0 0 6.2 6.2L4 8m16 8-2.2 1.8A7 7 0 0 1 5.5 15"/></svg>
+                                    Làm mới
+                                </button>
+                                <button type="button" class="button secondary small system-cleanup-action-btn" id="systemCleanupBtn">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    Dọn session
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <button class="button secondary dashboard-refresh-button" type="button" id="refreshDashboardBtn"
                         aria-label="Làm mới dữ liệu" title="Làm mới dữ liệu">
