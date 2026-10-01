@@ -179,6 +179,26 @@
                                         <small id="systemStorageStatusText">Đang tải dữ liệu thực tế...</small>
                                         <small class="system-failover-hint" id="systemCutoverMode">Chuyển đổi có kiểm soát</small>
                                     </div>
+                                    <small class="system-metric-subtext" id="systemStorageMeasurement">Ước tính theo dung lượng logic PostgreSQL</small>
+                                </div>
+                                <div class="system-metric-card">
+                                    <div class="system-metric-label">
+                                        <span>Kết nối Neon</span>
+                                        <strong id="systemDbConnections">-- / --</strong>
+                                    </div>
+                                    <div class="system-progress-bar system-progress-bar-compact">
+                                        <div class="system-progress-fill" id="systemDbConnectionsProgress" style="width: 0;"></div>
+                                    </div>
+                                </div>
+                                <div class="system-metric-card">
+                                    <div class="system-metric-label">
+                                        <span>Compute Neon tháng này</span>
+                                        <strong id="systemComputeText">-- / --</strong>
+                                    </div>
+                                    <div class="system-progress-bar system-progress-bar-compact">
+                                        <div class="system-progress-fill" id="systemComputeProgress" style="width: 0;"></div>
+                                    </div>
+                                    <small class="system-metric-subtext" id="systemComputeNote">Reset đầu tháng. Cập nhật từ Neon Console &gt; Billing.</small>
                                 </div>
                                 <div class="system-metric-card">
                                     <div class="system-metric-label">
@@ -189,12 +209,32 @@
                                         </span>
                                     </div>
                                     <small class="system-metric-subtext" id="systemRenderDetail">Trạng thái được lấy từ máy chủ</small>
+                                    <div class="system-provider-metrics" id="systemRenderMetrics">
+                                        <div class="system-provider-row">
+                                            <span>Outbound tháng này</span>
+                                            <strong id="systemRenderBandwidth">Chưa cấu hình API</strong>
+                                        </div>
+                                        <div class="system-progress-bar system-progress-bar-compact">
+                                            <div class="system-progress-fill" id="systemRenderBandwidthProgress" style="width: 0;"></div>
+                                        </div>
+                                        <small class="system-metric-subtext" id="systemRenderBandwidthPeriod" hidden></small>
+                                        <div class="system-provider-row">
+                                            <span>CPU hiện tại / đỉnh 1h</span>
+                                            <strong id="systemRenderCpu">-- / --</strong>
+                                        </div>
+                                        <div class="system-provider-row">
+                                            <span>RAM hiện tại / đỉnh 1h</span>
+                                            <strong id="systemRenderMemory">-- / --</strong>
+                                        </div>
+                                    </div>
+                                    <small class="system-metric-subtext" id="systemRenderBillingHint">Giờ instance và build minutes: xem Billing Render</small>
                                 </div>
                                 <div class="system-metric-card system-session-card">
                                     <div class="system-metric-label">
-                                        <span>Phiên làm việc</span>
+                                        <span>Phiên còn hiệu lực</span>
                                         <span id="systemSessionCount" class="system-session-badges">PHP: -- • Django: --</span>
                                     </div>
+                                    <small class="system-metric-subtext" id="systemExpiredSessionCount">Hết hạn chờ dọn: --</small>
                                 </div>
                             </div>
                             <div class="system-usage-popover-footer">
@@ -1671,7 +1711,7 @@
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
     <script src="js/app.js?v=92fb54903c7eac97"></script>
-    <script src="js/system_monitor.js?v=a69cf70e12fce7a8"></script>
+    <script src="js/system_monitor.js?v=9ca7b8908d88ee48"></script>
 </body>
 
 </html>

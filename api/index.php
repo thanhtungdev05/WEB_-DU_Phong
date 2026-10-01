@@ -13,6 +13,7 @@ require_once __DIR__ . '/lib/training_classes.php';
 require_once __DIR__ . '/lib/report_xlsx.php';
 require_once __DIR__ . '/lib/dashboard_report.php';
 require_once __DIR__ . '/lib/dashboard_technicians.php';
+require_once __DIR__ . '/lib/system_usage.php';
 load_app_environment($root);
 
 $GLOBALS['request_id'] = bin2hex(random_bytes(8));
@@ -3444,15 +3445,9 @@ function handle_system(array $segments, string $method): void
         try {
             $dbSizeBytes = (int)$pdo->query('SELECT pg_database_size(current_database())')->fetchColumn();
             $dbSizeMb = round($dbSizeBytes / 1024 / 1024, 2);
-            $neonFreeLimitMb = 512.0;
+            $neonFreeLimitMb = system_usage_float('NEON_STORAGE_LIMIT_MB', 512.0, 1.0, 10485760.0);
             $usagePct = round(($dbSizeMb / $neonFreeLimitMb) * 100, 1);
-
-            $status = 'OK';
-            if ($usagePct >= 92) {
-                $status = 'CRITICAL';
-            } elseif ($usagePct >= 80) {
-                $status = 'WARNING';
-            }
+            $status = system_usage_status($usagePct);
 
             $tableSizes = $pdo->query(<<<'SQL'
                 SELECT schemaname || '.' || tablename AS table_name,
@@ -3464,14 +3459,51 @@ function handle_system(array $segments, string $method): void
                  LIMIT 10
             SQL)->fetchAll(PDO::FETCH_ASSOC);
 
-            $phpSessions = 0;
-            $djangoSessions = 0;
+            $phpSessions = ['active' => 0, 'expired' => 0, 'total' => 0];
+            $djangoSessions = ['active' => 0, 'expired' => 0, 'total' => 0];
             try {
-                $phpSessions = (int)$pdo->query('SELECT COUNT(*) FROM app_sessions')->fetchColumn();
+                $row = $pdo->query(<<<'SQL'
+                    SELECT COUNT(*) FILTER (WHERE expires_at > NOW())::bigint AS active,
+                           COUNT(*) FILTER (WHERE expires_at <= NOW())::bigint AS expired,
+                           COUNT(*)::bigint AS total
+                      FROM app_sessions
+                SQL)->fetch(PDO::FETCH_ASSOC) ?: [];
+                $phpSessions = [
+                    'active' => (int)($row['active'] ?? 0),
+                    'expired' => (int)($row['expired'] ?? 0),
+                    'total' => (int)($row['total'] ?? 0),
+                ];
             } catch (Throwable) {}
             try {
-                $djangoSessions = (int)$pdo->query('SELECT COUNT(*) FROM django_session')->fetchColumn();
+                $row = $pdo->query(<<<'SQL'
+                    SELECT COUNT(*) FILTER (WHERE expire_date > NOW())::bigint AS active,
+                           COUNT(*) FILTER (WHERE expire_date <= NOW())::bigint AS expired,
+                           COUNT(*)::bigint AS total
+                      FROM django_session
+                SQL)->fetch(PDO::FETCH_ASSOC) ?: [];
+                $djangoSessions = [
+                    'active' => (int)($row['active'] ?? 0),
+                    'expired' => (int)($row['expired'] ?? 0),
+                    'total' => (int)($row['total'] ?? 0),
+                ];
             } catch (Throwable) {}
+
+            $connectionCount = 0;
+            $connectionLimit = 0;
+            try {
+                $connectionCount = (int)$pdo->query(
+                    'SELECT COUNT(*) FROM pg_stat_activity WHERE datname = current_database()'
+                )->fetchColumn();
+                // Ưu tiên giới hạn từ nhà cung cấp (Neon pooler): 10 connections free plan.
+                // SHOW max_connections trả về giới hạn PG server (~100), sai 10x với Neon.
+                $neonConnectionLimit = env_int('NEON_CONNECTION_LIMIT', 0, 0, 100000);
+                if ($neonConnectionLimit > 0) {
+                    $connectionLimit = $neonConnectionLimit;
+                } else {
+                    $connectionLimit = (int)$pdo->query('SHOW max_connections')->fetchColumn();
+                }
+            } catch (Throwable) {}
+            $connectionPercent = system_usage_percent($connectionCount, $connectionLimit);
 
             $activeTier = get_active_database_tier();
             $standbyConfigured = $activeTier === 'fallback'
@@ -3491,11 +3523,41 @@ function handle_system(array $segments, string $method): void
                         'neonLimitMb' => $neonFreeLimitMb,
                         'usagePercent' => $usagePct,
                         'status' => $status,
+                        'measurement' => 'postgres_logical_database_size',
+                        'isEstimate' => true,
+                        // Số thực từ Neon Console (admin nhập thủ công vào NEON_STORAGE_ACTUAL_MB)
+                        'neonActualMb' => env_value('NEON_STORAGE_ACTUAL_MB') !== null
+                            ? (float)env_value('NEON_STORAGE_ACTUAL_MB')
+                            : null,
                     ],
+                    'database' => [
+                        'connections' => [
+                            'current' => $connectionCount,
+                            'limit' => $connectionLimit,
+                            'usagePercent' => $connectionPercent,
+                            'status' => $connectionPercent === null ? 'UNKNOWN' : system_usage_status($connectionPercent),
+                        ],
+                        'networkTransfer' => [
+                            'available' => false,
+                            'reason' => 'not_exposed_by_postgresql',
+                        ],
+                    ],
+                    'computeHours' => [
+                        'limit' => env_int('NEON_COMPUTE_HOURS_LIMIT', 0, 0, 1000000),
+                        'used' => env_value('NEON_COMPUTE_HOURS_USED') !== null
+                            ? (float)env_value('NEON_COMPUTE_HOURS_USED')
+                            : null,
+                        'configured' => env_value('NEON_COMPUTE_HOURS_LIMIT') !== null,
+                        'source' => 'manual_neon_console',
+                        'note' => 'Reset đầu tháng. Cập nhật NEON_COMPUTE_HOURS_USED từ Neon Console > Billing.',
+                    ],
+                    'render' => render_usage_metrics(),
                     'tables' => $tableSizes,
                     'sessions' => [
-                        'phpSessions' => $phpSessions,
-                        'djangoSessions' => $djangoSessions,
+                        'phpSessions' => $phpSessions['active'],
+                        'djangoSessions' => $djangoSessions['active'],
+                        'php' => $phpSessions,
+                        'django' => $djangoSessions,
                     ],
                     'checkedAt' => gmdate('c'),
                 ],
