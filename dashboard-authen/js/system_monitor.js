@@ -34,6 +34,9 @@
         const dot = document.getElementById('systemStatusDot');
         const label = document.getElementById('systemUsageTier');
         const tierBadge = document.getElementById('systemTierBadge');
+        const cutoverMode = document.getElementById('systemCutoverMode');
+        const renderStatus = document.getElementById('systemRenderStatus');
+        const renderDetail = document.getElementById('systemRenderDetail');
 
         if (dot) {
             dot.className = 'system-status-indicator' + 
@@ -46,8 +49,26 @@
         }
 
         if (tierBadge) {
-            tierBadge.textContent = isFallback ? 'Neon Dự phòng' : 'Neon Chính';
+            tierBadge.textContent = isFallback ? 'Fallback đang hoạt động' : 'Primary đang hoạt động';
             tierBadge.className = 'system-tier-badge' + (isFallback ? ' is-fallback' : '');
+        }
+
+        if (cutoverMode) {
+            cutoverMode.textContent = data.standbyConfigured
+                ? 'Standby đã cấu hình • Chuyển đổi có kiểm soát'
+                : 'Chưa cấu hình standby';
+        }
+
+        if (renderStatus) {
+            renderStatus.textContent = data.isRender ? 'Đang phục vụ' : 'Môi trường cục bộ';
+        }
+
+        if (renderDetail) {
+            renderDetail.textContent = data.isRender
+                ? (data.renderSelfPingEnabled
+                    ? 'Self-health ping đang bật • Không phải cam kết uptime'
+                    : 'Render health hoạt động • Self-health ping đang tắt')
+                : 'Không chạy trên Render';
         }
 
         // Popover detail
@@ -82,6 +103,23 @@
         if (sessionCount && data.sessions) {
             sessionCount.textContent = `PHP: ${data.sessions.phpSessions || 0} • Django: ${data.sessions.djangoSessions || 0}`;
         }
+    }
+
+    function setSystemUsageUnavailable() {
+        const label = document.getElementById('systemUsageTier');
+        const tierBadge = document.getElementById('systemTierBadge');
+        const statusText = document.getElementById('systemStorageStatusText');
+        const progress = document.getElementById('systemStorageProgress');
+        if (label) label.textContent = 'DB: Không lấy được trạng thái';
+        if (tierBadge) {
+            tierBadge.textContent = 'Không xác định';
+            tierBadge.className = 'system-tier-badge';
+        }
+        if (statusText) {
+            statusText.textContent = 'Không thể xác minh dung lượng database';
+            statusText.style.color = '#ef4444';
+        }
+        if (progress) progress.style.width = '0';
     }
 
     function initSystemUsageMonitor() {
@@ -131,6 +169,8 @@
                 if (typeof window.showToast === 'function') {
                     window.showToast('Thông số tài nguyên đã được cập nhật.', 'success');
                 }
+            } else {
+                setSystemUsageUnavailable();
             }
             refreshBtn.disabled = false;
             refreshBtn.textContent = 'Làm mới';
@@ -171,6 +211,7 @@
         // Tải dữ liệu ban đầu
         fetchSystemUsageData().then(data => {
             if (data) updateSystemUsageUI(data);
+            else setSystemUsageUnavailable();
         });
 
         // Tự động cập nhật mỗi 5 phút khi tab đang mở

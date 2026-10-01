@@ -37,7 +37,13 @@ function load_app_environment(string $root): void
 
 function env_value(string $key, ?string $default = null): ?string
 {
-    $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+    // The real process environment (Render, Docker, or an intentional CLI
+    // putenv override) must win over values previously materialized in the PHP
+    // superglobals. This keeps DATABASE_ACTIVE deterministic during cutover.
+    $processValue = getenv($key);
+    $value = ($processValue !== false && $processValue !== '')
+        ? $processValue
+        : ($_ENV[$key] ?? $_SERVER[$key] ?? false);
     if ($value === false || $value === '') {
         return $default;
     }
@@ -144,7 +150,17 @@ function normalize_neon_options(string $host, ?string $options): ?string
 
 function get_active_database_tier(): string
 {
-    return (string)($GLOBALS['active_database_tier'] ?? 'primary');
+    return (string)($GLOBALS['active_database_tier'] ?? configured_active_database_tier());
+}
+
+function configured_active_database_tier(): string
+{
+    $tier = strtolower(trim((string)env_value('DATABASE_ACTIVE', 'primary')));
+    if (!in_array($tier, ['primary', 'fallback'], true)) {
+        throw new RuntimeException('DATABASE_ACTIVE must be either primary or fallback.');
+    }
+
+    return $tier;
 }
 
 function parse_database_url_to_pdo_params(string $databaseUrl): array
@@ -213,69 +229,42 @@ function create_database_connection(): PDO
 {
     $primaryUrl = env_value('DATABASE_URL');
     $fallbackUrl = env_value('FALLBACK_DATABASE_URL');
-    $forceFallback = env_bool('DATABASE_FORCE_FALLBACK', false);
+    $activeTier = configured_active_database_tier();
 
-    if ($forceFallback && $fallbackUrl) {
-        try {
-            $params = parse_database_url_to_pdo_params($fallbackUrl);
-            $pdo = connect_pdo_from_params($params);
-            $GLOBALS['active_database_tier'] = 'fallback';
-            return $pdo;
-        } catch (Throwable $exception) {
-            error_log('[db-failover] Forced fallback connection failed: ' . $exception->getMessage());
+    if ($activeTier === 'fallback') {
+        if (!$fallbackUrl) {
+            throw new RuntimeException('DATABASE_ACTIVE=fallback requires FALLBACK_DATABASE_URL.');
         }
+        $params = parse_database_url_to_pdo_params($fallbackUrl);
+    } elseif ($primaryUrl) {
+        $params = parse_database_url_to_pdo_params($primaryUrl);
+    } else {
+        $host = env_value('PGHOST', '127.0.0.1');
+        $port = env_value('PGPORT', '5432');
+        $dbname = env_value('PGDATABASE');
+        $user = env_value('PGUSER');
+        $password = env_value('PGPASSWORD', '');
+        $sslmode = env_value('PGSSLMODE', 'prefer');
+        $connectTimeout = env_value('PGCONNECT_TIMEOUT');
+        $options = env_value('PGOPTIONS');
+
+        if (!$dbname || !$user) {
+            throw new RuntimeException('PostgreSQL config is missing. Set DATABASE_URL or PG* variables.');
+        }
+
+        $params = [
+            'host' => $host,
+            'port' => $port,
+            'dbname' => $dbname,
+            'user' => $user,
+            'password' => $password,
+            'sslmode' => $sslmode,
+            'connectTimeout' => $connectTimeout,
+            'options' => $options,
+        ];
     }
 
-    // Attempt connection to Primary Database
-    try {
-        if ($primaryUrl) {
-            $params = parse_database_url_to_pdo_params($primaryUrl);
-        } else {
-            $host = env_value('PGHOST', '127.0.0.1');
-            $port = env_value('PGPORT', '5432');
-            $dbname = env_value('PGDATABASE');
-            $user = env_value('PGUSER');
-            $password = env_value('PGPASSWORD', '');
-            $sslmode = env_value('PGSSLMODE', 'prefer');
-            $connectTimeout = env_value('PGCONNECT_TIMEOUT');
-            $options = env_value('PGOPTIONS');
-
-            if (!$dbname || !$user) {
-                throw new RuntimeException('PostgreSQL config is missing. Set DATABASE_URL or PG* variables.');
-            }
-
-            $params = [
-                'host' => $host,
-                'port' => $port,
-                'dbname' => $dbname,
-                'user' => $user,
-                'password' => $password,
-                'sslmode' => $sslmode,
-                'connectTimeout' => $connectTimeout,
-                'options' => $options,
-            ];
-        }
-
-        $pdo = connect_pdo_from_params($params);
-        $GLOBALS['active_database_tier'] = 'primary';
-        return $pdo;
-    } catch (Throwable $primaryException) {
-        if ($fallbackUrl) {
-            error_log(sprintf(
-                '[db-failover] Primary DB connection failed (%s). Auto-failing over to FALLBACK_DATABASE_URL...',
-                $primaryException->getMessage()
-            ));
-            try {
-                $fallbackParams = parse_database_url_to_pdo_params($fallbackUrl);
-                $pdo = connect_pdo_from_params($fallbackParams);
-                $GLOBALS['active_database_tier'] = 'fallback';
-                error_log('[db-failover] Successfully connected to FALLBACK_DATABASE_URL.');
-                return $pdo;
-            } catch (Throwable $fallbackException) {
-                error_log('[db-failover] Fallback DB connection also failed: ' . $fallbackException->getMessage());
-            }
-        }
-
-        throw $primaryException;
-    }
+    $pdo = connect_pdo_from_params($params);
+    $GLOBALS['active_database_tier'] = $activeTier;
+    return $pdo;
 }

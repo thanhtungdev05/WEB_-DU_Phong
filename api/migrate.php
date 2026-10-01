@@ -21,8 +21,8 @@ $dryRun = in_array('--dry-run', $arguments, true);
 $statusOnly = in_array('--status', $arguments, true);
 $targetFallback = in_array('--fallback', $arguments, true);
 if ($targetFallback) {
-    putenv('DATABASE_FORCE_FALLBACK=1');
-    $_ENV['DATABASE_FORCE_FALLBACK'] = '1';
+    putenv('DATABASE_ACTIVE=fallback');
+    $_ENV['DATABASE_ACTIVE'] = 'fallback';
     fwrite(STDOUT, "[migration] Targeting FALLBACK_DATABASE_URL.\n");
 }
 if ($dryRun && $statusOnly) {

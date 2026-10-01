@@ -4,7 +4,7 @@ db_guardian.py — Background scheduler bảo vệ Neon + Render khỏi chạm l
 Chạy như một daemon thread trong run_all.py. Tự động:
 1. Xoá app_sessions hết hạn mỗi 6 giờ
 2. Kiểm tra storage Neon mỗi 2 giờ và in cảnh báo khi > 80%
-3. Ping /health/live để giữ Render service luôn sống (không spin-down)
+3. Có thể tự kiểm tra /health/live; không coi đây là bảo đảm chống Render spin-down
 4. Ghi log vào stderr để Render Logs có thể theo dõi
 
 Không có dependency ngoài stdlib + psycopg (đã có sẵn qua Django).
@@ -27,7 +27,7 @@ CRITICAL_THRESHOLD_PCT = 92
 # Khoảng thời gian chạy (giây)
 STORAGE_CHECK_INTERVAL_SEC = 2 * 3600      # 2 giờ
 CLEANUP_INTERVAL_SEC       = 6 * 3600      # 6 giờ
-KEEPALIVE_INTERVAL_SEC     = 10 * 60       # 10 phút (tránh Render spin-down sau 15 phút)
+KEEPALIVE_INTERVAL_SEC     = 10 * 60       # 10 phút; chỉ dùng khi bật self-health ping
 FIRST_RUN_DELAY_SEC        = 60            # Chờ 60s sau startup để DB ổn định
 
 # ── Logger ──────────────────────────────────────────────────────
@@ -50,14 +50,30 @@ def _get_db_connection(db_url: str | None = None):
     return psycopg.connect(target_url, autocommit=True)
 
 
+def get_database_selection() -> tuple[str, str, str, str]:
+    """Return active tier/url and standby tier/url without exposing credentials."""
+    active_tier = os.environ.get("DATABASE_ACTIVE", "primary").strip().lower()
+    if active_tier not in {"primary", "fallback"}:
+        raise RuntimeError("DATABASE_ACTIVE must be either primary or fallback.")
+
+    primary_url = os.environ.get("DATABASE_URL", "").strip()
+    fallback_url = os.environ.get("FALLBACK_DATABASE_URL", "").strip()
+    if active_tier == "fallback":
+        if not fallback_url:
+            raise RuntimeError("DATABASE_ACTIVE=fallback requires FALLBACK_DATABASE_URL.")
+        return "fallback", fallback_url, "primary", primary_url
+    if not primary_url:
+        raise RuntimeError("DATABASE_ACTIVE=primary requires DATABASE_URL.")
+    return "primary", primary_url, "fallback", fallback_url
+
+
 def check_storage() -> float:
-    """Trả về kích thước DB chính (MB) và in cảnh báo nếu cần."""
-    primary_url = os.environ.get("DATABASE_URL", "")
-    fallback_url = os.environ.get("FALLBACK_DATABASE_URL", "")
+    """Return active DB size (MB), and report active/standby health separately."""
     size_mb = 0.0
 
     try:
-        with _get_db_connection(primary_url) as conn:
+        active_tier, active_url, standby_tier, standby_url = get_database_selection()
+        with _get_db_connection(active_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT pg_database_size(current_database()) / 1024.0 / 1024.0"
@@ -69,35 +85,33 @@ def check_storage() -> float:
         ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
         if pct >= CRITICAL_THRESHOLD_PCT:
-            fallback_msg = " [Fallback DB đã sẵn sàng auto-failover]" if fallback_url else " [CHƯA cấu hình FALLBACK_DATABASE_URL]"
             log.error(
-                "[%s] NGUY HIEM Neon storage: %.2f MB / %d MB (%.1f%%). "
-                "DB se chuyen sang read-only neu vuot 100%%!%s",
-                ts, size_mb, NEON_FREE_LIMIT_MB, pct, fallback_msg
+                "[%s] NGUY HIEM active DB (%s): %.2f MB / %d MB (%.1f%%). "
+                "Can thuc hien controlled cutover; guardian se khong tu doi DB.",
+                ts, active_tier, size_mb, NEON_FREE_LIMIT_MB, pct,
             )
         elif pct >= WARN_THRESHOLD_PCT:
             log.warning(
-                "[%s] CANH BAO Neon storage: %.2f MB / %d MB (%.1f%%). "
-                "Can don dep session/log hoac dong bo sang DB du phong.",
-                ts, size_mb, NEON_FREE_LIMIT_MB, pct,
+                "[%s] CANH BAO active DB (%s): %.2f MB / %d MB (%.1f%%). "
+                "Can chuan bi controlled cutover.",
+                ts, active_tier, size_mb, NEON_FREE_LIMIT_MB, pct,
             )
         else:
             log.info(
-                "[%s] Neon storage OK: %.2f MB / %d MB (%.1f%%).",
-                ts, size_mb, NEON_FREE_LIMIT_MB, pct,
+                "[%s] Active DB (%s) storage OK: %.2f MB / %d MB (%.1f%%).",
+                ts, active_tier, size_mb, NEON_FREE_LIMIT_MB, pct,
             )
 
-        # Kiểm tra thêm trạng thái kết nối DB dự phòng nếu có
-        if fallback_url:
+        if standby_url:
             try:
-                with _get_db_connection(fallback_url) as fb_conn:
+                with _get_db_connection(standby_url) as fb_conn:
                     with fb_conn.cursor() as fb_cur:
                         fb_cur.execute("SELECT pg_database_size(current_database()) / 1024.0 / 1024.0")
                         fb_row = fb_cur.fetchone()
                         fb_size_mb = float(fb_row[0]) if fb_row else 0.0
-                        log.info("[%s] Fallback Neon storage: %.2f MB / %d MB (Standby OK).", ts, fb_size_mb, NEON_FREE_LIMIT_MB)
+                        log.info("[%s] Standby DB (%s): %.2f MB / %d MB (connection OK).", ts, standby_tier, fb_size_mb, NEON_FREE_LIMIT_MB)
             except Exception as fb_exc:
-                log.warning("[%s] Khong the ket noi Fallback DB: %s", ts, fb_exc)
+                log.warning("[%s] Khong the ket noi standby DB (%s): %s", ts, standby_tier, fb_exc)
 
         return size_mb
     except Exception as exc:
@@ -109,7 +123,8 @@ def cleanup_expired_sessions() -> dict:
     """Xoá session hết hạn và log/return kết quả."""
     results = {"app_sessions": 0, "django_session": 0, "login_logs": 0}
     try:
-        with _get_db_connection() as conn:
+        active_tier, active_url, _, _ = get_database_selection()
+        with _get_db_connection(active_url) as conn:
             with conn.cursor() as cur:
                 # PHP app_sessions
                 try:
@@ -151,7 +166,7 @@ def cleanup_expired_sessions() -> dict:
                 results["login_logs"],
             )
         else:
-            log.info("Cleanup: Khong co record het han nao can xoa.")
+            log.info("Cleanup active DB (%s): Khong co record het han nao can xoa.", active_tier)
 
     except Exception as exc:
         log.warning("Cleanup session that bai: %s", exc)
@@ -160,7 +175,7 @@ def cleanup_expired_sessions() -> dict:
 
 
 def keepalive_ping(base_url: str = "") -> bool:
-    """Ping /health/live để tránh Render spin-down sau 15 phút idle."""
+    """Run an optional self-health check; this does not guarantee Render uptime."""
     if not base_url:
         port = os.environ.get("PORT", "8080")
         base_url = f"http://127.0.0.1:{port}"
@@ -204,7 +219,7 @@ def _cleanup_worker():
 
 
 def _keepalive_worker():
-    """Thread ping keepalive định kỳ để tránh Render spin-down."""
+    """Optional periodic self-health check; it is not an uptime guarantee."""
     # Chờ service khởi động xong
     time.sleep(90)
     base_url = os.environ.get("APP_BASE_URL", "")
@@ -231,12 +246,11 @@ def start(enabled: bool = True):
         return
 
     is_render = os.environ.get("RENDER", "").lower() == "true"
-    db_url = os.environ.get("DATABASE_URL", "")
-
-    if not db_url:
+    try:
+        active_tier, _, _, _ = get_database_selection()
+    except RuntimeError as exc:
         log.warning(
-            "DATABASE_URL chua duoc set — db_guardian se khong chay "
-            "(khong co DB de ket noi)."
+            "db_guardian se khong chay: %s", exc
         )
         return
 
@@ -245,11 +259,12 @@ def start(enabled: bool = True):
         ("session-cleanup", _cleanup_worker),
     ]
 
-    # Keepalive chỉ cần thiết trên Render (production)
-    if is_render:
+    # Disabled by default because an internal/self ping is not an uptime SLA.
+    self_ping_enabled = os.environ.get("RENDER_SELF_PING_ENABLED", "0").strip() == "1"
+    if is_render and self_ping_enabled:
         threads.append(("render-keepalive", _keepalive_worker))
         log.info(
-            "Render environment detected — keepalive ping moi %d phut se duoc bat.",
+            "Render self-health ping enabled every %d minutes (not an uptime guarantee).",
             KEEPALIVE_INTERVAL_SEC // 60,
         )
 
@@ -259,7 +274,8 @@ def start(enabled: bool = True):
         log.info("Started daemon thread: %s", name)
 
     log.info(
-        "db_guardian running: storage check moi %dh, cleanup moi %dh.",
+        "db_guardian running for active DB (%s): storage check moi %dh, cleanup moi %dh.",
+        active_tier,
         STORAGE_CHECK_INTERVAL_SEC // 3600,
         CLEANUP_INTERVAL_SEC // 3600,
     )

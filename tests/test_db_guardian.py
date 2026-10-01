@@ -1,3 +1,4 @@
+import os
 import pathlib
 import unittest
 from unittest.mock import MagicMock, patch
@@ -24,7 +25,12 @@ class DbGuardianContractTests(unittest.TestCase):
         mock_conn.cursor.return_value.__enter__.return_value = mock_cur
         mock_get_conn.return_value.__enter__.return_value = mock_conn
 
-        size_mb = db_guardian.check_storage()
+        with patch.dict(os.environ, {
+            "DATABASE_ACTIVE": "primary",
+            "DATABASE_URL": "postgresql://primary.example/db",
+            "FALLBACK_DATABASE_URL": "",
+        }):
+            size_mb = db_guardian.check_storage()
         self.assertEqual(size_mb, 150.5)
 
     @patch("db_guardian._get_db_connection")
@@ -35,10 +41,39 @@ class DbGuardianContractTests(unittest.TestCase):
         mock_conn.cursor.return_value.__enter__.return_value = mock_cur
         mock_get_conn.return_value.__enter__.return_value = mock_conn
 
-        results = db_guardian.cleanup_expired_sessions()
+        with patch.dict(os.environ, {
+            "DATABASE_ACTIVE": "fallback",
+            "DATABASE_URL": "postgresql://primary.example/db",
+            "FALLBACK_DATABASE_URL": "postgresql://fallback.example/db",
+        }):
+            results = db_guardian.cleanup_expired_sessions()
         self.assertIn("app_sessions", results)
         self.assertIn("django_session", results)
         self.assertIn("login_logs", results)
+        mock_get_conn.assert_called_once_with("postgresql://fallback.example/db")
+
+    def test_database_selection_is_explicit_and_stable(self):
+        env = {
+            "DATABASE_ACTIVE": "fallback",
+            "DATABASE_URL": "postgresql://primary.example/db",
+            "FALLBACK_DATABASE_URL": "postgresql://fallback.example/db",
+        }
+        with patch.dict(os.environ, env):
+            selection = db_guardian.get_database_selection()
+        self.assertEqual(selection, (
+            "fallback",
+            "postgresql://fallback.example/db",
+            "primary",
+            "postgresql://primary.example/db",
+        ))
+
+    def test_fallback_selection_requires_fallback_url(self):
+        with patch.dict(os.environ, {
+            "DATABASE_ACTIVE": "fallback",
+            "DATABASE_URL": "postgresql://primary.example/db",
+            "FALLBACK_DATABASE_URL": "",
+        }), self.assertRaisesRegex(RuntimeError, "FALLBACK_DATABASE_URL"):
+            db_guardian.get_database_selection()
 
     def test_migration_052_contains_cleanup_and_views(self):
         migration_file = ROOT / "api" / "migrations" / "052_db_guardian_cleanup_views.sql"
@@ -74,11 +109,13 @@ class DbGuardianContractTests(unittest.TestCase):
         self.assertIn("FALLBACK_DATABASE_URL", runtime_content)
         self.assertIn("get_active_database_tier", runtime_content)
         self.assertIn("active_database_tier", runtime_content)
+        self.assertIn("DATABASE_ACTIVE", runtime_content)
+        self.assertNotIn("Auto-failing over", runtime_content)
 
     def test_migrate_php_supports_fallback_flag(self):
         migrate_content = (ROOT / "api" / "migrate.php").read_text(encoding="utf-8")
         self.assertIn("--fallback", migrate_content)
-        self.assertIn("DATABASE_FORCE_FALLBACK", migrate_content)
+        self.assertIn("DATABASE_ACTIVE=fallback", migrate_content)
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ Có thể chuyển toàn bộ dữ liệu về project/database cũ sau khi quot
 
 6. Trên database đích, chạy `php api/migrate.php` và Django migrations như quy trình deploy.
 7. So sánh migration ledger và row count của các bảng quan trọng: `users`, `timer_sessions`, `training_classes`, `class_enrollments`, `lab_assignments`, `app_sessions`.
-8. Kiểm thử đăng nhập, portal, nộp lab, dashboard và admin. Sau đó mới đổi `DATABASE_URL` và deploy.
+8. Kiểm thử đăng nhập, portal, nộp lab, dashboard và admin. Giữ nguyên cả hai connection string, đặt `DATABASE_ACTIVE` về tier đích rồi deploy. Không hoán đổi ý nghĩa của `DATABASE_URL` và `FALLBACK_DATABASE_URL`.
 9. Giữ database dự phòng ở chế độ chỉ đọc trong một khoảng rollback; không cho hai database cùng nhận ghi.
 
 ## Lưu ý

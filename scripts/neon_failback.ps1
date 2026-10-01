@@ -51,7 +51,7 @@ try {
     & pg_restore @restoreArgs
     if ($LASTEXITCODE -ne 0) { throw 'pg_restore failed. Keep the application pointed at the source database and inspect the target.' }
 
-    Write-Host 'Restore completed. Run migrations and verification before changing DATABASE_URL.'
+    Write-Host 'Restore completed. Run migrations and verification before changing DATABASE_ACTIVE.'
 } finally {
     if (Test-Path -LiteralPath $dumpPath) {
         Remove-Item -LiteralPath $dumpPath -Force

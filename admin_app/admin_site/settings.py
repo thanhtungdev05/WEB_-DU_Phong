@@ -6,6 +6,7 @@ Chỉ dùng nội bộ - /admin/* được proxy bởi run_all.py dispatcher.
 import os
 import sys
 from urllib.parse import urlparse
+
 import dj_database_url
 
 # BASE_DIR = thư mục admin_app/ (cha của admin_site/)
@@ -121,21 +122,20 @@ TEMPLATES = [
 WSGI_APPLICATION = 'admin_site.wsgi.application'
 
 # ===========================================================
-# Database — kết nối vào Neon PostgreSQL (hỗ trợ Auto-Failover)
+# Database — explicit controlled primary/fallback selection
 # ===========================================================
 _db_url = os.environ.get('DATABASE_URL', '')
 _fallback_db_url = os.environ.get('FALLBACK_DATABASE_URL', '')
-_target_url = _db_url
+_database_active = os.environ.get('DATABASE_ACTIVE', 'primary').strip().lower()
+if _database_active not in {'primary', 'fallback'}:
+    raise RuntimeError('DATABASE_ACTIVE must be either primary or fallback.')
 
-if os.environ.get('DATABASE_FORCE_FALLBACK', '0').strip() == '1' and _fallback_db_url:
+if _database_active == 'fallback':
+    if not _fallback_db_url:
+        raise RuntimeError('DATABASE_ACTIVE=fallback requires FALLBACK_DATABASE_URL.')
     _target_url = _fallback_db_url
-elif _db_url and _fallback_db_url:
-    try:
-        import psycopg
-        with psycopg.connect(_db_url, connect_timeout=3):
-            pass
-    except Exception:
-        _target_url = _fallback_db_url
+else:
+    _target_url = _db_url
 
 if _target_url:
     _ssl_require = (

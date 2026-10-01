@@ -3473,10 +3473,18 @@ function handle_system(array $segments, string $method): void
                 $djangoSessions = (int)$pdo->query('SELECT COUNT(*) FROM django_session')->fetchColumn();
             } catch (Throwable) {}
 
+            $activeTier = get_active_database_tier();
+            $standbyConfigured = $activeTier === 'fallback'
+                ? (bool)env_value('DATABASE_URL')
+                : (bool)env_value('FALLBACK_DATABASE_URL');
+
             respond([
                 'data' => [
-                    'activeTier' => get_active_database_tier(),
+                    'activeTier' => $activeTier,
+                    'selectionMode' => 'controlled',
+                    'standbyConfigured' => $standbyConfigured,
                     'isRender' => (bool)(env_value('RENDER') === 'true' || env_value('IS_RENDER') === 'true'),
+                    'renderSelfPingEnabled' => env_bool('RENDER_SELF_PING_ENABLED', false),
                     'storage' => [
                         'databaseSizeBytes' => $dbSizeBytes,
                         'databaseSizeMb' => $dbSizeMb,
