@@ -3567,8 +3567,11 @@ function handle_system(array $segments, string $method): void
                             'status' => $connectionPercent === null ? 'UNKNOWN' : system_usage_status($connectionPercent),
                         ],
                         'networkTransfer' => [
-                            'available' => false,
-                            'reason' => 'not_exposed_by_postgresql',
+                            'available' => !empty($neonMetrics['available']) && isset($neonMetrics['dataTransferBytes']),
+                            'bytes' => (int)($neonMetrics['dataTransferBytes'] ?? 0),
+                            'mb' => isset($neonMetrics['dataTransferBytes']) ? round((float)$neonMetrics['dataTransferBytes'] / (1024 * 1024), 2) : 0.0,
+                            'source' => !empty($neonMetrics['available']) ? 'neon_management_api' : 'not_exposed_by_postgresql',
+                            'writtenDataBytes' => (int)($neonMetrics['writtenDataBytes'] ?? 0),
                         ],
                     ],
                     'computeHours' => [

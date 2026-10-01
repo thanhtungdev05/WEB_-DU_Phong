@@ -172,6 +172,18 @@
         }
         updateProgress(dbConnectionsProgress, connection?.usagePercent, connection?.status);
 
+        const dbTransferRow = document.getElementById('systemDbTransferRow');
+        const dbTransferText = document.getElementById('systemDbTransferText');
+        const netTransfer = data.database?.networkTransfer;
+        if (dbTransferRow && dbTransferText) {
+            if (netTransfer?.available && netTransfer.bytes > 0) {
+                dbTransferText.textContent = formatBytes(netTransfer.bytes);
+                dbTransferRow.style.display = 'flex';
+            } else {
+                dbTransferRow.style.display = 'none';
+            }
+        }
+
         // Render bandwidth + period
         const render = data.render || {};
         const bandwidth = render.bandwidth || {};
