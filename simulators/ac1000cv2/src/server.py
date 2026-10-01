@@ -51,6 +51,20 @@ class GponHandler(BaseHTTPRequestHandler):
             return True
         return False
 
+    def _get_prefix(self):
+        referer = self.headers.get("Referer", "") if hasattr(self, "headers") else ""
+        cookie = self.headers.get("Cookie", "") if hasattr(self, "headers") else ""
+        raw_path = getattr(self, "path", "")
+        if (
+            hasattr(self, "detect_simulator")
+            or getattr(self, "server_version", "") == "FTC"
+            or "/sim_ac1000cv2" in referer
+            or "/sim_ac1000cv2" in raw_path
+            or "current_sim=sim_ac1000cv2" in cookie
+        ):
+            return "/sim_ac1000cv2"
+        return ""
+
     def _send_html(self, content, status=200, extra_headers=None):
         data = content.encode("utf-8") if isinstance(content, str) else content
         self.send_response(status)
@@ -64,11 +78,13 @@ class GponHandler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _send_401(self):
+        prefix = self._get_prefix()
+        target = f"{prefix}/login.html" if prefix else "login.html"
         html_401 = ('<!DOCTYPE html PUBLIC "-//W3C//Dtd XHTML 1.0 Strict//EN" "http://www.w3.org/tr/xhtml1/Dtd/xhtml1-Transitional.dtd">\n'
                     '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">\n'
                     '<head>\n<title>GPON Home Gateway</title>\n'
                     '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />\n'
-                    '<meta http-equiv="refresh" content="0; url=login.html" />\n'
+                    f'<meta http-equiv="refresh" content="0; url={target}" />\n'
                     '</head>\n<body></body>\n</html>')
         self._send_html(html_401, status=401)
 
@@ -112,6 +128,7 @@ class GponHandler(BaseHTTPRequestHandler):
             path = path[len("/GponForm"):]
         if not path.startswith("/"):
             path = "/" + path
+        prefix = self._get_prefix()
 
         # 0. API Reset session (ho tro Portal)
         if path in ("/api/reset", "/resetsession"):
@@ -229,7 +246,7 @@ class GponHandler(BaseHTTPRequestHandler):
         
         host = self.headers.get("Host", "")
         referer = self.headers.get("Referer", "")
-        prefix = "/sim_ac1000cv2" if is_dispatcher else ""
+        prefix = self._get_prefix()
 
         # 0. API Reset session
         if path in ("/api/reset", "/resetsession"):
