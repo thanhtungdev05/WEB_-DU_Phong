@@ -266,8 +266,14 @@
     selectInitialCatalogDevice(visibleDevices);
   }
 
+  function catalogCacheKey() {
+    const fingerprint = String((window.CATALOG_FINGERPRINT || '')).trim();
+    return /^[a-f0-9]{8,64}$/.test(fingerprint) ? fingerprint : 'no-version';
+  }
+
   function loadLearningCatalog() {
-    return fetch('/api/index.php/learning/catalog', { credentials: 'include' })
+    const url = '/api/index.php/learning/catalog?v=' + catalogCacheKey();
+    return fetch(url, { credentials: 'include' })
       .then(function (response) {
         if (!response.ok) throw new Error('Không thể tải danh sách bài luyện tập.');
         return response.json();

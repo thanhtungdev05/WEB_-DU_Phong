@@ -205,13 +205,19 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         # duyệt phục vụ catalog cũ vô thời hạn sau mỗi lần thêm/sửa catalog
         # trong database. Phải để fetch tôn trọng max-age do server gửi.
         portal = (ROOT / "app.js").read_text(encoding="utf-8")
-        fetch_call = re.search(
-            r"fetch\('/api/index\.php/learning/catalog'[^\n]*", portal
+        loader = re.search(
+            r"function loadLearningCatalog\(\)[\s\S]*?\}\n", portal
         )
-        self.assertIsNotNone(fetch_call)
-        self.assertNotIn("force-cache", fetch_call.group(0))
-        self.assertNotIn("cache: 'no-store'", fetch_call.group(0))
-        self.assertIn("credentials: 'include'", fetch_call.group(0))
+        self.assertIsNotNone(loader)
+        body = loader.group(0)
+        self.assertNotIn("force-cache", body)
+        self.assertNotIn("cache: 'no-store'", body)
+        self.assertIn("credentials: 'include'", body)
+
+        # URL phải mang fingerprint catalog để đổi theo nội dung catalog,
+        # nhờ đó URL mới mỗi lần deploy thêm/sửa thiết bị nên không còn
+        # entry cache cũ (Cache-Control mặc định 6 tiếng).
+        self.assertIn("/api/index.php/learning/catalog?v=", body)
 
         api = (ROOT / "api" / "index.php").read_text(encoding="utf-8")
         self.assertIn(

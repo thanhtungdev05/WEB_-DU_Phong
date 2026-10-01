@@ -25,10 +25,54 @@ ASSET_PATTERN = re.compile(
     r'(?:\?v=[^"&]+)?'
     r'(?P<suffix>")'
 )
+CATALOG_FINGERPRINT_PATTERN = re.compile(
+    r'window\.CATALOG_FINGERPRINT\s*=\s*"[a-f0-9]*"\s*;'
+)
+CATALOG_FINGERPRINT_GLOBAL = (
+    'window.CATALOG_FINGERPRINT="{fingerprint}";'
+)
 
 
 def content_version(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+
+
+def catalog_sources() -> list[Path]:
+    """Nguồn quyết định nội dung catalog mà portal đọc từ API.
+
+    Catalog thiết bị/bài lab nằm trong PostgreSQL và chỉ đổi qua
+    api/migrations/*.sql. Tên hiển thị của bài lấy từ lab_catalog (DB)
+    nên tên file lesson trong devices/ không ảnh hưởng fingerprint.
+    """
+    migrations = ROOT / "api" / "migrations"
+    return sorted(migrations.glob("*.sql")) if migrations.is_dir() else []
+
+
+def catalog_fingerprint() -> str:
+    """Vân tay catalog để gắn vào URL API.
+
+    Đổi migration = đổi catalog = fingerprint đổi = URL API đổi =
+    browser không còn entry cache cũ = thấy dữ liệu mới ngay sau deploy,
+    thay vì chờ hết Cache-Control max-age (mặc định 6 tiếng).
+    """
+    digest = hashlib.sha256()
+    sources = catalog_sources()
+    if not sources:
+        raise SystemExit("Khong tim thay api/migrations/*.sql de tinh catalog fingerprint.")
+    for path in sources:
+        digest.update(path.name.encode("utf-8"))
+        digest.update(path.read_bytes())
+    return digest.hexdigest()[:16]
+
+
+def synchronized_fingerprint(source: str, fingerprint: str) -> str:
+    replacement = CATALOG_FINGERPRINT_GLOBAL.format(fingerprint=fingerprint)
+    if CATALOG_FINGERPRINT_PATTERN.search(source):
+        return CATALOG_FINGERPRINT_PATTERN.sub(lambda _: replacement, source)
+    anchor = "</head>"
+    if anchor not in source:
+        raise SystemExit("Khong tim thay </head> de chen CATALOG_FINGERPRINT.")
+    return source.replace(anchor, f"  <script>{replacement}</script>\n{anchor}", 1)
 
 
 def resolve_asset(document: Path, url_path: str) -> Path:
@@ -71,10 +115,13 @@ def main() -> int:
     stale_documents: list[Path] = []
     missing_assets: list[str] = []
     updates: list[tuple[Path, str]] = []
+    fingerprint = catalog_fingerprint()
     for document in DOCUMENTS:
         source = document.read_text(encoding="utf-8")
         updated, missing = synchronized_html(document, source)
         missing_assets.extend(f"{document.relative_to(ROOT)}: {item}" for item in missing)
+        if document.name == "portal.html":
+            updated = synchronized_fingerprint(updated, fingerprint)
         if updated != source:
             stale_documents.append(document)
             updates.append((document, updated))
