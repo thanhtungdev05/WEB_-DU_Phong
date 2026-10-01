@@ -1,0 +1,355 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var wan_list = new Array();
+var route_list = new Array();
+var routing_table = [];
+var routing_table_v6 = [];
+
+routing_table = [
+	{"interface": "lo",	 "destip": "127.0.0.0",	 "gateway": "0.0.0.0",	 "netmask": "255.0.0.0"},
+	{"interface": "br0",	 "destip": "192.168.1.0",	 "gateway": "0.0.0.0",	 "netmask": "255.255.255.0"}
+];
+routing_table_v6 = [
+	{"interface": "eth0",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lan0",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lan1",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lan2",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lan3",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "wlan0",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "wlan1",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "::%4/0",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "::1%4/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::1%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::219:c7ff:fe01:102%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a683:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a685:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "ff02::fb%eth2/128",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "ff02::1:ff07:57e5%eth2/128",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "ff02::1:ffae:29d0%eth2/128",	 "gateway": "::%4"},
+	{"interface": "eth0",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lan0",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lan1",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lan2",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lan3",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "wlan0",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "wlan1",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "::%4/0",	 "gateway": "::%4"}
+];
+
+wan_list[0] = { index:" 0", name: "1_INTERNET_TR069_IPTV_R_VID_0" };
+
+
+
+function showWanList()
+{
+	var i;
+	for (i = 0; i < wan_list.length; i++)
+	{
+		$("#wanidx").append("<option value=\"" + (parseInt(wan_list[i].index) + 1) + "\">" + wan_list[i].name + "<\/option>");
+	}
+	$("#wanidx").append("<option value=\"0\">br0<\/option>");
+}
+
+function showRouteList()
+{
+	var i, j, str, ifname;
+	for (i = 0; i < route_list.length; i++)
+	{
+		ifname = "";
+		if (route_list[i].wanidx == 0) {
+			ifname = "br0";
+		} else {
+			for (j = 0; j < wan_list.length; j++)
+			{
+				if ((route_list[i].wanidx - 1) == wan_list[j].index)
+				{
+					ifname = wan_list[j].name;
+					break;
+				}
+			}
+		}
+		str = "<tr>";
+		str += "<td>" + route_list[i].destip + "<\/td>";
+		str += "<td>" + route_list[i].destplen + "<\/td>";
+		str += "<td>" + route_list[i].gateway + "<\/td>";
+		str += "<td>" + ifname + "<\/td>";
+		str += "<td><a class=\"btn remove_btn\" href=\"#\" onclick=\"deleteRoute(" + i + ");\">" + WebString.Remove + "<\/td>";
+		str += "<tr>";
+		$("#route_list").append(str);
+	}
+}
+
+function checkSameRule(destip, destplen, gateway)
+{
+	for (var i = 0; i < route_list.length; i++)
+	{
+		if (route_list[i].destip == destip && route_list[i].destplen == destplen 
+			&& route_list[i].gateway == gateway)
+			return false;
+	}
+	
+	return true;
+}
+
+function checkValue()
+{
+	var flag = true;
+	var obj = new Object();
+	if (route_list.length >= 32)
+	{
+		alert(WebString.rulefull);
+		return false;
+	}	
+	if ($("#destip").val() == '') {
+		alert(WebString.ipv6_addr_alert);
+		return false;
+	}
+	if (isValidIpAddress6($("#destip").val()) == false)
+	{
+		alert(WebString.ipv6_addr_alert);
+		return false;
+	}
+	if (isValidRoutePrefixLength(parseInt($("#destplen").val())) == false)
+	{
+		alert(WebString.ipv6route_plen_alert);
+		return false;
+	}
+	if (isValidIpAddress6($("#gateway").val()) == false)
+	{
+		alert(WebString.ipv6_addr_alert);
+		return false;
+	}
+	if ($("#gateway").val() == $("#destip").val())
+	{
+		alert(WebString.ipv6_addr_alert);
+		return false;
+	}
+	if (checkSameRule($("#destip").val(), $("#destplen").val(), $("#gateway").val()) == false)
+	{
+		alert(WebString.samerule);
+		return false;
+	}
+	$.each(routing_table_v6,function(id,el){
+		var tmp = el.destip.split('/');
+		if($("#destip").val() == tmp[0] && $("#destplen").val() == tmp[1] && $("#gateway").val() == el.gateway)
+		{
+			if($("#wanidx").val() == 0 && el.interface == "br0")
+			{
+				flag = false;
+				return false;
+			}
+			else if($("#wanidx").val() != 0 && (el.interface.charAt(el.interface.length - 1) + 1) == $("#wanidx").val())
+			{
+				flag = false;
+				return false;
+			}
+		}
+	});
+	if(flag == false)
+	{
+		alert(WebString.existed_rule);
+		return false;
+	}
+
+	return true;
+}
+
+function deleteRoute(idx)
+{
+	if (!confirm(WebString.delete_confirm))
+	{
+		return;
+	}
+	$("#destip").val(route_list[idx].destip);
+	$("#destplen").val(route_list[idx].destplen);
+	$("#gateway").val(route_list[idx].gateway);
+	$("#route_act").val("1");
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+	showWanList();
+	showRouteList();
+	WebStepIndex();
+}
+
+function WebDoSubmit()
+{
+	if (false == checkValue())
+	{
+		return;
+	}
+	$("#route_act").val("0");
+	$("#XForm").submit();
+}
+
+$(document).ready(function () {
+	$("#btn_apply").click(function() {
+        XDoSubmit();
+    });
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td id="XS1" width="200"></td>
+			<td><input type="text" name="destip" id="destip" maxlength="39" size="40" style="ime-mode:disabled" /></td>
+		</tr>
+		<tr>
+			<td id="XS2" width="200"></td>
+			<td><input type="text" name="destplen" id="destplen" maxlength="3" size="6" style="ime-mode:disabled" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" /></td>
+		</tr>
+		<tr>
+			<td id="XS3" width="200"></td>
+			<td><input type="text" name="gateway" id="gateway" maxlength="39" size="40" style="ime-mode:disabled" /></td>
+		</tr>
+		<tr>
+			<td id="XS4" width="200"></td>
+			<td><select name="wanidx" id="wanidx">
+				</select></td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong><script type="text/javascript">document.write(XsrouteString[10]);</script></strong></p>
+	<a id="btn_apply" class="btn apply_btn" href="#"><script type="text/javascript">document.write(WebString.Add);</script></a>
+	<input id="route_act" name="route_act" type="hidden" />
+</div>
+
+<div class="cfglist">
+	<table id="route_list">
+		<tr>
+			<th id="XS5" colspan="5" class="tableTitle"></th>
+		</tr>
+		<tr>
+			<th id="XS6" style="width: 20%"></th>
+			<th id="XS7" style="width: 20%"></th>
+			<th id="XS8" style="width: 20%"></th>
+			<th id="XS9" style="width: 25%"></th>
+			<th style="width: 15%"><script type="text/javascript">document.write(WebString.Edit);</script></th>		
+		</tr>
+	</table>  
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

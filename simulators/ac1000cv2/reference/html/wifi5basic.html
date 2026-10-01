@@ -1,0 +1,479 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+
+</style>
+
+<script type="text/javascript">
+    
+var wifi_enable = "";
+var wifi_mode = "";
+var channel_bandwidth = "";
+var channel = "";
+var power_level = "";
+var channel_list = new Array();
+var wifi_ssid_security = new Array();
+var wifi_current_mode = "";
+var ssid_enable = new Array();
+var max_clients = "";
+var wifi_multicast = "1";
+var porttal_en = "";
+var country="";
+
+country=0;
+channel_list = [{
+"channel":"0"
+},
+{
+"channel":"36"
+},
+{
+"channel":"40"
+},
+{
+"channel":"44"
+},
+{
+"channel":"48"
+},
+{
+"channel":"52"
+},
+{
+"channel":"56"
+},
+{
+"channel":"60"
+},
+{
+"channel":"64"
+},
+{
+"channel":"149"
+},
+{
+"channel":"153"
+},
+{
+"channel":"157"
+},
+{
+"channel":"161"
+},
+{
+"channel":"165"
+}
+];
+wifi_enable=1;
+channel=0;
+channel_bandwidth=2;
+power_level=0;
+wifi_mode=0;
+max_clients=0;
+wifi_multicast=1;
+wifi_ssid_security[0]=0;
+ssid_enable[0]=1;
+wifi_ssid_security[1]=0;
+ssid_enable[1]=0;
+wifi_ssid_security[2]=0;
+ssid_enable[2]=0;
+wifi_ssid_security[3]=0;
+ssid_enable[3]=0;
+porttal_en=1;
+
+
+function WebInit()
+{
+    if (wifi_enable == '1')
+        $("#wireless_enabled").attr("checked", true);
+    else
+        $("#wireless_disabled").attr("checked", true);
+    
+    $("#wifi_mode").val(wifi_mode);
+    wifi_current_mode = wifi_mode;
+    selectWifiMode(wifi_current_mode);
+    
+    $("#channel").val(channel);
+    $("#power_level").val(power_level);
+    $("#country").val(country);
+    if(porttal_en == '0') {
+        $("#max_clients_enable").hide();
+        $("#wifi_multicast_enable").hide();
+    }
+    else {
+        $("#max_clients_enable").show();
+        $("#max_clients").val(max_clients);
+        $("#wifi_multicast_enable").show();
+        if(wifi_multicast == '1')
+            $("#wifi_multicast_on").attr("checked", true);
+        else
+            $("#wifi_multicast_off").attr("checked", true); 
+    }
+
+    doWifiEn();
+}
+
+function doChannelSelect()
+{
+    var channelBW = $("#channel_bandwidth").val();
+    var mode = $("#wifi_mode").val();
+    var channel_str = "";
+    
+    for (var i = 0; i < channel_list.length; i++)
+    {
+        if (channel_list[i].channel == 0)
+        {
+            channel_str += "<option value=\"" +channel_list[i].channel + "\">"+ Xwifi5basicString[11] +"</option>";
+        }
+        else
+        {
+            if (((mode == 3) || (mode == 7)) && (channelBW == 1))
+            {
+                if ((channel_list[i].channel == 140) || (channel_list[i].channel == 165))
+                {
+                    continue;
+                }
+            }
+            channel_str += "<option value=\"" +channel_list[i].channel + "\">"+ channel_list[i].channel +"</option>";
+        }
+    }
+    $("#channel").html(channel_str);
+    set_select_val($("#channel"), channel);
+}
+
+function WebDoSubmit()
+{
+    var max_clients = $("#max_clients").val();
+    if( max_clients < 0 || max_clients > 32)
+    {
+        alert(Xwifi5basicString[14]);
+        return false;   
+    } 
+    $("#XForm").submit();
+}
+
+function doWifiEn()
+{
+    var enable = $("#wireless_enabled").attr("checked");
+    if (enable == "checked")
+    {
+        $("#enabled").show();
+    } 
+    else 
+    {
+        $("#enabled").hide();
+    }
+    WebStepIndex();
+}
+    
+$(document).ready(function () 
+{
+    $("input[name='wireless_radio']").click(function() {
+        doWifiEn();
+    });
+    
+    $("#btn_apply").click(function() {
+        WebDoSubmit();
+    });
+});
+
+function selectWifiMode(mode)
+{
+    var mode_conflict_flag = 0;
+    var str = "";
+    $("#config_channelBW").show();
+    $("#ch_bw").show();
+    $("#channel_bandwidth").val(channel_bandwidth);
+    
+    for (var i = 0; i < 4; i++)
+    {
+        if (ssid_enable[i] == 0)
+        {
+            continue;
+        }
+
+        if (((mode == "3") || (mode == "8")) && (wifi_ssid_security[i] == 2)) //11n only && wep
+        {
+            if (mode == "3") {
+                alert(WebString.mode_security_conflict);
+            } else if(mode == "8") {
+                alert(WebString.mode_security_5G_conflict);
+            }
+            
+            $("#wifi_mode").val(wifi_current_mode);
+            mode_conflict_flag = 1;
+            break;
+        }
+    }
+    if(mode == "0")
+    {
+        str += "<option value=3>" + "Auto" + "</option>";
+    }
+    else if(mode == "6")
+    {
+        str += "<option value=0>" + "20M" + "</option>";
+    }
+    else if(mode == "7")
+    {
+        str += "<option value=0>" + "20M" + "</option>";
+        str += "<option value=1>" + "40M" + "</option>";
+    }
+    else if(mode == "8")
+    {
+        str += "<option value=0>" + "20M" + "</option>";
+        str += "<option value=1>" + "40M" + "</option>";
+        str += "<option value=2>" + "80M" + "</option>";
+    }
+    
+    $("#channel_bandwidth").html(str);
+    $("#channel_bandwidth").val(channel_bandwidth);
+    
+    if (mode_conflict_flag == 1)
+    {
+        wifi_current_mode = wifi_current_mode;
+    }
+    else
+    {
+        wifi_current_mode = mode;
+    }
+
+    doChannelSelect();
+    WebStepIndex();
+}
+
+</script>
+
+
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+    <p><strong id="XS0"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS1"></td>
+            <td><input name="wireless_radio" id="wireless_enabled" type="radio" value="1" checked="checked" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+                <input name="wireless_radio" id="wireless_disabled" type="radio" value="0" /><script>document.write(WebString.Disable);</script>
+            </td>
+        </tr>
+    </table>
+</div>  
+
+<div id="enabled">
+    <div class="cfgstep">
+        <p><strong id="XS2"></strong></p>
+        <table>
+            <tr>
+                <td width="200" id="XS3"></td>
+                <td><select name="wifi_mode" id="wifi_mode" onchange="selectWifiMode(this.options[this.selectedIndex].value);">
+                    <option value="0">Auto(802.11 a/n/ac) </option>
+                    <option value="6">802.11a Only </option>
+                    <option value="7">802.11a/n </option>
+                    <option value="8" selected="selected" class="extended">802.11ac </option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="cfgstep" id="config_channelBW">
+        <p><strong id="XS4"></strong></p>
+        <table>
+            <tr id="ch_bw">
+                <td width="200" id="XS5"></td>
+                <td><select name="channel_bandwidth" id="channel_bandwidth" onchange="doChannelSelect()">
+                    <!--option value="3">Auto </option>
+                    <option value="0">20M </option>
+                    <option value="1">40M </option>
+                    <option value="2">80M </option-->
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="cfgstep" style="display:none">
+        <p><strong id="XS17"></strong></p>
+        <table>
+            <tr id="ch_bw">
+                <td width="200" id="XS18"></td>
+                <td><select name="country" id="country">
+                    <option value="0" selected="selected">CHINA</option>
+                    <option value="1">USA</option>
+                    <option value="2">JAPAN</option>
+                    <option value="3">EUROP</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="cfgstep"> 
+        <p><strong id="XS7"></strong></p>
+        <table>
+            <tr>
+                <td width="200" id="XS8"></td>
+                <td>
+                    <!--
+                    <select name="channel" id="channel">
+                    <option value="0" selected="selected">Auto Detect </option>
+                    <option value="1">1 </option>
+                    <option value="2">2 </option>
+                    <option value="3">3 </option>
+                    <option value="4">4 </option>
+                    <option value="5">5 </option>
+                    <option value="6">6 </option>
+                    <option value="7">7 </option>
+                    <option value="8">8 </option>
+                    <option value="9">9 </option>
+                    <option value="10">10 </option>
+                    <option value="11">11 </option>
+                    </select>
+                    -->
+                    <select name="channel" id="channel">
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="cfgstep">
+        <p><strong id="XS9"></strong></p>
+        <table>
+            <tr>
+                <td width="200" id="XS10"></td>
+                <td><select name="power_level" id="power_level">
+                    <option value="0" selected="selected">100% </option>
+                    <option value="1">75% </option>
+                    <option value="2">50% </option>
+                    <option value="3">25% </option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="cfgstep" id="max_clients_enable">
+        <p><strong id="XS12"></strong></p>
+        <table>
+            <tr>
+                <td width="200" id="XS13"></td>
+                <td>
+                    <input name="max_clients" id="max_clients" type="text" maxlength="2" size="6" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="cfgstep" id="wifi_multicast_enable">
+        <p><strong id="XS15"></strong></p>
+        <table>
+            <tr>
+                <td width="200" id="XS16"></td>
+                <td><input name="wifi_multicast" id="wifi_multicast_on" type="radio" value="1" checked="checked" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+                    <input name="wifi_multicast" id="wifi_multicast_off" type="radio" value="0" /><script>document.write(WebString.Disable);</script>
+                </td>
+            </tr>
+        </table>
+    </div>  
+</div>
+        
+<div class="cfgstep">
+    <p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+    <a href="#" id="btn_apply" class="btn"><script>document.write(WebString.Apply);</script></a>
+</div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

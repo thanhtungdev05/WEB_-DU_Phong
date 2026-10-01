@@ -1,0 +1,677 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript" src="script/protocol.js"></script>
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+var ipratelimit_enable;
+var wan_list = new Array();
+var ipratelimit_list = new Array();
+var lang = 1;
+var pool_type = 0;
+var lan_ip_0 = "";
+var lan_mask_0 = "";
+var lan_ip_1 = "";
+var lan_mask_1 = "";
+var LanDevStatus;
+var lan_dev = new Array();
+var wl_num;
+var eth_num;
+var ip_array = new Array();
+var mac_array = new Array();
+var conn_type_array = new Array();
+var hostname_array = new Array();
+var monitor_enable;
+var cfgTotalUsBW;
+var cfgTotalDsBW;
+var cfgUsPercent;
+var cfgDsPercent;
+var maxRuleNum;
+
+maxRuleNum=8;
+ipratelimit_enable=0;
+monitor_enable=0;
+cfgTotalUsBW=0;
+cfgTotalDsBW=0;
+cfgUsPercent=0;
+cfgDsPercent=0;
+ipratelimit_list = [
+
+];
+
+wan_list[0] = { index: "0", name: "1_INTERNET_TR069_IPTV_R_VID_0" };
+
+pool_type = "0";
+lan_ip_0 = "192.168.1.1";
+lan_mask_0 = "255.255.255.0";
+lan_ip_1 = "192.168.0.1";
+lan_mask_1 = "255.255.255.0";
+
+LanDevStatus = 2;
+lan_dev[0] = { mac: "bc:ec:a0:05:5f:8d", ip: "192.168.1.244", hostname: "thanhtung", conn_type: "1", uptime: "0h 0m ", dhcp: "1" };
+wl_num  = 0;
+eth_num = 1;
+
+
+function FreshTable(wan_id){
+	var i;
+	var value = "";
+	var lanip = "0.0.0.0";
+	var DeviceName;
+	var mac;
+	var conntype;
+	var usbw;
+	var dsbw;
+
+	var TR = "";
+	TR += "<table id='ipratelimitTable' class='mlist'>";
+	TR += '<tr>';
+	TR += '<th class="tableTitle" colspan="7">' + XipratelimitString[0] +'</th>\n';
+	TR += '</tr>\n';
+	TR += '<tr>\n';
+	TR += '<th>' + XipratelimitString[1] +'</th>\n';
+	TR += '<th>' + XipratelimitString[2] +'</th>\n';
+	TR += '<th>' + XipratelimitString[3] +'</th>\n';
+	TR += '<th>' + XipratelimitString[4] +'</th>\n';
+	TR += '<th>' + XipratelimitString[5] +'</th>\n';
+	TR += '<th>' + XipratelimitString[6] +'</th>\n';
+	TR += '<th>' + WebString.Edit +'</th>\n';
+	TR += '</tr>\n';
+	
+	if(ipratelimit_list.length == 0){
+		TR += '</table>\n';
+		$("#ipratelimit_value").val(value);
+		$("#ipratelimitDiv").html(TR);
+		return;
+	}else{
+		//wan_idx|enable|ip|mac|conn type|US BW|DS BW|deviename|
+		$.each(ipratelimit_list, function(id, el){
+			if (id > 0){
+				value += "-.-";
+			}
+
+			value += el.wan_index + "#" + el.enable + "#" + el.srcip + "#" + el.mac + "#" + el.conntype + "#" + el.USBanWidth + "#" + el.DSBanWidth + "#" + el.hostname;
+
+			if (el.wan_index != wan_id){
+				return true;     // continue
+			}
+
+			DeviceName = el.hostname;
+			lanip = el.srcip;
+			mac = el.mac;
+	        if(mac == "11:22:33:44:55:66" || mac == "00:00:00:00:00:00") {
+	          mac = XipratelimitString[9];
+	        }
+
+			if (el.conntype == "1")
+				conntype = XipratelimitString[21];
+			else if (el.conntype == "2")
+				conntype = XipratelimitString[22];
+			else if (el.conntype == "3")
+				conntype = XipratelimitString[23];
+			else
+				conntype = XipratelimitString[24];
+
+			usbw = el.USBanWidth;
+			dsbw = el.DSBanWidth;
+/*			
+			if(usbw == "0")
+				usbw = "";
+			if(dsbw == "0")
+				dsbw = "";
+*/
+			if (el.enable == "0") {
+				TR += '<tr>\n';	
+				TR += '<td style="width: 15%">' + '<font color="gray">' + DeviceName + '</font>' + '</td>\n';
+				TR += '<td style="width: 10%">' + '<font color="gray">' + lanip + '</font>' + '</td>\n';
+				TR += '<td style="width: 10%">' + '<font color="gray">' + mac + '</font>' + '</td>\n';
+				TR += '<td style="width: 15%">' + '<font color="gray">' + conntype + '</font>' + '</td>\n';
+				TR += '<td style="width: 10%">' + '<font color="gray">' + usbw + '</font>' + '</td>\n';
+				TR += '<td style="width: 10%">' + '<font color="gray">' + dsbw + '</font>' + '</td>\n';
+				TR += '<td style="width: 30%"><a href="#" class="btn enable_btn">'+ WebString.Enable + '</a><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+				TR += '</tr>\n';
+			} else {
+				TR += '<tr>\n';	
+				TR += '<td style="width: 15%">' + DeviceName + '</td>\n';
+				TR += '<td style="width: 10%">' + lanip + '</td>\n';
+				TR += '<td style="width: 10%">' + mac + '</td>\n';
+				TR += '<td style="width: 15%">' + conntype + '</td>\n';
+				TR += '<td style="width: 10%">' + usbw + '</td>\n';
+				TR += '<td style="width: 10%">' + dsbw + '</td>\n';
+				TR += '<td style="width: 30%"><a href="#" class="btn disable_btn">'+ WebString.Disable + '</a><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+				TR += '</tr>\n';
+			}
+		});
+
+		TR += '</table>\n';	
+	}
+	
+	$("#ipratelimit_value").val(value);
+	$("#ipratelimitDiv").html(TR);
+
+	$(".remove_btn").click(function(){
+		if (!confirm(WebString.delete_confirm))
+		{
+			return;
+		}
+
+		var row = this.parentNode.parentNode.rowIndex;
+		ipratelimit_list[row-2] = ipratelimit_list[ipratelimit_list.length-1];
+		ipratelimit_list.pop();
+		FreshTable($("#wan_conlist").val());
+		XDoSubmit();
+	});	
+	$(".enable_btn").click(function(){
+		var row = this.parentNode.parentNode.rowIndex;
+		ipratelimit_list[row-2].enable = "1";
+		
+		FreshTable($("#wan_conlist").val());
+		XDoSubmit();
+	});	
+	$(".disable_btn").click(function(){
+		var row = this.parentNode.parentNode.rowIndex;
+		ipratelimit_list[row-2].enable = "0";
+		
+		FreshTable($("#wan_conlist").val());
+		XDoSubmit();
+	});	
+
+}
+
+function WriteWanSel(){
+	var wan_sel = '<select id="wan_conlist" name="wan_conlist">\n';
+
+	if (wan_list.length == 0){
+		wan_sel += '<option value="-1">' + XipratelimitString[8] +'</option>\n';
+	}else{
+		$.each(wan_list, function(id, el){
+			wan_sel += '<option value="' + el.index + '">' + el.name + '</option>\n';
+		});
+	}
+
+	wan_sel += '</select>\n';
+	$("#wan_sel").html(wan_sel);
+
+	$("#wan_conlist").change(function(){
+		FreshTable($("#wan_conlist").val());
+	});
+}
+
+function WriteHostnameSel(){
+	var i = 0;
+	var device_sel = '<select id="device_select" style="width:220px">\n';
+	device_sel += '<option value="Manually Enter IP Address">' + XipratelimitString[27] + '</option>';
+
+	if (lan_dev.length != 0){
+		$.each(lan_dev, function(id, el){
+			hostname = el.hostname.replace(/-/, " ");
+			//device_sel += '<option>' + hostname + "-" + el.ip + '</option>';
+			device_sel += '<option>' + el.ip + '</option>';
+			ip_array[i] = el.ip;
+			mac_array[i] = el.mac;
+			conn_type_array[i] = el.conn_type;
+			hostname_array[i] = hostname;
+			i++;
+		});
+	}
+
+	device_sel += '</select>';
+	$("#device_select_td").html(device_sel);
+
+	//$("#ip_addr_tr_lan").hide();
+		
+	$("#device_select").change(function(){
+		if (XipratelimitString[27] == $("#device_select").val()){
+			$("#ip_addr_tr_lan").show();
+		}else{
+			$("#ip_addr_tr_lan").hide();
+		}
+	});
+		
+}
+
+function radioSet(name){
+	if (eval(name)=="0"){
+		$("#"+name+"0").get(0).checked=false;
+		$("#"+name+"1").get(0).checked=true;
+	}else if (eval(name)=="1"){
+		$("#"+name+"0").get(0).checked=true;
+		$("#"+name+"1").get(0).checked=false;
+	}else{
+		return;
+	}		
+}
+
+function checkmonitor() {
+	if ($("#monitor_enable").attr("checked")){
+		$("#cfgTotalUsBW").attr("disabled",false);
+		$("#cfgTotalDsBW").attr("disabled",false);
+		$("#cfgUsPercent").attr("disabled",false);
+		$("#cfgDsPercent").attr("disabled",false);
+	} else {
+		$("#cfgTotalUsBW").attr("disabled",true);
+		$("#cfgTotalDsBW").attr("disabled",true);
+		$("#cfgUsPercent").attr("disabled",true);
+		$("#cfgDsPercent").attr("disabled",true);
+	}
+}
+
+function qosMonitorSet(){
+	if(eval(monitor_enable) == "0")	 {
+		$("#monitor_enable").attr("checked", false);
+	} else {
+		$("#monitor_enable").attr("checked", true);
+	}
+	checkmonitor();
+	$("#cfgTotalUsBW").val(cfgTotalUsBW);
+	$("#cfgTotalDsBW").val(cfgTotalDsBW);
+	$("#cfgUsPercent").val(cfgUsPercent);
+	$("#cfgDsPercent").val(cfgDsPercent);
+	
+}
+
+function WebInit(){
+	WriteWanSel();
+	WriteHostnameSel();
+	radioSet("ipratelimit_enable");
+	qosMonitorSet();
+	SetMode();
+	FreshTable($("#wan_conlist").val());
+}
+
+function HaveSameRule(obj){
+	for (var i = 0; i < ipratelimit_list.length; i++ ){
+		if((ipratelimit_list[i].srcip == obj.srcip)){
+			return true;
+		}			
+	}	
+	
+	return false;
+}
+
+function isValidLanIpAddress(ip){
+	if (0 == pool_type || 1 == pool_type){
+		if (isLansubIP(ip, lan_ip_0, lan_mask_0) == false){
+			return false;
+		}
+	}else if (2 == pool_type){
+		if (isLansubIP(ip, lan_ip_0, lan_mask_0) == false
+			&& isLansubIP(ip, lan_ip_1, lan_mask_1) == false){
+			return false;
+		}
+	}
+}
+
+function doCheckVal(obj){
+    var total_bw = 0;
+    var i, USbw, DSbw;
+
+	if (ipratelimit_list.length >= maxRuleNum){	
+		alert(XipratelimitString[13]+maxRuleNum);
+		return false;
+	}
+
+	if (HaveSameRule(obj)){
+		alert(XipratelimitString[29]);
+		return false;
+	}	
+
+	if (obj.srcip.length == 0){
+		alert(XipratelimitString[14]);
+		return false;
+	}else if (isValidLanIpAddress(obj.srcip) == false){
+		alert(XipratelimitString[15]);
+		return false;
+	}
+
+}
+
+function SetMode(){
+	if (1 == $("input[name='ipratelimit_enable']:checked").val()){
+		$("[name='hide']").show();
+
+		WebStepIndex();
+	}else if (0 == $("input[name='ipratelimit_enable']:checked").val()){
+		$("[name='hide']").hide();
+		WebStepIndex();
+	}
+}
+
+function AddRule(){
+	var i;
+	var lanip;
+	var wan_index;
+	var hostname;
+	var srcip;
+	var us;
+	var ds;
+	var mac;
+	var conntype;
+
+	if ($("#wan_conlist").val() == "-1"){
+		alert(XipratelimitString[30]);
+		return;
+	}
+
+	wan_index = $("#wan_conlist").val();
+	if (XipratelimitString[27] == $("#device_select").val()){
+		hostname = XipratelimitString[24];
+		lanip = $("#ip_addr_lan").val();
+	}else{
+		temp = $("#device_select").val().split('-');
+		//hostname = $.trim(temp[0]);
+		//lanip = $.trim(temp[1]);
+		lanip = $.trim(temp[0]);
+	}
+
+	srcip = lanip;
+	srcip = $.trim(srcip);
+	
+	us = $("#USBanWidth").val();
+	us = $.trim(us);
+	
+	ds = $("#DSBanWidth").val();
+	ds = $.trim(ds);
+	
+	for (i = 0; i < lan_dev.length; i++) {
+		if (srcip == ip_array[i]) {
+			break;
+		}
+	}
+	if (i < lan_dev.length) {
+		mac = mac_array[i];
+		conntype = conn_type_array[i];
+		hostname = hostname_array[i];
+	} else {
+		//mac = XipratelimitString[9];
+		mac = "11:22:33:44:55:66";
+		conntype = XipratelimitString[24];
+		hostname = XipratelimitString[24];
+	}
+
+	var ipratelimitObj = new Object();
+
+	ipratelimitObj.wan_index = wan_index;
+	ipratelimitObj.enable = "1";
+	ipratelimitObj.srcip = srcip;
+	ipratelimitObj.mac = mac;
+	ipratelimitObj.conntype = conntype;
+	ipratelimitObj.hostname = hostname;
+	ipratelimitObj.USBanWidth = parseInt(us).toString();
+	ipratelimitObj.DSBanWidth = parseInt(ds).toString();
+
+	if (false == doCheckVal(ipratelimitObj)){
+		return;
+	}
+
+	ipratelimit_list.push(ipratelimitObj);
+
+	FreshTable($("#wan_conlist").val());
+	XDoSubmit();
+}
+
+
+function updateipratelimit(){
+	window.location.href = window.location.href;
+}
+
+function WebDoSubmit(){
+	setInterval("updateipratelimit();", 3000);
+	$("#XForm").submit();
+}
+
+function doBtnApplyCheck(){
+	var usBw;
+	var dsBw;
+	var usPer;
+	var dsPer;
+
+	usBw  = $("#cfgTotalUsBW").val();
+	dsBw  = $("#cfgTotalDsBW").val();
+	//usBw = parseInt(usBw);
+	//dsBw = parseInt(dsBw);
+
+	if(usBw > 1048576 || dsBw > 1048576) {
+		alert("Please input right value for Total US/DS Bandwidth:0~1048576kbps(1Gbps)!");
+		return;
+	}
+
+	usPer = $("#cfgUsPercent").val();
+	dsPer = $("#cfgDsPercent").val();
+	//usPer = parseInt(usPer);
+	//dsPer = parseInt(dsPer);
+
+	if(usPer > 100 || dsPer > 100) {
+		alert("Please input right value for US/DS Percentage:0~100!");
+		return;
+	}
+	$("#cfgTotalUsBW").attr("disabled",false);
+	$("#cfgTotalDsBW").attr("disabled",false);
+	$("#cfgUsPercent").attr("disabled",false);
+	$("#cfgDsPercent").attr("disabled",false);
+	XDoSubmit()
+}
+
+$(document).ready(function () {
+	$("input").css("ime-mode","disabled");
+	$("#ipratelimit_enable0").change(function(){
+		SetMode();
+	});
+	
+	$("#ipratelimit_enable1").change(function(){
+		SetMode();
+	});
+
+	$("#btn_apply").click(function(){
+		doBtnApplyCheck();
+	});
+
+	$("#btn_add").click(function(){
+		AddRule();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input id="ipratelimit_value" name="ipratelimit_value" type="hidden" value="" />
+<div class="cfgstep">
+	<p><strong id="XS19"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS20"></td>
+			<td>
+				<input type="radio" name="ipratelimit_enable" id="ipratelimit_enable0" value="1" />
+				<script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+				<input type="radio" name="ipratelimit_enable" id="ipratelimit_enable1" value="0" checked="true"/>
+				<script>document.write(WebString.Disable);</script> 
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide" id="monitor">
+	<p><strong id="XS38"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS37"></td>
+			<td>
+				<input type="checkbox" name="monitor_enable" id="monitor_enable" value = "1" onclick="checkmonitor()">
+			</td>
+		</tr>
+		<tr>
+			<td width="200" id="XS33"></td>
+			<td>
+				<input name="cfgTotalUsBW" id="cfgTotalUsBW" type="text" value = "" maxlength="7" size="8" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/><script>document.write(XipratelimitString[31]);</script>
+			</td>
+		</tr>
+		<tr>
+			<td width="200" id="XS34"></td>
+			<td>
+				<input name="cfgTotalDsBW" id="cfgTotalDsBW" type="text" value = "" maxlength="7" size="8" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/><script>document.write(XipratelimitString[31]);</script>
+			</td>
+		</tr>
+		<tr>
+			<td width="200" id="XS35"></td>
+			<td>
+				<input name="cfgUsPercent" id="cfgUsPercent" type="text" value = "" maxlength="3" size="4" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/><script>document.write("%");</script>
+			</td>
+		</tr>
+		<tr>
+			<td width="200" id="XS36"></td>
+			<td>
+				<input name="cfgDsPercent" id="cfgDsPercent" type="text" value = "" maxlength="3" size="4" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/><script>document.write("%");</script>
+			</td>
+		</tr>
+	</table>
+	<br/><script type="text/javascript">document.write(XipratelimitString[39]);</script>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(XipratelimitString[7]);</script></strong></p>
+	<a id="btn_apply" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Apply);</script>
+	</a>
+</div>
+<div class="cfgstep" style="display:none">
+	<p><strong id="XS17"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS18"></td>
+			<td id="wan_sel"></td>
+     	</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide" id="lan_ip">
+	<p><strong id="XS25"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS26"></td>
+			<td id="device_select_td"></td>
+     	</tr>
+     	<tr id="ip_addr_tr_lan">
+     	    <td width="200" id="XS28"></td>
+      		<td><input type="text" id="ip_addr_lan" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);"/>
+      		</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS10"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS11"></td>
+			<td>
+				<input name="USBanWidth" id="USBanWidth" type="text" value = "" maxlength="6" size="7" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/><script>document.write(XipratelimitString[31]);</script>
+			</td>
+		</tr>
+		<tr>
+			<td width="200" id="XS12"></td>
+			<td>
+				<input name="DSBanWidth" id="DSBanWidth" type="text" value = "" maxlength="6" size="7" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/><script>document.write(XipratelimitString[31]);</script>
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong><script>document.write(WebString.stepAdd);</script></strong></p>
+	<a id="btn_add" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Add);</script>
+	</a>
+</div>
+<div id="ipratelimitDiv" class="cfglist" style="display:none" name="hide"></div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

@@ -1,0 +1,566 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+
+</style>
+
+<script type="text/javascript">
+
+var wps_enable="";
+var ssid_list = new Array(4);
+var mac_enable = new Array(4);
+var mac_mode = new Array(4);
+var mac_count = new Array(4);
+var mac_list = new Array(4);
+var lan_dev = new Array();
+
+mac_list[0] = new Array();
+mac_list[1] = new Array();
+mac_list[2] = new Array();
+mac_list[3] = new Array();
+
+var BTN_APPLY_ENABLED 	= 0;
+var RTN_ADD  			= 1;
+var BTN_APPLY_DISABLED 	= 2;
+var UserPriority = 0;
+
+UserPriority=1;
+wps_enable=1;
+mac_enable[0]=0;
+mac_mode[0]=1;
+mac_count[0]=0;
+mac_list[0] = [
+
+];
+mac_enable[1]=0;
+mac_mode[1]=1;
+mac_count[1]=0;
+mac_list[1] = [
+
+];
+mac_enable[2]=0;
+mac_mode[2]=1;
+mac_count[2]=0;
+mac_list[2] = [
+
+];
+mac_enable[3]=0;
+mac_mode[3]=1;
+mac_count[3]=0;
+mac_list[3] = [
+
+];
+
+
+LanDevStatus = 2;
+lan_dev[0] = { mac: "bc:ec:a0:05:5f:8d", ip: "192.168.1.244", hostname: "thanhtung", conn_type: "1", uptime: "0h 0m ", dhcp: "1" };
+wl_num  = 0;
+eth_num = 1;
+
+
+function showSelectSsid()
+{
+	var str = "";
+	var j = 0;
+	for (var i = 0; i < 4; i++)
+	{
+
+		j = i + 1;
+		str += (
+			'<option value='+ i +'>' + 'SSID ' + j +'</option>'
+		);
+	}
+	$("#ssid_list").html(str);
+}
+
+function showDeviceList()
+{
+	var i;
+	var str;
+	var j;
+
+	str = '<option value = "0" selected = "selected" >' + Xwifi5accString[25] + '</option>';
+
+	for (i = 0; i < lan_dev.length; i++)
+	{
+		j = i + 1;
+		if (2 == lan_dev[i].conn_type)
+		{
+			str += '<option value =" '+ j +  '">' + lan_dev[i].hostname + ' - '+ lan_dev[i].mac + '<\/option>';
+		}
+	}
+
+	$("#mac_address").append(str);
+
+	WebStyleCommonList();
+}
+
+function FreshTable(ssid)
+{
+	var TR = "";
+
+	TR += "<table id='macfilterTable' class='mlist'>";
+	TR += '<tr>';
+	TR += '<th colspan="5" style="text-align:center">'+XwifiaccString[14]+'</th>\n';
+	TR += '</tr>\n';
+	TR += '<tr>\n';
+	TR += '<th>'+XwifiaccString[23]+'</th>\n';
+	TR += '<th>'+XwifiaccString[24]+'</th>\n';
+	TR += '<th>'+XwifiaccString[15]+'</th>\n';
+	TR += '<th>'+XwifiaccString[16]+'</th>\n';
+	TR += '<th>'+XwifiaccString[17]+'</th>\n';
+	TR += '</tr>\n';
+
+	if(mac_list[ssid].length == 0)
+	{
+		TR += '</table>\n';
+		$("#macFilterDiv").html(TR);
+		return;
+	}
+	else
+	{
+		for (var i = 0; i < mac_list[ssid].length; i++)
+		{
+			TR += '<tr>\n';
+			for (var j = 0; j < lan_dev.length; j++)
+			{
+				if((2 == lan_dev[j].conn_type)&&( mac_list[ssid][i].mac == lan_dev[j].mac))
+				{
+					TR += '<td>' + lan_dev[j].hostname + '</td>\n';
+					TR += '<td>' + lan_dev[j].ip + '</td>\n';
+					break;
+				}
+			}
+
+			if(lan_dev.length == j)
+			{
+				TR += '<td>' + 'Unknow' + '</td>\n';
+				TR += '<td>' + 'Unknow' + '</td>\n';
+			}
+
+			TR += '<td>' + mac_list[ssid][i].mac + '</td>\n';
+			if(mac_list[ssid][i].mod == 1)
+			{
+		    	TR += '<td>' + 'Access Denied'+ '</td>\n';
+			}
+			else if(mac_list[ssid][i].mod == 0)
+			{
+		    	TR += '<td>' + 'Access Allowed'+ '</td>\n';
+			}
+			TR += '<td><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+			TR += '</tr>\n';
+		}
+
+		TR += '</table>\n';
+	}
+
+	$("#macFilterDiv").html(TR);
+
+	$(".remove_btn").click(function(){
+		var value;
+		var row = this.parentNode.parentNode.rowIndex;
+		//  value = mac_list[ssid][row-2].devicename;
+		//  value += "|" + mac_list[ssid][row-2].ipaddress;
+		//value += "|" + mac_list[ssid][row-2].mac;
+
+		value = mac_list[ssid][row-2].mac;
+		value += "|" + mac_list[ssid][row-2].mod;
+
+		$("#removed_mac").val(value);
+		$("#XForm").submit();
+	});
+}
+
+function WebInit()
+{
+    showSelectSsid();
+	showDeviceList();
+	$("#access_disabled").hide();
+	SelectShow(0);
+	FreshTable(0);
+	WebStepIndex();
+}
+
+function SelectShow(i)
+{
+	if (mac_enable[i] == '1')
+	{
+		$("#acc_enabled").attr("checked", true);
+		$("#access_enabled").show();
+		$("#access_disabled").hide();
+		$("[name='hide']").show();
+		FreshTable(i);
+	}
+	else
+	{
+		$("#acc_disabled").attr("checked", true);
+		$("#access_enabled").hide();
+		$("#access_disabled").show();
+		$("[name='hide']").hide();
+    }
+
+	if(mac_mode[i] == '0')
+	{
+		$("#mac_mode_on").attr("checked", true);
+	}
+	else
+	{
+		$("#mac_mode_off").attr("checked", true);
+	}
+}
+
+
+function HaveSameMac(ssid ,mac)
+{
+	for (var i = 0; i < mac_list[ssid].length; i++ )
+	{
+		if(mac_list[ssid][i].mac == mac)
+			return true;
+	}
+
+	return false;
+}
+
+function doCheckVal(ssid,macaddr)
+{
+	var mac;
+
+	if (mac_list[ssid].length>=64)
+	{
+		alert(XwifiaccString[9]);
+		return false;
+	}
+
+	mac = macaddr.toLowerCase();
+	if (mac.length != 17)
+	{
+		alert(XwifiaccString[11]);
+		return false;
+	}
+
+	if(HaveSameMac(ssid, mac))
+	{
+		alert(XwifiaccString[12]);
+		return false;
+	}
+
+	if(isValidMacAddress(mac) == false)
+	{
+		alert(XwifiaccString[13]);
+		return false;
+	}
+}
+
+function WebAddSubmit()
+{
+	var enable;
+	var add_or_apply;
+	var ssid;
+	ssid = $("#ssid_list").val();
+	var mac_index = $("#mac_address").val();
+    /*
+    if (wps_enable == "1") {
+        alert(XwifiaccString[25]);
+	    return;
+    }
+    */
+	if(mac_count[ssid] >= 16)
+	{
+		alert(XwifiaccString[18]);
+		return;
+	}
+
+	enable = $("input[name='access_enable']:checked").val();
+
+	if(enable == 1)
+	{
+		var macaddr;
+		macaddr = $("#manual_mac_address").val();
+		macaddr = $.trim(macaddr);
+
+		if (false == doCheckVal(ssid,macaddr))
+		{
+			return;
+		}
+	}
+	$("#XForm").submit();
+}
+
+function WebApplySubmit()
+{
+	$("#XForm").submit();
+}
+
+function selectType(mode)
+{
+
+	if(mode != "0")
+	{
+		$("#manually_enter_mac").hide();
+	}
+	else
+	{
+		$("#manually_enter_mac").show();
+	}
+
+	if(mode != 0)
+	{
+
+		$("#manual_mac_address").val(lan_dev[mode-1].mac);
+	}
+}
+
+$(document).ready(function (){
+    var ssid = $("#ssid_list").val();
+    
+	$("#acc_enabled").click(function() {
+
+    /*
+    	if (wps_enable == "1") {
+            alert(XwifiaccString[25]);
+            $("#acc_disabled").attr("checked", true);
+    	    return;
+        }
+    */    
+		var ssid;
+		$("#access_enabled").show();
+		$("#access_disabled").hide();
+		$("[name='hide']").show();
+		ssid = $("#ssid_list").val();
+   		FreshTable(ssid);
+    	WebStepIndex();
+	});
+
+	$("#acc_disabled").click(function() {
+		$("#access_enabled").hide();
+		$("#access_disabled").show();
+	  	$("[name='hide']").hide();
+		WebStepIndex();
+	});
+
+	$("#btn_apply_enabled").click(function() {
+		$("#add_or_apply").val(BTN_APPLY_ENABLED);
+		WebApplySubmit();
+	});
+
+	$("#btn_add").click(function() {
+		$("#add_or_apply").val(RTN_ADD);
+		WebAddSubmit();
+	});
+
+	$("#btn_apply_disabled").click(function() {
+		$("#add_or_apply").val(BTN_APPLY_DISABLED);
+		WebApplySubmit();
+	});
+
+});
+
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<input type="hidden" id="add_or_apply" name="add_or_apply"  value="" />
+<input type="hidden" id="removed_mac" name="removed_mac" value="" />
+
+<div class="cfgstep">
+	<p><strong id="XS19"></strong></p>
+	<table>
+    <tr>
+        <td width="200" id="XS20"></td>
+        <td><select name="ssid_list" id="ssid_list" onchange="SelectShow(this.options[this.selectedIndex].value);">
+        <!--
+                <option value="0" selected="selected">SSID 1 </option>
+                <option value="1">SSID 2 </option>
+                <option value="2">SSID 3 </option>
+                <option value="3">SSID 4 </option>
+        -->
+            </select>
+        </td>
+    </tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS1"></td>
+			<td>
+			    <input name="access_enable" id="acc_enabled" type="radio" value="1" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+			    <input name="access_enable" id="acc_disabled" type="radio" value="0"/><script>document.write(WebString.Disable);</script>
+			</td>
+		</tr>
+	</table>
+</div>
+
+
+<div id="access_enabled">
+	<div class="cfgstep">
+		<p><strong id="XS2"></strong></p>
+        <table>
+			<tr>
+				<td width="200" id="XS3"></td>
+				<!--
+            	<td width="200">
+            		<input name="mac_mode" id="mode_allow" type="radio" value="0" checked="checked" />Allow Device List
+            	</td>
+            	<td width="200">
+            		<input name="mac_mode" id="mode_deny" type="radio" value="1" />Deny Device List
+            	</td>
+            	-->
+            	<td>
+            		<input name="mac_mode" id="mac_mode_on" type="radio" value="0" checked="checked" />
+            		<script>document.write(XwifiaccString[4]);</script>&nbsp;&nbsp;
+            		<input name="mac_mode" id="mac_mode_off" type="radio" value="1" />
+                	<script>document.write(XwifiaccString[5]);</script>
+            	</td>
+          	</tr>
+        </table>
+	</div>
+
+	<div class="cfgstep">
+		<p><strong><script>document.write(XwifiaccString[21]);</script></strong></p>
+		<a id="btn_apply_enabled" class="btn apply_btn" href="#">
+			<script>document.write(WebString.Apply);</script>
+		</a>
+	</div>
+
+	<div class="cfgstep">
+		<p><strong id="XS6"></strong>
+	    </p>
+		<table>
+          	<tr>
+          	  	<td width="200" id="XS7"></td>
+          	  	<td><select name="mac_address" id="mac_address" onchange="selectType(this.options[this.selectedIndex].value);">
+          	  		<!--
+          	  		<option value="0" selected="selected">Manually Enter MAC Address</option>
+          	  		<option value="1">Pauls PC - 3D:34:cd:54:8B</option>
+          	  		<option value="2">XBox 360 - 45:3c:6b:45:9a</option>
+          	  		-->
+          	  	  	</select>
+          	  	</td>
+          	</tr>
+          	<tr id="manually_enter_mac">
+          	  	<td width="200" id="XS8"></td>
+          	  	<td>
+          	  		<input name="manual_mac_address" id="manual_mac_address" type="text" maxlength="17" onkeypress="return OnKeyPress(event, X_INPUT_MAC);"/>
+					<script>document.write(Xwifi5accString[26]);</script>
+          	  	</td>
+          	</tr>
+        </table>
+	</div>
+
+	<div class="cfgstep">
+		<p><strong><script>document.write(XwifiaccString[22]);</script></strong></p>
+		<a id="btn_add" class="btn apply_btn" href="#">
+			<script>document.write(WebString.Add);</script>
+		</a>
+	</div>
+</div>
+
+<div id="access_disabled">
+	<div class="cfgstep">
+		<p><strong><script>document.write(XwifiaccString[21]);</script></strong></p>
+		<a id="btn_apply_disabled" class="btn apply_btn" href="#">
+			<script>document.write(WebString.Apply);</script>
+		</a>
+	</div>
+</div>
+
+
+<div id="macFilterDiv" class="cfglist" style="display:none" name="hide"></div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

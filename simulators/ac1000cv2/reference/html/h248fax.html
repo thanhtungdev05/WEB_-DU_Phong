@@ -1,0 +1,179 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var pots1_codec = new Array;
+var pots2_codec = new Array;
+
+voip_fax_pots1 = 0;
+pots1_codec[0] = {"codec": 0, "pri": 0};
+pots1_codec[1] = {"codec": 0, "pri": 0};
+pots1_codec[2] = {"codec": 0, "pri": 0};
+pots1_codec[3] = {"codec": 0, "pri": 0};
+voip_enable_pots1 = 0;
+rx_gain_1 = 0;
+tx_gain_1 = 0;
+echo_cancel_1 = 0;
+vad_1 = 0;
+pack_interval_1 = 0;
+voip_fax_pots2 = 0;
+pots2_codec[0] = {"codec": 0, "pri": 0};
+pots2_codec[1] = {"codec": 0, "pri": 0};
+pots2_codec[2] = {"codec": 0, "pri": 0};
+pots2_codec[3] = {"codec": 0, "pri": 0};
+voip_enable_pots2 = 0;
+rx_gain_2 = 0;
+tx_gain_2 = 0;
+echo_cancel_2 = 0;
+vad_2 = 0;
+pack_interval_2 = 0;
+oob_dtmf = 0;
+dtms_events = 0;
+fax_neg = 0;
+rtp_dscpmark = 0;
+sip_hook_timer_min = 0;
+sip_hook_timer_max = 0;
+country_code = 0;
+POTS_NUM = 0;
+
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+	WebStepIndex();
+}
+
+$(document).ready(function(){
+	
+	$("#fax_nego").val(fax_neg);
+
+	$("#btn_apply").click(function(){
+	XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS1"></td>
+			<td>
+				<select name="fax_nego" id="fax_nego">
+					<option selected="selected" value="1" id="XS2"></option>
+					<option value="0" id="XS3"></option>
+				</select>
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+	<a href="#" id="btn_apply" class="btn"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

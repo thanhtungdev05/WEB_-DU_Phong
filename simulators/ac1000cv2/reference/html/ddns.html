@@ -1,0 +1,372 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+//<![CDATA[
+var ddns_enable;
+var ddns_username;
+var ddns_password;
+var ddns_hostname;
+var ddns_domain;
+var ddns_server;
+var ddns_status;
+var ddns_datetime;
+var ddns_ipaddr;
+var ddns_wanindex;
+var has_route_wan = 0;
+//var mon_engligh = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+ddns_status="0";
+ddns_ipaddr="0.0.0.0";
+ddns_wanindex="0";
+ddns_datetime="2022-06-30~10:56:3410:56:34";
+
+has_route_wan = 1;
+ddns_enable="0";
+ddns_username="";
+ddns_password="";
+ddns_hostname="";
+ddns_domain="";
+ddns_serviceport="0";
+ddns_server="";
+
+
+function radioSet(name){
+	if(eval(name)=="1"){
+		$("#"+name+"0").get(0).checked=true;
+		$("#"+name+"1").get(0).checked=false;
+	}
+	else{
+		$("#"+name+"0").get(0).checked=false;
+		$("#"+name+"1").get(0).checked=true;
+	}		
+}
+
+function ddnsSetStatus(){
+	var date = "";
+	var time = "";
+	var tmp = "";
+	var meridiem = "AM";
+
+	$("#reportip").html(ddns_ipaddr);
+
+	if (ddns_status == 1){
+		$("#reportstat").html(XddnsString[24]);
+	}else if (ddns_status == 0){
+		$("#reportstat").html(XddnsString[25]);
+	}
+
+	tmp = ddns_datetime.split("~");
+	date = tmp[0];
+	time = tmp[1];
+
+	tmp = date.split("-");
+	year = tmp[0];
+	mon = tmp[1];
+	mon_num = parseInt(mon, 10);
+	day = tmp[2];
+	mon = mon_engligh[mon_num-1];
+	date = mon + " " + day + "," + year;
+
+	tmp = time.split(":");
+	hour = tmp[0];
+	min = tmp[1];
+	hour_num = parseInt(hour, 10);
+
+	if (hour_num > 12){
+		hour_num -= 12;
+		meridiem = "PM"
+	}
+
+	hour = hour_num.toString();
+	time = hour + ":" + min + " " + meridiem;
+
+	$("#reportdate").html(date);
+	$("#reporttime").html(time);
+}
+
+function WebInit(){
+	radioSet("ddns_enable");
+	SetMode();
+	ddnsSetStatus();
+	$("#ddns_server").val(ddns_server);
+	$("#ddns_username").val(ddns_username);
+	$("#ddns_password").val(ddns_password);
+	$("#ddns_hostname").val(ddns_hostname);
+}
+
+
+function SetMode(){	
+	if (1 == $("input[name='ddns_enable']:checked").val()){
+		$("[name='hide']").show();
+		WebStepIndex();
+	}
+	else if (0 == $("input[name='ddns_enable']:checked").val()){
+		$("[name='hide']").hide();
+		WebStepIndex();
+	}
+	
+}
+
+function doCheckVal(obj){
+	if (0 == obj.server.length){
+		alert(XddnsString[14]);
+		return false;
+	}
+
+	if (0 == obj.username.length){
+		alert(XddnsString[16]);
+		return false;
+	}
+
+	if (0 == obj.password.length){
+		alert(XddnsString[17]);
+		return false;
+	}
+
+	if (0 == obj.hostname.length){
+		alert(XddnsString[15]);
+		return false;
+	}
+}
+
+function WebDoSubmit(){
+	var value = "";
+	var ddnsObj = new Object();
+
+	if (0 == has_route_wan){
+		alert(XddnsString[18]);
+		return; 
+	}
+
+	ddnsObj.enable = $("input[name='ddns_enable']:checked").val();
+
+	do{
+		if (0 == ddnsObj.enable){
+			break;
+		}
+		
+		ddnsObj.server = $("#ddns_server").val();
+		ddnsObj.serverdomain = $("#ddns_server").find("option:selected").text();
+		ddnsObj.hostname = $("#ddns_hostname").val();	
+		ddnsObj.username = $("#ddns_username").val();
+		ddnsObj.password = $("#ddns_password").val();
+
+		if (false == doCheckVal(ddnsObj)){
+			return;
+		}	
+		
+		value = ddnsObj.hostname;
+		value += ":" + ddnsObj.serverdomain;
+		value += ":" + ddnsObj.server;
+		value += ":" + ddnsObj.username;
+		value += ":" + ddnsObj.password;			
+	
+	}while(0);
+
+	$("#ddns_value").val(value);
+	$("#XForm").submit();
+}
+
+$(document).ready(function () {
+	SetMode();
+	$("#ddns_enable0").change(function(){
+		SetMode();
+	});
+	
+	$("#ddns_enable1").change(function(){
+		SetMode();
+	});
+	
+	$("#ddns_server").change(function(){
+		SetMode();
+	});
+
+	$("#btn_apply").click(function(){			
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input id="ddns_value" name="ddns_value" type="hidden" value="" />
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td id="XS1" width="200"></td>
+			<td>
+				<input type="radio" name="ddns_enable" id="ddns_enable0" value="1" />
+				<script>document.write(WebString.Enable);</script>
+				<input type="radio" name="ddns_enable" id="ddns_enable1" value="0" checked="true"/>
+				<script>document.write(WebString.Disable);</script>
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS2"></strong></p>
+	<table>
+		<tr>
+			<td id="XS3" width="200"></td>
+			<td>
+				<select id="ddns_server" name="ddns_server">
+					<option id="XS4" value="dyndns" selected></option>
+					<option id="XS5" value="gnudip"></option>
+					<option id="XS6" value="tzo"></option>
+					<option id="XS7" value="ods"></option>
+					<option id="XS8" value="noip"></option>
+					<option id="XS26" value="ChangeIP.com"></option>
+       		    </select>
+     	    </td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS9"></strong></p>
+	<table>
+		<tr>
+			<td id="XS10" width="200"></td>
+			<td><input type="text" name="ddns_username" id="ddns_username" maxlength="96", style="width:150px" onkeypress="
+				return OnKeyPress(event, X_INPUT_ID);"/>
+			</td>
+		</tr>
+		<tr>
+			<td id="XS11"></td>
+			<td><input type="password" name="ddns_password" id="ddns_password" maxlength="96", style="width:150px" onkeypress="
+				return OnKeyPress(event, X_INPUT_PASSWD);"/>
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS12"></strong></p>
+	<table>
+		<tr>
+			<td id="XS13" width="200"></td>
+			<td>
+				<input type="text" name="ddns_hostname" id="ddns_hostname" maxlength="96", size="35"/>
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+	<a id="btn_apply" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Apply);</script>
+	</a>
+</div>
+<div class="cfglist" style="display:none" name="hide">
+  <table>
+	<tr>
+		<th colspan="4" id="XS23" style="text-align:center"></th>
+	</tr>
+    <tr>
+      <th width="134" id="XS19"></th>
+      <th width="141" id="XS20"></th>
+      <th width="77" id="XS21"></th>
+	  <th width="113" id="XS22"></th>
+    </tr>
+    <tr align="center">
+      <td id="reportip"></td>
+      <td id="reportdate"></td>
+      <td id="reporttime"></td>
+	  <td id="reportstat"></td>
+    </tr>
+  </table>
+</div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

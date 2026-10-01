@@ -1,0 +1,872 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript" src="script/protocol.js"></script>
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+var ipfilter_enable;
+var wan_list = new Array();
+var ipfilter_list = new Array();
+var lang = 1;
+var pool_type = 0;
+var lan_ip_0 = "";
+var lan_mask_0 = "";
+var lan_ip_1 = "";
+var lan_mask_1 = "";
+var LanDevStatus;
+var lan_dev = new Array();
+var wl_num;
+var eth_num;
+
+ipfilter_enable=0;
+ipfilter_list = [
+
+];
+
+wan_list[0] = { index: "0", name: "1_INTERNET_TR069_IPTV_R_VID_0" };
+
+pool_type = "0";
+lan_ip_0 = "192.168.1.1";
+lan_mask_0 = "255.255.255.0";
+lan_ip_1 = "192.168.0.1";
+lan_mask_1 = "255.255.255.0";
+
+LanDevStatus = 2;
+lan_dev[0] = { mac: "bc:ec:a0:05:5f:8d", ip: "192.168.1.244", hostname: "thanhtung", conn_type: "1", uptime: "0h 0m ", dhcp: "1" };
+wl_num  = 0;
+eth_num = 1;
+
+
+function FreshTable(wan_id){
+	var value = "";
+	var wanportrange = "N/A";
+	var lanportrange = "N/A";
+	var lanip = "0.0.0.0";
+	var wanip = "0.0.0.0";
+	var proto;
+	var protocol;
+	var ipfilter_mode;
+
+	var TR = "";
+	TR += "<table id='ipfilterTable' class='mlist'>";
+	TR += '<tr>';
+	TR += '<th class="tableTitle" colspan="7">' + XipfilterString[0] +'</th>\n';
+	TR += '</tr>\n';
+	TR += '<tr>\n';
+	TR += '<th>' + XipfilterString[1] +'</th>\n';
+	TR += '<th>' + XipfilterString[2] +'</th>\n';
+	TR += '<th>' + XipfilterString[3] +'</th>\n';
+	TR += '<th>' + XipfilterString[4] +'</th>\n';
+	TR += '<th>' + XipfilterString[5] +'</th>\n';
+	TR += '<th>' + XipfilterString[6] +'</th>\n';
+	TR += '<th>' + WebString.Edit +'</th>\n';
+	TR += '</tr>\n';
+	
+	if(ipfilter_list.length == 0){
+		TR += '</table>\n';
+		$("#ipfilter_value").val(value);
+		$("#ipFilterDiv").html(TR);
+		return;
+	}else{
+		//ipfltmode|deviename|servicename|localip|remoteip|wanportrange|lanportrange|
+		$.each(ipfilter_list, function(id, el){
+			if (id > 0){
+				value += "-.-";
+			}
+
+			value += el.wan_index + "#" + el.serviceorder + "#" + el.protocol + "#" + el.fltmode + "#" + el.srcip + "#" + el.dstip + "#" + el.srcport + "#" + el.srcport_end + "#" + el.dstport + "#" + el.dstport_end + "#" + el.hostname;
+	
+			if (el.wan_index != wan_id){
+				return true;     // continue
+			}
+
+			proto = el.protocol;
+			switch(proto){
+				case "0":{
+					protocol = XipfilterString[9];
+					wanportrange = "N/A";
+					lanportrange = "N/A";
+					break;
+				}
+				case "1":{
+					protocol = XipfilterString[10];
+
+					if (el.fltmode == 1){
+						wanportrange = el.srcport + "-" + el.srcport_end;
+						lanportrange = el.dstport + "-" + el.dstport_end;
+					}else{
+						wanportrange = el.dstport + "-" + el.dstport_end;
+						lanportrange = el.srcport + "-" + el.srcport_end;
+					}
+
+					break;
+				}
+				case "2":{
+					protocol = XipfilterString[11];
+
+					if (el.fltmode == 1){
+						wanportrange = el.srcport + "-" + el.srcport_end;
+						lanportrange = el.dstport + "-" + el.dstport_end;
+					}else{
+						wanportrange = el.dstport + "-" + el.dstport_end;
+						lanportrange = el.srcport + "-" + el.srcport_end;
+					}
+
+					break;
+				}
+				case "3":{
+					protocol = XipfilterString[45];
+
+					if (el.fltmode == 1){
+						wanportrange = el.srcport + "-" + el.srcport_end;
+						lanportrange = el.dstport + "-" + el.dstport_end;
+					}else{
+						wanportrange = el.dstport + "-" + el.dstport_end;
+						lanportrange = el.srcport + "-" + el.srcport_end;
+					}
+
+					break;
+				}
+				case "4":{
+					protocol = XipfilterString[12];
+					wanportrange = "N/A";
+					lanportrange = "N/A";
+					break;
+				}
+				default:{ 
+					break;
+				}
+			}
+
+			if (el.fltmode == 1){  //downstream
+				wanip = el.srcip;
+				lanip = el.dstip;
+				ipfilter_mode = XipfilterString[27];
+			}else{
+				wanip = el.dstip;
+				lanip = el.srcip;
+				ipfilter_mode = XipfilterString[28];
+			}
+
+			if (wanip == "0.0.0.0"){
+				wanip = "ALL IP"
+			}
+
+			if (lanip == "0.0.0.0"){
+				lanip = "ALL IP"
+			}
+
+			if (lanportrange == "0-0"){
+				lanportrange = "N/A"
+			}
+
+			if (wanportrange == "0-0"){
+				wanportrange = "N/A"
+			}
+
+			TR += '<tr>\n';	
+			TR += '<td style="width: 22%">' + ipfilter_mode + '</td>\n';
+			TR += '<td style="width: 12%">' + lanip + '</td>\n';
+			TR += '<td style="width: 10%">' + protocol + '</td>\n';
+			TR += '<td style="width: 15%">' + lanportrange + '</td>\n';
+			TR += '<td style="width: 12%">' + wanip + '</td>\n';
+			TR += '<td style="width: 15%">' + wanportrange + '</td>\n';
+			TR += '<td style="width: 14%"><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+			TR += '</tr>\n';
+		});
+
+		TR += '</table>\n';	
+	}
+	
+	$("#ipfilter_value").val(value);
+	$("#ipFilterDiv").html(TR);
+
+	$(".remove_btn").click(function(){
+		if (!confirm(WebString.delete_confirm))
+		{
+			return;
+		}
+
+		var row = this.parentNode.parentNode.rowIndex;
+		ipfilter_list[row-2] = ipfilter_list[ipfilter_list.length-1];
+		ipfilter_list.pop();
+		FreshTable($("#wan_conlist").val());
+		XDoSubmit();
+	});	
+}
+
+function WriteWanSel(){
+	var wan_sel = '<select id="wan_conlist" name="wan_conlist">\n';
+
+	if (wan_list.length == 0){
+		wan_sel += '<option value="-1">' + XipfilterString[8] +'</option>\n';
+	}else{
+		$.each(wan_list, function(id, el){
+			wan_sel += '<option value="' + el.index + '">' + el.name + '</option>\n';
+		});
+	}
+
+	wan_sel += '</select>\n';
+	$("#wan_sel").html(wan_sel);
+
+	$("#wan_conlist").change(function(){
+		FreshTable($("#wan_conlist").val());
+	});
+}
+
+function WriteProtocolSel(){
+	var protocol_sel = '<select id="protocol_list" name="protocol_list">\n';
+	protocol_sel += '<option value="0">' + XipfilterString[9] + '</option>';
+	protocol_sel += '<option value="1">' + XipfilterString[10] + '</option>';
+	protocol_sel += '<option value="2">' + XipfilterString[11] + '</option>';
+	protocol_sel += '<option value="3">' + XipfilterString[45] + '</option>';
+	protocol_sel += '<option value="4">' + XipfilterString[12] + '</option>';
+
+	if (ProtocolList.length != 0){
+		$.each(ProtocolList, function(index, item){
+			$.each(item, function(id, el){
+				if (id == lang && el != "HTTPS"){
+					protocol_sel += '<option value="' + (index+5) + '">' + el + '</option>';
+				}
+			});
+		});
+	}
+
+	protocol_sel += '</select>';
+	$("#protocol_select").html(protocol_sel);
+
+	$("#protocol_list").change(function(){
+		if ((1 == $("#protocol_list").val())
+			  || (2 == $("#protocol_list").val())
+			  || (3 == $("#protocol_list").val())){
+			$("[name='port_hide']").show();
+		}else{
+			$("[name='port_hide']").hide();
+		}	
+	});
+
+}
+
+function WriteHostnameSel(){
+	var device_sel = '<select id="device_select" style="width:220px">\n';
+	device_sel += '<option value="Manually Enter IP Address">' + XipfilterString[31] + '</option>';
+
+	if (lan_dev.length != 0){
+		$.each(lan_dev, function(id, el){
+			hostname = el.hostname.replace(/-/, " ");
+			device_sel += '<option>' + hostname + "-" + el.ip + '</option>';
+		});
+	}
+
+	device_sel += '</select>';
+	$("#device_select_td").html(device_sel);
+
+	$("#device_select").change(function(){
+		if ("Manually Enter IP Address" == $("#device_select").val()){
+			$("#ip_addr_tr_lan").show();
+		}else{
+			$("#ip_addr_tr_lan").hide();
+		}
+	});
+}
+
+function radioSet(name){
+	if (eval(name)=="0"){
+		$("#"+name+"0").get(0).checked=false;
+		$("#"+name+"1").get(0).checked=true;
+	}else if (eval(name)=="1"){
+		$("#"+name+"0").get(0).checked=true;
+		$("#"+name+"1").get(0).checked=false;
+	}else{
+		return;
+	}		
+}
+
+function WebInit(){
+	WriteWanSel();
+	WriteProtocolSel();
+	WriteHostnameSel();
+	radioSet("ipfilter_enable");
+	SetMode();
+	FreshTable($("#wan_conlist").val());
+}
+
+function HaveSameRule(obj){
+	for (var i = 0; i < ipfilter_list.length; i++ ){
+		if((ipfilter_list[i].fltmode == obj.fltmode) 
+			&& ((ipfilter_list[i].srcip == obj.srcip) || (ipfilter_list[i].srcip == "0.0.0.0"))
+			&& ((ipfilter_list[i].dstip == obj.dstip) || (ipfilter_list[i].dstip == "0.0.0.0"))
+			&& (ipfilter_list[i].srcport == obj.srcport)
+			&& (ipfilter_list[i].srcport_end == obj.srcport_end)
+			&& (ipfilter_list[i].dstport == obj.dstport)
+			&& (ipfilter_list[i].dstport_end == obj.dstport_end)
+			&& ((ipfilter_list[i].protocol == obj.protocol) || (ipfilter_list[i].protocol == "0"))
+			&& (ipfilter_list[i].serviceorder == obj.serviceorder)
+			&& (ipfilter_list[i].hostname == obj.hostname)
+			&& (ipfilter_list[i].wan_index == obj.wan_index)){
+			return true;
+		}			
+	}	
+	
+	return false;
+}
+
+function isValidRemoteIpAddress(ip){
+	var ip_num = Ip2Num(ip) >>> 0;
+	var bc = Ip2Num("255.255.255.255") >>> 0;   //broadcast 
+	var mcs = Ip2Num("224.0.0.0") >>> 0;  //multicast start
+    var mce = Ip2Num("239.255.255.255") >>> 0;  //multicast end
+
+    if(bc == ip_num || "255" == ip.split('.')[3]){ //broadcast
+		return false;
+    }else if((ip_num >= mcs) && (ip_num <= mce)){  //multicast
+        return false;
+    }else if (true == isValidSubnetMask(ip)){   //mask
+        return false;
+    }else if("127" == ip.split('.')[0]){  //loopback
+        return false;
+    }else{ //other
+    	return true;
+    }
+}
+
+function isValidLanIpAddress(ip){
+	if (0 == pool_type || 1 == pool_type){
+		if (isLansubIP(ip, lan_ip_0, lan_mask_0) == false){
+			return false;
+		}
+	}else if (2 == pool_type){
+		if (isLansubIP(ip, lan_ip_0, lan_mask_0) == false
+			&& isLansubIP(ip, lan_ip_1, lan_mask_1) == false){
+			return false;
+		}
+	}
+}
+
+function doCheckVal(obj){
+	if (ipfilter_list.length >= 64){	
+		alert(XipfilterString[13]);
+		return false;
+	}
+
+	if (HaveSameRule(obj)){
+		alert(XipfilterString[44]);
+		return false;
+	}	
+
+	if (0 == obj.fltmode){
+		if (obj.srcip.length == 0){
+			alert(XipfilterString[14]);
+			return false;
+		}else if (isValidLanIpAddress(obj.srcip) == false){
+			alert(XipfilterString[15]);
+			return false;
+		}
+
+		if (obj.dstip.length == 0){
+			alert(XipfilterString[16]);
+			return false;
+		}else if (false == isValidIpAddress(obj.dstip)){
+			alert(XipfilterString[15]);
+			return false;
+		}else if (false == isValidRemoteIpAddress(obj.dstip)){
+			alert(XipfilterString[15]);
+			return false;
+		}	
+	}else{
+		if (obj.srcip.length == 0){
+			alert(XipfilterString[16]);
+			return false;
+		}else if (false == isValidIpAddress(obj.srcip)){
+			alert(XipfilterString[15]);
+			return false;
+		}else if (false == isValidRemoteIpAddress(obj.srcip)){
+			alert(XipfilterString[15]);
+			return false;
+		}
+	}
+
+	if ((1 == obj.serviceorder)
+		  || (2 == obj.serviceorder)){
+		if ((obj.srcport <= 0) || (obj.srcport > 65535)
+			|| (obj.dstport <= 0) || (obj.dstport > 65535)
+			|| (obj.srcport_end <= 0) || (obj.srcport_end > 65535)
+			|| (obj.dstport_end <= 0) || (obj.dstport_end > 65535)){
+			alert(XipfilterString[17]);
+			return false;
+		}
+
+		if (obj.srcport > obj.srcport_end){
+			alert(XipfilterString[18]);
+			return false;
+		}
+
+		if (obj.dstport > obj.dstport_end){
+			alert(XipfilterString[18]);
+			return false;
+		}
+	}		
+}
+
+function SetMode(){
+	if (1 == $("input[name='ipfilter_enable']:checked").val()){
+		$("[name='hide']").show();
+
+		if (1 == $("#direction_select").val()){
+			$("#lan_ip").hide();
+		}
+
+		WebStepIndex();
+	}else if (0 == $("input[name='ipfilter_enable']:checked").val()){
+		$("[name='hide']").hide();
+		WebStepIndex();
+	}
+
+	if (1 == $("input[name='remoteip_define']:checked").val()){
+		$("#ip_addr_tr_remote").show();
+	}else if (0 == $("input[name='remoteip_define']:checked").val()){
+		$("#ip_addr_tr_remote").hide();
+	}
+}
+
+function AddRule(){
+	var i;
+	var lanip;
+	var wanip;
+	var porttype;
+	var wan_index;
+	var hostname;
+	var srcip;
+	var dstip;
+	var serviceorder;
+	var wan_end;
+	var lan_end;
+	var targetstr;
+	var indexofsplitor;    
+	var wanport = new Array();
+	var lanport = new Array();
+	var wanportrange = new Array();
+	var lanportrange = new Array();
+
+	if ($("#wan_conlist").val() == "-1"){
+		alert(XipfilterString[49]);
+		return;
+	}
+
+	wan_index = $("#wan_conlist").val();
+	fltmode = $("#direction_select").val();
+	if (0 == fltmode){
+		if ("Manually Enter IP Address" == $("#device_select").val()){
+			hostname = "Unknow";
+			lanip = $("#ip_addr_lan").val();
+		}else{
+		    targetstr = $("#device_select").val();
+		    indexofsplitor = targetstr.lastIndexOf('-');
+		    hostname = targetstr.substr(0, indexofsplitor);
+		    lanip = targetstr.substr(indexofsplitor+1);            
+		}
+
+		if (1 == $("input[name='remoteip_define']:checked").val()){
+			wanip = $("#ip_addr_remote").val();
+		}else{
+			wanip = "0.0.0.0";
+		}
+
+		srcip = lanip;
+		dstip = wanip;
+	}else if (1 == fltmode){	
+		if (1 == $("input[name='remoteip_define']:checked").val()){
+			wanip = $("#ip_addr_remote").val();
+		}else{
+			wanip = "0.0.0.0";
+		}
+
+		hostname = "Unknow";
+		srcip = wanip;
+		dstip = "0.0.0.0";
+	}
+
+	srcip = $.trim(srcip);
+	dstip = $.trim(dstip);
+	
+	serviceorder = $("#protocol_list").val();
+	if (serviceorder > 4){
+		wanportrange[0] = ProtocolList[serviceorder-5][2].split(","); //tcp
+		wanportrange[1] = ProtocolList[serviceorder-5][3].split(","); //udp
+		lanportrange[0] = ProtocolList[serviceorder-5][4].split(","); //tcp
+		lanportrange[1] = ProtocolList[serviceorder-5][5].split(","); //udp
+
+		for (porttype = 0; porttype < wanportrange.length; porttype++){
+			for (i = 0; i < wanportrange[porttype].length; i++){
+				var ipfltObj = new Object();
+				ipfltObj.protocol = porttype + 1;
+
+				wanport = wanportrange[porttype][i].split("-");
+				lanport = lanportrange[porttype][i].split("-");
+
+				if (0 == parseInt(wanport[0])){
+					break;
+				}
+
+				if ("undefined" == typeof(wanport[1])){
+					wan_end = wanport[0];
+				}else{
+					wan_end = wanport[1];
+				}
+
+				if ("undefined" == typeof(lanport[1])){
+					lan_end = lanport[0];
+				}else{
+					lan_end = lanport[1];
+				}
+
+				if (fltmode == 0){
+					ipfltObj.srcport = 0;
+					ipfltObj.srcport_end = 0;
+					ipfltObj.dstport = wanport[0];
+					ipfltObj.dstport_end = wan_end;
+				}else{
+					ipfltObj.srcport = 0;
+					ipfltObj.srcport_end = 0;
+					ipfltObj.dstport = lanport[0];
+					ipfltObj.dstport_end = lan_end;
+				}
+	
+				ipfltObj.srcip = srcip;
+				ipfltObj.dstip = dstip;
+				ipfltObj.hostname = hostname;
+				ipfltObj.fltmode = fltmode;
+				ipfltObj.wan_index = wan_index;
+				ipfltObj.serviceorder = (parseInt(serviceorder)).toString();
+				ipfltObj.protocol = (parseInt(ipfltObj.protocol)).toString();
+				ipfltObj.srcport = parseInt(ipfltObj.srcport).toString();
+				ipfltObj.srcport_end = parseInt(ipfltObj.srcport_end).toString();
+				ipfltObj.dstport = parseInt(ipfltObj.dstport).toString();
+				ipfltObj.dstport_end = parseInt(ipfltObj.dstport_end).toString();
+
+				if (false == doCheckVal(ipfltObj)){
+					return;
+				}
+
+				ipfilter_list.push(ipfltObj);
+			}
+		}		
+	}else{
+		var ipfltObj = new Object();
+		ipfltObj.protocol = serviceorder;
+
+		if ((1 == serviceorder)
+		  || (2 == serviceorder)
+		  || (3 == serviceorder)){
+			ipfltObj.srcport = $("#srcportstart").val() ? $("#srcportstart").val() : 0;
+			ipfltObj.srcport_end   = $("#srcportend").val() ? $("#srcportend").val() : 0;
+			ipfltObj.dstport = $("#dstportstart").val() ? $("#dstportstart").val() : 0;
+			ipfltObj.dstport_end   = $("#dstportend").val() ? $("#dstportend").val() : 0;
+		}else{
+			ipfltObj.srcport = 0;
+			ipfltObj.srcport_end   = 0;
+			ipfltObj.dstport = 0;
+			ipfltObj.dstport_end   = 0;
+		}
+
+		ipfltObj.srcip = srcip;
+		ipfltObj.dstip = dstip;
+		ipfltObj.hostname = hostname;
+		ipfltObj.fltmode = fltmode;
+		ipfltObj.wan_index = wan_index;
+		ipfltObj.serviceorder = (parseInt(serviceorder)).toString();
+		ipfltObj.protocol = (parseInt(ipfltObj.protocol)).toString();
+		ipfltObj.srcport = parseInt(ipfltObj.srcport).toString();
+		ipfltObj.srcport_end = parseInt(ipfltObj.srcport_end).toString();
+		ipfltObj.dstport = parseInt(ipfltObj.dstport).toString();
+		ipfltObj.dstport_end = parseInt(ipfltObj.dstport_end).toString();
+
+		if (false == doCheckVal(ipfltObj)){
+			return;
+		}
+
+		ipfilter_list.push(ipfltObj);
+	}
+
+	FreshTable($("#wan_conlist").val());
+	XDoSubmit();
+}
+
+
+function updateipflt(){
+	window.location.href = window.location.href;
+}
+
+function WebDoSubmit(){
+	setInterval("updateipflt();", 3000);
+	$("#XForm").submit();
+}
+
+$(document).ready(function () {
+	$("input").css("ime-mode","disabled");
+	$("#ipfilter_enable0").change(function(){
+		SetMode();
+	});
+	
+	$("#ipfilter_enable1").change(function(){
+		SetMode();
+	});
+
+	$("#remoteip_define0").change(function(){
+		SetMode();
+	});
+
+	$("#remoteip_define1").change(function(){
+		SetMode();
+	});
+
+	$("#direction_select").change(function(){
+		SetMode();
+	});
+
+	$("#btn_apply").click(function(){
+		XDoSubmit();
+	});
+
+	$("#btn_add").click(function(){
+		AddRule();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input id="ipfilter_value" name="ipfilter_value" type="hidden" value="" />
+<!--
+<div class="cfgstep">
+	<p><strong id="XS21"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS22"></td>
+			<td>
+				<input type="radio" name="stealth_enable" id="stealth_enable0" value="1" />
+				<script>document.write(WebString.Enable);</script>
+				<input type="radio" name="stealth_enable" id="stealth_enable1" value="0" checked="true"/>
+				<script>document.write(WebString.Disable);</script>
+			</td>
+		</tr>
+	</table>
+</div>
+-->
+<div class="cfgstep">
+	<p><strong id="XS23"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS24"></td>
+			<td>
+				<input type="radio" name="ipfilter_enable" id="ipfilter_enable0" value="1" />
+				<script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+				<input type="radio" name="ipfilter_enable" id="ipfilter_enable1" value="0" checked="true"/>
+				<script>document.write(WebString.Disable);</script> 
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(XipfilterString[7]);</script></strong></p>
+	<a id="btn_apply" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Apply);</script>
+	</a>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS25"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS26"></td>
+			<td>
+				<select id="direction_select">
+					<!--<option value="1" id="XS27"></option>-->
+					<option value="0" id="XS28"></option>
+        		</select>
+     	    </td>
+     	</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS19"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS20"></td>
+			<td id="wan_sel"></td>
+     	</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide" id="lan_ip">
+	<p><strong id="XS29"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS30"></td>
+			<td id="device_select_td"></td>
+     	</tr>
+     	<tr id="ip_addr_tr_lan">
+     	    <td width="200" id="XS32"></td>
+      		<td><input type="text" id="ip_addr_lan" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);"/>
+      		</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS33"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS34"></td>
+			<td>
+				<input type="radio" name="remoteip_define" id="remoteip_define0" value="0" checked="true"/>
+				<script>document.write(XipfilterString[35]);</script>
+				<input type="radio" name="remoteip_define" id="remoteip_define1" value="1" />
+				<script>document.write(XipfilterString[36]);</script>
+			</td>
+		</tr>
+		<tr id="ip_addr_tr_remote" style="display:none">
+			<td width="200" id="XS37"></td>
+      		<td><input type="text" id="ip_addr_remote" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);"/>
+      		</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS38"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS39"></td>
+			<td id="protocol_select"></td>
+     	</tr>
+		<tr name="port_hide" style="display:none">
+			<td id="XS40"></td>
+			<td>
+				<input type='text' id='srcportstart' onkeypress="
+      			return OnKeyPress(event, X_INPUT_NUM);"/>
+      		</td>
+		</tr>
+		<tr name="port_hide" style="display:none">
+			<td id="XS41"></td>
+			<td>
+				<input type='text' id='srcportend' onkeypress="
+      			return OnKeyPress(event, X_INPUT_NUM);"/>
+      		</td>
+		</tr>
+		<tr name="port_hide" style="display:none">
+			<td id="XS42"></td>
+			<td>
+				<input type='text' id='dstportstart' onkeypress="
+      			return OnKeyPress(event, X_INPUT_NUM);"/>
+      		</td>
+		</tr>
+		<tr name="port_hide" style="display:none">
+			<td id="XS43"></td>
+			<td>
+				<input type='text' id='dstportend' onkeypress="
+      			return OnKeyPress(event, X_INPUT_NUM);"/>
+      		</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong><script>document.write(WebString.stepAdd);</script></strong></p>
+	<a id="btn_add" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Add);</script>
+	</a>
+</div>
+<div id="ipFilterDiv" class="cfglist" style="display:none" name="hide"></div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

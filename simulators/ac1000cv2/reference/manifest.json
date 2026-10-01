@@ -1,0 +1,567 @@
+{
+  "thiet_bi": "AC1000CV2",
+  "firmware": "R4.2.23.109",
+  "ip": "192.168.1.1",
+  "tep": {
+    "/login.html": {
+      "size": 7294,
+      "sha256": "30aa8e15d34c9a1587f3b3e1e3577d74cd94827f97ce3b9512e7407930f4b4ea",
+      "loai": "html"
+    },
+    "/index.html": {
+      "size": 1359,
+      "sha256": "d55b53b1ca40b84f44e33cca572d935976cfa7f7b435cabae27cd766e59d1c7d",
+      "loai": "html"
+    },
+    "/alg.html": {
+      "size": 7663,
+      "sha256": "908887e85dba49993c08d0ab10e5f8bf7b4197e2695e741534430ef6a90aceed",
+      "loai": "html"
+    },
+    "/aoe.html": {
+      "size": 4337,
+      "sha256": "87878102f37af1083163d0bdca61568c76d0e4f2b34a4d9f6f4d8b6c6074522f",
+      "loai": "html"
+    },
+    "/backup.html": {
+      "size": 3521,
+      "sha256": "3c8d340169f8da91833c72f1ed1c47ff51a1397a2b66eabe5e90f219346cee06",
+      "loai": "html"
+    },
+    "/brg.html": {
+      "size": 25741,
+      "sha256": "8bdb1e798cb4d4a229893e9077d530f29b600d5b1f3138591ea7f92f899b601c",
+      "loai": "html"
+    },
+    "/ddns.html": {
+      "size": 9015,
+      "sha256": "e03e3b7151c8b3d42f93b1770cd91f9e26bb75e7887986f3e2f6fab4ea1a71eb",
+      "loai": "html"
+    },
+    "/devinfo.html": {
+      "size": 10103,
+      "sha256": "bf2013aa9973485452ffb8b8b50202b54572c8a99ad8909e952f1effdeb42461",
+      "loai": "html"
+    },
+    "/devtable.html": {
+      "size": 4212,
+      "sha256": "3384fe580e1c0d21d6cf8b0bb37378957eae2f02fc5095117a983b77cf982537",
+      "loai": "html"
+    },
+    "/dmz.html": {
+      "size": 9747,
+      "sha256": "2ccdcf0345c050e99c181db8968a79e3d1940ac135ae8223c46267278f1bdc20",
+      "loai": "html"
+    },
+    "/gponinfo.html": {
+      "size": 5410,
+      "sha256": "ed92669f6c0933403e9743339856821a9e2445ce3b6f4914d565fe2b595630e8",
+      "loai": "html"
+    },
+    "/h248basic.html": {
+      "size": 7481,
+      "sha256": "b9f7bbdb95591c15093159afe316106aec5ad8bc3abd06ab35ba98ca87ca127e",
+      "loai": "html"
+    },
+    "/h248dmap.html": {
+      "size": 4628,
+      "sha256": "4270b77f5705a665b636a326c56391d7094e5f5148b4920da77bb2b4ac2d62ee",
+      "loai": "html"
+    },
+    "/h248fax.html": {
+      "size": 4190,
+      "sha256": "5229e6727a3901ece809cdca30d88cd2e8c37dd432391b52e476dd81cbcc8e21",
+      "loai": "html"
+    },
+    "/init.html": {
+      "size": 3885,
+      "sha256": "0a474169633c20a8badb8ad59d9d2337b352cfbaae1507f162cd734a83b94bad",
+      "loai": "html"
+    },
+    "/ip6proute.html": {
+      "size": 7176,
+      "sha256": "bde9eeeef8cc8310536d3f9961077d09d984fe3be2a064e324058ae62b0cd7c8",
+      "loai": "html"
+    },
+    "/ip6sroute.html": {
+      "size": 10722,
+      "sha256": "4e66ad09007f1d03c08739baca5ba9c08195ec68ee54941098c54be7bc721e77",
+      "loai": "html"
+    },
+    "/ipfilter.html": {
+      "size": 23178,
+      "sha256": "aa7c3fda502c60ad34d1abd3f8898623a65c3397a396956ce41dae87211e4836",
+      "loai": "html"
+    },
+    "/ipratelimit.html": {
+      "size": 18071,
+      "sha256": "2c94d96b64b79c9edcec726533860a72a5e1d9c6eed074cfff2cdbc6d200361f",
+      "loai": "html"
+    },
+    "/iptvmulticast.html": {
+      "size": 11283,
+      "sha256": "04372ed688b39697f82b446c6007efa413cf8e189998f937ec4f4b1375dcf8d7",
+      "loai": "html"
+    },
+    "/ipv6firewall.html": {
+      "size": 4145,
+      "sha256": "ee5ec48bdd3be103a9c3340bdace82810aa21bfe9d38e5e1df513d7ec6e9e9be",
+      "loai": "html"
+    },
+    "/lan.html": {
+      "size": 48674,
+      "sha256": "4f6e52ee3bea6f61d191b0b714bf6b2bb6d236aa39ac132aaa6a3c18a9689d35",
+      "loai": "html"
+    },
+    "/lanadvanced.html": {
+      "size": 18191,
+      "sha256": "5664774eea58f636313c419918b5ce739080dd11acdd77477435b2c4c39d141c",
+      "loai": "html"
+    },
+    "/laninfo.html": {
+      "size": 5184,
+      "sha256": "5072d5fd07e1a500ca72827a94ac0f2602b57f527f41f25bcd7a309ecd9e5e00",
+      "loai": "html"
+    },
+    "/lanipv6.html": {
+      "size": 28181,
+      "sha256": "87749e75c8e4a147f18c6342f865cbd546101e5b1e92fab49f5612a625061f4c",
+      "loai": "html"
+    },
+    "/log.html": {
+      "size": 5379,
+      "sha256": "9d419c466efb816c8cbde1ca1f132446af2b46c6389a033943eff4adb1e5cfe0",
+      "loai": "html"
+    },
+    "/loid.html": {
+      "size": 5481,
+      "sha256": "a54ccca21f5973c56432a4077a1b96b03b5c7dacd712c5bc3b80ee5ef1e99716",
+      "loai": "html"
+    },
+    "/loopdetect.html": {
+      "size": 4681,
+      "sha256": "a367b455df2da15bf527472b0cb97c1f89dc49d92a7ec2ecfbd4e712642cf71d",
+      "loai": "html"
+    },
+    "/macfilter.html": {
+      "size": 24984,
+      "sha256": "a63d7188516106b5364c71b0221d130d91566065bbcc660ffd083ac1c4989e46",
+      "loai": "html"
+    },
+    "/mirror.html": {
+      "size": 3924,
+      "sha256": "72db7708496cc2e74b93202bc7f1d12adf0bcca33642245df94388706d4d60d2",
+      "loai": "html"
+    },
+    "/nat.html": {
+      "size": 3563,
+      "sha256": "e96ada9beb95eb3cae203788a2f07700824d265f044db5953d2e64146b503fdb",
+      "loai": "html"
+    },
+    "/ntp.html": {
+      "size": 14287,
+      "sha256": "9668302eb5127f5f68d00d0fcd924beee8512f69ab64919140c34daad66630f3",
+      "loai": "html"
+    },
+    "/password.html": {
+      "size": 5775,
+      "sha256": "0aa1dc677211c5ca1fbfa5356a4992a7df466a62ac7e5534b80ef9718e9d71fb",
+      "loai": "html"
+    },
+    "/ping.html": {
+      "size": 7145,
+      "sha256": "0c3f55fefc61863dee896a665c09b06e348aa59fa304788a546942a26063a774",
+      "loai": "html"
+    },
+    "/portfwd.html": {
+      "size": 19933,
+      "sha256": "6bcd23b732b9316d0df65c0f3e9cd5e9b818fe746255bed3e980c2e5c1617fec",
+      "loai": "html"
+    },
+    "/pptpd.html": {
+      "size": 16133,
+      "sha256": "ef85de80ec85afed9e45df75738b29ecb02d176c1e4208cfbc7078eae3e57612",
+      "loai": "html"
+    },
+    "/proute.html": {
+      "size": 7159,
+      "sha256": "65f4121d5841069b7ff6ed8c9400abb682df5afc739fe962a45f1f01983309c6",
+      "loai": "html"
+    },
+    "/qos.html": {
+      "size": 27820,
+      "sha256": "7a300f472483cb7345f506fd545d393a25ff7c2768d4479b269a09a22f8813c2",
+      "loai": "html"
+    },
+    "/reboot.html": {
+      "size": 3865,
+      "sha256": "b0b95df0e3f6f3bf91e6c170370f3346611d94fb5f3838149b5f2e945d6acbb0",
+      "loai": "html"
+    },
+    "/rebootswitchtimer.html": {
+      "size": 10461,
+      "sha256": "15cf10693b336eebeb71f08c6e80200fe981de752a56a7a76a4138b7877d1608",
+      "loai": "html"
+    },
+    "/restable.html": {
+      "size": 3718,
+      "sha256": "7b48321af3be6799dafa89a9568306049b9dc217fbdbd21489f4cde970659c4d",
+      "loai": "html"
+    },
+    "/restore.html": {
+      "size": 6032,
+      "sha256": "4955c02c0af0f7e56fe5332c3bd3c951a4293629c4a540f2648425bc32f8242a",
+      "loai": "html"
+    },
+    "/rmtweb.html": {
+      "size": 13327,
+      "sha256": "1aebcb1de69040b42423095d63baaa1778cc0b05f0ee950d437cff5e8e207aa9",
+      "loai": "html"
+    },
+    "/rttable.html": {
+      "size": 8765,
+      "sha256": "b5b01bc0f5ebc426db078f3b7dc57be8744ada31aa73a2a123fcecb7f4a41a29",
+      "loai": "html"
+    },
+    "/selftest.html": {
+      "size": 12033,
+      "sha256": "e29494d65845cbfa680bd2c178522a06beb9fbb90de4c7861561b1c91d0084a7",
+      "loai": "html"
+    },
+    "/sipadv.html": {
+      "size": 9730,
+      "sha256": "ee4af8ab27daa9132d8e85cb63dd06f21b8999ff09ab7c353b654cb6a04a7a01",
+      "loai": "html"
+    },
+    "/sipbasic.html": {
+      "size": 8858,
+      "sha256": "38c06b51473e2127c88c6d5ffb188161ff568e4999e1422e084364d1b5d38441",
+      "loai": "html"
+    },
+    "/sipcodecs.html": {
+      "size": 8438,
+      "sha256": "29574850c45103eb356647c930cc414189f43f7f9210addd33d5e48353f56fbb",
+      "loai": "html"
+    },
+    "/sipdmap.html": {
+      "size": 5339,
+      "sha256": "6d8014d4e1abb409d39c7e8defea1b122410c50a6da2a6b8cd282b724493da7c",
+      "loai": "html"
+    },
+    "/sipfax.html": {
+      "size": 5282,
+      "sha256": "c988bf88e5f74b3448d4204e897284540fc97a3f9a7d32f748147ab5aaa8e1ec",
+      "loai": "html"
+    },
+    "/sroute.html": {
+      "size": 11042,
+      "sha256": "e3b798947460b22c0b91ea3b73db17ff553c5afcc8c727ba4c1f4d6ddde875dd",
+      "loai": "html"
+    },
+    "/ssh.html": {
+      "size": 10083,
+      "sha256": "d77348fae289855dd6c6c50ddad4b9f73b03f27df35a78b0b0340a1bc90c8458",
+      "loai": "html"
+    },
+    "/sys.html": {
+      "size": 3491,
+      "sha256": "35b3d98e6866e53e9672d18de3a0fcefc7843d5fd4dfd4c5dd19fb9c79908b5d",
+      "loai": "html"
+    },
+    "/syslog.html": {
+      "size": 4848,
+      "sha256": "7a1122afd4f81d284a837645e3387dd5da76b4fe7351d8d0e3d7801a539d6c4c",
+      "loai": "html"
+    },
+    "/tcpdump.html": {
+      "size": 11857,
+      "sha256": "42f73e41f4c6935b1b88dbd2c5f4eb4f74668743bafc59f6bc1e190093e0c4aa",
+      "loai": "html"
+    },
+    "/techsupportinfo.html": {
+      "size": 5337,
+      "sha256": "e0daf0614d7635de08543d799c7369317c5bf09ef70180557e30f5adebb7e640",
+      "loai": "html"
+    },
+    "/telnet.html": {
+      "size": 8069,
+      "sha256": "492b7df8275147dbf444142fbb51904a7dbe72bfba7a2853eec7ebda84c92cdc",
+      "loai": "html"
+    },
+    "/tr069.html": {
+      "size": 5865,
+      "sha256": "9f6865e1f5bfd134cc4f53db0697e3709cafa5a80b60594b054d92b8bb9d71b6",
+      "loai": "html"
+    },
+    "/traceroute.html": {
+      "size": 5937,
+      "sha256": "6b212deed2ee8728a59d7f93bcc624940df1e3a094e6d14446dcb8c6019682cf",
+      "loai": "html"
+    },
+    "/upgrade.html": {
+      "size": 6319,
+      "sha256": "d98ba1c5e31e93af49b63c8a8920da3a8f9b308ba70cdde6aff0a17759335269",
+      "loai": "html"
+    },
+    "/upnp.html": {
+      "size": 5509,
+      "sha256": "41f17bd3fe0202c0847c0212c934f7d343c86131d93c9642f0279b0d84a4979d",
+      "loai": "html"
+    },
+    "/usbstr.html": {
+      "size": 8488,
+      "sha256": "bff380deaaf328cf0582bb3b9d15c224ca7b8b5d0fc5a31e0e6ab9358f9e569c",
+      "loai": "html"
+    },
+    "/voipadv.html": {
+      "size": 11535,
+      "sha256": "777a89beb59b32f404680cc46839e9481437def0c35d90a92219fdb8bd785b0b",
+      "loai": "html"
+    },
+    "/voipbasic.html": {
+      "size": 6332,
+      "sha256": "18522a2d2943323400bf44ccc8279a9109f1e0fa46552e24ea9db63af17e90f3",
+      "loai": "html"
+    },
+    "/wan.html": {
+      "size": 44511,
+      "sha256": "83d6a37bd1544dbee0f8588593a70fb78d6e9d5bc2a8247b3392b43a86f9f8f1",
+      "loai": "html"
+    },
+    "/wan3g.html": {
+      "size": 6028,
+      "sha256": "352468bb38aa537c9de17865498df7fc8744d110b71e68f3ade9564eda0db8c7",
+      "loai": "html"
+    },
+    "/wan3gstatus.html": {
+      "size": 5112,
+      "sha256": "f0ceb9526664a3fb3b7c3a7e4a748bd5b8ebb76ce0de91ae40214476a39b734c",
+      "loai": "html"
+    },
+    "/waninfo.html": {
+      "size": 15137,
+      "sha256": "2787db5ed1fbce65790006066a763ceafefa2f562740b0de013f09e7245f4810",
+      "loai": "html"
+    },
+    "/webfilter.html": {
+      "size": 10514,
+      "sha256": "9a0bcbea439c5fa6a7e22c1e9531b8e1ca85df46842b543b821f9d94af44cf8f",
+      "loai": "html"
+    },
+    "/wifi5acc.html": {
+      "size": 12459,
+      "sha256": "ef8701c54e4406369624f42f0e4a763975ac37c86b025c25f6b5fcc479f1c05c",
+      "loai": "html"
+    },
+    "/wifi5adv.html": {
+      "size": 8869,
+      "sha256": "fd7979801876870892f568cf9b25f9a913b0474dd8ef746c0fd8ac9e856fb801",
+      "loai": "html"
+    },
+    "/wifi5basic.html": {
+      "size": 12776,
+      "sha256": "d063c49ea00a871beeaebf492257edbed5e08811c7e0a0ecdf11258df99aa54a",
+      "loai": "html"
+    },
+    "/wifi5info.html": {
+      "size": 12878,
+      "sha256": "e5393964dc188978200f061cc65fe7dc81a0d06e29e2314f1b2220d7e66f2eee",
+      "loai": "html"
+    },
+    "/wifi5list.html": {
+      "size": 5778,
+      "sha256": "95ef6c49da4d9bf527318f697fb3b4f56d17b2ac7f41d35460d41a1e31534bd2",
+      "loai": "html"
+    },
+    "/wifi5secu.html": {
+      "size": 14729,
+      "sha256": "447eb259e5109ff339108a259db0ca0c2a3512c71819b583b9a5a27201b0ac8c",
+      "loai": "html"
+    },
+    "/wifi5ssid.html": {
+      "size": 9286,
+      "sha256": "49c7804b9e3014c403e04ee804adb857089c824a460305170517c1aec8bda5bb",
+      "loai": "html"
+    },
+    "/wifi5wps.html": {
+      "size": 9962,
+      "sha256": "edacd2c14206b4dac2809f6423649f6f2d5edcbef17c38193585675999827d0b",
+      "loai": "html"
+    },
+    "/wifiacc.html": {
+      "size": 13202,
+      "sha256": "a35177a9c9e2778f4c21ce61b5f9348529aa549940582d229963a4750ad4a191",
+      "loai": "html"
+    },
+    "/wifiadv.html": {
+      "size": 9149,
+      "sha256": "ea08d7567c53b544e58995e42892ef72e2181c0ac2d7478ad7b7adfd7d38a7a5",
+      "loai": "html"
+    },
+    "/wifibasic.html": {
+      "size": 11314,
+      "sha256": "7ffcea265a3d0270d0307f035326ef0297493f226446d4478685e0ffcd7ee81d",
+      "loai": "html"
+    },
+    "/wifiinfo.html": {
+      "size": 12655,
+      "sha256": "040a2dc511ff3bd291eb9bf3d8a559cd456e3a2fa6b890c71be56556c719ca32",
+      "loai": "html"
+    },
+    "/wifilist.html": {
+      "size": 5758,
+      "sha256": "181546b78abb4ea58ee968d35aacde9917e824a71573ace13e17cf4720bf5d17",
+      "loai": "html"
+    },
+    "/wifilog.html": {
+      "size": 3367,
+      "sha256": "e0e345607f439771ff0eb54bb9b079ef0de5da31d02bbbefbc539cdb19b97829",
+      "loai": "html"
+    },
+    "/wifisecu.html": {
+      "size": 14901,
+      "sha256": "2a27b3bd0cb4a4e407140a23f3dc0da48712e5fabea29fb87971f4b4ec3595ec",
+      "loai": "html"
+    },
+    "/wifissid.html": {
+      "size": 10258,
+      "sha256": "90114379160c1d9fad33d2c386b08f4b626766a0f1ac78a963d66032ae2100f7",
+      "loai": "html"
+    },
+    "/wifiswitchtimer.html": {
+      "size": 11620,
+      "sha256": "3a5b36a9544c4e31a2611d43b82584e0b58b5dcd308c19f27e885134ac588ce0",
+      "loai": "html"
+    },
+    "/wifiwps.html": {
+      "size": 9886,
+      "sha256": "cc28f5819882e35940e2f4b4be01e1f1477c33a635a4485bf7009c9f2aaf1704",
+      "loai": "html"
+    },
+    "/wizard.html": {
+      "size": 2685,
+      "sha256": "31273c1fed1190f2d46dc9b13c7781bb7211934e5219928ba7b82808b8762011",
+      "loai": "html"
+    },
+    "/script/rg_menu.js": {
+      "size": 13794,
+      "sha256": "4d072bebc6f553026efaea68aa1304a3aaf39c6c226344e365d614db2e2a30db",
+      "loai": "js"
+    },
+    "/script/lang_en.js": {
+      "size": 114287,
+      "sha256": "3c69b748e0f4824baf319f22852996e994382d726f2bb866e3c4b18e1e0f05b6",
+      "loai": "js"
+    },
+    "/script/menu.js": {
+      "size": 4762,
+      "sha256": "9ef902a0e6c62a7247630bef1ff363a40d63c909c1105029a05c00b0e77a2750",
+      "loai": "js"
+    },
+    "/script/common.js": {
+      "size": 23205,
+      "sha256": "745fbee4488917c0b89c2661acea95568beb6da5345c5ff03949730462f314e3",
+      "loai": "js"
+    },
+    "/script/jquery.js": {
+      "size": 93637,
+      "sha256": "ba6eda7945ab8d7e57b34cc5a3dd292fa2e4c60a5ced79236ecf1a9e0f0c2d32",
+      "loai": "js"
+    },
+    "/script/sha256.js": {
+      "size": 6784,
+      "sha256": "a9c1a625f719f8665afc89816ed7c6c44cfb20e935add2c93fd3efc10c0dad36",
+      "loai": "js"
+    },
+    "/script/port_forwarding.js": {
+      "size": 45029,
+      "sha256": "9a0df1a0ff519c1475f0b18ff1a2b209df29ee8f23d10972fd7812f9b1e5cfbb",
+      "loai": "js"
+    },
+    "/script/protocol.js": {
+      "size": 2506,
+      "sha256": "1ab50aecaa32116730312b3ea8133445773473f6fafc1e2ed85a35f37b3bca67",
+      "loai": "js"
+    },
+    "/script/json2.js": {
+      "size": 17521,
+      "sha256": "4b05fd300b023998641714cb534c7c0d6b91bd4fb7ce461959ac28f9db0ec328",
+      "loai": "js"
+    },
+    "/style/ont.css": {
+      "size": 11223,
+      "sha256": "631d9601e60a757f7cfecbd2ef9cc85665b68d8c6ef86830fac3ccb54a979cf6",
+      "loai": "css"
+    },
+    "/style/reset.css": {
+      "size": 1015,
+      "sha256": "02199a3a74aa01644afe138e531c68a97bd44616553748399d12bd25a19d3ba3",
+      "loai": "css"
+    },
+    "/style/css3pie/PIE.htc": {
+      "size": 1733,
+      "sha256": "e370c7cb68ac74ced7637b79134b6410d794ca5bdbb284983cda7e17535c43fc",
+      "loai": "css"
+    },
+    "/images/logo.png": {
+      "size": 2708,
+      "sha256": "65a847ac1679706a0bf5fdeb7bdbbdfe4a88b116733284f59278fb9e4dbb29cf",
+      "loai": "img"
+    },
+    "/images/body_bg.png": {
+      "size": 158,
+      "sha256": "e0bd875c1dfce34cbad0b249fda04996892761642d751948ee0402a43f79d20b",
+      "loai": "img"
+    },
+    "/images/menu_bg.png": {
+      "size": 2736,
+      "sha256": "b59ebee480a21fa57544a7cecc88658d73c5c36cabe60d110acfdd601bba3e55",
+      "loai": "img"
+    },
+    "/images/status_bg.png": {
+      "size": 4328,
+      "sha256": "c8fac3f06c717eec594876192206f26fdff7b1becdc8cf8a08ca819022a81896",
+      "loai": "img"
+    },
+    "/images/wireless_bg.png": {
+      "size": 3681,
+      "sha256": "f70137780c73aa83ec8c7374ec24a0b0915899d7ff3b1ea65040b7ca4b67381c",
+      "loai": "img"
+    },
+    "/images/advance_bg.png": {
+      "size": 3935,
+      "sha256": "faf2c558710eb8161c39e5fdccb028e0a8987220f53a4df783931f8dbb6efb40",
+      "loai": "img"
+    },
+    "/images/security_bg.png": {
+      "size": 1485,
+      "sha256": "472958d88832e600678431509589dd2713ac57a72a75c6752ec525ca4dacf093",
+      "loai": "img"
+    },
+    "/images/utilities_bg.png": {
+      "size": 4435,
+      "sha256": "8a70486c030882ce8c93730264d81b9fd41e0ddfc34a27cb483fdc2bde728324",
+      "loai": "img"
+    },
+    "/images/support_bg.png": {
+      "size": 2853,
+      "sha256": "43670e1f5de5689251069dfa6460df319d42725ad5b13b687991b7aae264b9a0",
+      "loai": "img"
+    },
+    "/images/voip_bg.png": {
+      "size": 4591,
+      "sha256": "af4bed49676a13f1689a010d47cc387f55730af74416e525230e1904ed72dcbb",
+      "loai": "img"
+    },
+    "/images/submenu_selected.png": {
+      "size": 1361,
+      "sha256": "2c247d52af4427a55e48029f364865ca5609ba68c50565e2e97e735994657b32",
+      "loai": "img"
+    },
+    "/images/submenu_selected2.png": {
+      "size": 1853,
+      "sha256": "a1a0666b9a3ab90e25abdbd4695a58f2c3a49db146b62138013006273ee81ae9",
+      "loai": "img"
+    }
+  }
+}

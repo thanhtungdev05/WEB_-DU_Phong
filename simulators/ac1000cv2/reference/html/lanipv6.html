@@ -1,0 +1,1100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var wan_list = new Array();
+var prefix_list = new Array();
+var v6localhost_list = new Array();
+var WanIndex = 0;
+
+var RadvdEnable = 1;
+var RaManageFlag = 0;
+var RaOtherFlag = 0;
+var RaMaxIntervalTime = 0;
+var RaMinIntervalTime = 0;
+var plifetime = 0;
+var vlifetime = 0;
+
+var Dhcp6sEnable = 0;
+var PrefixMode = 0;
+var ParentPrefix = "";
+var ChildPrefixBits = "";
+var Dhcp6sStart = "";
+var Dhcp6sEnd = "";
+
+var UlaEnable = 0;
+var UlaMode = 0;
+var UlaPrefix = "";
+var dnstype = 0;
+var v6domain_local_host = "";
+var v6ip_local_host = "";
+
+prefix_list[0] = { index:" 0", prefix: "", plifetime: "0", vlifetime: "0" };
+prefix_list[1] = { index:" 1", prefix: "", plifetime: "0", vlifetime: "0" };
+prefix_list[2] = { index:" 2", prefix: "", plifetime: "0", vlifetime: "0" };
+prefix_list[3] = { index:" 3", prefix: "", plifetime: "0", vlifetime: "0" };
+prefix_list[4] = { index:" 4", prefix: "", plifetime: "0", vlifetime: "0" };
+prefix_list[5] = { index:" 5", prefix: "", plifetime: "0", vlifetime: "0" };
+prefix_list[6] = { index:" 6", prefix: "", plifetime: "0", vlifetime: "0" };
+prefix_list[7] = { index:" 7", prefix: "", plifetime: "0", vlifetime: "0" };
+WanIndex = 0;
+
+ Dhcp6sEnable = 1;
+
+ PrefixMode = 0;
+
+ ParentPrefix = "";
+
+ ChildPrefix = "ffff::1";
+
+ Dhcp6sStart = "";
+
+ Dhcp6sEnd = "";
+
+ plifetime = "0";
+
+ vlifetime = "0";
+
+ RadvdEnable = 1;
+
+ RaManageFlag = 1;
+
+ RaOtherFlag = 1;
+
+ RaMaxIntervalTime = 300;
+
+ RaMinIntervalTime = 60;
+
+ UlaEnable = 0;
+
+ UlaMode = 0;
+
+ UlaPrefix = "";
+
+ dnstype  = 1;
+v6localhost_list = [
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+}
+];
+
+wan_list[0] = { index:" 0", name: "1_INTERNET_TR069_IPTV_R_VID_0" };
+
+
+function FreshTable(){
+	var ip = "";
+	var domain = "";
+	var value = "";
+	var TR = "";
+	TR += "<table id='localhostTable' class='mlist'>";
+	TR += '<tr>';
+	TR += '<th colspan="4" class="tableTitle">' + Xlanipv6String[40] +'</th>\n';
+	TR += '</tr>\n';
+	TR += '<tr>\n';
+	TR += '<th>' + Xlanipv6String[41] +'</th>\n';
+	TR += '<th>' + Xlanipv6String[42] +'</th>\n';
+	TR += '<th>' + WebString.Edit +'</th>\n';
+	TR += '</tr>\n';
+	
+	if(v6localhost_list.length == 0){
+		TR += '</table>\n';
+		$("#v6localhost_value").val(value);
+		$("#v6localHostDiv").html(TR);
+		return;
+	}else{
+		$.each(v6localhost_list, function(id, el){
+			if (id > 0){
+				value += "-.-";
+			}
+
+			value += el.ip + "#" + el.domain + "#" + el.enable;
+
+			ip = el.ip;
+			if (ip == "0.0.0.0"){
+				ip = "ALL IP";
+			}
+			if(el.enable == 1) {
+				TR += '<tr>\n';	
+				TR += '<td>' + el.ip + '</td>\n';
+				TR += '<td>' + el.domain + '</td>\n';
+				TR += '<td><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+				TR += '</tr>\n';
+			}	
+		});
+		
+		TR += '</table>\n';
+	}
+	
+	$("#v6localhost_value").val(value);
+	$("#v6localHostDiv").html(TR);
+
+	$(".remove_btn").click(function(){
+		if (!confirm(WebString.delete_confirm))
+		{
+			return;
+		}
+
+		var row = this.parentNode.parentNode.rowIndex;
+		var index=0;
+
+		for (var i = 0; i < v6localhost_list.length; i++ ){
+			if(v6localhost_list[i].enable == 1) {
+				index +=1;
+				if(row-1 == index) {
+					v6localhost_list[i].enable = 0;
+					v6localhost_list[i].ip = "";
+					v6localhost_list[i].domain = "";
+					break;
+				}
+			}
+		}
+		FreshTable();
+		XDoSubmit();
+	});	
+}
+
+function dataInit()
+{
+    var i;
+    if(0 == wan_list.length)
+    {
+        $("#wan_conlist").append("<option>" + "NO_WAN_Connection" + "</option>");
+    }
+    else
+    {
+        for (i = 0; i < wan_list.length; i++)
+        {
+            $("#wan_conlist").append("<option value=\"" + parseInt(wan_list[i].index) + "\">" + wan_list[i].name + "</option>");
+        }
+    }
+
+    if(1 == RadvdEnable)
+    {
+        $("#radvd_enable").attr("checked", true);
+    }
+    else
+    {
+        $("#radvd_enable").attr("checked", false);        
+    }
+
+    if(1 == Dhcp6sEnable)
+    {
+        $("#dhcp6s_enable").attr("checked", true);
+    }
+    else
+    {
+        $("#dhcp6s_enable").attr("checked", false);       
+    }
+
+    if(1 == UlaEnable)
+    {
+        $("#ula_enable").attr("checked", true);
+    }
+    else
+    {
+        $("#ula_enable").attr("checked", false);        
+    }
+
+    $("#ula_prefix_mode").val(UlaMode);
+    ula_prefix_mode_change();
+
+    if (UlaMode == 0)
+    {
+		$("#ula_prefix").val(UlaPrefix);
+    }
+    else if (UlaMode == 1)
+    {
+    	$("#ula_auto_value").html(UlaPrefix);
+        $("#ula_auto_prefix").val(UlaPrefix);
+    }
+
+    if(1 == RaManageFlag)
+    {
+        $("#m_flag").attr("checked", true);
+        ChangeManagedFlag();
+    }
+    else
+    {
+        $("#m_flag").attr("checked", false);
+    }
+
+    if(1 == RaOtherFlag)
+    {
+        $("#o_flag").attr("checked", true);
+        ChangeManagedFlag();
+    }
+    else
+    {
+        $("#o_flag").attr("checked", false);
+    }
+    
+    if (0 == dnstype)
+    {
+        $("#dnsrelay").attr("checked",true);        
+    }
+    else
+    {
+        $("#dnsproxy").attr("checked",true);        
+    }
+    
+    if (PrefixMode == 1)
+    {
+        $("#parent_prefix").val(ParentPrefix);
+        $("#ptime").val(plifetime);
+        $("#vtime").val(vlifetime);
+    }
+    else
+    {
+        $("#parent_prefix").val(prefix_list[WanIndex].prefix);
+        $("#ptime").val(prefix_list[WanIndex].plifetime);
+        $("#vtime").val(prefix_list[WanIndex].vlifetime);    
+    }
+    
+    $("#child_prefix_bits").val(ChildPrefixBits);
+    $("#Dhcp6s_minaddr").val(Dhcp6sStart);
+    $("#Dhcp6s_maxaddr").val(Dhcp6sEnd);
+    $("#max_ra_interval").val(RaMaxIntervalTime);
+    $("#min_ra_interval").val(RaMinIntervalTime);
+    $("#prefix_mode")[0].selectedIndex = PrefixMode;
+    $("#v6domain_local_host").val(v6domain_local_host);
+    $("#v6ip_local_host").val(v6ip_local_host);
+}
+
+function ChangeRADVD()
+{
+    if($("#radvd_enable").attr('checked') == undefined)
+    {        
+        $("#m_flag").attr("disabled", true);
+        $("#o_flag").attr("disabled", true);
+        $("#max_ra_interval").attr("disabled", true);
+        $("#min_ra_interval").attr("disabled", true);
+        $("#radvdvalue").val("0");
+    }
+    else
+    {       
+        //$("#m_flag").attr("disabled", false);
+        //$("#o_flag").attr("disabled", false);
+        //$("#max_ra_interval").attr("disabled", false);
+        //$("#min_ra_interval").attr("disabled", false);
+        $("#radvdvalue").val("1");
+    }  
+}
+
+function ChangeDHCP6S()
+{
+    $("#Dhcp6svalue").val("1"); 
+    if($("#dhcp6s_enable").attr('checked') == undefined)
+    {
+        $("Dhcp6s_minaddr").val("");        
+        $("Dhcp6s_maxaddr").val(""); 
+        $("#Dhcp6svalue").val("0");      
+    }    
+}
+
+function ChangeULA()
+{
+    $("#ulavalue").val("1"); 
+    if($("#ula_enable").attr('checked') == undefined)
+    {
+        $("#ulavalue").val("0");      
+    }    
+}
+
+function ChangeManagedFlag()
+{
+    if($("#m_flag").attr('checked') == undefined)
+    {
+        $("#managed_flag_value").val("0");
+    }
+    else
+    {
+        $("#managed_flag_value").val("1");
+    }
+}
+
+function ChangeOtherFlag()
+{
+    if($("#o_flag").attr('checked') == undefined)
+    {
+        $("#other_flag_value").val("0");
+    }
+    else
+    {
+        $("#other_flag_value").val("1");
+    }
+}
+
+function wanindex_change()
+{
+    $("#parent_prefix").val(prefix_list[$("#wan_conlist").val()].prefix);
+    $("#ptime").val(prefix_list[$("#wan_conlist").val()].plifetime);
+    $("#vtime").val(prefix_list[$("#wan_conlist").val()].vlifetime);
+}
+
+function prefix_mode_change()
+{
+    var mode = $("#prefix_mode").val();
+    if ("0" == mode) 
+    {        
+        $("#wan_conlist").show();
+        $("#parent_prefix").attr("disabled",true);      
+        $("#ptime").attr("disabled",true); 
+        $("#vtime").attr("disabled",true);
+        $("#parent_prefix").val(prefix_list[WanIndex].prefix);  
+        $("#ptime").val(prefix_list[WanIndex].plifetime);  
+        $("#vtime").val(prefix_list[WanIndex].vlifetime);  
+    }
+    else 
+    {
+        $("#wan_conlist").hide();        
+        $("#parent_prefix").attr("disabled",false);
+        $("#ptime").attr("disabled",false); 
+        $("#vtime").attr("disabled",false);
+        $("#parent_prefix").val(ParentPrefix);
+        $("#ptime").val(plifetime);
+        $("#vtime").val(vlifetime);        
+    }
+}
+
+function ula_prefix_mode_change()
+{
+    var ula_prefix_mode = $("#ula_prefix_mode").val();
+    if ("0" == ula_prefix_mode) 
+    {
+        $("#ula_manual_mode").show();
+        $("#ula_auto_mode_value").hide();
+        $("#ula_auto_mode_btn").hide();
+        $("#ula_prefix_mode").val("0");
+    }
+    else 
+    {
+        $("#ula_auto_mode_value").show();
+        $("#ula_auto_mode_btn").show();
+        $("#ula_manual_mode").hide();
+        $("#ula_prefix_mode").val("1");
+    }
+}
+
+function RestoreConfig()
+{
+    if (!confirm(WebString.lanipv6_restore))
+    {
+        return;
+    }
+    $("#radvdvalue").val("1");
+    $("#managed_flag_value").val("0");
+    $("#other_flag_value").val("1");
+    $("#max_ra_interval").val("300");
+    $("#min_ra_interval").val("60");
+    $("#Dhcp6svalue").val("1");
+    $("#prefix_mode").val("0");
+    $("#ulavalue").val("0");
+    $("#ula_prefix_mode").val("0");
+    $("#ula_prefix").val("");
+    $('input:radio[name="dnstype"]:checked').val("1");
+    $("#XForm").submit();
+}
+
+function HaveSameRule(ipaddr, domain){
+	for (var i = 0; i < v6localhost_list.length; i++ ){
+		if(v6localhost_list[i].enable == 1) {
+			if((v6localhost_list[i].ip == ipaddr) 
+				|| (v6localhost_list[i].domain == domain)){
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+function doCheckVal(ipaddr, domain){
+	
+	if (ipaddr.length == 0){
+		alert(Xlanipv6String[44]);
+		return false;
+	}else if ((false == isValidIpAddress6(ipaddr))){
+		alert(Xlanipv6String[48]);
+		return false;
+	}else if (true == HaveSameRule(ipaddr, domain)){
+		alert(Xlanipv6String[45]);
+		return false;	
+	}else if (false == isValidDomain(domain)){
+		alert(Xlanipv6String[47]);
+		return false;	
+	}	
+	return true;
+}
+
+function getv6TempLocalHost(ipaddr, domain)
+{
+	for (var i = 0; i < v6localhost_list.length; i++ ){
+		if((v6localhost_list[i].enable == 0)
+			&& (v6localhost_list[i].ip == ipaddr) ){
+			for (var j = 0; j < v6localhost_list.length; j++ ){
+				if((v6localhost_list[j].enable == 0)
+					&& (v6localhost_list[j].domain == domain) ){
+					v6localhost_list[j].domain = "";
+					v6localhost_list[j].ip = "";
+				}
+			}
+			return i;
+		}
+	}
+	for (var i = 0; i < v6localhost_list.length; i++ ){
+		if((v6localhost_list[i].enable == 0)
+			&& (v6localhost_list[i].domain == domain) ){
+			return i;
+		}
+	}
+	for (var i = 0; i < v6localhost_list.length; i++ ){
+		if((v6localhost_list[i].ip == "") 
+			&& (v6localhost_list[i].domain == "")){
+			return i;
+		}
+	}
+	for (var i = 0; i < v6localhost_list.length; i++ ){
+		if(v6localhost_list[i].enable == 0){
+			return i;
+		}
+	}
+	return v6localhost_list.length;
+}
+
+function WebInit()
+{
+    dataInit();
+    ChangeRADVD();
+    ChangeDHCP6S();
+    ChangeULA();
+    ChangeManagedFlag();
+    ChangeOtherFlag();
+    prefix_mode_change();
+    SetMode();
+    WebStepIndex();
+    FreshTable();
+}
+
+function AddRule(){
+	var ipaddr;
+	var domain;
+	var index;
+
+	ipaddr = $("#v6ip_local_host").val();
+	domain = $("#v6domain_local_host").val();
+
+	ipaddr = $.trim(ipaddr);
+	domain = $.trim(domain);
+	
+	if (false == doCheckVal(ipaddr, domain)){
+		return;
+	}
+
+	index = getv6TempLocalHost(ipaddr, domain);
+	if(index == v6localhost_list.length) {
+		alert(XlanString[33]);
+		return;
+	}
+	v6localhost_list[index].enable = 1;
+	v6localhost_list[index].ip = ipaddr;
+	v6localhost_list[index].domain = domain;
+	FreshTable();
+	XDoSubmit();
+}
+
+$(document).ready(function (){
+   $("#btn_apply").click(function(){
+        XDoSubmit();
+    });
+    
+    $("#radvd_enable").click(function(){
+        ChangeRADVD();
+    });
+    
+    $("#dhcp6s_enable").click(function(){
+        ChangeDHCP6S();
+    });
+    
+    $("#m_flag").click(function(){
+        ChangeManagedFlag();
+    });
+    
+    $("#o_flag").click(function(){
+        ChangeOtherFlag();
+    });
+    
+    $("#prefix_mode").change(function() {
+        prefix_mode_change();
+    });
+
+    $("#ula_prefix_mode").change(function() {
+        ula_prefix_mode_change();
+    });
+
+    $("#generatebtn").click(function() {
+        return;
+        $.post("/GponForm/ula_AutoGeneratePrefix", "hi", function(data){
+            data = data.replace(/"/g, "");
+            $("#ula_auto_value").html(data);
+            $("#ula_auto_prefix").val(data);
+        });
+    });
+
+    $("#ula_enable").click(function(){
+        ChangeULA();
+    }); 
+    $("#btn_store").click(function(){
+        return;
+        RestoreConfig();
+    });
+    
+    $("#wan_conlist").change(function() {
+        wanindex_change();
+    });
+	
+    $("#dnsrelay").change(function(){
+	    SetMode();
+    });
+
+    $("#dnsproxy").change(function(){
+        SetMode();
+    });
+
+    $("#btn_add").click(function(){
+        AddRule();
+    });
+});
+
+function isValidIpChar(ipchar)
+{
+    var str="0123456789abcdefABCDEF";
+    var i = 0;
+   
+    if (ipchar.length == 0 || ipchar.length > 4)
+    {
+        return false;
+    }
+    
+    for(i = 0; i < ipchar.length; i++)
+    {        
+        if (str.indexOf(ipchar.charAt(i)) < 0)
+        {
+            return false;
+        }    
+    }    
+
+    return true;   
+}
+
+function isValidSuffix(address)
+{
+    var j = 0;
+    address = address.toUpperCase();
+    
+    if (address == "0:0:0:0" || address == "FFFF:FFFF:FFFF:FFFF")
+        return false;
+        
+    ipParts = address.split(':');
+    if (ipParts.length != 4)
+    {
+        return false;
+    }
+    else
+    {  
+        for(j = 0; j < 4; j++)
+        {          
+            if(false == isValidIpChar(ipParts[j]))
+            {
+                return false;
+            }
+        }        
+    }
+    return true;
+}
+
+function isValidPrefix(address)
+{
+    var j = 0;
+    var ret;
+
+	do {
+		if (true == isValidIp6Prefix(address)) {
+			break;
+		}
+	    else if (false == isValidIpAddress6(address)) {
+	    	return false;
+		}
+	}while(0);
+
+	ret = /^fc[\da-f]{2}/i.test(address);
+
+	return ret;
+}
+
+function compareIpv6Addr(ipv6addrmin, ipv6addrmax)
+{
+    ipv6addrmin = ipv6addrmin.toUpperCase();    
+    ipv6addrmax = ipv6addrmax.toUpperCase();
+    
+    var ip6addr1 = ipv6addrmin.split(':');
+    var ip6addr2 = ipv6addrmax.split(':');
+    
+    for(i = 0; i < 4; i++)
+    {       
+        if (parseInt(ip6addr1[i], 16) < parseInt(ip6addr2[i], 16)) 
+        {
+            return 1;
+        }
+        
+        if (parseInt(ip6addr1[i], 16) > parseInt(ip6addr2[i], 16)) 
+        {
+            return -1;
+        }
+    }
+    
+    return 0;
+}
+
+function CheckSetValue()
+{
+    var max_val = $("#max_ra_interval").val();
+    var min_val = $("#min_ra_interval").val();    
+    
+    if ($("#prefix_mode").val() == 1)
+    {
+        if($("#parent_prefix").val().length == 0)
+        {
+            alert(Xlanipv6String[35]);
+            $("#parent_prefix").focus();
+            return false;
+        }		
+        else if ($("#parent_prefix").val().length > 0)
+        {	
+            if (isValidIp6Prefix($("#parent_prefix").val()) == false)
+            {
+                alert(Xlanipv6String[35]);
+                $("#parent_prefix").focus();
+                return false;
+             }					
+        }
+        if (($("#ptime").val() > 4294967295) || ($("#ptime").val() < 0))
+        {
+            alert(Xlanipv6String[33]);
+            $("#ptime").focus();
+            return false;        
+        }
+        
+        if (($("#vtime").val() > 4294967295) || ($("#vtime").val() < 0))
+        {
+            alert(Xlanipv6String[34]);
+            $("#vtime").focus();
+            return false;        
+        }
+
+        if ($("#ptime").val() >= $("#vtime").val())
+        {
+            alert(Xlanipv6String[37]);
+            $("#ptime").focus();
+            return false;        
+        }
+    }
+
+    if($("#radvd_enable").attr('checked') == "checked")
+    {
+        if(false == IsNum(max_val) || parseInt(max_val) > 1800 || parseInt(max_val) < 4)
+        {
+            alert(WebString.max_ra_interval);
+            $("#max_ra_interval").focus();
+            return false;
+        }
+
+        if(false == IsNum(min_val) || parseInt(min_val) >  0.75 * (parseInt(max_val)) || parseInt(min_val) < 3)
+        {
+            alert(WebString.min_ra_interval);
+            $("#min_ra_interval").focus();
+            return false;
+        }
+    }    
+
+	do {
+    if ($("#dhcp6s_enable").attr('checked') == "checked") 
+    {    
+        if (($("#Dhcp6s_minaddr").val().length == 0) && ($("#Dhcp6s_maxaddr").val().length == 0))
+        {
+            break;
+        }
+
+        if(false == isValidSuffix($("#Dhcp6s_minaddr").val()))
+        {
+            alert(Xlanipv6String[16]);
+            $("#Dhcp6s_minaddr").focus();
+            return false;
+        }
+        if(false == isValidSuffix($("#Dhcp6s_maxaddr").val()))
+        {
+            alert(Xlanipv6String[17]);
+            $("#Dhcp6s_maxaddr").focus();
+            return false;
+        }        
+    
+        if( compareIpv6Addr($("#Dhcp6s_minaddr").val(), $("#Dhcp6s_maxaddr").val()) < 1)
+        {
+            alert(Xlanipv6String[18]);
+            return false;
+        }      
+    }
+    }while(0)
+    
+
+    if($("#ula_enable").attr('checked') == "checked"){
+    	var ula_prefix_mode = $("#ula_prefix_mode").val();
+	    if ("0" == ula_prefix_mode) 
+	    {
+	        if(false == isValidPrefix($("#ula_prefix").val()))
+	        {
+	            alert(Xlanipv6String[36]);
+	            $("#ula_prefix").focus();
+	            return false;
+	        }
+	    }
+    }    
+
+    return true;
+}
+
+function WebDoSubmit()
+{
+    
+    if( false == CheckSetValue())
+    {
+        return;
+    }
+    $("#parent_prefix").attr("disabled", false);
+    $("#XForm").submit();
+}
+
+function SetMode(){
+	if (1 == $("input[name='dnstype']:checked").val()){
+		$("#div_ipv6dnstype").show();
+		$("#v6localHostDiv").show();
+		WebStepIndex();
+	}else if (0 == $("input[name='dnstype']:checked").val()){
+		$("#div_ipv6dnstype").hide();
+		$("#v6localHostDiv").hide();
+		WebStepIndex();
+	}
+}	
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input id="v6localhost_value" name="v6localhost_value" type="hidden" value="" />
+<div disabled="disabled">
+<div id="div_prefix_mode" class="cfgstep">
+    <p><strong id="XS27"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS28"></td>
+            <td>
+                <select name="prefix_mode" id="prefix_mode" disabled="disabled">
+                    <option value="0">Auto</option>
+                    <option value="1">Static</option>
+                </select>
+            </td>
+        </tr> 
+    
+        <tr id="prefix_auto">
+            <td width="200" id="XS29"></td>
+            <td>
+                <select name="wan_conlist" id="wan_conlist" disabled="disabled">
+                </select>
+                <input type="text" name="parent_prefix" id="parent_prefix" size="24" disabled style="margin-top: 5px" />
+            </td>
+        </tr>
+        <!--        
+        <tr id="prefix_static">
+            <td width="200" id="XS30"></td>
+            <td>
+                <input type="text" name="parent_prefix" id="parent_prefix" size="24"  style="margin-top: 5px" />
+            </td>
+        </tr>
+        -->
+    
+        <tr>
+            <td width="200" id="XS31"></td>
+            <td>
+                <input type="text" name="ptime" id="ptime" disabled="disabled" size="24" style="margin-top: 5px" value="7200" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/>
+            </td>
+        </tr>
+        
+        <tr>
+            <td width="200" id="XS32"></td>
+            <td>
+                <input type="text" name="vtime" id="vtime" disabled="disabled" size="24" style="margin-top: 5px" value="86400" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/>
+            </td>
+        </tr>
+        
+    </table>
+</div>
+
+<div id="div_radvd_set" class="cfgstep">
+    <p><strong id="XS0"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS1"></td>
+            <td><input type="checkbox" name="radvd_enable" id="radvd_enable" disabled="disabled" /></td>
+            <td><input type="hidden" name="radvdvalue" id="radvdvalue"/></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS2"></td>
+            <td><input type="checkbox" name="m_flag" id="m_flag" disabled="disabled" /><input type="hidden" name="managed_flag_value" id="managed_flag_value" /></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS4"></td>
+            <td><input type="checkbox" name="o_flag" id="o_flag" disabled="disabled" /><input type="hidden" name="other_flag_value" id="other_flag_value"/></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS6"></td>
+            <td style="white-space:nowrap;"><input type="text" name="max_ra_interval" id="max_ra_interval" disabled="disabled" value="600" maxlength="4" size="4" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/>&nbsp;s</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS7"></td>
+            <td style="white-space:nowrap;"><input type="text" name="min_ra_interval" id="min_ra_interval" disabled="disabled" value="198" maxlength="4" size="4" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/>&nbsp;s</td>
+            <td></td>
+        </tr>
+    </table>
+</div>
+
+<div id="div_dhcp6s" class="cfgstep">
+    <p><strong id="XS8"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS9"></td>
+            <td><input type="checkbox" name="dhcp6s_enable" id="dhcp6s_enable" disabled="disabled" />
+            	  <input type="hidden" name="Dhcp6svalue" id="Dhcp6svalue" /></td>
+        </tr>
+        <tr id="dhcp_pd_type2" style="display:none">
+            <td width="200" id="XS12"></td>
+            <td><input type="text" name="child_prefix_bits" id="child_prefix_bits" size="24" disabled="disabled" /></td>
+        </tr>
+        <tr id="static_type1">
+            <td width="200" id="XS13"></td>
+            <td><input type="text" name="Dhcp6s_minaddr" id="Dhcp6s_minaddr" size="24" disabled="disabled" /></td>
+        </tr>
+        <tr id="static_type2">
+            <td width="200" id="XS14"></td>
+            <td><input type="text" name="Dhcp6s_maxaddr" id="Dhcp6s_maxaddr" size="24" disabled="disabled" />
+        </td>
+        </tr>
+    </table>
+</div>
+
+<input type="hidden" name="ula_auto_prefix" id="ula_auto_prefix" />
+<div id="div_ula" class="cfgstep">
+    <p><strong id="XS19"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS20"></td>
+            <td><input type="checkbox" name="ula_enable" id="ula_enable" disabled="disabled" />
+            	  <input type="hidden" name="ulavalue" id="ulavalue" /></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS21"></td>
+            <td><select name="ula_prefix_mode" id="ula_prefix_mode" disabled="disabled">
+                    <option value="0">Manual</option>
+                    <option value="1">Auto</option>
+                </select>
+            </td>
+        </tr>
+        <tr id="ula_manual_mode">
+            <td width="200" id="XS22"></td>
+            <td><input type="text" name="ula_prefix" id="ula_prefix" disabled="disabled" /></td>
+        </tr>
+        <tr id="ula_auto_mode_value" style="display:none">
+            <td width="200">ULA Prefix</td>
+            <td>
+                <span id="ula_auto_value">fc01::</sapn>
+            </td>
+        </tr>
+        <tr id="ula_auto_mode_btn" style="display:none">
+            <td><a href="#" class="btn" id="generatebtn"><script>document.write(WebString.generateULA);</script></a></td>
+            <td></td>
+        </tr>        
+    </table>
+</div>
+
+<div id="div_ipv6dns" class="cfgstep">
+    <p><strong id="XS23"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS24"></td>
+            <td><input type="radio" name="dnstype" id="dnsrelay" disabled="disabled" value="0" checked="checked"/><span id="XS25"></td>
+            <td><input type="radio" name="dnstype" id="dnsproxy" disabled="disabled" value="1"/><span id="XS26"></td>
+        </tr>
+    </table>
+</div>
+
+<div id="div_ipv6dnstype" class="cfgstep" style="display:none" name="hide">
+    <p><strong id="XS46"></strong></p>
+    <table>
+        <tr id="local_host_domain">
+            <td width="200" id="XS38"></td>
+            <td><input type="text" name="v6domain_local_host" id="v6domain_local_host" maxlength="64" onkeyup="value=value.replace(/[^\w\.\-\/]/ig,'')" onkeypress="return OnKeyPress(event, X_INPUT_URL);" /></td>
+        </tr>
+		<tr id="local_host_ip">
+            <td width="200" id="XS39"></td>
+            <td><input type="text" name="v6ip_local_host" id="v6ip_local_host" maxlength="48" onkeypress="return OnKeyPress(event, X_INPUT_IPV6);" /></td>
+        </tr>
+    </table>
+	<a id="btn_add" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Add);</script>
+	</a>
+</div>
+
+<div id="v6localHostDiv" class="cfglist" style="display:none" name="hide"></div>
+
+<div class="cfgstep">
+    <p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+    <a id="btn_apply" class="btn apply_btn" href="#"><script>document.write(WebString.Apply);</script></a>&nbsp; 
+    <a href="#" id="btn_store" class="btn" style="display:none"><script>document.write(WebString.Restore);</script></a>
+</div>
+</div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+
+

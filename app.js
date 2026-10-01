@@ -5,6 +5,21 @@
 (function () {
   'use strict';
 
+  // Đảm bảo các router dùng frameset đọc được thông tin quyền người dùng trên window.top
+  window._IS_FTC_PORTAL = true;
+  window.XCurrentUser = 2;
+  window.XWebTimeout = 86400; // 24 giờ cho môi trường phòng lab thực hành
+  window.WebProject = 'general';
+  window.num_lan = 4;
+  window.num_wifi = 4;
+  window.num_5g_wifi = 4;
+  window.num_usb = 1;
+  window.WebPotsNumber = 0;
+  window.XHasWifi = 1;
+  window.XHas80211acWifi = 1;
+  window.CurMainMenu = 0;
+  window.CurSubMenu = 'devinfo';
+
   // ── State ────────────────────────────────────────────────────────
   let currentDeviceId = null;
   let currentLessonId = null;
@@ -127,7 +142,7 @@
     const id = String(deviceId).trim().toLowerCase();
     return id === 'ax3000c' || id === 'ax3000hv2' || id === 'ax3000s' ||
            id === 'ont_be6500c' || id === 'be6500c' || id === 'be12000' ||
-           id === 'vigor2927' || id === 'mikrotik_hexs';
+           id === 'vigor2927' || id === 'mikrotik_hexs' || id === 'ac1000cv2';
   }
 
   function populateDeviceDropdown(devices) {
@@ -620,16 +635,26 @@
                         return text === 'ok' || text === 'apply';
                       } catch (error) { return false; }
                     })();
+                    const laNutLuuAc1000cv2 = (currentDeviceId === 'ac1000cv2' || currentDeviceId === 'sim_ac1000cv2') && (function () {
+                      try {
+                        const anchor = (el.tagName === 'A') ? el : (el.closest ? el.closest('a') : null);
+                        if (!anchor) return false;
+                        if (anchor.id && (anchor.id === 'btn_apply' || anchor.id.startsWith('btn_apply'))) return true;
+                        const text = (anchor.textContent || '').trim().toLowerCase();
+                        return text === 'apply' || text === 'save' || text === 'add';
+                      } catch (error) { return false; }
+                    })();
                     if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' ||
-                        (el.getAttribute && el.getAttribute('role') === 'button') || laNutLuuMikrotik) {
+                        (el.getAttribute && el.getAttribute('role') === 'button') || laNutLuuMikrotik || laNutLuuAc1000cv2) {
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
                       const isSaveOrApply = laNutLuuMikrotik ||
+                        laNutLuuAc1000cv2 ||
                         btnVal.includes('save') ||
                         btnVal.includes('apply') || 
                         btnVal.includes('submit') || 
                         btnVal.includes('lưu') || 
                         ((currentDeviceId === 'vigor2927') && (btnVal === 'ok' || el.name === 'submit')) ||
-                        ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06') && (btnVal === 'add' || el.name === 'AddBtn' || el.name === 'Add1')) ||
+                        ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06' || currentLessonId === 'ac1000cv2-bai6' || currentLessonId === 'LAB_AC1000CV2_06') && (btnVal === 'add' || el.name === 'AddBtn' || el.name === 'Add1')) ||
                         (el.type === 'submit' && el.tagName === 'INPUT');
                       if (isSaveOrApply) {
                         doc._ftcLastSaveInteraction = Date.now();
@@ -664,10 +689,19 @@
                         return text === 'ok' || text === 'apply';
                       } catch (error) { return false; }
                     })();
-                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || laNutLuuMikrotik) {
+                    const laNutLuuAc1000cv2 = (currentDeviceId === 'ac1000cv2' || currentDeviceId === 'sim_ac1000cv2') && (function () {
+                      try {
+                        const anchor = (el.tagName === 'A') ? el : (el.closest ? el.closest('a') : null);
+                        if (!anchor) return false;
+                        if (anchor.id && (anchor.id === 'btn_apply' || anchor.id.startsWith('btn_apply'))) return true;
+                        const text = (anchor.textContent || '').trim().toLowerCase();
+                        return text === 'apply' || text === 'save' || text === 'add';
+                      } catch (error) { return false; }
+                    })();
+                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || laNutLuuMikrotik || laNutLuuAc1000cv2) {
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
                       const isOntBai6 = (currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6');
-                      const isPortFwdAdd = (currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06');
+                      const isPortFwdAdd = (currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06' || currentLessonId === 'ac1000cv2-bai6' || currentLessonId === 'LAB_AC1000CV2_06');
 
                       // Nút "Add New" trên thanh công cụ dùng để mở modal thêm mới, KHÔNG phải nút lưu cấu hình
                       const isAddNewBtn = btnVal === 'add new' || el.classList.contains('sim-them') || (isOntBai6 && btnVal === 'add' && !el.closest('.MuiDialog-root, .MuiPaper-root') && !el.classList.contains('dlg-luu'));
@@ -698,6 +732,7 @@
                           (el.name && el.name.toLowerCase() === 'button_apply') ||
                           (el.classList && el.classList.contains('btn-apply'));
                         const isSaveOrApply = laNutLuuMikrotik ||
+                          laNutLuuAc1000cv2 ||
                           isAx3000sApply ||
                           btnVal.includes('save') ||
                           btnVal.includes('apply') || 
@@ -771,6 +806,238 @@
                           } catch (err) { }
                           triggerSaveFlashEffect(doc, el);
 
+                          if (currentDeviceId === 'ac1000cv2' || currentDeviceId === 'sim_ac1000cv2') {
+                            try {
+                              const anchor = (el.tagName === 'A') ? el : (el.closest ? el.closest('a') : null);
+                              if (anchor && e && e.preventDefault) e.preventDefault();
+                              if (!window._sessionRuleCache) window._sessionRuleCache = {};
+                              const cacheKey = `ac1000cv2:${currentLessonId || 'ac1000cv2-bai1'}`;
+                              window._sessionRuleCacheScope = cacheKey;
+                              if (_trackingSession && !_trackingSession.ruleCache) _trackingSession.ruleCache = {};
+
+                              const pPath = (doc.location && doc.location.pathname) ? doc.location.pathname.toLowerCase() : '';
+
+                              // Bài 1: WAN PPPoE
+                              const userEl = doc.querySelector('#ppp_user, input[name="ppp_user"]');
+                              const passEl = doc.querySelector('#ppp_pass, input[name="ppp_pass"]');
+                              if (userEl) {
+                                const uVal = (userEl.value || '').trim();
+                                window._sessionRuleCache['ppp_user'] = {
+                                  actualValue: uVal,
+                                  isSaved: true,
+                                  isMatch: (uVal === 'sgfdl-210208-218')
+                                };
+                                if (_trackingSession) _trackingSession.ruleCache['ppp_user'] = window._sessionRuleCache['ppp_user'];
+                              }
+                              if (passEl) {
+                                const pVal = (passEl.value || '').trim();
+                                window._sessionRuleCache['ppp_pass'] = {
+                                  actualValue: pVal,
+                                  isSaved: true,
+                                  isMatch: (pVal === 'fpt12345')
+                                };
+                                if (_trackingSession) _trackingSession.ruleCache['ppp_pass'] = window._sessionRuleCache['ppp_pass'];
+                              }
+
+                              // Bài 2: Wi-Fi 2.4G & 5G
+                              const ssidEl = doc.querySelector('#ssid_network_name, input[name="ssid_network_name"]');
+                              const keyEl = doc.querySelector('#security_wpa_key, input[name="security_wpa_key"]');
+
+                              if (pPath.includes('wifi5ssid') && ssidEl) {
+                                const sVal = (ssidEl.value || '').trim();
+                                window._sessionRuleCache['wifi5_ssid'] = {
+                                  actualValue: sVal,
+                                  isSaved: true,
+                                  isMatch: (sVal === 'FPT Telecom' || sVal === 'FPT Telecom_5G' || sVal === 'FTP Telecom')
+                                };
+                                if (_trackingSession) _trackingSession.ruleCache['wifi5_ssid'] = window._sessionRuleCache['wifi5_ssid'];
+                              } else if (pPath.includes('wifissid') && ssidEl) {
+                                const sVal = (ssidEl.value || '').trim();
+                                window._sessionRuleCache['wifi24_ssid'] = {
+                                  actualValue: sVal,
+                                  isSaved: true,
+                                  isMatch: (sVal === 'FPT Telecom' || sVal === 'FTP Telecom')
+                                };
+                                if (_trackingSession) _trackingSession.ruleCache['wifi24_ssid'] = window._sessionRuleCache['wifi24_ssid'];
+                              }
+
+                              if (pPath.includes('wifi5secu') && keyEl) {
+                                const kVal = (keyEl.value || '').trim();
+                                window._sessionRuleCache['wifi5_key'] = {
+                                  actualValue: kVal,
+                                  isSaved: true,
+                                  isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                                };
+                                if (_trackingSession) _trackingSession.ruleCache['wifi5_key'] = window._sessionRuleCache['wifi5_key'];
+                                window._ftcAc1000cv2FinalApplyClicked = true;
+                              } else if (pPath.includes('wifisecu') && keyEl) {
+                                const kVal = (keyEl.value || '').trim();
+                                window._sessionRuleCache['wifi24_key'] = {
+                                  actualValue: kVal,
+                                  isSaved: true,
+                                  isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                                };
+                                if (_trackingSession) _trackingSession.ruleCache['wifi24_key'] = window._sessionRuleCache['wifi24_key'];
+                              }
+
+                              // Bài 3: Wi-Fi phụ (IoT / Khách)
+                              const isBai3 = (currentLessonId === 'ac1000cv2-bai3' || currentLessonId === 'LAB_AC1000CV2_03');
+                              if (isBai3) {
+                                const sListEl = doc.querySelector('#ssid_list, select[name="ssid_list"]');
+                                const sListVal = sListEl ? String(sListEl.value).trim() : '';
+                                if (pPath.includes('wifissid')) {
+                                  if (sListEl) {
+                                    window._sessionRuleCache['wifi_iot_index'] = {
+                                      actualValue: sListVal,
+                                      isSaved: true,
+                                      isMatch: (sListVal === '1' || sListVal === 'SSID 2')
+                                    };
+                                    if (_trackingSession) _trackingSession.ruleCache['wifi_iot_index'] = window._sessionRuleCache['wifi_iot_index'];
+                                  }
+                                  const enEl = doc.querySelector('#ssid_enable, input[name="ssid_state"][value="1"]');
+                                  const isEn = Boolean(enEl && enEl.checked);
+                                  window._sessionRuleCache['wifi_iot_enable'] = {
+                                    actualValue: isEn ? '1' : '0',
+                                    isSaved: true,
+                                    isMatch: isEn
+                                  };
+                                  if (_trackingSession) _trackingSession.ruleCache['wifi_iot_enable'] = window._sessionRuleCache['wifi_iot_enable'];
+
+                                  if (ssidEl) {
+                                    const sVal = (ssidEl.value || '').trim();
+                                    window._sessionRuleCache['wifi_iot_ssid'] = {
+                                      actualValue: sVal,
+                                      isSaved: true,
+                                      isMatch: (sVal === 'FPT Telecom-IoT')
+                                    };
+                                    if (_trackingSession) _trackingSession.ruleCache['wifi_iot_ssid'] = window._sessionRuleCache['wifi_iot_ssid'];
+                                  }
+                                } else if (pPath.includes('wifisecu')) {
+                                  if (sListEl && sListVal === '1') {
+                                    window._sessionRuleCache['wifi_iot_index'] = {
+                                      actualValue: sListVal,
+                                      isSaved: true,
+                                      isMatch: true
+                                    };
+                                    if (_trackingSession) _trackingSession.ruleCache['wifi_iot_index'] = window._sessionRuleCache['wifi_iot_index'];
+                                  }
+                                  if (keyEl) {
+                                    const kVal = (keyEl.value || '').trim();
+                                    window._sessionRuleCache['wifi_iot_key'] = {
+                                      actualValue: kVal,
+                                      isSaved: true,
+                                      isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                                    };
+                                    if (_trackingSession) _trackingSession.ruleCache['wifi_iot_key'] = window._sessionRuleCache['wifi_iot_key'];
+                                    window._ftcAc1000cv2FinalApplyClicked = true;
+                                  }
+                                }
+                              }
+
+                              // Bài 4: Cấu hình DNS thủ công (LAN)
+                              const isBai4 = (currentLessonId === 'ac1000cv2-bai4' || currentLessonId === 'LAB_AC1000CV2_04') || pPath.includes('lan');
+                              if (isBai4 && pPath.includes('lan')) {
+                                const ovwrt0 = doc.querySelector('#dns_ovwrt0, input[name="dns_overwrite"][value="1"]');
+                                const isOvwrt = Boolean(ovwrt0 && ovwrt0.checked);
+                                window._sessionRuleCache['dns_overwrite'] = {
+                                  actualValue: isOvwrt ? '1' : '0',
+                                  isSaved: true,
+                                  isMatch: isOvwrt
+                                };
+                                if (_trackingSession) _trackingSession.ruleCache['dns_overwrite'] = window._sessionRuleCache['dns_overwrite'];
+
+                                const p1El = doc.querySelector('#dns_primary, input[name="dns_primary"]');
+                                if (p1El) {
+                                  const p1Val = (p1El.value || '').trim();
+                                  window._sessionRuleCache['dns_primary'] = {
+                                    actualValue: p1Val,
+                                    isSaved: true,
+                                    isMatch: (p1Val === '8.8.8.8')
+                                  };
+                                  if (_trackingSession) _trackingSession.ruleCache['dns_primary'] = window._sessionRuleCache['dns_primary'];
+                                }
+
+                                const p2El = doc.querySelector('#dns_secondary, input[name="dns_secondary"]');
+                                if (p2El) {
+                                  const p2Val = (p2El.value || '').trim();
+                                  window._sessionRuleCache['dns_secondary'] = {
+                                    actualValue: p2Val,
+                                    isSaved: true,
+                                    isMatch: (p2Val === '8.8.4.4')
+                                  };
+                                  if (_trackingSession) _trackingSession.ruleCache['dns_secondary'] = window._sessionRuleCache['dns_secondary'];
+                                }
+                              }
+
+                              // Bài 5: Cấu hình địa chỉ mạng LAN & DHCP
+                              const isBai5 = (currentLessonId === 'ac1000cv2-bai5' || currentLessonId === 'LAB_AC1000CV2_05');
+                              if (isBai5 && pPath.includes('lan')) {
+                                const lanIpEl = doc.querySelector('#lan_ip, input[name="lan_ip"]');
+                                if (lanIpEl) {
+                                  const lanIpVal = (lanIpEl.value || '').trim();
+                                  window._sessionRuleCache['lan_ip'] = {
+                                    actualValue: lanIpVal,
+                                    isSaved: true,
+                                    isMatch: (lanIpVal === '192.168.10.1' || lanIpVal === '192.168.1.1')
+                                  };
+                                  if (_trackingSession) _trackingSession.ruleCache['lan_ip'] = window._sessionRuleCache['lan_ip'];
+                                }
+
+                                const lanMaskEl = doc.querySelector('#lan_mask, input[name="lan_mask"]');
+                                if (lanMaskEl) {
+                                  const lanMaskVal = (lanMaskEl.value || '').trim();
+                                  window._sessionRuleCache['lan_mask'] = {
+                                    actualValue: lanMaskVal,
+                                    isSaved: true,
+                                    isMatch: (lanMaskVal === '255.255.255.0')
+                                  };
+                                  if (_trackingSession) _trackingSession.ruleCache['lan_mask'] = window._sessionRuleCache['lan_mask'];
+                                }
+
+                                const dhcpEnEl = doc.querySelector('#dhcp_enable0, input[name="dhcp_enable"][value="1"]');
+                                const isDhcpEn = Boolean(dhcpEnEl && dhcpEnEl.checked);
+                                window._sessionRuleCache['dhcp_enable'] = {
+                                  actualValue: isDhcpEn ? '1' : '0',
+                                  isSaved: true,
+                                  isMatch: isDhcpEn
+                                };
+                                if (_trackingSession) _trackingSession.ruleCache['dhcp_enable'] = window._sessionRuleCache['dhcp_enable'];
+
+                                const startIpEl = doc.querySelector('#start_ip, #startip, input[name="start_ip"], input[name="startip"]');
+                                if (startIpEl) {
+                                  const startIpVal = (startIpEl.value || '').trim();
+                                  window._sessionRuleCache['dhcp_start'] = {
+                                    actualValue: startIpVal,
+                                    isSaved: true,
+                                    isMatch: (startIpVal === '192.168.10.2' || startIpVal === '192.168.1.2')
+                                  };
+                                  if (_trackingSession) _trackingSession.ruleCache['dhcp_start'] = window._sessionRuleCache['dhcp_start'];
+                                }
+
+                                const endIpEl = doc.querySelector('#end_ip, #endip, input[name="end_ip"], input[name="endip"]');
+                                if (endIpEl) {
+                                  const endIpVal = (endIpEl.value || '').trim();
+                                  window._sessionRuleCache['dhcp_end'] = {
+                                    actualValue: endIpVal,
+                                    isSaved: true,
+                                    isMatch: (endIpVal === '192.168.10.254' || endIpVal === '192.168.1.254')
+                                  };
+                                  if (_trackingSession) _trackingSession.ruleCache['dhcp_end'] = window._sessionRuleCache['dhcp_end'];
+                                }
+                              }
+                            } catch (e) { }
+
+                            let statusMsg = doc.getElementById('ftc-ac1000cv2-save-status');
+                            if (!statusMsg) {
+                              statusMsg = doc.createElement('span');
+                              statusMsg.id = 'ftc-ac1000cv2-save-status';
+                              statusMsg.style.cssText = 'color:#15803d;font-weight:bold;font-size:13px;margin-left:12px;vertical-align:middle;';
+                              if (el.parentNode) el.parentNode.insertBefore(statusMsg, el.nextSibling);
+                            }
+                            statusMsg.textContent = ' Đã lưu cấu hình thành công!';
+                            setTimeout(function () { if (statusMsg) statusMsg.textContent = ''; }, 3500);
+                          }
+
                           if (currentDeviceId === 'vigor2927') {
                             let statusMsg = doc.getElementById('ftc-save-status');
                             if (!statusMsg) {
@@ -793,6 +1060,269 @@
                     el = el.parentNode;
                   }
                 }, true);
+
+                // AC1000C V2: Chặn submit reload toàn trang, lưu dữ liệu nền và cập nhật session
+                if ((currentDeviceId === 'ac1000cv2' || currentDeviceId === 'sim_ac1000cv2') && !doc._ftcAc1000cv2SubmitAttached) {
+                  doc.addEventListener('submit', function (event) {
+                    const form = event.target;
+                    event.preventDefault();
+                    doc._ftcIsSaved = true;
+                    window._hasClickedSaveInGuide = true;
+
+                    try {
+                      if (!window._sessionRuleCache) window._sessionRuleCache = {};
+                      const cacheKey = `ac1000cv2:${currentLessonId || 'ac1000cv2-bai1'}`;
+                      window._sessionRuleCacheScope = cacheKey;
+                      if (_trackingSession && !_trackingSession.ruleCache) _trackingSession.ruleCache = {};
+
+                      const pPath = (doc.location && doc.location.pathname) ? doc.location.pathname.toLowerCase() : '';
+
+                      // Bài 1: WAN PPPoE
+                      const userEl = doc.querySelector('#ppp_user, input[name="ppp_user"]');
+                      const passEl = doc.querySelector('#ppp_pass, input[name="ppp_pass"]');
+                      if (userEl) {
+                        const uVal = (userEl.value || '').trim();
+                        window._sessionRuleCache['ppp_user'] = {
+                          actualValue: uVal,
+                          isSaved: true,
+                          isMatch: (uVal === 'sgfdl-210208-218')
+                        };
+                        if (_trackingSession) _trackingSession.ruleCache['ppp_user'] = window._sessionRuleCache['ppp_user'];
+                      }
+                      if (passEl) {
+                        const pVal = (passEl.value || '').trim();
+                        window._sessionRuleCache['ppp_pass'] = {
+                          actualValue: pVal,
+                          isSaved: true,
+                          isMatch: (pVal === 'fpt12345')
+                        };
+                        if (_trackingSession) _trackingSession.ruleCache['ppp_pass'] = window._sessionRuleCache['ppp_pass'];
+                      }
+
+                      // Bài 2: Wi-Fi 2.4G & 5G
+                      const ssidEl = doc.querySelector('#ssid_network_name, input[name="ssid_network_name"]');
+                      const keyEl = doc.querySelector('#security_wpa_key, input[name="security_wpa_key"]');
+
+                      if (pPath.includes('wifi5ssid') && ssidEl) {
+                        const sVal = (ssidEl.value || '').trim();
+                        window._sessionRuleCache['wifi5_ssid'] = {
+                          actualValue: sVal,
+                          isSaved: true,
+                          isMatch: (sVal === 'FPT Telecom' || sVal === 'FPT Telecom_5G' || sVal === 'FTP Telecom')
+                        };
+                        if (_trackingSession) _trackingSession.ruleCache['wifi5_ssid'] = window._sessionRuleCache['wifi5_ssid'];
+                      } else if (pPath.includes('wifissid') && ssidEl) {
+                        const sVal = (ssidEl.value || '').trim();
+                        window._sessionRuleCache['wifi24_ssid'] = {
+                          actualValue: sVal,
+                          isSaved: true,
+                          isMatch: (sVal === 'FPT Telecom' || sVal === 'FTP Telecom')
+                        };
+                        if (_trackingSession) _trackingSession.ruleCache['wifi24_ssid'] = window._sessionRuleCache['wifi24_ssid'];
+                      }
+
+                      if (pPath.includes('wifi5secu') && keyEl) {
+                        const kVal = (keyEl.value || '').trim();
+                        window._sessionRuleCache['wifi5_key'] = {
+                          actualValue: kVal,
+                          isSaved: true,
+                          isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                        };
+                        if (_trackingSession) _trackingSession.ruleCache['wifi5_key'] = window._sessionRuleCache['wifi5_key'];
+                        window._ftcAc1000cv2FinalApplyClicked = true;
+                      } else if (pPath.includes('wifisecu') && keyEl) {
+                        const kVal = (keyEl.value || '').trim();
+                        window._sessionRuleCache['wifi24_key'] = {
+                          actualValue: kVal,
+                          isSaved: true,
+                          isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                        };
+                        if (_trackingSession) _trackingSession.ruleCache['wifi24_key'] = window._sessionRuleCache['wifi24_key'];
+                      }
+
+                      // Bài 3: Wi-Fi phụ (IoT / Khách)
+                      const isBai3 = (currentLessonId === 'ac1000cv2-bai3' || currentLessonId === 'LAB_AC1000CV2_03');
+                      if (isBai3) {
+                        const sListEl = doc.querySelector('#ssid_list, select[name="ssid_list"]');
+                        const sListVal = sListEl ? String(sListEl.value).trim() : '';
+                        if (pPath.includes('wifissid')) {
+                          if (sListEl) {
+                            window._sessionRuleCache['wifi_iot_index'] = {
+                              actualValue: sListVal,
+                              isSaved: true,
+                              isMatch: (sListVal === '1' || sListVal === 'SSID 2')
+                            };
+                            if (_trackingSession) _trackingSession.ruleCache['wifi_iot_index'] = window._sessionRuleCache['wifi_iot_index'];
+                          }
+                          const enEl = doc.querySelector('#ssid_enable, input[name="ssid_state"][value="1"]');
+                          const isEn = Boolean(enEl && enEl.checked);
+                          window._sessionRuleCache['wifi_iot_enable'] = {
+                            actualValue: isEn ? '1' : '0',
+                            isSaved: true,
+                            isMatch: isEn
+                          };
+                          if (_trackingSession) _trackingSession.ruleCache['wifi_iot_enable'] = window._sessionRuleCache['wifi_iot_enable'];
+
+                          if (ssidEl) {
+                            const sVal = (ssidEl.value || '').trim();
+                            window._sessionRuleCache['wifi_iot_ssid'] = {
+                              actualValue: sVal,
+                              isSaved: true,
+                              isMatch: (sVal === 'FPT Telecom-IoT')
+                            };
+                            if (_trackingSession) _trackingSession.ruleCache['wifi_iot_ssid'] = window._sessionRuleCache['wifi_iot_ssid'];
+                          }
+                        } else if (pPath.includes('wifisecu')) {
+                          if (sListEl && sListVal === '1') {
+                            window._sessionRuleCache['wifi_iot_index'] = {
+                              actualValue: sListVal,
+                              isSaved: true,
+                              isMatch: true
+                            };
+                            if (_trackingSession) _trackingSession.ruleCache['wifi_iot_index'] = window._sessionRuleCache['wifi_iot_index'];
+                          }
+                          if (keyEl) {
+                            const kVal = (keyEl.value || '').trim();
+                            window._sessionRuleCache['wifi_iot_key'] = {
+                              actualValue: kVal,
+                              isSaved: true,
+                              isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                            };
+                            if (_trackingSession) _trackingSession.ruleCache['wifi_iot_key'] = window._sessionRuleCache['wifi_iot_key'];
+                            window._ftcAc1000cv2FinalApplyClicked = true;
+                          }
+                        }
+                      }
+
+                      // Bài 4: Cấu hình DNS thủ công (LAN)
+                      const isBai4 = (currentLessonId === 'ac1000cv2-bai4' || currentLessonId === 'LAB_AC1000CV2_04') || pPath.includes('lan');
+                      if (isBai4 && pPath.includes('lan')) {
+                        const ovwrt0 = doc.querySelector('#dns_ovwrt0, input[name="dns_overwrite"][value="1"]');
+                        const isOvwrt = Boolean(ovwrt0 && ovwrt0.checked);
+                        window._sessionRuleCache['dns_overwrite'] = {
+                          actualValue: isOvwrt ? '1' : '0',
+                          isSaved: true,
+                          isMatch: isOvwrt
+                        };
+                        if (_trackingSession) _trackingSession.ruleCache['dns_overwrite'] = window._sessionRuleCache['dns_overwrite'];
+
+                        const p1El = doc.querySelector('#dns_primary, input[name="dns_primary"]');
+                        if (p1El) {
+                          const p1Val = (p1El.value || '').trim();
+                          window._sessionRuleCache['dns_primary'] = {
+                            actualValue: p1Val,
+                            isSaved: true,
+                            isMatch: (p1Val === '8.8.8.8')
+                          };
+                          if (_trackingSession) _trackingSession.ruleCache['dns_primary'] = window._sessionRuleCache['dns_primary'];
+                        }
+
+                        const p2El = doc.querySelector('#dns_secondary, input[name="dns_secondary"]');
+                        if (p2El) {
+                          const p2Val = (p2El.value || '').trim();
+                          window._sessionRuleCache['dns_secondary'] = {
+                            actualValue: p2Val,
+                            isSaved: true,
+                            isMatch: (p2Val === '8.8.4.4')
+                          };
+                          if (_trackingSession) _trackingSession.ruleCache['dns_secondary'] = window._sessionRuleCache['dns_secondary'];
+                        }
+                      }
+
+                      // Bài 5: Cấu hình địa chỉ mạng LAN & DHCP
+                      const isBai5 = (currentLessonId === 'ac1000cv2-bai5' || currentLessonId === 'LAB_AC1000CV2_05');
+                      if (isBai5 && pPath.includes('lan')) {
+                        const lanIpEl = doc.querySelector('#lan_ip, input[name="lan_ip"]');
+                        if (lanIpEl) {
+                          const lanIpVal = (lanIpEl.value || '').trim();
+                          window._sessionRuleCache['lan_ip'] = {
+                            actualValue: lanIpVal,
+                            isSaved: true,
+                            isMatch: (lanIpVal === '192.168.1.1')
+                          };
+                          if (_trackingSession) _trackingSession.ruleCache['lan_ip'] = window._sessionRuleCache['lan_ip'];
+                        }
+
+                        const lanMaskEl = doc.querySelector('#lan_mask, input[name="lan_mask"]');
+                        if (lanMaskEl) {
+                          const lanMaskVal = (lanMaskEl.value || '').trim();
+                          window._sessionRuleCache['lan_mask'] = {
+                            actualValue: lanMaskVal,
+                            isSaved: true,
+                            isMatch: (lanMaskVal === '255.255.255.0')
+                          };
+                          if (_trackingSession) _trackingSession.ruleCache['lan_mask'] = window._sessionRuleCache['lan_mask'];
+                        }
+
+                        const dhcpEnEl = doc.querySelector('#dhcp_enable0, input[name="dhcp_enable"][value="1"]');
+                        const isDhcpEn = Boolean(dhcpEnEl && dhcpEnEl.checked);
+                        window._sessionRuleCache['dhcp_enable'] = {
+                          actualValue: isDhcpEn ? '1' : '0',
+                          isSaved: true,
+                          isMatch: isDhcpEn
+                        };
+                        if (_trackingSession) _trackingSession.ruleCache['dhcp_enable'] = window._sessionRuleCache['dhcp_enable'];
+
+                        const startIpEl = doc.querySelector('#start_ip, #startip, input[name="start_ip"], input[name="startip"]');
+                        if (startIpEl) {
+                          const startIpVal = (startIpEl.value || '').trim();
+                          window._sessionRuleCache['dhcp_start'] = {
+                            actualValue: startIpVal,
+                            isSaved: true,
+                            isMatch: (startIpVal === '192.168.1.2')
+                          };
+                          if (_trackingSession) _trackingSession.ruleCache['dhcp_start'] = window._sessionRuleCache['dhcp_start'];
+                        }
+
+                        const endIpEl = doc.querySelector('#end_ip, #endip, input[name="end_ip"], input[name="endip"]');
+                        if (endIpEl) {
+                          const endIpVal = (endIpEl.value || '').trim();
+                          window._sessionRuleCache['dhcp_end'] = {
+                            actualValue: endIpVal,
+                            isSaved: true,
+                            isMatch: (endIpVal === '192.168.1.254')
+                          };
+                          if (_trackingSession) _trackingSession.ruleCache['dhcp_end'] = window._sessionRuleCache['dhcp_end'];
+                        }
+                      }
+                    } catch (e) { }
+
+                    try {
+                      const pName = (doc.getElementById('XWebPageName') && doc.getElementById('XWebPageName').value) || 'wan';
+                      const act = form.action || ("/GponForm/" + pName + "_XForm");
+                      const formData = new FormData(form);
+                      const params = new URLSearchParams();
+                      for (const pair of formData.entries()) {
+                        params.append(pair[0], pair[1]);
+                      }
+                      fetch(act, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params.toString()
+                      }).catch(function() {});
+                    } catch (e) { }
+
+                    let statusMsg = doc.getElementById('ftc-ac1000cv2-save-status');
+                    if (!statusMsg) {
+                      statusMsg = doc.createElement('span');
+                      statusMsg.id = 'ftc-ac1000cv2-save-status';
+                      statusMsg.style.cssText = 'color:#15803d;font-weight:bold;font-size:13px;margin-left:12px;vertical-align:middle;';
+                      const applyBtn = doc.getElementById('btn_apply') || doc.getElementById('btn_apply2') || doc.querySelector('.apply_btn') || form.querySelector('button, input[type="submit"]');
+                      if (applyBtn && applyBtn.parentNode) applyBtn.parentNode.insertBefore(statusMsg, applyBtn.nextSibling);
+                    }
+                    if (statusMsg) {
+                      statusMsg.textContent = ' Đã lưu cấu hình thành công!';
+                      setTimeout(function () { if (statusMsg) statusMsg.textContent = ''; }, 3500);
+                    }
+
+                    try {
+                      if (typeof window.onSimulatorSave === 'function') {
+                        window.onSimulatorSave(doc.defaultView || doc.parentWindow);
+                      }
+                    } catch (error) { }
+                  }, true);
+                  doc._ftcAc1000cv2SubmitAttached = true;
+                }
 
                 // Vigor2927 dùng nhiều form CGI: giữ điều hướng giữa các trang nhưng chặn reload khi lưu cấu hình.
                 if (currentDeviceId === 'vigor2927') {
@@ -1073,7 +1603,8 @@
               } else {
                 // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
                 if (btnGuideErrors) {
-                  const hasMissingSteps = !trangDangLamSach || !evalResult.passed;
+                  const isMultiStepIncomplete = Boolean(evalResult && evalResult.daVaoTrangCuoi === false);
+                  const hasMissingSteps = (!trangDangLamSach || !evalResult.passed) && !isMultiStepIncomplete;
                   if (window._hasClickedSaveInGuide && evalResult && hasMissingSteps) {
                     // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN để trợ giúp học tập
                     btnGuideErrors.style.display = 'flex';
@@ -1879,6 +2410,7 @@
     _lastSubmitDurationSec = 0;
     window._hasClickedSaveInGuide = false;
     window._hasSuccHintStored = false;
+    window._ftcAc1000cv2FinalApplyClicked = false;
     window._sessionRuleCache = null;
     window._sessionRuleCacheScope = null;
 
@@ -1894,7 +2426,13 @@
    * Chạy sau mỗi lần iframe load hoặc định kỳ để học viên phải tự nhập giá trị.
    */
   function clearLessonFields() {
-    if (window._hasClickedSaveInGuide && currentLessonId !== 'LAB_AX3000S_02') return;
+    const activeDevId = typeof currentDeviceId !== 'undefined' ? currentDeviceId : (window.currentDeviceId || '');
+    const activeLesId = typeof currentLessonId !== 'undefined' ? currentLessonId : (window.currentLessonId || '');
+    const isAc1000cV2MultiStep = (activeDevId === 'ac1000cv2' || activeDevId === 'sim_ac1000cv2') && (
+      activeLesId === 'ac1000cv2-bai2' || activeLesId === 'LAB_AC1000CV2_02' ||
+      activeLesId === 'ac1000cv2-bai3' || activeLesId === 'LAB_AC1000CV2_03'
+    );
+    if (window._hasClickedSaveInGuide && activeLesId !== 'LAB_AX3000S_02' && !isAc1000cV2MultiStep) return;
     if (!_currentLesson) return;
 
     // Nếu lesson có hàm customClear riêng thì chạy hàm đó
@@ -1907,13 +2445,20 @@
       const isAnyDocSaved = allDocs.some(d => {
         try {
           return Boolean(
+            d._ftcIsSaved === true ||
+            (d.location && d.location.search && d.location.search.includes('save_success=1')) ||
             (d._ftcLastSaveInteraction && (d._ftcIsSaved === true || (d.location && d.location.search && d.location.search.includes('save_success=1')))) ||
             (currentLessonId === 'LAB_AX3000S_02' && (d._ftc2gSaved === true || window._ftc2gSaved === true))
           );
         } catch (e) { return false; }
       });
-      if (isAnyDocSaved || (currentLessonId === 'LAB_AX3000S_02' && window._ftc2gSaved === true)) {
+      if ((isAnyDocSaved || (currentLessonId === 'LAB_AX3000S_02' && window._ftc2gSaved === true)) && !isAc1000cV2MultiStep) {
         window._hasClickedSaveInGuide = true;
+        allDocs.forEach(d => {
+          if (d.location && d.location.search && d.location.search.includes('save_success=1')) {
+            d._ftcIsSaved = true;
+          }
+        });
         return;
       }
     } catch (e) { }
@@ -1924,6 +2469,8 @@
       allDocs.forEach(doc => {
         if (
           (currentLessonId === 'LAB_AX3000S_02' && (doc._ftc2gSaved || window._ftc2gSaved)) ||
+          doc._ftcIsSaved === true ||
+          (doc.location && doc.location.search && doc.location.search.includes('save_success=1')) ||
           (doc._ftcLastSaveInteraction && (doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1'))))
         ) {
           return;
@@ -1971,9 +2518,229 @@
   function evaluateLesson(device, lesson) {
     if (!lesson) return null;
 
-    if (lesson.grading && typeof lesson.grading.customGrading === 'function') {
+    const activeLessonId = (lesson && lesson.id) || (typeof currentLessonId !== 'undefined' ? currentLessonId : '');
+    const activeDeviceId = (device && device.id) ? device.id : (typeof currentDeviceId !== 'undefined' ? currentDeviceId : '');
+
+    function getLabelForElement(el, doc) {
+    if (el.labels && el.labels.length > 0) return el.labels[0].textContent.trim().replace(/:$/, '');
+    if (el.id) {
+      const label = doc.querySelector(`label[for="${el.id}"]`);
+      if (label) return label.textContent.trim().replace(/:$/, '');
+    }
+    const tr = el.closest ? el.closest('tr') : null;
+    if (tr) {
+      const th = tr.querySelector('th, td.head, td.label, .dt');
+      if (th && th !== el.parentElement) return th.textContent.trim().replace(/:$/, '');
+      const firstTd = tr.querySelector('td');
+      if (firstTd && firstTd !== el.closest('td')) return firstTd.textContent.trim().replace(/:$/, '');
+    }
+    const dl = el.closest ? el.closest('dl') : null;
+    if (dl) {
+      const dt = dl.querySelector('dt, .dt');
+      if (dt) return dt.textContent.trim().replace(/:$/, '');
+    }
+    let parent = el.parentElement;
+    let depth = 0;
+    while (parent && parent !== doc.body && depth < 4) {
+      const prev = parent.previousElementSibling;
+      if (prev && (prev.tagName === 'LABEL' || prev.className.includes('label') || prev.className.includes('title') || prev.className.includes('dt'))) {
+        return prev.textContent.trim().replace(/:$/, '');
+      }
+      const labelEl = parent.querySelector('label, .label, .dt, .title, .head');
+      if (labelEl && labelEl !== el && !labelEl.contains(el)) {
+        return labelEl.textContent.trim().replace(/:$/, '');
+      }
+      parent = parent.parentElement;
+      depth++;
+    }
+    let fallback = el.id || el.name || el.placeholder;
+    if (fallback) return fallback.replace(/_/g, ' ');
+    return 'Trường ẩn/Không xác định';
+  }
+
+  function evaluateAutoBaseline(allDocs, rules, lesson) {
+    let unexpectedErrors = [];
+
+    allDocs.forEach(doc => {
+      if (doc._ftcOriginalValues) {
+        Object.keys(doc._ftcOriginalValues).forEach(uid => {
+          const originalValue = doc._ftcOriginalValues[uid];
+          const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
+          if (el) {
+            // Bỏ qua các trường thuộc trang hoặc form đăng nhập router
+            const isLoginField = (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
+              el.id === 'username' || el.id === 'password' ||
+              (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
+              (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password'))) ||
+              (el.value === 'admin' && (originalValue === '' || originalValue === null || originalValue === undefined));
+            if (isLoginField) return;
+
+            // Bỏ qua các trường được cho phép hoặc nằm trong guidePopups (hướng dẫn từng bước của bài học)
+            const effectiveLesson = lesson || (typeof _currentLesson !== 'undefined' ? _currentLesson : null);
+            const guideList = (effectiveLesson && Array.isArray(effectiveLesson.guidePopups)) ? effectiveLesson.guidePopups : [];
+            const allowedSelectors = [
+              ...(effectiveLesson && Array.isArray(effectiveLesson.allowedSelectors) ? effectiveLesson.allowedSelectors : []),
+              ...(effectiveLesson && effectiveLesson.grading && Array.isArray(effectiveLesson.grading.allowedSelectors) ? effectiveLesson.grading.allowedSelectors : []),
+              ...guideList.map(g => g.selector).filter(Boolean)
+            ];
+            const isAllowedByLesson = allowedSelectors.some(sel => {
+              try {
+                const matchedList = Array.from(doc.querySelectorAll(sel));
+                if (matchedList.includes(el)) return true;
+                // Tự động cho phép input đi kèm với component dropdown/select (ví dụ MUI Select)
+                return matchedList.some(m => {
+                  if (m.contains && m.contains(el)) return true;
+                  if (el.name && m.id && m.id.includes(el.name)) return true;
+                  if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
+                  const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
+                  return mParent && mParent.contains(el);
+                });
+              } catch (e) { return false; }
+            });
+            if (isAllowedByLesson) return;
+
+            // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, DHCP, Wi-Fi IoT / WiFi5 enable, SSID broadcast
+            const isAuxToggle = (el.name && (
+              el.name.toLowerCase() === 'dnstyperadio' ||
+              el.name.toLowerCase() === 'dhcptyperadio' ||
+              el.name.toLowerCase().includes('enable_wifi') ||
+              el.name.toLowerCase().includes('wifi5') ||
+              el.name.toLowerCase().includes('essid_hide')
+            )) ||
+            (el.id && (
+              el.id.toLowerCase().includes('dnsrelay') ||
+              el.id.toLowerCase().includes('dhcp') ||
+              el.id.toLowerCase().includes('wifi5_enable') ||
+              el.id.toLowerCase().includes('enable_wifi')
+            ));
+            if (isAuxToggle) return;
+
+            // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
+            const isExpected = (rules || []).some(r => {
+              try {
+                const matchedList = Array.from(doc.querySelectorAll(r.selector));
+                if (matchedList.includes(el)) return true;
+                return matchedList.some(m => {
+                  if (m.contains && m.contains(el)) return true;
+                  if (el.name && m.id && m.id.includes(el.name)) return true;
+                  if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
+                  const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
+                  return mParent && mParent.contains(el);
+                });
+              } catch (e) { return false; }
+            });
+
+            // Nếu KHÔNG nằm trong rule, nhưng lại bị sửa giá trị khác gốc
+            if (!isExpected) {
+              const currentValue = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+              if (String(currentValue) !== String(originalValue)) {
+                // Bỏ qua đánh giá radio bị tắt để tránh 1 lần click sinh 2 lỗi trùng lặp
+                if (el.type === 'radio' && !el.checked) return;
+
+                let labelText = getLabelForElement(el, doc);
+                let formattedOriginal = '';
+                let formattedCurrent = '';
+
+                if (el.type === 'checkbox' || el.type === 'radio') {
+                  formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
+                  formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
+                } else if (el.tagName === 'SELECT') {
+                  try {
+                    let optOrig = el.querySelector(`option[value="${originalValue}"]`);
+                    let optCurr = el.querySelector(`option[value="${currentValue}"]`);
+                    formattedOriginal = optOrig ? optOrig.textContent.trim() : originalValue;
+                    formattedCurrent = optCurr ? optCurr.textContent.trim() : currentValue;
+                  } catch (e) {
+                    formattedOriginal = originalValue;
+                    formattedCurrent = currentValue;
+                  }
+                } else {
+                  formattedOriginal = originalValue || 'Trống';
+                  formattedCurrent = currentValue || 'Trống';
+                }
+
+                unexpectedErrors.push({
+                  label: labelText,
+                  expected: formattedOriginal,
+                  actual: formattedCurrent
+                });
+              }
+            }
+          }
+        });
+      }
+    });
+
+    // Đồng bộ lỗi thao tác thừa theo phiên nếu có (giữ nguyên lỗi nếu học viên chuyển sang trang khác)
+    if (_trackingSession) {
+      if (unexpectedErrors.length > 0) {
+        _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
+      } else {
+        const hasFormFields = allDocs.some(d => {
+          try {
+            return (rules || []).some(r => d.querySelector(r.selector) !== null);
+          } catch(e) { return false; }
+        });
+        if (hasFormFields) {
+          _trackingSession.cachedUnexpectedErrors = [];
+        }
+      }
+    }
+    if (unexpectedErrors.length === 0 && _trackingSession && Array.isArray(_trackingSession.cachedUnexpectedErrors) && _trackingSession.cachedUnexpectedErrors.length > 0) {
+      unexpectedErrors = _trackingSession.cachedUnexpectedErrors;
+    }
+
+    // Lọc triệt để loại bỏ các trường đăng nhập admin/admin, dnsTypeRadio, dhcpTypeRadio, wifi5/IoT toggle khỏi danh sách lỗi thao tác thừa
+    unexpectedErrors = unexpectedErrors.filter(err => {
+      const lbl = (err.label || '').toLowerCase();
+      const act = (err.actual || '').toLowerCase();
+      if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) && (act === 'admin' || act === '')) {
+        return false;
+      }
+      if (lbl.includes('dns relay') || lbl.includes('dnstyperadio') || lbl.includes('chế độ dns') || lbl.includes('dns mode')) {
+        return false;
+      }
+      if (lbl.includes('dns') && (act === 'manual' || act === 'auto' || act === 'bật/enable' || act === 'tắt/disable')) {
+        return false;
+      }
+      if (lbl === 'dhcp' || lbl === 'dhcp server' || lbl.includes('dhcptyperadio')) {
+        return false;
+      }
+      if (lbl.includes('2.4g wifi') || lbl.includes('5g wifi') || lbl.includes('wifi5') || lbl.includes('wifi 5') || lbl.includes('enable_wifi') || lbl.includes('ssid broadcast')) {
+        return false;
+      }
+      return true;
+    });
+
+    return unexpectedErrors;
+  }
+
+  if (lesson.grading && typeof lesson.grading.customGrading === 'function') {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
-      return lesson.grading.customGrading(allDocs);
+      const customResult = lesson.grading.customGrading(allDocs);
+      if (customResult && Array.isArray(customResult.details)) {
+        const effectiveRules = (lesson.grading && Array.isArray(lesson.grading.rules)) ? lesson.grading.rules : [];
+        const unexpErrors = evaluateAutoBaseline(allDocs, effectiveRules, lesson);
+        if (unexpErrors && unexpErrors.length > 0) {
+          unexpErrors.forEach(err => {
+            const alreadyHas = customResult.details.some(d => d.name && (d.name.includes(err.label) || d.name === err.label));
+            if (!alreadyHas) {
+              customResult.details.push({
+                id: 'err_unexp_' + (err.label || '').replace(/\s+/g, '_').toLowerCase(),
+                name: 'Thao tác ngoài phạm vi: ' + (err.label || 'Trường không xác định'),
+                expected: err.expected || 'Giữ nguyên',
+                actual: err.actual || 'Đã bị sửa',
+                passed: false,
+                message: 'Cố tình thay đổi thông số "' + (err.label || '') + '" ngoài yêu cầu bài học'
+              });
+              customResult.passed = false;
+              customResult.totalRules = (customResult.totalRules || customResult.details.length) + 1;
+              customResult.score = Math.max(0, Math.round(((customResult.passedCount || 0) / customResult.totalRules) * 100));
+            }
+          });
+        }
+      }
+      return customResult;
     }
 
     let rules = (lesson.grading && lesson.grading.rules && lesson.grading.rules.length > 0)
@@ -1982,7 +2749,7 @@
 
     // Loại bỏ hoàn toàn ràng buộc "Chế độ DNS" / "DNS Mode" / "manual" nếu còn sót lại ở bài 4 ONT BE6500C / BE6500C
     if (lesson.id === 'ONT_be6500c-bai4' || lesson.id === 'be6500c-bai4' ||
-        ((currentDeviceId === 'ONT_be6500c' || currentDeviceId === 'be6500c') && lesson.id && lesson.id.includes('bai4'))) {
+        ((activeDeviceId === 'ONT_be6500c' || activeDeviceId === 'be6500c') && lesson.id && lesson.id.includes('bai4'))) {
       rules = rules.filter(r => {
         const n = (r.name || '').toLowerCase();
         const id = (r.id || '').toLowerCase();
@@ -2096,7 +2863,7 @@
           if (els.length > 0) {
             // Cho bài 2 AX3000S: Ràng buộc wifi_bw chỉ áp dụng cho băng tần 2.4G,
             // bỏ qua dropdown bandwidth của trang 5G để không bị xung đột với 80Mhz mặc định của 5G.
-            if ((currentLessonId === 'LAB_AX3000S_02' || (lesson && lesson.id === 'LAB_AX3000S_02')) && rule.id === 'wifi_bw') {
+            if ((activeLessonId === 'LAB_AX3000S_02') && rule.id === 'wifi_bw') {
               els = els.filter(el => {
                 let is5g = false;
                 try {
@@ -2127,7 +2894,7 @@
             elementFound = true;
             const isDocSaved = doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1') && doc._ftcIsSaved !== false);
             const isSessionSaved = (window._hasClickedSaveInGuide === true && doc._ftcIsSaved !== false);
-            const isAx3000s2gSaved = ((currentLessonId === 'LAB_AX3000S_02') || (lesson && lesson.id === 'LAB_AX3000S_02')) && Boolean(doc._ftc2gSaved || window._ftc2gSaved);
+            const isAx3000s2gSaved = (activeLessonId === 'LAB_AX3000S_02') && Boolean(doc._ftc2gSaved || window._ftc2gSaved);
             if (isDocSaved || isSessionSaved || isAx3000s2gSaved) isSaved = true;
 
             // Tìm xem có phần tử nào khớp với expectedVal không
@@ -2213,21 +2980,38 @@
                 }
               }
             }
+
+            // Fallback: nếu giá trị đọc từ input rỗng nhưng trước đó đã lưu thành công vào session cache
+            if (!isMatch && (!actualValue || actualValue === '')) {
+              const isScopeValid = (window._sessionRuleCacheScope === currentLessonKey) || Boolean(
+                window._sessionRuleCacheScope === `${effectiveDeviceId}_${activeLessonId}` ||
+                ((effectiveDeviceId === 'ac1000cv2' || effectiveDeviceId === 'sim_ac1000cv2') && window._sessionRuleCacheScope && window._sessionRuleCacheScope.includes('ac1000cv2'))
+              );
+              const cached = isScopeValid && (
+                (_trackingSession && _trackingSession.ruleCache && _trackingSession.ruleCache[rule.id]) ||
+                (window._sessionRuleCache && window._sessionRuleCache[rule.id])
+              );
+              if (cached && cached.actualValue && cached.isMatch) {
+                actualValue = cached.actualValue;
+                isSaved = true;
+                isMatch = true;
+              }
+            }
             break;
           }
         } catch (e) { }
       }
 
-      const effectiveDeviceId = (device && device.id) ? device.id : currentDeviceId;
-      const currentLessonKey = `${effectiveDeviceId}:${(lesson && lesson.id) || currentLessonId}`;
+      const effectiveDeviceId = activeDeviceId;
+      const currentLessonKey = `${effectiveDeviceId}:${activeLessonId}`;
 
       // Nếu không tìm thấy element trong các frame hiện hành (do học viên đã chuyển trang khác như LAN, Wi-Fi...)
       // thì kiểm tra xem rule này đã từng được nhập và lưu thành công trong phiên làm việc hiện tại hay chưa (Session Cache)
       if (!elementFound) {
-        const isScopeValid = (
-          window._sessionRuleCacheScope === currentLessonKey ||
-          window._sessionRuleCacheScope === `${effectiveDeviceId}_${(lesson && lesson.id) || currentLessonId}` ||
-          (effectiveDeviceId === 'ax3000s' && ((lesson && lesson.id === 'LAB_AX3000S_02') || currentLessonId === 'LAB_AX3000S_02') && window._sessionRuleCacheScope && window._sessionRuleCacheScope.includes('LAB_AX3000S_02'))
+        const isScopeValid = (window._sessionRuleCacheScope === currentLessonKey) || Boolean(
+          window._sessionRuleCacheScope === `${effectiveDeviceId}_${activeLessonId}` ||
+          (effectiveDeviceId === 'ax3000s' && (activeLessonId === 'LAB_AX3000S_02') && window._sessionRuleCacheScope && window._sessionRuleCacheScope.includes('LAB_AX3000S_02')) ||
+          ((effectiveDeviceId === 'ac1000cv2' || effectiveDeviceId === 'sim_ac1000cv2') && window._sessionRuleCacheScope && window._sessionRuleCacheScope.includes('ac1000cv2'))
         );
         const cached = isScopeValid && (
           (_trackingSession && _trackingSession.ruleCache && _trackingSession.ruleCache[rule.id]) ||
@@ -2238,7 +3022,7 @@
           actualValue = cached.actualValue;
           isSaved = cached.isSaved;
           isMatch = cached.isMatch;
-        } else if (((currentLessonId === 'LAB_AX3000S_02') || (lesson && lesson.id === 'LAB_AX3000S_02'))) {
+        } else if (activeLessonId === 'LAB_AX3000S_02') {
           // Fallback cho AX3000S bài 2: nếu đã bấm lưu 2.4G và simulator lưu vào SIM.RADIOS[0]
           for (const d of allDocs) {
             try {
@@ -2307,7 +3091,7 @@
         } else {
           const isActuallyInDom = allDocs.some(d => {
             try {
-              if (((currentLessonId === 'LAB_AX3000S_02') || (lesson && lesson.id === 'LAB_AX3000S_02')) && rule.id === 'wifi_bw') {
+              if ((activeLessonId === 'LAB_AX3000S_02') && rule.id === 'wifi_bw') {
                 const sel = d.querySelector(rule.selector);
                 if (!sel) return false;
                 let is5g = false;
@@ -2336,10 +3120,13 @@
             } catch (e) { return false; }
           });
           if (isActuallyInDom) {
-            if (window._sessionRuleCache && window._sessionRuleCacheScope === currentLessonKey) {
-              delete window._sessionRuleCache[rule.id];
+            const isAc1000Saved = (effectiveDeviceId === 'ac1000cv2' || effectiveDeviceId === 'sim_ac1000cv2') && window._hasClickedSaveInGuide;
+            if (!isAc1000Saved) {
+              if (window._sessionRuleCache && window._sessionRuleCacheScope === currentLessonKey) {
+                delete window._sessionRuleCache[rule.id];
+              }
+              if (_trackingSession && _trackingSession.ruleCache) delete _trackingSession.ruleCache[rule.id];
             }
-            if (_trackingSession && _trackingSession.ruleCache) delete _trackingSession.ruleCache[rule.id];
           }
         }
       }
@@ -2377,197 +3164,8 @@
       });
     });
 
-    function getLabelForElement(el, doc) {
-      if (el.labels && el.labels.length > 0) return el.labels[0].textContent.trim().replace(/:$/, '');
-      if (el.id) {
-        const label = doc.querySelector(`label[for="${el.id}"]`);
-        if (label) return label.textContent.trim().replace(/:$/, '');
-      }
-      const tr = el.closest('tr');
-      if (tr) {
-        const th = tr.querySelector('th, td.head, td.label, .dt');
-        if (th && th !== el.parentElement) return th.textContent.trim().replace(/:$/, '');
-        const firstTd = tr.querySelector('td');
-        if (firstTd && firstTd !== el.closest('td')) return firstTd.textContent.trim().replace(/:$/, '');
-      }
-      const dl = el.closest('dl');
-      if (dl) {
-        const dt = dl.querySelector('dt, .dt');
-        if (dt) return dt.textContent.trim().replace(/:$/, '');
-      }
-      let parent = el.parentElement;
-      let depth = 0;
-      while (parent && parent !== doc.body && depth < 4) {
-        const prev = parent.previousElementSibling;
-        if (prev && (prev.tagName === 'LABEL' || prev.className.includes('label') || prev.className.includes('title') || prev.className.includes('dt'))) {
-          return prev.textContent.trim().replace(/:$/, '');
-        }
-        const labelEl = parent.querySelector('label, .label, .dt, .title, .head');
-        if (labelEl && labelEl !== el && !labelEl.contains(el)) {
-          return labelEl.textContent.trim().replace(/:$/, '');
-        }
-        parent = parent.parentElement;
-        depth++;
-      }
-      let fallback = el.id || el.name || el.placeholder;
-      if (fallback) return fallback.replace(/_/g, ' ');
-      return 'Trường ẩn/Không xác định';
-    }
-
     // === BỘ LỌC AUTO-BASELINE (TÌM THAO TÁC THỪA) ===
-    let unexpectedErrors = [];
-
-    allDocs.forEach(doc => {
-      if (doc._ftcOriginalValues) {
-        Object.keys(doc._ftcOriginalValues).forEach(uid => {
-          const originalValue = doc._ftcOriginalValues[uid];
-          const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
-          if (el) {
-            // Bỏ qua các trường thuộc trang hoặc form đăng nhập router
-            const isLoginField = (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
-              el.id === 'username' || el.id === 'password' ||
-              (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
-              (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password'))) ||
-              (el.value === 'admin' && (originalValue === '' || originalValue === null || originalValue === undefined));
-            if (isLoginField) return;
-
-            // Bỏ qua các trường được cho phép hoặc nằm trong guidePopups (hướng dẫn từng bước của bài học)
-            const effectiveLesson = lesson || _currentLesson;
-            const guideList = (effectiveLesson && Array.isArray(effectiveLesson.guidePopups)) ? effectiveLesson.guidePopups : [];
-            const allowedSelectors = [
-              ...(effectiveLesson && Array.isArray(effectiveLesson.allowedSelectors) ? effectiveLesson.allowedSelectors : []),
-              ...(effectiveLesson && effectiveLesson.grading && Array.isArray(effectiveLesson.grading.allowedSelectors) ? effectiveLesson.grading.allowedSelectors : []),
-              ...guideList.map(g => g.selector).filter(Boolean)
-            ];
-            const isAllowedByLesson = allowedSelectors.some(sel => {
-              try {
-                const matchedList = Array.from(doc.querySelectorAll(sel));
-                if (matchedList.includes(el)) return true;
-                // Tự động cho phép input đi kèm với component dropdown/select (ví dụ MUI Select)
-                return matchedList.some(m => {
-                  if (m.contains && m.contains(el)) return true;
-                  if (el.name && m.id && m.id.includes(el.name)) return true;
-                  if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
-                  const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
-                  return mParent && mParent.contains(el);
-                });
-              } catch (e) { return false; }
-            });
-            if (isAllowedByLesson) return;
-
-            // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, DHCP, Wi-Fi IoT / WiFi5 enable, SSID broadcast
-            const isAuxToggle = (el.name && (
-              el.name.toLowerCase() === 'dnstyperadio' ||
-              el.name.toLowerCase() === 'dhcptyperadio' ||
-              el.name.toLowerCase().includes('enable_wifi') ||
-              el.name.toLowerCase().includes('wifi5') ||
-              el.name.toLowerCase().includes('essid_hide')
-            )) ||
-            (el.id && (
-              el.id.toLowerCase().includes('dnsrelay') ||
-              el.id.toLowerCase().includes('dhcp') ||
-              el.id.toLowerCase().includes('wifi5_enable') ||
-              el.id.toLowerCase().includes('enable_wifi')
-            ));
-            if (isAuxToggle) return;
-
-            // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
-            const isExpected = rules.some(r => {
-              try {
-                const matchedList = Array.from(doc.querySelectorAll(r.selector));
-                if (matchedList.includes(el)) return true;
-                return matchedList.some(m => {
-                  if (m.contains && m.contains(el)) return true;
-                  if (el.name && m.id && m.id.includes(el.name)) return true;
-                  if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
-                  const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
-                  return mParent && mParent.contains(el);
-                });
-              } catch (e) { return false; }
-            });
-
-            // Nếu KHÔNG nằm trong rule, nhưng lại bị sửa giá trị khác gốc
-            if (!isExpected) {
-              const currentValue = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
-              if (String(currentValue) !== String(originalValue)) {
-                // Bỏ qua đánh giá radio bị tắt để tránh 1 lần click sinh 2 lỗi trùng lặp
-                if (el.type === 'radio' && !el.checked) return;
-
-                let labelText = getLabelForElement(el, doc);
-                let formattedOriginal = '';
-                let formattedCurrent = '';
-
-                if (el.type === 'checkbox' || el.type === 'radio') {
-                  formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
-                  formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
-                } else if (el.tagName === 'SELECT') {
-                  try {
-                    let optOrig = el.querySelector(`option[value="${originalValue}"]`);
-                    let optCurr = el.querySelector(`option[value="${currentValue}"]`);
-                    formattedOriginal = optOrig ? optOrig.textContent.trim() : originalValue;
-                    formattedCurrent = optCurr ? optCurr.textContent.trim() : currentValue;
-                  } catch (e) {
-                    formattedOriginal = originalValue;
-                    formattedCurrent = currentValue;
-                  }
-                } else {
-                  formattedOriginal = originalValue || 'Trống';
-                  formattedCurrent = currentValue || 'Trống';
-                }
-
-                unexpectedErrors.push({
-                  label: labelText,
-                  expected: formattedOriginal,
-                  actual: formattedCurrent
-                });
-              }
-            }
-          }
-        });
-      }
-    });
-
-    // Đồng bộ lỗi thao tác thừa theo phiên nếu có (giữ nguyên lỗi nếu học viên chuyển sang trang khác)
-    if (_trackingSession) {
-      if (unexpectedErrors.length > 0) {
-        _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
-      } else {
-        // Nếu trang hiện tại chứa các input cấu hình chính và không còn thao tác thừa, xóa cache cũ
-        const hasFormFields = allDocs.some(d => {
-          try {
-            return rules.some(r => d.querySelector(r.selector) !== null);
-          } catch(e) { return false; }
-        });
-        if (hasFormFields) {
-          _trackingSession.cachedUnexpectedErrors = [];
-        }
-      }
-    }
-    if (unexpectedErrors.length === 0 && _trackingSession && Array.isArray(_trackingSession.cachedUnexpectedErrors) && _trackingSession.cachedUnexpectedErrors.length > 0) {
-      unexpectedErrors = _trackingSession.cachedUnexpectedErrors;
-    }
-
-    // Lọc triệt để loại bỏ các trường đăng nhập admin/admin, dnsTypeRadio, dhcpTypeRadio, wifi5/IoT toggle khỏi danh sách lỗi thao tác thừa
-    unexpectedErrors = unexpectedErrors.filter(err => {
-      const lbl = (err.label || '').toLowerCase();
-      const act = (err.actual || '').toLowerCase();
-      if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) && (act === 'admin' || act === '')) {
-        return false;
-      }
-      if (lbl.includes('dns relay') || lbl.includes('dnstyperadio') || lbl.includes('chế độ dns') || lbl.includes('dns mode')) {
-        return false;
-      }
-      if (lbl.includes('dns') && (act === 'manual' || act === 'auto' || act === 'bật/enable' || act === 'tắt/disable')) {
-        return false;
-      }
-      if (lbl === 'dhcp' || lbl === 'dhcp server' || lbl.includes('dhcptyperadio')) {
-        return false;
-      }
-      if (lbl.includes('2.4g wifi') || lbl.includes('5g wifi') || lbl.includes('wifi5') || lbl.includes('wifi 5') || lbl.includes('enable_wifi') || lbl.includes('ssid broadcast')) {
-        return false;
-      }
-      return true;
-    });
+    let unexpectedErrors = evaluateAutoBaseline(allDocs, rules, lesson);
 
     // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa
     const criteria = rules;
@@ -3798,7 +4396,7 @@
           if (btnGuideErrors) {
             btnGuideErrors.style.display = 'none';
           }
-        } else if (trangDangLamSach) {
+        } else if (trangDangLamSach || (evalResult && evalResult.daVaoTrangCuoi === false)) {
           if (btnGuideErrors) btnGuideErrors.style.display = 'none';
           if (btnSubmitLab) {
             btnSubmitLab.disabled = true;

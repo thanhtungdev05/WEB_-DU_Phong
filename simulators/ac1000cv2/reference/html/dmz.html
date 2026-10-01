@@ -1,0 +1,427 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var lan_ip = "";
+var lan_mask = "";
+var lan_dev = new Array();
+var LanDevStatus = 0;
+var wan_list = new Array();
+var dmz_list = new Array();
+var dmz_count = 0;
+var index = 1;
+var remote_enable = 0;
+var protocol = 0;
+var portid = 80;
+
+dmz_list[0]={
+wanindex:"0",
+dmz_enable:"0",
+dmz_ipaddr:"0.0.0.0",
+dmz_hostname:""
+}
+dmz_count=1
+pool_type = "0";
+lan_ip_0 = "192.168.1.1";
+lan_mask_0 = "255.255.255.0";
+lan_ip_1 = "192.168.0.1";
+lan_mask_1 = "255.255.255.0";
+
+LanDevStatus = 2;
+lan_dev[0] = { mac: "bc:ec:a0:05:5f:8d", ip: "192.168.1.244", hostname: "thanhtung", conn_type: "1", uptime: "0h 0m ", dhcp: "1" };
+wl_num  = 0;
+eth_num = 1;
+
+wan_list[0] = { index: "0", name: "1_INTERNET_TR069_IPTV_R_VID_0" };
+
+remote_enable = 0;
+wanindex = 0;
+protocol = 1;
+portid = 443;
+username = "";
+password = "08ypih%&*%^#T()#$&E%SUCG6uy$E&";
+
+
+
+
+function wanlist_init()
+{
+    var i = 0;
+    if(0 == wan_list.length) {
+        $("#wan_conlist").append("<option>" + "NO_WAN_Connection" + "</option>");
+    }
+    else {
+        for (i = 0; i < wan_list.length; i++) {
+            $("#wan_conlist").append("<option value=\"" + parseInt(wan_list[i].index) + "\">" + wan_list[i].name + "</option>");
+        }
+    }
+}
+
+function lanlist_init()
+{
+    var i = 0;
+    for(var i = 0; i < lan_dev.length; i++) {
+        var tmp = "<option value='" + i + "'>" + lan_dev[i].hostname + " - " + lan_dev[i].ip + "</option>";
+        $("#host_idx").append(tmp);
+    }
+}
+
+function datainit(wanindex)
+{
+    if (dmz_count > 0)
+    {
+        if(dmz_list[wanindex].dmz_enable == 1) {
+            $("#enable").get(0).checked = true;
+             $("#setdmz").show();
+        }
+        else {
+            $("#disable").get(0).checked = true;
+             $("#setdmz").hide();
+        }
+            
+        if(dmz_list[wanindex].dmz_ipaddr != "0.0.0.0") {
+            $("#host_ip").val(dmz_list[wanindex].dmz_ipaddr);
+        }
+        else {
+            $("#host_ip").val(null);
+        }
+    }
+    else
+    {
+        $("#disable").get(0).checked = true;
+        $("#host_ip").val(null);        
+    }
+}
+
+function wanindex_change()
+{
+    var select_index = 0;
+    select_index = $("#wan_conlist").val();
+    datainit(select_index);
+}
+
+function FreshTable()
+{
+    var TR = "";
+    var i = 0;
+    var j = 0;
+
+    TR += '<table>\n';
+    TR += '<tr><th class="tableTitle" colspan="4" id="XS6"></th></tr>\n';
+    TR += '<tr>\n';
+    TR += '<th id="XS7"></th>\n';
+    TR += '<th id="XS8"></th>\n';
+    TR += '<th id="XS12"></th>\n';
+    TR += '<th id="XS9"></th>\n';
+    TR += '</tr>\n';
+
+    for(i = 0; i < dmz_count; i++)
+    {
+        if (dmz_list[i].dmz_enable==0) 
+        {
+            continue;
+        } 
+        else
+        {
+            TR += '<tr>\n';
+            TR += '<td>' + dmz_list[i].dmz_hostname + '</td>\n';
+            TR += '<td>' + dmz_list[i].dmz_ipaddr + '</td>\n';
+            for (j = 0; j < wan_list.length; j++)
+            {
+                if(wan_list[j].index == dmz_list[i].wanindex)
+                {
+                    TR += '<td>' + wan_list[j].name + '</td>\n';
+                    break;
+                }
+            }
+        TR += '<td><a href="#" class="btn remove_btn" onclick="DeleteDmzHost(this,'+dmz_list[i].wanindex+');" >' + WebString.Remove + '</a></td>';
+        TR += '</tr>\n';
+        dmz_list[i].index = index;
+        index++;
+        }        
+    }
+
+    TR += '</table>\n';
+    $("#DMZdiv").html(TR);
+}
+
+function DeleteDmzHost(r, wanindex)
+{
+    var row = r.parentNode.parentNode.rowIndex;          
+    if (!confirm(WebString.delete_confirm))
+    {
+        return;
+    }
+
+    $("#wan_conlist").val(wanindex);          
+    $("#host_ip").val(null);
+    $("#disable").get(0).checked = true;
+    $("#XForm").submit();
+}
+
+function SetHost()
+{
+	var idx = $("#host_idx").val();
+	$("#manu_ip").show();
+	if($("#host_idx").val() != -1)
+	{
+		$("#manu_ip").hide();
+		$("#host_ip").val(lan_dev[idx].ip);
+	}
+}
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+    wanlist_init();
+    
+    lanlist_init();
+    
+    datainit(0);
+
+	SetHost();
+
+	WebStepIndex();
+}
+
+$(document).ready(function(){
+	
+	$("#enable").change(function(){
+        $("#setdmz").show();
+            
+	});
+	$("#disable").change(function(){
+        $("#setdmz").hide();
+	});
+	$("#host_idx").change(function(){
+		SetHost();
+	});
+    
+    $("#wan_conlist").change(function() {
+        wanindex_change();
+    });
+	
+    FreshTable();
+    
+	$("#btn_apply").click(function(){
+		var hid = $("#host_idx").val();
+		var dmz_lanip = $("#host_ip").val();
+		if(hid != -1)
+		{
+			$("#host_name").val(lan_dev[hid].hostname);
+		}
+		else
+		{
+			$("#host_name").val(null);
+		}
+
+		if($("#enable").get(0).checked == true)
+		{
+			if(wan_list.length == 0)
+			{
+				alert(WebString.wan_not_exist_alert);
+				return false;
+			}
+			if(dmz_lanip.length == 0)
+			{
+				alert(WebString.no_lanip);
+				return false;
+			}
+			if(isValidIpAddress(dmz_lanip) == false)
+			{
+				alert(WebString.lan_ip_erro_alert);
+				return false;
+			}
+			if(isLansubIP(dmz_lanip,lan_ip_0,lan_mask_0) == false)
+			{
+				if(pool_type == 0 || pool_type == 1)
+				{
+					alert(WebString.lan_ip_erro_alert);
+					return false;
+				}
+				else
+				{
+					if(isLansubIP(dmz_lanip,lan_ip_1,lan_mask_1) == false)
+					{
+						alert(WebString.lan_ip_erro_alert);
+						return false;
+					}
+				}
+			}
+			if (1 == remote_enable)
+			{
+				if (0 == protocol && 80 == portid)
+				{
+					alert(WebString.DmzHttpConflict);
+				}			
+				else if (1 == protocol && 443 == portid)
+				{
+					alert(WebString.DmzHttpsConflict);
+				}
+			}
+		}
+		else
+		{
+			$("#host_ip").val(null);
+		}
+		
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS10"></strong></p>
+	<table>
+    <tr>
+			<td width="200" id="XS11"></td>
+			<td><select name="wan_conlist" id="wan_conlist">
+                </select>
+			</td>
+    </tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+    <tr>
+			<td width="200" id="XS1"></td>
+			<td>
+				<input id="enable" name="dmzenable" value="1" type="radio" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+				<input id="disable" name="dmzenable" value="0" type="radio" /><script>document.write(WebString.Disable);</script>
+			</td>
+    </tr>
+	</table>
+</div>
+<div class="cfgstep" id="setdmz">
+	<p><strong id="XS2"></strong></p>
+	<table>
+    <tr>
+			<td width="200" id="XS3"></td>
+			<td>
+				<select name="host_idx" id="host_idx" style="width:220px">
+					<option selected="selected" value="-1" id="XS4"></option>
+      	</select>
+      	<input id="host_name" name="host_name" type="hidden" />
+			</td>
+    </tr>
+    <tr id="manu_ip">
+			<td width="200" id="XS5"></td>
+			<td>
+				<input id="host_ip" name="host_ip" type="text" onkeypress="return OnKeyPress(event, X_INPUT_IP);" />
+			</td>
+    </tr>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+	<a href="#" id="btn_apply" class="btn"><script>document.write(WebString.Apply);</script></a>
+</div>
+<div class="cfglist" id="DMZdiv"></div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

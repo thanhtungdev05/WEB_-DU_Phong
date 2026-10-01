@@ -1,0 +1,286 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var routing_table = [];
+var routing_table_v6 = [];
+
+routing_table = [
+	{"interface": "lo",	 "destip": "127.0.0.0",	 "gateway": "0.0.0.0",	 "netmask": "255.0.0.0"},
+	{"interface": "br0",	 "destip": "192.168.1.0",	 "gateway": "0.0.0.0",	 "netmask": "255.255.255.0"}
+];
+routing_table_v6 = [
+	{"interface": "eth0",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lan0",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lan1",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lan2",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lan3",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "wlan0",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "wlan1",	 "destip": "fe80::%eth2/64",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "::%4/0",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "::1%4/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::1%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::219:c7ff:fe01:102%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a681:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a683:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "fe80::a685:7aff:fe75:c168%eth2/128",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "ff02::fb%eth2/128",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "ff02::1:ff07:57e5%eth2/128",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "ff02::1:ffae:29d0%eth2/128",	 "gateway": "::%4"},
+	{"interface": "eth0",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lan0",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lan1",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lan2",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lan3",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "br0",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "wlan0",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "wlan1",	 "destip": "ff00::%4/8",	 "gateway": "::%4"},
+	{"interface": "lo",	 "destip": "::%4/0",	 "gateway": "::%4"}
+];
+
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+	if (top.WebShowIpv6)
+	{
+		$("#route_table_v6").show();
+	}
+}
+
+function getSubstring(str,index,key)
+{
+	if (str == undefined)
+	{
+		alert("str is undefined");
+	}
+	if (key == undefined)
+	{
+		alert("key is undefined");
+	}
+	var tmp = new Array();
+	tmp = str.split(key);
+	return tmp[index];
+}
+
+$(document).ready(function(){
+	
+	WebStepIndex();
+	
+	//IPv4 Routing Table
+	var TR = '<p><strong id="XS0"></strong></p>';
+
+	TR += '<table class="commonlist">\n';
+	TR += '<tr>\n';
+	TR += '<th style="width: 25%;" id="XS1"></th>\n';
+	TR += '<th style="width: 25%;" id="XS2"></th>\n';
+	TR += '<th style="width: 25%;" id="XS3"></th>\n';
+	TR += '<th style="width: 25%;" id="XS4"></th>\n';
+	TR += '</tr>\n';
+	
+	if(routing_table.length == 0)
+	{
+		TR += '</table>\n';
+		$("#route_table").html(TR);
+		return;
+	}
+	else
+	{
+		$.each(routing_table, function(id,el){
+			for(var i = 8; i <= 15; i++)
+			{
+				if(el.interface == ("wan" + i) || el.interface == ("ppp" + i))
+				return true;
+			}
+			if(el.interface == "lo")
+			{
+				return true;
+			}
+			
+			TR += '<tr>\n';
+			TR += '<td>' + el.destip + '</td>\n';
+			TR += '<td>' + el.netmask + '</td>\n';
+			TR += '<td>' + el.gateway + '</td>\n';
+			TR += '<td>' + el.interface + '</td>\n';
+			TR += '</tr>\n';
+		});
+		TR += '</table>\n';
+		
+		$("#route_table").html(TR);
+	}
+	
+	//IPv6 Routing Table
+	var TRV6 = '<p><strong id="XS5"></strong></p>';
+	var destipv6 = "";
+	var prefix = "";
+
+	TRV6 += '<table class="commonlist">\n';
+	TRV6 += '<tr>\n';
+	TRV6 += '<th style="width: 30%;" id="XS6"></th>\n';
+	TRV6 += '<th style="width: 20%;" id="XS7"></th>\n';
+	TRV6 += '<th style="width: 30%;" id="XS8"></th>\n';
+	TRV6 += '<th style="width: 20%;" id="XS9"></th>\n';
+	TRV6 += '</tr>\n';
+	
+	if(routing_table_v6.length == 0)
+	{
+		TRV6 += '</table>\n';
+		$("#route_table_v6").html(TRV6);
+		return;
+	}
+	else
+	{
+		$.each(routing_table_v6, function(sid,sel){
+			
+			if(sel.destip.indexOf("ff") == 0 || sel.interface == "lo")
+			{
+				return true;
+			}
+			for(var j = 8; j <= 15; j++)
+			{
+				if(sel.interface == ("wan" + j) || sel.interface == ("ppp" + j))
+				return true;
+			}
+			destipv6 = getSubstring(sel.destip,0,"/");
+			prefix = getSubstring(sel.destip,1,"/");
+			TRV6 += '<tr>\n';
+			TRV6 += '<td>' + destipv6 + '</td>\n';
+			TRV6 += '<td>' + prefix + '</td>\n';
+			TRV6 += '<td>' + sel.gateway + '</td>\n';
+			TRV6 += '<td>' + sel.interface + '</td>\n';
+			TRV6 += '</tr>\n';
+		});
+		TRV6 += '</table>\n';
+		
+		$("#route_table_v6").html(TRV6);
+	}
+
+	WebStyleCommonList();
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep" id="route_table"></div>
+<div class="cfgstep" id="route_table_v6" style="display:none"></div>
+
+<div class="cfgstep">
+	<a id="btn_refresh" class="btn" href="rttable.html"><script type="text/javascript">document.write(WebString.Refresh);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

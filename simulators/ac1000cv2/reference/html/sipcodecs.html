@@ -1,0 +1,321 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var pots1_codec = new Array;
+var pots2_codec = new Array;
+
+voip_fax_pots1 = 0;
+pots1_codec[0] = {"codec": 0, "pri": 0};
+pots1_codec[1] = {"codec": 0, "pri": 0};
+pots1_codec[2] = {"codec": 0, "pri": 0};
+pots1_codec[3] = {"codec": 0, "pri": 0};
+voip_enable_pots1 = 0;
+rx_gain_1 = 0;
+tx_gain_1 = 0;
+echo_cancel_1 = 0;
+vad_1 = 0;
+pack_interval_1 = 0;
+voip_fax_pots2 = 0;
+pots2_codec[0] = {"codec": 0, "pri": 0};
+pots2_codec[1] = {"codec": 0, "pri": 0};
+pots2_codec[2] = {"codec": 0, "pri": 0};
+pots2_codec[3] = {"codec": 0, "pri": 0};
+voip_enable_pots2 = 0;
+rx_gain_2 = 0;
+tx_gain_2 = 0;
+echo_cancel_2 = 0;
+vad_2 = 0;
+pack_interval_2 = 0;
+oob_dtmf = 0;
+dtms_events = 0;
+fax_neg = 0;
+rtp_dscpmark = 0;
+sip_hook_timer_min = 0;
+sip_hook_timer_max = 0;
+country_code = 0;
+POTS_NUM = 0;
+
+
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+	$("#outbound").hide();
+	if($("#oob_dtmf").val() == 1)
+	{
+		$("#outbound").show();
+	}
+	
+	WebStepIndex();
+}
+
+$(document).ready(function(){
+
+	// G711A(8), G711U(0), G729(18), G723(4)
+	var i, obj;
+	for (i = 0; i < pots1_codec.length; i++)
+	{
+		obj = "#pots1_codec" + pots1_codec[i].pri;
+		$(obj).val(pots1_codec[i].codec);
+	}
+	$("#oob_dtmf").val(oob_dtmf);
+	$("#dtms_events").val(dtms_events);
+	
+	$("#oob_dtmf").change(function(){
+		WebInit();
+	});
+	if(POTS_NUM > 1)
+	{
+		$("#pots_2").show();
+		var i, obj;
+    	for (i = 0; i < pots2_codec.length; i++)
+    	{
+    		obj = "#pots2_codec" + pots2_codec[i].pri;
+    		$(obj).val(pots2_codec[i].codec);
+    	}
+	}
+	else
+	{
+		$("#pots_2").hide();
+	}
+	$("#btn_apply").click(function(){
+		for(var i = 0; i < POTS_NUM ; i++)
+		{
+			for(var j = 0; j < 3; j++)
+			{
+				var pname = "#pots" + (i+1) + "_codec" + (j+1);
+				for (var k = j+1; k < 4; k++)
+				{
+					var kname = "#pots" + (i+1) + "_codec" + (k+1);
+					if($(pname).val() >= 0 && $(pname).val() == $(kname).val())
+					{
+						alert(WebString.codec_same);
+						return false;
+					}
+				}
+			}
+		}
+		if(($("#oob_dtmf").val() == 1) && (parseInt($("#dtms_events").val()) > 101 || parseInt($("#dtms_events").val()) < 97 || !$("#dtms_events").val().length))
+		{	
+			alert(WebString.dtmf_payload);
+			return false;
+		}
+		XDoSubmit();
+	});
+	
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<td width="200">
+			<ul style="font-weight:bold" width="200"><script>document.write(WebString.pots_if);</script></ul>
+			<ul style="padding-top:10px" width="200" id="XS1"></ul>
+			<ul style="padding-top:10px" width="200" id="XS2"></ul>
+			<ul style="padding-top:10px" width="200" id="XS3"></ul>
+			<ul style="padding-top:10px" width="200" id="XS4"></ul>			
+		</td>
+		<td width="200" id="pots_1">
+			<ul style="font-weight:bold"><script>document.write(WebString.pots1);</script></ul>
+			<ul style="padding-top:10px">
+				<select name="pots1_codec1" id="pots1_codec1">
+					<option value="8">G.711A</option>
+					<option value="0">G.711U</option>
+					<option value="4">G.723</option>
+					<option value="18">G.729</option>
+				</select>
+			</ul>
+			<ul style="padding-top:10px">
+				<select name="pots1_codec2" id="pots1_codec2">
+					<option value="8">G.711A</option>
+					<option value="0">G.711U</option>
+					<option value="4">G.723</option>
+					<option value="18">G.729</option>
+				</select>
+			</ul>
+			<ul style="padding-top:10px">
+				<select name="pots1_codec3" id="pots1_codec3">
+					<option value="8">G.711A</option>
+					<option value="0">G.711U</option>
+					<option value="4">G.723</option>
+					<option value="18">G.729</option>
+				</select>
+			</ul>
+			<ul style="padding-top:10px">
+				<select name="pots1_codec4" id="pots1_codec4">
+					<option value="8">G.711A</option>
+					<option value="0">G.711U</option>
+					<option value="4">G.723</option>
+					<option value="18">G.729</option>
+				</select>
+			</ul>
+		</td>			
+		<td width="200" id="pots_2">
+			<ul style="font-weight:bold"><script>document.write(WebString.pots2);</script></ul>
+			<ul style="padding-top:10px">
+				<select name="pots2_codec1" id="pots2_codec1">
+					<option value="8">G.711A</option>
+					<option value="0">G.711U</option>
+					<option value="4">G.723</option>
+					<option value="18">G.729</option>
+				</select>
+			</ul>
+			<ul style="padding-top:10px">
+				<select name="pots2_codec2" id="pots2_codec2">
+					<option value="8">G.711A</option>
+					<option value="0">G.711U</option>
+					<option value="4">G.723</option>
+					<option value="18">G.729</option>
+				</select>
+			</ul>
+			<ul style="padding-top:10px">
+				<select name="pots2_codec3" id="pots2_codec3">
+					<option value="8">G.711A</option>
+					<option value="0">G.711U</option>
+					<option value="4">G.723</option>
+					<option value="18">G.729</option>
+				</select>
+			</ul>
+			<ul style="padding-top:10px">
+				<select name="pots2_codec4" id="pots2_codec4">
+					<option value="8">G.711A</option>
+					<option value="0">G.711U</option>
+					<option value="4">G.723</option>
+					<option value="18">G.729</option>
+				</select>
+			</ul>
+		</td>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong id="XS5"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS6"></td>
+			<td colspan="2">
+				<select name="oob_dtmf" id="oob_dtmf">
+					<option value="0" selected="selected" id="XS7"></option>
+					<option value="1" id="XS8"></option>
+				</select>
+			</td>
+		</tr>
+		<tr id="outbound">
+			<td width="200" id="XS9"></td>
+			<td colspan="2">
+				<input id="dtms_events" name="dtms_events" type="text" maxlength="3" size="6" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />(97~101)
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+	<a href="#" id="btn_apply" class="btn"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

@@ -1,0 +1,292 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+	
+#up_img {
+	filter: alpha(opacity:0);
+	opacity: 0;
+}
+
+.type-file-text {
+	border: 1px solid #cdcdcd;
+}
+
+.type-file-button {
+	background-color: #fff;
+	border: 1px solid #cdcdcd;
+}
+
+</style>
+<script type="text/javascript">
+//<![CDATA[
+var upgd_flag = 0;
+var	firm_ver = "";
+var values = "";
+var i = 0;
+
+upgd_flag = 0;
+firm_ver="R4.2.23.109";
+
+
+function updateProcess()
+{
+	if(i < 99)
+	{
+		i = i + 1;
+		values =  WebString.upgrading + i + "%";
+		document.getElementById('myProcess').innerHTML = values;
+	}
+	else
+	{
+		window.location.href = window.location.href;
+	}
+}
+
+function WebDoSubmit()
+{
+	if($("#up_img").val() == "")
+	{
+		alert(WebString.upgrade_alert);
+		$("#up_img").focus();
+		return;
+	}
+	if(!confirm(WebString.upgrading_alert))
+	{
+		return;
+	}
+
+	$("#div_up_file").hide();
+	$("#div_wirte_firmware").hide();
+	$("#div_upload_file").show();
+	$("#XForm").attr("enctype", "multipart/form-data");
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+	$("#firm_ver").html(firm_ver);
+	$("#div_upload_file").hide();
+	$("#div_error").hide();
+	
+	if(0 == upgd_flag)
+	{
+		$("#div_up_file").show();
+		$("#div_wirte_firmware").hide();
+	}
+	else if(1 == upgd_flag)
+	{
+		setInterval("updateProcess();", 1600);
+		$("#div_up_file").hide();
+		$("#div_wirte_firmware").show();
+	}
+	else if(2 == upgd_flag)
+	{
+		$("#div_up_file").hide();
+		$("#div_wirte_firmware").hide();
+		$("#div_error").show();
+	}
+	
+	WebStepIndex();
+}
+
+$(document).ready(function () {
+	$("#up_img").offset({top:-1000,left:-1000});
+	$("#up_img_button").val(WebString.browse);
+	var navigatorName = "Microsoft Internet Explorer"; 
+	if(navigator.appName == navigatorName)
+	{
+		$(document).mousemove(function(e){
+			var pos = $("#up_img_button").offset();
+			var bright = pos.left + $("#up_img_button").width() + 16;
+			var bbuttom = pos.top + $("#up_img_button").height() + 2;
+			if(e.pageX >= pos.left && e.pageX <= bright && e.pageY >= pos.top && e.pageY <= bbuttom)
+			{
+				$("#up_img").offset({top:e.pageY-10,left:e.pageX-50});
+			}
+			else
+			{
+				$("#up_img").offset({top:-1000,left:-1000});
+			}
+		});
+	}
+	else
+	{
+		$("#up_img_button").click(function(){
+			$("#up_img").focus();
+			$("#up_img").trigger("click");
+		});
+	}
+
+	$("#up_img").change(function(){
+		if($("#up_img").val() != null)              
+		{
+			var filepath = $("#up_img").val();
+			var filename = filepath.substr(filepath.lastIndexOf('\\')+1);
+			$("#up_img_text").val(filename);
+		}
+	});
+	
+	$("#btn_upgrade").click(function(){
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input type="file" id="up_img" name="up_img" size="1" />
+<div id="div_up_file">
+	<div class="cfgstep">
+		<table>
+			<tr>
+				<td id="XS0" width="200"></td>
+				<td id="firm_ver"></td>
+			</tr>
+		</table>
+	</div>
+	
+	<div class="cfgstep">
+		<p><strong id="XS1"></strong></p>
+		<table>
+			<tr>
+				<td>
+					<input type="text" id="up_img_text" class="type-file-text" readonly="readonly" />
+					<input type="button" id="up_img_button" class="type-file-button" />
+				</td>
+			</tr>
+		</table>
+	</div>
+	
+	<div class="cfgstep">
+		<p><strong><script>document.write(WebString.stepUpgrade);</script></strong></p>
+		<a id="btn_upgrade" class="btn apply_btn" href="#"><script>document.write(WebString.Upgrade);</script></a>
+	</div>
+</div>
+
+<div id="div_wirte_firmware">
+	<div class="cfgstep">
+		<p><strong id="XS2"></strong></p>
+		<table>
+			<tr>
+				<td id="myProcess"></td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<div id="div_upload_file">
+	<div class="cfgstep">
+		<p><strong id="XS3"></strong></p>
+		<table>
+			<tr>
+				<td id="XS4"></td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<div id="div_error">
+	<div class="cfgstep">
+		<p><strong id="XS5"></strong></p>
+		<table>
+			<tr>
+				<td id="XS6"></td>
+			</tr>
+		</table>
+	</div>
+</div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

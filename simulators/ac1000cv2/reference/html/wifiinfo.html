@@ -1,0 +1,569 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+//init data started
+var ssid_num = 0;
+var wifi_status = {};
+var wifi_status_ap = new Array();
+var basic = {};
+var access_control = new Array();
+var ssid = new Array();
+var wps = new Array();
+var wifiswitchtimer_enable;
+var wifiswitchtimerday = 0;
+var wifi_switch_start_time = "";
+var wifi_switch_end_time = "";
+var wifi_state = {};
+
+//set to default
+wifi_status_ap[0]={
+rx_packets:0,
+tx_packets:0,
+security:0
+};
+wifi_status_ap[1]={
+rx_packets:0,
+tx_packets:0,
+security:0
+};
+wifi_status_ap[2]={
+rx_packets:0,
+tx_packets:0,
+security:0
+};
+wifi_status_ap[3]={
+rx_packets:0,
+tx_packets:0,
+security:0
+};
+var UserPriority = 0;
+
+//data from web server started
+
+UserPriority=1;
+wifi_status = {
+wifienable:1,
+channel:11,
+wifi_channel_state:0,
+second_channel:0,
+powervalue:-12
+};
+
+basic = {
+enable:1,
+channel:0,
+txpower:0,
+rfindex:0,
+channelwidth:0,
+staNum:0,
+ieeeMode:0,
+country:1
+};
+
+ssid[0]={
+enable:1,
+isinuse:0,
+ssidIndex:0,
+ssidBroadcast:1,
+ssidIsolate:0,
+ssidName:"FPT Telecom-C16E"
+};
+
+access_control[0]={
+enable:0
+};
+
+wifi_status_ap[0] = {
+rx_packets:374664,
+tx_packets:0,
+security:0,
+rfindex:0,
+signal:0
+};
+
+wifi_status_ap[0].security=2,
+
+wps[0]={
+isinuse:1,
+ssidIndex:0,
+mode:0,
+pin:12345678
+};
+
+ssid[1]={
+enable:0,
+isinuse:0,
+ssidIndex:1,
+ssidBroadcast:1,
+ssidIsolate:0,
+ssidName:"FPT Telecom-C16E-SSID2"
+};
+
+access_control[1]={
+enable:0
+};
+
+wifi_status_ap[1].security=2,
+
+wps[1]={
+isinuse:0,
+ssidIndex:1,
+mode:0,
+pin:12345678
+};
+
+ssid[2]={
+enable:0,
+isinuse:0,
+ssidIndex:2,
+ssidBroadcast:1,
+ssidIsolate:0,
+ssidName:"FPT Telecom-C16E-SSID3"
+};
+
+access_control[2]={
+enable:0
+};
+
+wifi_status_ap[2].security=2,
+
+wps[2]={
+isinuse:0,
+ssidIndex:2,
+mode:0,
+pin:12345678
+};
+
+ssid[3]={
+enable:0,
+isinuse:0,
+ssidIndex:3,
+ssidBroadcast:1,
+ssidIsolate:0,
+ssidName:"FPT Telecom-C16E-SSID4"
+};
+
+access_control[3]={
+enable:0
+};
+
+wifi_status_ap[3].security=2,
+
+wps[3]={
+isinuse:0,
+ssidIndex:3,
+mode:0,
+pin:12345678
+};
+
+ssid_num = 4;
+wifi_state = {
+"enable":"1",
+};
+
+wifioptimize_enable = 0;
+
+wifiswitchtimer_enable=0;
+wifi_switch_start_time="06:00";
+wifi_switch_end_time="23:00";
+
+wifiswitchtimerday="127";
+
+
+
+//data from web server ended
+
+//init data ended
+
+//Client contents started.
+
+//define wifi mode
+var RG_WIFI_MODE_AUTO = 0;		   // 802.11b, 11g, 11n mixed
+var RG_WIFI_MODE_11GN = 1;
+var RG_WIFI_MODE_11BG = 2;		   // 802.11b, 11g mixed
+var RG_WIFI_MODE_11N = 3;		   // 802.11n only(802.11ng)
+var RG_WIFI_MODE_11G = 4;		   // 802.11g only
+var RG_WIFI_MODE_11B = 5;		   // 802.11b only
+var RG_WIFI_MODE_11A = 6;		   // 802.11a/n for 5.8G band RF
+var RG_WIFI_MODE_11AN = 7;
+
+var security_type_show = new Array();
+security_type_show[0]=XwifiinfoString[24];
+security_type_show[1]=XwifiinfoString[25];
+security_type_show[2]=XwifiinfoString[26];
+security_type_show[3]=XwifiinfoString[27];
+security_type_show[4]=XwifiinfoString[28];
+security_type_show[5]=XwifiinfoString[29];
+
+var wireless_mode_show = new Array();
+wireless_mode_show[RG_WIFI_MODE_AUTO] = XwifiinfoString[30]; //auto
+wireless_mode_show[RG_WIFI_MODE_11GN] = XwifiinfoString[31]; //gn
+wireless_mode_show[RG_WIFI_MODE_11BG] = XwifiinfoString[32]; //bg
+wireless_mode_show[RG_WIFI_MODE_11N] = XwifiinfoString[33]; //n
+wireless_mode_show[RG_WIFI_MODE_11G] = XwifiinfoString[34]; //g
+wireless_mode_show[RG_WIFI_MODE_11B] = XwifiinfoString[35]; //b
+
+var wps_type_show = new Array();
+wps_type_show[0] = XwifiinfoString[22];
+wps_type_show[1] = XwifiinfoString[23];
+
+function showSelectSsid()
+{
+	var str = "";
+	var j = 0;
+	for (var i=0; i<ssid_num; i++)
+	{
+
+		j = i + 1;
+		str += (
+			'<option value='+ i +'>' + 'SSID' + j + ':' + ssid[i].ssidName +'</option>'
+		);
+	}
+	$("#ssid").html(str);
+}
+
+function doSelectSsid()
+{
+	var ssid_index = parseInt($("#ssid").attr("value"));
+
+	if(ssid_index > ssid_num)
+		ssid_index = 0;
+
+	if (0 == wifi_status.wifienable) {
+		wifi_state_en = 0;
+	} else {
+		wifi_state_en = 1;
+	}
+	var radio_show = wifi_state_en != 0 ? XwifiinfoString[6] : XwifiinfoString[7];
+	if (1 == wifi_status.wifi_channel_state) {
+		wifi_state_en = 0;
+		radio_show =  XwifiinfoString[36];
+	}
+	var ssid_state = ssid[ssid_index].enable != 0 ? XwifiinfoString[6] : XwifiinfoString[7];
+	
+	var channel = wifi_status.channel;
+	var wireless_security_type = security_type_show[ wifi_status_ap[ssid_index].security];
+	var ssid_broadcast = ssid[ssid_index].ssidBroadcast != 0 ? XwifiinfoString[6] : XwifiinfoString[7];
+	var mac_authentication = access_control[ssid_index].enable != 0 ? XwifiinfoString[6] : XwifiinfoString[7];
+	var wireless_mode = wireless_mode_show[basic.ieeeMode];
+	var wps_state = wps[ssid_index].isinuse != 0 ? XwifiinfoString[6] : XwifiinfoString[7];
+	var wps_type = wps_type_show[wps[ssid_index].mode];
+	var wireless_packets_sent = wifi_status_ap[ssid_index].tx_packets;
+	var wireless_packets_received = wifi_status_ap[ssid_index].rx_packets;
+
+	if (wifiswitchtimer_enable == 1) {
+	if (wifi_state_en == 0) {
+	  radio_show = radio_show + " (Wifi OpenTime: "+ wifi_switch_start_time + "-" + wifi_switch_end_time + ")";
+	  $("#radio_en").html(radio_show);
+	} else {
+	  $("#radio_en").html(radio_show);
+	}
+  }
+  else {
+	$("#radio_en").html(radio_show);
+  }
+
+	$("#ssid_en").html(ssid_state);
+
+	$("#channel").html(channel);
+	$("#secu_type").html(wireless_security_type);
+	$("#ssid_broadcast").html(ssid_broadcast);
+	$("#mac_auth").html(mac_authentication);
+	$("#wireless_mode").html(wireless_mode);
+	$("#wps_state").html(wps_state);
+	$("#wps_type").html(wps_type);
+	$("#packets_sent").html(wireless_packets_sent);
+	$("#packets_received").html(wireless_packets_received);
+
+	if (wifi_state_en == 0)
+	{
+		$("#ssid_name").hide();
+		$("#ssid_enable").hide();
+		$("#wifi_status_detail").hide();
+	}
+	else if (ssid[ssid_index].enable == 0)
+	{
+		$("#ssid_name").show();
+		$("#ssid_enable").show();
+		$("#wifi_status_detail").hide();
+	}
+	else
+	{
+		$("#ssid_name").show();
+		$("#ssid_enable").show();
+		$("#wifi_status_detail").show();
+	}
+	
+	if ((0 == ssid_index) && (wifi_status_ap[ssid_index].security <= 2))
+	{
+		$("#wifi_wps_state").show();
+		if (wps[ssid_index].isinuse != 0)
+		{
+			$("#wifi_wps_type").show();
+		}
+		else
+		{
+			$("#wifi_wps_type").hide();
+		}
+	} 
+	else 
+	{
+		$("#wifi_wps_state").hide();
+		$("#wifi_wps_type").hide();
+	}
+}
+
+function WebDoSubmit()
+{
+	//do nothing.
+}
+
+//---------------init value--------------------
+function WebInit()
+{
+	showSelectSsid();
+	doSelectSsid();
+    
+    if (1 == wifioptimize_enable)
+    {
+      $("#optimize_warning").show();
+      $("#btn_wifioptimize").attr("disabled", true);
+      $("#btn_wifioptimize").removeClass("btn").addClass("btn_gray");
+      var time = setInterval(function(){
+        clearInterval(time);
+        $("#optimize_warning").hide();
+        $("#btn_wifioptimize").attr("disabled", false);
+        $("#btn_wifioptimize").removeClass("btn_gray").addClass("btn");
+        self.location.reload();
+      }, 10000); 
+    }
+	//WebStepIndex();
+}
+
+function WifiOptimize()
+{
+   if (0 == wifi_status.wifienable)
+   {
+       alert(XwifiinfoString[39]);   
+   }
+   else
+   { 
+	   if (0 == basic.channel)  //auto mode
+	   {
+		  $("#wifioptimize_value").val("1");
+		  $("#optimize_warning").show();
+		  $("#btn_wifioptimize").attr("disabled", true);
+		  $("#btn_wifioptimize").removeClass("btn").addClass("btn_gray");
+		  $("#XForm").submit();    
+	   }
+	   else
+	   {
+		 alert(XwifiinfoString[38]);
+	   }
+   }
+}
+
+//-------------setup triger--------------------
+$(document).ready(function(){
+
+	$("#ssid").change(function(){
+		doSelectSsid();
+	});
+    
+	$("#btn_wifioptimize").click(function(){
+	    WifiOptimize();
+	});
+});
+
+//Client contents ended.
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+		<div class="cfgstep">
+			<p><strong id="XS0"></strong></p>
+			<table>
+			<tbody>
+				<tr>
+					<td width="200" id="XS5"></td>
+					<td id="radio_en"></td>
+				</tr>
+				<tr id="ssid_name">
+					<td width="200" id="XS2"></td>
+					<td>
+						<select name="ssid" id="ssid">
+						</select>
+					</td>
+				</tr>
+				<tr id="ssid_enable">
+					<td width="200" id="XS8"></td>
+					<td id="ssid_en"></td>
+				</tr>
+			</tbody>
+			</table>
+		</div>
+		
+        <div class="cfgstep">
+			<p><strong id="XS37"></strong></p>
+			<table>
+			<tbody>
+				<tr>
+                    <div id="optimize_warning" height="40" style="display:none" name="hide">
+                       <p><strong id="optimize_warning_message" style="color:red">Warning：The "Wi-Fi Optimize" will result in all Wi-Fi clients temporarily disconnected from Wi-Fi service.</strong></p>
+				    </div>
+                    <input id="wifioptimize_value" name="wifioptimize_value" type="hidden" value="" />
+                </tr>
+                <tr>
+                    <a id="btn_wifioptimize" class="btn" href="#"><script>document.write(WebString.wifioptimize);</script></a>
+			    </tr>
+            </tbody>
+			</table>
+		</div>
+        
+		<div class="cfgstep" id="wifi_status_detail">
+			<p><strong id="XS9"></strong></p>
+			<table>
+				<tr>
+					<td id="XS13" width="200"></td>
+					<td id="channel"></td>
+				</tr>
+				<tr>
+					<td id="XS14" width="200"></td>
+					<td id="secu_type"></td>
+				</tr>
+				<tr>
+					<td id="XS15" width="200"></td>
+					<td id="ssid_broadcast"></td>
+				</tr>
+				<tr>
+					<td id="XS16" width="200"></td>
+					<td id="mac_auth"></td>
+				</tr>
+				<tr>
+					<td id="XS17" width="200"></td>
+					<td id="wireless_mode"></td>
+				</tr>
+				<tr id="wifi_wps_state">
+					<td id="XS18" width="200"></td>
+					<td id="wps_state"></td>
+				</tr>
+				<tr id="wifi_wps_type">
+					<td id="XS19" width="200"></td>
+					<td id="wps_type"></td>
+				</tr>
+				<tr>
+					<td id="XS20" width="200"></td>
+					<td id="packets_sent"></td>
+				</tr>
+				<tr>
+					<td id="XS21" width="200"></td>
+					<td id="packets_received"></td>
+				</tr>
+			</table>
+		</div>
+
+<div class="cfgstep">
+	<a id="btn_refresh" class="btn" href="wifiinfo.html"><script type="text/javascript">document.write(WebString.Refresh);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

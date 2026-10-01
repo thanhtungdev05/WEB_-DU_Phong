@@ -1,0 +1,376 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+var rebootswitchtimer_enable;
+var rebootswitchtimerday = 0;
+var reboot_switch_time = "";
+
+rebootswitchtimer_enable=0;
+reboot_switch_time="06:00";
+
+rebootswitchtimerday="127";
+
+
+
+function radioSet(enable){
+	if (eval(enable)=="1"){
+		$("#"+enable+"0").get(0).checked=false;
+    $("#"+enable+"1").get(0).checked=true;
+	}else if (eval(enable)=="0"){
+		$("#"+enable+"0").get(0).checked=true;
+		$("#"+enable+"1").get(0).checked=false;
+	}else{
+		return;
+	}
+		
+}
+
+function dataInit(){
+  var iday = rebootswitchtimerday;
+  
+  $("#reboot_time").val(reboot_switch_time);
+
+  if (iday & 0x1) {
+    $("#Monday").attr("checked", true);
+  } else {
+    $("#Monday").attr("checked", false);
+  }
+    
+  if (iday & 0x2) {
+    $("#Tuesday").attr("checked", true);
+  } else {
+    $("#Tuesday").attr("checked", false);  
+  }
+
+  if (iday & 0x4) {
+    $("#Wednesday").attr("checked", true);
+  } else {
+    $("#Wednesday").attr("checked", false);  
+  }
+
+  if (iday & 0x8) {
+    $("#Thursday").attr("checked", true);
+  } else {
+    $("#Thursday").attr("checked", false);  
+  }
+
+  if (iday & 0x10) {
+    $("#Friday").attr("checked", true);
+  } else {
+    $("#Friday").attr("checked", false);  
+  }
+
+  if (iday & 0x20) {
+    $("#Saturday").attr("checked", true);
+  } else {
+    $("#Saturday").attr("checked", false);    
+  }
+
+  if (iday & 0x40) {
+    $("#Sunday").attr("checked", true);
+  } else {
+    $("#Sunday").attr("checked", false);    
+  }
+
+}
+
+function SetMode(){
+  //alert("reboot=" + reboot_switch_time + " day=" + rebootswitchtimerday);
+	if ("1" == rebootswitchtimer_enable){
+		$("[name='hide']").show();
+		WebStepIndex();
+        dataInit();    
+	}else if ("0" == rebootswitchtimer_enable){
+		$("[name='hide']").hide();
+		WebStepIndex();
+	}
+}
+
+function getrebootswitchtimerdayval(){
+	  var checkboxenable = $("#Monday").attr("checked");
+	  if (checkboxenable == "checked")
+	    rebootswitchtimerday |= parseInt($("#Monday").val());
+	  else
+	    rebootswitchtimerday &= ~parseInt($("#Monday").val());
+
+	  checkboxenable = $("#Tuesday").attr("checked");
+	  if (checkboxenable == "checked")
+	    rebootswitchtimerday |= parseInt($("#Tuesday").val());
+	  else
+	    rebootswitchtimerday &= ~parseInt($("#Tuesday").val());
+
+	  checkboxenable = $("#Wednesday").attr("checked");
+	  if (checkboxenable == "checked")
+	    rebootswitchtimerday |= parseInt($("#Wednesday").val());
+	  else
+	    rebootswitchtimerday &= ~parseInt($("#Wednesday").val());
+
+	  checkboxenable = $("#Thursday").attr("checked");
+	  if (checkboxenable == "checked")
+	    rebootswitchtimerday |= parseInt($("#Thursday").val());
+	  else
+	    rebootswitchtimerday &= ~parseInt($("#Thursday").val());
+
+	  checkboxenable = $("#Friday").attr("checked");
+	  if (checkboxenable == "checked")
+	    rebootswitchtimerday |= parseInt($("#Friday").val());
+	  else
+	    rebootswitchtimerday &= ~parseInt($("#Friday").val());
+
+	  checkboxenable = $("#Saturday").attr("checked");
+	  if (checkboxenable == "checked")
+	    rebootswitchtimerday |= parseInt($("#Saturday").val());
+	  else
+	    rebootswitchtimerday &= ~parseInt($("#Saturday").val());
+
+	  checkboxenable = $("#Sunday").attr("checked");
+	  if (checkboxenable == "checked")
+	    rebootswitchtimerday |= parseInt($("#Sunday").val());
+	  else
+	    rebootswitchtimerday &= ~parseInt($("#Sunday").val());
+}
+	
+function isValidTimeFormat(stime) {
+   var c = '';
+   var ihour = 0, iminute = 0;
+   var i = 0, j = 0;
+
+   timeParts = stime.split(':');
+   if ( timeParts.length != 2 ) return false;
+
+   for (i = 0; i < 2; i++) {
+      if ( timeParts[i] == '' )
+         return false;
+	  
+      for ( j = 0; j < timeParts[i].length; j++ ) {
+         c = timeParts[i].toLowerCase().charAt(j);
+         if ( (c >= '0' && c <= '9'))
+            continue;
+         else
+            return false;
+      }
+   }
+
+   ihour = parseInt(timeParts[0]);
+   iminute = parseInt(timeParts[1]);
+   if (ihour >= 0 && ihour <= 23 && iminute >=  0 && iminute <= 59)	  
+      return true;
+    
+    return false;
+}
+
+function doCheckVal(rebootswitchtimerday, reboottm){
+
+    if(isValidTimeFormat(reboottm) == false){
+		alert(XrebootswitchtimerString[7]);
+		return false;
+	}
+
+  /*
+  if (rebootswitchtimerday == 0) {
+		alert(XrebootswitchtimerString[8]);
+		return false;  
+  }	
+  */
+
+	return true;
+}
+
+function updatetimerswitch(){
+	window.location.href = window.location.href;
+}
+
+function WebDoSubmit(){
+	setInterval("updatetimerswitch();", 3000);
+	$("#XForm").submit();
+}
+
+function getconfigdata(){
+    rebootswitchtimerday = 0;
+    getrebootswitchtimerdayval();
+
+	var reboottm = $("#reboot_time").val();
+	reboottm = $.trim(reboottm);
+    var stimeParts = reboottm.split(':');
+    	
+	if (false == doCheckVal(rebootswitchtimerday, reboottm)){
+		return false;
+	}	
+  
+	var value = stimeParts[0] + "#" + stimeParts[1] + "#" + rebootswitchtimerday;    
+    $("#rebootswitchtimer_value").val(value);
+    return true;
+}   
+
+function WebInit(){
+	radioSet("rebootswitchtimer_enable");
+	SetMode();
+}
+
+$(document).ready(function () {
+	$("input").css("ime-mode","disabled");
+	$("#rebootswitchtimer_enable0").change(function(){
+        rebootswitchtimer_enable = "0";
+		SetMode();
+	});
+	
+	$("#rebootswitchtimer_enable1").change(function(){
+        rebootswitchtimer_enable = "1";
+		SetMode();
+	});
+
+	$("#btn_apply").click(function(){
+ 	    var reboot_sw_en = $('input:radio[name="rebootswitchtimer_enable"]:checked').val();
+	    if (reboot_sw_en == 1) {
+            if (false == getconfigdata()) {
+                return;
+            }
+	    }
+		XDoSubmit();
+	});
+});
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input id="rebootswitchtimer_value" name="rebootswitchtimer_value" type="hidden" value="" />
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td id="XS1" width="200"></td>
+			<td>
+				<input type="radio" name="rebootswitchtimer_enable" id="rebootswitchtimer_enable0" value="0" />
+				<script>document.write(WebString.Disable);</script>&nbsp;&nbsp;
+				<input type="radio" name="rebootswitchtimer_enable" id="rebootswitchtimer_enable1" value="1" checked="true"/><script>document.write(WebString.Enable);</script>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS2"></strong></p>
+	<table>     
+        <tr style="display:none" name="hide">
+            <td id="XS3"></td>
+      		<td><input type="text" id="reboot_time" maxlength="5" onkeypress="return OnKeyPress(event, X_INPUT_MAC);"/>
+      			<script>document.write(XrebootswitchtimerString[5]);</script></td>
+        </tr>
+        <tr style="display:none" name="hide">
+            <td id="XS4"></td>
+ 			<td><input type="checkbox" name="Monday" id="Monday" value="1"/><script type="text/javascript">document.write(WebString.Mon);</script>
+				<input type="checkbox" name="Tuesday" id="Tuesday" value="2"/><script type="text/javascript">document.write(WebString.Tue);</script>
+				<input type="checkbox" name="Wednesday" id="Wednesday" value="4"/><script type="text/javascript">document.write(WebString.Wed);</script>
+				<input type="checkbox" name="Thursday" id="Thursday" value="8"/><script type="text/javascript">document.write(WebString.Thu);</script>
+				<input type="checkbox" name="Friday" id="Friday" value="16"/><script type="text/javascript">document.write(WebString.Fri);</script>
+				<input type="checkbox" name="Saturday" id="Saturday" value="32"/><script type="text/javascript">document.write(WebString.Sat);</script>
+				<input type="checkbox" name="Sunday" id="Sunday" value="64"/><script type="text/javascript">document.write(WebString.Sun);</script>
+			</td>
+        </tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong><script>document.write(XrebootswitchtimerString[6]);</script></strong></p>
+	<a id="btn_apply" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Apply);</script>
+	</a>
+</div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+ 

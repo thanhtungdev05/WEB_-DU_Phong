@@ -1,0 +1,225 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var igd_enable = "";
+var upnp_list = new Array();
+
+igd_enable="1";
+
+
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+function showUPnPList()
+{
+	var i, str;
+	for (i = 0; i < upnp_list.length; i++)
+	{
+		if(i > 32)
+		    break;
+		    
+		str = "<tr>";
+		str += "<td>" + upnp_list[i].ip + "<\/td>";
+		str += "<td>" + upnp_list[i].protocol + "<\/td>";
+		str += "<td>" + upnp_list[i].iport + "<\/td>";
+		str += "<td>" + upnp_list[i].eport + "<\/td>";
+		str += "<td><a class=\"btn remove_btn\" href=\"#\" onclick=\"deleteUPnP(" + i + ");\">" + WebString.Remove + "<\/td>";
+		str += "<tr>";
+		$("#upnp_list").append(str);
+	}
+}
+
+function deleteUPnP(idx)
+{
+	if (!confirm(WebString.delete_confirm))
+	{
+		return;
+	}
+	$("#ipaddr").val(upnp_list[idx].ip);
+	$("#protocol").val(upnp_list[idx].protocol);
+	$("#iport").val(upnp_list[idx].iport);
+	$("#eport").val(upnp_list[idx].eport);
+	$("#XForm").submit();
+}
+
+function upnp_enable()
+{
+	var upnp_en = $('input:radio[name="igdenable"]:checked').val();
+	
+	if(1 == upnp_en)
+		$("#upnplist_div").show();
+	else
+		$("#upnplist_div").hide();
+}
+
+function DataInit()
+{
+	if(igd_enable == 1)
+		$("#enable").get(0).checked = true;
+	else
+		$("#disable").get(0).checked = true;
+		
+   upnp_enable();
+}
+
+function WebInit()
+{
+	DataInit();
+	upnp_enable();
+	showUPnPList();
+	WebStepIndex();
+}
+
+$(document).ready(function(){
+
+	$("input[name='igdenable']").click(function() {
+		upnp_enable();
+	});
+    
+	$("#btn_apply").click(function(){
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+    <tr>
+			<td width="200" id="XS1"></td>
+			<td>
+				<input id="enable" name="igdenable" value="1" type="radio" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+				<input id="disable" name="igdenable" value="0" type="radio" /><script>document.write(WebString.Disable);</script>
+				<input id="ipaddr" name="ipaddr" type="hidden" value=""  />
+				<input id="protocol" name="protocol" type="hidden" value=""  />
+				<input id="iport" name="iport" type="hidden" value=""  />
+				<input id="eport" name="eport" type="hidden" value=""  />
+			</td>
+    </tr>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+	<a href="#" id="btn_apply" class="btn"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+<div class="cfglist" id="upnplist_div">
+	<table id="upnp_list">
+		<tr>
+			<th id="XS2" colspan="5" class="tableTitle">UPnP List</th>
+		</tr>
+		<tr>
+			<th id="XS3" style="width: 28%">IP Address</th>
+			<th id="XS4" style="width: 16%">Protocol</th>
+			<th id="XS5" style="width: 20%">Internal Port</th>
+			<th id="XS6" style="width: 20%">External Port</th>
+			<th style="width: 16%"><script type="text/javascript">document.write(WebString.Edit);</script></th>		
+		</tr>
+	</table>  
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

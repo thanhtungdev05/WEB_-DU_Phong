@@ -1,0 +1,761 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript" src="script/port_forwarding.js"></script>
+<script type="text/javascript">
+//<![CDATA[
+
+var portfwd_list = [];
+var lan_ip = "";
+var lan_mask = "";
+var lan_dev = new Array();
+
+portfwd_list = [
+{
+"wan_index": 0, 
+"wan_name": "1_INTERNET_TR069_IPTV_R_VID_", 
+"mapping_list" : [
+	]
+}
+];
+
+pool_type = "0";
+lan_ip_0 = "192.168.1.1";
+lan_mask_0 = "255.255.255.0";
+lan_ip_1 = "192.168.0.1";
+lan_mask_1 = "255.255.255.0";
+
+LanDevStatus = 2;
+lan_dev[0] = { mac: "bc:ec:a0:05:5f:8d", ip: "192.168.1.244", hostname: "thanhtung", conn_type: "1", uptime: "0h 0m ", dhcp: "1" };
+wl_num  = 0;
+eth_num = 1;
+
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+function FreshTable(idx)
+{
+	var TR = "";	
+
+	TR += '<table>\n';
+	TR += '<tr><th class="tableTitle" colspan="7" id="XS18"></th></tr>\n';
+	TR += '<tr>\n';
+	TR += '<th id="XS19"></th>\n';
+	TR += '<th id="XS20"></th>\n';
+	TR += '<th id="XS21"></th>\n';
+	TR += '<th id="XS22"></th>\n';
+	//TR += '<th id="XS23"></th>\n';
+	TR += '<th id="XS24"></th>\n';
+	TR += '<th id="XS25"></th>\n';
+	TR += '</tr>\n';
+	
+	if(portfwd_list.length == 0)
+	{
+		TR += '</table>\n';
+		$("#portfwd_mappinglist").html(TR);
+		return;
+	}
+	else if(portfwd_list[idx].mapping_list.length == 0)
+	{
+		TR += '</table>\n';
+		$("#portfwd_mappinglist").html(TR);
+		return;
+	}
+	else
+	{
+		$.each(portfwd_list[idx].mapping_list,function(id,tmpdata){
+			var proto = "";
+			if(tmpdata.protocol == 1)
+				proto = "TCP";
+			else if(tmpdata.protocol == 2)
+				proto = "UDP";
+			else if(tmpdata.protocol == 3)
+				proto = "Both";
+			//var remote_ip = "N/A";
+			//if(tmpdata.remote_ip != "0.0.0.0")
+				//remote_ip = tmpdata.remote_ip;
+			var wan_port = tmpdata.wan_port_start + " thru " + tmpdata.wan_port_end;
+			if(parseInt(tmpdata.wan_port_start) == parseInt(tmpdata.wan_port_end))
+				wan_port = tmpdata.wan_port_start;
+			var app_name = WebString.customer_setting;
+			if(tmpdata.apporder != -1)
+			{
+				app_name = PortfwdApp[tmpdata.apporder];
+			}
+			if (tmpdata.enable == 0)
+			{
+				TR += '<tr>\n';
+				TR += '<td style="width: 15%">' + '<font color="gray">' + app_name + '</font>' + '</td>\n';
+				TR += '<td style="width: 20%">' + '<font color="gray">' + tmpdata.lan_ip + '</font>' + '</td>\n';
+				TR += '<td style="width: 10%">' + '<font color="gray">' + proto + '</font>' + '</td>\n';
+				TR += '<td style="width: 10%">' + '<font color="gray">' + tmpdata.lan_port + '</font>' + '</td>\n';
+				//TR += '<td style="width: 15%">' + remote_ip + '</td>\n';
+				TR += '<td style="width: 15%">' + '<font color="gray">' + wan_port + '</font>' + '</td>\n';
+				TR += '<td style="width: 30%"><a href="#" class="btn enable_btn">'+ WebString.Enable + '</a><a href="#" class="btn remove_btn">'+ WebString.Remove + '</a></td>\n';
+				TR += '</tr>\n';
+			}
+			else {
+				TR += '<tr>\n';
+				TR += '<td style="width: 15%">' + app_name + '</td>\n';
+				TR += '<td style="width: 20%">' + tmpdata.lan_ip + '</td>\n';
+				TR += '<td style="width: 10%">' + proto + '</td>\n';
+				TR += '<td style="width: 10%">' + tmpdata.lan_port + '</td>\n';
+				//TR += '<td style="width: 15%">' + remote_ip + '</td>\n';
+				TR += '<td style="width: 15%">' + wan_port + '</td>\n';
+				TR += '<td style="width: 30%"><a href="portfwdedit.html" class="btn edit_btn">'+ WebString.Edit + '</a><a href="#" class="btn remove_btn">'+ WebString.Remove + '</a></td>\n';
+				TR += '</tr>\n';
+			}
+		});
+	}
+	TR += '</table>\n';
+	
+	$("#portfwd_mappinglist").html(TR);
+	
+	$(".remove_btn").click(function(){
+		if (!confirm(WebString.delete_confirm))
+		{
+			return;
+		}
+
+		var row = this.parentNode.parentNode.rowIndex;
+		$("#action").val("del_portfwd");
+		$("#value").val($("#wan_conlist").val() + "_" + (row - 2));
+		$("#XForm").submit();
+	});
+	$(".edit_btn").click(function(){
+		var row = this.parentNode.parentNode.rowIndex;
+		top.portfwdeditIdx = row-2;	
+		top.wanIdx = $("#wan_conlist").val();
+		top.host_idx = hid;
+	});
+	$(".enable_btn").click(function(){
+		var row = this.parentNode.parentNode.rowIndex;
+		$("#action").val("en_portfwd");
+		$("#value").val($("#wan_conlist").val() + "_" + (row - 2));
+		$("#XForm").submit();
+	});
+}
+
+function FreshApp(appidx)
+{
+	var TR = "";	
+
+	TR += '<table>\n';
+	TR += '<tr><th class="tableTitle" colspan="6" id="XS32"></th></tr>\n';
+	TR += '<tr>\n';
+	TR += '<th id="XS26"></th>\n';
+	TR += '<th id="XS27"></th>\n';
+	TR += '<th id="XS28"></th>\n';
+	TR += '<th id="XS29"></th>\n';
+	TR += '<th id="XS30"></th>\n';
+	TR += '<th id="XS31"></th>\n';
+	TR += '</tr>\n';
+	
+	if(apporder[appidx].tcp != null)
+	{
+		$.each(apporder[appidx].tcp,function(tid,tel){
+			
+			TR += '<tr>\n';
+			TR += '<td style="width: 37%">' + PortfwdApp[appidx] + '</td>\n';
+			TR += '<td style="width: 15%">TCP</td>\n';
+			TR += '<td style="width: 12%">' + tel.ws + '</td>\n';
+			TR += '<td style="width: 12%">' + tel.we + '</td>\n';
+			TR += '<td style="width: 12%">' + tel.ls + '</td>\n';
+			TR += '<td style="width: 12%">' + tel.le + '</td>\n';
+			TR += '</tr>\n';
+		});
+	}
+	if(apporder[appidx].udp != null)
+	{
+		$.each(apporder[appidx].udp,function(uid,uel){
+			
+			TR += '<tr>\n';
+			TR += '<td style="width: 37%">' + PortfwdApp[appidx] + '</td>\n';
+			TR += '<td style="width: 15%">UDP</td>\n';
+			TR += '<td style="width: 12%">' + uel.ws + '</td>\n';
+			TR += '<td style="width: 12%">' + uel.we + '</td>\n';
+			TR += '<td style="width: 12%">' + uel.ls + '</td>\n';
+			TR += '<td style="width: 12%">' + uel.le + '</td>\n';
+			TR += '</tr>\n';
+		});
+	}
+	TR += '</table>\n';
+	
+	$("#FreshAppTable").html(TR);
+	
+}
+
+function WriteAppOrder()
+{
+	var app = '<select id="portfwd_sel" name="portfwd_sel" style="width:200px">\n';
+
+	app += '<option value="-1">' + WebString.customer_setting + '</option>\n';
+
+	$.each(apporder,function(aid,ael){
+		app += '<option value="' + aid + '">' + PortfwdApp[aid] + '</option>\n';
+	});
+		
+	app += '</select>\n';
+	$("#appod").html(app);
+}
+
+function WriteWanList()
+{
+	var sobj = '<select id="wan_conlist" name="wan_conlist">\n';
+	if (portfwd_list.length == 0)
+	{
+		sobj += '<option value="0">NO_WAN_Interface</option>\n';
+	}
+	else
+	{
+		$.each(portfwd_list,function(wid,wel){
+			sobj += '<option value="' + wel.wan_index + '">' + wel.wan_name + '</option>\n';
+		});
+	}
+	sobj += '</select>\n';
+	$("#wan_sel").html(sobj);
+}
+
+function SetApp()
+{
+	$("#viewrule").hide();
+	$("#portfwd_cfg").show();
+	var appid = $("#portfwd_sel").val();
+	if(appid != -1)
+	{
+		$("#viewrule").show();
+		$("#portfwd_cfg").hide();
+	}
+}
+
+function EnableRemoteIp()
+{
+	$("#remip").hide();
+	if($("#enable").get(0).checked == true)
+		$("#remip").show();
+}
+
+function SetHost()
+{
+	var idx = $("#host_idx").val();
+	$("#manu_ip").show();
+	if($("#host_idx").val() != -1)
+	{
+		$("#manu_ip").hide();
+		$("#portfwd_lanip").val(lan_dev[idx].ip);
+	}
+}
+
+function WebInit()
+{
+	WebStepIndex();
+}
+
+$(document).ready(function(){
+	
+	$("#remoteIp").hide();
+	WriteAppOrder();
+	SetApp();
+	WriteWanList();
+	FreshTable(0);
+	//EnableRemoteIp();
+	SetHost();
+	
+	for(var i = 0; i < lan_dev.length; i++)
+	{
+		var tmp = "<option value='" + i + "'>" + lan_dev[i].hostname + " - " + lan_dev[i].ip + "</option>";
+		$("#host_idx").append(tmp);
+	}
+	
+	$("#portfwd_sel").change(function(){
+		SetApp();
+		WebStepIndex();
+	});
+	
+	$("#enable").change(function(){
+		EnableRemoteIp();
+	});
+	$("#disable").change(function(){
+		EnableRemoteIp();
+	});
+	
+	$("#wan_conlist").change(function(){
+		FreshTable($("#wan_conlist").get(0).selectedIndex);
+		WebLoadString();
+		WebStepIndex();
+	});
+	
+	$("#sel_rule").click(function(){
+		FreshApp($("#portfwd_sel").val());
+		$("#set_rule").hide();
+		WebLoadString();
+		$("#portfwd_app").show();
+	});
+	
+	$("#host_idx").change(function(){
+		SetHost();
+	});
+	
+	$("#app_back").click(function(){
+		$("#set_rule").show();
+		$("#portfwd_app").hide();
+		WebStepIndex();
+	});
+	
+	$("#btn_apply").click(function(){
+		var wanid = $("#wan_conlist").get(0).selectedIndex;
+		var appid = $("#portfwd_sel").val();
+		var hid = $("#host_idx").val();
+		var hostname = "";
+		if(hid != -1)
+		{
+			hostname = lan_dev[hid].hostname;
+		}
+		else
+		{
+			hostname = "Unknown";
+		}
+		if(hostname.length == 0)
+		{
+			hostname = "Unknown";
+		}
+		var portfwd_lanip = $("#portfwd_lanip").val();
+		if(portfwd_list.length == 0)
+		{
+			alert(WebString.wan_not_exist_alert);
+			return false;
+		}
+		if(portfwd_lanip.length == 0)
+		{
+			alert(WebString.no_lanip);
+			return false;
+		}
+		if(isValidIpAddress(portfwd_lanip) == false)
+		{
+			alert(WebString.lan_ip_erro_alert);
+			return false;
+		}
+		if(isLansubIP(portfwd_lanip,lan_ip_0,lan_mask_0) == false)
+		{
+			if(pool_type == 0 || pool_type == 1)
+			{
+				alert(WebString.lan_ip_erro_alert);
+				return false;
+			}
+			else
+			{
+				if(isLansubIP(portfwd_lanip,lan_ip_1,lan_mask_1) == false)
+				{
+					alert(WebString.lan_ip_erro_alert);
+					return false;
+				}
+			}
+		}
+		
+		if(appid == -1)
+		{
+			if(portfwd_list[wanid].mapping_list.length == 32)
+			{
+				alert(WebString.maxrule);
+				return false;
+			}
+			if($("#portfwd_lanport").val() < 1 || $("#portfwd_lanport").val() > 65535)
+			{
+				alert(WebString.nat_lan_port_erro_alert);
+				return false;
+			}
+			if($("#portfwd_wanstart").val() < 1 || $("#portfwd_wanstart").val() > 65535)
+			{
+				alert(WebString.nat_wan_start_port_alert);
+				return false;
+			}
+			if($("#portfwd_wanend").val() < 1 || $("#portfwd_wanend").val() > 65535)
+			{
+				alert(WebString.nat_wan_end_port_alert);
+				return false;
+			}
+			if(parseInt($("#portfwd_wanstart").val()) > parseInt($("#portfwd_wanend").val()))
+			{
+				alert(WebString.nat_wan_port_erro_alert);
+				return false;
+			}
+			var flag = 0;
+			$.each(portfwd_list[wanid].mapping_list,function(tid,tel){
+				var wanps = tel.wan_port_start; 
+				var wanpe = tel.wan_port_end;
+		
+				if(($("#portfwd_wanstart").val() >= wanps && $("#portfwd_wanstart").val() <= wanpe) 
+							|| ($("#portfwd_wanend").val() >= wanps && $("#portfwd_wanend").val() <= wanpe))
+				{
+					alert(WebString.wan_port_overlap_alert);
+					flag = 1;
+					return false;
+				}
+			});
+			if(flag) return false;
+/*	
+			if($("#enable").get(0).checked == true)
+			{
+				if($("#portfwd_remoteip").val().length == 0)
+				{
+					alert(WebString.nat_no_remoteip);
+					return false;
+				}
+				if(isValidIpAddress($("#portfwd_remoteip").val()) == false)
+				{
+					alert(WebString.nat_remote_ip_erro_alert);
+					return false;
+				}
+				if(isValidDnsIpAddress($("#portfwd_remoteip").val()) == false)
+				{
+					alert(WebString.nat_remote_ip_erro_alert);
+					return false;
+				}
+			}
+*/			
+			$("#action").val("add_portfwd");
+			var rem_ip = "null";
+			/*
+			if($("#enable").get(0).checked == true)
+			{
+				rem_ip = $("#portfwd_remoteip").val(); 
+			}
+			*/
+			var portfwd_data = $("#wan_conlist").val().toString();
+			portfwd_data += "|" + $("#portfwd_wanstart").val();
+			portfwd_data += "|" + $("#portfwd_wanend").val(); 
+			portfwd_data += "|" + $("#portfwd_lanport").val();
+			portfwd_data += "|" + $("#portfwd_lanport").val();
+			portfwd_data += "|" + $("#portfwd_lanip").val(); 
+			portfwd_data += "|" + $("#protocol").val(); 
+			portfwd_data += "|" + rem_ip;
+			portfwd_data += "|" + hostname; 
+			//Be there just to make up the number match huawei
+			portfwd_data += "|" + "NULL";
+			portfwd_data += "|" + appid;
+			$("#rulenum").val(1);
+			$("#value").val(portfwd_data);
+		}
+		else
+		{
+			var tcp_rule = 0;
+			var udp_rule = 0;
+			var rule_num = 0;
+			var rule_tol = 0;
+			var app_data = "";
+			
+			var appflag = 0;
+			$.each(portfwd_list[wanid].mapping_list,function(tid,tel){
+				var wanps = tel.wan_port_start; 
+				var wanpe = tel.wan_port_end;
+				
+				if(apporder[appid].tcp != null)
+				{
+					$.each(apporder[appid].tcp,function(ctid,ctel){
+						if((ctel.ws >= wanps && ctel.ws <= wanpe) || (ctel.we >= wanps && ctel.we <= wanpe))
+						{
+							alert(WebString.wan_port_overlap_alert);
+							appflag = 1;
+							return false;
+						}
+					});
+				}
+				if(appflag) return false;
+				if(apporder[appid].udp != null)
+				{
+					$.each(apporder[appid].udp,function(utid,utel){
+						if((utel.ws >= wanps && utel.ws <= wanpe) || (utel.we >= wanps && utel.we <= wanpe))
+						{
+							alert(WebString.wan_port_overlap_alert);
+							appflag = 1;
+							return false;
+						}
+					});
+				}
+				if(appflag) return false;
+			});
+			if(appflag) return false;
+			
+			if(apporder[appid].tcp != null)
+			{
+				tcp_rule = apporder[appid].tcp.length;
+				
+				$.each(apporder[appid].tcp,function(tid,tel){
+					if(tid > 0)
+					{
+						app_data += "~";
+					}
+					app_data += $("#wan_conlist").val().toString();
+					app_data += "|" + tel.ws;
+					app_data += "|" + tel.we;
+					app_data += "|" + tel.ls;
+					app_data += "|" + tel.le;
+					app_data += "|" + $("#portfwd_lanip").val(); 
+					app_data += "|" + 1; 
+					app_data += "|" + "null";
+					app_data += "|" + hostname; 
+					//Be there just to make up the number match huawei
+					app_data += "|" + "NULL";
+					app_data += "|" + appid;
+				});
+			}
+			if(apporder[appid].udp != null)
+			{
+				udp_rule = apporder[appid].udp.length;
+				
+				$.each(apporder[appid].udp,function(uid,uel){
+					if(uid > 0 || apporder[appid].tcp != null)
+					{
+						app_data += "~";
+					}
+					app_data += $("#wan_conlist").val().toString();
+					app_data += "|" + uel.ws;
+					app_data += "|" + uel.we;
+					app_data += "|" + uel.ls;
+					app_data += "|" + uel.le;
+					app_data += "|" + $("#portfwd_lanip").val(); 
+					app_data += "|" + 2; 
+					app_data += "|" + "null";
+					app_data += "|" + hostname; 
+					//Be there just to make up the number match huawei
+					app_data += "|" + "NULL";
+					app_data += "|" + appid;
+				});
+			}
+			$("#action").val("add_portfwd");
+			rule_num = parseInt(tcp_rule) + parseInt(udp_rule);
+			rule_tol = parseInt(portfwd_list[wanid].mapping_list.length) + rule_num;
+			if(rule_tol >= 32)
+			{
+				alert(WebString.maxrule);
+				return false;
+			}
+			$("#rulenum").val(rule_num);
+			$("#value").val(app_data);
+		}
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	if (!page || page === "undefined") {
+		page = (typeof getCurSubMenu === "function") ? getCurSubMenu() : "portfwd";
+	}
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu || "portfwd");
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input id="action" name="action" type="hidden" />
+<input id="rulenum" name="rulenum" type="hidden" />
+<input id="value" name="value" type="hidden" />
+<div id="set_rule">
+	<div class="cfgstep">
+		<p><strong id="XS0"></strong></p>
+		<table>
+			<tr>
+				<td width="200" id="XS1"></td>
+				<td>
+					<span id="appod"></span>
+					<span id="viewrule">
+						<a href="#" id="sel_rule" class="btn"><script>document.write(WebString.viewrule);</script></a>
+					</span>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div class="cfgstep">
+		<p><strong id="XS2"></strong></p>
+		<table>
+			<tr>
+				<td width="200" id="XS3"></td>
+				<td>
+					<select name="host_idx" id="host_idx" style="width:220px">
+						<option id="XS4" value="-1"></option>
+					</select>
+					<input id="host_name" name="host_name" type="hidden" />
+				</td>
+			</tr>
+			<tr id="manu_ip">
+				<td width="200" id="XS5"></td>
+				<td>
+					<input name="portfwd_lanip" id="portfwd_lanip" type="text" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" />
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div id="portfwd_cfg">
+		<div class="cfgstep">
+			<p><strong id="XS6"></strong></p>
+			<table>
+				<tr>
+					<td width="200" id="XS7"></td>
+					<td>
+						<input name="portfwd_lanport" id="portfwd_lanport" type="text" maxlength="5" size="6" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="cfgstep">
+			<p><strong id="XS8"></strong></p>
+			<table>
+				<tr>
+					<td width="200" id="XS9"></td>
+					<td>
+						<select name="protocol" id="protocol">
+							<option value="1">TCP</option>
+							<option value="2">UDP</option>
+							<option value="3">Both</option>
+						</select>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="cfgstep">
+			<p><strong id="XS10"></strong></p>
+			<table>
+				<tr>
+					<td width="200" id="XS11"></td>
+					<td>
+						<input name="portfwd_wanstart" id="portfwd_wanstart" type="text" maxlength="5" size="6" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+					</td>
+				</tr>
+				<tr>
+					<td width="200" id="XS12"></td>
+					<td>
+						<input name="portfwd_wanend" id="portfwd_wanend" type="text" maxlength="5" size="6" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div id = "remoteIp" "class="cfgstep">
+			<p><strong id="XS13"></strong></p>
+			<table>
+				<tr>
+					<td width="200" id="XS14"></td>
+					<td>
+						<input name="en_remote_ip" id="disable" type="radio" checked="checked"/><script>document.write(WebString.nat_all_ip);</script>&nbsp;&nbsp;
+						<input name="en_remote_ip" id="enable" type="radio" /><script>document.write(WebString.nat_def_ip);</script>
+					</td>
+				</tr>
+				<tr id="remip">
+					<td width="200" id="XS15"></td>
+					<td>
+						<input name="portfwd_remoteip" id="portfwd_remoteip" type="text" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" />
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<div class="cfgstep">
+		<p><strong id="XS16"></strong></p>
+		<table>
+			<tr>
+				<td width="200" id="XS17"></td>
+				<td id="wan_sel"></td>
+			</tr>
+		</table>
+	</div>
+	<div class="cfgstep">
+		<p><strong><script>document.write(WebString.stepAdd);</script></strong></p>
+		<a href="#" id="btn_apply" class="btn"><script>document.write(WebString.Add);</script></a>
+	</div>
+	<div class="cfglist" id="portfwd_mappinglist"></div>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

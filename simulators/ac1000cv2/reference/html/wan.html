@@ -1,0 +1,1416 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var MAX_NUM = 8;
+var wanConfig = new Array();
+var num_con = 0;   //route wan number
+var wan_num = 0;   //route and bridge wan number
+var dslite_conn_idx = -1;
+var legalrouteportmap = 0;
+wan_num=1;
+var lanPorts = new Array();
+var port_val = new Array();
+var num_lan=4;
+var num_wifi=0;
+var num_5g_wifi=0;
+lanPorts[0] = "ETH1";
+port_val[0] = "0";
+lanPorts[1] = "ETH2";
+port_val[1] = "1";
+lanPorts[2] = "ETH3";
+port_val[2] = "2";
+lanPorts[3] = "ETH4";
+port_val[3] = "3";
+num_wifi=4;
+num_5g_wifi=4;
+port_val[4] = "16";
+lanPorts[4] = "SSID1";
+port_val[5] = "17";
+lanPorts[5] = "SSID2";
+port_val[6] = "18";
+lanPorts[6] = "SSID3";
+port_val[7] = "19";
+lanPorts[7] = "SSID4";
+port_val[8] = "24";
+lanPorts[8] = "SSID5";
+port_val[9] = "25";
+lanPorts[9] = "SSID6";
+port_val[10] = "26";
+lanPorts[10] = "SSID7";
+port_val[11] = "27";
+lanPorts[11] = "SSID8";
+var disable_wan_edit=1;
+
+legalrouteportmap=-1;
+wanConfig[0] = {
+	"devtype":"1",
+	"index":"0","enable":"1","service":"14","metric":"1","portmap":"0",
+	"vlan_en":"0","vlan_id":"0","p802":"0",
+	"ipver":"2","ipmode":"1","mtu":"1500","nat":"1",
+	"ipv4":{
+		"pppoe":{"username":"fpt","password":"08ypih%&*%^#T()#$&E%SUCG6uy$E&","ppp_mode":"0"},
+		"dnswr":"0","dns1":"0.0.0.0","dns2":"0.0.0.0"
+	},
+	"ipv6":{
+		"pppoe":{ },
+		"dnswr":"1","dns1":"2001:4860:4860::8888","dns2":"2001:4860:4860::8844",
+		"rd6_en":"0","rd6_mode":"0","rd6_pref":"",
+		"rd6_plen":"0","rd6_masklen":"0","rd6_braddr":"0.0.0.0",
+		"dslite_en":"0","dslite_mode":"0","dslite_aftraddr":"","ad_mode":"2","pd_mode":"16","wanip6":"","wanpd":"","gw6mode":"0","gw6addr":""
+	}
+};
+num_con=1;
+
+
+function changeadmode()
+{
+    if("4" == $("#ipv6_ad_mode").val())
+    {
+        $("#tr_ipv6_ad_static").show();
+    }
+    else
+    {
+        $("#tr_ipv6_ad_static").hide();
+    } 
+}
+
+function changepdmode()
+{
+    if("32" == $("#ipv6_pd_mode").val())
+    {
+        $("#tr_ipv6_pd_static").show();
+    }
+    else
+    {
+        $("#tr_ipv6_pd_static").hide();
+    } 
+}
+
+function doSetVal()
+{
+	var selIndex = $("#wan_list").val();
+	for (i = 0; i < wanConfig.length; i++)
+	{
+		if (selIndex == wanConfig[i].index)
+		{
+			selIndex = i;
+			break;
+		}
+	}
+	if (selIndex == 100)
+	{
+		$("#wan_en1").attr("checked", true);
+		$("#internet").attr("checked", false);
+		$("#tr69").attr("checked", false);
+		$("#voip").attr("checked", false);
+		$("#iptv").attr("checked", false);
+		$("#ip_ver").val("0");
+		$("#ip_mode").val("0");
+		$("#mtu").val("1492");
+		$("#nat0").attr("checked", true);
+		$("#metric").val("");
+		$("#tr_metric").show();
+		$("#ppp_user").val("");
+		$("#ppp_pass").val("");
+		$("#ppp_mode").val("0");
+		$("#static_ip").val("");
+		$("#static_mask").val("");
+		$("#static_gw").val("");
+		$("#ipv6_static_addr").val("");
+		$("#ipv6_static_wanplen").val("");
+		$("#dnswr1").attr("checked", true);
+		$("#dns1").val("");
+		$("#dns2").val("");
+		$("#ipv6_dnswr1").attr("checked", true);
+		$("#ipv6_dns1").val("");
+		$("#ipv6_dns2").val("");
+		$("#dslite_en1").attr("checked", true);
+		$("#dslite_mode").val("0");
+		$("#dslite_aftraddr").val("");
+		$("#ipv6_ad_mode").val("0");
+        $("#ipv6_pd_mode").val("16");
+        $("#ipv6_ad_static").val("");
+        $("#ipv6_pd_static").val("");
+        $("#ipv6_gw_mode").val("0")
+		$("#rd6_en0").attr("checked",true);
+		$("#rd6_opt0").attr("checked",true);
+		$("#rd6_manual_prefix_val").val("");
+		$("#rd6_manual_prefix_length_val").val("");
+		$("#rd6_manual_ipv4mask_length_val").val("");
+		$("#rd6_manual_border_addr_val").val("");
+        changeadmode();
+        changepdmode();
+	}
+	else if (selIndex < num_con)
+	{
+		if (parseInt(wanConfig[selIndex].enable))
+			$("#wan_en0").attr("checked", true);
+		else
+			$("#wan_en1").attr("checked", true);
+		$("#voip").attr("checked", (parseInt(wanConfig[selIndex].service)&0x1)?true:false);
+		$("#tr69").attr("checked", (parseInt(wanConfig[selIndex].service)&0x2)?true:false);
+		$("#internet").attr("checked", (parseInt(wanConfig[selIndex].service)&0x4)?true:false);
+		$("#iptv").attr("checked", (parseInt(wanConfig[selIndex].service)&0x8)?true:false);
+		$("#mtu").val(wanConfig[selIndex].mtu);
+        if (wanConfig[selIndex].metric != 0)
+            $("#metric").val(wanConfig[selIndex].metric);
+        else
+            $("#metric").val("");
+		if($("#internet").attr("checked"))
+			$("#tr_metric").show();
+		else
+			$("#tr_metric").hide();
+		if (parseInt(wanConfig[selIndex].nat))
+			$("#nat0").attr("checked", true);
+		else
+			$("#nat1").attr("checked", true);
+
+		var ipVer = parseInt(wanConfig[selIndex].ipver);
+		var ipMode = parseInt(wanConfig[selIndex].ipmode);
+		
+		//check the ipv4 or ipv6
+		$("#ip_ver").val(ipVer);
+		$("#ip_mode").val(ipMode);
+			
+		if (wanConfig[selIndex].ipv4.dnswr == "1")
+			$("#dnswr0").attr("checked", true);
+		else
+			$("#dnswr1").attr("checked", true);
+		$("#dns1").val(wanConfig[selIndex].ipv4.dns1);
+		$("#dns2").val(wanConfig[selIndex].ipv4.dns2);
+		if (wanConfig[selIndex].ipv6.dnswr == "1")
+			$("#ipv6_dnswr0").attr("checked", true);
+		else
+			$("#ipv6_dnswr1").attr("checked", true);
+		$("#ipv6_dns1").val(wanConfig[selIndex].ipv6.dns1);
+		$("#ipv6_dns2").val(wanConfig[selIndex].ipv6.dns2);
+		
+		if (wanConfig[selIndex].ipv6.rd6_en == "1")
+			$("#rd6_en1").attr("checked", true);
+		else
+			$("#rd6_en0").attr("checked", true);
+		if (wanConfig[selIndex].ipv6.rd6_mode == "0")
+			$("#rd6_opt0").attr("checked", true);
+		else
+			$("#rd6_opt1").attr("checked", true);
+		$("#rd6_manual_prefix_val").val(wanConfig[selIndex].ipv6.rd6_pref);
+		$("#rd6_manual_prefix_length_val").val(wanConfig[selIndex].ipv6.rd6_plen);
+		$("#rd6_manual_ipv4mask_length_val").val(wanConfig[selIndex].ipv6.rd6_masklen);
+		$("#rd6_manual_border_addr_val").val(wanConfig[selIndex].ipv6.rd6_braddr);
+		
+		if (wanConfig[selIndex].ipv6.dslite_en == "1")
+			$("#dslite_en0").attr("checked", true);
+		else
+			$("#dslite_en1").attr("checked", true);
+		$("#dslite_mode").val(parseInt(wanConfig[selIndex].ipv6.dslite_mode));
+		$("#dslite_aftraddr").val(wanConfig[selIndex].ipv6.dslite_aftraddr);
+		$("#ipv6_ad_mode").val(parseInt(wanConfig[selIndex].ipv6.ad_mode));
+        $("#ipv6_pd_mode").val(parseInt(wanConfig[selIndex].ipv6.pd_mode));
+
+        changeadmode();
+        changepdmode();
+        
+		$("#ipv6_ad_static").val(wanConfig[selIndex].ipv6.wanip6);
+        $("#ipv6_pd_static").val(wanConfig[selIndex].ipv6.wanpd);	
+        
+		if (ipMode == 1 || ipMode == 0)
+		{
+			$("#ppp_user").val(wanConfig[selIndex].ipv4.pppoe.username);
+			$("#ppp_pass").val(wanConfig[selIndex].ipv4.pppoe.password);
+			$("#ppp_mode").val(parseInt(wanConfig[selIndex].ipv4.pppoe.ppp_mode));
+		}
+		else if (ipMode == 2)
+		{
+		}
+		else if (ipMode == 3)
+		{
+			$("#static_ip").val(wanConfig[selIndex].ipv4.static.ip);
+			$("#static_mask").val(wanConfig[selIndex].ipv4.static.netmask);
+			$("#static_gw").val(wanConfig[selIndex].ipv4.static.gw);
+
+			$("#ipv6_static_addr").val(wanConfig[selIndex].ipv6.static.addr);
+			$("#ipv6_static_wanplen").val(wanConfig[selIndex].ipv6.static.wanplen);
+		}
+        
+        $("#ipv6gw").val(wanConfig[selIndex].ipv6.gw6addr);
+        if ("0" == wanConfig[selIndex].ipv6.gw6mode)
+        {
+            $("#ipv6_gw_mode").val("0");
+            $("#ipv6gw").hide();
+        }
+        else
+        {   
+            $("#ipv6_gw_mode").val("1");
+            $("#ipv6gw").show();
+        }
+        
+        if (wanConfig[selIndex].devtype == "8")
+        {
+            $("#ip_ver").val("0");
+            $("#ip_mode").val("1");
+            $("#ppp_user").val("");
+            $("#ppp_pass").val("");
+            $("#tr_ppp_user").hide();
+            $("#tr_ppp_pass").hide();
+            $("#ipv4_adv").hide();
+        }
+        else
+        {
+            $("#tr_ppp_user").show();
+            $("#tr_ppp_pass").show();
+        }
+    
+	}
+    
+}
+function doportmap(wanindex)
+{    
+	var legalroutportmap = parseInt(legalrouteportmap);
+	$("#lan1").attr("disabled", (legalroutportmap&0x1)?false:true);	
+	$("#lan2").attr("disabled", (legalroutportmap&0x2)?false:true);
+	$("#lan3").attr("disabled", (legalroutportmap&0x4)?false:true);
+	$("#lan4").attr("disabled", (legalroutportmap&0x8)?false:true);
+	$("#2dot4g_ssid1").attr("disabled", (legalroutportmap&0x010000)?false:true);
+	$("#2dot4g_ssid2").attr("disabled", (legalroutportmap&0x020000)?false:true);
+	$("#2dot4g_ssid3").attr("disabled", (legalroutportmap&0x040000)?false:true);
+	$("#2dot4g_ssid4").attr("disabled", (legalroutportmap&0x080000)?false:true);
+	$("#5g_ssid1").attr("disabled", (legalroutportmap&0x01000000)?false:true);
+	$("#5g_ssid2").attr("disabled", (legalroutportmap&0x02000000)?false:true);
+	$("#5g_ssid3").attr("disabled", (legalroutportmap&0x04000000)?false:true);
+	$("#5g_ssid4").attr("disabled", (legalroutportmap&0x08000000)?false:true);
+
+    $("#lan1").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x1)?true:false);
+    $("#lan2").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x2)?true:false);
+    $("#lan3").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x4)?true:false);
+    $("#lan4").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x8)?true:false);
+    $("#2dot4g_ssid1").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x010000)?true:false);
+    $("#2dot4g_ssid2").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x020000)?true:false);
+    $("#2dot4g_ssid3").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x040000)?true:false);
+    $("#2dot4g_ssid4").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x080000)?true:false);
+    $("#5g_ssid1").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x01000000)?true:false);
+    $("#5g_ssid2").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x02000000)?true:false);
+    $("#5g_ssid3").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x04000000)?true:false);
+    $("#5g_ssid4").attr("checked", (parseInt(wanConfig[wanindex].portmap)&0x08000000)?true:false);
+}    
+
+function doWanList()
+{
+    var selIndex = $("#wan_list").val();
+    if(null != selIndex)
+    {
+        if (selIndex == 100) {
+            $("#btn_add").show();
+            $("#btn_modify").hide();
+            $("#btn_apply").removeClass("btn").addClass("btn_gray");
+
+            $("#ip_ver").attr("disabled",false);
+            $("#ip_mode").attr("disabled",false);
+            $("#ppp_user").attr("disabled",false);
+            $("#ppp_pass").attr("disabled",false);
+            $("#ipv4_adv").show();
+        } else {
+            $("#btn_add").hide();
+            $("#btn_modify").show();
+            $("#btn_apply").removeClass("btn_gray").addClass("btn");
+
+            selIndex = $("#wan_list").get(0).selectedIndex;
+            if (wanConfig[selIndex].devtype == "8")
+            {
+                $("#ip_ver").attr("disabled",true);
+                $("#ip_mode").attr("disabled",true);
+                $("#ppp_user").attr("disabled",true);
+                $("#ppp_pass").attr("disabled",true);
+                $("#ipv4_adv").hide();
+            }
+            else
+            {
+                $("#ppp_user").attr("disabled",false);
+                $("#ppp_pass").attr("disabled",false);
+                $("#ipv4_adv").show();
+            }
+        }
+    }
+    else
+    {
+        $("#btn_add").hide();
+        $("#btn_modify").hide();
+        $("#btn_apply").removeClass("btn").addClass("btn_gray");
+    }
+}
+
+function showportmap()
+{
+    var selIndex = $("#wan_list").get(0).selectedIndex;
+
+    if($("#internet").attr("checked"))
+    {
+        doportmap(selIndex);
+    }
+
+    $("#lan_portmap").hide();
+    $("#2dot4g_ssid_portmap").hide();
+    $("#5g_ssid_portmap").hide();
+}
+
+function doIpMode()
+{
+	var selIndex = $("#wan_list").val();
+	var ipVer = $("#ip_ver").val();
+	var ipMode = $("#ip_mode").val();
+	var ppp_mode = $("#ppp_mode").val();
+
+	if (ipVer == "0") {
+		$("#ipv4_nat").show();
+		$("#ipv4_ppp_mode").show();
+		$("#ipv4_static").show();
+		$("#ipv6_static").hide();
+		$("#ipv4_dns").show();
+		$("#ipv6_dns").hide();
+		if (top.WebProject == "bhs") {
+			$("#ipv4_adv").show();
+		}
+		$("#ipv6_adv").hide();
+        $("#ipv6_def_gw_mode").hide();
+		if (ipMode == "1") {
+			$("#wan_ppp").show();
+			$("#wan_static").hide();
+			$("#ipv4_dns_overwrt").hide();
+			if( "1" == ppp_mode)
+			  $("#pppoe_demandtime").attr("disabled",false);
+		} else if (ipMode == "2") {
+			$("#wan_ppp").hide();
+			$("#wan_static").hide();
+			$("#ipv4_dns_overwrt").show();
+		} else if (ipMode == "3") {
+			$("#wan_ppp").hide();
+			$("#wan_static").show();
+			$("#ipv4_dns_overwrt").hide();
+		}
+        
+        
+	} else if (ipVer == "1") {
+		$("#ipv4_nat").hide();
+		$("#ipv4_ppp_mode").hide();
+		$("#ipv4_static").hide();
+		$("#ipv6_static").show();
+		$("#ipv4_dns").hide();
+		$("#ipv6_dns").show();
+        $("#ipv6_adv").show();
+        $("#ipv6_def_gw_mode").show();
+        $("#ipv6_dslite_en").show();
+		$("#ipv4_adv").hide();
+		if (ipMode == "1") {
+			$("#wan_ppp").show();
+			$("#wan_static").hide();
+			$("#ipv6_dns_overwrt").show();
+			$("#tr_ipv6_ad_mode").show();
+            $("#tr_ipv6_pd_mode").show();
+		} else if (ipMode == "2") {
+			$("#wan_ppp").hide();
+			$("#wan_static").hide();
+			$("#ipv6_dns_overwrt").show();
+			$("#tr_ipv6_ad_mode").show();
+            $("#tr_ipv6_pd_mode").show();
+		} else if (ipMode == "3") {
+			$("#wan_ppp").hide();
+			$("#wan_static").show();
+			$("#ipv6_dns_overwrt").hide();
+			$("#tr_ipv6_ad_mode").hide();
+            $("#tr_ipv6_pd_mode").hide();
+			$("#tr_ipv6_ad_static").hide();
+            $("#tr_ipv6_pd_static").hide();
+		}
+	} else if (ipVer == "2") {
+		$("#ipv4_nat").show();
+		$("#ipv4_ppp_mode").show();
+		$("#ipv4_static").show();
+		$("#ipv6_static").show();
+        $("#ipv6_def_gw_mode").show();
+		$("#ipv4_dns").show();
+		$("#ipv6_dns").show();
+		$("#ipv4_adv").hide();
+		if (ipMode == "1") {
+			$("#wan_ppp").show();
+			$("#wan_static").hide();
+			$("#ipv4_dns_overwrt").hide();
+			$("#ipv6_dns_overwrt").show();
+			$("#ipv6_adv").show();
+			$("#ipv6_dslite_en").hide();
+			$("#tr_ipv6_ad_mode").show();
+            $("#tr_ipv6_pd_mode").show();
+		} else if (ipMode == "2") {
+			$("#wan_ppp").hide();
+			$("#wan_static").hide();
+			$("#ipv4_dns_overwrt").show();
+			$("#ipv6_dns_overwrt").show();
+			$("#ipv6_adv").show();
+			$("#ipv6_dslite_en").hide();
+			$("#tr_ipv6_ad_mode").show();
+            $("#tr_ipv6_pd_mode").show();
+		} else if (ipMode == "3") {
+			$("#wan_ppp").hide();
+			$("#wan_static").show();
+			$("#ipv4_dns_overwrt").hide();
+			$("#ipv6_dns_overwrt").hide();
+			$("#ipv6_adv").hide();
+			$("#tr_ipv6_ad_mode").hide();
+            $("#tr_ipv6_pd_mode").hide();
+			$("#tr_ipv6_ad_static").hide();
+            $("#tr_ipv6_pd_static").hide();            
+		}
+	}     
+
+    if ((ipVer != "0") && (ipMode != "3"))
+    {
+        changeadmode();
+        changepdmode();
+    }
+  
+	doDnswr();
+	doIpv6Dnswr();
+	doRd6En();
+	doDsliteEn();
+	WebStepIndex();
+}
+
+function doRd6En()
+{
+	var ipVer = $("#ip_ver").val();
+	var rd6_en = $("#rd6_en1").attr("checked");
+	if (ipVer !=  "0") return;
+	if (rd6_en)
+	{
+		$("#ipv4_rd6_opt").show();
+		doRd6Mode();
+	} else {
+		$("#ipv4_rd6_opt").hide();
+		$("#ipv4_rd6_manual").hide();
+	}
+}
+
+function doRd6Mode()
+{
+	var rd6_mode = $("#rd6_opt0").attr("checked");
+	if (!rd6_mode)
+	{
+		$("#ipv4_rd6_manual").show();
+	} else {
+		$("#ipv4_rd6_manual").hide();
+	}
+}
+
+function doMetric()
+{
+	if($("#internet").attr("checked"))
+	{
+		$("#tr_metric").show();
+	}
+	else
+	{	
+		$("#tr_metric").hide();
+	}
+}
+function doDnswr()
+{
+	var ipMode = $("#ip_mode").val();
+	var enable = $("#dnswr0").attr("checked");
+	if (ipMode == "3" || (ipMode == "2" && enable == "checked")) {
+		$("#ipv4_dns_pri").show();
+		$("#ipv4_dns_snd").show();
+	} else {
+		$("#ipv4_dns_pri").hide();
+		$("#ipv4_dns_snd").hide();
+	}
+}
+
+function doIpv6Dnswr()
+{
+	var ipMode = $("#ip_mode").val();
+	var enable = $("#ipv6_dnswr0").attr("checked");
+	if (ipMode == "3" || enable == "checked") {
+		$("#ipv6_dns_pri").show();
+		$("#ipv6_dns_snd").show();
+	} else {
+		$("#ipv6_dns_pri").hide();
+		$("#ipv6_dns_snd").hide();
+	}
+}
+
+function doDsliteEn()
+{
+	var ipVer = $("#ip_ver").val();
+	var enable = $("#dslite_en0").attr("checked");
+	if (ipVer ==  "1" && enable == "checked") {
+		$("#ipv6_dslite_mode").show();
+		doDsliteMode();
+	} else {
+		$("#ipv6_dslite_mode").hide();
+	}
+}
+
+function doDsliteMode()
+{
+	var ds_mode = $("#dslite_mode").val();
+	if (1 == ds_mode)
+	{
+		$("#dslite_aftraddr").show();
+	} else {
+		$("#dslite_aftraddr").hide();
+	}
+}
+
+function showWanList()
+{
+	$("#wan_list option:first").remove();
+	for (i=0; i<num_con; i++)
+	{
+		var index = wanConfig[i].index;
+		var idx = parseInt(index)+1;
+		var mode = "R";
+		var service = parseInt(wanConfig[i].service);
+		var serv = "_";
+		if (service & 0x4)
+			serv = serv + "INTERNET_";
+		if (service & 0x2)
+			serv = serv + "TR069_";
+		if (service & 0x1)
+			serv = serv + "VOIP_";
+		if (service & 0x8)
+			serv = serv + "IPTV_";
+		var vlan = wanConfig[i].vlan_id;
+		if((wanConfig[i].vlan_en == 0)&&(vlan == 0))
+			var name = idx.toString() + serv + mode + '_VID_';
+		else
+		var name = idx.toString() + serv + mode + '_VID_' + vlan;
+		$("#wan_list").append("<option value="+index+">"+name+"<\/option>");
+		
+		if (wanConfig[i].ipver == "1" && wanConfig[i].ipv6.dslite_en == "1")
+		{
+			dslite_conn_idx = wanConfig[i].index;
+		}
+	}
+	if (wan_num < MAX_NUM)
+	{
+		$("#wan_list").append("<option value=\"100\">"+XwanString[2]+"<\/option>");
+	}
+}
+
+function docheckValue()
+{
+	var selIndex = $("#wan_list").val();
+	if(null == selIndex)
+	{
+	    alert(WebString.wan_not_exist);
+	    return;
+	}
+	
+	if (!$("#voip").attr("checked") && !$("#tr69").attr("checked")
+		&& !$("#internet").attr("checked") && !$("#iptv").attr("checked"))
+	{
+		alert(WebString.wan_service_alert);
+		return false;
+	}
+
+	var wanIdx = $("#wan_list").val();
+	var ipVer = $("#ip_ver").val();
+	var ipMode = $("#ip_mode").val();
+	if($("#wan_en0").attr("checked"))
+	{
+	    if($("#internet").attr("checked") && (($("#metric").val() == "")||(parseInt($("#metric").val())>255||parseInt($("#metric").val())<1)))
+	    {
+		    //alert(WebString.wan_internet_metric);
+		    //return false;
+		    $("#metric").val(wanIdx+1);
+	    }
+	}	
+	for (var i = 0; i < wanConfig.length; i++)
+	{
+		if (wanIdx == wanConfig[i].index) continue;
+		if (($("#tr69").attr("checked") && (wanConfig[i].service  & 0x2))
+			|| ($("#voip").attr("checked") && (wanConfig[i].service  & 0x1))
+			|| ($("#iptv").attr("checked") && (wanConfig[i].service  & 0x8)))
+		{
+			alert(WebString.wan_service_same_alert);
+			return false;
+		}
+        
+		if ($("#internet").attr("checked") && (wanConfig[i].service  & 0x4))			
+		{
+            if ((ipVer == wanConfig[i].ipver) || (2 == ipVer) || (2 == wanConfig[i].ipver))
+            {
+                alert(WebString.wan_service_internet_alert);
+                return false;
+            }
+		}
+      
+		if($("#internet").attr("checked")&&(wanConfig[i].service & 0x4) && (parseInt($("#metric").val())==parseInt(wanConfig[i].metric)))
+		{
+			alert(WebString.wan_internet_metric_same);
+			return false;
+		}
+	}
+
+    if (ipVer == 1 || ipVer == 2)
+    {
+        {
+            if(parseInt($("#mtu").val())<1280 || parseInt($("#mtu").val())>1600)
+            {
+                alert(WebString.wan_mtu_max_1600_ipv6_alert);
+                return false;
+            }
+        }
+    }
+    else
+    {
+        {
+            if(parseInt($("#mtu").val())<512 || parseInt($("#mtu").val())>1600)
+            {
+                alert(WebString.wan_mtu_max_1600_alert);
+                return false;
+            }
+        }
+    }
+    
+    if (ipMode == 1)
+    {
+        wanIdx = $("#wan_list").get(0).selectedIndex;
+        if (wanConfig[wanIdx].devtype != "8")
+        {        
+            if ($("#ppp_user").val() == "" || $("#ppp_pass").val() == "")
+            {
+                alert(WebString.wan_pppoe_null_alert);
+                return false;
+            }
+            if ((false == isValidPppoeName($("#ppp_user").val())) || (false == isValidPppoeName($("#ppp_pass").val())))
+            {
+                alert(WebString.wan_pppoe_alert);
+                return false;
+            }
+        }
+    }
+    else if (ipMode == 3)
+    {
+        if (ipVer == 0 || ipVer == 2)
+        {
+            if (false == isValidIpAddress($("#static_ip").val()))
+            {
+                alert(WebString.ip_alert);
+                return false;
+            }
+            if (false == isValidSubnetMask($("#static_mask").val()))
+            {
+                alert(WebString.netmask_alert);
+                return false;
+            }
+            if (false == isValidIpAddress($("#static_gw").val()))
+            {
+                alert(WebString.gw_alert);
+                return false;
+            }
+            if (false == isSameSubNet($("#static_ip").val(), $("#static_mask").val(), $("#static_gw").val(), $("#static_mask").val()))
+            {
+                alert(WebString.gw_ip_alert);
+                return false;
+            }
+        }
+
+        if (ipVer == 1 || ipVer == 2)
+        {
+            if (false == isValidIpAddress6($("#ipv6_static_addr").val()))
+            {
+                alert(WebString.ipv6_addr_alert);
+                return false;
+            }
+            if (isValidPrefixLength(parseInt($("#ipv6_static_wanplen").val())) == false)
+            {
+                alert(WebString.ipv6_plen_alert);
+                return false;
+            }
+        }
+    }
+		
+	if ((ipVer == 0 || ipVer == 2)
+		&& (ipMode == 3 || $("#dnswr0").attr("checked") == "checked"))
+	{
+		if ($("#dns1").val().length > 0 && $("#dns1").val() != "0.0.0.0")
+		{
+			if (false == isValidIpAddress($("#dns1").val()))
+			{
+				alert(WebString.wan_pridns_alert);
+				return false;
+			}
+		}
+		if ($("#dns2").val().length > 0 && $("#dns2").val() != "0.0.0.0")
+		{
+			if (false == isValidIpAddress($("#dns2").val()))
+			{
+				alert(WebString.wan_secdns_alert);
+				return false;
+			}
+			if ($("#dns1").val() == $("#dns2").val())
+			{
+				alert(WebString.wan_prisec_alert);
+				return false;
+			}
+		}
+	}
+		
+	if (ipVer == 0)
+	{
+		if ($("#rd6_en1").attr("checked") && $("#rd6_opt1").attr("checked"))
+		{
+			if (!isValidIpAddress6($("#rd6_manual_prefix_val").val()))
+			{
+				alert(XwanString[66]);
+				return false;
+			}
+			var rd6_masklen = parseInt($("#rd6_manual_ipv4mask_length_val").val());
+			var rd6_plen = parseInt($("#rd6__manual_prefix_length_val").val());
+			if (rd6_masklen < 0 || rd6_masklen > 32)
+			{
+				alert(XwanString[67]);
+				return false;
+			}
+			if ((32 - rd6_masklen + rd6_plen) > 128)
+			{
+				alert(XwanString[68]);
+				return false;
+			}
+			if (!isValidIpAddress($("#rd6_manual_border_addr_val").val()))
+			{
+				alert(XwanString[69]);
+				return false;
+			}
+		}
+	}
+	if ((ipVer == 1 || ipVer == 2)
+		&& (ipMode == 3 || $("#ipv6_dnswr0").attr("checked") == "checked"))
+	{
+		if ($("#ipv6_dns1").val().length > 0 && $("#ipv6_dns1").val() != "0.0.0.0")
+		{
+			if (false == isValidIpAddress6($("#ipv6_dns1").val()))
+			{
+				alert(WebString.wan_v6pridns_alert);
+				return false;
+			}
+		}
+		if ($("#ipv6_dns2").val().length > 0 && $("#ipv6_dns2").val() != "0.0.0.0")
+		{
+			if (false == isValidIpAddress6($("#ipv6_dns2").val()))
+			{
+				alert(WebString.wan_v6secdns_alert);
+				return false;
+			}
+			if ($("#ipv6_dns1").val() == $("#ipv6_dns2").val())
+			{
+				alert(WebString.wan_v6prisec_alert);
+				return false;
+			}
+		}
+	}
+	
+	if (ipVer == 1) 
+	{
+		if ($("#dslite_en0").attr("checked") && (1 == $("#dslite_mode").val()))
+		{
+			if (!isValidIpAddress6($("#dslite_aftraddr").val())
+				&& !isValidDomain($("#dslite_aftraddr").val()))
+			{
+				alert(WebString.ipv6_addr_alert);
+				return false;
+			}
+		}
+	}
+    
+    if (ipVer == 1 || ipVer == 2)
+    {
+        if ("0" != $("#ipv6_gw_mode").val())
+        {
+            if (!isValidIpAddress6($("#ipv6gw").val()))
+			{
+				alert(WebString.ipv6_addr_alert);
+				return false;
+			}
+            
+        }
+        
+    }
+    
+    if ((ipVer == 1 || ipVer == 2) && (ipMode != 3))
+    {
+        if ($("#ipv6_ad_mode").val() == 4)
+        {
+			if (false == isValidIpAddress6($("#ipv6_ad_static").val()))
+			{
+				alert(WebString.ipv6_addr_alert);
+				return false;
+			}            
+        }
+    }
+    
+    if ((ipVer == 1 || ipVer == 2) && (ipMode != 3))
+    {
+        if ($("#ipv6_pd_mode").val() == 32)
+        {
+			if (false == isValidIp6Prefix($("#ipv6_pd_static").val()))
+			{
+				alert(WebString.ipv6_pd_alert);
+				return false;
+			}            
+        }
+    }    
+    
+	
+	return true;
+}
+
+function WebInit()
+{
+	if (top.WebPotsNumber > 0)
+	{
+		$("#serv_voip").show();
+	}
+	if (0 == top.WebShowIpv6)
+	{
+		$("#ip_ver").html('<option value="0" id="XS10">' + XwanString[10] + '</option>');
+	}
+	showWanList();
+	doWanList();
+	doSetVal();
+	doIpMode();
+    showportmap();
+    $("#tr_metric").hide();
+}
+
+function WebDoSubmit()
+{
+	var selIndex = $("#wan_list").val();
+	if (selIndex == 100)
+	{
+		alert(WebString.wan_creat_alert);
+		return;
+	}
+	if (false == docheckValue())
+	{
+		return;
+	}
+    
+    $("select[name=wan_list]").attr("disabled", false);
+    $("select[name=ip_mode]").attr("disabled", false);
+    $("select[name=ip_ver]").attr("disabled", false);
+    $("select[name=ppp_mode]").attr("disabled", false);
+    $("input[name=tr069]").attr("disabled", false);
+    $("input[name=iptv]").attr("disabled", false);
+    $("input[name=internet]").attr("disabled", false);
+    $("input[name=voip]").attr("disabled", false);
+    $("select[name=ipv6_pd_mode]").attr("disabled", false);
+    $("select[name=ipv6_ad_mode]").attr("disabled", false);
+    var curAct = $("#XForm").attr("action");
+    if (!curAct || curAct.indexOf("undefined") !== -1) {
+        $("#XForm").attr("action", "/GponForm/wan_XForm");
+        $("#XWebPageName").val("wan");
+    }
+    $("#XForm").submit();
+}
+
+function doChangeMTU(mode)
+{
+	if (1 == parseInt(mode))
+		$("#mtu").val("1492");
+	else
+		$("#mtu").val("1500");
+}
+
+$(document).ready(function () {
+	$("#wan_list").change(function() {
+		doWanList();
+		doSetVal();
+		doIpMode();
+        showportmap();        
+	});
+	
+	$("#internet").change(function (){
+   
+		// internet option can't be modified
+		if (1 == disable_wan_edit) {
+			$("#internet").attr("checked", true);
+		}
+
+		doMetric();
+        showportmap();
+	});
+	$("#ip_ver").change(function() {
+		doIpMode();
+	});
+
+	$("#ip_mode").change(function() {
+		doIpMode();
+		doChangeMTU($("#ip_mode").val());
+	});
+	
+	$("input[name='dnswr']").click(function() {
+		doDnswr();
+	});
+	
+	$("input[name='ipv6_dnswr']").click(function() {
+		doIpv6Dnswr();
+	});
+	$("input[name='rd6_en']").click(function() {
+		doRd6En();
+	});
+	
+	$("input[name='rd6_opt']").click(function() {
+		doRd6Mode();
+	});
+
+	$("input[name='dslite_en']").click(function() {
+		doDsliteEn();
+	});
+	
+	$("#dslite_mode").change(function() {
+		doDsliteMode();
+	});
+
+	$("#btn_add").click(function() {
+		top.wanConnModifyIdx = -1;
+	});
+
+	$("#btn_modify").click(function() {
+		top.wanConnModifyIdx = $("#wan_list").val();
+	});
+
+	$("#btn_apply").click(function(e) {
+		if (e && e.preventDefault) e.preventDefault();
+		XDoSubmit();
+	});
+      
+    $("#ipv6_gw_mode").change(function() {
+        if("0" == $("#ipv6_gw_mode").val())
+        {
+            $("#ipv6gw").hide();
+        }
+        else
+        {
+            $("#ipv6gw").show();
+        }    
+	}); 
+
+    $("#ipv6_ad_mode").change(function() {
+        changeadmode();  
+	}); 
+
+    $("#ipv6_pd_mode").change(function() {
+        changepdmode();
+	});     
+      
+});
+
+//]]>
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	if (!page || page === "undefined") {
+		page = (typeof getCurSubMenu === "function") ? getCurSubMenu() : "wan";
+	}
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu || "wan");
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS1"></td>
+			<td><select name="wan_list" id="wan_list" class="wan_list" disabled="disabled">
+				<option value="100" id="XS2"></option>
+				</select>
+				<a id="btn_add" class="btn" href="wanconn.html"><script type="text/javascript">document.write(WebString.Add);</script></a>
+				<a id="btn_modify" class="btn" href="wanconn.html"><script type="text/javascript">document.write(WebString.Modify);</script></a>
+			</td>
+        </tr>
+		<tr>
+			<td width="200" id="XS3" style="display:none"></td>
+			<td style="display:none" ><input type="radio" name="wan_en" id="wan_en0" value="1" /><script type="text/javascript">document.write(WebString.Enable);</script>
+				<input type="radio" name="wan_en" id="wan_en1" value="0" /><script type="text/javascript">document.write(WebString.Disable);</script></td>
+		</tr>
+		<tr>
+			<td width="200" id="XS4"></td>
+			<td><input type="checkbox" name="internet" id="internet" value="4" disabled="disabled"/><script type="text/javascript">document.write(XwanString[5]);</script>
+				<input type="checkbox" name="tr069" style="display:none" id="tr69" value="2"  disabled="disabled"/>
+				<span id="serv_voip" style="display:none"><input type="checkbox" name="voip" id="voip" value="1"  disabled="disabled"/><script type="text/javascript">document.write(XwanString[7]);</script></span>
+				<input type="checkbox" name="iptv" id="iptv" value="8"  disabled="disabled"/><script type="text/javascript">document.write(XwanString[8]);</script>
+			</td>
+		</tr>
+        <!--portmap enter-->
+		<tr id="lan_portmap">
+			<td width="200" id="XS71"></td>
+			<td>
+                <input type="checkbox" name="lan1" id="lan1" value="1" /><label id="XS72"></label>
+                <input type="checkbox" name="lan2" id="lan2" value="2" /><label id="XS73"></label>
+                <script type="text/javascript">
+            	if (4 == num_lan) {
+                document.write("<input type=\"checkbox\" name=\"lan3\" id=\"lan3\" value=\"4\" /><label id=\"XS74\"></label>");
+                document.write("<input type=\"checkbox\" name=\"lan4\" id=\"lan4\" value=\"8\" /><label id=\"XS75\"></label>");
+				}
+                </script>
+            </td>
+		</tr>
+		<script type="text/javascript">
+		if (4 == num_wifi) {
+		document.write("<tr id=\"2dot4g_ssid_portmap\">");
+			document.write("<td width=\"200\"></td>");
+			document.write("<td>");
+                document.write("<input type=\"checkbox\" name=\"2dot4g_ssid1\" id=\"2dot4g_ssid1\" value=\"1\" /><label id=\"XS86\"></label>");
+                document.write("<input type=\"checkbox\" name=\"2dot4g_ssid2\" id=\"2dot4g_ssid2\" value=\"2\" /><label id=\"XS87\"></label>");
+                document.write("<br>");
+                document.write("<input type=\"checkbox\" name=\"2dot4g_ssid3\" id=\"2dot4g_ssid3\" value=\"4\" /><label id=\"XS88\"></label>");
+                document.write("<input type=\"checkbox\" name=\"2dot4g_ssid4\" id=\"2dot4g_ssid4\" value=\"8\" /><label id=\"XS89\"></label>");
+            document.write("</td>");
+		document.write("</tr>");
+		}
+		if (4 == num_5g_wifi) {
+		document.write("<tr id=\"5g_ssid_portmap\">");
+			document.write("<td width=\"200\"></td>");
+			document.write("<td>");
+                document.write("<input type=\"checkbox\" name=\"5g_ssid1\" id=\"5g_ssid1\" value=\"1\" /><label id=\"XS90\"></label>");
+                document.write("<input type=\"checkbox\" name=\"5g_ssid2\" id=\"5g_ssid2\" value=\"2\" /><label id=\"XS91\"></label>");
+                document.write("<input type=\"checkbox\" name=\"5g_ssid3\" id=\"5g_ssid3\" value=\"4\" /><label id=\"XS92\"></label>");
+                document.write("<input type=\"checkbox\" name=\"5g_ssid4\" id=\"5g_ssid4\" value=\"8\" /><label id=\"XS93\"></label>");
+            document.write("</td>");
+		document.write("</tr>");
+		}
+		</script>
+		<!--portmap end-->        
+		<tr>
+			<td width="200" id="XS9"></td>
+			<td><select name="ip_ver" id="ip_ver" disabled="disabled">
+				<option value="0" id="XS10"></option>
+				<option value="1" id="XS11"></option>
+				<option value="2" id="XS12"></option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td width="200" id="XS13"></td>
+			<td><select name="ip_mode" id="ip_mode" disabled="disabled">
+				<option value="1" id="XS14"></option>
+				<option value="2" id="XS15"></option>
+				<option value="3" id="XS16"></option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td width="200" id="XS17"></td>
+			<td><input type="text" name="mtu" id="mtu" maxlength="4" size="6" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" /></td>
+		</tr>
+		<tr id="ipv4_nat">
+			<td width="200" id="XS18"></td>
+			<td><input type="radio" name="nat" id="nat0" value="1" /><script type="text/javascript">document.write(WebString.Enable);</script>
+				<input type="radio" name="nat" id="nat1" value="0" /><script type="text/javascript">document.write(WebString.Disable);</script></td>
+		</tr>
+		<tr id="tr_metric">
+			<td width="200" id="XS70"></td>
+			<td><input type="text" name="metric" id="metric" maxlength="3" size="6" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" /><script type="text/javascript">document.write(XwanString[80]);</script></td>
+		</tr>
+	</table>
+</div>
+
+<div id="wan_ppp" class="cfgstep">
+	<p><strong id="XS19"></strong></p>
+	<table>
+		<tr id="tr_ppp_user">
+			<td width="200" id="XS20"></td>
+			<td><input type="text" name="ppp_user" id="ppp_user" maxlength="64" style="width:150px" /></td>
+		</tr>
+		<tr id="tr_ppp_pass">
+			<td width="200" id="XS21"></td>
+			<td><input type="password" name="ppp_pass" id="ppp_pass" maxlength="64" style="width:150px" /></td>
+		</tr>
+		<tr id="ipv4_ppp_mode">
+			<td width="200" id="XS22"></td>
+			<td><select name="ppp_mode" id="ppp_mode" disabled="disabled">
+				<option value="0" id="XS23"></option>
+				<option value="1" id="XS24"></option>
+				</select>
+				<input type="hidden" name="pppoe_demandtime" id="pppoe_demandtime" value="300" disabled="true"/>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div id="wan_static" class="cfgstep">
+	<p><strong id="XS26"></strong></p>
+	<table id="ipv4_static">
+		<tr>
+			<td width="200" id="XS27"></td>
+			<td><input type="text" name="static_ip" id="static_ip" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+		</tr>
+		<tr>
+			<td width="200" id="XS29"></td>
+			<td><input type="text" name="static_mask" id="static_mask" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+		</tr>
+		<tr>
+			<td width="200" id="XS28"></td>
+			<td><input type="text" name="static_gw" id="static_gw" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+		</tr>
+	</table>
+
+	<table id="ipv6_static">
+		<tr>
+			<td width="200" id="XS30"></td>
+			<td><input type="text" name="ipv6_static_addr" id="ipv6_static_addr" maxlength="39" size="40" onkeypress="return OnKeyPress(event, X_INPUT_IPV6);" /></td>
+		</tr>
+		<tr>
+			<td width="200" id="XS53"></td>
+			<td><input type="text" name="ipv6_static_wanplen" id="ipv6_static_wanplen" maxlength="2" size="6" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" /></td>
+		</tr>    
+	</table>
+</div>
+
+<div id="wan_dns" class="cfgstep">
+	<p><strong id="XS33"></strong></p>
+	<table id="ipv4_dns">
+		<tr id="ipv4_dns_overwrt">
+			<td width="200" id="XS34"></td>
+			<td><input type="radio" name="dnswr" id="dnswr0" value="1" /><script type="text/javascript">document.write(WebString.Enable);</script>
+				<input type="radio" name="dnswr" id="dnswr1" value="0" /><script type="text/javascript">document.write(WebString.Disable);</script>
+				<br /><script type="text/javascript">document.write(XwanString[35]);</script></td>
+		</tr>
+		<tr id="ipv4_dns_pri">
+			<td width="200" id="XS36"></td>
+			<td><input type="text" name="dns1" id="dns1" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+		</tr>
+		<tr id="ipv4_dns_snd">
+			<td width="200" id="XS37"></td>
+			<td><input type="text" name="dns2" id="dns2" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+		</tr>
+	</table>
+
+	<table id="ipv6_dns">
+		<tr id="ipv6_dns_overwrt">
+			<td width="200" id="XS38"></td>
+			<td><input type="radio" name="ipv6_dnswr" id="ipv6_dnswr0" value="1" /><script type="text/javascript">document.write(WebString.Enable);</script>
+				<input type="radio" name="ipv6_dnswr" id="ipv6_dnswr1" value="0" /><script type="text/javascript">document.write(WebString.Disable);</script>
+				<br /><script type="text/javascript">document.write(XwanString[39]);</script></td>
+		</tr>
+		<tr id="ipv6_dns_pri">
+			<td width="200" id="XS40"></td>
+			<td><input type="text" name="ipv6_dns1" id="ipv6_dns1" maxlength="39" size="40" onkeypress="return OnKeyPress(event, X_INPUT_IPV6);" /></td>
+		</tr>
+		<tr id="ipv6_dns_snd">
+			<td width="200" id="XS41"></td>
+			<td><input type="text" name="ipv6_dns2" id="ipv6_dns2" maxlength="39" size="40" onkeypress="return OnKeyPress(event, X_INPUT_IPV6);" /></td>
+		</tr>
+	</table>
+</div>
+
+<div id="ipv4_adv" class="cfgstep">
+	<p><strong id="XS59"></strong></p>
+	<table>
+		<tr id="ipv4_rd6_en">
+			<td width="200" id="XS60"></td>
+			<td>
+				<input type="radio" name="rd6_en" id="rd6_en1" value="1" /><script type="text/javascript">document.write(WebString.Enable);</script>
+				<input type="radio" name="rd6_en" id="rd6_en0" value="0" /><script type="text/javascript">document.write(WebString.Disable);</script>
+			</td>
+		</tr>
+		<tr id="ipv4_rd6_opt">
+			<td width="200" id="XS61"></td>
+			<td>
+				<input type="radio" name="rd6_opt" id="rd6_opt0" value="0" /><script type="text/javascript">document.write(WebString.Enable);</script>
+				<input type="radio" name="rd6_opt" id="rd6_opt1" value="1" /><script type="text/javascript">document.write(WebString.Disable);</script>
+			</td>
+		</tr>
+	</table>
+	<table id="ipv4_rd6_manual">
+		<tr id="rd6_manual_prefix">
+			<td width="200" id="XS62"></td>
+			<td>
+				<input type="text" id="rd6_manual_prefix_val" name="rd6_manual_prefix_val" maxlength="127" size="35"/>
+			</td>
+		</tr>
+		<tr id="rd6_manual_prefix_length">
+			<td width="200" id="XS63"></td>
+			<td>
+				<input type="text" id="rd6_manual_prefix_length_val" name="rd6_manual_prefix_length_val" maxlength="3" size="35"/>
+			</td>
+		</tr>
+		<tr id="rd6_manual_ipv4mask_length">
+			<td width="200" id="XS64"></td>
+			<td>
+				<input type="text" id="rd6_manual_ipv4mask_length_val" name="rd6_manual_ipv4mask_length_val" maxlength="2" size="35"/>
+			</td>
+		</tr>
+		<tr id="rd6_manual_border_addr">
+			<td width="200" id="XS65"></td>
+			<td>
+				<input type="text" id="rd6_manual_border_addr_val" name="rd6_manual_border_addr_val" maxlength="15" size="35"/>
+			</td>
+		</tr>
+	</table>
+</div>
+<div id="ipv6_adv" class="cfgstep">
+	<p><strong id="XS42"></strong></p>
+	<table>
+		<tr id="ipv6_dslite_en">
+			<td width="200" id="XS43"></td>
+			<td><input type="radio" name="dslite_en" id="dslite_en0" value="1" /><script type="text/javascript">document.write(WebString.Enable);</script>
+				<input type="radio" name="dslite_en" id="dslite_en1" value="0" /><script type="text/javascript">document.write(WebString.Disable);</script></td>
+		</tr>
+		<tr id="ipv6_dslite_mode">
+			<td width="200" id="XS44"></td>
+			<td><select name="dslite_mode" id="dslite_mode">
+				<option value="0" id="XS45"></option>
+				<option value="1" id="XS46"></option>
+				</select>
+				<input type="text" id="dslite_aftraddr" name="dslite_aftraddr" maxlength="127" size="35"/>
+			</td>
+		</tr>
+		<tr id="tr_ipv6_ad_mode">
+			<td width="200" id="XS82"></td>
+			<td><select name="ipv6_ad_mode" id="ipv6_ad_mode" disabled="disabled">
+                <option value="0" id="XS54"></option>
+                <option value="1" id="XS48"></option>
+                <option value="2" id="XS49"></option>
+                <option value="4" id="XS50"></option>
+                <option value="8" id="XS55"></option>
+				</select></td>
+		</tr>
+		<tr id="tr_ipv6_ad_static" style="display:none">
+			<td width="200" ></td>
+			<td><input type="text" id="ipv6_ad_static" name="ipv6_ad_static" maxlength="39" size="40" onkeypress="return OnKeyPress(event, X_INPUT_IPV6);"></td>
+		</tr>
+		<tr id="tr_ipv6_pd_mode">
+			<td width="200" id="XS47"></td>
+			<td><select name="ipv6_pd_mode" id="ipv6_pd_mode" disabled="disabled">
+                <option value="16" id="XS83"></option>
+                <option value="32" id="XS84"></option>
+                <option value="64" id="XS85"></option>
+				</select></td>
+		</tr>
+		<tr id="tr_ipv6_pd_static" style="display:none">
+			<td width="200" ></td>
+			<td><input type="text" id="ipv6_pd_static" name="ipv6_pd_static" maxlength="39" size="40" onkeypress="return OnKeyPress(event, X_INPUT_IPV6);"></td>
+		</tr>        
+        
+	</table>
+</div>
+
+<div id="ipv6_def_gw_mode" class="cfgstep">
+	<p><strong id="XS81"></strong></p>
+	<table>
+        <tr>
+            <td width="200" id="XS56"></td>
+            <td><select name="ipv6_gw_mode" id="ipv6_gw_mode" disabled="disabled">
+                <option value="0" id="XS57"></option>
+                <option value="1" id="XS58"></option>
+                </select>
+                <input type="text" id="ipv6gw" name="ipv6gw" maxlength="64" size="32"/>
+            <td>
+        </tr>
+	</table>
+</div>
+        
+<div class="cfgstep">
+	<p><strong><script type="text/javascript">document.write(WebString.stepApply);</script></strong></p>
+	<a id="btn_apply" href="#" class="btn"><script type="text/javascript">document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

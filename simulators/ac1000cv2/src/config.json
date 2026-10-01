@@ -1,0 +1,77 @@
+{
+  "auth": {
+    "admin": "admin"
+  },
+  "system": {
+    "dev_name": "G-97RG6W",
+    "dev_id": "FPTT19a0107e",
+    "hw_ver": "01",
+    "sw_ver": "R4.2.23.109",
+    "desc": "G-97RG6W",
+    "mac": "A4:81:7A:75:C1:6E",
+    "workMode": "0",
+    "wifi_button": "0",
+    "lan_mtu": "1500",
+    "uptime": 0
+  },
+  "lan": {
+    "ip": "192.168.10.1",
+    "mask": "255.255.255.0",
+    "dhcp_enable": "1",
+    "dhcp_start": "192.168.10.2",
+    "dhcp_end": "192.168.10.254",
+    "dhcp_lease": "86400",
+    "dns_overwrite": "1",
+    "dns_primary": "8.8.8.8",
+    "dns_secondary": "8.8.4.4"
+  },
+  "wifi24": {
+    "enable": "1",
+    "ssid": "FPT Telecom",
+    "channel": "auto",
+    "security": "WPA2-PSK",
+    "password": "fpt12345",
+    "hidden": "0",
+    "last_idx": "1"
+  },
+  "wifi5": {
+    "enable": "1",
+    "ssid": "FPT Telecom",
+    "channel": "auto",
+    "security": "WPA2-PSK",
+    "password": "fpt12345",
+    "hidden": "0"
+  },
+  "dmz": {
+    "enable": "1",
+    "dest_ip": "192.168.1.99"
+  },
+  "ddns": {
+    "enable": "0",
+    "provider": "dyndns",
+    "username": "",
+    "password": "",
+    "hostname": ""
+  },
+  "portfwd": {
+    "rules": [],
+    "lanip": "192.168.1.254",
+    "lanport": "3389",
+    "wanstart": "3389",
+    "wanend": "3389",
+    "protocol": "1"
+  },
+  "firewall": {
+    "enable": "1",
+    "spi_enable": "1",
+    "dos_enable": "1"
+  },
+  "wan": {
+    "ppp_user": "sgfdl-210208-218",
+    "ppp_pass": "fpt12345"
+  },
+  "wifi_iot": {
+    "ssid": "FPT Telecom-IoT",
+    "enable": "1"
+  }
+}

@@ -1,0 +1,938 @@
+[
+  {
+    "id": "m1_status",
+    "show": 7,
+    "submenu": [
+      {
+        "id": "devinfo",
+        "show": 7,
+        "submenu": null,
+        "title": "Device Status",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/devinfo.html"
+      },
+      {
+        "id": "gponinfo",
+        "show": 7,
+        "submenu": null,
+        "title": "GPON Status",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/gponinfo.html"
+      },
+      {
+        "id": "waninfo",
+        "show": 7,
+        "submenu": null,
+        "title": "WAN Status",
+        "desc": "Select WAN connection to display WAN status.",
+        "has_html": true,
+        "html_url": "/waninfo.html"
+      },
+      {
+        "id": "wan3gstatus",
+        "show": 0,
+        "submenu": null,
+        "title": "3G Status",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/wan3gstatus.html"
+      },
+      {
+        "id": "laninfo",
+        "show": 7,
+        "submenu": null,
+        "title": "Ethernet Status",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/laninfo.html"
+      },
+      {
+        "id": "wifiinfo",
+        "show": 7,
+        "submenu": null,
+        "title": "2.4G Wireless Status",
+        "desc": "Select SSID to display wireless status.",
+        "has_html": true,
+        "html_url": "/wifiinfo.html"
+      },
+      {
+        "id": "wifi5info",
+        "show": 7,
+        "submenu": null,
+        "title": "5G Wireless Status",
+        "desc": "Select SSID to display wireless status.",
+        "has_html": true,
+        "html_url": "/wifi5info.html"
+      },
+      {
+        "id": "devtable",
+        "show": 7,
+        "submenu": null,
+        "title": "Device Table",
+        "desc": "Here lists user devices served by this gateway.",
+        "has_html": true,
+        "html_url": "/devtable.html"
+      },
+      {
+        "id": "rttable",
+        "show": 7,
+        "submenu": null,
+        "title": "Routing Table",
+        "desc": "Here lists gateway's effective routing table.",
+        "has_html": true,
+        "html_url": "/rttable.html"
+      },
+      {
+        "id": "restable",
+        "show": 7,
+        "submenu": null,
+        "title": "Resource Table",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/restable.html"
+      }
+    ],
+    "title": "Gateway Status",
+    "desc": "",
+    "has_html": false
+  },
+  {
+    "id": "m1_wizard",
+    "show": 0,
+    "submenu": [
+      {
+        "id": "wizard",
+        "show": 7,
+        "submenu": null,
+        "title": "Quick Setup",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/wizard.html"
+      }
+    ],
+    "title": "Quick Setup",
+    "desc": "",
+    "has_html": false
+  },
+  {
+    "id": "m1_wireless",
+    "show": 7,
+    "submenu": [
+      {
+        "id": "wifi24",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "wifibasic",
+            "show": 7,
+            "submenu": null,
+            "title": "Basic",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/wifibasic.html"
+          },
+          {
+            "id": "wifissid",
+            "show": 7,
+            "submenu": null,
+            "title": "SSID",
+            "desc": "Select and configure wireless networks.",
+            "has_html": true,
+            "html_url": "/wifissid.html"
+          },
+          {
+            "id": "wifisecu",
+            "show": 7,
+            "submenu": null,
+            "title": "Wireless Security",
+            "desc": "Configure wireless security options for each network.",
+            "has_html": true,
+            "html_url": "/wifisecu.html"
+          },
+          {
+            "id": "wifiadv",
+            "show": 7,
+            "submenu": null,
+            "title": "Advanced",
+            "desc": "The advanced wireless settings for 2.4G radio. Default values are already optimized for most of cases.",
+            "has_html": true,
+            "html_url": "/wifiadv.html"
+          },
+          {
+            "id": "wifiwps",
+            "show": 7,
+            "submenu": null,
+            "title": "WPS",
+            "desc": "WPS provides an easy and secure way to establish a WLAN network by pushing button or PIN code.",
+            "has_html": true,
+            "html_url": "/wifiwps.html"
+          },
+          {
+            "id": "wifiacc",
+            "show": 7,
+            "submenu": null,
+            "title": "Access Control",
+            "desc": "Limit access to the gateway by using the MAC address of specific wireless devices.",
+            "has_html": true,
+            "html_url": "/wifiacc.html"
+          },
+          {
+            "id": "wifilist",
+            "show": 7,
+            "submenu": null,
+            "title": "Detect Wi-Fi Signal",
+            "desc": "Detect real time value of Wi-Fi signal corresponding to every Wi-Fi connected client.",
+            "has_html": true,
+            "html_url": "/wifilist.html"
+          },
+          {
+            "id": "wifilog",
+            "show": 7,
+            "submenu": null,
+            "title": "Download Wi-Fi Log",
+            "desc": "Users can download the Wi-Fi log file on your PC. The file can be used to record the history of using Wi-Fi network.",
+            "has_html": true,
+            "html_url": "/wifilog.html"
+          }
+        ],
+        "title": "2.4G Radio",
+        "desc": "",
+        "has_html": false
+      },
+      {
+        "id": "wifi5",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "wifi5basic",
+            "show": 7,
+            "submenu": null,
+            "title": "Basic",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/wifi5basic.html"
+          },
+          {
+            "id": "wifi5ssid",
+            "show": 7,
+            "submenu": null,
+            "title": "SSID",
+            "desc": "Select and configure wireless networks.",
+            "has_html": true,
+            "html_url": "/wifi5ssid.html"
+          },
+          {
+            "id": "wifi5secu",
+            "show": 7,
+            "submenu": null,
+            "title": "Wireless Security",
+            "desc": "Configure wireless security options for each network.",
+            "has_html": true,
+            "html_url": "/wifi5secu.html"
+          },
+          {
+            "id": "wifi5adv",
+            "show": 7,
+            "submenu": null,
+            "title": "Advanced",
+            "desc": "The advanced wireless settings for 5G radio. Default values are already optimized for most of cases.",
+            "has_html": true,
+            "html_url": "/wifi5adv.html"
+          },
+          {
+            "id": "wifi5wps",
+            "show": 7,
+            "submenu": null,
+            "title": "WPS",
+            "desc": "WPS provides an easy and secure way to establish a WLAN network by pushing button or PIN code.",
+            "has_html": true,
+            "html_url": "/wifi5wps.html"
+          },
+          {
+            "id": "wifi5acc",
+            "show": 7,
+            "submenu": null,
+            "title": "Access Control",
+            "desc": "Limit access to the gateway by using the MAC address of specific wireless devices.",
+            "has_html": true,
+            "html_url": "/wifi5acc.html"
+          },
+          {
+            "id": "wifi5list",
+            "show": 7,
+            "submenu": null,
+            "title": "Detect Wi-Fi Signal",
+            "desc": "Detect real time value of Wi-Fi signal corresponding to every Wi-Fi connected client.",
+            "has_html": true,
+            "html_url": "/wifi5list.html"
+          }
+        ],
+        "title": "5G Radio",
+        "desc": "",
+        "has_html": false
+      }
+    ],
+    "title": "Wireless Setup",
+    "desc": "",
+    "has_html": false
+  },
+  {
+    "id": "m1_advanced",
+    "show": 7,
+    "submenu": [
+      {
+        "id": "ipnetwork",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "lan",
+            "show": 7,
+            "submenu": null,
+            "title": "LAN Basic",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/lan.html"
+          },
+          {
+            "id": "lanadvanced",
+            "show": 7,
+            "submenu": null,
+            "title": "LAN Advanced",
+            "desc": "Setup the secondary LAN IP and DHCP server.",
+            "has_html": true,
+            "html_url": "/lanadvanced.html"
+          },
+          {
+            "id": "lanipv6",
+            "show": 7,
+            "submenu": null,
+            "title": "LAN IPv6",
+            "desc": "LAN IPv6 settings, the default settings work in most of cases.",
+            "has_html": true,
+            "html_url": "/lanipv6.html"
+          },
+          {
+            "id": "wan",
+            "show": 7,
+            "submenu": null,
+            "title": "WAN",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/wan.html"
+          },
+          {
+            "id": "nat",
+            "show": 0,
+            "submenu": null,
+            "title": "NAT",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/nat.html"
+          },
+          {
+            "id": "ddns",
+            "show": 7,
+            "submenu": null,
+            "title": "Dynamic DNS",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/ddns.html"
+          },
+          {
+            "id": "alg",
+            "show": 7,
+            "submenu": null,
+            "title": "ALG",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/alg.html"
+          },
+          {
+            "id": "aoe",
+            "show": 7,
+            "submenu": null,
+            "title": "AOE Game",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/aoe.html"
+          },
+          {
+            "id": "pptpd",
+            "show": 7,
+            "submenu": null,
+            "title": "PPTP Server",
+            "desc": "PPTP Server Configurations.",
+            "has_html": true,
+            "html_url": "/pptpd.html"
+          }
+        ],
+        "title": "IP Network",
+        "desc": "",
+        "has_html": false
+      },
+      {
+        "id": "uplinkinterfaces",
+        "show": 0,
+        "submenu": [
+          {
+            "id": "wan3g",
+            "show": 0,
+            "submenu": null,
+            "title": "3G Uplink",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/wan3g.html"
+          }
+        ],
+        "title": "Uplink Interfaces",
+        "desc": "",
+        "has_html": false
+      },
+      {
+        "id": "bridge",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "brg",
+            "show": 7,
+            "submenu": null,
+            "title": "Bridge",
+            "desc": "Setup networking bridging services.",
+            "has_html": true,
+            "html_url": "/brg.html"
+          }
+        ],
+        "title": "Bridges Network",
+        "desc": "",
+        "has_html": false
+      },
+      {
+        "id": "qossection",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "qos",
+            "show": 7,
+            "submenu": null,
+            "title": "QoS",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/qos.html"
+          },
+          {
+            "id": "ipratelimit",
+            "show": 7,
+            "submenu": null,
+            "title": "IP Rate Limit",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/ipratelimit.html"
+          }
+        ],
+        "title": "QoS Section",
+        "desc": "",
+        "has_html": false
+      },
+      {
+        "id": "usb",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "usbstr",
+            "show": 7,
+            "submenu": null,
+            "title": "FTP Server",
+            "desc": "Configure FTP server on USB storage.",
+            "has_html": true,
+            "html_url": "/usbstr.html"
+          }
+        ],
+        "title": "USB",
+        "desc": "",
+        "has_html": false
+      },
+      {
+        "id": "routing",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "sroute",
+            "show": 7,
+            "submenu": null,
+            "title": "IPv4 Static Routing",
+            "desc": "Add static IPv4 routing entries to gateway routing table.",
+            "has_html": true,
+            "html_url": "/sroute.html"
+          },
+          {
+            "id": "ip6sroute",
+            "show": 7,
+            "submenu": null,
+            "title": "IPv6 Static Routing",
+            "desc": "Add static IPv6 routing entries to gateway routing table.",
+            "has_html": true,
+            "html_url": "/ip6sroute.html"
+          },
+          {
+            "id": "proute",
+            "show": 7,
+            "submenu": null,
+            "title": "IPv4 Policy Routing",
+            "desc": "Add IPv4 policy routing entries to routing table. Currently only source IP based policy routing is supported.",
+            "has_html": true,
+            "html_url": "/proute.html"
+          },
+          {
+            "id": "ip6proute",
+            "show": 7,
+            "submenu": null,
+            "title": "IPv6 Policy Routing",
+            "desc": "Add IPv6 policy routing entries to routing table. Currently only source IP based policy routing is supported.",
+            "has_html": true,
+            "html_url": "/ip6proute.html"
+          }
+        ],
+        "title": "Routing",
+        "desc": "",
+        "has_html": false
+      }
+    ],
+    "title": "Advanced Setup",
+    "desc": "",
+    "has_html": false
+  },
+  {
+    "id": "m1_secu",
+    "show": 7,
+    "submenu": [
+      {
+        "id": "management",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "password",
+            "show": 7,
+            "submenu": null,
+            "title": "Password",
+            "desc": "User password prevents outsiders from accessing or modifying gateway settings.",
+            "has_html": true,
+            "html_url": "/password.html"
+          },
+          {
+            "id": "loid",
+            "show": 7,
+            "submenu": null,
+            "title": "GPON Password (SLID)",
+            "desc": "GPON password, also known as SLID, is used for registering to OLT.",
+            "has_html": true,
+            "html_url": "/loid.html"
+          },
+          {
+            "id": "rmtweb",
+            "show": 7,
+            "submenu": null,
+            "title": "Remote Web",
+            "desc": "Control remote access to gateway web GUI through WAN interface. Gateway WAN IP address is used for remote access.",
+            "has_html": true,
+            "html_url": "/rmtweb.html"
+          },
+          {
+            "id": "telnet",
+            "show": 7,
+            "submenu": null,
+            "title": "Telnet",
+            "desc": "Control Telnet access to gateway from WAN interface or LAN interface, using WAN or LAN-side IP address.",
+            "has_html": true,
+            "html_url": "/telnet.html"
+          },
+          {
+            "id": "ssh",
+            "show": 7,
+            "submenu": null,
+            "title": "SSH",
+            "desc": "Control SSH access to gateway from WAN or LAN interfaces, using WAN or LAN-side IP address.",
+            "has_html": true,
+            "html_url": "/ssh.html"
+          }
+        ],
+        "title": "Management",
+        "desc": "",
+        "has_html": false
+      },
+      {
+        "id": "security",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "ipfilter",
+            "show": 7,
+            "submenu": null,
+            "title": "IPv4 Firewall",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/ipfilter.html"
+          },
+          {
+            "id": "ipv6firewall",
+            "show": 7,
+            "submenu": null,
+            "title": "IPv6 Firewall",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/ipv6firewall.html"
+          },
+          {
+            "id": "macfilter",
+            "show": 7,
+            "submenu": null,
+            "title": "Parental Control",
+            "desc": "Control device accessing Internet based on device's MAC address.",
+            "has_html": true,
+            "html_url": "/macfilter.html"
+          },
+          {
+            "id": "webfilter",
+            "show": 7,
+            "submenu": null,
+            "title": "Website Filtering",
+            "desc": "Website filtering limits LAN devices from accessing some websites.",
+            "has_html": true,
+            "html_url": "/webfilter.html"
+          },
+          {
+            "id": "portfwd",
+            "show": 7,
+            "submenu": null,
+            "title": "Port Forwarding",
+            "desc": "Port forwarding function forwards WAN applications to LAN devices. Multiple port forwarding rules are supported.",
+            "has_html": true,
+            "html_url": "/portfwd.html"
+          },
+          {
+            "id": "dmz",
+            "show": 7,
+            "submenu": null,
+            "title": "DMZ Hosting",
+            "desc": "DMZ hosting allow a LAN device to be accessed remotely by Internet WAN IP address. Firewall rules will be bypassed when accessing this device.",
+            "has_html": true,
+            "html_url": "/dmz.html"
+          },
+          {
+            "id": "upnp",
+            "show": 7,
+            "submenu": null,
+            "title": "UPnP",
+            "desc": "UPnP (Universal Plug and Play) simplifies the connection and implementation of devices to your network.",
+            "has_html": true,
+            "html_url": "/upnp.html"
+          }
+        ],
+        "title": "Security",
+        "desc": "",
+        "has_html": false
+      }
+    ],
+    "title": "Security Setup",
+    "desc": "",
+    "has_html": false
+  },
+  {
+    "id": "m1_voip",
+    "show": 7,
+    "submenu": [
+      {
+        "id": "voip",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "voipbasic",
+            "show": 7,
+            "submenu": null,
+            "title": "Basic",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/voipbasic.html"
+          },
+          {
+            "id": "voipadv",
+            "show": 7,
+            "submenu": null,
+            "title": "Advanced",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/voipadv.html"
+          },
+          {
+            "id": "sipcodecs",
+            "show": 7,
+            "submenu": null,
+            "title": "Codecs",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/sipcodecs.html"
+          }
+        ],
+        "title": "VoIP",
+        "desc": "",
+        "has_html": false
+      },
+      {
+        "id": "sip",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "sipbasic",
+            "show": 7,
+            "submenu": null,
+            "title": "Basic",
+            "desc": "SIP server and account.",
+            "has_html": true,
+            "html_url": "/sipbasic.html"
+          },
+          {
+            "id": "sipadv",
+            "show": 7,
+            "submenu": null,
+            "title": "Advanced",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/sipadv.html"
+          },
+          {
+            "id": "sipfax",
+            "show": 7,
+            "submenu": null,
+            "title": "Fax",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/sipfax.html"
+          },
+          {
+            "id": "sipdmap",
+            "show": 7,
+            "submenu": null,
+            "title": "Digit Map",
+            "desc": "",
+            "has_html": true,
+            "html_url": "/sipdmap.html"
+          }
+        ],
+        "title": "SIP",
+        "desc": "",
+        "has_html": false
+      }
+    ],
+    "title": "VoIP Setup",
+    "desc": "",
+    "has_html": false
+  },
+  {
+    "id": "m1_utilities",
+    "show": 7,
+    "submenu": [
+      {
+        "id": "reboot",
+        "show": 7,
+        "submenu": null,
+        "title": "Reboot",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/reboot.html"
+      },
+      {
+        "id": "init",
+        "show": 7,
+        "submenu": null,
+        "title": "Restore Default",
+        "desc": "Restore gateway configurations to factory default.",
+        "has_html": true,
+        "html_url": "/init.html"
+      },
+      {
+        "id": "upgrade",
+        "show": 7,
+        "submenu": null,
+        "title": "Upgrade Firmware",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/upgrade.html"
+      },
+      {
+        "id": "ping",
+        "show": 7,
+        "submenu": null,
+        "title": "Ping Test",
+        "desc": "Test network connectivity using Ping.",
+        "has_html": true,
+        "html_url": "/ping.html"
+      },
+      {
+        "id": "traceroute",
+        "show": 7,
+        "submenu": null,
+        "title": "Traceroute",
+        "desc": "Diagnose route path or measure network delay using Traceroute utility.",
+        "has_html": true,
+        "html_url": "/traceroute.html"
+      },
+      {
+        "id": "tcpdump",
+        "show": 7,
+        "submenu": null,
+        "title": "TCPDump",
+        "desc": "Diagnose Data service using TCPDump utility.",
+        "has_html": true,
+        "html_url": "/tcpdump.html"
+      },
+      {
+        "id": "mirror",
+        "show": 7,
+        "submenu": null,
+        "title": "Mirror",
+        "desc": "<div>1、After the mirroring function is enabled, the mirroring function will be disabled after the ONT restarts.</div> <div>2、Mirror the PON port to LAN1.</div>",
+        "has_html": true,
+        "html_url": "/mirror.html"
+      },
+      {
+        "id": "selftest",
+        "show": 7,
+        "submenu": null,
+        "title": "Self Test",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/selftest.html"
+      },
+      {
+        "id": "backup",
+        "show": 7,
+        "submenu": null,
+        "title": "Backup Config",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/backup.html"
+      },
+      {
+        "id": "restore",
+        "show": 7,
+        "submenu": null,
+        "title": "Restore Config",
+        "desc": "Restore gateway configuration from a backup file.",
+        "has_html": true,
+        "html_url": "/restore.html"
+      },
+      {
+        "id": "log",
+        "show": 7,
+        "submenu": null,
+        "title": "System Log",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/log.html"
+      },
+      {
+        "id": "ntp",
+        "show": 7,
+        "submenu": null,
+        "title": "NTP",
+        "desc": "Setup NTP client in gateway to sync time from Internet.",
+        "has_html": true,
+        "html_url": "/ntp.html"
+      },
+      {
+        "id": "loopdetect",
+        "show": 7,
+        "submenu": null,
+        "title": "Loop Detection",
+        "desc": "Loop detection setting and status.",
+        "has_html": true,
+        "html_url": "/loopdetect.html"
+      },
+      {
+        "id": "sys",
+        "show": 0,
+        "submenu": null,
+        "title": "Customization",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/sys.html"
+      },
+      {
+        "id": "timesetting",
+        "show": 7,
+        "submenu": [
+          {
+            "id": "wifiswitchtimer",
+            "show": 7,
+            "submenu": null,
+            "title": "Wi-Fi Timer",
+            "desc": "Time switch Wi-Fi",
+            "has_html": true,
+            "html_url": "/wifiswitchtimer.html"
+          },
+          {
+            "id": "rebootswitchtimer",
+            "show": 7,
+            "submenu": null,
+            "title": "Reboot Timer",
+            "desc": "Time switch reboot",
+            "has_html": true,
+            "html_url": "/rebootswitchtimer.html"
+          }
+        ],
+        "title": "Timer Setting",
+        "desc": "",
+        "has_html": false
+      },
+      {
+        "id": "syslog",
+        "show": 0,
+        "submenu": null,
+        "title": "Syslog",
+        "desc": "Setup syslog client in gateway to upload system log to remote syslog server.",
+        "has_html": true,
+        "html_url": "/syslog.html"
+      }
+    ],
+    "title": "Utilities",
+    "desc": "",
+    "has_html": false
+  },
+  {
+    "id": "m1_support",
+    "show": 7,
+    "submenu": [
+      {
+        "id": "iptvmulticast",
+        "show": 7,
+        "submenu": null,
+        "title": "IPTV Multicast",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/iptvmulticast.html"
+      },
+      {
+        "id": "tr069",
+        "show": 0,
+        "submenu": null,
+        "title": "TR-069",
+        "desc": "",
+        "has_html": true,
+        "html_url": "/tr069.html"
+      },
+      {
+        "id": "techsupportinfo",
+        "show": 7,
+        "submenu": null,
+        "title": "Tech Support Info",
+        "desc": "This info is for problem analysis,Please collect Tech support info firstly,then save and send to ISP to analysis if you encounter any issue!",
+        "has_html": true,
+        "html_url": "/techsupportinfo.html"
+      }
+    ],
+    "title": "Support Console",
+    "desc": "",
+    "has_html": false
+  }
+]

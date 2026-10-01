@@ -1,0 +1,245 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var v_apnnane = "";
+var v_dialnum = "";
+var v_pppuser = "";
+var v_ppppwd = "";
+var v_pincode = "";
+var v_enable  = "1";
+
+v_apnnane="";
+v_dialnum="";
+v_pppuser="";
+v_ppppwd="";
+v_pincode="";
+v_enable="0";
+
+currentIndex= "0";
+
+Status3G=
+{ 
+ "status":"0",
+ "auth_failures":"0",
+ "count":{"txByte":"0","rxByte":"0","txPackets":"0","rxPackets":"0"}
+};
+
+
+function doSetVal()
+{
+    switch(parseInt(Status3G.status))
+    {
+        case 1:
+            $("#state3g").html(Xwan3gString[2]);
+            $("#state3g").css("color","#090");
+            break;
+        case 2:
+            $("#state3g").html(Xwan3gString[3]);
+            $("#state3g").css("color","#E08800");
+            break;
+        case 0:
+        default:
+            $("#state3g").html(Xwan3gString[4]);
+            $("#state3g").css("color","#F00");
+        break;
+    }
+    
+    $("#apnname").val(v_apnnane);
+    
+    $("#dialnum").val(v_dialnum);
+
+    $("#pppuser").val(v_pppuser);
+    
+    $("#ppppwd").val(v_ppppwd);
+    
+    $("#pincode").val(v_pincode);
+    
+    $("#enable3g").attr("checked", ((v_enable == "1")?true:false));
+    
+}
+
+function docheckValue()
+{
+    if (($("#pincode").val().length != 0) && (($("#pincode").val().length < 4) || ($("#pincode").val().length > 8)))
+    {
+        alert(WebString.wan3gPIN);
+        return false;
+    } 
+}
+
+function WebInit()
+{
+    doSetVal();
+    WebStepIndex();
+}
+
+function WebDoSubmit()
+{
+	if (false == docheckValue())
+	{
+		return;
+	}
+	$("#XForm").submit();
+}
+
+$(document).ready(function () {
+    $("#btn_apply").click(function() {
+		XDoSubmit();
+	}); 
+
+    $("#btn_reconnect").click(function() {
+        $("#reconnect").val("1");
+        XDoSubmit();
+	}); 
+    
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<input type="hidden" id="reconnect" name="reconnect" value="0" />
+<div class="cfgstep">
+	<p><strong id="XS0"> </strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS1"> </td>
+			<td><label id="state3g" style="font-weight:bold;"> </label>
+                <a class="btn" href="#" id="btn_reconnect"><script>document.write(Xwan3gString[5]);</script></a>
+            </td>
+        </tr>
+		<tr>
+			<td width="200" id="XS6"> </td>
+			<td><input type="text" id="apnname" name="apnname" maxlength="32" style="width:240px"/></td>
+        </tr>
+		<tr>
+			<td width="200" id="XS7"> </td>
+			<td><input type="text" id="dialnum" name="dialnum" maxlength="32" style="width:240px"/></td>
+        </tr>
+        <tr>
+			<td width="200" id="XS8"> </td>
+			<td><input type="text" id="pppuser" name="pppuser" maxlength="64" style="width:240px"/></td>
+        </tr>
+		<tr>
+			<td width="200" id="XS9"> </td>
+			<td><input type="password" id="ppppwd" name="ppppwd" maxlength="64" style="width:240px"/></td>
+        </tr>
+		<tr>
+			<td width="200" id="XS10"> </td>
+			<td><input type="password" id="pincode" name="pincode" maxlength="8" size="8" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/>
+            <script>document.write(Xwan3gString[11]);</script></td>
+        </tr>
+		<tr>
+			<td width="200" id="XS12"> </td>
+			<td><input type="checkbox" id="enable3g" name="enable3g"/></td>
+        </tr>        
+    </table>
+</div>
+
+<div class="cfgstep">
+	<p><strong><script type="text/javascript">document.write(WebString.stepApply);</script></strong></p>
+	<a id="btn_apply" href="#" class="btn"><script type="text/javascript">document.write(WebString.Apply);</script></a>
+</div>
+
+
+
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

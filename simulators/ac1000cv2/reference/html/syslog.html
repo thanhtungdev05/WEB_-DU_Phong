@@ -1,0 +1,206 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var syslog_enable = 0;
+var syslog_server = "";
+var server_cfg_err = 0;
+
+syslog_enable=1;
+syslog_server="bblogs.fpt.vn";
+server_cfg_err="0";
+
+
+function syslogdisplay()
+{
+	var enable = $("#syslog_enable").attr("checked");
+	if (enable == "checked")
+	{
+		$("#syslog_server").show();
+	} 
+	else 
+	{
+		$("#syslog_server").hide();
+	}
+	WebStepIndex();
+}
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+	if(1 == syslog_enable){
+		$("#syslog_enabled").attr("checked",true);
+		$("#syslog_server").val(syslog_server);
+	}
+	else 
+	{
+		$("#syslog_disabled").attr("checked",true);
+		$("#syslog_server").val(syslog_server);
+	}
+	if(1 == server_cfg_err){
+		alert(WebString.server_cfg_err);
+	}
+	WebStepIndex();
+}
+
+function CheckSetValue()
+{
+    if(1 == $('input[name="syslog_enable"]:checked').val())
+    {
+        if( !isValidIpAddress($("#syslog_server").val()) && !isValidDomain($("#syslog_server").val()) )
+        {
+            alert(WebString.server_cfg_err);
+            return false;
+        }
+	}
+}
+
+$(document).ready(function () {
+	/*$("input[name='syslog_enable']").click(function() {
+		syslogdisplay();
+	});*/
+
+
+
+	$("#btn_apply").click(function(){
+	    if( false == CheckSetValue())
+	    {
+	        return;
+	    }
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS1"></td>
+			<td><input type="radio" name="syslog_enable" id="syslog_enabled" value="1" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+				<input type="radio" name="syslog_enable" id="syslog_disabled" value="0" /><script>document.write(WebString.Disable);</script></td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS2"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS3"></td>
+			<td><input type="text" name="syslog_server" id="syslog_server" maxlength="128" size="40" onkeypress="return OnKeyPress(event, X_INPUT_URL);" /></td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+	<a id="btn_apply" class="btn apply_btn" href="#"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

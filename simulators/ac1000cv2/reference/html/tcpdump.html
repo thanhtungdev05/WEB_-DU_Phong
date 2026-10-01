@@ -1,0 +1,409 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript" src="script/json2.js"></script>
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var port_list = 9;
+var tcpdump_count = 24;
+var tcpdump_state = 0;
+var save_file = "";
+var stopdump_flag = 0;
+var wan_list = [];
+var applyType = 0;
+
+var wanConfig = new Array();
+var bridge = new Array();
+var FiltersData = new Array();
+var num_con = 0;
+var MAX_NUM = 8;
+var wan_num = 0;
+var legalbrgportmap = 0;
+var portmap_f = 0;
+
+var ssid_list = new Array([4]);
+
+var wifi_24g_enable = 0;
+var wifi_58g_enable = 0;
+var ssid_enable = new Array([4]);
+var ssid5_enable = new Array([4]);
+var ssid_network_name = new Array([4]);
+
+wan_list[0] = { index:" 0", name: "1_INTERNET_TR069_IPTV_R_VID_0" };
+
+port_list="0";
+tcpdump_count="20";
+tcpdump_state="0";
+save_file="";
+
+wan_num=1;
+var lanPorts = new Array();
+var port_val = new Array();
+var num_lan=4;
+var num_wifi=0;
+var num_5g_wifi=0;
+lanPorts[0] = "ETH1";
+port_val[0] = "0";
+lanPorts[1] = "ETH2";
+port_val[1] = "1";
+lanPorts[2] = "ETH3";
+port_val[2] = "2";
+lanPorts[3] = "ETH4";
+port_val[3] = "3";
+num_wifi=4;
+num_5g_wifi=4;
+port_val[4] = "16";
+lanPorts[4] = "SSID1";
+port_val[5] = "17";
+lanPorts[5] = "SSID2";
+port_val[6] = "18";
+lanPorts[6] = "SSID3";
+port_val[7] = "19";
+lanPorts[7] = "SSID4";
+port_val[8] = "24";
+lanPorts[8] = "SSID5";
+port_val[9] = "25";
+lanPorts[9] = "SSID6";
+port_val[10] = "26";
+lanPorts[10] = "SSID7";
+port_val[11] = "27";
+lanPorts[11] = "SSID8";
+var disable_wan_edit=1;
+
+legalbrgportmap=-1;
+num_con=0;
+
+wifi_24g_enable=1;
+ssid_list[0]=0;
+ssid_enable[0]=1;
+ssid_network_name[0]="FPT Telecom-C16E";
+ssid_list[1]=1;
+ssid_enable[1]=0;
+ssid_network_name[1]="FPT Telecom-C16E-SSID2";
+ssid_list[2]=2;
+ssid_enable[2]=0;
+ssid_network_name[2]="FPT Telecom-C16E-SSID3";
+ssid_list[3]=3;
+ssid_enable[3]=0;
+ssid_network_name[3]="FPT Telecom-C16E-SSID4";
+
+wifi_58g_enable=1;
+ssid_list[0]=0;
+ssid5_enable[0]=1;
+ssid_network_name[0]="FPT Telecom-C16E";
+ssid_list[1]=1;
+ssid5_enable[1]=0;
+ssid_network_name[1]="FPT Telecom-5g-C16E-SSID2";
+ssid_list[2]=2;
+ssid5_enable[2]=0;
+ssid_network_name[2]="FPT Telecom-5g-C16E-SSID3";
+ssid_list[3]=3;
+ssid5_enable[3]=0;
+ssid_network_name[3]="FPT Telecom-5g-C16E-SSID4";
+
+
+function showWanList()
+{
+    var i;
+    for (i = 0; i < wan_list.length; i++)
+    {
+        $("#port_list").append("<option value=\"" + (parseInt(wan_list[i].index) + 1) + "\">" + wan_list[i].name + "<\/option>");
+    }
+    $("#port_list").append("<option value=\"0\">br0<\/option>");
+}
+
+function showLanPortList()                                                                                                               
+{                                                                                                                                        
+    for(var i = 0; i < lanPorts.length; i++ ) {                     
+        if (parseInt(legalbrgportmap) & (1<< port_val[i]))
+        {                                                 
+            if (i >= 4 && i <= 7) {                      
+            	if (wifi_24g_enable == '0' || ssid_enable[i-4] == '0')
+                	continue;               
+            }                                               
+            if (i >= 8 && i <= 11) {                      
+            	if (wifi_58g_enable == '0' || ssid5_enable[i-8] == '0')
+                	continue;               
+            }                                               
+                                                            
+            if (i >=0 && i <=3)                                                       
+            {                                                                                                                            
+                $("#port_list").append("<option value=\"" + (parseInt(port_val[i]) + 9) + "\">" + lanPorts[i] + "<\/option>");           
+            }                                                                                                                            
+            else                                                                                                                         
+            {                                                                                                                 
+                $("#port_list").append("<option value=\"" + (parseInt(port_val[i])) + "\">" + lanPorts[i] + "<\/option>");    
+            }                                                                                                                 
+            portmap_f = 1;                                                                                                    
+        }                                                                                                                     
+    }                                                                                                                     
+}                                                                                                                         
+
+
+function WebDoSubmit()
+{
+    if (1 == $("#applyType").val())
+    {
+		if(1 == top.tcpdump_btn_flag)
+		{
+			alert(WebString.tcpdumping_alert);
+			return;
+		}
+
+		if($("#tcpdump_count").val() < 1 || $("#tcpdump_count").val() > 2000)
+		{
+			alert(WebString.tcpdump_count_alert);
+			return;
+		}
+
+		$("#btn_tcpdump").removeClass("btn").addClass("btn_gray");
+		$("#btn_save").removeClass("btn").addClass("btn_gray");		
+		top.tcpdump_btn_flag = 1;
+    	$("#XForm").submit();
+    }
+    else if (2 == $("#applyType").val())
+    {	if(1 == top.stopdump_btn_flag)
+		{
+			return;
+		}
+	    if (1 != tcpdump_state) {
+	    	return;
+        }
+
+  		$("#btn_stopdump").removeClass("btn").addClass("btn_gray");	
+ 		top.stopdump_btn_flag = 1;
+	    $("#XForm").submit();
+    }
+}
+
+function WebInit()
+{
+	showWanList();
+	showLanPortList();
+	WebStepIndex();
+
+    $("#port_list").val(port_list);
+    $("#tcpdump_count").val(tcpdump_count);
+
+	if (1 == tcpdump_state)
+	{
+		$("#btn_tcpdump").removeClass("btn").addClass("btn_gray");
+		$("#btn_save").removeClass("btn").addClass("btn_gray");
+		$("#btn_stopdump").removeClass("btn_gray").addClass("btn");
+
+		//$("#btn_tcpdump").attr("disabled",true);
+		//$("#btn_save").attr("disabled",true);
+		setTimeout(function(){window.location.href = window.location.href;}, 5000);
+	}
+	else if(2 == tcpdump_state)
+	{
+		$("#btn_tcpdump").removeClass("btn_gray").addClass("btn");
+		$("#btn_save").removeClass("btn_gray").addClass("btn");		
+   		$("#btn_stopdump").removeClass("btn").addClass("btn_gray");
+
+		//$("#btn_tcpdump").attr("disabled",false);
+		//$("#btn_save").attr("disabled",false);
+		top.tcpdump_btn_flag = 0;
+ 		top.stopdump_btn_flag = 0;
+
+	}
+	else if (3 == tcpdump_state)
+	{
+		$("#btn_tcpdump").removeClass("btn").addClass("btn_gray");
+		$("#btn_save").removeClass("btn").addClass("btn_gray");
+		$("#btn_stopdump").removeClass("btn").addClass("btn_gray");
+
+		//$("#btn_tcpdump").attr("disabled",true);
+		//$("#btn_save").attr("disabled",true);
+		setTimeout(function(){window.location.href = window.location.href;}, 5000);
+	}
+	else
+	{
+		//$("#btn_tcpdump").attr("disabled",false);
+		//$("#btn_save").attr("disabled",true);
+		$("#btn_tcpdump").removeClass("btn_gray").addClass("btn");
+    	$("#btn_save").removeClass("btn").addClass("btn_gray");		
+   		$("#btn_stopdump").removeClass("btn").addClass("btn_gray");
+	}
+}
+
+$(document).ready(function () {
+	$("#btn_tcpdump").click(function(){
+	    $("#applyType").val('1');
+		XDoSubmit();
+	});
+
+	$("#btn_save").click(function() {
+    	if(1 != top.tcpdump_btn_flag)
+	    {
+	        if(save_file == "") {
+	            alert(XtcpdumpString[6]);
+	        }else {
+	            window.location.href = save_file;
+	        }
+	    }
+	});
+
+	$("#btn_stopdump").click(function(){
+	    $("#applyType").val('2');
+		XDoSubmit();
+	});
+
+	
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS1"></td>
+			<td>
+				<select name="port_list" id="port_list" width="350">
+				</select>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS2"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS3"></td>
+			<td><input type="text" name="tcpdump_count" id="tcpdump_count" maxlength="4" size="6" style="ime-mode: disabled;" value="10" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />(1-2000)</td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS4"></strong></p>
+	<table>
+		<tr>
+			<td><a id="btn_tcpdump" class="btn apply_btn" href="#"><script>document.write(WebString.Start);</script></a></td>
+			<td><a id="btn_stopdump" class="btn apply_btn" href="#"><script type="text/javascript">document.write(WebString.Stop);</script></a></td>
+		</tr>
+	</table>
+</div>
+
+
+<div class="cfgstep">
+	<p><strong id="XS5"></strong></p>
+ 	<table>
+		<tr>
+            <td><a id="btn_save" class="btn apply_btn" href="#"><script>document.write(WebString.Save);</script></a></td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep" style="display:none">
+	<p><strong id="XS2"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS3"></td>
+			<td><input type="text" name="applyType" id="applyType" maxlength="4" size="6" style="ime-mode: disabled;" value="0" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" /></td>
+		</tr>
+	</table>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

@@ -1,0 +1,440 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+#test_pon,#test_lan1,#test_lan2,#test_lan3,#test_lan4stb,#test_wifi,#test_ram,#test_rom,#test_usb,#test_led
+{
+	text-align: center;
+}
+#test_alart
+{
+	height: 40px;
+	width: 500px;
+	overflow-x:hidden;
+	overflow-y:hidden;
+}
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var testrl_pon = "Fail";
+var testrl_lan1 = "Link Down";
+var testrl_lan2 = "Link Down";
+var testrl_lan3 = "Link Down";
+var testrl_lan4stb = "Link Down";
+var testrl_wifi = "Fail";
+var testrl_ram = "RAM size is 0MB";
+var testrl_rom = "ROM size is 0MB";
+var testrl_usb = "Fail";
+var testrl_led = "Fail";
+var testrl_btnled = 0;
+var selftest_timer;
+
+testrl_pon = "Fail";
+testrl_lan1 = "Link up";
+testrl_lan2 = "Link down";
+testrl_lan3 = "Link down";
+testrl_lan4stb = "Link down";
+testrl_wifi = "Pass";
+testrl_ram = "RAM size is 170MB";
+testrl_rom = "ROM size is 128MB";
+testrl_usb = "Fail";
+testrl_btnled = "0";
+testrl_led = "Pass";
+
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+function test_ponSubmit()
+{
+	$("#test_ponen").val("1");
+	XDoSubmit();
+}
+function test_lan1Submit()
+{
+	$("#test_lan1en").val("1");
+	XDoSubmit();
+}
+function test_lan2Submit()
+{
+	$("#test_lan2en").val("1");
+	XDoSubmit();
+}
+function test_lan3Submit()
+{
+	$("#test_lan3en").val("1");
+	XDoSubmit();
+}
+function test_stbSubmit()
+{
+	$("#test_stben").val("1");
+	XDoSubmit();
+}
+function test_wifiSubmit()
+{
+	$("#test_wifien").val("1");
+	XDoSubmit();
+}
+function test_ramSubmit()
+{
+	$("#test_ramen").val("1");
+	XDoSubmit();
+}
+function test_romSubmit()
+{
+	$("#test_romen").val("1");
+	XDoSubmit();
+}
+function test_usbSubmit()
+{
+	$("#test_usben").val("1");
+	XDoSubmit();
+}
+function test_ledSubmit()
+{
+	$("#test_leden").val("1");
+	XDoSubmit();
+}
+
+function hide_button()
+{
+    clearTimeout(selftest_timer);
+		$("#btn_pass").hide();
+		$("#btn_fail").hide();
+		$("#test_alart").hide();
+
+		$("#btn_passen").val("1");
+		XDoSubmit();
+}
+
+function WebInit()
+{
+	$("#test_pon").val(testrl_pon);
+  if(testrl_pon=="Pass")
+    $("#test_pon").css("color","#090");
+  else
+    $("#test_pon").css("color","#F00");
+
+	$("#test_lan1").val(testrl_lan1);
+  if(testrl_lan1=="Link up")
+    $("#test_lan1").css("color","#090");
+  else
+    $("#test_lan1").css("color","#F00");
+  
+	$("#test_lan2").val(testrl_lan2);
+  if(testrl_lan2=="Link up")
+    $("#test_lan2").css("color","#090");
+  else
+    $("#test_lan2").css("color","#F00");
+  
+	$("#test_lan3").val(testrl_lan3);
+  if(testrl_lan3=="Link up")
+    $("#test_lan3").css("color","#090");
+  else
+    $("#test_lan3").css("color","#F00");
+
+	$("#test_lan4stb").val(testrl_lan4stb);
+  if(testrl_lan4stb=="Link up")
+    $("#test_lan4stb").css("color","#090");
+  else
+    $("#test_lan4stb").css("color","#F00");
+
+	$("#test_wifi").val(testrl_wifi);
+  if(testrl_wifi=="Pass")
+    $("#test_wifi").css("color","#090");
+  else
+    $("#test_wifi").css("color","#F00");
+
+	$("#test_ram").val(testrl_ram);
+  $("#test_ram").css("color","#090");
+	$("#test_rom").val(testrl_rom);
+  $("#test_rom").css("color","#090");
+    
+	$("#test_usb").val(testrl_usb);
+  if(testrl_usb=="Pass")
+    $("#test_usb").css("color","#090");
+  else
+    $("#test_usb").css("color","#F00");
+
+	$("#test_led").val(testrl_led);
+  if(testrl_led=="Pass")
+    $("#test_led").css("color","#090");
+  else
+    $("#test_led").css("color","#F00");
+  
+	$("#test_alart").val("Xin vui lòng nhìn vào trạng thái đèn trên thiết bị, nếu tất cả các đèn đều sáng hãy bấm nút PASS, nếu một hoặc nhiều đèn không sáng hãy bấm nút FAIL");
+	
+	$("#btn_pass").hide();
+	$("#btn_fail").hide();
+	$("#test_alart").hide();
+	$("#btn_pon").click(function() {
+		test_ponSubmit();
+	});
+	$("#btn_lan1").click(function() {
+		test_lan1Submit();
+	});
+	$("#btn_lan2").click(function() {
+		test_lan2Submit();
+	});
+	$("#btn_lan3").click(function() {
+		test_lan3Submit();
+	});
+	$("#btn_lan4stb").click(function() {
+		test_stbSubmit();
+	});
+	$("#btn_wifi").click(function() {
+		test_wifiSubmit();
+	});
+	$("#btn_ram").click(function() {
+		test_ramSubmit();
+	});
+	$("#btn_rom").click(function() {
+		test_romSubmit();
+	});
+	$("#btn_usb").click(function() {
+		test_usbSubmit();
+	});
+	$("#btn_led").click(function() {
+		test_ledSubmit();
+	});	
+	$("#btn_pass").click(function() {
+		$("#test_led").val("Pass");
+		$("#btn_passen").val("1");
+		testrl_btnled = 0;
+    clearTimeout(selftest_timer);
+		XDoSubmit();
+	});	
+	$("#btn_fail").click(function() {
+		$("#test_led").val("Fail");
+		$("#btn_failen").val("1");
+		testrl_btnled = 0;
+    clearTimeout(selftest_timer);
+		XDoSubmit();
+	});	
+	$("#test_ponen").hide();
+	$("#test_lan1en").hide();
+	$("#test_lan2en").hide();
+	$("#test_lan3en").hide();
+	$("#test_stben").hide();
+	$("#test_wifien").hide();
+	$("#test_ramen").hide();
+	$("#test_romen").hide();
+	$("#test_usben").hide();
+	$("#test_leden").hide();
+	$("#btn_passen").hide();
+	$("#btn_failen").hide();
+	
+	if(testrl_btnled == 1) {
+		$("#btn_pass").show();
+		$("#btn_fail").show();
+		$("#test_alart").show();
+    selftest_timer = setTimeout("hide_button();", 10000);
+	} else {
+		$("#btn_pass").hide();
+		$("#btn_fail").hide();
+		$("#test_alart").hide();
+  }
+}
+$(document).ready(function (){
+
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<body style="background:none" onload="WebInit();">
+<div class="cfgstep">
+<table id="selftest_list" class="commonlist">
+    <tr>
+        <td id="XS0">PON</td>
+        <td><input type="test" name="test_pon" id="test_pon" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_pon" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_ponen" id="test_ponen" value="0" />
+		</td>
+    </tr>
+    <tr>
+        <td id="XS1">LAN1</td>
+        <td><input type="test" name="test_lan1" id="test_lan1" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_lan1" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_lan1en" id="test_lan1en" value="0" />
+		</td>
+    </tr>
+    <tr>
+        <td id="XS2">LAN2</td>
+        <td><input type="test" name="test_lan2" id="test_lan2" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_lan2" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_lan2en" id="test_lan2en" value="0" />
+		</td>
+    </tr>
+    <tr>
+        <td id="XS3">LAN3</td>
+        <td><input type="test" name="test_lan3" id="test_lan3" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_lan3" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_lan3en" id="test_lan3en" value="0" />
+		</td>
+    </tr>
+    <tr>
+        <td id="XS4">LAN4/STB</td>
+        <td><input type="test" name="test_lan4stb" id="test_lan4stb" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_lan4stb" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_stben" id="test_stben" value="0" />
+		</td>
+    </tr>
+	<tr>
+        <td id="XS5">Wi-Fi</td>
+        <td><input type="test" name="test_wifi" id="test_wifi" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_wifi" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_wifien" id="test_wifien" value="0" />
+		</td>
+    </tr>
+	<tr>
+        <td id="XS6">RAM</td>
+        <td><input type="test" name="test_ram" id="test_ram" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_ram" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_ramen" id="test_ramen" value="0" />
+		</td>
+    </tr>
+	<tr>
+        <td id="XS7">ROM</td>
+        <td><input type="test" name="test_rom" id="test_rom" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_rom" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_romen" id="test_romen" value="0" />
+		</td>
+    </tr>
+	<tr>
+        <td id="XS8">USB</td>
+        <td><input type="test" name="test_usb" id="test_usb" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_usb" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_usben" id="test_usben" value="0" />
+		</td>
+    </tr>
+	<tr>
+        <td id="XS9">LED</td>
+        <td><input type="test" name="test_led" id="test_led" style="border:0px;" readonly="readonly" /></td>
+        <td>
+			<a id="btn_led" href="#"><script type="text/javascript">document.write(WebString.selftest);</script></a>
+			<input type="test" name="test_leden" id="test_leden" value="0" />
+		</td>
+    </tr>
+</table>  
+<table>
+	<tr>
+		<a name="btn_pass" id="btn_pass" class="btn" href="#" style="width: 100px;"><script type="text/javascript">document.write(WebString.pass);</script></a>
+		<input type="test" name="btn_passen" id="btn_passen" value="0" />
+		<a name="btn_fail" id="btn_fail" class="btn" href="#" style="width: 100px;"><script type="text/javascript">document.write(WebString.fail);</script></a>
+		<input type="test" name="btn_failen" id="btn_failen" value="0" />
+	</tr>
+	<tr>
+		<textarea id="test_alart" style="border:0px;" readonly="readonly" /></textarea>
+	</tr>	
+</table>	
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

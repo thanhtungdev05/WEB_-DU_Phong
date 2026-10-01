@@ -1,0 +1,428 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+var urlfilter_enable;
+var urlfilter_list = new Array();
+var pool_type = 0;
+var lan_ip_0 = "";
+var lan_mask_0 = "";
+var lan_ip_1 = "";
+var lan_mask_1 = "";
+var LanDevStatus;
+var lan_dev = new Array();
+var wl_num;
+var eth_num;
+
+urlfilter_enable=0;
+urlfilter_list = [
+
+];
+
+pool_type = "0";
+lan_ip_0 = "192.168.1.1";
+lan_mask_0 = "255.255.255.0";
+lan_ip_1 = "192.168.0.1";
+lan_mask_1 = "255.255.255.0";
+
+LanDevStatus = 2;
+lan_dev[0] = { mac: "bc:ec:a0:05:5f:8d", ip: "192.168.1.244", hostname: "thanhtung", conn_type: "1", uptime: "0h 0m ", dhcp: "1" };
+wl_num  = 0;
+eth_num = 1;
+
+
+function FreshTable(){
+	var ip = "";
+	var hostname = "";
+	var value = "";
+	var TR = "";
+	TR += "<table id='urlfilterTable' class='mlist'>";
+	TR += '<tr>';
+	TR += '<th colspan="4" class="tableTitle">' + XwebfilterString[0] +'</th>\n';
+	TR += '</tr>\n';
+	TR += '<tr>\n';
+	TR += '<th>' + XwebfilterString[1] +'</th>\n';
+	TR += '<th>' + XwebfilterString[2] +'</th>\n';
+	TR += '<th>' + XwebfilterString[3] +'</th>\n';
+	TR += '<th>' + WebString.Edit +'</th>\n';
+	TR += '</tr>\n';
+	
+	if(urlfilter_list.length == 0){
+		TR += '</table>\n';
+		$("#urlfilter_value").val(value);
+		$("#urlFilterDiv").html(TR);
+		return;
+	}else{
+		$.each(urlfilter_list, function(id, el){
+			if (id > 0){
+				value += "-.-";
+			}
+
+			value += el.hostname + "#" + el.ip + "#" + el.url;
+
+			ip = el.ip;
+			if (ip == "0.0.0.0"){
+				ip = "ALL IP";
+			}
+
+			TR += '<tr>\n';	
+			TR += '<td>' + el.hostname + '</td>\n';
+			TR += '<td>' + ip + '</td>\n';
+			TR += '<td>' + el.url + '</td>\n';
+			TR += '<td><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+			TR += '</tr>\n';
+		});
+		
+		TR += '</table>\n';
+	}
+	
+	$("#urlfilter_value").val(value);
+	$("#urlFilterDiv").html(TR);
+
+	$(".remove_btn").click(function(){
+		if (!confirm(WebString.delete_confirm))
+		{
+			return;
+		}
+
+		var row = this.parentNode.parentNode.rowIndex;
+		urlfilter_list[row-2] = urlfilter_list[urlfilter_list.length-1];
+		urlfilter_list.pop();
+		FreshTable();
+		XDoSubmit();
+	});	
+}
+
+function WriteHostnameSel(){
+	var device_sel = '<select id="device_select" style="width:220px">\n';
+	device_sel += '<option value="all">' + XwebfilterString[19] + '</option>';
+	device_sel += '<option value="manu">' + XwebfilterString[15] + '</option>';
+	$.each(lan_dev, function(id, el){
+		hostname = el.hostname.replace(/-/, " ");
+		device_sel += '<option>' + hostname + "-" + el.ip + '</option>';
+	});
+
+	device_sel += '</select>';
+	$("#device_select_td").html(device_sel);
+
+	$("#device_select").change(function(){
+		if ("all" == $("#device_select").val()){
+			$("#ip_addr").val("");
+			$("#ip_addr_tr").hide();
+		}else if ("manu" == $("#device_select").val()){
+			$("#ip_addr_tr").show();
+		}else{
+			$("#ip_addr_tr").hide();
+		}
+	});
+}
+
+function radioSet(name){
+	if (eval(name)=="1"){
+		$("#"+name+"0").get(0).checked=false;
+		$("#"+name+"1").get(0).checked=true;
+	}else if (eval(name)=="0"){
+		$("#"+name+"0").get(0).checked=true;
+		$("#"+name+"1").get(0).checked=false;
+	}else{
+		return;
+	}		
+}
+
+function SetMode(){
+	if (1 == $("input[name='urlfilter_enable']:checked").val())
+	{
+		$("[name='hide']").show();
+		WebStepIndex();
+	}else if (0 == $("input[name='urlfilter_enable']:checked").val()){
+		$("[name='hide']").hide();
+		WebStepIndex();
+	}
+}
+
+function HaveSameRule(urladdr, ipaddr){
+	for (var i = 0; i < urlfilter_list.length; i++ ){
+		if((urlfilter_list[i].url == urladdr) 
+			&& (urlfilter_list[i].ip == ipaddr)){
+			return true;
+		}			
+	}	
+	
+	return false;
+}
+
+function isValidLanIpAddress(ip){
+	if (0 == pool_type || 1 == pool_type){
+		if (isLansubIP(ip, lan_ip_0, lan_mask_0) == false){
+			return false;
+		}
+	}else if (2 == pool_type){
+		if (isLansubIP(ip, lan_ip_0, lan_mask_0) == false
+			&& isLansubIP(ip, lan_ip_1, lan_mask_1) == false){
+			return false;
+		}
+	}
+}
+
+function doCheckVal(urladdr, ipaddr){
+	if (urlfilter_list.length >= 32){	
+		alert(XwebfilterString[5]);
+		return false;
+	}
+	
+	if (urladdr.length > 64){
+		alert(XwebfilterString[8]);
+		return false;
+	}else if (urladdr.length == 0){
+		alert(XwebfilterString[9]);
+		return false;
+	}
+    if (urladdr.indexOf("https:\/\/") != -1){
+		alert(XwebfilterString[20]);	
+                return false;
+	}
+	
+	if (ipaddr.length == 0){
+		alert(XwebfilterString[6]);
+		return false;
+	}else if (ipaddr == "0.0.0.0"){
+		return true;
+	}
+	else if ((false == isValidIpAddress(ipaddr)) || (false == isValidLanIpAddress(ipaddr))){
+		alert(XwebfilterString[7]);
+		return false;
+	}
+	
+	if(HaveSameRule(urladdr, ipaddr)){
+		alert(XwebfilterString[10]);
+		return false;	
+	}					
+}
+
+function WebInit(){
+	WriteHostnameSel();
+	radioSet("urlfilter_enable");
+	SetMode();
+	FreshTable();
+}
+
+function AddRule(){
+	var ipaddr;
+	var ipaddr2;
+	var urladdr;
+	var temp;
+	var hostname;
+	var targetstr;	
+	var indexofsplitor;
+	var splitor = "-";	
+	
+	var obj = new Object();
+
+	if ("manu" == $("#device_select").val()){
+		hostname = "Unknown";
+		ipaddr = $("#ip_addr").val();
+	}else if ("all" == $("#device_select").val()){
+		hostname = "ALL";
+		ipaddr = "0.0.0.0";
+	}else{
+		targetstr = $("#device_select").val();
+		indexofsplitor = targetstr.lastIndexOf(splitor);
+		hostname = targetstr.substr(0, indexofsplitor);
+		ipaddr = targetstr.substr(indexofsplitor+1);
+	}
+	
+	urladdr = $("#url_addr").val();
+
+	ipaddr = $.trim(ipaddr);
+	hostname = $.trim(hostname);
+	urladdr = $.trim(urladdr);
+	urladdr = urladdr.replace(/^http:\/\//, "")
+
+	if (false == doCheckVal(urladdr, ipaddr)){
+		return;
+	}
+
+	obj.ip = ipaddr;
+	obj.url = urladdr;
+	obj.hostname = hostname;
+	urlfilter_list.push(obj);
+	FreshTable();
+	XDoSubmit();
+}
+
+function WebDoSubmit(){
+	$("#XForm").submit();
+}
+
+$(document).ready(function () {
+	$("input").css("ime-mode","disabled");
+	$("#urlfilter_enable0").change(function(){
+		SetMode();
+	});
+	
+	$("#urlfilter_enable1").change(function(){
+		SetMode();
+	});
+
+	$("#btn_apply").click(function(){
+		XDoSubmit();
+	});
+
+	$("#btn_add").click(function(){
+		AddRule();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input id="urlfilter_value" name="urlfilter_value" type="hidden" value="" />
+<div class="cfgstep">
+	<p><strong id="XS11"></strong></p>
+	<table>
+		<tr>
+			<td id="XS12" width="200"></td>
+			<td>
+				<input type="radio" name="urlfilter_enable" id="urlfilter_enable0" value="0" />
+				<script>document.write(WebString.Disable);</script>&nbsp;&nbsp;
+				<input type="radio" name="urlfilter_enable" id="urlfilter_enable1" value="1" checked="true"/>
+				<script>document.write(WebString.BlockList);</script>
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(XwebfilterString[4]);</script></strong></p>
+	<a id="btn_apply" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Apply);</script>
+	</a>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS13"></strong></p>
+	<table>
+		<tr>
+			<td id="XS14" width="200"></td>
+			<td id="device_select_td"></td>
+     	</tr>
+     	<tr id="ip_addr_tr" style="display:none">
+     	    <td id="XS16" width="200"></td>
+      		<td><input type="text" id="ip_addr" maxlength="15" onkeyup="value=value.replace(/[^\w\.:\/]/ig,'')" onkeypress="return OnKeyPress(event, X_INPUT_IP);"/>
+      		</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS17"></strong></p>
+	<table>
+		<tr>
+			<td id="XS18" width="200"></td>
+			<td><input type="text" id="url_addr" maxlength="63" size="40" onkeyup="value=value.replace(/[^\w\.\-:\/]/ig,'')" onkeypress="return OnKeyPress(event, X_INPUT_URL);"/>
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong><script>document.write(WebString.stepAdd);</script></strong></p>
+	<a id="btn_add" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Add);</script>
+	</a>
+</div>
+<div id="urlFilterDiv" class="cfglist" style="display:none" name="hide"></div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+
