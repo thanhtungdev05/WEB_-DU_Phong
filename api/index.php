@@ -3510,6 +3510,37 @@ function handle_system(array $segments, string $method): void
                 ? (bool)env_value('DATABASE_URL')
                 : (bool)env_value('FALLBACK_DATABASE_URL');
 
+            $neonMetrics = neon_usage_metrics();
+
+            // Storage determination:
+            $neonActualMb = null;
+            $storageSource = 'postgres_logical_database_size';
+            if (env_value('NEON_STORAGE_ACTUAL_MB') !== null) {
+                $neonActualMb = (float)env_value('NEON_STORAGE_ACTUAL_MB');
+                $storageSource = 'manual_neon_console';
+            } elseif (!empty($neonMetrics['available']) && isset($neonMetrics['syntheticStorageMb'])) {
+                $neonActualMb = (float)$neonMetrics['syntheticStorageMb'];
+                $storageSource = 'neon_management_api';
+            }
+
+            // Compute hours determination:
+            $computeLimit = env_int('NEON_COMPUTE_HOURS_LIMIT', 100, 0, 1000000);
+            $computeUsed = null;
+            $computeSource = 'unconfigured';
+            $computeNote = 'Reset đầu tháng.';
+            if (env_value('NEON_COMPUTE_HOURS_USED') !== null) {
+                $computeUsed = (float)env_value('NEON_COMPUTE_HOURS_USED');
+                $computeSource = 'manual_neon_console';
+                $computeNote = 'Nhập thủ công từ Neon Console > Billing (reset đầu tháng).';
+            } elseif (!empty($neonMetrics['available']) && isset($neonMetrics['computeHours'])) {
+                $computeUsed = (float)$neonMetrics['computeHours'];
+                $computeSource = 'neon_management_api';
+                $computeNote = 'Tự động từ Neon Management API v2 (chu kỳ tính phí hiện tại).';
+            } elseif (!empty($neonMetrics['configured'])) {
+                $computeSource = 'neon_management_api';
+                $computeNote = 'Đã cấu hình Neon API nhưng chưa lấy được số liệu.';
+            }
+
             respond([
                 'data' => [
                     'activeTier' => $activeTier,
@@ -3523,12 +3554,10 @@ function handle_system(array $segments, string $method): void
                         'neonLimitMb' => $neonFreeLimitMb,
                         'usagePercent' => $usagePct,
                         'status' => $status,
-                        'measurement' => 'postgres_logical_database_size',
-                        'isEstimate' => true,
-                        // Số thực từ Neon Console (admin nhập thủ công vào NEON_STORAGE_ACTUAL_MB)
-                        'neonActualMb' => env_value('NEON_STORAGE_ACTUAL_MB') !== null
-                            ? (float)env_value('NEON_STORAGE_ACTUAL_MB')
-                            : null,
+                        'measurement' => $storageSource,
+                        'source' => $storageSource,
+                        'isEstimate' => $neonActualMb === null,
+                        'neonActualMb' => $neonActualMb,
                     ],
                     'database' => [
                         'connections' => [
@@ -3543,14 +3572,13 @@ function handle_system(array $segments, string $method): void
                         ],
                     ],
                     'computeHours' => [
-                        'limit' => env_int('NEON_COMPUTE_HOURS_LIMIT', 0, 0, 1000000),
-                        'used' => env_value('NEON_COMPUTE_HOURS_USED') !== null
-                            ? (float)env_value('NEON_COMPUTE_HOURS_USED')
-                            : null,
-                        'configured' => env_value('NEON_COMPUTE_HOURS_LIMIT') !== null,
-                        'source' => 'manual_neon_console',
-                        'note' => 'Reset đầu tháng. Cập nhật NEON_COMPUTE_HOURS_USED từ Neon Console > Billing.',
+                        'limit' => $computeLimit,
+                        'used' => $computeUsed,
+                        'configured' => $computeUsed !== null || !empty($neonMetrics['configured']) || env_value('NEON_COMPUTE_HOURS_LIMIT') !== null,
+                        'source' => $computeSource,
+                        'note' => $computeNote,
                     ],
+                    'neon' => $neonMetrics,
                     'render' => render_usage_metrics(),
                     'tables' => $tableSizes,
                     'sessions' => [

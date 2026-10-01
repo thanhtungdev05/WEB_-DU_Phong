@@ -132,10 +132,14 @@
         updateProgress(storageProgress, displayPct, displayStatus);
 
         if (storageMeasurement) {
-            if (neonActualMb != null) {
-                storageMeasurement.textContent = 'Số đo từ Neon Console (thực tế); ước tính PG: ' + sizeMb + ' MB';
+            if (storage.source === 'neon_management_api') {
+                storageMeasurement.textContent = `Dung lượng thực tế tự động từ Neon API (Synthetic: ${neonActualMb} MB; ước tính PG: ${sizeMb} MB)`;
+            } else if (storage.source === 'manual_neon_console') {
+                storageMeasurement.textContent = `Số đo từ Neon Console (nhập tay: ${neonActualMb} MB; ước tính PG: ${sizeMb} MB)`;
+            } else if (neonActualMb != null) {
+                storageMeasurement.textContent = `Số đo thực tế: ${neonActualMb} MB; ước tính PG: ${sizeMb} MB`;
             } else {
-                storageMeasurement.textContent = 'Ước tính theo pg_database_size — nhập NEON_STORAGE_ACTUAL_MB để có số thật';
+                storageMeasurement.textContent = `Ước tính theo pg_database_size (~${sizeMb} MB) — cấu hình NEON_API_KEY để tự động đo`;
             }
         }
 
@@ -215,19 +219,20 @@
         // Neon Compute hours
         const computeHours = data.computeHours || {};
         if (computeText) {
-            if (!computeHours.configured || !computeHours.limit) {
-                computeText.textContent = 'Chưa cấu hình — xem Neon Console > Billing';
-            } else if (computeHours.used == null) {
-                computeText.textContent = `? / ${computeHours.limit} h — thêm NEON_COMPUTE_HOURS_USED`;
-            } else {
+            if (computeHours.used != null) {
                 const pct = Math.round((computeHours.used / computeHours.limit) * 1000) / 10;
-                computeText.textContent = `${computeHours.used} / ${computeHours.limit} h (${pct}%)`;
+                const srcBadge = computeHours.source === 'neon_management_api' ? ' (Tự động API)' : '';
+                computeText.textContent = `${computeHours.used} / ${computeHours.limit} h (${pct}%)${srcBadge}`;
                 const cStatus = pct >= 92 ? 'CRITICAL' : pct >= 80 ? 'WARNING' : 'OK';
                 updateProgress(computeProgress, pct, cStatus);
+            } else if (!computeHours.configured || !computeHours.limit) {
+                computeText.textContent = 'Chưa cấu hình (thêm NEON_API_KEY hoặc NEON_COMPUTE_HOURS_USED)';
+            } else {
+                computeText.textContent = `? / ${computeHours.limit} h — cấu hình NEON_API_KEY để tự động đo`;
             }
         }
         if (computeNote) {
-            computeNote.textContent = computeHours.note || 'Reset đầu tháng. Cập nhật từ Neon Console > Billing.';
+            computeNote.textContent = computeHours.note || 'Reset đầu tháng theo chu kỳ Neon.';
         }
     }
 

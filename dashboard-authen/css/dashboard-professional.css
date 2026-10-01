@@ -2868,7 +2868,10 @@ body.report-export-open {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    width: 290px;
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 88px);
+    overflow-y: auto;
     background: var(--ui-panel, #ffffff);
     border: 1px solid var(--ui-border, #e2e8f0);
     border-radius: 12px;
@@ -2920,6 +2923,16 @@ body.report-export-open {
     gap: 10px;
 }
 
+.system-metric-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 9px;
+    border: 1px solid var(--ui-border, #e2e8f0);
+    border-radius: 8px;
+    background: var(--ui-bg-subtle, #f8fafc);
+}
+
 .system-metric-row {
     display: flex;
     flex-direction: column;
@@ -2950,6 +2963,32 @@ body.report-export-open {
 
 .system-progress-fill.is-warning { background: #f59e0b; }
 .system-progress-fill.is-critical { background: #ef4444; }
+
+.system-progress-bar-compact {
+    height: 4px;
+}
+
+.system-provider-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-top: 4px;
+}
+
+.system-provider-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--ui-muted, #64748b);
+    font-size: 10.5px;
+}
+
+.system-provider-row strong {
+    color: var(--ui-text, #1e293b);
+    font-size: 10.5px;
+    text-align: right;
+}
 
 .system-metric-subtext {
     font-size: 11px;
@@ -2995,4 +3034,24 @@ body.report-export-open {
 
 :root[data-theme="dark"] .system-progress-bar {
     background: #334155;
+}
+
+:root[data-theme="dark"] .system-metric-card {
+    background: #111c2f;
+    border-color: #334155;
+}
+
+:root[data-theme="dark"] .system-provider-row strong {
+    color: #f1f5f9;
+}
+
+@media (max-width: 720px) {
+    .system-usage-popover {
+        position: fixed;
+        top: 68px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+        max-width: none;
+    }
 }
