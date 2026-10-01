@@ -12,6 +12,7 @@ require_once __DIR__ . '/lib/ktv_roster_import.php';
 require_once __DIR__ . '/lib/training_classes.php';
 require_once __DIR__ . '/lib/report_xlsx.php';
 require_once __DIR__ . '/lib/dashboard_report.php';
+require_once __DIR__ . '/lib/dashboard_report_cache.php';
 require_once __DIR__ . '/lib/dashboard_technicians.php';
 require_once __DIR__ . '/lib/system_usage.php';
 load_app_environment($root);
@@ -28,7 +29,7 @@ header('Access-Control-Allow-Origin: ' . $corsOrigin);
 header('Vary: Origin');
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Tracking-Key');
-header('Access-Control-Expose-Headers: X-Request-ID, X-Response-Bytes, X-Database-Queries');
+header('Access-Control-Expose-Headers: X-Request-ID, X-Response-Bytes, X-Database-Queries, X-Dashboard-Cache, Server-Timing');
 header('Access-Control-Max-Age: 86400');
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -117,6 +118,7 @@ function respond(array $payload = [], int $status = 200): void
         'status' => $status,
         'response_bytes' => $responseBytes,
         'database_queries' => $queryCount,
+        'dashboard_cache' => $GLOBALS['dashboard_report_cache_status'] ?? null,
         'response_budget_bytes' => $responseBudget,
         'query_budget' => $queryBudget,
         'budget_exceeded' => $responseBytes > $responseBudget || $queryCount > $queryBudget,
@@ -2668,7 +2670,15 @@ function handle_dashboard(array $segments, string $method): void
 
     if ($action === 'report') {
         try {
-            respond(['data' => dashboard_report_payload(db(), $_GET)]);
+            $reportStartedAt = microtime(true);
+            $pdo = db();
+            $statementTimeoutMs = env_int('DASHBOARD_REPORT_STATEMENT_TIMEOUT_MS', 20000, 1000, 120000);
+            $pdo->exec('SET statement_timeout = ' . $statementTimeoutMs);
+            $report = dashboard_report_cached_payload($pdo, $_GET);
+            $reportDurationMs = (int)round((microtime(true) - $reportStartedAt) * 1000);
+            header('X-Dashboard-Cache: ' . ($GLOBALS['dashboard_report_cache_status'] ?? 'unknown'));
+            header('Server-Timing: dashboard;dur=' . $reportDurationMs);
+            respond(['data' => $report]);
         } catch (InvalidArgumentException $exception) {
             fail(400, 'invalid-report-period', $exception->getMessage());
         } catch (Throwable $exception) {
@@ -2680,13 +2690,7 @@ function handle_dashboard(array $segments, string $method): void
     if ($action === 'version') {
         $pdo = db();
         try {
-            $version = $pdo->query(
-                <<<'SQL'
-                SELECT last_value::text
-                  FROM dashboard_revision_seq
-                SQL
-            )->fetchColumn();
-            respond(['data' => ['data_version' => is_string($version) ? $version : '']]);
+            respond(['data' => ['data_version' => dashboard_report_data_version($pdo)]]);
         } catch (Throwable $exception) {
             report_exception($exception, 'dashboard-version');
             fail(500, 'dashboard-version-failed', 'Unable to load dashboard version.');

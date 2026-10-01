@@ -190,45 +190,18 @@ catalog_sessions AS (
       JOIN active_labs lab ON lab.lab_id = session.lab_id
 ),
 resolved_sessions AS (
-    SELECT timer.id,
-           identity.person_id,
-           lab.lab_id,
-           lab.device_id,
-           COALESCE(timer.started_at, timer.finished_at, timer.created_at) AS occurred_at,
-           timer.mode,
-           timer.status,
-           timer.is_passed,
-           timer.completed_first_try,
-           timer.practice_attempt_no,
-           timer.attempt_sequence_complete,
-           timer.seed_batch,
-           (
-               timer.is_passed IS TRUE
-               AND timer.attempt_sequence_complete IS FALSE
-               AND timer.seed_batch LIKE 'firebase-v1-%'
-           ) AS is_historical_pass,
-           timer.duration_sec
-      FROM timer_sessions timer
-      JOIN active_labs lab ON lab.lab_id = timer.lab_id
-      JOIN eligible_identities identity
-        ON identity.identity_key = CASE
-            WHEN timer.user_id IS NOT NULL THEN 'user:' || timer.user_id::text
-            WHEN NULLIF(timer.email, '') IS NOT NULL THEN 'email:' || LOWER(timer.email)
-            ELSE 'employee:' || COALESCE(timer.technician_id, '')
-        END
-     WHERE NOT COALESCE(timer.is_mock, FALSE)
-       AND timer.status IN ('completed', 'failed')
-       AND EXISTS (
-           SELECT 1
-             FROM assignment_pairs assigned
-            WHERE assigned.person_id = identity.person_id
-              AND assigned.lab_id = lab.lab_id
-              AND COALESCE(timer.started_at, timer.finished_at, timer.created_at) >= assigned.effective_from
-              AND (
-                  assigned.effective_to IS NULL
-                  OR COALESCE(timer.started_at, timer.finished_at, timer.created_at)
-                     < assigned.effective_to::timestamp + INTERVAL '1 day'
-              )
+    SELECT session.*
+      FROM catalog_sessions session
+     WHERE EXISTS (
+            SELECT 1
+              FROM assignment_pairs assigned
+             WHERE assigned.person_id = session.person_id
+               AND assigned.lab_id = session.lab_id
+               AND session.occurred_at >= assigned.effective_from
+               AND (
+                   assigned.effective_to IS NULL
+                   OR session.occurred_at < assigned.effective_to::timestamp + INTERVAL '1 day'
+               )
        )
 ),
 numbered_sessions AS (
@@ -1507,36 +1480,50 @@ function dashboard_report_payload(PDO $pdo, array $query): array
 
     $includeBranchDrilldown = !array_key_exists('include_branch_drilldown', $query)
         || filter_var($query['include_branch_drilldown'], FILTER_VALIDATE_BOOLEAN);
-    if ($scope === 'lifetime') {
-        $current = dashboard_report_metric($pdo, null, null);
-        $previous = $current;
-        $lifetime = $current;
-        $reportStartYear = (int)$today->format('Y');
-        $reportEndYear = $reportStartYear;
-    } else {
-        $previousEndDefault = $from->modify('-1 day');
-        $periodLength = (int)$from->diff($to)->format('%a');
-        $previousStartDefault = $previousEndDefault->modify('-' . $periodLength . ' days');
-        $compareFrom = dashboard_report_parse_date($query['compare_from'] ?? null, $previousStartDefault);
-        $compareTo = dashboard_report_parse_date($query['compare_to'] ?? null, $previousEndDefault);
-        $current = dashboard_report_metric($pdo, $from->format('Y-m-d'), $to->format('Y-m-d'));
-        $previous = dashboard_report_metric($pdo, $compareFrom->format('Y-m-d'), $compareTo->format('Y-m-d'));
-        $lifetime = dashboard_report_metric($pdo, null, null);
-        $reportStartYear = (int)$from->format('Y');
-        $reportEndYear = (int)$to->format('Y');
+    $section = trim((string)($query['section'] ?? 'full'));
+    if (!in_array($section, ['full', 'summary', 'trends', 'matrix'], true)) {
+        throw new InvalidArgumentException('Unsupported dashboard report section.');
     }
-    $monthly = dashboard_report_monthly($pdo, $reportStartYear, $reportEndYear);
-    $monthlyRegions = dashboard_report_monthly_regions($pdo, $reportStartYear, $reportEndYear);
-    $matrix = dashboard_report_matrix(
-        $pdo,
-        $from?->format('Y-m-d'),
-        $to?->format('Y-m-d'),
-        $includeBranchDrilldown
-    );
+    $includeSummary = in_array($section, ['full', 'summary'], true);
+    $includeTrends = in_array($section, ['full', 'trends'], true);
+    $includeMatrix = in_array($section, ['full', 'matrix'], true);
+    $reportStartYear = $scope === 'lifetime' ? (int)$today->format('Y') : (int)$from->format('Y');
+    $reportEndYear = $scope === 'lifetime' ? $reportStartYear : (int)$to->format('Y');
+
+    $current = null;
+    $previous = null;
+    $lifetime = null;
+    if ($includeSummary) {
+        if ($scope === 'lifetime') {
+            $current = dashboard_report_metric($pdo, null, null);
+            $previous = $current;
+            $lifetime = $current;
+        } else {
+            $previousEndDefault = $from->modify('-1 day');
+            $periodLength = (int)$from->diff($to)->format('%a');
+            $previousStartDefault = $previousEndDefault->modify('-' . $periodLength . ' days');
+            $compareFrom = dashboard_report_parse_date($query['compare_from'] ?? null, $previousStartDefault);
+            $compareTo = dashboard_report_parse_date($query['compare_to'] ?? null, $previousEndDefault);
+            $current = dashboard_report_metric($pdo, $from->format('Y-m-d'), $to->format('Y-m-d'));
+            $previous = dashboard_report_metric($pdo, $compareFrom->format('Y-m-d'), $compareTo->format('Y-m-d'));
+            $lifetime = dashboard_report_metric($pdo, null, null);
+        }
+    }
+    $monthly = $includeTrends ? dashboard_report_monthly($pdo, $reportStartYear, $reportEndYear) : [];
+    $monthlyRegions = $includeTrends ? dashboard_report_monthly_regions($pdo, $reportStartYear, $reportEndYear) : [];
+    $matrix = $includeMatrix
+        ? dashboard_report_matrix(
+            $pdo,
+            $from?->format('Y-m-d'),
+            $to?->format('Y-m-d'),
+            $includeBranchDrilldown
+        )
+        : null;
 
     return [
         'meta' => [
             'source' => 'database',
+            'section' => $section,
             'scope' => $scope,
             'cohort' => 'assigned_as_of_period_end',
             'metric_semantics' => [
@@ -1554,7 +1541,7 @@ function dashboard_report_payload(PDO $pdo, array $query): array
                 'region_matrix' => 'All active technicians in the current region roster are in scope for every active lab; sessions do not require an assignment.',
             ],
             'data_quality' => $matrix['data_quality'] ?? [],
-            'includes_branch_drilldown' => $includeBranchDrilldown,
+            'includes_branch_drilldown' => $includeMatrix && $includeBranchDrilldown,
             'period' => [
                 'from' => $from?->format('Y-m-d'),
                 'to' => $to?->format('Y-m-d'),
@@ -1564,7 +1551,7 @@ function dashboard_report_payload(PDO $pdo, array $query): array
             ],
             'generated_at' => (new DateTimeImmutable())->format(DATE_ATOM),
         ],
-        'summary' => ['current' => $current, 'previous' => $previous, 'lifetime' => $lifetime],
+        'summary' => $includeSummary ? ['current' => $current, 'previous' => $previous, 'lifetime' => $lifetime] : null,
         'monthly' => $monthly,
         'monthly_regions' => $monthlyRegions,
         'matrix' => $matrix,

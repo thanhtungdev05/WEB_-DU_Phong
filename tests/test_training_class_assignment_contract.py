@@ -109,6 +109,7 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
     def test_class_creation_refreshes_roster_report_and_dashboard_version(self):
         api = (ROOT / "api" / "index.php").read_text(encoding="utf-8")
         dashboard = (ROOT / "dashboard-authen" / "js" / "app.js").read_text(encoding="utf-8")
+        report_cache = (ROOT / "api" / "lib" / "dashboard_report_cache.php").read_text(encoding="utf-8")
         revision_migration = (ROOT / "api" / "migrations" / "047_dashboard_transfer_guard.sql").read_text(encoding="utf-8")
 
         self.assertIn("function roster_assigned_class_join_sql", api)
@@ -117,7 +118,8 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         for table in ("training_classes", "class_enrollments", "class_lab_assignments", "lab_assignments"):
             self.assertIn(f"'{table}'", revision_migration)
         self.assertIn("'timer_session_assignment_links'", revision_migration)
-        self.assertIn("FROM dashboard_revision_seq", api)
+        self.assertIn("dashboard_report_data_version($pdo)", api)
+        self.assertIn("FROM dashboard_revision_seq", report_cache)
         self.assertIn("data_version: version", dashboard)
         self.assertRegex(
             dashboard,

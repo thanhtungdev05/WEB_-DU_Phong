@@ -2928,12 +2928,13 @@ let dashboardReportRequestSequence = 0;
 // does not keep serverless compute awake. Manual refresh and tab focus remain
 // available when fresher data is needed.
 
-function dashboardReportQuery() {
+function dashboardReportQuery(section = 'summary') {
     if (activeDashboardView === 'analytics') {
         return new URLSearchParams({
             scope: 'lifetime',
             cohort: 'assigned_as_of_period_end',
-            include_branch_drilldown: '1'
+            section,
+            include_branch_drilldown: section === 'matrix' ? '1' : '0'
         });
     }
     const periods = getKpiComparisonPeriods();
@@ -2944,8 +2945,58 @@ function dashboardReportQuery() {
         compare_from: periods.previousStart,
         compare_to: periods.previousEnd,
         cohort: 'assigned_as_of_period_end',
-        include_branch_drilldown: activeDashboardView === 'analytics' ? '1' : '0'
+        section,
+        include_branch_drilldown: '0'
     });
+}
+
+function dashboardReportDetailSections(viewName = activeDashboardView) {
+    return viewName === 'analytics' ? ['matrix'] : ['trends', 'matrix'];
+}
+
+function mergeDashboardReportSection(current, incoming) {
+    if (!incoming) return current;
+    const section = incoming.meta?.section || 'full';
+    if (!current || section === 'full') return incoming;
+    if (section === 'summary') {
+        const currentPeriod = current.meta?.period || {};
+        const incomingPeriod = incoming.meta?.period || {};
+        const samePeriod = current.meta?.scope === incoming.meta?.scope
+            && currentPeriod.from === incomingPeriod.from
+            && currentPeriod.to === incomingPeriod.to;
+        if (!samePeriod) return incoming;
+        return {
+            ...current,
+            summary: incoming.summary,
+            meta: {
+                ...(current.meta || {}),
+                ...(incoming.meta || {}),
+                section: 'composed',
+                data_quality: current.meta?.data_quality || [],
+                includes_branch_drilldown: Boolean(current.meta?.includes_branch_drilldown)
+            }
+        };
+    }
+    const merged = {
+        ...current,
+        meta: {
+            ...(current.meta || {}),
+            ...(incoming.meta || {}),
+            section: 'composed',
+            data_quality: incoming.meta?.data_quality?.length
+                ? incoming.meta.data_quality
+                : (current.meta?.data_quality || []),
+            includes_branch_drilldown: Boolean(
+                current.meta?.includes_branch_drilldown || incoming.meta?.includes_branch_drilldown
+            )
+        }
+    };
+    if (section === 'trends') {
+        merged.monthly = incoming.monthly || [];
+        merged.monthly_regions = incoming.monthly_regions || [];
+    }
+    if (section === 'matrix') merged.matrix = incoming.matrix || null;
+    return merged;
 }
 
 function dashboardViewNeedsReport(viewName = activeDashboardView) {
@@ -2965,12 +3016,20 @@ async function fetchDashboardReport(query = dashboardReportQuery()) {
     if (dashboardReportCache.has(key)) return dashboardReportCache.get(key);
     if (dashboardReportRequests.has(key)) return dashboardReportRequests.get(key);
     const request = (async () => {
-        const response = await fetch(`${API_BASE_URL}/dashboard/report?${query}`);
-        if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
-        const payload = await response.json();
-        const report = payload.data || null;
-        dashboardReportCache.set(key, report);
-        return report;
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 25_000);
+        try {
+            const response = await fetch(`${API_BASE_URL}/dashboard/report?${query}`, {
+                signal: controller.signal
+            });
+            if (!response.ok) throw new Error(`API báo cáo trả về HTTP ${response.status}`);
+            const payload = await response.json();
+            const report = payload.data || null;
+            dashboardReportCache.set(key, report);
+            return report;
+        } finally {
+            window.clearTimeout(timeoutId);
+        }
     })().finally(() => dashboardReportRequests.delete(key));
     dashboardReportRequests.set(key, request);
     return request;
@@ -3326,15 +3385,41 @@ function reloadDashboardSelectedRange() {
     void Promise.allSettled(requests);
 }
 
+async function reloadDashboardReportDetails(requestSequence = dashboardReportRequestSequence) {
+    const viewName = activeDashboardView;
+    const results = await Promise.allSettled(
+        dashboardReportDetailSections(viewName).map(section => fetchDashboardReport(dashboardReportQuery(section)))
+    );
+    if (requestSequence !== dashboardReportRequestSequence || viewName !== activeDashboardView) return false;
+    let loaded = 0;
+    results.forEach(result => {
+        if (result.status !== 'fulfilled' || !result.value) return;
+        const currentVersion = String(dashboardReport?.meta?.data_version || '');
+        const incomingVersion = String(result.value?.meta?.data_version || '');
+        if (currentVersion && incomingVersion && currentVersion !== incomingVersion) return;
+        dashboardReport = mergeDashboardReportSection(dashboardReport, result.value);
+        loaded++;
+    });
+    if (loaded) renderAll();
+    results.filter(result => result.status === 'rejected').forEach(result => {
+        console.warn('KhÃ´ng táº£i Ä‘Æ°á»£c má»™t pháº§n bÃ¡o cÃ¡o dashboard.', result.reason);
+    });
+    return loaded === results.length;
+}
+
 async function reloadDashboardReport() {
     const requestSequence = ++dashboardReportRequestSequence;
     state.dashboardReportStatus = 'loading';
     renderAll();
     try {
-        const report = await fetchDashboardReport();
+        const report = await fetchDashboardReport(dashboardReportQuery('summary'));
         if (requestSequence !== dashboardReportRequestSequence) return;
-        dashboardReport = report;
+        dashboardReport = mergeDashboardReportSection(dashboardReport, report);
         state.dashboardReportStatus = 'ready';
+        renderAll();
+        const detailsReady = await reloadDashboardReportDetails(requestSequence);
+        if (requestSequence !== dashboardReportRequestSequence) return;
+        state.dashboardReportStatus = detailsReady ? 'ready' : 'stale';
         renderAll();
     } catch (error) {
         console.warn('Không tải được báo cáo dashboard theo kỳ.', error);
@@ -3387,11 +3472,13 @@ async function fetchDashboardData(versionHint = '') {
     allParams.set('include_sessions', sessionsRequested ? '1' : '0');
     const reportRequested = dashboardViewNeedsReport();
     const reportRequest = reportRequested
-        ? fetchDashboardReport()
+        ? fetchDashboardReport(dashboardReportQuery('summary'))
         : Promise.resolve(undefined);
     const versionRequest = versionHint
         ? Promise.resolve(versionHint)
-        : fetchDashboardVersion();
+        : (reportRequested
+            ? reportRequest.then(report => String(report?.meta?.data_version || ''))
+            : fetchDashboardVersion());
     const technicianCatalogRequested = dashboardViewNeedsTechnicianCatalog();
     const dashboardCatalogRequest = fetchDashboardCatalog({ includeTechnicians: technicianCatalogRequested });
     const regionCatalogPromise = fetchAndBuildRegionCatalog();
@@ -3474,7 +3561,7 @@ function applyDashboardData(data) {
         classMemberships = data.classMemberships || [];
         state.assignmentsLoaded = true;
     }
-    if (data.report !== undefined) dashboardReport = data.report;
+    if (data.report !== undefined) dashboardReport = mergeDashboardReportSection(dashboardReport, data.report);
     state.dashboardReportStatus = data.reportStatus || (dashboardReport ? 'ready' : 'unavailable');
     state.sessionHistoryDays = data.sessionHistoryDays;
     state.sessionHistoryFrom = data.sessionHistoryFrom;
@@ -3698,6 +3785,7 @@ async function refreshDashboardData({ force = false, announce = false } = {}) {
         refreshFilterOptionLists();
         mergeDefaultClassLearners();
         renderAll();
+        if (dashboardViewNeedsReport()) void reloadDashboardReportDetails(dashboardReportRequestSequence);
         state.lastSuccessfulRefreshAt = new Date();
         setDashboardSyncState('ready');
         if (announce) showToast('Dashboard đã được cập nhật với dữ liệu mới nhất.', 'success');
@@ -3744,6 +3832,7 @@ async function loadDashboardFromApi() {
             initFilters();
             initPopovers();
             renderAll();
+            if (dashboardViewNeedsReport()) void reloadDashboardReportDetails(dashboardReportRequestSequence);
             return true;
         } catch (error) {
             console.warn('Không kết nối được dữ liệu dashboard.', error);

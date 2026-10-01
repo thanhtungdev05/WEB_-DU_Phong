@@ -148,6 +148,27 @@ function normalize_neon_options(string $host, ?string $options): ?string
     return trim($options . ' endpoint=' . $hostLabel);
 }
 
+function resolve_database_hostaddr(string $host, ?callable $resolver = null): ?string
+{
+    // libpq may try every unreachable IPv6 address before IPv4. Supplying a
+    // trusted DNS-resolved IPv4 address keeps TLS hostname verification on
+    // `host` while avoiding one connect timeout per AAAA record.
+    if (!str_ends_with(strtolower($host), '.neon.tech')) {
+        return null;
+    }
+
+    $addresses = $resolver ? $resolver($host) : gethostbynamel($host);
+    if (!is_array($addresses)) {
+        return null;
+    }
+    foreach ($addresses as $address) {
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return $address;
+        }
+    }
+    return null;
+}
+
 function get_active_database_tier(): string
 {
     return (string)($GLOBALS['active_database_tier'] ?? configured_active_database_tier());
@@ -196,6 +217,7 @@ function parse_database_url_to_pdo_params(string $databaseUrl): array
 function connect_pdo_from_params(array $params): PDO
 {
     $options = normalize_neon_options((string)$params['host'], $params['options'] ?? null);
+    $hostaddr = resolve_database_hostaddr((string)$params['host']);
     $dsn = sprintf(
         'pgsql:host=%s;port=%s;dbname=%s;sslmode=%s',
         $params['host'],
@@ -203,6 +225,9 @@ function connect_pdo_from_params(array $params): PDO
         $params['dbname'],
         $params['sslmode']
     );
+    if ($hostaddr !== null) {
+        $dsn .= ';hostaddr=' . $hostaddr;
+    }
     if (!empty($params['connectTimeout'])) {
         $dsn .= ';connect_timeout=' . $params['connectTimeout'];
     }

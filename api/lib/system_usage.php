@@ -303,7 +303,15 @@ function neon_usage_metrics(): array
 
     $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
-    // Tự động tìm project ID nếu chưa cấu hình NEON_PROJECT_ID
+    // Tự động tìm project ID từ DATABASE_URL hoặc từ API /projects
+    if ($projectId === '') {
+        $dbUrl = (string)env_value('DATABASE_URL', '');
+        $host = (string)parse_url($dbUrl, PHP_URL_HOST);
+        if (preg_match('/^ep-([a-z0-9\-]+?)(?:-pooler)?\.[a-z0-9\.\-]+neon\.tech$/i', $host, $m)) {
+            $projectId = $m[1];
+        }
+    }
+
     if ($projectId === '') {
         $projectsRes = neon_api_request('https://api.neon.tech/api/v2/projects', $apiKey, 6);
         if ($projectsRes['success'] && is_array($projectsRes['data']['projects'] ?? null)) {

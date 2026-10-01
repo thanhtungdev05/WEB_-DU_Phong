@@ -10,6 +10,7 @@ class NeonTransferBudgetTests(unittest.TestCase):
         cls.api = (ROOT / 'api' / 'index.php').read_text(encoding='utf-8')
         cls.dashboard = (ROOT / 'dashboard-authen' / 'js' / 'app.js').read_text(encoding='utf-8')
         cls.report = (ROOT / 'api' / 'lib' / 'dashboard_report.php').read_text(encoding='utf-8')
+        cls.report_cache = (ROOT / 'api' / 'lib' / 'dashboard_report_cache.php').read_text(encoding='utf-8')
         cls.technicians = (ROOT / 'api' / 'lib' / 'dashboard_technicians.php').read_text(encoding='utf-8')
         cls.migration = (ROOT / 'api' / 'migrations' / '047_dashboard_transfer_guard.sql').read_text(encoding='utf-8')
         cls.sequence_migration = (ROOT / 'api' / 'migrations' / '048_dashboard_revision_sequence.sql').read_text(encoding='utf-8')
@@ -89,7 +90,7 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn('function dashboard_report_monthly(PDO $pdo, int $startYear, ?int $endYear = null)', self.report)
         self.assertIn('function dashboard_report_monthly_regions(PDO $pdo, int $startYear, ?int $endYear = null)', self.report)
         self.assertIn("CAST(:year_end AS date) + INTERVAL '11 months'", self.report)
-        self.assertIn('$reportEndYear = (int)$to->format(\'Y\')', self.report)
+        self.assertIn("$reportEndYear = $scope === 'lifetime' ? $reportStartYear : (int)$to->format('Y')", self.report)
 
     def test_technician_lookup_uses_server_pages_and_lazy_history(self):
         self.assertIn('function dashboard_technician_summary_page', self.technicians)
@@ -127,6 +128,8 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn("'budget_exceeded' =>", self.api)
         self.assertIn('DASHBOARD_MAX_RESPONSE_BYTES=2097152', self.example_env)
         self.assertIn('DASHBOARD_MAX_QUERY_COUNT=8', self.example_env)
+        self.assertIn("DASHBOARD_REPORT_STATEMENT_TIMEOUT_MS', 20000", self.api)
+        self.assertIn('DASHBOARD_REPORT_STATEMENT_TIMEOUT_MS=20000', self.example_env)
 
     def test_get_sessions_avoid_touch_writes_and_duplicate_reads(self):
         self.assertIn("session_start($readOnly ? ['read_and_close' => true] : [])", self.api)
@@ -144,7 +147,8 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn('observe_database_query();', self.runtime)
 
     def test_version_poll_reads_single_revision_row(self):
-        self.assertIn('FROM dashboard_revision_seq', self.api)
+        self.assertIn('dashboard_report_data_version($pdo)', self.api)
+        self.assertIn('FROM dashboard_revision_seq', self.report_cache)
         self.assertNotIn('(SELECT COUNT(*) FROM timer_sessions)', self.api)
         self.assertIn('FOR EACH STATEMENT EXECUTE FUNCTION bump_dashboard_revision()', self.migration)
         self.assertIn("'timer_sessions'", self.migration)

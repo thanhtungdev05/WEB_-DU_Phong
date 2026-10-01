@@ -6,10 +6,13 @@
     'use strict';
 
     async function fetchSystemUsageData() {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
         try {
             const response = await fetch('/api/system/usage', {
                 headers: { 'Accept': 'application/json' },
                 cache: 'no-store',
+                signal: controller.signal,
             });
             if (!response.ok) return null;
             const result = await response.json();
@@ -17,6 +20,8 @@
         } catch (e) {
             console.debug('System usage fetch failed:', e);
             return null;
+        } finally {
+            window.clearTimeout(timeoutId);
         }
     }
 
@@ -296,6 +301,10 @@
         }
 
         // Toggle popover — lazy-load dữ liệu lần đầu khi mở
+        // Populate the compact header status immediately. Opening the popover
+        // reuses this result instead of leaving the header in a checking state.
+        void loadData();
+
         trigger.addEventListener('click', (e) => {
             e.stopPropagation();
             const isHidden = popover.hasAttribute('hidden');
