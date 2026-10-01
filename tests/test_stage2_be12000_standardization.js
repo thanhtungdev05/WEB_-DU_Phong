@@ -151,7 +151,7 @@ console.log('Test 2: BE12000 Bài 3 (Wi-Fi IoT)...');
 const instText = bai3.instructions.join(' ');
 assert.ok(!instText.includes('SSID Isolation'), 'Instructions must not mention SSID Isolation');
 assert.ok(!instText.includes('Maximum Clients'), 'Instructions must not mention Maximum Clients');
-assert.ok(instText.includes('SSID Hide'), 'Instructions must mention SSID Hide: Off');
+assert.ok(instText.includes('SSID Name'), 'Instructions must mention SSID Name');
 
 // Rules must contain iot_hide
 const hideRule = bai3.grading.rules.find(r => r.id === 'iot_hide');
@@ -159,11 +159,11 @@ assert.ok(hideRule, 'Rule iot_hide must exist');
 assert.strictEqual(hideRule.expected, '0', 'iot_hide expected value must be 0 (Off)');
 assert.ok(hideRule.selector.includes('ESSIDHideEnable1\\:1') || hideRule.selector.includes('ESSIDHideEnable:1'), 'iot_hide selector must target ESSIDHideEnable');
 
-// Tooltip step 4 must have expected '0'
+// Tooltip step 8 must have expected '0'
 const bai3Tooltips = tooltips['LAB_BE12000_03'];
-const step4 = bai3Tooltips.find(t => t.text && t.text.includes('Bước 4: Chọn Off của phần SSID Hide'));
-assert.ok(step4, 'Tooltip Step 4 for SSID Hide must exist');
-assert.strictEqual(step4.expected, '0', 'Tooltip Step 4 expected must be 0');
+const step8 = bai3Tooltips.find(t => t.text && t.text.includes('Bước 8: Chọn Off của phần SSID Hide'));
+assert.ok(step8, 'Tooltip Step 8 for SSID Hide must exist');
+assert.strictEqual(step8.expected, '0', 'Tooltip Step 8 expected must be 0');
 console.log('✓ Bài 3 (Wi-Fi IoT) passed all assertions');
 
 // ==========================================
@@ -176,7 +176,7 @@ function createDhcpDoc(isSaved) {
     createMockElement('input', { id: 'ServerEnable1', checked: true, value: '1' }),
     createMockElement('input', { id: 'sub_IPAddr0:DHCPBasicCfg', value: '192' }),
     createMockElement('input', { id: 'sub_IPAddr1:DHCPBasicCfg', value: '168' }),
-    createMockElement('input', { id: 'sub_IPAddr2:DHCPBasicCfg', value: '1' }),
+    createMockElement('input', { id: 'sub_IPAddr2:DHCPBasicCfg', value: '10' }),
     createMockElement('input', { id: 'sub_IPAddr3:DHCPBasicCfg', value: '1' }),
     createMockElement('input', { id: 'sub_SubMask0', value: '255' }),
     createMockElement('input', { id: 'sub_SubMask1', value: '255' }),
@@ -184,11 +184,11 @@ function createDhcpDoc(isSaved) {
     createMockElement('input', { id: 'sub_SubMask3', value: '0' }),
     createMockElement('input', { id: 'sub_MinAddress0:DHCPBasicCfg', value: '192' }),
     createMockElement('input', { id: 'sub_MinAddress1:DHCPBasicCfg', value: '168' }),
-    createMockElement('input', { id: 'sub_MinAddress2:DHCPBasicCfg', value: '1' }),
+    createMockElement('input', { id: 'sub_MinAddress2:DHCPBasicCfg', value: '10' }),
     createMockElement('input', { id: 'sub_MinAddress3:DHCPBasicCfg', value: '2' }),
     createMockElement('input', { id: 'sub_MaxAddress0:DHCPBasicCfg', value: '192' }),
     createMockElement('input', { id: 'sub_MaxAddress1:DHCPBasicCfg', value: '168' }),
-    createMockElement('input', { id: 'sub_MaxAddress2:DHCPBasicCfg', value: '1' }),
+    createMockElement('input', { id: 'sub_MaxAddress2:DHCPBasicCfg', value: '10' }),
     createMockElement('input', { id: 'sub_MaxAddress3:DHCPBasicCfg', value: '254' })
   ];
   return createMockDocument(elements, isSaved);
@@ -215,14 +215,14 @@ assert.ok(bai6Tooltips, 'Bài 6 tooltips must exist');
 // Must NOT have WAN Host IP tooltip
 assert.ok(!bai6Tooltips.some(t => t.selector.includes('sub_RemoteHostEndRange3')), 'Redundant WAN Host IP tooltip must be removed');
 assert.ok(!bai6Tooltips.some(t => t.text && t.text.includes('WAN Host IP Address')), 'Tooltip text must not reference WAN Host IP');
-// Step numbering should be 1 to 6
+// Step numbering in Option 1 should be 4 to 9 for form fields and apply
 const stepTexts = bai6Tooltips.map(t => t.text);
-assert.ok(stepTexts.some(t => t.includes('Bước 1: Nhập Name')), 'Step 1 must be Name');
-assert.ok(stepTexts.some(t => t.includes('Bước 2: Chọn Protocol')), 'Step 2 must be Protocol');
-assert.ok(stepTexts.some(t => t.includes('Bước 3: Nhập LAN Host: 192.168.1.100')), 'Step 3 must be LAN Host');
-assert.ok(stepTexts.some(t => t.includes('Bước 4: Nhập WAN Port: 8080')), 'Step 4 must be WAN Port');
-assert.ok(stepTexts.some(t => t.includes('Bước 5: Nhập LAN Host Port: 8080')), 'Step 5 must be LAN Host Port');
-assert.ok(stepTexts.some(t => t.includes('Bước 6: Nhấn Apply')), 'Step 6 must be Apply');
+assert.ok(stepTexts.some(t => t.includes('Bước 4: Nhập Name')), 'Step 4 must be Name');
+assert.ok(stepTexts.some(t => t.includes('Bước 5: Chọn Protocol')), 'Step 5 must be Protocol');
+assert.ok(stepTexts.some(t => t.includes('Bước 6: Nhập LAN Host: 192.168.1.100')), 'Step 6 must be LAN Host');
+assert.ok(stepTexts.some(t => t.includes('Bước 7: Nhập WAN Port: 8080')), 'Step 7 must be WAN Port');
+assert.ok(stepTexts.some(t => t.includes('Bước 8: Nhập LAN Host Port: 8080')), 'Step 8 must be LAN Host Port');
+assert.ok(stepTexts.some(t => t.includes('Bước 9: Nhấn Apply')), 'Step 9 must be Apply');
 
 // Rules tightening
 const lanHostRule = bai6.grading.rules.find(r => r.id === 'lan_host');

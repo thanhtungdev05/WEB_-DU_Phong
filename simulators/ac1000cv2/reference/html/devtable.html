@@ -1,0 +1,179 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var LanDevStatus = 1;
+var lan_dev = new Array();
+
+LanDevStatus = 2;
+lan_dev[0] = { mac: "bc:ec:a0:05:5f:8d", ip: "192.168.1.244", hostname: "thanhtung", conn_type: "1", uptime: "0h 0m ", dhcp: "1" };
+wl_num  = 0;
+eth_num = 1;
+
+
+function showDeviceList()
+{
+	var i;
+	for (i = 0; i < lan_dev.length; i++)
+	{
+		var conn_type;
+		if (1 == lan_dev[i].conn_type)
+		{
+			conn_type = XdevtableString[5];
+		}
+		else if ((2 == lan_dev[i].conn_type) || (3 == lan_dev[i].conn_type))
+		{
+			conn_type = XdevtableString[6];
+		}
+		else
+		{
+		    conn_type = XdevtableString[7];
+		}
+		str = "<tr>";
+		str += '<td style="word-break : break-all;">' + lan_dev[i].hostname + '<\/td>';
+		str += "<td>" + lan_dev[i].ip + "<\/td>";
+		str += "<td>" + lan_dev[i].mac + "<\/td>";
+		str += "<td>" + conn_type + "<\/td>";
+		str += "<td>" + lan_dev[i].uptime + XdevtableString[9] + "<\/td>";
+		str += "<\/tr>";
+		$("#device_list").append(str);
+	}
+	WebStyleCommonList();
+}
+
+function WebInit()
+{
+	showDeviceList();
+}
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+$(document).ready(function () {
+	$("#btn_refresh").click(function() {
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table id="device_list" class="commonlist">
+		<tr>
+			<th id="XS1"></th>
+			<th id="XS2"></th>
+			<th id="XS3"></th>
+			<th id="XS4"></th>
+			<th id="XS8"></th>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<a id="btn_refresh" class="btn" href="#"><script type="text/javascript">document.write(WebString.Refresh);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

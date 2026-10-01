@@ -1,0 +1,358 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+
+var ssid_list = new Array([4]);
+
+var ssid_security = new Array([4]);
+var ssid_enable = new Array([4]);
+var ssid_network_name = new Array([4]);
+var ssid_broadcast = new Array([4]);
+var ssid_isolation = new Array([4]);
+var ssid_wmm = new Array([4]);
+var ssid_max_clients = new Array([4]);
+var wifi_mode='0';
+
+
+wifi_mode=0;
+UserPriority=1;
+ssid_security[0]=0;
+ssid_list[0]=0;
+ssid_enable[0]=1;
+ssid_network_name[0]="FPT Telecom-C16E";
+ssid_broadcast[0]=1;
+ssid_isolation[0]=0;
+ssid_wmm[0] =1;
+ssid_max_clients[0]=16;
+ssid_security[1]=0;
+ssid_list[1]=1;
+ssid_enable[1]=0;
+ssid_network_name[1]="FPT Telecom-5g-C16E-SSID2";
+ssid_broadcast[1]=1;
+ssid_isolation[1]=0;
+ssid_wmm[1] =1;
+ssid_max_clients[1]=16;
+ssid_security[2]=0;
+ssid_list[2]=2;
+ssid_enable[2]=0;
+ssid_network_name[2]="FPT Telecom-5g-C16E-SSID3";
+ssid_broadcast[2]=1;
+ssid_isolation[2]=0;
+ssid_wmm[2] =1;
+ssid_max_clients[2]=16;
+ssid_security[3]=0;
+ssid_list[3]=3;
+ssid_enable[3]=0;
+ssid_network_name[3]="FPT Telecom-5g-C16E-SSID4";
+ssid_broadcast[3]=1;
+ssid_isolation[3]=0;
+ssid_wmm[3] =1;
+ssid_max_clients[3]=16;
+
+
+function SelectShow(i)
+{
+	$("#ssid_list").val(ssid_list[i]);
+	
+	$("#ssid_network_name").val(ssid_network_name[i]);
+
+	if (ssid_enable[i] == '1')
+	{
+        /*wifi_mode 3: 11n only, security 2: wep*/
+        if ((wifi_mode == 3) && (ssid_security[i] == 2))
+        {
+            //11n only do not support wep
+            alert(WebString.mode_security_conflict);
+            $("#ssid_disable").attr("checked", true);
+        }
+        else
+        {
+            $("#ssid_enable").attr("checked", true);
+        }
+	}
+	else
+	{	
+		$("#ssid_disable").attr("checked", true);	
+	}	
+	if (ssid_broadcast[i] == '1')
+		$("#ssid_broadcast_on").attr("checked", true);
+	else
+		$("#ssid_broadcast_off").attr("checked", true);
+		
+	if (ssid_isolation[i] == '1')
+		$("#ssid_isolation_on").attr("checked", true);
+	else
+		$("#ssid_isolation_off").attr("checked", true);		
+
+	if (wifi_mode == '3')
+		document.getElementById("wmm_off").disabled=true;
+	else 
+		document.getElementById("wmm_off").disabled=false;
+
+	if (ssid_wmm[i] == '1')
+		$("#wmm_on").attr("checked", true);
+	else
+		$("#wmm_off").attr("checked", true);
+		
+	//$("#max_clients").val(ssid_max_clients[i]);	
+}
+
+
+function WebInit()
+{
+	if (top.WebProject != "hw")
+	{
+		$("#max_client_num").show();
+	}
+	
+	SelectShow(0);
+	WebStepIndex();
+}
+
+function WebDoSubmit()
+{
+	var ssid_network_name = $("#ssid_network_name").val();
+    var ssidindex = $("#ssid_list").val();
+    var enable = $("#ssid_enable").attr("checked");
+    
+    if ((wifi_mode == 3) && (ssid_security[ssidindex] == 2))
+    {
+        if (enable == "checked")
+        {
+            //11n only do not support wep
+            alert(WebString.mode_security_conflict);
+            $("#ssid_disable").attr("checked", true);
+            return false;
+        }
+    }
+    if (false == isValidSsid(ssid_network_name, true))
+    {
+        alert(Xwifi5ssidString[18]);
+        return false;
+    }
+    else if(ssid_network_name.length == 0)
+    {
+        alert(Xwifi5ssidString[10]);
+        return false;
+    }
+    else if (ssid_network_name.charAt(0) == " ")
+    {
+        alert(Xwifi5ssidString[19]);
+        return false;
+    }
+	//var max_clients = $("#max_clients").val();
+	//if( max_clients < 0 || max_clients > 32)
+	//{
+	//	alert(Xwifi5ssidString[15]);
+	//	return false;	
+	//}		
+	
+	$("#XForm").submit();
+}
+
+function select_ssid(mode)
+{
+	SelectShow(mode);
+}
+
+
+$(document).ready(function () {
+	
+	$("#btn_apply").click(function() {
+		WebDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS1"></td>
+  		    <td><select name="ssid_list" id="ssid_list" onchange="select_ssid(this.options[this.selectedIndex].value);">
+  	            <option value="0" selected="selected">SSID 1</option>
+  	            <option value="1">SSID 2</option>
+  	            <option value="2">SSID 3</option>
+  	            <option value="3">SSID 4</option>
+  	        	</select>
+  			</td>
+		</tr>
+	</table>   
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS2"></strong></p>
+	<table>
+		<tr>
+		    <td width="200" id="XS3"></td>
+		    <td>
+		    	<input name="ssid_state" id="ssid_enable" type="radio" value="1" checked="checked" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+		    	<input name="ssid_state" id="ssid_disable" type="radio" value="0" /><script>document.write(WebString.Disable);</script>
+		    </td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS4"></strong></p>
+	<table>
+ 	<tr>
+		<td width="200" id="XS5"></td>
+		<td><input name="ssid_network_name"  id="ssid_network_name" type="text" size="32" maxlength="32"/></td>
+	</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+<p><strong id="XS6"></strong></p>
+<table>
+	<tr>
+		<td width="200" id="XS7"></td>
+		<td><input name="ssid_broadcast" id="ssid_broadcast_on" type="radio" value="1" checked="checked" /><script>document.write(XwifissidString[16]);</script>&nbsp;&nbsp;
+		    <input name="ssid_broadcast" id="ssid_broadcast_off" type="radio"  value="0"  /><script>document.write(XwifissidString[17]);</script></td>
+	</tr>
+</table>	 
+</div>
+
+<!--div class="cfgstep">
+<p><strong id="XS8"></strong></p>
+<table>
+	<tr>
+	   <td width="200" id="XS9">Isolate the Wireless Stations</td>
+	   <td><input name="ssid_isolation" id="ssid_isolation_on" type="radio"  value="1" checked="checked"/><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+	       <input name="ssid_isolation" id="ssid_isolation_off"  type="radio"   value="0" /><script>document.write(WebString.Disable);</script></td>
+	</tr>
+</table>
+</div-->
+
+<div class="cfgstep">
+	<p><strong id="XS11"></strong></p>
+	<table>
+	  	<tr>
+	  	  	<td width="200" id="XS12"></td>
+	  	  	<td>
+	  	  	    <input name="wmm" type="radio" id="wmm_on" value="1" checked="checked" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+	  	  	    <input name="wmm" type="radio" id="wmm_off"  value="0"  /><script>document.write(WebString.Disable);</script>
+	  	  	</td>
+	  	</tr>
+	</table>
+</div>
+
+<!--div class="cfgstep" id="max_client_num" style="display:none">
+	<p><strong id="XS13"></strong></p>
+	<table>
+	  	<tr>
+	  	  	<td width="200" id="XS14"></td>
+	  	  	<td>
+	  	  	    <input name="max_clients" id="max_clients" type="text" maxlength="2" size="6" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/>
+	  	  	</td>
+	  	</tr>
+	</table>
+</div-->
+
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+	<a href="#" id="btn_apply" class="btn"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

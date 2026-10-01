@@ -1,0 +1,519 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var username = "";
+var password = "";
+var remote_enable = 1;
+var wanindex = 0;
+var protocol = 0;
+var portid = 80;
+
+var wan_list = new Array();
+var iplist = new Array();
+var iplist_add = new Array();
+
+remote_enable = 0;
+wanindex = 0;
+protocol = 1;
+portid = 443;
+username = "";
+password = "08ypih%&*%^#T()#$&E%SUCG6uy$E&";
+
+wan_list[0] = { index:" 0", name: "1_INTERNET_TR069_IPTV_R_VID_0" };
+
+
+function DataInit()
+{
+    if (1 == remote_enable)
+    {
+        $("#rmt_enable").attr("checked", true);
+        $("#wanlist_div").show();
+        $("#password_div").show();
+        $("#protocol_div").show();
+        $("#iplist_div").show();
+    }
+    else
+    {
+        $("#rmt_disable").attr("checked", true);
+        $("#wanlist_div").hide();
+        $("#password_div").hide();
+        $("#protocol_div").hide();
+        $("#iplist_div").hide();
+    }
+        
+    var i;
+    if(0 == wan_list.length)
+    {
+        $("#wan_list").append("<option value=\"no_wan\">" + "NO_WAN_Connection" + "</option>");
+    }
+    else
+    {
+        for (i = 0; i < wan_list.length; i++)
+        {
+           $("#wan_list").append("<option value=\"" + parseInt(wan_list[i].index) + "\">" + wan_list[i].name + "</option>");
+        }
+        $("#wan_list").attr("value", wanindex);
+    }
+    $("#protocol_list").attr("value", protocol);
+    $("#port").val(portid);
+    $("#username").val(username);
+    $("#password1").val(password);
+    $("#password2").val(password); 
+    InitTable(); 
+}
+
+function BindIpListValue()
+{
+    this.ip;
+    this.mask;
+}
+
+function InitTable()
+{
+    var i = 0;
+    var j = 0;
+    for(i = 0; i < iplist.length; i++)
+    {
+        iplist_add[i]=new BindIpListValue();
+        iplist_add[i].ip = iplist[i].ip;
+        if("0.0.0.0" == iplist[i].mask)
+            iplist_add[i].mask = "";
+        else
+            iplist_add[i].mask = iplist[i].mask;
+    }
+}
+
+function RemoteAccessEnable()
+{
+    var val=$('input:radio[name="rmt_state"]:checked').val();
+    if(1 == val)
+    {
+        $("#wanlist_div").show();
+        $("#password_div").show();
+        $("#protocol_div").show();
+        $("#iplist_div").show();
+    }
+    else
+    {
+        $("#wanlist_div").hide();
+        $("#password_div").hide();
+        $("#protocol_div").hide();
+        $("#iplist_div").hide();
+        $("#protocol_list").attr("value", 0);
+        $("#username").val("");
+        $("#password1").val("");
+        $("#password2").val(""); 
+        $("#iplist_value").val(""); 
+        $("#port").val("80");
+    }
+    WebStepIndex();
+}
+
+function ProtocolChanged()
+{
+    if ("0" == $("#protocol_list").val()) 
+    {
+        $("#port").val("80");
+    }
+    else
+    {
+        $("#port").val("443");
+    }
+}
+
+function DeleteIpSelected(r)
+{
+    WebResetTimer();
+
+    var row = r.parentNode.parentNode.rowIndex;
+    var len = iplist_add.length;
+    for (var i = row-1; i < iplist_add.length; i++ )
+    {
+        iplist_add[i] = iplist_add[i+1];
+    }
+    iplist_add.pop();
+    IpListTableFresh();
+}
+
+function IpListTableFresh()
+{
+    var STR = "";
+    STR += '<table id="IpListTable" class="commonlist">\n';
+    STR += '<tr>\n';
+    STR += '<th style="width: 40%;">' + XrmtwebString[14] + '</th>\n';
+    STR += '<th style="width: 40%;">' + XrmtwebString[15] + '</th>\n';
+    STR += '<th style="width: 20%;">' + WebString.Edit + '</th>\n';
+    STR += '</tr>\n';
+    var post_str="";
+
+    for (var i = 0; i < iplist_add.length; i++)
+    {
+        var ip = iplist_add[i].ip;
+        var mask = iplist_add[i].mask;
+
+        post_str += ip + "|";
+        if("" == mask)
+            post_str += "0.0.0.0" + "~";
+        else
+            post_str += mask + "~";
+
+        STR += '<tr>\n';
+        STR += '<td>' + ip + '</td>\n';
+        STR += '<td>' + mask + '</td>\n';
+        STR += '<td><a href="#" class="btn remove_btn" onclick="DeleteIpSelected(this);" >' + WebString.Remove + '</a></td>';
+        STR += '</tr>\n';        
+    }    
+    
+    STR += '</table>\n';
+    $("#DynamicIpListTableDiv").html(STR);
+    $("#iplist_value").val(post_str);
+    
+    WebStyleCommonList();
+}
+
+function IpAddrBind()
+{  
+    WebResetTimer();
+
+    var obj = new Object();
+    var ipList = $("#ip_list").val();
+    var ipParts = ipList.split('/');
+    var ip = ipParts[0]; 
+    var mask = ""; 
+    var num = 0;
+
+    if (false == isValidIpAddress(ip) || false == isValidDnsIpAddress(ip))
+    {
+        alert(WebString.ip_alert);
+        return false;
+    }
+     
+    if(2 == ipParts.length)
+    {
+        if(true == IsNum(ipParts[1]))
+        {
+            if(0 == ipParts[1].length || parseInt(ipParts[1]) <= 0 || parseInt(ipParts[1]) >32 )
+            {
+                alert(WebString.ipv4_prefix_length);
+                return false;
+            }
+            for(var i = 31; i >= (32 - ipParts[1]); i--)
+            {
+                num += (1 << i);
+            }              
+            mask = Num2Ip(num >>> 0);
+        }
+        else
+        {
+            mask = ipParts[1];
+        }
+        if (false == isValidIpAddress(mask))
+        {
+            alert(WebString.ip_alert);
+            return false;
+        }
+        if ( false == isValidUnicastIpAddress(ip, mask) )
+        {
+            alert(WebString.unicastip);
+            return false;
+        }
+    }
+
+    if(iplist_add.length >= 32)
+    {
+        alert(WebString.max_iplist);
+        return false;
+    }
+    
+    for (var i = 0; i < iplist_add.length; i++ )
+    {
+       if( (ip == iplist_add[i].ip) && (mask == iplist_add[i].mask) )
+       {
+            alert(WebString.same_iplist);
+            return false;
+       }
+    }   
+    obj.ip = ip;
+    obj.mask = mask;
+    iplist_add.push(obj);
+    IpListTableFresh();
+}
+
+function WebInit()
+{
+    DataInit(); 
+    RemoteAccessEnable();
+    IpListTableFresh();
+    WebStepIndex(); 
+}
+
+$(document).ready(function (){
+	$("input").css("ime-mode","disabled");
+    $("#btn_apply").click(function(){
+        XDoSubmit();
+    });   
+
+    $("input[name='rmt_state']").click(function() {
+        RemoteAccessEnable();
+    });
+
+    $("#protocol_list").change(function() {
+        ProtocolChanged();
+    });
+
+    $("#addip").click(function(){
+        IpAddrBind();
+    });
+    
+});
+
+function CheckSetValue()
+{
+    var val=$('input:radio[name="rmt_state"]:checked').val();
+    if(1 == val)
+    {
+        var username = $("#username").val();
+        var password1 = $("#password1").val();
+        var password2 = $("#password2").val();
+
+        if (false == isValidUsername1(username)) 
+        {
+            alert(WebString.valid_username);
+            $("#username").focus();
+            return false;
+        }
+
+        if(username.length < 6)
+        {
+            alert(WebString.username_length);
+            $("#username").focus();
+            return false;
+        }
+
+        if(password1.length < 6 || password1.length > 64)
+        {
+            alert(WebString.valid_passwd_length);
+            $("#password1").focus();
+            return false;
+        }
+
+        if(password1 != password2)
+        {
+            alert(WebString.password_differ);
+            $("#password2").focus();
+            return false;
+        }
+        if(false == IsPort($("#port").val()))
+        {
+            alert(WebString.network_port);
+            return false;
+        }
+        if("no_wan" == $("#wan_list").val())
+        {
+            alert(WebString.no_valid_wan);
+            $("#wan_list").focus();
+            return false;	
+        }
+    }
+
+    return true;
+}
+
+function WebDoSubmit()
+{         
+    if( false == CheckSetValue())
+    {
+        return;
+    }
+    
+    $("#XForm").submit();
+}
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+    <p><strong id="XS0"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS1"></td>
+            <td><input type="radio" name="rmt_state" id="rmt_enable" value="1" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+                <input type="radio" name="rmt_state" id="rmt_disable" value="0" checked/><script>document.write(WebString.Disable);</script>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="wanlist_div" class="cfgstep">
+    <p><strong id="XS2"></strong></p>
+    <table>
+        <tr id="wanlist_div">
+            <td width="200" id="XS3"></td>
+            <td>
+                <select name="wan_list" id="wan_list"></select>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="password_div" class="cfgstep">
+    <p><strong id="XS4"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS5"></td>
+            <td><input type="text" name="username" id="username" maxlength="64" style="width:150px" onkeypress="return OnKeyPress(event, X_INPUT_ID);" /></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS6"></td>
+            <td><input type="password" name="password1" id="password1" style="width:150px" onkeypress="return OnKeyPress(event, X_INPUT_PASSWD);" /></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS7"></td>
+            <td><input type="password" name="password2" id="password2" style="width:150px" onkeypress="return OnKeyPress(event, X_INPUT_PASSWD);" /></td>
+        </tr>
+    </table>
+</div>
+
+<div id="protocol_div" class="cfgstep">
+    <p><strong id="XS8"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS9"></td>
+            <td>
+                <select name="protocol_list" id="protocol_list">
+                    <option value="0" selected>HTTP</option>
+                    <option value="1">HTTPS</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td width="200" id="XS10"></td>
+            <td><input type="text" name="port" id="port" maxlength="5" size="6" value="80" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" /></td>
+        </tr>
+    </table>
+</div>
+
+<div id="iplist_div" class="cfgstep">
+    <p><strong id="XS11"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS12"></td>
+            <td><input type="text" name="ip_list" id="ip_list" size="32" maxlength="31" />
+                <a id="addip" name="addip" class="btn" href="#"/><script>document.write(WebString.Add);</script></a>
+                <br><script>document.write(XrmtwebString[13]);</script></td>
+        </tr>
+        <tr id="iplist_add">
+            <td colspan="2">
+                <input id="iplist_value" name="iplist_value" type="hidden" value=""  />
+            </td>
+        </tr>
+    </table>
+    <div id="DynamicIpListTableDiv"></div>
+</div>
+
+<div class="cfgstep">
+    <p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+    <a id="btn_apply" class="btn" href="#"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

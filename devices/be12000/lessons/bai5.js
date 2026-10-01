@@ -12,15 +12,10 @@ var lessonData = {
   subtitle: 'Cấu hình DHCP Server và dải IP Start/End trên BE12000',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình DHCP Server và dải IP cấp phát tại menu <b>Local Network > LAN > IPv4</b> trong mục <b>DHCP Server</b> theo các thông số sau:',
-    '- DHCP Server: <span class="val">On</span>',
-    '- LAN IP Address: <span class="val">192.168.1.1</span>',
+    '- LAN IP Address: <span class="val">192.168.10.1</span>',
     '- Subnet Mask: <span class="val">255.255.255.0</span>',
-    '- DHCP Start IP Address: <span class="val">192.168.1.2</span>',
-    '- DHCP End IP Address: <span class="val">192.168.1.254</span>',
-    'Nhấn <b>Apply</b> để lưu cấu hình DHCP.',
-    '<br>',
-    '<i>Lưu ý: Dải DHCP Start/End phải cùng lớp mạng với LAN IP (192.168.1.0/24) và Start IP < End IP.</i>'
+    '- DHCP Start IP Address: <span class="val">192.168.10.2</span>',
+    '- DHCP End IP Address: <span class="val">192.168.10.254</span>'
   ],
   practiceUrl: '/sim_be12000/login',
   onSimLoad: function (simWin) {
@@ -31,18 +26,9 @@ var lessonData = {
       }
     } catch (e) { }
   },
-  clearFields: [
-    '[id="sub_IPAddr3:DHCPBasicCfg"]',
-    '#sub_SubMask3',
-    '[id="sub_MinAddress3:DHCPBasicCfg"]',
-    '[id="sub_MaxAddress3:DHCPBasicCfg"]',
-    'input[name="sub_IPAddr3:DHCPBasicCfg"]',
-    'input[name="sub_SubMask3"]',
-    'input[name="sub_MinAddress3:DHCPBasicCfg"]',
-    'input[name="sub_MaxAddress3:DHCPBasicCfg"]'
-  ],
+  clearFields: [],
   grading: {
-    description: 'Kiểm tra cấu hình DHCP Server, LAN IP và dải DHCP Start/End trên BE12000',
+    description: 'Kiểm tra cấu hình đổi IP LAN và dải DHCP sang 192.168.10.1/24 trên BE12000',
     rules: [
       {
         id: 'dhcp_server_enable',
@@ -50,6 +36,15 @@ var lessonData = {
         selector: '#ServerEnable1, input[name="ServerEnable"][value="1"]',
         expected: '1',
         type: 'radio_checked',
+        required: true
+      },
+      {
+        id: 'lan_ip_octet2',
+        name: 'LAN IP Address - Octet 3',
+        selector: '[id="sub_IPAddr2:DHCPBasicCfg"], input[name="sub_IPAddr2:DHCPBasicCfg"]',
+        expected: '10',
+        type: 'text_exact',
+        trim: true,
         required: true
       },
       {
@@ -62,29 +57,20 @@ var lessonData = {
         required: true
       },
       {
-        id: 'subnet_mask_octet3',
-        name: 'Subnet Mask - Octet 4',
-        selector: '#sub_SubMask3, input[name="sub_SubMask3"]',
-        expected: '0',
+        id: 'dhcp_start_octet2',
+        name: 'DHCP Start IP Address - Octet 3',
+        selector: '[id="sub_MinAddress2:DHCPBasicCfg"], input[name="sub_MinAddress2:DHCPBasicCfg"]',
+        expected: '10',
         type: 'text_exact',
         trim: true,
         required: true
       },
       {
-        id: 'dhcp_start_octet3',
-        name: 'DHCP Start IP Address - Octet 4',
-        selector: '[id="sub_MinAddress3:DHCPBasicCfg"], input[name="sub_MinAddress3:DHCPBasicCfg"]',
-        expected: ['2', '10', '20', '50', '100'],
-        type: 'any_of',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'dhcp_end_octet3',
-        name: 'DHCP End IP Address - Octet 4',
-        selector: '[id="sub_MaxAddress3:DHCPBasicCfg"], input[name="sub_MaxAddress3:DHCPBasicCfg"]',
-        expected: ['254', '200', '249', '250'],
-        type: 'any_of',
+        id: 'dhcp_end_octet2',
+        name: 'DHCP End IP Address - Octet 3',
+        selector: '[id="sub_MaxAddress2:DHCPBasicCfg"], input[name="sub_MaxAddress2:DHCPBasicCfg"]',
+        expected: '10',
+        type: 'text_exact',
         trim: true,
         required: true
       }
@@ -134,19 +120,19 @@ var lessonData = {
       // 2. LAN IP Address & Subnet Mask
       var lanIP = getIP('sub_IPAddr', ':DHCPBasicCfg');
       var subnetMask = getIP('sub_SubMask', '');
-      var lanPassed = (lanIP === '192.168.1.1') && (subnetMask === '255.255.255.0');
+      var lanPassed = (lanIP === '192.168.10.1') && (subnetMask === '255.255.255.0');
 
       // 3. DHCP Start IP Address
       var dhcpStart = getIP('sub_MinAddress', ':DHCPBasicCfg');
       var startParts = dhcpStart.split('.');
       var startOctet3 = parseInt(startParts[3], 10);
-      var dhcpStartPassed = (dhcpStart === '192.168.1.2') || (startParts.length === 4 && startParts[0] === '192' && startParts[1] === '168' && startParts[2] === '1' && !isNaN(startOctet3) && startOctet3 >= 2 && startOctet3 <= 253);
+      var dhcpStartPassed = (dhcpStart === '192.168.10.2') || (startParts.length === 4 && startParts[0] === '192' && startParts[1] === '168' && startParts[2] === '10' && !isNaN(startOctet3) && startOctet3 >= 2 && startOctet3 <= 253);
 
       // 4. DHCP End IP Address
       var dhcpEnd = getIP('sub_MaxAddress', ':DHCPBasicCfg');
       var endParts = dhcpEnd.split('.');
       var endOctet3 = parseInt(endParts[3], 10);
-      var dhcpEndPassed = (dhcpEnd === '192.168.1.254' || dhcpEnd === '192.168.1.249' || dhcpEnd === '192.168.1.250') || (endParts.length === 4 && endParts[0] === '192' && endParts[1] === '168' && endParts[2] === '1' && !isNaN(endOctet3) && endOctet3 > startOctet3 && endOctet3 <= 254);
+      var dhcpEndPassed = (dhcpEnd === '192.168.10.254' || dhcpEnd === '192.168.10.250' || dhcpEnd === '192.168.10.200') || (endParts.length === 4 && endParts[0] === '192' && endParts[1] === '168' && endParts[2] === '10' && !isNaN(endOctet3) && endOctet3 > startOctet3 && endOctet3 <= 254);
 
       var isSaved = Boolean(
         doc._ftcIsSaved ||
@@ -176,26 +162,26 @@ var lessonData = {
           {
             id: 'lan_ip_subnet',
             name: 'LAN IP Address & Subnet Mask',
-            expected: '192.168.1.1 / 255.255.255.0',
+            expected: '192.168.10.1 / 255.255.255.0',
             actual: ((lanIP || 'Trống') + ' / ' + (subnetMask || 'Trống')) + (!isSaved ? ' (Chưa lưu)' : ''),
             passed: lanPassed && isSaved,
-            message: lanPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : 'Mong muốn: IP 192.168.1.1, Subnet Mask 255.255.255.0'
+            message: lanPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : 'Mong muốn: IP 192.168.10.1, Subnet Mask 255.255.255.0'
           },
           {
             id: 'dhcp_start_ip',
             name: 'DHCP Start IP Address',
-            expected: '192.168.1.2',
+            expected: '192.168.10.2',
             actual: (dhcpStart || 'Trống') + (!isSaved ? ' (Chưa lưu)' : ''),
             passed: dhcpStartPassed && isSaved,
-            message: dhcpStartPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : ('Mong muốn: "192.168.1.2", Thực tế: "' + (dhcpStart || 'Trống') + '"')
+            message: dhcpStartPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : ('Mong muốn: "192.168.10.2", Thực tế: "' + (dhcpStart || 'Trống') + '"')
           },
           {
             id: 'dhcp_end_ip',
             name: 'DHCP End IP Address',
-            expected: '192.168.1.254',
+            expected: '192.168.10.254',
             actual: (dhcpEnd || 'Trống') + (!isSaved ? ' (Chưa lưu)' : ''),
             passed: dhcpEndPassed && isSaved,
-            message: dhcpEndPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : ('Mong muốn: "192.168.1.254", Thực tế: "' + (dhcpEnd || 'Trống') + '"')
+            message: dhcpEndPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DHCP') : ('Mong muốn: "192.168.10.254", Thực tế: "' + (dhcpEnd || 'Trống') + '"')
           }
         ]
       };

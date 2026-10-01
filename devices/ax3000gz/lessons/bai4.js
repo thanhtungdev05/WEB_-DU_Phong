@@ -46,38 +46,38 @@ window.DEVICE_AX3000GZ_LESSONS.push({
   guidePopups: [
     {
       selector: '#topmenu a[href*="localnetwork"]',
-      text: 'Chọn Local Network',
+      text: 'Bước 1: Chọn Local Network',
       position: 'bottom',
       hideOnPage: 'localnetwork'
     },
     {
       selector: '#sidebarmenu a[href*="/localnetwork/lan"]',
-      text: 'Chọn LAN',
+      text: 'Bước 2: Chọn LAN',
       position: 'right',
       page: 'localnetwork',
       hideOnPage: 'lan'
     },
     {
       selector: '#cbi-network h3',
-      text: 'Chọn DHCP Server',
+      text: 'Bước 3: Chọn DHCP Server',
       position: 'right',
       page: 'lan'
     },
     {
       selector: '[id="widget.cbid.network.lan.Primary_DNS"]',
-      text: 'Nhập Primary DNS: 8.8.8.8',
+      text: 'Bước 4: Nhập Primary DNS: 8.8.8.8',
       position: 'right',
       page: 'lan'
     },
     {
       selector: '[id="widget.cbid.network.lan.Secondary_DNS"]',
-      text: 'Nhập Secondary DNS: 8.8.4.4',
+      text: 'Bước 5: Nhập Secondary DNS: 8.8.4.4',
       position: 'right',
       page: 'lan'
     },
     {
       selector: '.cbi-page-actions .cbi-button-save',
-      text: 'Chọn Apply để lưu cấu hình',
+      text: 'Bước 6: Chọn Apply để lưu cấu hình',
       position: 'top',
       page: 'lan'
     }

@@ -431,29 +431,21 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình Load Balancing & Route Failover',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình cân bằng tải (Load Balancing) và dự phòng (Failover) trên DrayTek Vigor2927',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
-    '<b>Trang 1 — WAN >> General Setup:</b>',
-    '- Bật <span class="val">Enable</span> và <span class="val">Load Balance</span> cho cả <b>WAN1</b> và <b>WAN2</b>',
-    '- Mode: chọn <span class="val">Session Based</span>',
-    '- Line Speed: chọn <span class="val">According to Line Speed</span>',
-    '- Load Balance Weights: chọn <span class="val">' + VG2927_BAI6_TEN_WEIGHTS[VG2927_BAI6_DAPAN.overview.lbWeights] + '</span>',
-    '- Nhấn <b>OK</b> (vẫn ở lại trang này), sau đó bấm vào <b>WAN1</b>',
-    '<b>Trang 2 — WAN1:</b>',
-    '- Enable: <span class="val">Yes</span>',
-    '- Display Name: <span class="val">ISP-1</span>',
-    '- Line Speed DownLink: <span class="val">80000</span> Kbps, UpLink: <span class="val">80000</span> Kbps <i>(nhớ chọn đơn vị Kbps; nhập 80 Mbps cũng được chấp nhận vì tương đương)</i>',
-    '- Link Condition Detection — Mode: <span class="val">' + VG2927_BAI6_TEN_DETECT[VG2927_BAI6_DAPAN.wan1.detectMode] + '</span>',
+    '<b>[General Setup]</b>',
+    '- WAN1 & WAN2: Enable: <span class="val">Yes</span>, Load Balance: <span class="val">Yes</span>',
+    '- Mode: <span class="val">Session Based</span>',
+    '- Line Speed: <span class="val">According to Line Speed</span>',
+    '- Load Balance Weights: <span class="val">' + VG2927_BAI6_TEN_WEIGHTS[VG2927_BAI6_DAPAN.overview.lbWeights] + '</span>',
+    '<b>[WAN1]</b>',
+    '- Enable: <span class="val">Yes</span>, Display Name: <span class="val">ISP-1</span>',
+    '- Line Speed: DownLink <span class="val">80000</span> Kbps, UpLink <span class="val">80000</span> Kbps',
+    '- Link Condition Detection: <span class="val">' + VG2927_BAI6_TEN_DETECT[VG2927_BAI6_DAPAN.wan1.detectMode] + '</span>',
     '- Active Mode: <span class="val">Always On</span>',
-    '- Nhấn <b>OK</b> (tự quay về General Setup), sau đó bấm vào <b>WAN2</b>',
-    '<b>Trang 3 — WAN2:</b>',
-    '- Enable: <span class="val">Yes</span>',
-    '- Display Name: <span class="val">ISP-2</span>',
-    '- Line Speed DownLink: <span class="val">80000</span> Kbps, UpLink: <span class="val">80000</span> Kbps',
-    '- Link Condition Detection — Mode: <span class="val">' + VG2927_BAI6_TEN_DETECT[VG2927_BAI6_DAPAN.wan2.detectMode] + '</span>',
-    '- Active Mode: <span class="val">Always On</span>',
-    '- Nhấn <b>OK</b> — đây là nút cuối cùng, hệ thống sẽ Nộp bài & Chấm điểm toàn bộ bài Lab'
+    '<b>[WAN2]</b>',
+    '- Enable: <span class="val">Yes</span>, Display Name: <span class="val">ISP-2</span>',
+    '- Line Speed: DownLink <span class="val">80000</span> Kbps, UpLink <span class="val">80000</span> Kbps',
+    '- Link Condition Detection: <span class="val">' + VG2927_BAI6_TEN_DETECT[VG2927_BAI6_DAPAN.wan2.detectMode] + '</span>',
+    '- Active Mode: <span class="val">Always On</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
 
@@ -680,25 +672,25 @@ window.DEVICE_VIGOR2927_LESSONS.push({
        trong "mwangen1.htm" vì có số 1 chen giữa). */
     {
       selector: 'input[name="sBwWanDisName"]',
-      text: 'Bước 1: nhập ISP-1',
+      text: 'Bước 6: nhập ISP-1',
       position: 'right',
       page: 'mwangen.htm'
     },
     {
       selector: 'select[name="uilBwLBInRateUnit"]',
-      text: 'Bước 2: nhập 80 Mbps',
+      text: 'Bước 7: nhập 80 Mbps',
       position: 'right',
       page: 'mwangen.htm'
     },
     {
       selector: 'select[name="uilBwLBOutRateUnit"]',
-      text: 'Bước 3: nhập 80 Mbps',
+      text: 'Bước 8: nhập 80 Mbps',
       position: 'right',
       page: 'mwangen.htm'
     },
     {
       selector: 'input[name="submit"], input[value="OK"]',
-      text: 'Bước 4: chọn OK',
+      text: 'Bước 9: chọn OK',
       position: 'top',
       page: 'mwangen.htm'
     },
@@ -707,25 +699,25 @@ window.DEVICE_VIGOR2927_LESSONS.push({
        trong phạm vi Bài 6, không lẫn với General Setup hay WAN1. */
     {
       selector: 'input[name="sBwWanDisName"]',
-      text: 'Bước 1: nhập ISP-2',
+      text: 'Bước 10: nhập ISP-2',
       position: 'right',
       page: 'wan.cgi'
     },
     {
       selector: 'select[name="uilBwLBInRateUnit"]',
-      text: 'Bước 2: nhập 80 Mbps',
+      text: 'Bước 11: nhập 80 Mbps',
       position: 'right',
       page: 'wan.cgi'
     },
     {
       selector: 'select[name="uilBwLBOutRateUnit"]',
-      text: 'Bước 3: nhập 80 Mbps',
+      text: 'Bước 12: nhập 80 Mbps',
       position: 'right',
       page: 'wan.cgi'
     },
     {
       selector: 'input[name="submit"], input[value="OK"]',
-      text: 'Bước 4: chọn OK',
+      text: 'Bước 13: chọn OK',
       position: 'top',
       page: 'wan.cgi'
     }

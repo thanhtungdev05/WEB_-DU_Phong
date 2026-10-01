@@ -1,12 +1,12 @@
 /**
  * devices/be15000/data.js — Cấu hình chung cho BE15000
- * Bài học chi tiết: devices/be15000/lessons/bai1.js (Xem thiết bị ONT BE15000)
+ * Bài học chi tiết: devices/be15000/lessons/bai1.js (Xem thiết bị AP BE1500)
  */
 
 window.DEVICE_BE15000 = {
   id: 'be15000',
-  name: 'ONT BE15000',
-  shortName: 'BE15000',
+  name: 'AP BE1500',
+  shortName: 'BE1500',
   port: 8080,
   folder: 'sim_be15000',
   serverBat: 'chay_server.bat',

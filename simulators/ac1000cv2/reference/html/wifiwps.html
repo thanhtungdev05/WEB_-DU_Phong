@@ -1,0 +1,410 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+
+</style>
+
+<script type="text/javascript">
+
+function ValidChecksum(PIN)
+{
+	var accum = 0;
+	
+	accum += 3 * (Math.floor(PIN / 10000000) % 10);
+	accum += 1 * (Math.floor(PIN / 1000000) % 10);
+	accum += 3 * (Math.floor(PIN / 100000) % 10);	
+	accum += 1 * (Math.floor(PIN / 10000) % 10);	
+	accum += 3 * (Math.floor(PIN / 1000) % 10);	
+	accum += 1 * (Math.floor(PIN / 100) % 10);	
+	accum += 3 * (Math.floor(PIN / 10) % 10);
+	accum += 1 * (Math.floor(PIN / 1) % 10);
+
+	return (0 == (accum % 10));
+}
+
+function AutoCompleteZeroPIN(PIN)
+{
+    var pin_val;
+    if      ((PIN < 100000000) && (PIN >= 10000000))
+    {                              
+        pin_val = PIN;        
+    }  
+    else if ((PIN < 10000000) && (PIN >= 1000000))
+    {                                            
+        pin_val = "0" + PIN;         
+    }                                       
+    else if ((PIN < 1000000) && (PIN >= 100000))
+    {                                      
+        pin_val = "00" + PIN;      
+    }                                              
+    else if ((PIN < 100000) && (PIN >= 10000))
+    {
+        pin_val = "000" + PIN;      
+    }
+    else if ((PIN < 10000) && (PIN >= 1000))
+    {
+        pin_val = "0000" + PIN;      
+    }
+    else if ((PIN < 1000) && (PIN >= 100))
+    {
+        pin_val = "00000" + auto_pin;      
+    }
+    else if ((PIN < 100) && (PIN >= 10))
+    {
+        pin_val = "000000" + PIN;      
+    }
+    else if ((PIN < 10) && (PIN >= 1))
+    {
+        pin_val = "0000000" + PIN;      
+    }
+    else
+    {
+        pin_val = "00000000";
+    }
+    return pin_val;
+}
+
+function ComputeChecksum(PIN)
+{
+	var accum = 0;
+	var digit = 0;
+	
+	PIN = PIN*10;
+	accum += 3 * (Math.floor(PIN / 10000000) % 10);
+	accum += 1 * (Math.floor(PIN / 1000000) % 10);
+	accum += 3 * (Math.floor(PIN / 100000) % 10);	
+	accum += 1 * (Math.floor(PIN / 10000) % 10);	
+	accum += 3 * (Math.floor(PIN / 1000) % 10);	
+	accum += 1 * (Math.floor(PIN / 100) % 10);	
+	accum += 3 * (Math.floor(PIN / 10) % 10);
+	digit = accum % 10;
+	return (10 - digit) % 10;
+}
+
+var SecurityCheck = 0;
+var ssid_list = 0;
+var wps_enable = 0;
+var wps_mode = 0;
+var wps_pin = 0;
+var psk_ver = 0;
+var wps_pin_mode = 0;
+
+var WPS_DOCONNECT = 1;
+var WPS_DONTCONNECT = 0;
+
+SecurityCheck=1;
+psk_ver=2;
+wps_enable=1;
+wps_mode=0;
+wps_pin="12345678";
+wps_pin_mode=0;
+
+
+function WebInit()
+{
+	if((top.WebProject == "bhs")&&(psk_ver == 0))
+	{
+		SecurityCheck = 0;
+	}
+
+    if (SecurityCheck == 0)
+    {
+        alert(WebString.wps_check_sec_fail);
+		$("#wps_show").hide();
+		$("#wps_config").hide();
+		$("#wps_apply").hide();
+		
+        return false;
+    }
+	SelectShow();
+	selectWPSType(wps_mode);//select wps type 0
+}
+
+function SelectShow()
+{
+	if((top.WebProject == "bhs")&&(psk_ver == 0))
+	{
+		SecurityCheck = 0;
+	}
+	
+	if (wps_enable == '1')
+	{
+		$("#ap_pin").val(wps_pin);
+		$("#wps_enable").attr("checked", true);
+        $("#wps_show").show();
+	    $("#wps_apply").show();
+		$("#wps_apply1").hide();
+	}	
+	else
+	{	
+		$("#wps_disable").attr("checked", true);
+        $("#wps_show").hide();
+		$("#wps_apply").hide();
+		$("#wps_apply1").show();
+	}	
+
+
+ 	$("#wps_type_list").val(wps_mode);
+ 	$("#generate_pin_type").val(wps_pin_mode);  
+}
+
+
+function wps_change()
+{
+	var ss = $("input[name='wps_state']:checked").val();  
+
+	if (ss == 1)
+	{
+		$("#wps_show").show();		
+	    $("#wps_apply").show();
+		$("#wps_apply1").hide();
+	}
+	else if(ss == 0)
+	{
+		$("#wps_show").hide();	
+		$("#wps_apply").hide();
+		$("#wps_apply1").show();
+	}
+
+	WebStepIndex();
+}
+
+function selectWPSType(mode)
+{
+	if(mode == "0")
+	{
+		$("#pin").hide();		
+	}
+
+	if(mode == "1")
+	{
+		$("#pin").show();	
+		selectPinType();
+	}
+}
+
+function selectPinType(mode)
+{
+	var mode = $("#generate_pin_type").val();
+	if(mode == "1")
+	{
+        $("#ap_pin").attr("disabled", true);
+		$("#btn_generate").show();
+	} else {
+        $("#ap_pin").attr("disabled", false);
+		$("#btn_generate").hide();
+	}
+}
+
+function generatePin()
+{  
+    var auto_pin = 0;
+    var lowest_bit = 0;
+    var high_seven_bit = 0;
+    var temp_random = 0;
+
+    temp_random = Math.random();
+
+    high_seven_bit = Math.floor(temp_random * 10000000);
+    lowest_bit = ComputeChecksum(high_seven_bit);
+    auto_pin = high_seven_bit * 10 + lowest_bit;
+
+    $("#ap_pin").val(AutoCompleteZeroPIN(auto_pin));
+}
+
+function WebDoConnect()
+{
+    $("#wps_connect").val(WPS_DOCONNECT);
+    $("#XForm").submit();
+}
+
+function WebDoSubmit()
+{
+    if(1 == $("#wps_type_list").val())
+    {
+        var pin_val = $("#ap_pin").val();	
+        if(0 == ValidChecksum(pin_val) || 8 != pin_val.length)
+        {
+            alert(WebString.pin_invalid);
+            return false;	
+        }
+        $("#ap_pin").attr("disabled", false);
+    }
+
+	$("#wps_connect").val(WPS_DONTCONNECT);
+	$("#XForm").submit();
+}
+
+$(document).ready(function () {
+
+    $("#btn_apply_2").click(function() {
+		WebDoConnect();
+	});
+
+	$("#btn_apply_1").click(function() {
+		WebDoSubmit();
+	});
+
+	$("#btn_apply_3").click(function() {
+		WebDoSubmit();
+	});
+
+});
+
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<input type="hidden" id="wps_connect" name="wps_connect" value="" />
+
+<div class="cfgstep" id="wps_config">
+	<p><strong id="XS2"></strong></p>
+    <table>
+    	<tr>
+            <td width="200" id="XS3"></td>
+            <td><input name="wps_state" id="wps_enable" type="radio" value="1" checked="checked" onclick="wps_change();"/><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+            	<input name="wps_state" id="wps_disable" type="radio"  value="0"  onclick="wps_change();"/><script>document.write(WebString.Disable);</script>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="cfgstep" id="wps_show">
+		<p><strong id="XS4"></strong> </p>
+		<table>
+		    <tr>
+		        <td width="200" id="XS5"></td>
+		        <td><select name="wps_type_list" id="wps_type_list" onchange="selectWPSType(this.options[this.selectedIndex].value);">
+		                <option value="0" selected="selected">Push Button (PBC)</option>
+		                <option value="1">AP PIN</option>
+		            </select>
+		    	</td>	
+		    </tr>
+		</table>
+
+		<table id = "pin">
+			<tr id="pin_show">
+			    <td width="200" id="XS6"></td>
+			    <td><select name="generate_pin_type" id="generate_pin_type"  onchange="selectPinType();">
+			            <option value="1" selected="selected">Auto</option>
+			        </select>
+			    </td>	           
+			</tr> 
+			
+			<tr id="pin_1">
+				<td width="200" id="XS7"></td>
+			    <td>
+			        <input type="text" name="ap_pin" id="ap_pin" maxlength="8" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/>
+					<a id="btn_generate" href="#" class="btn" onclick="generatePin()"><script>document.write(WebString.GeneratePIN);</script></a>
+			    </td>	  
+			</tr>
+		</table>
+</div>
+
+<div class="cfgstep" id="wps_apply">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+    <a href="#" id="btn_apply_1" class="btn"><script>document.write(WebString.Apply);</script></a>
+    <a href="#" id="btn_apply_2" class="btn"><script>document.write(WebString.Connect);</script></a>
+</div>
+
+<div class="cfgstep" id="wps_apply1">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+    <a href="#" id="btn_apply_3" class="btn"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

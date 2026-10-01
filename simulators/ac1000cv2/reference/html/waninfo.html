@@ -1,0 +1,571 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+.X_RESULT {
+	width: 780px;
+	height: 300px;
+	line-height: 300px;
+}
+
+.X_RESULT_LI {
+	width: 780px;
+	height: 300px;
+}
+
+.X_RESULT_TEXT {
+	width: 95%;
+	height: 95%;
+	text-align: left;
+	vertical-align: top;
+	font-size: 14px;
+}
+
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var MAX_NUM = 8;
+var wanStatus = new Array();
+var num_con = 0;
+var wan_uptime = 0;
+var currentIndex = 0;
+var failure = 0;
+
+var nat_content = "";
+
+currentIndex= "0";
+
+wanStatus[0]=
+{ 
+ "index":"0","enable":"1","service":"14","vlan_en":"0","vlan_id":"0",
+ "ipver":"2","ipmode":"1","mtu":"1500","nat":"1",
+ "mac":"A4:81:7A:75:C1:6E",
+ "pppoe":{"username":"fpt","auth_failures":"0","session_time":"0"},
+ "count":{
+         "txByte":"0","rxByte":"0","txPackets":"0","rxPackets":"0","txErrs":"0","rxErrs":"0","txDrop":"0","rxDrop":"0"
+          },
+ "mc_count":{
+         "txByte":"0","rxByte":"0","txPackets":"0","rxPackets":"0"
+          },
+ "ipv4":{
+         "ipv4state":"0","ip":"0.0.0.0","mask":"0.0.0.0","gw":"0.0.0.0","dns1":"0.0.0.0","dns2":"0.0.0.0"
+          },
+ "ipv6":{
+         "ipv6state":"0","ip":"","prefix":"","linkip":"","gw":"","dns1":"","dns2":""
+          }
+};
+num_con=1;
+
+
+function SetUptime()
+{
+	wan_uptime++;
+
+    if (1 != parseInt(wanStatus[$("#wan_list").get(0).selectedIndex].ipmode))
+    {
+        return
+    }
+
+    if ((parseInt(wanStatus[$("#wan_list").get(0).selectedIndex].ipv4.ipv4state) != 1) && 
+        (parseInt(wanStatus[$("#wan_list").get(0).selectedIndex].ipv6.ipv6state) != 1))
+    {
+        wanStatus[$("#wan_list").get(0).selectedIndex].pppoe.session_time = 0;
+    }    
+        
+    if (0 == parseInt(wanStatus[$("#wan_list").get(0).selectedIndex].pppoe.session_time))
+    {
+        var second = 0;
+    }
+    else
+    {
+        var second = wan_uptime + parseInt(wanStatus[$("#wan_list").get(0).selectedIndex].pppoe.session_time);
+    }
+	var dd = parseInt(second/(3600*24));
+	var hh = parseInt((second%(3600*24))/3600);
+	var mm = parseInt((second%3600)/60);
+	var ss = parseInt(second%60);
+	var strtime = "";
+
+    strtime += dd + " " + WebString.days;
+    strtime += ", " + hh + WebString.hour;
+    strtime += ":" + mm + WebString.minute;
+    strtime += ":" + ss + WebString.second;
+
+	 $("#ppp_session").html(strtime);
+}
+
+function showWanList()
+{
+	$("#wan_list option:first").remove();
+	for (i=0; i<num_con; i++)
+	{
+		var index = wanStatus[i].index;
+		var idx = parseInt(index)+1;
+		var mode = "R";
+		var service = parseInt(wanStatus[i].service);
+		var serv = "_";
+		if (service & 0x4)
+			serv = serv + "INTERNET_";
+		if (service & 0x2)
+			serv = serv + "TR069_";
+		if (service & 0x1)
+			serv = serv + "VOIP_";
+		if (service & 0x8)
+			serv = serv + "IPTV_";
+		var vlan = wanStatus[i].vlan_id;
+		if((wanStatus[i].vlan_en == 0)&&(vlan == 0))
+			var name = idx.toString() + serv + mode + '_VID_';
+		else
+			var name = idx.toString() + serv + mode + '_VID_' + vlan;
+		$("#wan_list").append("<option value="+index+">"+name+"</option>");
+	}
+	if (num_con == 0)
+	{
+		$("#wan_list").append("<option value=\"100\">"+ XwaninfoString[40] +"</option>");
+	}
+    
+    $("#wan_list").val(currentIndex);
+}
+
+function doSetVal()
+{   
+	var selIndex = $("#wan_list").get(0).selectedIndex;
+    
+	if ($("#wan_list").val() == "100")
+	{
+        $("#connstate").html("");
+        $("#reconnect").hide();
+        $("#wansetting").hide();
+        $("#ipv4info").hide();
+        $("#ipv6info").hide();
+        
+	}
+	else if (selIndex < num_con)
+	{
+        var ipv4state = parseInt(wanStatus[selIndex].ipv4.ipv4state);
+        var ipv6state = parseInt(wanStatus[selIndex].ipv6.ipv6state);
+        
+        if(ipv4state > 0 || ipv6state > 0)
+        {
+            $("#reconnect").show();
+        }
+        else
+        {
+            $("#reconnect").hide();
+        }
+        $("#wansetting").show();
+        $("#ipv4info").show();
+        if (top.WebShowIpv6)
+        {
+            $("#ipv6info").show();
+        }
+        
+        if(ipv4state == 1 || ipv6state == 1)
+        {
+            $("#connstate").html(XwaninfoString[1]);
+            $("#connstate").css("color","#090");
+        }
+        else if(ipv4state == 2 || ipv6state == 2)
+        {
+            $("#connstate").html(XwaninfoString[2]); 
+            $("#connstate").css("color","#E08800");
+        }
+        else if(ipv4state == 0 || ipv6state == 0)
+        {
+            $("#connstate").html(XwaninfoString[3]);
+            $("#connstate").css("color","#F00");
+        }
+        else
+        {
+            $("#connstate").html(XwaninfoString[4]);
+
+        }
+        
+        if(wanStatus[selIndex].ipmode == 3)
+        {
+            $("#ipmode").html("Static IP");
+        }
+        else if(wanStatus[selIndex].ipmode == 2)
+        {
+        $("#ipmode").html("IPoE");
+        }
+        else if(wanStatus[selIndex].ipmode == 1)
+        {
+            $("#ipmode").html("PPPoE");
+        }
+        else 
+        {
+            $("#ipmode").html("NONE");                
+        }     
+        
+        $("#mtu").html(wanStatus[selIndex].mtu);                
+        if (top.WebProject != "hw" || 4 == top.XCurrentUser) {
+            $("#wan_mtu").show();
+        };
+        
+        //pppoe mode
+        if(wanStatus[selIndex].ipmode == 1)
+        {
+            
+            $("#ppp_username").html(encodeHtml(wanStatus[selIndex].pppoe.username));
+
+            switch(parseInt(wanStatus[selIndex].pppoe.auth_failures))
+            {
+                case 0:
+                    if(ipv4state == 0 && ipv6state == 0)
+                        failure    = XwaninfoString[42];
+                    else
+                        failure    = XwaninfoString[36];
+                    break
+                case 1:
+                    failure    = XwaninfoString[37];
+                    break
+                case 2:
+                    failure    = XwaninfoString[38];
+                    break
+                default:
+                    failure    = XwaninfoString[39];
+                    break
+            }
+            
+            $("#ppp_failures").html(failure);
+
+            
+            SetUptime(wanStatus[selIndex].pppoe.session_time);
+            if (top.WebProject != "hw" || 4 == top.XCurrentUser) {
+                $("#pppusername").show();
+                $("#pppfailures").show();
+                $("#pppsession").show();
+            }
+        }
+        else
+        {
+            $("#pppusername").hide();
+            $("#pppfailures").hide();
+            $("#pppsession").hide();           
+        }
+        
+        $("#txByte").html(wanStatus[selIndex].count.txByte);
+        $("#rxByte").html(wanStatus[selIndex].count.rxByte);
+        $("#txPackets").html(wanStatus[selIndex].count.txPackets);
+        $("#rxPackets").html(wanStatus[selIndex].count.rxPackets);
+        $("#txErrs").html(wanStatus[selIndex].count.txErrs);
+        $("#rxErrs").html(wanStatus[selIndex].count.rxErrs);
+        $("#txDrop").html(wanStatus[selIndex].count.txDrop);
+        $("#rxDrop").html(wanStatus[selIndex].count.rxDrop);
+  
+        // ipv4
+        $("#ipv4addr").html(wanStatus[selIndex].ipv4.ip);
+        $("#ipv4mask").html(wanStatus[selIndex].ipv4.mask);
+        $("#ipv4dns1").html(wanStatus[selIndex].ipv4.dns1);
+        $("#ipv4dns2").html(wanStatus[selIndex].ipv4.dns2);
+        $("#ipv4gw").html(wanStatus[selIndex].ipv4.gw);
+        
+        //ipv6
+        $("#ipv6addr").html(wanStatus[selIndex].ipv6.ip);
+        $("#ipv6prefix").html(wanStatus[selIndex].ipv6.prefix);
+        $("#ipv6Link").html(wanStatus[selIndex].ipv6.linkip);
+        $("#ipv6gw").html(wanStatus[selIndex].ipv6.gw);
+        $("#ipv6dns1").html(wanStatus[selIndex].ipv6.dns1);
+        $("#ipv6dns2").html(wanStatus[selIndex].ipv6.dns2);
+	}
+    //WebStepIndex();
+}
+
+function WebInit()
+{
+    showWanList();
+    doSetVal();
+    //WebStepIndex();
+    
+    SetUptime();
+	setInterval("SetUptime();", 1000);
+
+}
+
+function ShowNatSession()
+{
+    connection=window.open('connection.html','connection','width=720, height=480, top=150,left=280, toolbar=no, menubar=no, scrollbars=yes, resizable=no, location=yes, status=no');
+}
+
+$(document).ready(function () {
+	$("#wan_list").change(function() {
+		doSetVal();
+	});
+    
+    $("#Refresh").click(function() {
+        $("#vRefresh").val(1);
+        $("#XForm").submit();
+	});
+
+    $("#btn_reconnect").click(function() {
+        $("#XForm").submit();
+	});
+
+    $("#sessionshow").click(function() {
+        ShowNatSession();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS28"> </strong></p>
+	<table>
+		<tr>
+            <td width="200">
+                <select name="wan_list" id="wan_list">
+				</select>
+			</td>
+        <td><label id="connstate" style="font-weight:bold;"> </label></td>
+        </tr>
+        <tr>
+            <td width="200" id="reconnect">
+                <a class="btn" href="#" id="btn_reconnect"><script>document.write(XwaninfoString[29]);</script></a>
+            </td>     
+        </tr>
+	</table>
+</div>
+
+<div class="cfgstep" id="wansetting">
+	<p><strong id="XS5"> </strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS6"> </td>
+			<td><label id="ipmode"> </label></td>
+        </tr>
+        
+		<tr id="pppusername" style="display:none">
+			<td width="200" id="XS7"> </td>
+			<td style="word-break : break-all;"><label id="ppp_username"> </label></td>
+        </tr>
+        
+		<tr id="pppfailures" style="display:none">
+			<td width="200" id="XS8"> </td>
+			<td><label id="ppp_failures"> </label></td>
+        </tr>
+        
+		<tr id="pppsession" style="display:none">
+			<td width="200" id="XS9"> </td>
+			<td><label id="ppp_session"> </label></td>
+        </tr>
+        
+		<tr>
+			<td width="200" id="XS10"> </td>
+			<td><label id="txByte"> </label></td>
+        </tr>
+        
+        <tr>
+			<td width="200" id="XS11"> </td>
+			<td><label id="rxByte"> </label></td>
+        </tr> 
+        
+        <tr>
+			<td width="200" id="XS12"> </td>
+			<td><label id="txPackets"> </label></td>
+        </tr> 
+        
+        <tr>
+			<td width="200" id="XS13"> </td>
+			<td><label id="rxPackets"> </label></td>
+        </tr> 
+		
+        <tr>
+			<td width="200" id="XS43"> </td>
+			<td><label id="txErrs"> </label></td>
+        </tr>
+        
+        <tr>
+			<td width="200" id="XS44"> </td>
+			<td><label id="rxErrs"> </label></td>
+        </tr> 
+        
+        <tr>
+			<td width="200" id="XS45"> </td>
+			<td><label id="txDrop"> </label></td>
+        </tr> 
+        
+        <tr>
+			<td width="200" id="XS46"> </td>
+			<td><label id="rxDrop"> </label></td>
+        </tr> 
+		
+        <tr id="wan_mtu" style="display:none">
+			<td width="200" id="XS14"> </td>
+			<td><label id="mtu"> </label></td>
+        </tr> 
+        </table>
+</div>
+
+<div class="cfgstep" id="ipv4info">
+    <p><strong id="XS15"> </strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS16"> </td>
+            <td><label id="ipv4addr"> </label></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS17"> </td>
+            <td><label id="ipv4mask"> </label></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS20"> </td>
+            <td><label id="ipv4gw"> </label></td>
+        </tr>  
+        <tr>
+            <td width="200" id="XS18"> </td>
+            <td><label id="ipv4dns1"> </label></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS19"> </td>
+            <td><label id="ipv4dns2"> </label></td>
+        </tr>       
+    </table>
+</div>
+<div class="cfgstep" id="ipv6info" style="display:none">
+	<p><strong id="XS21"> </strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS22"> </td>
+			<td><label id="ipv6addr"> </label></td>
+        </tr>
+		<tr>
+			<td width="200" id="XS23"> </td>
+			<td><label id="ipv6prefix"> </label></td>
+        </tr>
+		<tr>
+			<td width="200" id="XS24"> </td>
+			<td><label id="ipv6Link"> </label></td>
+        </tr>
+        <tr>
+			<td width="200" id="XS41"> </td>
+			<td><label id="ipv6gw"> </label></td>
+        </tr>
+		<tr>
+			<td width="200" id="XS25"> </td>
+			<td><label id="ipv6dns1"> </label></td>
+        </tr>
+		<tr>
+			<td width="200" id="XS26"> </td>
+			<td><label id="ipv6dns2"> </label></td>
+        </tr>
+    </table>
+</div>
+    
+<table>
+	<tr>
+		<td width="200" id="XS27"></td>
+		<td width="200" id="sessionshow">
+            <a class="btn" href="#" id="sessionshow"><script>document.write(XwaninfoString[30]);</script></a>
+		</td>
+	</tr>    
+</table>
+
+<div class="cfgstep">
+	<a class="btn" id="Refresh" href="#" ><script>document.write(WebString.Refresh)</script></a>
+	<input type="hidden" id="vRefresh" name="vRefresh" value="0" />
+</div>
+
+
+
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

@@ -1,0 +1,407 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var dev_name = "";
+var vendor = "";
+var customer = "";
+var dev_id = "";
+var hw_ver = "";
+var sw_ver = "";
+var onuid = "";
+var desc = "";
+var txpower = 0;
+var rxpower = 0;
+var lan_mtu = 2000;
+var dev_uptime = 0;
+var ponStaIndex = 1;
+var pots_state = new Array();
+var workMode = 0;
+
+//add by rex to get wan mac
+var wanStatus = new Array();
+var num_con = 0;
+var wifi_button = 0;
+var has_wifi_btn = 0;
+
+dev_id = "FPTT19a0107e";
+dev_name = "G-97RG6W";
+hw_ver = "01";
+sw_ver = "R4.2.23.109";
+desc = "G-97RG6W";
+onuid = 1;
+dev_uptime = 4834;
+POTS_NUM = 0;
+pots_state[0]=0;
+POTS_NUM = 0;
+pots_state[1]=0;
+workMode = "0";
+wifi_button=0;
+has_wifi_btn=1;
+
+ponStaIndex = 1;
+rxfecEnable = 0;
+txfecEnable = 0;
+txpkts = 0;
+rxpkts = 0;
+txDropped = 0;
+rxDropped = 0;
+txErrs = 0;
+
+hidden = 0;
+current="7150";
+voltage="165";
+temperature="8448";
+rxpower="14500";
+txpower="14500";
+
+//add by rex to get wan mac
+currentIndex= "0";
+
+wanStatus[0]=
+{ 
+ "index":"0","enable":"1","service":"14","vlan_en":"0","vlan_id":"0",
+ "ipver":"2","ipmode":"1","mtu":"1500","nat":"1",
+ "mac":"A4:81:7A:75:C1:6E",
+ "pppoe":{"username":"fpt","auth_failures":"0","session_time":"0"},
+ "count":{
+         "txByte":"0","rxByte":"0","txPackets":"0","rxPackets":"0","txErrs":"0","rxErrs":"0","txDrop":"0","rxDrop":"0"
+          },
+ "mc_count":{
+         "txByte":"0","rxByte":"0","txPackets":"0","rxPackets":"0"
+          },
+ "ipv4":{
+         "ipv4state":"0","ip":"0.0.0.0","mask":"0.0.0.0","gw":"0.0.0.0","dns1":"0.0.0.0","dns2":"0.0.0.0"
+          },
+ "ipv6":{
+         "ipv6state":"0","ip":"","prefix":"","linkip":"","gw":"","dns1":"","dns2":""
+          }
+};
+num_con=1;
+
+function SetUptime()
+{
+    dev_uptime++;
+
+    var second = parseInt(dev_uptime);
+    var dd = parseInt(second/(3600*24));
+    var hh = parseInt((second%(3600*24))/3600);
+    var mm = parseInt((second%3600)/60);
+    var ss = parseInt(second%60);
+    var strtime = "";
+    
+    strtime += dd + " " + WebString.days + ", ";
+    strtime += hh + "h:";
+    strtime += mm + "m:";
+    strtime += ss + "s";
+    
+    $("#uptime").html(strtime);
+}
+
+function WebInit()
+{
+    var i, obj;
+    
+    if (top.WebProject == "hw")
+    {
+        $("#dev_vendor").html("Huawei");
+        $("#vendor").show();
+    }
+    
+    for (i = 0; i < top.WebPotsNumber; i++)
+    {
+        obj = "#voip_pots" + parseInt(i + 1);
+        $(obj).show();
+    }
+
+    if (ponStaIndex == 5)
+    {
+        $("#onuid").html(onuid);
+    }
+	if (workMode == 1)
+	{
+		$("#rxpower_sfu").show();
+		$("#txpower_sfu").show();
+		$("#lan_mtu_sfu").show();
+	}
+	$("#txpower").html(((parseInt(txpower)/500)-30).toFixed(2) + " dBm");
+	if (ponStaIndex == 1)
+	{
+		$("#rxpower").html(WebString.no_optical_input);	
+	}
+	else 
+	{
+		$("#rxpower").html(((parseInt(rxpower)/500)-30).toFixed(2) + " dBm");	
+	}	
+	
+    $("#dev_name").html(dev_name);
+    $("#dev_sn").html(dev_id.toUpperCase());
+    $("#dev_hw").html(hw_ver.toUpperCase());
+    $("#dev_sw").html(sw_ver);
+    $("#desc").html(desc);
+	$("#lan_mtu").html(lan_mtu);
+    $("#gpon").html("O" + ponStaIndex + " - " + WebString.gpon_state[ponStaIndex-1]);
+    $("#workMode").val(workMode);
+
+    //add by rex to get wan mac
+    for (i=0; i<num_con; i++)
+    {
+		var service = parseInt(wanStatus[i].service);
+        if (service & 0x4)
+        {
+            $("#mac").html(wanStatus[i].mac);
+            break;
+        }
+    }
+    
+    for (i = 0; i < pots_state.length; i++)
+    {
+        if(parseInt(pots_state[i]) != 0 && parseInt(pots_state[i]) != 1)
+        {
+            pots_state[i] = 2;
+        }
+        $("#pots" + (i + 1)).html(WebString.pots_state[pots_state[i]]);
+    }
+
+    if(POTS_NUM > 1)    
+    {       
+        $("#voip_pots2").show();    
+    }   
+    else
+    {       
+        $("#voip_pots2").hide();    
+    }
+
+    if (has_wifi_btn == 1) {
+        $("#wifi_button_enable").show();
+        if(wifi_button == 1)
+            $("#wifi_button_on").attr("checked", true);
+        else
+            $("#wifi_button_off").attr("checked", true);
+    } else {
+        $("#wifi_button_enable").hide();
+    }
+
+    SetUptime();
+    setInterval("SetUptime();", 1000);
+}
+
+function WebDoSubmit()
+{
+	//if ($("#workMode").val() == workMode)
+	//{
+	//	return;
+	//}
+
+	//if(!confirm(XdevinfoString[15]))
+	//{
+	//	return;
+	//}
+
+    $("#XForm").submit();
+}
+
+$(document).ready(function () {
+    $("#save").click(function() {
+        XDoSubmit();
+    });
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+    <p><strong id="XS0"></strong></p>
+    <table id="wifi_button_enable" style="display:none">
+		<tr>
+	        <td width="200" id="XS20"></td>
+	        <td><input name="wifi_button" id="wifi_button_on" type="radio" value="1" checked="checked" /><script>document.write(WebString.ButtonEnable);</script>&nbsp;&nbsp;
+	        	<input name="wifi_button" id="wifi_button_off" type="radio" value="0" /><script>document.write(WebString.ButtonDisable);</script>
+	        </td>
+	    </tr>    
+    </table>
+    <table id="mode">
+        <tr>
+            <td width="200" id="XS12"></td>
+            <td>
+                <select name="workMode" id="workMode">
+                    <option value="0" id="XS13"></option>
+                    <option value="1" id="XS14"></option>
+                </select>
+            </td>
+            <td id="save">
+                <a class="btn" href="#" id="save"><script>document.write(WebString.Save);</script></a>
+            </td>
+        </tr>    
+    </table>
+    <table>
+        <tr id="vendor" style="display:none">
+            <td width="200" id="XS9"></td>
+            <td id="dev_vendor"></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS1"></td>
+            <td id="dev_sn"></td>
+        </tr>
+        <!-- add by rex to get wan mac -->
+        <tr>
+            <td width="200" id="XS19"></td>
+            <td id="mac"></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS2"></td>
+            <td id="dev_name"></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS3"></td>
+            <td id="dev_sw"></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS4"></td>
+            <td id="dev_hw"></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS5"></td>
+            <td id="uptime"></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS6"></td>
+            <td id="gpon"></td>
+        </tr>
+        <tr id="voip_pots1" style="display:none">
+            <td width="200" id="XS7"></td>
+            <td id="pots1"></td>
+        </tr>
+        <tr id="voip_pots2" style="display:none">
+            <td width="200" id="XS8"></td>
+            <td id="pots2"></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS10"></td>
+            <td id="onuid"></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS11"></td>
+            <td id="desc"></td>
+        </tr>
+        <tr id="txpower_sfu" style="display:none">
+            <td width="200" id="XS16"></td >
+            <td id="txpower"></td>
+        </tr>
+        <tr id="rxpower_sfu" style="display:none">
+            <td width="200" id="XS17"></td>
+            <td id="rxpower"></td>
+        </tr>		
+       <tr id="lan_mtu_sfu" style="display:none">
+            <td width="200" id="XS18"></td>
+            <td id="lan_mtu"></td>
+        </tr>		
+    </table>
+</div>
+
+<!--div class="cfgstep">
+    <a id="btn_refresh" class="btn" href="devinfo.html"><script type="text/javascript">document.write(WebString.Refresh);</script></a>
+</div-->
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+
+

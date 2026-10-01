@@ -11,9 +11,8 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình PPPoE',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình kết nối WAN/Internet trên thiết bị DrayTek Vigor2927 theo chế độ PPPoE với các thông số sau:',
     '- Username: <span class="val">sgfdl-211208-218</span>',
-    '- Password: <span class="val">12345678</span>',
+    '- Password: <span class="val">12345678</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
 

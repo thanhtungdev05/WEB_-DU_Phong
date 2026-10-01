@@ -1,0 +1,29 @@
+var ProtocolList = new Array();
+
+ ProtocolList[0] = new Array("IGMP","IGMP","465","465","465","465");
+ ProtocolList[1] = new Array("FTP","FTP","21","0","21", "0");
+ ProtocolList[2] = new Array("TELNET","TELNET","23","0","23", "0");
+ ProtocolList[3] = new Array("HTTP","HTTP","80,8080","0","80,8080", "0");
+ ProtocolList[4] = new Array("HTTPS","HTTPS","443","0","443", "0");
+ ProtocolList[5] = new Array("IMAP","IMAP","143, 220, 585, 993","0","143, 220, 585, 993", "0");
+ ProtocolList[6] = new Array("IMAP3","IMAP3","220","220","220", "220");
+ ProtocolList[7] = new Array("IMAP4","IMAP4","585, 993","585, 993","585, 993", "585, 993");
+ ProtocolList[8] = new Array("IMAPS","IMAPS","993","993","993", "993");
+ ProtocolList[9] = new Array("POP","POP","109","109","109", "109");
+ ProtocolList[10] = new Array("POP2","POP2","109","109","109","109");
+ ProtocolList[11] = new Array("POP3","POP3","110, 995","0","110, 995", "0");
+ ProtocolList[12] = new Array("SMTP","SMTP","25","0","25", "0");
+ ProtocolList[13] = new Array("SSH","SSH","22","0","22", "0");
+ ProtocolList[14] = new Array("DNS","DNS","53","53","53", "53");
+ ProtocolList[15] = new Array("NTP","NTP","563, 580, 2514","563, 580, 2514","563, 580, 2514", "563, 580, 2514");
+ ProtocolList[16] = new Array("H323","H323","1023, 1502, 1504, 1730, 1732, 65534","1024, 65535","1023, 1502, 1504, 1730, 1732, 65534", "1024, 65535");
+ ProtocolList[17] = new Array("SIP","SIP","5060","5060","5060", "5060");
+ ProtocolList[18] = new Array("RTP","RTP","5004, 5005","5004, 5005","5004, 5005", "5004, 5005");
+ ProtocolList[19] = new Array("IPSEC","IPSEC","4500","4500","4500","4500");
+ ProtocolList[20] = new Array("VPN","VPN","259, 1194, 1723","259, 1194","259, 1194, 1723", "259, 1194");
+ ProtocolList[21] = new Array("SSL","SSL","443, 989, 990, 992","443, 989, 990, 992","443, 989, 990, 992", "443, 989, 990, 992");
+ ProtocolList[22] = new Array("MESSENGER WINDOWS LIVE","WINDOWS LIVE MESSENGER","80,  443, 1025, 1503, 1863, 3389, 5061, 6891-6901, 7001, 30000-65535","9, 1025, 1863, 5004, 6891-6901, 7001, 30000-65535","80,  443, 1025, 1503, 1863, 3389, 5061, 6891-6901, 7001, 30000-65535", "9, 1025, 1863, 5004, 6891-6901, 7001, 30000-65535");
+ ProtocolList[23] = new Array("MESSENGER YAHOO","YAHOO MESSENGER","5050","0","5050", "0");
+ ProtocolList[24] = new Array("SKYPE","SKYPE","80, 443, 23399","443, 23399","80, 443, 23399", "443, 23399");
+ ProtocolList[25] = new Array("WEB","WEB","80, 8080","80, 8080","80, 8080", "80, 8080");
+

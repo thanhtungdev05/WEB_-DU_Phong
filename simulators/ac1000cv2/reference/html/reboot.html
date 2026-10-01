@@ -1,0 +1,177 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var values = "";
+var i = 0;
+
+function updateProcess()
+{
+	if(i < 99)
+	{
+		i = i + 1;
+		values =  WebString.rebooting + i + "%";
+		document.getElementById('myProcess').innerHTML = values;
+	}
+	else
+	{
+		window.location.href = window.location.href;
+	}
+}
+
+function WebDoSubmit()
+{
+	if(!confirm(WebString.reboot_confirm))
+	{
+		return;
+	}
+	
+	top.reboot_flag = 1;
+	$("#div_rebooting").show();
+	$("#div_init").hide();
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+	if(1 == top.reboot_flag)
+	{
+		setInterval("updateProcess();", 1000);
+		$("#div_rebooting").show();
+		$("#div_init").hide();
+	}
+	else
+	{
+		$("#div_rebooting").hide();
+		$("#div_init").show();
+	}
+
+	//WebStepIndex();
+}
+
+$(document).ready(function () {
+	$("#btn_reboot").click(function(){
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div id="div_init">
+	<div class="cfgstep">
+		<p><strong><script>document.write(WebString.stepReboot);</script></strong></p>
+		<a id="btn_reboot" class="btn apply_btn" href="#"><script>document.write(WebString.Reboot);</script></a>
+	</div>
+</div>
+
+<div id="div_rebooting">
+	<div class="cfgstep">
+		<p><strong id="XS1"></strong></p>
+		<table>
+			<tr>
+				<td id="myProcess"></td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

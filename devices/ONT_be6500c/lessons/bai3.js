@@ -48,29 +48,29 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   guidePopups: [
     {
       "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\")",
-      "text": "Chọn Wi-Fi",
+      "text": "Bước 1: Chọn Wi-Fi",
       "position": "right"
     },
     {
       "selector": "button[id=\"SmartHome\"]",
-      "text": "Chuyển sang tab SMARTHOME NETWORK",
+      "text": "Bước 2: Chuyển sang tab SMARTHOME NETWORK",
       "position": "bottom"
     },
     {
       "selector": "#tabpanel-SmartHome input[name=\"networks.0.name\"], input[name=\"networks.0.name\"]",
-      "text": "Nhập tên Wi-Fi cho IoT (VD: FPT IoT)",
+      "text": "Bước 3: Nhập tên Wi-Fi cho IoT (VD: FPT IoT)",
       "position": "right",
       "expected": "FPT IoT"
     },
     {
       "selector": "#tabpanel-SmartHome input[name=\"networks.0.passphrase\"], input[name=\"networks.0.passphrase\"]",
-      "text": "Nhập mật khẩu cho IoT (VD: fpt12345)",
+      "text": "Bước 4: Nhập mật khẩu cho IoT (VD: fpt12345)",
       "position": "right",
       "expected": "fpt12345"
     },
     {
       "selector": "button:contains(\"Save\")",
-      "text": "Chọn Save",
+      "text": "Bước 5: Chọn Save để lưu cấu hình",
       "position": "bottom"
     }
   ]

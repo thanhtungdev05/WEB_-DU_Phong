@@ -8,49 +8,49 @@ if (!window.TOOLTIPS_BE12000) window.TOOLTIPS_BE12000 = {};
 window.TOOLTIPS_BE12000['LAB_BE12000_02'] = [
   {
     selector: '#localnet:not(.SelectMenuItem)',
-    text: 'Chọn Local Network',
+    text: 'Bước 1: Chọn Local Network',
     position: 'bottom'
   },
   {
     selector: '#wlanConfig:not(.selectClass2Menu)',
-    text: 'Chọn WLAN',
+    text: 'Bước 2: Chọn WLAN',
     position: 'right'
   },
   {
     selector: '#wlanBasic:not(.selectClass3Menu)',
-    text: 'Chọn WLAN Basic',
+    text: 'Bước 3: Chọn WLAN Basic',
     position: 'right'
   },
   {
     selector: '#WLANSSIDConfBar[aria-expanded="false"], #WLANSSIDConf:not(:has(#WLANSSIDConf_container:visible)) #WLANSSIDConfBar',
-    text: 'Mở WLAN SSID Configuration',
+    text: 'Bước 4: Mở WLAN SSID Configuration',
     position: 'top'
   },
   {
     selector: '#template_WLANSSIDConf_0 .instName:not(.instNameExp), [id="instName_WLANSSIDConf:0"]:not(.instNameExp)',
-    text: 'Mở cấu hình SSID1 (2.4GHz)',
+    text: 'Bước 5: Mở cấu hình SSID1',
     position: 'top'
   },
   {
     selector: '[id="ESSID:0"]:not(:disabled), input[id="ESSID:0"]:not(:disabled)',
-    text: 'Bước 1: Nhập SSID Name: FPT Telecom',
+    text: 'Bước 6: Nhập SSID Name: FPT Telecom',
     position: 'right',
     expected: 'FPT Telecom'
   },
   {
     selector: '[id="EncryptionType:0"]:not(:disabled), select[id="EncryptionType:0"]:not(:disabled)',
-    text: 'Bước 2: Chọn WPA2-PSK-AES hoặc WPA3',
+    text: 'Bước 7: Chọn WPA2-PSK-AES hoặc WPA3',
     position: 'right'
   },
   {
     selector: '[id="KeyPassphrase:0"]:not(:disabled), input[id="KeyPassphrase:0"]:not(:disabled)',
-    text: 'Bước 3: Nhập WPA Passphrase: 19006600',
+    text: 'Bước 8: Nhập WPA Passphrase: 19006600',
     position: 'right',
     expected: '19006600'
   },
   {
     selector: '[id="Btn_apply_WLANSSIDConf:0"]:not(.disableBtn)',
-    text: 'Bước 4: Nhấn Apply để lưu cấu hình Wi-Fi',
+    text: 'Bước 9: Nhấn Apply để lưu cấu hình Wi-Fi',
     position: 'top'
   }
 ];

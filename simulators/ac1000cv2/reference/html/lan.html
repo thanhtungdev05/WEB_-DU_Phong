@@ -1,0 +1,1691 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var lan_ip = "";
+var lan_mask = "";
+var dhcp_enable = 1;
+var pooltype = 0;
+var dhcp_lease_time = 0;
+var pool_count = 0;
+var pool_enable = 0;
+var dns_mode = 0;
+var manual_dns1 = "";
+var manual_dns2 = "";
+var domain_local_host = "";
+var ip_local_host = "";
+var AddrPoolData = new Array();
+var addrpool_list = new Array();
+var MacIpData = new Array();
+var macipcount = 0;
+var MacIp_list = new Array();
+var pool = new Array();
+var localhost_list = new Array();
+var local_ip = "";
+var lan_dev = new Array();
+
+//unimode,  bridge port:0, router port:1
+var eth1 = 0;   
+var eth2 = 0;
+var eth3 = 0;
+var eth4 = 0;
+var num_lan = 2;
+var workMode = 0;
+var pptpd_enable = 0;
+var domain_name = "";
+var splitor = "-";
+
+lan_ip = "192.168.1.1";
+lan_mask = "255.255.255.0";
+dhcp_enable = 1;
+pooltype = 0;
+pool_count = 1;
+pool[1] = { "lan_ip": "192.168.0.1", "lan_mask": "255.255.255.0", "dhcp_enable": "0" };
+pool_enable = 0;
+addrpool_list[0] = {
+"lanif":"0","startip":"192.168.1.2","endip":"192.168.1.254"
+ }
+dhcp_lease_time = 1440;
+dns_mode = 0;
+manual_dns1 = "0.0.0.0";
+manual_dns2 = "0.0.0.0";
+localhost_list = [
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+},
+{
+"enable":"0",
+"ip":"",
+"domain":""
+}
+];
+domain_name = "";
+workMode = "0";
+pptpd_enable = "0";
+local_ip = "192.168.2.1";
+macipcount = 0;
+
+eth1 = 0;
+eth2 = 0;
+eth3 = 0;
+eth4 = 0;
+num_lan = 4;
+
+LanDevStatus = 2;
+lan_dev[0] = { mac: "bc:ec:a0:05:5f:8d", ip: "192.168.1.244", hostname: "thanhtung", conn_type: "1", uptime: "0h 0m ", dhcp: "1" };
+wl_num  = 0;
+eth_num = 1;
+
+
+function FreshTable(){
+	var ip = "";
+	var domain = "";
+	var value = "";
+	var TR = "";
+	TR += "<table id='localhostTable' class='mlist'>";
+	TR += '<tr>';
+	TR += '<th colspan="4" class="tableTitle">' + XlanString[30] +'</th>\n';
+	TR += '</tr>\n';
+	TR += '<tr>\n';
+	TR += '<th>' + XlanString[31] +'</th>\n';
+	TR += '<th>' + XlanString[32] +'</th>\n';
+	TR += '<th>' + WebString.Edit +'</th>\n';
+	TR += '</tr>\n';
+	
+	if(localhost_list.length == 0){
+		TR += '</table>\n';
+		$("#localhost_value").val(value);
+		$("#localHostDiv").html(TR);
+		return;
+	}else{
+		$.each(localhost_list, function(id, el){
+			if (id > 0){
+				value += "-.-";
+			}
+
+			value += el.ip + "#" + el.domain + "#" + el.enable;
+
+			ip = el.ip;
+			if (ip == "0.0.0.0"){
+				ip = "ALL IP";
+			}
+			if (el.enable == 1) {
+				TR += '<tr>\n';	
+				TR += '<td>' + el.ip + '</td>\n';
+				TR += '<td>' + el.domain + '</td>\n';
+				TR += '<td><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+				TR += '</tr>\n';
+			}
+		});
+		
+		TR += '</table>\n';
+	}
+	
+	$("#localhost_value").val(value);
+	$("#localHostDiv").html(TR);
+
+	$(".remove_btn").click(function(){
+		var row = this.parentNode.parentNode.rowIndex;
+		var index=0;
+
+		if (!confirm(WebString.delete_confirm))
+		{
+			return;
+		}
+		for (var i = 0; i < localhost_list.length; i++ ){
+			if(localhost_list[i].enable == 1) {
+				index +=1;
+				if(row-1 == index) {
+					localhost_list[i].enable = 0;
+					localhost_list[i].ip = "";
+					localhost_list[i].domain = "";
+					break;
+				}
+			}
+		}
+		FreshTable();
+		XDoSubmit();
+	});	
+}
+
+function dataInit()
+{
+    $("#lan_ip").val(lan_ip);
+    $("#lan_mask").val(lan_mask);
+    $("#start_ip").val(addrpool_list[0].startip);
+    $("#end_ip").val(addrpool_list[0].endip);
+    $("#dns_primary").val(manual_dns1);
+    $("#dns_secondary").val(manual_dns2);
+    $("#domain_local_host").val(domain_local_host);
+    $("#ip_local_host").val(ip_local_host);
+    $("#time_day").val( parseInt(dhcp_lease_time/(24*60)) );
+    $("#time_hour").val( parseInt(dhcp_lease_time%(24*60)/(60)) );
+    $("#time_minu").val( parseInt(dhcp_lease_time%60) );
+    if (1 == dhcp_enable)
+        $("#dhcp_enable0").attr("checked", true);
+    else
+        $("#dhcp_enable1").attr("checked", true);
+
+    if (0 == pooltype)
+        $("#mode0").attr("checked", true);
+    else if(1 == pooltype)
+        $("#mode1").attr("checked", true);
+    else
+        $("#mode2").attr("checked", true);
+      
+    if (1 == dns_mode)
+        $("#dns_ovwrt0").attr("checked", true);
+    else
+        $("#dns_ovwrt1").attr("checked", true);
+    if(1 < pool_count)
+        $("#multaddr_enable0").attr("checked", true);
+    else
+        $("#multaddr_enable1").attr("checked", true);  
+
+    //if (1 == pptpd_enable)
+	//{
+	//	document.getElementById("lan_mask").disabled=true;
+	//	document.getElementById("mode1").style.display='none';	
+	//}
+	//else
+	//{
+	//	document.getElementById("lan_mask").disabled=false;
+	//	document.getElementById("mode1").style.display='';			
+	//}
+}
+
+function uniModeInit()
+{
+    if(0 == eth2)
+        $("#lan2").attr("disabled", true);
+    if(0 == eth3)
+        $("#lan3").attr("disabled", true);
+    if(0 == eth4)
+        $("#lan4").attr("disabled", true);    
+}
+
+function dhcpserver_enable()
+{
+    var val = $('input:radio[name="dhcp_enable"]:checked').val();
+    var mode = $('input:radio[name="pool_mode"]:checked').val();
+    $("#multipool_info").hide();
+    
+    if(1 == val)
+    {
+        $("#default_addr_range_div").show();
+        $("#multiple_addrpool_div").show();
+        $("#dhcp_leasetime_div").show();
+        $("#dns_overwrite_div").show();
+        $("#mac_ip_bind_div").show();		
+        if(1 == mode)
+        {
+            $("#multiple_addrpool_div").show();
+            $("#MultAddrPoolTableContainer").show();
+        }
+        else
+        {
+            $("#multiple_addrpool_div").hide();
+            $("#MultAddrPoolTableContainer").hide();
+            $("#addrpooltable").val("");             
+        }
+    }
+    else
+    {
+        $("#default_addr_range_div").hide();
+        $("#multiple_addrpool_div").hide();
+        $("#dhcp_leasetime_div").hide();
+        $("#dns_overwrite_div").hide();
+        $("#start_ip").val(addrpool_list[0].startip);
+        $("#end_ip").val(addrpool_list[0].endip);
+        $("#addrpooltable").val("");         
+        $("#leasetime").val("0");
+        $("#multaddr_enable1").attr("checked", true);
+        $("#dns_ovwrt1").attr("checked", true);
+        $("#mac_ip_bind_div").hide();		
+    }
+    if(2 == mode)
+    {
+        $("#multipool_info").show();
+    }
+    WebStepIndex();
+}
+
+function dns_overwrite_manual()
+{
+    var val=$('input:radio[name="dns_overwrite"]:checked').val();    
+    if(1 == val)
+    {      
+        $("#primary_dns").show();
+        $("#secondary_dns").show();
+        if( "" == manual_dns1)
+            $("#primary_dns").val($("#lan_ip").val());
+        else
+            $("#primary_dns").val(manual_dns1);
+    }
+    else
+    {
+        $("#primary_dns").hide();
+        $("#secondary_dns").hide();
+        $("#dns_primary").val("");
+        $("#dns_secondary").val("");
+    }
+}
+
+
+/*  cig_rg_common.h define
+   // 0xfffffff, last 4 bits is LAN1-4, LAN:16bits, ssid:8bits * 2
+typedef enum {
+    RG_UNI_LAN1         = 0,
+    RG_UNI_LAN2         = 1,
+    RG_UNI_LAN3         = 2,
+    RG_UNI_LAN4         = 3,
+    //
+    RG_UNI_RF0_SSID1    = 16,  //2.4G
+    RG_UNI_RF0_SSID2    = 17,
+    RG_UNI_RF0_SSID3    = 18,
+    RG_UNI_RF0_SSID4    = 19,
+    RG_UNI_RF1_SSID1    = 24, //5G
+    RG_UNI_RF1_SSID2    = 25,
+    RG_UNI_RF1_SSID3    = 26,
+    RG_UNI_RF1_SSID4    = 27,
+    RG_UNI_MAX          = 32,
+} RG_UNI_E;
+*/
+
+function MultAddrTableFresh()
+{
+    var TR = "";
+    TR += '<table id="MultAddrTable" class="commonlist">\n';
+    TR += '<tr>\n';
+    TR += '<th style="width: 35%;">' + XlanString[18] + '</th>\n';
+    TR += '<th style="width: 25%;">' + XlanString[19] + '</th>\n';
+    TR += '<th style="width: 25%;">' + XlanString[20] + '</th>\n';
+    TR += '<th style="width: 15%;">' + WebString.Edit + '</th>\n';
+    TR += '</tr>\n';
+    var post_str="";
+
+    for (var i = 0; i < AddrPoolData.length; i++)
+    {
+        var lanif = AddrPoolData[i].lanif;
+        var startip = AddrPoolData[i].startip;
+        var endip = AddrPoolData[i].endip;
+        //var leasetime = AddrPoolData[i].leasetime;
+        var ifname = "";
+        if(lanif & (1 << 0))
+            ifname += "LAN1 ";
+        if(lanif & (1 << 1))
+            ifname += "LAN2 ";
+        if(lanif & (1 << 2))
+            ifname += "LAN3 "; 
+        if(lanif & (1 << 3))
+            ifname += "LAN4 ";
+        if(lanif & (1 << 16))
+            ifname += "2.4G_SSID1 ";
+        if(lanif & (1 << 17))
+            ifname += "2.4G_SSID2 ";
+        if(lanif & (1 << 18))
+            ifname += "2.4G_SSID3 "; 
+        if(lanif & (1 << 19))
+            ifname += "2.4G_SSID4 "; 
+        if(lanif & (1 << 24))
+            ifname += "5G_SSID1 "; 
+        if(lanif & (1 << 25))
+            ifname += "5G_SSID2 "; 
+        if(lanif & (1 << 26))
+            ifname += "5G_SSID3 "; 
+        if(lanif & (1 << 27))
+            ifname += "5G_SSID4 ";
+
+        post_str=post_str + lanif + "|";
+        post_str=post_str + startip + "|";
+        post_str=post_str + endip + "~";
+       // post_str=post_str + leasetime + "~";
+
+        TR += '<tr>\n';
+        TR += '<td>' + ifname + '</td>\n';
+        TR += '<td>' + startip + '</td>\n';
+        TR += '<td>' + endip + '</td>\n';
+        TR += '<td><a href="#" class="btn remove_btn" onclick="DeleteIpSelected(this);" >' + WebString.Remove + '</a></td>';
+        TR += '</tr>\n';        
+    }    
+    
+    TR += '</table>\n';
+    $("#MultAddrPoolTableContainer").html(TR);
+    $("#addrpooltable").val(post_str);
+    
+    WebStyleCommonList();
+}
+
+function DeleteIpSelected(r)
+{
+    WebResetTimer();
+
+    var row = r.parentNode.parentNode.rowIndex;
+    var len = AddrPoolData.length;
+    for (var i = row-1; i < AddrPoolData.length; i++ )
+    {
+        AddrPoolData[i] = AddrPoolData[i+1];
+    }
+    AddrPoolData.pop();
+    MultAddrTableFresh();
+}
+
+function IpAddrPoolBind()
+{  
+    WebResetTimer();
+
+    var obj = new Object();
+    var leasetime = 0; 
+    var lanif = 0; 
+    var pool_lan_ip = Ip2Num($("#lan_ip").val());
+    var pool_lan_mask = Ip2Num($("#lan_mask").val());
+    var ip_start_def = Ip2Num($("#start_ip").val());
+    var ip_end_def = Ip2Num($("#end_ip").val());
+    var pool_ip_start = Ip2Num($("#dhcp_start_ip").val());
+    var pool_ip_end = Ip2Num($("#dhcp_end_ip").val());
+    var pool_subnet = (pool_lan_ip & pool_lan_mask);        
+
+    if(AddrPoolData.length >= 3)
+    {
+        alert(WebString.dhcp_pool_max_num);
+        return false;
+    }
+
+    if( !isValidIpAddress($("#dhcp_start_ip").val()) || !isValidIpAddress($("#dhcp_end_ip").val()) )
+    {
+        alert(WebString.ip_alert);
+        return false;
+    }     
+    
+    if (false == isValidUnicastIpAddress($("#dhcp_start_ip").val(), $("#lan_mask").val())
+    || false == isValidUnicastIpAddress($("#dhcp_end_ip").val(), $("#lan_mask").val()))
+    {
+        alert(WebString.unicastip);
+        return false;
+    }
+    
+    if(pool_lan_ip == pool_ip_start || pool_lan_ip == pool_ip_end)
+    {
+        alert(WebString.ip_conflict);
+        return false;	
+    }
+         
+    if (pool_subnet != (pool_ip_start & pool_lan_mask))
+    {
+        alert(WebString.diff_subnet);
+        return false;
+    }
+    if (pool_subnet != (pool_ip_end & pool_lan_mask))
+    {
+        alert(WebString.diff_subnet);
+        return false;
+    }
+
+    if(pool_ip_start > pool_ip_end)
+    {
+        alert(WebString.addr_beyond);
+        return false;
+    }
+
+    if(pool_ip_start >= ip_start_def && pool_ip_start <= ip_end_def ||
+        pool_ip_end >= ip_start_def && pool_ip_end <= ip_end_def)
+    {
+        alert(WebString.pool_addr_cross);
+        return false;
+    }
+    if(pool_ip_start <= ip_start_def && pool_ip_end >= ip_end_def)
+    {
+        alert(WebString.invalid_ip_range);
+        return false;
+    }
+    
+    for (var i = 0; i < AddrPoolData.length; i++ )
+    {
+        if(pool_ip_start >= Ip2Num(AddrPoolData[i].startip) && pool_ip_start <= Ip2Num(AddrPoolData[i].endip) ||
+        pool_ip_end >= Ip2Num(AddrPoolData[i].startip) && pool_ip_end <= Ip2Num(AddrPoolData[i].endip))
+        {
+            alert(WebString.pool_addr_cross);
+            return false;
+        }
+        if(pool_ip_start <= Ip2Num(AddrPoolData[i].startip) && pool_ip_end >= Ip2Num(AddrPoolData[i].endip))
+        {
+            alert(WebString.invalid_ip_range);
+            return false;
+        }
+    }
+    
+    if($("#lan1").attr("disabled") == undefined && $("#lan1").attr("checked") != undefined)
+    {
+        lanif |= (1 << 0);
+    }
+    if($("#lan2").attr("disabled") == undefined && $("#lan2").attr("checked") != undefined)
+    {
+        lanif |= (1 << 1);
+    }
+    if($("#lan3").attr("disabled") == undefined && $("#lan3").attr("checked") != undefined)
+    {
+        lanif |= (1 << 2);      
+    }    
+    if($("#lan4").attr("disabled") == undefined && $("#lan4").attr("checked") != undefined)
+    {
+        lanif |= (1 << 3);
+    }    
+    if($("#ssid1_24g").attr("disabled") == undefined && $("#ssid1_24g").attr("checked") != undefined)
+    {
+        lanif |= (1 << 16);
+    }
+    if($("#ssid2_24g").attr("disabled") == undefined && $("#ssid2_24g").attr("checked") != undefined)
+    {
+        lanif |= (1 << 17);
+    }
+    if($("#ssid3_24g").attr("disabled") == undefined && $("#ssid3_24g").attr("checked") != undefined)
+    {
+        lanif |= (1 << 18);      
+    }    
+    if($("#ssid4_24g").attr("disabled") == undefined && $("#ssid4_24g").attr("checked") != undefined)
+    {
+        lanif |= (1 << 19);
+    }
+    if($("#ssid1_5g").attr("disabled") == undefined && $("#ssid1_5g").attr("checked") != undefined)
+    {
+        lanif |= (1 << 24);
+    }    
+    if($("#ssid2_5g").attr("disabled") == undefined && $("#ssid2_5g").attr("checked") != undefined)
+    {
+        lanif |= (1 << 25);
+    }
+    if($("#ssid3_5g").attr("disabled") == undefined && $("#ssid3_5g").attr("checked") != undefined)
+    { 
+        lanif |= (1 << 26);
+    }
+    if($("#ssid4_5g").attr("disabled") == undefined && $("#ssid4_5g").attr("checked") != undefined)
+    {
+        lanif |= (1 << 27);
+    }
+    if(0 == lanif)
+    {
+        alert(WebString.port_select);
+        return false;
+    }
+    else
+    {
+        if(lanif & (1 << 0))
+        {
+            $("#lan1").attr("checked", true);
+            $("#lan1").attr("disabled", true);
+        }
+        if(lanif & (1 << 1))
+        {
+            $("#lan2").attr("checked", true);
+            $("#lan2").attr("disabled", true);
+        }
+        if(lanif & (1 << 2))
+        {
+            $("#lan3").attr("checked", true);
+            $("#lan3").attr("disabled", true);
+        }
+        if(lanif & (1 << 3))
+        {
+            $("#lan4").attr("checked", true);
+            $("#lan4").attr("disabled", true);
+        }
+        if(lanif & (1 << 16))
+        {
+            $("#ssid1_24g").attr("checked", true);
+            $("#ssid1_24g").attr("disabled", true);
+        }
+        if(lanif & (1 << 17))
+        {
+            $("#ssid2_24g").attr("checked", true);
+            $("#ssid2_24g").attr("disabled", true);
+        }
+        if(lanif & (1 << 18))
+        {
+            $("#ssid3_24g").attr("checked", true);
+            $("#ssid3_24g").attr("disabled", true);
+        }
+        if(lanif & (1 << 19))
+        {
+            $("#ssid4_24g").attr("checked", true);
+            $("#ssid4_24g").attr("disabled", true);
+        }
+        if(lanif & (1 << 24))
+        {
+            $("#ssid1_5g").attr("checked", true);
+            $("#ssid1_5g").attr("disabled", true);
+        }
+        if(lanif & (1 << 25))
+        {
+            $("#ssid2_5g").attr("checked", true);
+            $("#ssid2_5g").attr("disabled", true);
+        }
+        if(lanif & (1 << 26))
+        {
+            $("#ssid3_5g").attr("checked", true);
+            $("#ssid3_5g").attr("disabled", true);
+        }
+        if(lanif & (1 << 27))
+        {
+            $("#ssid4_5g").attr("checked", true);
+            $("#ssid4_5g").attr("disabled", true);
+        }
+    }
+    
+    obj.lanif = lanif;
+    obj.startip = $("#dhcp_start_ip").attr("value");
+    obj.endip = $("#dhcp_end_ip").attr("value");
+    obj.leasetime = leasetime;
+    AddrPoolData.push(obj);
+    MultAddrTableFresh();
+}
+
+function MacIpTableFresh()
+{
+    var TR = "";
+    TR += '<table id="MacIpTable" class="commonlist">\n';
+    TR += '<tr>\n';
+    TR += '<th style="width: 40%;">' + XlanString[42] + '</th>\n';
+    TR += '<th style="width: 40%;">' + XlanString[43] + '</th>\n';
+    TR += '<th style="width: 20%;">' + WebString.Edit + '</th>\n';
+    TR += '</tr>\n';
+    var post_str = "";
+    var post_str1 = "";
+    var post_str2 = "";
+    var post_str3 = "";
+    var post_str4 = "";
+    var post_str5 = "";
+    var post_str6 = "";
+    var post_str7 = "";
+    var post_str8 = "";
+    var index = 0;
+
+    for (var i = 0; i < MacIpData.length; i++)
+    {
+        var mac = MacIpData[i].mac;
+        var ip = MacIpData[i].ip;    
+
+        index = parseInt(i/8);
+        if (i%8 == 0)
+        {
+            post_str = "";
+        }
+        post_str = post_str + mac + "|";
+        post_str = post_str + ip + "~";
+
+        switch(index) 
+        {
+            case 0:
+                post_str1 = post_str;
+                break;
+            case 1:
+                post_str2 = post_str;
+                break;
+            case 2:
+                post_str3 = post_str;
+                break;
+            case 3:
+                post_str4 = post_str;
+                break;
+            case 4:
+                post_str5 = post_str;
+                break;
+            case 5:
+                post_str6 = post_str;
+                break;
+            case 6:
+                post_str7 = post_str;
+                break;
+            case 7:
+                post_str8 = post_str;
+                break;  
+            default:
+                post_str = post_str;
+        }
+        
+        TR += '<tr>\n';
+        TR += '<td>' + mac + '</td>\n';
+        TR += '<td>' + ip + '</td>\n';
+        TR += '<td><a href="#" class="btn remove_btn" onclick="DeletemacipbindSelected(this);" >' + WebString.Remove + '</a></td>';
+        TR += '</tr>\n';        
+    }    
+    
+    TR += '</table>\n';
+    $("#MacIpTableContainer").html(TR);
+    $("#bindtable1").val(post_str1);
+    $("#bindtable2").val(post_str2);
+    $("#bindtable3").val(post_str3);
+    $("#bindtable4").val(post_str4);
+    $("#bindtable5").val(post_str5);
+    $("#bindtable6").val(post_str6);
+    $("#bindtable7").val(post_str7);
+    $("#bindtable8").val(post_str8);
+    
+    WebStyleCommonList();
+}
+
+function macissame(oldmac, newmac)
+{
+   
+    var soldmac = oldmac.split(":");
+    var snewmac = newmac.split(":");
+	if ((soldmac.length != 6) || (snewmac.length != 6))
+	{
+		return false;
+	}    
+    
+    if ((soldmac[0] == snewmac[0]) && 
+        (soldmac[1] == snewmac[1]) && 
+        (soldmac[2] == snewmac[2]) && 
+        (soldmac[3] == snewmac[3]) && 
+        (soldmac[4] == snewmac[4]) && 
+        (soldmac[5] == snewmac[5]))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+function isValidIP2MACbind(mac, ip)
+{
+    var i = 0, ipaddr = Ip2Num(ip);
+    var n_ip_start = Ip2Num($("#start_ip").val()) >>> 0;
+    var n_ip_end = Ip2Num($("#end_ip").val()) >>> 0;
+
+	if ((ipaddr < n_ip_start) || (ipaddr > n_ip_end)) {
+		alert("IP address: " + ip + " " + WebString.mac_ip_notinpool);
+		return false;
+	}
+	
+    for(i = 0; i < lan_dev.length; i++) {
+        if ((ipaddr == Ip2Num(lan_dev[i].ip)) && (mac != lan_dev[i].mac)) {
+            alert("IP address: " + ip + " " + WebString.mac_ip_used);
+            return false;
+        }
+    }
+    
+	return true;
+}
+
+function IpMacBind()
+{  
+    WebResetTimer();
+
+    var obj = new Object();
+	var targetstr;
+    var indexofsplitor;
+
+    var ip = Ip2Num($("#bindip").val());
+    //var mac = $("#bindmac").val();
+    var mac = "";
+
+	if ("Manually Enter MAC Address" == $("#device_select").val()){
+		mac = $("#bindmac").val();
+	} else {
+        targetstr = $("#device_select").val();
+        indexofsplitor = targetstr.lastIndexOf(splitor);
+        hostname = targetstr.substr(0, indexofsplitor);
+        mac = targetstr.substr(indexofsplitor+1);
+	}
+	mac = $.trim(mac);
+	mac = mac.toLowerCase();
+
+    if(MacIpData.length >= 64)
+    {
+        alert(WebString.mac_ip_num);
+        return false;
+    }
+
+	if(false == isValidMacAddress(mac) || mac.length != 17)
+    {
+		alert(WebString.mac_alert);
+		return false;
+	}
+	
+	if(false == isValidIpAddress($("#bindip").val())) 
+	{
+        alert(WebString.ip_alert);
+        return false;
+	}
+	
+    for (var i = 0; i < MacIpData.length; i++ )
+    {
+        if((ip == Ip2Num(MacIpData[i].ip)) || macissame(mac, MacIpData[i].mac))
+        {
+            alert(WebString.mac_ip_cross);
+            return false;
+        }
+    }
+
+    if (false == isValidIP2MACbind(mac, ($("#bindip").val()))) {
+        return false;
+    }
+	
+	obj.mac = mac;
+    obj.ip = $("#bindip").attr("value");
+
+    MacIpData.push(obj);
+    MacIpTableFresh();
+}
+
+function DeletemacipbindSelected(r)
+{
+    WebResetTimer();
+
+    var row = r.parentNode.parentNode.rowIndex;
+    var len = MacIpData.length;
+    for (var i = row-1; i < MacIpData.length; i++ )
+    {
+        MacIpData[i] = MacIpData[i+1];
+    }
+    MacIpData.pop();
+    MacIpTableFresh();
+}
+
+function BindMutilAddrPoolValue()
+{
+    this.lanif;
+    this.startip;
+    this.endip;
+    //this.leasetime;
+}
+
+function BindMacIpPoolValue()
+{
+    this.ip;
+    this.mac;
+}
+
+function InitTable()
+{
+    var i = 0;
+    var j = 0;
+    for(i = 0; i < parseInt(pool_count) - 1; i++)
+    {
+        //pool[0] for default(2. Enter the DHCP address pool definition.)
+        j = i + 1;
+        AddrPoolData[i]=new BindMutilAddrPoolValue();
+        AddrPoolData[i].lanif = addrpool_list[j].lanif;
+        AddrPoolData[i].startip = addrpool_list[j].startip;
+        AddrPoolData[i].endip = addrpool_list[j].endip;
+        //AddrPoolData[i].leasetime = addrpool_list[j].leasetime;
+        
+        var lan_if = addrpool_list[j].lanif;
+        if(lan_if & (1 << 0))
+        {
+            $("#lan1").attr("checked", true);
+            $("#lan1").attr("disabled", true);
+        }
+        if(lan_if & (1 << 1))
+        {
+            $("#lan2").attr("checked", true);
+            $("#lan2").attr("disabled", true);
+        }
+        if(lan_if & (1 << 2))
+        {
+            $("#lan3").attr("checked", true);
+            $("#lan3").attr("disabled", true);
+        }
+        if(lan_if & (1 << 3))
+        {
+            $("#lan4").attr("checked", true);
+            $("#lan4").attr("disabled", true);
+        }
+        if(lan_if & (1 << 16))
+        {
+            $("#ssid1_24g").attr("checked", true);
+            $("#ssid1_24g").attr("disabled", true);
+        }
+        if(lan_if & (1 << 17))
+        {
+            $("#ssid2_24g").attr("checked", true);
+            $("#ssid2_24g").attr("disabled", true);
+        }
+        if(lan_if & (1 << 18))
+        {
+            $("#ssid3_24g").attr("checked", true);
+            $("#ssid3_24g").attr("disabled", true);
+        }
+        if(lan_if & (1 << 19))
+        {
+            $("#ssid4_24g").attr("checked", true);
+            $("#ssid4_24g").attr("disabled", true);
+        }
+        if(lan_if & (1 << 24))
+        {
+            $("#ssid1_5g").attr("checked", true);
+            $("#ssid1_5g").attr("disabled", true);
+        }
+        if(lan_if & (1 << 25))
+        {
+            $("#ssid2_5g").attr("checked", true);
+            $("#ssid2_5g").attr("disabled", true);
+        }
+        if(lan_if & (1 << 26))
+        {
+            $("#ssid3_5g").attr("checked", true);
+            $("#ssid3_5g").attr("disabled", true);
+        }
+        if(lan_if & (1 << 27))
+        {
+            $("#ssid4_5g").attr("checked", true);
+            $("#ssid4_5g").attr("disabled", true);
+        }
+    }   
+    for (i = 0; i < macipcount; i++)
+    {
+        MacIpData[i] = new BindMacIpPoolValue();
+        MacIpData[i].mac = MacIp_list[i].mac;
+        MacIpData[i].ip = MacIp_list[i].ip;     
+    }
+}
+
+function is2LanSubnetDiffer()
+{
+    var lanip = $("#lan_ip").val();
+    var lanmask = $("#lan_mask").val();
+    var lanip2 = pool[1].lan_ip;
+    var lanmask2 = pool[1].lan_mask;
+    var subnet1 = Ip2Num(lanip) & Ip2Num(lanmask);
+    var subnet2 = Ip2Num(lanip2) & Ip2Num(lanmask2);
+    var pptpd_lanip = local_ip;
+    var pptpd_subnet = Ip2Num(pptpd_lanip) & Ip2Num(lanmask);
+	
+    if (false == isValidIpAddress(lanip))
+    {
+        alert(WebString.ip_alert);
+        return false;
+    }
+
+    if (false == isValidSubnetMask(lanmask))
+    {
+        alert(WebString.netmask_alert);
+        return false;
+    }
+
+    if (false == isValidUnicastIpAddress(lanip, lanmask))
+    {
+        alert(WebString.unicastip);
+        return false;
+    }
+
+    if( subnet1 == subnet2)
+    {
+        alert(WebString.same_subnet);
+        return false;
+    }
+	
+    if( subnet1 == pptpd_subnet)
+    {
+        alert(WebString.pptpd_same_subnet_alert);
+        return false;
+    }
+    
+    return true;
+}
+
+function LocalSubnetChange()
+{
+    if (false == is2LanSubnetDiffer())
+    {
+        return false;
+    }
+
+    if(1 == $('input:radio[name="dhcp_enable"]:checked').val())
+    {        
+        var n_lan_ip = Ip2Num($("#lan_ip").val()) >>> 0;
+        var n_lan_mask = Ip2Num($("#lan_mask").val()) >>> 0;
+        var n_ip_start = Ip2Num($("#start_ip").val()) >>> 0;
+        var n_ip_end = Ip2Num($("#end_ip").val()) >>> 0;
+        var n_subnet = (n_lan_ip & n_lan_mask);
+
+        if( !isValidIpAddress($("#start_ip").val()) || !isValidIpAddress($("#end_ip").val()) )
+        {
+            alert(WebString.ip_alert);
+            return false;
+        }
+
+        if( lan_ip != $("#lan_ip").val() && n_subnet != ((Ip2Num(lan_ip) >>> 0) & (Ip2Num(lan_mask) >>> 0)) )
+        {
+            alert(WebString.subnet_changed);
+            var new_ipstart = n_ip_start - (n_ip_start & n_lan_mask) + n_subnet;
+            var new_ipend = n_ip_end - (n_ip_end & n_lan_mask) + n_subnet;
+            $("#start_ip").val(Num2Ip(new_ipstart));
+            $("#end_ip").val(Num2Ip(new_ipend));
+            
+            if($('input:radio[name="addrpool_enable"]:checked').val())
+            {
+                for (var i = 0; i < AddrPoolData.length; i++ )
+                {
+                    var ipstart = Ip2Num(AddrPoolData[i].startip) >>> 0;
+                    var ipend = Ip2Num(AddrPoolData[i].endip) >>> 0;
+                    var dhcp_startip = ipstart - (ipstart & n_lan_mask) + n_subnet;
+                    var dhcp_endip = ipend - (ipend & n_lan_mask) + n_subnet;
+                    AddrPoolData[i].startip = Num2Ip(dhcp_startip);
+                    AddrPoolData[i].endip = Num2Ip(dhcp_endip);
+                }
+            }
+            MultAddrTableFresh();
+        }
+    } 
+    return true;
+}
+
+function isValidLanIpAddress(ip){
+	if (0 == pool_type || 1 == pool_type){
+		if (isLansubIP(ip, lan_ip_0, lan_mask_0) == false){
+			return false;
+		}
+	}else if (2 == pool_type){
+		if (isLansubIP(ip, lan_ip_0, lan_mask_0) == false
+			&& isLansubIP(ip, lan_ip_1, lan_mask_1) == false){
+			return false;
+		}
+	}
+}
+
+function HaveSameRule(ipaddr, domain){
+	for (var i = 0; i < localhost_list.length; i++ ){
+		if(localhost_list[i].enable == 1) {
+			if((localhost_list[i].ip == ipaddr) || (localhost_list[i].domain == domain))
+				return true;
+		}			
+	}	
+	
+	return false;
+}
+
+function doCheckVal(ipaddr, domain){
+	var n_lan_ip = Ip2Num($("#lan_ip").val()) >>> 0;
+	var n_lan_mask = Ip2Num($("#lan_mask").val()) >>> 0;
+	var n_ip = Ip2Num(ipaddr) >>> 0;
+	var n_subnet = (n_lan_ip & n_lan_mask);
+	
+	if (ipaddr.length == 0){
+		alert(XlanString[34]);
+		return false;
+	}else if ((false == isValidIpAddress(ipaddr))){
+		alert(XlanString[35]);
+		return false;
+	}else if (n_subnet != (n_ip & n_lan_mask)){
+		alert(XlanString[35]);
+		return false;
+	}else if (true == HaveSameRule(ipaddr, domain)){
+		alert(XlanString[36]);
+		return false;	
+	}else if (false == isValidDomain(domain)){
+		alert(XlanString[38]);
+		return false;	
+	}else if (domain == domain_name){
+		alert(XlanString[37]);
+		return false;	
+	}
+	return true;	
+}
+
+function WriteHostnameSel(){
+	var device_sel = '<select id="device_select" style="width:220px">\n';
+	device_sel += '<option value="Manually Enter MAC Address">' + XmacfilterString[13] + '</option>';
+	if (lan_dev.length != 0){
+		$.each(lan_dev, function(id, el){
+			device_sel += '<option>' + el.hostname + splitor + el.mac + '</option>';
+		});
+	}
+
+	device_sel += '</select>';
+	$("#device_select_td").html(device_sel);
+
+	$("#device_select").change(function(){
+		if ("Manually Enter MAC Address" == $("#device_select").val()){
+			$("#bindmac_tr").show();
+		}else{
+			$("#bindmac_tr").hide();
+		}
+	});
+}
+
+function WebInit()
+{
+    $("#div_ipv4dnstype").show();
+    $("#localHostDiv").show();
+    if (top.num_5g_wifi)
+    {
+        $("#wifi5g").show();
+    }
+    dataInit(); 
+
+	WriteHostnameSel();
+    //if the port is l2 port, don't assign ip to this port
+    uniModeInit();
+    
+    dhcpserver_enable();
+    dns_overwrite_manual();
+    InitTable();
+    MultAddrTableFresh();
+	SetMode();
+	MacIpTableFresh();
+    WebStepIndex();
+
+    //  hide the DHCP while SFU mode
+    if (1 == workMode)
+    {
+        $("#dhcp_cfg_div").hide();
+    }
+	FreshTable();
+}
+
+function getTempLocalHost(ipaddr, domain)
+{
+	for (var i = 0; i < localhost_list.length; i++ ){
+		if((localhost_list[i].enable == 0)
+			&& (localhost_list[i].ip == ipaddr) ){
+			for (var j = 0; j < localhost_list.length; j++ ){
+				if((localhost_list[j].enable == 0)
+					&& (localhost_list[j].domain == domain) ){
+					localhost_list[j].domain = "";
+					localhost_list[j].ip = "";
+				}
+			}
+			return i;
+		}
+	}
+	for (var i = 0; i < localhost_list.length; i++ ){
+		if((localhost_list[i].enable == 0)
+			&& (localhost_list[i].domain == domain) ){
+			return i;
+		}
+	}
+	for (var i = 0; i < localhost_list.length; i++ ){
+		if((localhost_list[i].ip == "") 
+			&& (localhost_list[i].domain == "")){
+			return i;
+		}
+	}
+	for (var i = 0; i < localhost_list.length; i++ ){
+		if(localhost_list[i].enable == 0){
+			return i;
+		}
+	}
+	return localhost_list.length;
+}
+
+function AddRule(){
+	var ipaddr;
+	var domain;
+	var index;
+
+	ipaddr = $("#ip_local_host").val();
+	domain = $("#domain_local_host").val();
+
+	ipaddr = $.trim(ipaddr);
+	domain = $.trim(domain);
+	
+	if (false == doCheckVal(ipaddr, domain)){
+		return;
+	}
+
+	index = getTempLocalHost(ipaddr, domain);
+	if(index == localhost_list.length) {
+		alert(XlanString[33]);
+		return;
+	}
+	localhost_list[index].enable = 1;
+	localhost_list[index].ip = ipaddr;
+	localhost_list[index].domain = domain;
+
+	FreshTable();
+	XDoSubmit();
+}
+
+$(document).ready(function (){
+    $("#btn_apply").click(function(){
+        XDoSubmit();
+    });
+    
+    $("#addpool").click(function(){
+        IpAddrPoolBind();
+    });     
+
+    $("#addbind").click(function(){
+        IpMacBind();
+    });      
+
+    $("input[name='dhcp_enable']").click(function() {
+        dhcpserver_enable();
+    });
+
+    $("input[name='pool_mode']").click(function() {
+        dhcpserver_enable();
+    });
+
+    $("input[name='dns_overwrite']").click(function() {
+        dns_overwrite_manual();
+    });
+    
+    $("input[name='lan_ip']").change(function() {
+        LocalSubnetChange();
+		//if (1 == pptpd_enable)
+		//alert(WebString.subnet_changed_for_pptpd);	
+    });
+    
+    $("input[name='lan_mask']").change(function() {
+        LocalSubnetChange();
+    });
+    
+	$("#dns_ovwrt0").change(function(){
+		SetMode();
+	});
+	
+	$("#dns_ovwrt1").change(function(){
+		SetMode();
+	});
+	
+	$("#btn_add").click(function(){
+	    AddRule();
+	});
+
+	$("#start_ip").change(function(){
+		if(0 != MacIpData.length) {
+        	alert(WebString.sync_ip2mactable);
+		}
+	});
+
+	$("#end_ip").change(function(){
+		if(0 != MacIpData.length) {
+        	alert(WebString.sync_ip2mactable);
+		}
+	});
+});
+
+function CheckSetValue()
+{
+	var mac;
+	var ip;
+	
+    if (false == is2LanSubnetDiffer())
+    {
+        return false;
+    }
+    
+    if(1 == $('input:radio[name="dhcp_enable"]:checked').val())
+    {
+        var n_lan_ip = Ip2Num($("#lan_ip").val()) >>> 0;
+        var n_lan_mask = Ip2Num($("#lan_mask").val()) >>> 0;
+        var n_ip_start = Ip2Num($("#start_ip").val()) >>> 0;
+        var n_ip_end = Ip2Num($("#end_ip").val()) >>> 0;
+        var n_subnet = (n_lan_ip & n_lan_mask);
+        var pmode = $('input:radio[name="pool_mode"]:checked').val();
+
+        if( !isValidIpAddress($("#start_ip").val()) || !isValidIpAddress($("#end_ip").val()) )
+        {
+            alert(WebString.ip_alert);
+            return false;
+        }
+        
+        if (false == isValidUnicastIpAddress($("#start_ip").val(), $("#lan_mask").val())
+        || false == isValidUnicastIpAddress($("#end_ip").val(), $("#lan_mask").val()))
+        {
+            alert(WebString.unicastip);
+            return false;
+        } 
+         
+        if(n_lan_ip == n_ip_start || n_lan_ip == n_ip_end)
+        {
+            alert(WebString.ip_conflict);
+            return false;	
+        }      
+
+        if (n_subnet != (n_ip_start & n_lan_mask))
+        {
+            alert(WebString.diff_subnet);
+            return false;
+        }
+        if (n_subnet != (n_ip_end & n_lan_mask))
+        {
+            alert(WebString.diff_subnet);
+            return false;
+        }
+       
+        if(n_ip_start > n_ip_end)
+        {
+            alert(WebString.addr_beyond);
+            return false;
+        }
+        
+        if(1 == pmode)
+        {
+            for (var i = 1; i < addrpool_list.length; i++ )
+            {
+                if(n_ip_start >= Ip2Num(addrpool_list[i].startip) && n_ip_start <= Ip2Num(addrpool_list[i].endip) ||
+                n_ip_end >= Ip2Num(addrpool_list[i].startip) && n_ip_end <= Ip2Num(addrpool_list[i].endip))
+                {
+                    alert(WebString.pool_addr_cross);
+                    return false;
+                }
+                if((n_ip_start <= Ip2Num(addrpool_list[i].startip)) && (n_ip_end >= Ip2Num(addrpool_list[i].endip)))
+                {
+                    alert(WebString.invalid_ip_range);
+                    return false;
+                }
+            }
+        }
+
+        if(1 == $('input:radio[name="dns_overwrite"]:checked').val())
+        {
+            var dns1 = $("#dns_primary").val();
+            var dns2 = $("#dns_secondary").val();
+            if(dns1.length > 0 && dns1 != "0.0.0.0")
+            {
+                if (false == isValidDnsIpAddress(dns1))
+                {
+                    alert(WebString.wan_pridns_alert);
+                    return false;
+                }
+            }
+            if(dns2.length > 0 && dns2 != "0.0.0.0")
+            {
+                if (false == isValidDnsIpAddress(dns2))
+                {
+                    alert(WebString.wan_secdns_alert);
+                    return false;
+                }
+                if(dns1 == dns2)
+                {
+                    alert(WebString.wan_prisec_alert);
+                    return false;
+                }
+            }
+            if(("" == dns1 && "" == dns2) || ("0.0.0.0" == dns1 && "0.0.0.0" == dns2))
+            {
+                alert(WebString.dns_valid);
+                return false;  
+            }
+            if(("" == dns1 || "0.0.0.0" == dns1) && ("" == dns2 || "0.0.0.0" == dns2))
+            {
+                $("#dns_primary").val($("#lan_ip").val());
+                $("#dns_secondary").val("0.0.0.0");
+            }             
+        }
+        
+        var time_day = parseInt($("#time_day").attr("value"));
+        var time_hour = parseInt($("#time_hour").attr("value"));
+        var time_minu = parseInt($("#time_minu").attr("value"));
+        if(time_day < 0 || time_day > 365)
+        {
+            alert(WebString.day_alert);
+            return false;            
+        }
+        if(time_hour < 0 || time_hour > 23)
+        {
+            alert(WebString.hour_alert);
+            return false;            
+        }
+        if(time_minu < 0 || time_minu > 59)
+        {
+            alert(WebString.minute_alert);
+            return false;            
+        }
+        
+        var dhcpleasetime = time_day * 24 * 60 + time_hour * 60 + time_minu;
+        if(2 > dhcpleasetime)
+        {
+            alert(WebString.min_leasetime);
+            return false; 
+        }
+        $("#leasetime").val(dhcpleasetime);
+    }
+               
+    return true;
+}
+
+function WebDoSubmit()
+{   
+    if( false == CheckSetValue())
+    {
+        return;
+    }
+    $("#XForm").submit();
+}
+
+function SetMode(){
+	WebStepIndex();
+}	
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	if (!page || page === "undefined") {
+		page = (typeof getCurSubMenu === "function") ? getCurSubMenu() : "lan";
+	}
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu || "lan");
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input id="localhost_value" name="localhost_value" type="hidden" value="" />
+<div class="cfgstep">
+    <p><strong id="XS0"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS1"></td>
+            <td><input type="text" name="lan_ip" id="lan_ip" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);"/></td>
+		</tr>
+        <!--tr>
+            <td width="200"></td>
+            <td><script>if(pptpd_enable==1)document.write(WebString.pptpd_enable);</script></td>
+		</tr-->		
+        <tr>
+            <td width="200" id="XS2"></td>
+            <td><input type="text" name="lan_mask" id="lan_mask" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+        </tr>
+    </table>
+</div>
+<div id="dhcp_cfg_div" class="cfgstep">
+    <table>
+        <tr>
+            <td width="200" id="XS3"></td>
+            <td><input type="radio" name="dhcp_enable" id="dhcp_enable0" value="1" checked /><script>document.write(WebString.Enable);</script>
+                <input type="radio" name="dhcp_enable" id="dhcp_enable1" value="0" /><script>document.write(WebString.Disable);</script></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS21"></td>
+            <td><input type="radio" name="pool_mode" id="mode0" value="0" checked /><script>document.write(WebString.pooltype0);</script><br>
+                <input type="radio" name="pool_mode" id="mode1" value="1" /><script>document.write(WebString.pooltype1);</script><br>
+                <input type="radio" name="pool_mode" id="mode2" value="2" /><script>document.write(WebString.pooltype2);</script></td>
+        </tr>
+        <tr id="multipool_info" style="display:none">
+            <td width="200" id="XS22" colspan="2" style="font-weight: bold"></td>
+        </tr>
+    </table>
+</div>
+
+<div id="default_addr_range_div" class="cfgstep">
+    <p><strong id="XS4"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS5"></td>
+            <td><input type="text" name="start_ip" id="start_ip" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+        </tr>
+        <tr>
+            <td width="200" id="XS6"></td>
+            <td><input type="text" name="end_ip" id="end_ip" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+        </tr>
+    </table>
+</div>
+
+<div id="mac_ip_bind_div" class="cfgstep">
+    <p><strong id="XS39"></strong></p>
+    <table>
+		<tr>
+			<td id="XS44" width="200"></td>
+			<td id="device_select_td"></td>
+     	</tr>
+        <tr id="bindmac_tr">
+            <td width="200" id="XS40"></td>
+            <td>
+            	<input type="text" name="bindmac" id="bindmac" maxlength="17" onkeypress="return OnKeyPress(event, X_INPUT_MAC);" />
+            	<script>document.write(XmacfilterString[15]);</script>
+            </td>
+        </tr>
+        <tr>
+            <td width="200" id="XS41"></td>
+            <td><input type="text" name="bindip" id="bindip" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" />
+            <script>document.write("(from " + addrpool_list[0].startip + " to " + addrpool_list[0].endip + ")");</script>
+            </td>
+        </tr>
+        <tr id="bind_add">
+            <td width="200"></td>
+            <td colspan="5">
+                <a id="addbind" name="addbind" class="btn" href="#"><script>document.write(WebString.Add);</script></a>
+                <input id="bindtable1" name="bindtable1" type="hidden" value=""  />
+                <input id="bindtable2" name="bindtable2" type="hidden" value=""  />
+                <input id="bindtable3" name="bindtable3" type="hidden" value=""  />
+                <input id="bindtable4" name="bindtable4" type="hidden" value=""  />
+                <input id="bindtable5" name="bindtable5" type="hidden" value=""  />
+                <input id="bindtable6" name="bindtable6" type="hidden" value=""  />
+                <input id="bindtable7" name="bindtable7" type="hidden" value=""  />
+                <input id="bindtable8" name="bindtable8" type="hidden" value=""  />
+            </td>
+        </tr>
+    </table>
+    <div id="MacIpTableContainer"></div>
+</div>
+
+<div id="multiple_addrpool_div" class="cfgstep" style="display:none">
+    <p><strong id="XS7"></strong></p>
+    <table id="multaddrpool" >
+        <tr id="start_60">
+            <td width="200" id="XS9"></td>
+            <td><input type="text"  id="dhcp_start_ip" name="dhcp_start_ip" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+        </tr>
+        <tr id="end_60">
+            <td width="200" id="XS10"></td>
+            <td><input type="text" id="dhcp_end_ip" name="dhcp_end_ip"  maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+        </tr>
+    </table>
+    <table>
+        <tr id="select_60">
+            <td colspan="5" id="XS11"></td>
+        </tr>
+        <tr>
+            <td width="10"></td>
+            <td><input name="lan1" type="checkbox" id="lan1" disabled="disabled" />LAN1</td>
+            <td><input name="lan2" type="checkbox" id="lan2" />LAN2</td>
+            <script type="text/javascript">
+            if (num_lan > 2) {
+              document.write("<td><input type=\"checkbox\" name=\"lan3\" id=\"lan3\" />LAN3</td>");
+              document.write("<td><input type=\"checkbox\" name=\"lan4\" id=\"lan4\" />LAN4</td>");
+			}
+			</script>
+        </tr>
+        <tr>
+            <td width="10"></td>
+            <td><input name="ssid1_24g" type="checkbox" id="ssid1_24g" />2.4G_SSID1</td>
+            <td><input name="ssid2_24g" type="checkbox" id="ssid2_24g" />2.4G_SSID2</td>
+            <td><input name="ssid3_24g" type="checkbox" id="ssid3_24g" />2.4G_SSID3</td>
+            <td><input name="ssid4_24g" type="checkbox" id="ssid4_24g" />2.4G_SSID4</td>
+        </tr>
+        <tr id="wifi5g" style="display:none">
+            <td width="10"></td>
+            <td><input name="ssid1_5g" type="checkbox" id="ssid1_5g" />5G_SSID1</td>
+            <td><input name="ssid2_5g" type="checkbox" id="ssid2_5g" />5G_SSID2</td>
+            <td><input name="ssid3_5g" type="checkbox" id="ssid3_5g" />5G_SSID3</td>
+            <td><input name="ssid4_5g" type="checkbox" id="ssid4_5g" />5G_SSID4</td>
+        </tr>
+        <tr id="options_add">
+            <td colspan="5">
+                <span id="XS23"></span>
+                <a id="addpool" name="addpool" class="btn" href="#"><script>document.write(WebString.Add);</script></a>
+                <input id="addrpooltable" name="addrpooltable" type="hidden" value=""  />
+            </td>
+        </tr>
+    </table>
+    <div id="MultAddrPoolTableContainer"></div>
+</div>
+
+<div id="dhcp_leasetime_div" class="cfgstep">
+    <p><strong id="XS12"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS13"></td>
+            <td>
+                <input type="text" id="time_day" name="time_day" value="1" maxlength="3" size="3" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/><script>document.write(WebString.days);</script>
+                <input type="text" id="time_hour" name="time_hour" value="12" maxlength="3" size="3" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/><script>document.write(WebString.hours);</script>
+                <input type="text" id="time_minu" name="time_minu" value="30" maxlength="3" size="3" onkeypress="return OnKeyPress(event, X_INPUT_NUM);"/><script>document.write(WebString.minutes);</script>
+                <input id="leasetime" name="leasetime" type="hidden" value=""  /></td>
+        </tr>
+    </table>
+</div>
+
+<div id="dns_overwrite_div" class="cfgstep">
+    <p><strong id="XS14"></strong></p>
+    <table>
+        <tr>
+            <td width="200" id="XS15"></td>
+            <td><input type="radio" name="dns_overwrite" id="dns_ovwrt0" value="1" /><script>document.write(WebString.Enable);</script></td>
+            <td><input type="radio" name="dns_overwrite" id="dns_ovwrt1" value="0" checked="checked" /><script>document.write(WebString.Disable);</script></td>
+        </tr>
+        <tr id="primary_dns" style="display:none">
+            <td width="200" id="XS16"></td>
+            <td><input type="text" name="dns_primary" id="dns_primary" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+        </tr>
+        <tr id="secondary_dns" style="display:none">
+            <td id="XS17"></td>
+            <td><input type="text" name="dns_secondary" id="dns_secondary" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+        </tr>
+    </table>
+</div>
+
+<div id="div_ipv4dnstype" class="cfgstep" style="display:none" name="hide">
+    <p><strong id="XS27"></strong></p>
+    <table>
+        <tr id="local_host_domain">
+            <td width="200" id="XS28"></td>
+            <td><input type="text" name="domain_local_host" id="domain_local_host" maxlength="64" onkeyup="value=value.replace(/[^\w\.\-\/]/ig,'')" onkeypress="return OnKeyPress(event, X_INPUT_URL);" /></td>
+        </tr>
+		<tr id="local_host_ip">
+            <td width="200" id="XS29"></td>
+            <td><input type="text" name="ip_local_host" id="ip_local_host" maxlength="15" onkeypress="return OnKeyPress(event, X_INPUT_IP);" /></td>
+        </tr>
+    </table>
+	<a id="btn_add" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Add);</script>
+	</a>
+</div>
+
+<div id="localHostDiv" class="cfglist" style="display:none" name="hide"></div>
+
+<div class="cfgstep">
+    <p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+    <a id="btn_apply" class="btn" href="#"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+
+

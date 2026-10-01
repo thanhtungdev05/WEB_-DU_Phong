@@ -85,6 +85,7 @@ import simulators.sim_vigor2927.src.server as vigor2927
 import simulators.sim_ONT_be6500c.src.server as be6500c
 import simulators.ont_be6500c.src.server as ONT_be6500c
 import simulators.mikrotik_hexs.src.server as mikrotik_hexs
+import simulators.ac1000cv2.src.server as ac1000cv2
 
 # Mapping từ device id sang module
 SIM_MODULES = {
@@ -99,7 +100,8 @@ SIM_MODULES = {
     'sim_vigor2927': vigor2927,
     'sim_be6500c': be6500c,
     'sim_ONT_be6500c': ONT_be6500c,
-    'sim_mikrotik_hexs': mikrotik_hexs
+    'sim_mikrotik_hexs': mikrotik_hexs,
+    'sim_ac1000cv2': ac1000cv2
 }
 
 # Các class Handler của từng thiết bị
@@ -115,7 +117,8 @@ SIM_HANDLERS = {
     'sim_vigor2927': vigor2927.H,
     'sim_be6500c': be6500c.H,
     'sim_ONT_be6500c': ONT_be6500c.H,
-    'sim_mikrotik_hexs': mikrotik_hexs.H
+    'sim_mikrotik_hexs': mikrotik_hexs.H,
+    'sim_ac1000cv2': ac1000cv2.H
 }
 
 # File/thư mục Portal luôn do Portal phục vụ (chống bị 'cướp' bởi Referer/Cookie)
@@ -322,6 +325,10 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             pass
         elif is_portal_path(path):
             return None
+
+        # Ngoại lệ cho AC1000CV2: thiết bị này dùng /GponForm/ cho mọi submit form
+        if path.startswith('/GponForm/'):
+            return 'sim_ac1000cv2'
 
         # 1. Kiểm tra prefix trong URL path
         for sim_id in SIM_MODULES.keys():

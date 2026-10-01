@@ -1,0 +1,5325 @@
+{
+  "alg.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 20,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "alg_value",
+          "type": "hidden",
+          "id": "alg_value"
+        },
+        {
+          "name": "ftp",
+          "type": "radio",
+          "id": "ftp0"
+        },
+        {
+          "name": "ftp",
+          "type": "radio",
+          "id": "ftp1"
+        },
+        {
+          "name": "tftp",
+          "type": "radio",
+          "id": "tftp0"
+        },
+        {
+          "name": "tftp",
+          "type": "radio",
+          "id": "tftp1"
+        },
+        {
+          "name": "sip",
+          "type": "radio",
+          "id": "sip0"
+        },
+        {
+          "name": "sip",
+          "type": "radio",
+          "id": "sip1"
+        },
+        {
+          "name": "h323",
+          "type": "radio",
+          "id": "h3230"
+        },
+        {
+          "name": "h323",
+          "type": "radio",
+          "id": "h3231"
+        },
+        {
+          "name": "rtsp",
+          "type": "radio",
+          "id": "rtsp0"
+        },
+        {
+          "name": "rtsp",
+          "type": "radio",
+          "id": "rtsp1"
+        },
+        {
+          "name": "l2tp",
+          "type": "radio",
+          "id": "l2tp0"
+        },
+        {
+          "name": "l2tp",
+          "type": "radio",
+          "id": "l2tp1"
+        },
+        {
+          "name": "ipsec",
+          "type": "radio",
+          "id": "ipsec0"
+        },
+        {
+          "name": "ipsec",
+          "type": "radio",
+          "id": "ipsec1"
+        },
+        {
+          "name": "pptp",
+          "type": "radio",
+          "id": "pptp0"
+        },
+        {
+          "name": "pptp",
+          "type": "radio",
+          "id": "pptp1"
+        },
+        {
+          "name": "gre",
+          "type": "radio",
+          "id": "gre0"
+        },
+        {
+          "name": "gre",
+          "type": "radio",
+          "id": "gre1"
+        }
+      ]
+    }
+  ],
+  "aoe.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 5,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "aoe_value",
+          "type": "radio",
+          "id": "aoe_on"
+        },
+        {
+          "name": "aoe_value",
+          "type": "radio",
+          "id": "aoe_off"
+        },
+        {
+          "name": "lol_value",
+          "type": "radio",
+          "id": "lol_on"
+        },
+        {
+          "name": "lol_value",
+          "type": "radio",
+          "id": "lol_off"
+        }
+      ]
+    }
+  ],
+  "backup.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "brg.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 10,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wan_list",
+          "type": "text",
+          "id": "wan_list"
+        },
+        {
+          "name": "wan_en",
+          "type": "checkbox",
+          "id": "wan_en"
+        },
+        {
+          "name": "stp_en",
+          "type": "checkbox",
+          "id": "stp_en"
+        },
+        {
+          "name": "iptv_srv",
+          "type": "checkbox",
+          "id": "iptv_srv"
+        },
+        {
+          "name": "lanport_list",
+          "type": "text",
+          "id": "lanport_list"
+        },
+        {
+          "name": "fut_en",
+          "type": "checkbox",
+          "id": "fut_en"
+        },
+        {
+          "name": "traffic_act",
+          "type": "text",
+          "id": "traffic_act"
+        },
+        {
+          "name": "vlan_id",
+          "type": "text",
+          "id": "vlan_id"
+        },
+        {
+          "name": "filterEntryTable",
+          "type": "hidden",
+          "id": "filterEntryTable"
+        }
+      ]
+    }
+  ],
+  "ddns.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 8,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ddns_value",
+          "type": "hidden",
+          "id": "ddns_value"
+        },
+        {
+          "name": "ddns_enable",
+          "type": "radio",
+          "id": "ddns_enable0"
+        },
+        {
+          "name": "ddns_enable",
+          "type": "radio",
+          "id": "ddns_enable1"
+        },
+        {
+          "name": "ddns_server",
+          "type": "text",
+          "id": "ddns_server"
+        },
+        {
+          "name": "ddns_username",
+          "type": "text",
+          "id": "ddns_username"
+        },
+        {
+          "name": "ddns_password",
+          "type": "password",
+          "id": "ddns_password"
+        },
+        {
+          "name": "ddns_hostname",
+          "type": "text",
+          "id": "ddns_hostname"
+        }
+      ]
+    }
+  ],
+  "devinfo.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 4,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wifi_button",
+          "type": "radio",
+          "id": "wifi_button_on"
+        },
+        {
+          "name": "wifi_button",
+          "type": "radio",
+          "id": "wifi_button_off"
+        },
+        {
+          "name": "workMode",
+          "type": "text",
+          "id": "workMode"
+        }
+      ]
+    }
+  ],
+  "devtable.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "dmz.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 7,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wan_conlist",
+          "type": "text",
+          "id": "wan_conlist"
+        },
+        {
+          "name": "dmzenable",
+          "type": "radio",
+          "id": "enable"
+        },
+        {
+          "name": "dmzenable",
+          "type": "radio",
+          "id": "disable"
+        },
+        {
+          "name": "host_idx",
+          "type": "text",
+          "id": "host_idx"
+        },
+        {
+          "name": "host_name",
+          "type": "hidden",
+          "id": "host_name"
+        },
+        {
+          "name": "host_ip",
+          "type": "text",
+          "id": "host_ip"
+        }
+      ]
+    }
+  ],
+  "gponinfo.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "h248basic.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 12,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "phy_tid_prefix",
+          "type": "text",
+          "id": "phy_tid_prefix"
+        },
+        {
+          "name": "pots1_term_id",
+          "type": "text",
+          "id": "pots1_term_id"
+        },
+        {
+          "name": "pots2_term_id",
+          "type": "text",
+          "id": "pots2_term_id"
+        },
+        {
+          "name": "rtp_tid_prefix",
+          "type": "text",
+          "id": "rtp_tid_prefix"
+        },
+        {
+          "name": "rtp_tid_uniform",
+          "type": "checkbox",
+          "id": "rtp_tid_uniform"
+        },
+        {
+          "name": "rtp_tid_len",
+          "type": "text",
+          "id": "rtp_tid_len"
+        },
+        {
+          "name": "rtp_tid_sv",
+          "type": "text",
+          "id": "rtp_tid_sv"
+        },
+        {
+          "name": "pri_mgc_addr",
+          "type": "text",
+          "id": "pri_mgc_addr"
+        },
+        {
+          "name": "sec_mgc_addr",
+          "type": "text",
+          "id": "sec_mgc_addr"
+        },
+        {
+          "name": "h248_mid_type",
+          "type": "text",
+          "id": "h248_mid_type"
+        },
+        {
+          "name": "h248_mid_domain",
+          "type": "text",
+          "id": "h248_mid_domain"
+        }
+      ]
+    }
+  ],
+  "h248dmap.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 4,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "per_timer",
+          "type": "text",
+          "id": "per_timer"
+        },
+        {
+          "name": "digi_timer",
+          "type": "text",
+          "id": "digi_timer"
+        },
+        {
+          "name": "cri_timer",
+          "type": "text",
+          "id": "cri_timer"
+        }
+      ]
+    }
+  ],
+  "h248fax.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 2,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "fax_nego",
+          "type": "text",
+          "id": "fax_nego"
+        }
+      ]
+    }
+  ],
+  "index.html": [],
+  "init.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "ip6proute.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 7,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "policymode",
+          "type": "text",
+          "id": "policymode"
+        },
+        {
+          "name": "srcip",
+          "type": "text",
+          "id": "srcip"
+        },
+        {
+          "name": "srcplen",
+          "type": "text",
+          "id": "srcplen"
+        },
+        {
+          "name": "gateway",
+          "type": "text",
+          "id": "gateway"
+        },
+        {
+          "name": "wanidx",
+          "type": "text",
+          "id": "wanidx"
+        },
+        {
+          "name": "route_act",
+          "type": "hidden",
+          "id": "route_act"
+        }
+      ]
+    }
+  ],
+  "ip6sroute.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 6,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "destip",
+          "type": "text",
+          "id": "destip"
+        },
+        {
+          "name": "destplen",
+          "type": "text",
+          "id": "destplen"
+        },
+        {
+          "name": "gateway",
+          "type": "text",
+          "id": "gateway"
+        },
+        {
+          "name": "wanidx",
+          "type": "text",
+          "id": "wanidx"
+        },
+        {
+          "name": "route_act",
+          "type": "hidden",
+          "id": "route_act"
+        }
+      ]
+    }
+  ],
+  "ipfilter.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 15,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ipfilter_value",
+          "type": "hidden",
+          "id": "ipfilter_value"
+        },
+        {
+          "name": "stealth_enable",
+          "type": "radio",
+          "id": "stealth_enable0"
+        },
+        {
+          "name": "stealth_enable",
+          "type": "radio",
+          "id": "stealth_enable1"
+        },
+        {
+          "name": "ipfilter_enable",
+          "type": "radio",
+          "id": "ipfilter_enable0"
+        },
+        {
+          "name": "ipfilter_enable",
+          "type": "radio",
+          "id": "ipfilter_enable1"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "direction_select"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "ip_addr_lan"
+        },
+        {
+          "name": "remoteip_define",
+          "type": "radio",
+          "id": "remoteip_define0"
+        },
+        {
+          "name": "remoteip_define",
+          "type": "radio",
+          "id": "remoteip_define1"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "ip_addr_remote"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "srcportstart"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "srcportend"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "dstportstart"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "dstportend"
+        }
+      ]
+    }
+  ],
+  "ipratelimit.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 12,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ipratelimit_value",
+          "type": "hidden",
+          "id": "ipratelimit_value"
+        },
+        {
+          "name": "ipratelimit_enable",
+          "type": "radio",
+          "id": "ipratelimit_enable0"
+        },
+        {
+          "name": "ipratelimit_enable",
+          "type": "radio",
+          "id": "ipratelimit_enable1"
+        },
+        {
+          "name": "monitor_enable",
+          "type": "checkbox",
+          "id": "monitor_enable"
+        },
+        {
+          "name": "cfgTotalUsBW",
+          "type": "text",
+          "id": "cfgTotalUsBW"
+        },
+        {
+          "name": "cfgTotalDsBW",
+          "type": "text",
+          "id": "cfgTotalDsBW"
+        },
+        {
+          "name": "cfgUsPercent",
+          "type": "text",
+          "id": "cfgUsPercent"
+        },
+        {
+          "name": "cfgDsPercent",
+          "type": "text",
+          "id": "cfgDsPercent"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "ip_addr_lan"
+        },
+        {
+          "name": "USBanWidth",
+          "type": "text",
+          "id": "USBanWidth"
+        },
+        {
+          "name": "DSBanWidth",
+          "type": "text",
+          "id": "DSBanWidth"
+        }
+      ]
+    }
+  ],
+  "iptvmulticast.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 4,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "cross_vlan_enable",
+          "type": "radio",
+          "id": "cross_vlan_enable_radio_dis"
+        },
+        {
+          "name": "cross_vlan_enable",
+          "type": "radio",
+          "id": "cross_vlan_enable_radio_en"
+        },
+        {
+          "name": "cross_vlan_text",
+          "type": "text",
+          "id": "cross_vlan_text"
+        }
+      ]
+    }
+  ],
+  "ipv6firewall.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 3,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ipv6firewallEnable",
+          "type": "radio",
+          "id": "ipv6firewallEnable1"
+        },
+        {
+          "name": "ipv6firewallEnable",
+          "type": "radio",
+          "id": "ipv6firewallEnable0"
+        }
+      ]
+    }
+  ],
+  "lan.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 46,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "localhost_value",
+          "type": "hidden",
+          "id": "localhost_value"
+        },
+        {
+          "name": "lan_ip",
+          "type": "text",
+          "id": "lan_ip"
+        },
+        {
+          "name": "lan_mask",
+          "type": "text",
+          "id": "lan_mask"
+        },
+        {
+          "name": "dhcp_enable",
+          "type": "radio",
+          "id": "dhcp_enable0"
+        },
+        {
+          "name": "dhcp_enable",
+          "type": "radio",
+          "id": "dhcp_enable1"
+        },
+        {
+          "name": "pool_mode",
+          "type": "radio",
+          "id": "mode0"
+        },
+        {
+          "name": "pool_mode",
+          "type": "radio",
+          "id": "mode1"
+        },
+        {
+          "name": "pool_mode",
+          "type": "radio",
+          "id": "mode2"
+        },
+        {
+          "name": "start_ip",
+          "type": "text",
+          "id": "start_ip"
+        },
+        {
+          "name": "end_ip",
+          "type": "text",
+          "id": "end_ip"
+        },
+        {
+          "name": "bindmac",
+          "type": "text",
+          "id": "bindmac"
+        },
+        {
+          "name": "bindip",
+          "type": "text",
+          "id": "bindip"
+        },
+        {
+          "name": "bindtable1",
+          "type": "hidden",
+          "id": "bindtable1"
+        },
+        {
+          "name": "bindtable2",
+          "type": "hidden",
+          "id": "bindtable2"
+        },
+        {
+          "name": "bindtable3",
+          "type": "hidden",
+          "id": "bindtable3"
+        },
+        {
+          "name": "bindtable4",
+          "type": "hidden",
+          "id": "bindtable4"
+        },
+        {
+          "name": "bindtable5",
+          "type": "hidden",
+          "id": "bindtable5"
+        },
+        {
+          "name": "bindtable6",
+          "type": "hidden",
+          "id": "bindtable6"
+        },
+        {
+          "name": "bindtable7",
+          "type": "hidden",
+          "id": "bindtable7"
+        },
+        {
+          "name": "bindtable8",
+          "type": "hidden",
+          "id": "bindtable8"
+        },
+        {
+          "name": "dhcp_start_ip",
+          "type": "text",
+          "id": "dhcp_start_ip"
+        },
+        {
+          "name": "dhcp_end_ip",
+          "type": "text",
+          "id": "dhcp_end_ip"
+        },
+        {
+          "name": "lan1",
+          "type": "checkbox",
+          "id": "lan1"
+        },
+        {
+          "name": "lan2",
+          "type": "checkbox",
+          "id": "lan2"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "ssid1_24g",
+          "type": "checkbox",
+          "id": "ssid1_24g"
+        },
+        {
+          "name": "ssid2_24g",
+          "type": "checkbox",
+          "id": "ssid2_24g"
+        },
+        {
+          "name": "ssid3_24g",
+          "type": "checkbox",
+          "id": "ssid3_24g"
+        },
+        {
+          "name": "ssid4_24g",
+          "type": "checkbox",
+          "id": "ssid4_24g"
+        },
+        {
+          "name": "ssid1_5g",
+          "type": "checkbox",
+          "id": "ssid1_5g"
+        },
+        {
+          "name": "ssid2_5g",
+          "type": "checkbox",
+          "id": "ssid2_5g"
+        },
+        {
+          "name": "ssid3_5g",
+          "type": "checkbox",
+          "id": "ssid3_5g"
+        },
+        {
+          "name": "ssid4_5g",
+          "type": "checkbox",
+          "id": "ssid4_5g"
+        },
+        {
+          "name": "addrpooltable",
+          "type": "hidden",
+          "id": "addrpooltable"
+        },
+        {
+          "name": "time_day",
+          "type": "text",
+          "id": "time_day"
+        },
+        {
+          "name": "time_hour",
+          "type": "text",
+          "id": "time_hour"
+        },
+        {
+          "name": "time_minu",
+          "type": "text",
+          "id": "time_minu"
+        },
+        {
+          "name": "leasetime",
+          "type": "hidden",
+          "id": "leasetime"
+        },
+        {
+          "name": "dns_overwrite",
+          "type": "radio",
+          "id": "dns_ovwrt0"
+        },
+        {
+          "name": "dns_overwrite",
+          "type": "radio",
+          "id": "dns_ovwrt1"
+        },
+        {
+          "name": "dns_primary",
+          "type": "text",
+          "id": "dns_primary"
+        },
+        {
+          "name": "dns_secondary",
+          "type": "text",
+          "id": "dns_secondary"
+        },
+        {
+          "name": "domain_local_host",
+          "type": "text",
+          "id": "domain_local_host"
+        },
+        {
+          "name": "ip_local_host",
+          "type": "text",
+          "id": "ip_local_host"
+        }
+      ]
+    }
+  ],
+  "lanadvanced.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 17,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "lan_ip",
+          "type": "text",
+          "id": "lan_ip"
+        },
+        {
+          "name": "lan_mask",
+          "type": "text",
+          "id": "lan_mask"
+        },
+        {
+          "name": "dhcp_enable",
+          "type": "radio",
+          "id": "dhcp_enable0"
+        },
+        {
+          "name": "dhcp_enable",
+          "type": "radio",
+          "id": "dhcp_enable1"
+        },
+        {
+          "name": "start_ip",
+          "type": "text",
+          "id": "start_ip"
+        },
+        {
+          "name": "end_ip",
+          "type": "text",
+          "id": "end_ip"
+        },
+        {
+          "name": "dhcp_option60",
+          "type": "text",
+          "id": "dhcp_option60"
+        },
+        {
+          "name": "option60cfgvalue",
+          "type": "hidden",
+          "id": "option60cfgvalue"
+        },
+        {
+          "name": "time_day",
+          "type": "text",
+          "id": "time_day"
+        },
+        {
+          "name": "time_hour",
+          "type": "text",
+          "id": "time_hour"
+        },
+        {
+          "name": "time_minu",
+          "type": "text",
+          "id": "time_minu"
+        },
+        {
+          "name": "leasetime",
+          "type": "hidden",
+          "id": "leasetime"
+        },
+        {
+          "name": "dns_overwrite",
+          "type": "radio",
+          "id": "dns_ovwrt0"
+        },
+        {
+          "name": "dns_overwrite",
+          "type": "radio",
+          "id": "dns_ovwrt1"
+        },
+        {
+          "name": "dns_primary",
+          "type": "text",
+          "id": "dns_primary"
+        },
+        {
+          "name": "dns_secondary",
+          "type": "text",
+          "id": "dns_secondary"
+        }
+      ]
+    }
+  ],
+  "laninfo.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "lanipv6.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 30,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "v6localhost_value",
+          "type": "hidden",
+          "id": "v6localhost_value"
+        },
+        {
+          "name": "prefix_mode",
+          "type": "text",
+          "id": "prefix_mode"
+        },
+        {
+          "name": "wan_conlist",
+          "type": "text",
+          "id": "wan_conlist"
+        },
+        {
+          "name": "parent_prefix",
+          "type": "text",
+          "id": "parent_prefix"
+        },
+        {
+          "name": "parent_prefix",
+          "type": "text",
+          "id": "parent_prefix"
+        },
+        {
+          "name": "ptime",
+          "type": "text",
+          "id": "ptime"
+        },
+        {
+          "name": "vtime",
+          "type": "text",
+          "id": "vtime"
+        },
+        {
+          "name": "radvd_enable",
+          "type": "checkbox",
+          "id": "radvd_enable"
+        },
+        {
+          "name": "radvdvalue",
+          "type": "hidden",
+          "id": "radvdvalue"
+        },
+        {
+          "name": "m_flag",
+          "type": "checkbox",
+          "id": "m_flag"
+        },
+        {
+          "name": "managed_flag_value",
+          "type": "hidden",
+          "id": "managed_flag_value"
+        },
+        {
+          "name": "o_flag",
+          "type": "checkbox",
+          "id": "o_flag"
+        },
+        {
+          "name": "other_flag_value",
+          "type": "hidden",
+          "id": "other_flag_value"
+        },
+        {
+          "name": "max_ra_interval",
+          "type": "text",
+          "id": "max_ra_interval"
+        },
+        {
+          "name": "min_ra_interval",
+          "type": "text",
+          "id": "min_ra_interval"
+        },
+        {
+          "name": "dhcp6s_enable",
+          "type": "checkbox",
+          "id": "dhcp6s_enable"
+        },
+        {
+          "name": "Dhcp6svalue",
+          "type": "hidden",
+          "id": "Dhcp6svalue"
+        },
+        {
+          "name": "child_prefix_bits",
+          "type": "text",
+          "id": "child_prefix_bits"
+        },
+        {
+          "name": "Dhcp6s_minaddr",
+          "type": "text",
+          "id": "Dhcp6s_minaddr"
+        },
+        {
+          "name": "Dhcp6s_maxaddr",
+          "type": "text",
+          "id": "Dhcp6s_maxaddr"
+        },
+        {
+          "name": "ula_auto_prefix",
+          "type": "hidden",
+          "id": "ula_auto_prefix"
+        },
+        {
+          "name": "ula_enable",
+          "type": "checkbox",
+          "id": "ula_enable"
+        },
+        {
+          "name": "ulavalue",
+          "type": "hidden",
+          "id": "ulavalue"
+        },
+        {
+          "name": "ula_prefix_mode",
+          "type": "text",
+          "id": "ula_prefix_mode"
+        },
+        {
+          "name": "ula_prefix",
+          "type": "text",
+          "id": "ula_prefix"
+        },
+        {
+          "name": "dnstype",
+          "type": "radio",
+          "id": "dnsrelay"
+        },
+        {
+          "name": "dnstype",
+          "type": "radio",
+          "id": "dnsproxy"
+        },
+        {
+          "name": "v6domain_local_host",
+          "type": "text",
+          "id": "v6domain_local_host"
+        },
+        {
+          "name": "v6ip_local_host",
+          "type": "text",
+          "id": "v6ip_local_host"
+        }
+      ]
+    }
+  ],
+  "log.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 3,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "write_level",
+          "type": "text",
+          "id": "write_level"
+        },
+        {
+          "name": "read_level",
+          "type": "text",
+          "id": "read_level"
+        }
+      ]
+    }
+  ],
+  "login.html": [
+    {
+      "action": "/GponForm/LoginForm",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 5,
+      "inputs": [
+        {
+          "name": "XRanID",
+          "type": "hidden",
+          "id": "XRanID"
+        },
+        {
+          "name": "XNonce",
+          "type": "hidden",
+          "id": "XNonce"
+        },
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "username"
+        },
+        {
+          "name": "",
+          "type": "password",
+          "id": "password"
+        }
+      ]
+    }
+  ],
+  "loid.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 4,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "new_pwd",
+          "type": "password",
+          "id": "new_pwd"
+        },
+        {
+          "name": "pwd_model",
+          "type": "text",
+          "id": "pwd_model"
+        },
+        {
+          "name": "reboot",
+          "type": "hidden",
+          "id": "reboot"
+        }
+      ]
+    }
+  ],
+  "loopdetect.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 3,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "lpdenable",
+          "type": "radio",
+          "id": "lpdenable1"
+        },
+        {
+          "name": "lpdenable",
+          "type": "radio",
+          "id": "lpdenable0"
+        }
+      ]
+    }
+  ],
+  "macfilter.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 16,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "macfilter_value",
+          "type": "hidden",
+          "id": "macfilter_value"
+        },
+        {
+          "name": "macfilter_enable",
+          "type": "radio",
+          "id": "macfilter_enable0"
+        },
+        {
+          "name": "macfilter_enable",
+          "type": "radio",
+          "id": "macfilter_enable1"
+        },
+        {
+          "name": "macfilter_enable",
+          "type": "radio",
+          "id": "macfilter_enable2"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "mac_addr"
+        },
+        {
+          "name": "parentalctl_en",
+          "type": "checkbox",
+          "id": "parentalctl_en"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "start_time"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "end_time"
+        },
+        {
+          "name": "Monday",
+          "type": "checkbox",
+          "id": "Monday"
+        },
+        {
+          "name": "Tuesday",
+          "type": "checkbox",
+          "id": "Tuesday"
+        },
+        {
+          "name": "Wednesday",
+          "type": "checkbox",
+          "id": "Wednesday"
+        },
+        {
+          "name": "Thursday",
+          "type": "checkbox",
+          "id": "Thursday"
+        },
+        {
+          "name": "Friday",
+          "type": "checkbox",
+          "id": "Friday"
+        },
+        {
+          "name": "Saturday",
+          "type": "checkbox",
+          "id": "Saturday"
+        },
+        {
+          "name": "Sunday",
+          "type": "checkbox",
+          "id": "Sunday"
+        }
+      ]
+    }
+  ],
+  "mirror.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 3,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "mirror",
+          "type": "radio",
+          "id": "mirror_enable"
+        },
+        {
+          "name": "mirror",
+          "type": "radio",
+          "id": "mirror_disable"
+        }
+      ]
+    }
+  ],
+  "nat.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 2,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "nat_type",
+          "type": "text",
+          "id": "nat_type"
+        }
+      ]
+    }
+  ],
+  "ntp.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 16,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ntp_enable",
+          "type": "radio",
+          "id": "ntp_enabled"
+        },
+        {
+          "name": "ntp_enable",
+          "type": "radio",
+          "id": "ntp_disabled"
+        },
+        {
+          "name": "ntpwanIndex",
+          "type": "text",
+          "id": "ntpwanIndex"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "ntp_server1"
+        },
+        {
+          "name": "new_server1",
+          "type": "text",
+          "id": "new_server1"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "ntp_server2"
+        },
+        {
+          "name": "new_server2",
+          "type": "text",
+          "id": "new_server2"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "ntp_server3"
+        },
+        {
+          "name": "new_server3",
+          "type": "text",
+          "id": "new_server3"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "ntp_server4"
+        },
+        {
+          "name": "new_server4",
+          "type": "text",
+          "id": "new_server4"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "ntp_server5"
+        },
+        {
+          "name": "new_server5",
+          "type": "text",
+          "id": "new_server5"
+        },
+        {
+          "name": "time_Zone",
+          "type": "text",
+          "id": "time_Zone"
+        },
+        {
+          "name": "syncInterval",
+          "type": "text",
+          "id": "syncInterval"
+        }
+      ]
+    }
+  ],
+  "password.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 6,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "userlist",
+          "type": "text",
+          "id": "userlist"
+        },
+        {
+          "name": "username",
+          "type": "text",
+          "id": "username"
+        },
+        {
+          "name": "password0",
+          "type": "password",
+          "id": "password0"
+        },
+        {
+          "name": "password1",
+          "type": "password",
+          "id": "password1"
+        },
+        {
+          "name": "password2",
+          "type": "password",
+          "id": "password2"
+        }
+      ]
+    }
+  ],
+  "ping.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 7,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wanIndex",
+          "type": "text",
+          "id": "wanIndex"
+        },
+        {
+          "name": "iptype",
+          "type": "radio",
+          "id": "select_ipv4"
+        },
+        {
+          "name": "iptype",
+          "type": "radio",
+          "id": "select_ipv6"
+        },
+        {
+          "name": "url_or_ip",
+          "type": "text",
+          "id": "url_or_ip"
+        },
+        {
+          "name": "packet_size",
+          "type": "text",
+          "id": "packet_size"
+        },
+        {
+          "name": "ping_count",
+          "type": "text",
+          "id": "ping_count"
+        }
+      ]
+    }
+  ],
+  "portfwd.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 14,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "action",
+          "type": "hidden",
+          "id": "action"
+        },
+        {
+          "name": "rulenum",
+          "type": "hidden",
+          "id": "rulenum"
+        },
+        {
+          "name": "value",
+          "type": "hidden",
+          "id": "value"
+        },
+        {
+          "name": "host_idx",
+          "type": "text",
+          "id": "host_idx"
+        },
+        {
+          "name": "host_name",
+          "type": "hidden",
+          "id": "host_name"
+        },
+        {
+          "name": "portfwd_lanip",
+          "type": "text",
+          "id": "portfwd_lanip"
+        },
+        {
+          "name": "portfwd_lanport",
+          "type": "text",
+          "id": "portfwd_lanport"
+        },
+        {
+          "name": "protocol",
+          "type": "text",
+          "id": "protocol"
+        },
+        {
+          "name": "portfwd_wanstart",
+          "type": "text",
+          "id": "portfwd_wanstart"
+        },
+        {
+          "name": "portfwd_wanend",
+          "type": "text",
+          "id": "portfwd_wanend"
+        },
+        {
+          "name": "en_remote_ip",
+          "type": "radio",
+          "id": "disable"
+        },
+        {
+          "name": "en_remote_ip",
+          "type": "radio",
+          "id": "enable"
+        },
+        {
+          "name": "portfwd_remoteip",
+          "type": "text",
+          "id": "portfwd_remoteip"
+        }
+      ]
+    }
+  ],
+  "pptpd.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 13,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "pptp_clients_value",
+          "type": "hidden",
+          "id": "pptp_clients_value"
+        },
+        {
+          "name": "remove_flag_value",
+          "type": "hidden",
+          "id": "remove_flag_value"
+        },
+        {
+          "name": "pptpd_enable",
+          "type": "radio",
+          "id": "pptpd_enable"
+        },
+        {
+          "name": "pptpd_enable",
+          "type": "radio",
+          "id": "pptpd_disable"
+        },
+        {
+          "name": "local_ip",
+          "type": "text",
+          "id": "local_ip"
+        },
+        {
+          "name": "start_ip",
+          "type": "text",
+          "id": "start_ip"
+        },
+        {
+          "name": "end_ip",
+          "type": "text",
+          "id": "end_ip"
+        },
+        {
+          "name": "pptpd_username",
+          "type": "text",
+          "id": "pptpd_username"
+        },
+        {
+          "name": "pptpd_password",
+          "type": "password",
+          "id": "pptpd_password"
+        },
+        {
+          "name": "pptpdcfgvalue",
+          "type": "hidden",
+          "id": "pptpdcfgvalue"
+        },
+        {
+          "name": "mppe128_enable",
+          "type": "radio",
+          "id": "mppe128_enable"
+        },
+        {
+          "name": "mppe128_enable",
+          "type": "radio",
+          "id": "mppe128_disable"
+        }
+      ]
+    }
+  ],
+  "proute.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 7,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "policymode",
+          "type": "text",
+          "id": "policymode"
+        },
+        {
+          "name": "srcip",
+          "type": "text",
+          "id": "srcip"
+        },
+        {
+          "name": "srcmask",
+          "type": "text",
+          "id": "srcmask"
+        },
+        {
+          "name": "gateway",
+          "type": "text",
+          "id": "gateway"
+        },
+        {
+          "name": "wanidx",
+          "type": "text",
+          "id": "wanidx"
+        },
+        {
+          "name": "route_act",
+          "type": "hidden",
+          "id": "route_act"
+        }
+      ]
+    }
+  ],
+  "qos.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 21,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "qos_en",
+          "type": "radio",
+          "id": "qos_en"
+        },
+        {
+          "name": "qos_en",
+          "type": "radio",
+          "id": "qos_dis"
+        },
+        {
+          "name": "cls_proto",
+          "type": "text",
+          "id": "cls_proto"
+        },
+        {
+          "name": "cls_srcIp",
+          "type": "text",
+          "id": "cls_srcIp"
+        },
+        {
+          "name": "cls_srcMask",
+          "type": "text",
+          "id": "cls_srcMask"
+        },
+        {
+          "name": "cls_srcPort",
+          "type": "text",
+          "id": "cls_srcPort"
+        },
+        {
+          "name": "cls_srcPortMax",
+          "type": "text",
+          "id": "cls_srcPortMax"
+        },
+        {
+          "name": "cls_dstIp",
+          "type": "text",
+          "id": "cls_dstIp"
+        },
+        {
+          "name": "cls_dstMask",
+          "type": "text",
+          "id": "cls_dstMask"
+        },
+        {
+          "name": "cls_dstPort",
+          "type": "text",
+          "id": "cls_dstPort"
+        },
+        {
+          "name": "cls_dstPortMax",
+          "type": "text",
+          "id": "cls_dstPortMax"
+        },
+        {
+          "name": "action_queue",
+          "type": "text",
+          "id": "action_queue"
+        },
+        {
+          "name": "cls_discription",
+          "type": "text",
+          "id": "cls_discription"
+        },
+        {
+          "name": "action_pbit",
+          "type": "checkbox",
+          "id": "action_pbit"
+        },
+        {
+          "name": "action_pbitVal",
+          "type": "text",
+          "id": "action_pbitVal"
+        },
+        {
+          "name": "action_dscp",
+          "type": "checkbox",
+          "id": "action_dscp"
+        },
+        {
+          "name": "action_dscpVal",
+          "type": "text",
+          "id": "action_dscpVal"
+        },
+        {
+          "name": "qos_op",
+          "type": "text",
+          "id": "qos_op"
+        },
+        {
+          "name": "rule_index",
+          "type": "text",
+          "id": "rule_index"
+        },
+        {
+          "name": "qos_template",
+          "type": "text",
+          "id": "qos_template"
+        }
+      ]
+    }
+  ],
+  "reboot.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "rebootswitchtimer.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 12,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "rebootswitchtimer_value",
+          "type": "hidden",
+          "id": "rebootswitchtimer_value"
+        },
+        {
+          "name": "rebootswitchtimer_enable",
+          "type": "radio",
+          "id": "rebootswitchtimer_enable0"
+        },
+        {
+          "name": "rebootswitchtimer_enable",
+          "type": "radio",
+          "id": "rebootswitchtimer_enable1"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "reboot_time"
+        },
+        {
+          "name": "Monday",
+          "type": "checkbox",
+          "id": "Monday"
+        },
+        {
+          "name": "Tuesday",
+          "type": "checkbox",
+          "id": "Tuesday"
+        },
+        {
+          "name": "Wednesday",
+          "type": "checkbox",
+          "id": "Wednesday"
+        },
+        {
+          "name": "Thursday",
+          "type": "checkbox",
+          "id": "Thursday"
+        },
+        {
+          "name": "Friday",
+          "type": "checkbox",
+          "id": "Friday"
+        },
+        {
+          "name": "Saturday",
+          "type": "checkbox",
+          "id": "Saturday"
+        },
+        {
+          "name": "Sunday",
+          "type": "checkbox",
+          "id": "Sunday"
+        }
+      ]
+    }
+  ],
+  "restable.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "restore.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 4,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "up_img",
+          "type": "file",
+          "id": "up_img"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "up_img_text"
+        },
+        {
+          "name": "",
+          "type": "button",
+          "id": "up_img_button"
+        }
+      ]
+    }
+  ],
+  "rmtweb.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 11,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "rmt_state",
+          "type": "radio",
+          "id": "rmt_enable"
+        },
+        {
+          "name": "rmt_state",
+          "type": "radio",
+          "id": "rmt_disable"
+        },
+        {
+          "name": "wan_list",
+          "type": "text",
+          "id": "wan_list"
+        },
+        {
+          "name": "username",
+          "type": "text",
+          "id": "username"
+        },
+        {
+          "name": "password1",
+          "type": "password",
+          "id": "password1"
+        },
+        {
+          "name": "password2",
+          "type": "password",
+          "id": "password2"
+        },
+        {
+          "name": "protocol_list",
+          "type": "text",
+          "id": "protocol_list"
+        },
+        {
+          "name": "port",
+          "type": "text",
+          "id": "port"
+        },
+        {
+          "name": "ip_list",
+          "type": "text",
+          "id": "ip_list"
+        },
+        {
+          "name": "iplist_value",
+          "type": "hidden",
+          "id": "iplist_value"
+        }
+      ]
+    }
+  ],
+  "rttable.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "selftest.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 24,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "test_pon",
+          "type": "test",
+          "id": "test_pon"
+        },
+        {
+          "name": "test_ponen",
+          "type": "test",
+          "id": "test_ponen"
+        },
+        {
+          "name": "test_lan1",
+          "type": "test",
+          "id": "test_lan1"
+        },
+        {
+          "name": "test_lan1en",
+          "type": "test",
+          "id": "test_lan1en"
+        },
+        {
+          "name": "test_lan2",
+          "type": "test",
+          "id": "test_lan2"
+        },
+        {
+          "name": "test_lan2en",
+          "type": "test",
+          "id": "test_lan2en"
+        },
+        {
+          "name": "test_lan3",
+          "type": "test",
+          "id": "test_lan3"
+        },
+        {
+          "name": "test_lan3en",
+          "type": "test",
+          "id": "test_lan3en"
+        },
+        {
+          "name": "test_lan4stb",
+          "type": "test",
+          "id": "test_lan4stb"
+        },
+        {
+          "name": "test_stben",
+          "type": "test",
+          "id": "test_stben"
+        },
+        {
+          "name": "test_wifi",
+          "type": "test",
+          "id": "test_wifi"
+        },
+        {
+          "name": "test_wifien",
+          "type": "test",
+          "id": "test_wifien"
+        },
+        {
+          "name": "test_ram",
+          "type": "test",
+          "id": "test_ram"
+        },
+        {
+          "name": "test_ramen",
+          "type": "test",
+          "id": "test_ramen"
+        },
+        {
+          "name": "test_rom",
+          "type": "test",
+          "id": "test_rom"
+        },
+        {
+          "name": "test_romen",
+          "type": "test",
+          "id": "test_romen"
+        },
+        {
+          "name": "test_usb",
+          "type": "test",
+          "id": "test_usb"
+        },
+        {
+          "name": "test_usben",
+          "type": "test",
+          "id": "test_usben"
+        },
+        {
+          "name": "test_led",
+          "type": "test",
+          "id": "test_led"
+        },
+        {
+          "name": "test_leden",
+          "type": "test",
+          "id": "test_leden"
+        },
+        {
+          "name": "btn_passen",
+          "type": "test",
+          "id": "btn_passen"
+        },
+        {
+          "name": "btn_failen",
+          "type": "test",
+          "id": "btn_failen"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "test_alart"
+        }
+      ]
+    }
+  ],
+  "sipadv.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 16,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "sip_reg_extime",
+          "type": "text",
+          "id": "sip_reg_extime"
+        },
+        {
+          "name": "sip_reg_hstime",
+          "type": "text",
+          "id": "sip_reg_hstime"
+        },
+        {
+          "name": "sip_reg_retrytime",
+          "type": "text",
+          "id": "sip_reg_retrytime"
+        },
+        {
+          "name": "sip_heart_beat",
+          "type": "checkbox",
+          "id": "sip_heart_beat"
+        },
+        {
+          "name": "sip_hb_time",
+          "type": "text",
+          "id": "sip_hb_time"
+        },
+        {
+          "name": "sip_ses_hbeat",
+          "type": "checkbox",
+          "id": "sip_ses_hbeat"
+        },
+        {
+          "name": "sip_hbeat_refmeth",
+          "type": "text",
+          "id": "sip_hbeat_refmeth"
+        },
+        {
+          "name": "sip_ses_hbtime",
+          "type": "text",
+          "id": "sip_ses_hbtime"
+        },
+        {
+          "name": "sip_ses_mintime",
+          "type": "text",
+          "id": "sip_ses_mintime"
+        },
+        {
+          "name": "sip_call_wt1",
+          "type": "checkbox",
+          "id": "sip_call_wt1"
+        },
+        {
+          "name": "sip_call_hold1",
+          "type": "checkbox",
+          "id": "sip_call_hold1"
+        },
+        {
+          "name": "sip_call_trans1",
+          "type": "checkbox",
+          "id": "sip_call_trans1"
+        },
+        {
+          "name": "sip_call_wt2",
+          "type": "checkbox",
+          "id": "sip_call_wt2"
+        },
+        {
+          "name": "sip_call_hold2",
+          "type": "checkbox",
+          "id": "sip_call_hold2"
+        },
+        {
+          "name": "sip_call_trans2",
+          "type": "checkbox",
+          "id": "sip_call_trans2"
+        }
+      ]
+    }
+  ],
+  "sipbasic.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 15,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "sip_port_base",
+          "type": "text",
+          "id": "sip_port_base"
+        },
+        {
+          "name": "sip_host_uri",
+          "type": "text",
+          "id": "sip_host_uri"
+        },
+        {
+          "name": "sip_auth_name1",
+          "type": "text",
+          "id": "sip_auth_name1"
+        },
+        {
+          "name": "sip_auth_pw1",
+          "type": "password",
+          "id": "sip_auth_pw1"
+        },
+        {
+          "name": "sip_user_part1",
+          "type": "text",
+          "id": "sip_user_part1"
+        },
+        {
+          "name": "sip_auth_name2",
+          "type": "text",
+          "id": "sip_auth_name2"
+        },
+        {
+          "name": "sip_auth_pw2",
+          "type": "password",
+          "id": "sip_auth_pw2"
+        },
+        {
+          "name": "sip_user_part2",
+          "type": "text",
+          "id": "sip_user_part2"
+        },
+        {
+          "name": "",
+          "type": "checkbox",
+          "id": "enable_obproxy"
+        },
+        {
+          "name": "sip_obproxy_addr",
+          "type": "text",
+          "id": "sip_obproxy_addr"
+        },
+        {
+          "name": "sip_obproxy_port",
+          "type": "text",
+          "id": "sip_obproxy_port"
+        },
+        {
+          "name": "",
+          "type": "checkbox",
+          "id": "enable_reg"
+        },
+        {
+          "name": "sip_reg_addr",
+          "type": "text",
+          "id": "sip_reg_addr"
+        },
+        {
+          "name": "sip_reg_port",
+          "type": "text",
+          "id": "sip_reg_port"
+        }
+      ]
+    }
+  ],
+  "sipcodecs.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 11,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "pots1_codec1",
+          "type": "text",
+          "id": "pots1_codec1"
+        },
+        {
+          "name": "pots1_codec2",
+          "type": "text",
+          "id": "pots1_codec2"
+        },
+        {
+          "name": "pots1_codec3",
+          "type": "text",
+          "id": "pots1_codec3"
+        },
+        {
+          "name": "pots1_codec4",
+          "type": "text",
+          "id": "pots1_codec4"
+        },
+        {
+          "name": "pots2_codec1",
+          "type": "text",
+          "id": "pots2_codec1"
+        },
+        {
+          "name": "pots2_codec2",
+          "type": "text",
+          "id": "pots2_codec2"
+        },
+        {
+          "name": "pots2_codec3",
+          "type": "text",
+          "id": "pots2_codec3"
+        },
+        {
+          "name": "pots2_codec4",
+          "type": "text",
+          "id": "pots2_codec4"
+        },
+        {
+          "name": "oob_dtmf",
+          "type": "text",
+          "id": "oob_dtmf"
+        },
+        {
+          "name": "dtms_events",
+          "type": "text",
+          "id": "dtms_events"
+        }
+      ]
+    }
+  ],
+  "sipdmap.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 5,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "sip_dial_plan",
+          "type": "text",
+          "id": "sip_dial_plan"
+        },
+        {
+          "name": "per_timer",
+          "type": "text",
+          "id": "per_timer"
+        },
+        {
+          "name": "digi_timer",
+          "type": "text",
+          "id": "digi_timer"
+        },
+        {
+          "name": "cri_timer",
+          "type": "text",
+          "id": "cri_timer"
+        }
+      ]
+    }
+  ],
+  "sipfax.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 3,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "fax_mode1",
+          "type": "text",
+          "id": "fax_mode1"
+        },
+        {
+          "name": "fax_mode2",
+          "type": "text",
+          "id": "fax_mode2"
+        }
+      ]
+    }
+  ],
+  "sroute.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 6,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "destip",
+          "type": "text",
+          "id": "destip"
+        },
+        {
+          "name": "destmask",
+          "type": "text",
+          "id": "destmask"
+        },
+        {
+          "name": "gateway",
+          "type": "text",
+          "id": "gateway"
+        },
+        {
+          "name": "wanidx",
+          "type": "text",
+          "id": "wanidx"
+        },
+        {
+          "name": "route_act",
+          "type": "hidden",
+          "id": "route_act"
+        }
+      ]
+    }
+  ],
+  "ssh.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 12,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "local_ssh",
+          "type": "radio",
+          "id": "local_enable"
+        },
+        {
+          "name": "local_ssh",
+          "type": "radio",
+          "id": "local_disable"
+        },
+        {
+          "name": "remote_ssh",
+          "type": "radio",
+          "id": "rmt_enable"
+        },
+        {
+          "name": "remote_ssh",
+          "type": "radio",
+          "id": "rmt_disable"
+        },
+        {
+          "name": "wan_list",
+          "type": "text",
+          "id": "wan_list"
+        },
+        {
+          "name": "username",
+          "type": "text",
+          "id": "username"
+        },
+        {
+          "name": "password1",
+          "type": "password",
+          "id": "password1"
+        },
+        {
+          "name": "password2",
+          "type": "password",
+          "id": "password2"
+        },
+        {
+          "name": "idle_disconnect",
+          "type": "radio",
+          "id": "idle_enable"
+        },
+        {
+          "name": "idle_disconnect",
+          "type": "radio",
+          "id": "idle_disable"
+        },
+        {
+          "name": "keepalive",
+          "type": "text",
+          "id": "keepalive"
+        }
+      ]
+    }
+  ],
+  "sys.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 2,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "language",
+          "type": "text",
+          "id": "language"
+        }
+      ]
+    }
+  ],
+  "syslog.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 4,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "syslog_enable",
+          "type": "radio",
+          "id": "syslog_enabled"
+        },
+        {
+          "name": "syslog_enable",
+          "type": "radio",
+          "id": "syslog_disabled"
+        },
+        {
+          "name": "syslog_server",
+          "type": "text",
+          "id": "syslog_server"
+        }
+      ]
+    }
+  ],
+  "tcpdump.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 4,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "port_list",
+          "type": "text",
+          "id": "port_list"
+        },
+        {
+          "name": "tcpdump_count",
+          "type": "text",
+          "id": "tcpdump_count"
+        },
+        {
+          "name": "applyType",
+          "type": "text",
+          "id": "applyType"
+        }
+      ]
+    }
+  ],
+  "techsupportinfo.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 2,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "applyType",
+          "type": "text",
+          "id": "applyType"
+        }
+      ]
+    }
+  ],
+  "telnet.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 9,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "local_telnet",
+          "type": "radio",
+          "id": "local_enable"
+        },
+        {
+          "name": "local_telnet",
+          "type": "radio",
+          "id": "local_disable"
+        },
+        {
+          "name": "remote_telnet",
+          "type": "radio",
+          "id": "rmt_enable"
+        },
+        {
+          "name": "remote_telnet",
+          "type": "radio",
+          "id": "rmt_disable"
+        },
+        {
+          "name": "wan_list",
+          "type": "text",
+          "id": "wan_list"
+        },
+        {
+          "name": "username",
+          "type": "text",
+          "id": "username"
+        },
+        {
+          "name": "password1",
+          "type": "password",
+          "id": "password1"
+        },
+        {
+          "name": "password2",
+          "type": "password",
+          "id": "password2"
+        }
+      ]
+    }
+  ],
+  "tr069.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 9,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "inform",
+          "type": "radio",
+          "id": "inform0"
+        },
+        {
+          "name": "inform",
+          "type": "radio",
+          "id": "inform1"
+        },
+        {
+          "name": "informinterval",
+          "type": "text",
+          "id": "informinterval"
+        },
+        {
+          "name": "acsurl",
+          "type": "text",
+          "id": "acsurl"
+        },
+        {
+          "name": "acsuser",
+          "type": "text",
+          "id": "acsuser"
+        },
+        {
+          "name": "acspwd",
+          "type": "password",
+          "id": "acspwd"
+        },
+        {
+          "name": "connrequser",
+          "type": "text",
+          "id": "connrequser"
+        },
+        {
+          "name": "connreqpwd",
+          "type": "password",
+          "id": "connreqpwd"
+        }
+      ]
+    }
+  ],
+  "traceroute.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 5,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wanIndex",
+          "type": "text",
+          "id": "wanIndex"
+        },
+        {
+          "name": "iptype",
+          "type": "radio",
+          "id": "select_ipv4"
+        },
+        {
+          "name": "iptype",
+          "type": "radio",
+          "id": "select_ipv6"
+        },
+        {
+          "name": "url_or_ip",
+          "type": "text",
+          "id": "url_or_ip"
+        }
+      ]
+    }
+  ],
+  "upgrade.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 4,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "up_img",
+          "type": "file",
+          "id": "up_img"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "up_img_text"
+        },
+        {
+          "name": "",
+          "type": "button",
+          "id": "up_img_button"
+        }
+      ]
+    }
+  ],
+  "upnp.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 7,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "igdenable",
+          "type": "radio",
+          "id": "enable"
+        },
+        {
+          "name": "igdenable",
+          "type": "radio",
+          "id": "disable"
+        },
+        {
+          "name": "ipaddr",
+          "type": "hidden",
+          "id": "ipaddr"
+        },
+        {
+          "name": "protocol",
+          "type": "hidden",
+          "id": "protocol"
+        },
+        {
+          "name": "iport",
+          "type": "hidden",
+          "id": "iport"
+        },
+        {
+          "name": "eport",
+          "type": "hidden",
+          "id": "eport"
+        }
+      ]
+    }
+  ],
+  "usbstr.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 7,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ftp_enable",
+          "type": "radio",
+          "id": "ftp_enable0"
+        },
+        {
+          "name": "ftp_enable",
+          "type": "radio",
+          "id": "ftp_enable1"
+        },
+        {
+          "name": "ftpusername",
+          "type": "text",
+          "id": "ftpusername"
+        },
+        {
+          "name": "ftppassword1",
+          "type": "password",
+          "id": "ftppassword1"
+        },
+        {
+          "name": "ftppassword2",
+          "type": "password",
+          "id": "ftppassword2"
+        },
+        {
+          "name": "ftp_port",
+          "type": "text",
+          "id": "ftp_port"
+        }
+      ]
+    }
+  ],
+  "voipadv.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 18,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "echo_cancel_1",
+          "type": "checkbox",
+          "id": "echo_cancel_1"
+        },
+        {
+          "name": "tx_gain_1",
+          "type": "text",
+          "id": "tx_gain_1"
+        },
+        {
+          "name": "rx_gain_1",
+          "type": "text",
+          "id": "rx_gain_1"
+        },
+        {
+          "name": "vad_1",
+          "type": "text",
+          "id": "vad_1"
+        },
+        {
+          "name": "pack_interval_1",
+          "type": "text",
+          "id": "pack_interval_1"
+        },
+        {
+          "name": "echo_cancel_2",
+          "type": "checkbox",
+          "id": "echo_cancel_2"
+        },
+        {
+          "name": "tx_gain_2",
+          "type": "text",
+          "id": "tx_gain_2"
+        },
+        {
+          "name": "rx_gain_2",
+          "type": "text",
+          "id": "rx_gain_2"
+        },
+        {
+          "name": "vad_2",
+          "type": "text",
+          "id": "vad_2"
+        },
+        {
+          "name": "pack_interval_2",
+          "type": "text",
+          "id": "pack_interval_2"
+        },
+        {
+          "name": "lcfo",
+          "type": "text",
+          "id": "lcfo"
+        },
+        {
+          "name": "pr_on_callee",
+          "type": "text",
+          "id": "pr_on_callee"
+        },
+        {
+          "name": "hook_min",
+          "type": "text",
+          "id": "hook_min"
+        },
+        {
+          "name": "hook_max",
+          "type": "text",
+          "id": "hook_max"
+        },
+        {
+          "name": "caller_id_format",
+          "type": "text",
+          "id": "caller_id_format"
+        },
+        {
+          "name": "sig_dscp_mark",
+          "type": "text",
+          "id": "sig_dscp_mark"
+        },
+        {
+          "name": "medi_dscp_mark",
+          "type": "text",
+          "id": "medi_dscp_mark"
+        }
+      ]
+    }
+  ],
+  "voipbasic.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 4,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "country_code",
+          "type": "text",
+          "id": "country_code"
+        },
+        {
+          "name": "en_pots1",
+          "type": "checkbox",
+          "id": "en_pots1"
+        },
+        {
+          "name": "en_pots2",
+          "type": "checkbox",
+          "id": "en_pots2"
+        }
+      ]
+    }
+  ],
+  "wan.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 61,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wan_list",
+          "type": "text",
+          "id": "wan_list"
+        },
+        {
+          "name": "wan_en",
+          "type": "radio",
+          "id": "wan_en0"
+        },
+        {
+          "name": "wan_en",
+          "type": "radio",
+          "id": "wan_en1"
+        },
+        {
+          "name": "internet",
+          "type": "checkbox",
+          "id": "internet"
+        },
+        {
+          "name": "tr069",
+          "type": "checkbox",
+          "id": "tr69"
+        },
+        {
+          "name": "voip",
+          "type": "checkbox",
+          "id": "voip"
+        },
+        {
+          "name": "iptv",
+          "type": "checkbox",
+          "id": "iptv"
+        },
+        {
+          "name": "lan1",
+          "type": "checkbox",
+          "id": "lan1"
+        },
+        {
+          "name": "lan2",
+          "type": "checkbox",
+          "id": "lan2"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": ""
+        },
+        {
+          "name": "ip_ver",
+          "type": "text",
+          "id": "ip_ver"
+        },
+        {
+          "name": "ip_mode",
+          "type": "text",
+          "id": "ip_mode"
+        },
+        {
+          "name": "mtu",
+          "type": "text",
+          "id": "mtu"
+        },
+        {
+          "name": "nat",
+          "type": "radio",
+          "id": "nat0"
+        },
+        {
+          "name": "nat",
+          "type": "radio",
+          "id": "nat1"
+        },
+        {
+          "name": "metric",
+          "type": "text",
+          "id": "metric"
+        },
+        {
+          "name": "ppp_user",
+          "type": "text",
+          "id": "ppp_user"
+        },
+        {
+          "name": "ppp_pass",
+          "type": "password",
+          "id": "ppp_pass"
+        },
+        {
+          "name": "ppp_mode",
+          "type": "text",
+          "id": "ppp_mode"
+        },
+        {
+          "name": "pppoe_demandtime",
+          "type": "hidden",
+          "id": "pppoe_demandtime"
+        },
+        {
+          "name": "static_ip",
+          "type": "text",
+          "id": "static_ip"
+        },
+        {
+          "name": "static_mask",
+          "type": "text",
+          "id": "static_mask"
+        },
+        {
+          "name": "static_gw",
+          "type": "text",
+          "id": "static_gw"
+        },
+        {
+          "name": "ipv6_static_addr",
+          "type": "text",
+          "id": "ipv6_static_addr"
+        },
+        {
+          "name": "ipv6_static_wanplen",
+          "type": "text",
+          "id": "ipv6_static_wanplen"
+        },
+        {
+          "name": "dnswr",
+          "type": "radio",
+          "id": "dnswr0"
+        },
+        {
+          "name": "dnswr",
+          "type": "radio",
+          "id": "dnswr1"
+        },
+        {
+          "name": "dns1",
+          "type": "text",
+          "id": "dns1"
+        },
+        {
+          "name": "dns2",
+          "type": "text",
+          "id": "dns2"
+        },
+        {
+          "name": "ipv6_dnswr",
+          "type": "radio",
+          "id": "ipv6_dnswr0"
+        },
+        {
+          "name": "ipv6_dnswr",
+          "type": "radio",
+          "id": "ipv6_dnswr1"
+        },
+        {
+          "name": "ipv6_dns1",
+          "type": "text",
+          "id": "ipv6_dns1"
+        },
+        {
+          "name": "ipv6_dns2",
+          "type": "text",
+          "id": "ipv6_dns2"
+        },
+        {
+          "name": "rd6_en",
+          "type": "radio",
+          "id": "rd6_en1"
+        },
+        {
+          "name": "rd6_en",
+          "type": "radio",
+          "id": "rd6_en0"
+        },
+        {
+          "name": "rd6_opt",
+          "type": "radio",
+          "id": "rd6_opt0"
+        },
+        {
+          "name": "rd6_opt",
+          "type": "radio",
+          "id": "rd6_opt1"
+        },
+        {
+          "name": "rd6_manual_prefix_val",
+          "type": "text",
+          "id": "rd6_manual_prefix_val"
+        },
+        {
+          "name": "rd6_manual_prefix_length_val",
+          "type": "text",
+          "id": "rd6_manual_prefix_length_val"
+        },
+        {
+          "name": "rd6_manual_ipv4mask_length_val",
+          "type": "text",
+          "id": "rd6_manual_ipv4mask_length_val"
+        },
+        {
+          "name": "rd6_manual_border_addr_val",
+          "type": "text",
+          "id": "rd6_manual_border_addr_val"
+        },
+        {
+          "name": "dslite_en",
+          "type": "radio",
+          "id": "dslite_en0"
+        },
+        {
+          "name": "dslite_en",
+          "type": "radio",
+          "id": "dslite_en1"
+        },
+        {
+          "name": "dslite_mode",
+          "type": "text",
+          "id": "dslite_mode"
+        },
+        {
+          "name": "dslite_aftraddr",
+          "type": "text",
+          "id": "dslite_aftraddr"
+        },
+        {
+          "name": "ipv6_ad_mode",
+          "type": "text",
+          "id": "ipv6_ad_mode"
+        },
+        {
+          "name": "ipv6_ad_static",
+          "type": "text",
+          "id": "ipv6_ad_static"
+        },
+        {
+          "name": "ipv6_pd_mode",
+          "type": "text",
+          "id": "ipv6_pd_mode"
+        },
+        {
+          "name": "ipv6_pd_static",
+          "type": "text",
+          "id": "ipv6_pd_static"
+        },
+        {
+          "name": "ipv6_gw_mode",
+          "type": "text",
+          "id": "ipv6_gw_mode"
+        },
+        {
+          "name": "ipv6gw",
+          "type": "text",
+          "id": "ipv6gw"
+        }
+      ]
+    }
+  ],
+  "wan3g.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 8,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "reconnect",
+          "type": "hidden",
+          "id": "reconnect"
+        },
+        {
+          "name": "apnname",
+          "type": "text",
+          "id": "apnname"
+        },
+        {
+          "name": "dialnum",
+          "type": "text",
+          "id": "dialnum"
+        },
+        {
+          "name": "pppuser",
+          "type": "text",
+          "id": "pppuser"
+        },
+        {
+          "name": "ppppwd",
+          "type": "password",
+          "id": "ppppwd"
+        },
+        {
+          "name": "pincode",
+          "type": "password",
+          "id": "pincode"
+        },
+        {
+          "name": "enable3g",
+          "type": "checkbox",
+          "id": "enable3g"
+        }
+      ]
+    }
+  ],
+  "wan3gstatus.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 2,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "vRefresh",
+          "type": "hidden",
+          "id": "vRefresh"
+        }
+      ]
+    }
+  ],
+  "waninfo.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 3,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wan_list",
+          "type": "text",
+          "id": "wan_list"
+        },
+        {
+          "name": "vRefresh",
+          "type": "hidden",
+          "id": "vRefresh"
+        }
+      ]
+    }
+  ],
+  "webfilter.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 6,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "urlfilter_value",
+          "type": "hidden",
+          "id": "urlfilter_value"
+        },
+        {
+          "name": "urlfilter_enable",
+          "type": "radio",
+          "id": "urlfilter_enable0"
+        },
+        {
+          "name": "urlfilter_enable",
+          "type": "radio",
+          "id": "urlfilter_enable1"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "ip_addr"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "url_addr"
+        }
+      ]
+    }
+  ],
+  "wifi5acc.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 12,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "add_or_apply",
+          "type": "hidden",
+          "id": "add_or_apply"
+        },
+        {
+          "name": "removed_mac",
+          "type": "hidden",
+          "id": "removed_mac"
+        },
+        {
+          "name": "ssid_list",
+          "type": "text",
+          "id": "ssid_list"
+        },
+        {
+          "name": "access_enable",
+          "type": "radio",
+          "id": "acc_enabled"
+        },
+        {
+          "name": "access_enable",
+          "type": "radio",
+          "id": "acc_disabled"
+        },
+        {
+          "name": "mac_mode",
+          "type": "radio",
+          "id": "mode_allow"
+        },
+        {
+          "name": "mac_mode",
+          "type": "radio",
+          "id": "mode_deny"
+        },
+        {
+          "name": "mac_mode",
+          "type": "radio",
+          "id": "mac_mode_on"
+        },
+        {
+          "name": "mac_mode",
+          "type": "radio",
+          "id": "mac_mode_off"
+        },
+        {
+          "name": "mac_address",
+          "type": "text",
+          "id": "mac_address"
+        },
+        {
+          "name": "manual_mac_address",
+          "type": "text",
+          "id": "manual_mac_address"
+        }
+      ]
+    }
+  ],
+  "wifi5adv.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 13,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "submit_or_restore",
+          "type": "hidden",
+          "id": "submit_or_restore"
+        },
+        {
+          "name": "aggre_mode",
+          "type": "text",
+          "id": "aggre_mode"
+        },
+        {
+          "name": "threshold",
+          "type": "text",
+          "id": "threshold"
+        },
+        {
+          "name": "dtm",
+          "type": "text",
+          "id": "dtm"
+        },
+        {
+          "name": "802_11_mode",
+          "type": "text",
+          "id": "802_11_mode"
+        },
+        {
+          "name": "protection",
+          "type": "radio",
+          "id": "protection_bg_on"
+        },
+        {
+          "name": "protection",
+          "type": "radio",
+          "id": "protection_bg_off"
+        },
+        {
+          "name": "beacon_interval",
+          "type": "text",
+          "id": "beacon_interval"
+        },
+        {
+          "name": "multicast",
+          "type": "radio",
+          "id": "multicast_on"
+        },
+        {
+          "name": "multicast",
+          "type": "radio",
+          "id": "multicast_off"
+        },
+        {
+          "name": "shortguard",
+          "type": "radio",
+          "id": "shortguard_on"
+        },
+        {
+          "name": "shortguard",
+          "type": "radio",
+          "id": "shortguard_off"
+        }
+      ]
+    }
+  ],
+  "wifi5basic.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 12,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wireless_radio",
+          "type": "radio",
+          "id": "wireless_enabled"
+        },
+        {
+          "name": "wireless_radio",
+          "type": "radio",
+          "id": "wireless_disabled"
+        },
+        {
+          "name": "wifi_mode",
+          "type": "text",
+          "id": "wifi_mode"
+        },
+        {
+          "name": "channel_bandwidth",
+          "type": "text",
+          "id": "channel_bandwidth"
+        },
+        {
+          "name": "country",
+          "type": "text",
+          "id": "country"
+        },
+        {
+          "name": "channel",
+          "type": "text",
+          "id": "channel"
+        },
+        {
+          "name": "channel",
+          "type": "text",
+          "id": "channel"
+        },
+        {
+          "name": "power_level",
+          "type": "text",
+          "id": "power_level"
+        },
+        {
+          "name": "max_clients",
+          "type": "text",
+          "id": "max_clients"
+        },
+        {
+          "name": "wifi_multicast",
+          "type": "radio",
+          "id": "wifi_multicast_on"
+        },
+        {
+          "name": "wifi_multicast",
+          "type": "radio",
+          "id": "wifi_multicast_off"
+        }
+      ]
+    }
+  ],
+  "wifi5info.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 3,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ssid",
+          "type": "text",
+          "id": "ssid"
+        },
+        {
+          "name": "wifioptimize_value",
+          "type": "hidden",
+          "id": "wifioptimize_value"
+        }
+      ]
+    }
+  ],
+  "wifi5list.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "wifi5secu.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 11,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ssid_list",
+          "type": "text",
+          "id": "ssid_list"
+        },
+        {
+          "name": "select_security_mode",
+          "type": "text",
+          "id": "select_security_mode"
+        },
+        {
+          "name": "encryption_wpa_type",
+          "type": "text",
+          "id": "encryption_wpa_type"
+        },
+        {
+          "name": "security_wpa_key",
+          "type": "text",
+          "id": "security_wpa_key"
+        },
+        {
+          "name": "encryption_wep_type",
+          "type": "text",
+          "id": "encryption_wep_type"
+        },
+        {
+          "name": "security_wep_key",
+          "type": "text",
+          "id": "security_wep_key"
+        },
+        {
+          "name": "server",
+          "type": "text",
+          "id": "server"
+        },
+        {
+          "name": "port",
+          "type": "text",
+          "id": "port"
+        },
+        {
+          "name": "key",
+          "type": "text",
+          "id": "key"
+        },
+        {
+          "name": "interval",
+          "type": "text",
+          "id": "interval"
+        }
+      ]
+    }
+  ],
+  "wifi5ssid.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 12,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ssid_list",
+          "type": "text",
+          "id": "ssid_list"
+        },
+        {
+          "name": "ssid_state",
+          "type": "radio",
+          "id": "ssid_enable"
+        },
+        {
+          "name": "ssid_state",
+          "type": "radio",
+          "id": "ssid_disable"
+        },
+        {
+          "name": "ssid_network_name",
+          "type": "text",
+          "id": "ssid_network_name"
+        },
+        {
+          "name": "ssid_broadcast",
+          "type": "radio",
+          "id": "ssid_broadcast_on"
+        },
+        {
+          "name": "ssid_broadcast",
+          "type": "radio",
+          "id": "ssid_broadcast_off"
+        },
+        {
+          "name": "ssid_isolation",
+          "type": "radio",
+          "id": "ssid_isolation_on"
+        },
+        {
+          "name": "ssid_isolation",
+          "type": "radio",
+          "id": "ssid_isolation_off"
+        },
+        {
+          "name": "wmm",
+          "type": "radio",
+          "id": "wmm_on"
+        },
+        {
+          "name": "wmm",
+          "type": "radio",
+          "id": "wmm_off"
+        },
+        {
+          "name": "max_clients",
+          "type": "text",
+          "id": "max_clients"
+        }
+      ]
+    }
+  ],
+  "wifi5wps.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 7,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wps_connect",
+          "type": "hidden",
+          "id": "wps_connect"
+        },
+        {
+          "name": "wps_state",
+          "type": "radio",
+          "id": "wps_enable"
+        },
+        {
+          "name": "wps_state",
+          "type": "radio",
+          "id": "wps_disable"
+        },
+        {
+          "name": "wps_type_list",
+          "type": "text",
+          "id": "wps_type_list"
+        },
+        {
+          "name": "generate_pin_type",
+          "type": "text",
+          "id": "generate_pin_type"
+        },
+        {
+          "name": "ap_pin",
+          "type": "text",
+          "id": "ap_pin"
+        }
+      ]
+    }
+  ],
+  "wifiacc.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 12,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "add_or_apply",
+          "type": "hidden",
+          "id": "add_or_apply"
+        },
+        {
+          "name": "removed_mac",
+          "type": "hidden",
+          "id": "removed_mac"
+        },
+        {
+          "name": "ssid_list",
+          "type": "text",
+          "id": "ssid_list"
+        },
+        {
+          "name": "access_enable",
+          "type": "radio",
+          "id": "acc_enabled"
+        },
+        {
+          "name": "access_enable",
+          "type": "radio",
+          "id": "acc_disabled"
+        },
+        {
+          "name": "mac_mode",
+          "type": "radio",
+          "id": "mode_allow"
+        },
+        {
+          "name": "mac_mode",
+          "type": "radio",
+          "id": "mode_deny"
+        },
+        {
+          "name": "mac_mode",
+          "type": "radio",
+          "id": "mac_mode_on"
+        },
+        {
+          "name": "mac_mode",
+          "type": "radio",
+          "id": "mac_mode_off"
+        },
+        {
+          "name": "mac_address",
+          "type": "text",
+          "id": "mac_address"
+        },
+        {
+          "name": "manual_mac_address",
+          "type": "text",
+          "id": "manual_mac_address"
+        }
+      ]
+    }
+  ],
+  "wifiadv.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 13,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "submit_or_restore",
+          "type": "hidden",
+          "id": "submit_or_restore"
+        },
+        {
+          "name": "aggre_mode",
+          "type": "text",
+          "id": "aggre_mode"
+        },
+        {
+          "name": "threshold",
+          "type": "text",
+          "id": "threshold"
+        },
+        {
+          "name": "dtm",
+          "type": "text",
+          "id": "dtm"
+        },
+        {
+          "name": "802_11_mode",
+          "type": "text",
+          "id": "802_11_mode"
+        },
+        {
+          "name": "protection",
+          "type": "radio",
+          "id": "protection_bg_on"
+        },
+        {
+          "name": "protection",
+          "type": "radio",
+          "id": "protection_bg_off"
+        },
+        {
+          "name": "beacon_interval",
+          "type": "text",
+          "id": "beacon_interval"
+        },
+        {
+          "name": "multicast",
+          "type": "radio",
+          "id": "multicast_on"
+        },
+        {
+          "name": "multicast",
+          "type": "radio",
+          "id": "multicast_off"
+        },
+        {
+          "name": "shortguard",
+          "type": "radio",
+          "id": "shortguard_on"
+        },
+        {
+          "name": "shortguard",
+          "type": "radio",
+          "id": "shortguard_off"
+        }
+      ]
+    }
+  ],
+  "wifibasic.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 11,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wireless_radio",
+          "type": "radio",
+          "id": "wireless_enabled"
+        },
+        {
+          "name": "wireless_radio",
+          "type": "radio",
+          "id": "wireless_disabled"
+        },
+        {
+          "name": "wifi_mode",
+          "type": "text",
+          "id": "wifi_mode"
+        },
+        {
+          "name": "channel_bandwidth",
+          "type": "text",
+          "id": "channel_bandwidth"
+        },
+        {
+          "name": "channel",
+          "type": "text",
+          "id": "channel"
+        },
+        {
+          "name": "channel",
+          "type": "text",
+          "id": "channel"
+        },
+        {
+          "name": "power_level",
+          "type": "text",
+          "id": "power_level"
+        },
+        {
+          "name": "max_clients",
+          "type": "text",
+          "id": "max_clients"
+        },
+        {
+          "name": "wifi_multicast",
+          "type": "radio",
+          "id": "wifi_multicast_on"
+        },
+        {
+          "name": "wifi_multicast",
+          "type": "radio",
+          "id": "wifi_multicast_off"
+        }
+      ]
+    }
+  ],
+  "wifiinfo.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 3,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ssid",
+          "type": "text",
+          "id": "ssid"
+        },
+        {
+          "name": "wifioptimize_value",
+          "type": "hidden",
+          "id": "wifioptimize_value"
+        }
+      ]
+    }
+  ],
+  "wifilist.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "wifilog.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ],
+  "wifisecu.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 11,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ssid_list",
+          "type": "text",
+          "id": "ssid_list"
+        },
+        {
+          "name": "select_security_mode",
+          "type": "text",
+          "id": "select_security_mode"
+        },
+        {
+          "name": "encryption_wpa_type",
+          "type": "text",
+          "id": "encryption_wpa_type"
+        },
+        {
+          "name": "security_wpa_key",
+          "type": "text",
+          "id": "security_wpa_key"
+        },
+        {
+          "name": "encryption_wep_type",
+          "type": "text",
+          "id": "encryption_wep_type"
+        },
+        {
+          "name": "security_wep_key",
+          "type": "text",
+          "id": "security_wep_key"
+        },
+        {
+          "name": "server",
+          "type": "text",
+          "id": "server"
+        },
+        {
+          "name": "port",
+          "type": "text",
+          "id": "port"
+        },
+        {
+          "name": "key",
+          "type": "text",
+          "id": "key"
+        },
+        {
+          "name": "interval",
+          "type": "text",
+          "id": "interval"
+        }
+      ]
+    }
+  ],
+  "wifissid.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 12,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "ssid_list",
+          "type": "text",
+          "id": "ssid_list"
+        },
+        {
+          "name": "ssid_state",
+          "type": "radio",
+          "id": "ssid_enable"
+        },
+        {
+          "name": "ssid_state",
+          "type": "radio",
+          "id": "ssid_disable"
+        },
+        {
+          "name": "ssid_network_name",
+          "type": "text",
+          "id": "ssid_network_name"
+        },
+        {
+          "name": "ssid_broadcast",
+          "type": "radio",
+          "id": "ssid_broadcast_on"
+        },
+        {
+          "name": "ssid_broadcast",
+          "type": "radio",
+          "id": "ssid_broadcast_off"
+        },
+        {
+          "name": "ssid_isolation",
+          "type": "radio",
+          "id": "ssid_isolation_on"
+        },
+        {
+          "name": "ssid_isolation",
+          "type": "radio",
+          "id": "ssid_isolation_off"
+        },
+        {
+          "name": "wmm",
+          "type": "radio",
+          "id": "wmm_on"
+        },
+        {
+          "name": "wmm",
+          "type": "radio",
+          "id": "wmm_off"
+        },
+        {
+          "name": "max_clients",
+          "type": "text",
+          "id": "max_clients"
+        }
+      ]
+    }
+  ],
+  "wifiswitchtimer.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 13,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wifiswitchtimer_value",
+          "type": "hidden",
+          "id": "wifiswitchtimer_value"
+        },
+        {
+          "name": "wifiswitchtimer_enable",
+          "type": "radio",
+          "id": "wifiswitchtimer_enable0"
+        },
+        {
+          "name": "wifiswitchtimer_enable",
+          "type": "radio",
+          "id": "wifiswitchtimer_enable1"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "start_time"
+        },
+        {
+          "name": "",
+          "type": "text",
+          "id": "end_time"
+        },
+        {
+          "name": "Monday",
+          "type": "checkbox",
+          "id": "Monday"
+        },
+        {
+          "name": "Tuesday",
+          "type": "checkbox",
+          "id": "Tuesday"
+        },
+        {
+          "name": "Wednesday",
+          "type": "checkbox",
+          "id": "Wednesday"
+        },
+        {
+          "name": "Thursday",
+          "type": "checkbox",
+          "id": "Thursday"
+        },
+        {
+          "name": "Friday",
+          "type": "checkbox",
+          "id": "Friday"
+        },
+        {
+          "name": "Saturday",
+          "type": "checkbox",
+          "id": "Saturday"
+        },
+        {
+          "name": "Sunday",
+          "type": "checkbox",
+          "id": "Sunday"
+        }
+      ]
+    }
+  ],
+  "wifiwps.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 7,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        },
+        {
+          "name": "wps_connect",
+          "type": "hidden",
+          "id": "wps_connect"
+        },
+        {
+          "name": "wps_state",
+          "type": "radio",
+          "id": "wps_enable"
+        },
+        {
+          "name": "wps_state",
+          "type": "radio",
+          "id": "wps_disable"
+        },
+        {
+          "name": "wps_type_list",
+          "type": "text",
+          "id": "wps_type_list"
+        },
+        {
+          "name": "generate_pin_type",
+          "type": "text",
+          "id": "generate_pin_type"
+        },
+        {
+          "name": "ap_pin",
+          "type": "text",
+          "id": "ap_pin"
+        }
+      ]
+    }
+  ],
+  "wizard.html": [
+    {
+      "action": "/GponForm/LogoutForm",
+      "method": "POST",
+      "name": "GForm",
+      "inputs_count": 0,
+      "inputs": []
+    },
+    {
+      "action": "",
+      "method": "POST",
+      "name": "XForm",
+      "inputs_count": 1,
+      "inputs": [
+        {
+          "name": "XWebPageName",
+          "type": "hidden",
+          "id": "XWebPageName"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,635 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+var ntp_enable = 1;
+var cur_time = "";
+var new_server1 = "";
+var new_server2 = "";
+var new_server3 = "";
+var new_server4 = "";
+var new_server5 = "";
+var time_Zone = 0;
+var wan_list = new Array();
+var ntpwanIndex = 0;
+var syncInterval = 0;
+
+ntp_enable=1;
+time_Zone=7;
+ntpwanIndex=0;
+syncInterval=86400;
+new_server1="vn.pool.ntp.org";
+new_server2="time.nist.gov";
+new_server3="";
+new_server4="";
+new_server5="";
+cur_time="Thu Jun 30 12:32:35 UTC 2022";
+
+wan_list[0] = { index:" 0", name: "1_INTERNET_TR069_IPTV_R_VID_0" };
+
+
+var tmp_time = cur_time.replace("  "," ");
+var	strDateTime = tmp_time.split(' ');
+	
+var weekday = strDateTime[0];
+var month = strDateTime[1];
+var day = strDateTime[2];
+var timezone = strDateTime[4];
+var year = strDateTime[5];
+
+var time = strDateTime[3].split(':');
+var hour = time[0];
+var minute = time[1];
+var second = time[2];
+var n=0;
+var meridiem="AM";
+var mon="";
+var monthup=0;
+var timeZones = new Array();
+
+timeZones[0] = WebString.ntp_timeZones0;
+timeZones[1] = WebString.ntp_timeZones1;
+timeZones[2] = WebString.ntp_timeZones2;
+timeZones[3] = WebString.ntp_timeZones3;
+timeZones[4] = WebString.ntp_timeZones4;
+timeZones[5] = WebString.ntp_timeZones5;
+timeZones[6] = WebString.ntp_timeZones6;
+timeZones[7] = WebString.ntp_timeZones7;
+timeZones[8] = WebString.ntp_timeZones8;
+timeZones[9] = WebString.ntp_timeZones9;
+timeZones[10] = WebString.ntp_timeZones10;
+timeZones[11] = WebString.ntp_timeZones11;
+timeZones[12] = WebString.ntp_timeZones12;
+timeZones[13] = WebString.ntp_timeZones13;
+timeZones[14] = WebString.ntp_timeZones14;
+timeZones[15] = WebString.ntp_timeZones15;
+timeZones[16] = WebString.ntp_timeZones16;
+timeZones[17] = WebString.ntp_timeZones17;
+timeZones[18] = WebString.ntp_timeZones18;
+timeZones[19] = WebString.ntp_timeZones19;
+timeZones[20] = WebString.ntp_timeZones20;
+timeZones[21] = WebString.ntp_timeZones21;
+timeZones[22] = WebString.ntp_timeZones22;
+timeZones[23] = WebString.ntp_timeZones23;
+timeZones[24] = WebString.ntp_timeZones24;
+
+function getTimeZoneOffset(idx)
+{
+	ret = idx - 12;
+	return ret;
+}
+
+function writeTimeZoneList()
+{
+	var str = "";
+	for( var i = 0; i < timeZones.length; i++ ) {
+		str += "<option value=" + getTimeZoneOffset(i) + ">" + timeZones[i] + "</option>";
+	}
+	$("#time_Zone").html(str);
+}
+
+function showWanList()
+{
+	var i;
+	for (i = 0; i < wan_list.length; i++)
+	{
+		$("#ntpwanIndex").append("<option value=\"" + parseInt(wan_list[i].index) + "\">" + wan_list[i].name + "<\/option>");
+	}
+	if(0 == wan_list.length)
+	{
+		$("#ntpwanIndex").append("<option value=\"-1\">NO_WAN_CONNECTION<\/option>");
+	}
+}
+
+function ntpdisplay()
+{
+	var enable = $("#ntp_enabled").attr("checked");
+	if (enable == "checked")
+	{
+		$("#div_display1").show();
+		$("#div_display2").show();
+		$("#div_display3").show();
+		$("#div_display4").show();
+	} 
+	else 
+	{
+		$("#div_display1").hide();
+		$("#div_display2").hide();
+		$("#div_display3").hide();
+		$("#div_display4").hide();
+	}
+	WebStepIndex();
+}
+
+function showtime()
+{
+	second++;
+	n++;
+	if(second<10)
+	{
+		second='0' + second;
+	}
+	else if(second>=60)
+	{
+		minute++;
+		second="00";
+		if(minute<10)
+		{
+			minute='0' + minute;
+		}
+	}
+
+	if(minute>=60)
+	{
+		hour++;
+		minute="00";
+		if(hour<10)
+		{
+			hour='0' + hour;
+		}
+		if(hour>12)
+		{
+			hour=hour-12;
+			meridiem="PM";
+		}
+		
+		if(meridiem=="PM"&&hour>=11)
+		{
+			hour="00";
+			meridiem="AM";
+			day++;
+		}
+	}
+
+	if(day>28&&monthup==2)
+	{
+		mon++;
+		day=1;			
+	}
+	if(day>30&&monthup==3)
+	{
+		mon++;
+		day=1;			
+	}
+	if(day>31&&monthup==1)
+	{
+		mon++;
+		day=1;			
+	}
+	if(mon>12)
+	{
+		mon=1;
+		year++;
+	}
+	strCurrentTime = mon+ '/' + day + '/' + year + ' ' + hour + ':' + minute + ':' + second + ' ' + meridiem;
+	if(n>60)
+	{
+		self.location.reload();
+	}
+	$("#cur_time").html(strCurrentTime);
+}
+
+function ParseTime()
+{
+	tmp_tmp=cur_time.replace("  "," ");
+	strDateTime = tmp_tmp.split(' ');
+	
+	weekday = strDateTime[0];
+	month = strDateTime[1];
+	day = strDateTime[2];
+	time = strDateTime[3].split(':');
+	timezone = strDateTime[4];
+	year = strDateTime[5];
+
+	hour = time[0];
+	minute = time[1];
+	second = time[2];
+	
+	switch(month)
+	{
+		case "Jan":
+			mon="1";
+			monthup=1;
+			break;
+		case "Feb":
+			mon="2";
+			monthup=2;
+			break
+		case "Mar":
+			mon="3";
+			monthup=1;
+			break;
+		case "Apr":
+			mon="4";
+			monthup=3;
+			break;
+		case "May":
+			mon="5";
+			monthup=1;
+			break;
+		case "Jun":
+			mon="6";
+			monthup=3;
+			break;
+		case "Jul":
+			mon="7";
+			monthup=1;
+			break;
+		case "Aug":
+			mon="8";
+			monthup=1;
+			break;
+		case "Sep":
+			mon="9";
+			monthup=3;
+			break;
+		case "Oct":
+			mon="10";
+			monthup=1;
+			break;
+		case "Nov":
+			mon="11";
+			monthup=3;
+			break;
+		case "Dec":	
+			mon="12";
+			monthup=1;
+			break;
+		default:
+			mon="";
+			monthup=0;
+			break;	
+	}
+	if(hour>12)
+	{
+		hour=hour-12;
+		meridiem="PM";
+	}
+	strCurrentTime = mon+ '/' + day + '/' + year + ' ' + hour + ':' + minute + ':' + second + ' ' + meridiem;
+	$("#cur_time").html(strCurrentTime);
+}
+
+function WebDoSubmit()
+{
+	if(1 == $('input:radio[name="ntp_enable"]:checked').val())
+	{
+		if("-1" == $("#ntpwanIndex").attr("value"))
+		{
+			alert(WebString.wan_not_exist_alert);
+			return;
+		}
+	
+		if($("#syncInterval").val() < 600 || $("#syncInterval").val() > 86400)
+		{
+			alert(WebString.ntp_syncInterval_alert);
+			return;
+		}
+	
+		if(($("#ntp_server1").val() == 9) && "" == $("#new_server1").val())
+		{
+			alert(WebString.ntp_alert);
+			$("#new_server1").focus();
+			return;
+		}
+	}
+
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+	writeTimeZoneList();
+	
+	$("#cur_time").html(cur_time);
+	$("#time_Zone").val(time_Zone);
+	$("#syncInterval").val(syncInterval);
+
+	if(1 == ntp_enable){
+		$("#ntp_enabled").attr("checked",true);
+	}
+	else 
+	{
+		$("#ntp_disabled").attr("checked",true);
+	}
+
+	$("#new_server1").val(new_server1);
+	$("#ntp_server1").val(9);
+	$("#display_server1").show();
+
+	$("#display_server2").hide();
+	$("#new_server2").val(new_server2);
+	if (new_server2 == "") {
+		$("#ntp_server2").val(0);
+	} else {
+		$("#ntp_server2").val(9);
+		$("#display_server2").show();
+	}
+
+	$("#display_server3").hide();
+	$("#new_server3").val(new_server3);
+	if (new_server3 == "") {
+		$("#ntp_server3").val(0);
+	} else {
+		$("#ntp_server3").val(9);
+		$("#display_server3").show();
+	}
+
+	$("#display_server4").hide();
+	$("#new_server4").val(new_server4);
+	if (new_server4 == "") {
+		$("#ntp_server4").val(0);
+	} else {
+		$("#ntp_server4").val(9);
+		$("#display_server4").show();
+	}
+
+	$("#display_server5").hide();
+	$("#new_server5").val(new_server5);
+	if (new_server5 == "") {
+		$("#ntp_server5").val(0);
+	} else {
+		$("#ntp_server5").val(9);
+		$("#display_server5").show();
+	}
+
+	ntpdisplay();
+	showWanList();
+	$("#ntpwanIndex").val(ntpwanIndex);
+	ParseTime();
+	setInterval("showtime();", 1000);
+}
+
+$(document).ready(function () {
+	$("input[name='ntp_enable']").click(function() {
+		ntpdisplay();
+	});
+
+	$("#ntp_server1").click(function() {
+		var nv = $("#ntp_server1").val();
+		if (0 == nv) {
+			$("#display_server1").hide();
+			$("#new_server1").val("");
+		} else {
+			$("#display_server1").show();
+		}
+	});
+
+	$("#ntp_server2").click(function() {
+		var nv = $("#ntp_server2").val();
+		if (0 == nv) {
+			$("#display_server2").hide();
+			$("#new_server2").val("");
+		} else {
+			$("#display_server2").show();
+		}
+	});
+
+	$("#ntp_server3").click(function() {
+		var nv = $("#ntp_server3").val();
+		if (0 == nv) {
+			$("#display_server3").hide();
+			$("#new_server3").val("");
+		} else {
+			$("#display_server3").show();
+		}
+	});
+
+	$("#ntp_server4").click(function() {
+		var nv = $("#ntp_server4").val();
+		if (0 == nv) {
+			$("#display_server4").hide();
+			$("#new_server4").val("");
+		} else {
+			$("#display_server4").show();
+		}
+	});
+
+	$("#ntp_server5").click(function() {
+		var nv = $("#ntp_server5").val();
+		if (0 == nv) {
+			$("#display_server5").hide();
+			$("#new_server5").val("");
+		} else {
+			$("#display_server5").show();
+		}
+	});
+
+	$("#btn_apply").click(function(){
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS1"></td>
+			<td><input type="radio" name="ntp_enable" id="ntp_enabled" value="1" /><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+				<input type="radio" name="ntp_enable" id="ntp_disabled" value="0" /><script>document.write(WebString.Disable);</script></td>
+		</tr>
+		<tr>
+			<td width="200" id="XS2"></td>
+			<td id="cur_time" ></td>
+		</tr>
+	</table>
+</div>
+
+
+<div id="div_display1" class="cfgstep">
+	<p><strong id="XS3"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS4"></td>
+			<td>
+				<select name="ntpwanIndex" id="ntpwanIndex">
+				</select>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div id="div_display2" class="cfgstep">
+	<p><strong id="XS5"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS6"></td>
+			<td>
+				<select id="ntp_server1">
+					<option value="9"><script type="text/javascript">document.write(WebString.customer_setting);</script></option>
+				</select>
+			</td>
+			<td id="display_server1"><input type="text" name="new_server1" id="new_server1" maxlength="63" /></td>
+		</tr>
+		<tr>
+			<td width="200" id="XS7"></td>
+			<td>
+				<select id="ntp_server2">
+					<option value="0"><script type="text/javascript">document.write(WebString.None);</script></option>
+					<option value="9"><script type="text/javascript">document.write(WebString.customer_setting);</script></option>
+				</select>
+			</td>
+			<td id="display_server2"><input type="text" name="new_server2" id="new_server2" maxlength="63" /></td>
+		</tr>
+		<tr>
+			<td width="200" id="XS8"></td>
+			<td>
+				<select id="ntp_server3">
+					<option value="0"><script type="text/javascript">document.write(WebString.None);</script></option>
+					<option value="9"><script type="text/javascript">document.write(WebString.customer_setting);</script></option>
+				</select>
+			</td>
+			<td id="display_server3"><input type="text" name="new_server3" id="new_server3" maxlength="63" /></td>
+		</tr>
+		<tr>
+			<td width="200" id="XS9"></td>
+			<td>
+				<select id="ntp_server4">
+					<option value="0"><script type="text/javascript">document.write(WebString.None);</script></option>
+					<option value="9"><script type="text/javascript">document.write(WebString.customer_setting);</script></option>
+				</select>
+			</td>
+			<td id="display_server4"><input type="text" name="new_server4" id="new_server4" maxlength="63" /></td>
+		</tr>
+		<tr>
+			<td width="200" id="XS10"></td>
+			<td>
+				<select id="ntp_server5">
+					<option value="0"><script type="text/javascript">document.write(WebString.None);</script></option>
+					<option value="9"><script type="text/javascript">document.write(WebString.customer_setting);</script></option>
+				</select>
+			</td>
+			<td id="display_server5"><input type="text" name="new_server5" id="new_server5" maxlength="63" /></td>
+		</tr>
+	</table>
+</div>
+
+<div id="div_display3" class="cfgstep">
+	<p><strong id="XS11"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS12"></td>
+			<td>
+				<select name="time_Zone" id="time_Zone" style="width:300px">
+				</select>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div id="div_display4" class="cfgstep">
+	<p><strong id="XS13"></strong></p>
+	<table>
+		<tr>
+			<td width="200" id="XS14"></td>
+			<td><input type="text" name="syncInterval" id="syncInterval" maxlength="10" style="ime-mode: disabled;" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />s</td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+	<a id="btn_apply" class="btn apply_btn" href="#"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

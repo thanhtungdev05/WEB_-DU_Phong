@@ -17,7 +17,7 @@ window.TOOLTIPS_BE12000._common_login = [
   },
   {
     selector: '#Btn_login, #LoginId, .loginBtn, input[type="submit"], input[type="button"][value="Login"], input#LoginId, button#LoginId',
-    text: 'Bước 3: Nhấn Login để đăng nhập',
+    text: 'Nhấn Login để đăng nhập',
     position: 'bottom'
   }
 ];

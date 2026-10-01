@@ -640,6 +640,21 @@ g_DnsServerSource_DNSCtrlDisp();
 $("#LeaseTimeMode").change(function(){
 g_LeaseTimeMode_CtrlDisp();
 });
+$(document).on("input change keyup", "[id^='sub_IPAddr']", function() {
+    for (var k = 0; k < 3; k++) {
+        var octVal = $("[id='sub_IPAddr" + k + ":DHCPBasicCfg']").val();
+        if (octVal !== undefined && octVal !== "") {
+            $("[id='sub_MinAddress" + k + ":DHCPBasicCfg']").val(octVal);
+            $("[id='sub_MaxAddress" + k + ":DHCPBasicCfg']").val(octVal);
+        }
+    }
+    if (!$("[id='sub_MinAddress3:DHCPBasicCfg']").val()) {
+        $("[id='sub_MinAddress3:DHCPBasicCfg']").val("2");
+    }
+    if (!$("[id='sub_MaxAddress3:DHCPBasicCfg']").val()) {
+        $("[id='sub_MaxAddress3:DHCPBasicCfg']").val("254");
+    }
+});
 Head.chanegeDataByCustom =function(xml){
 var OBJ = $(xml).find("OBJ_BRGRP_ID");
 var instances = $("Instance ", OBJ);

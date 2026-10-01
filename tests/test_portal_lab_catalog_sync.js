@@ -19,12 +19,13 @@ const expected = {
   vigor2927: 'vg2927-bai'
 };
 const supportedPortalDevices = [
-  'ac1000f', 'ax3000c', 'ax3000gz', 'ax3000hv2', 'ax3000s',
+  'ac1000f', 'ac1000cv2', 'ax3000c', 'ax3000gz', 'ax3000hv2', 'ax3000s',
   'ac1000HI', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c',
   'mikrotik_hexs'
 ];
 const simulatorPrefixes = {
   ac1000f: '/sim_ac1000f/',
+  ac1000cv2: '/sim_ac1000cv2/',
   ax3000c: '/sim_ax3000c/',
   ax3000gz: '/sim_ax3000gz/',
   ax3000hv2: '/sim_ax3000hv2/',
@@ -99,7 +100,8 @@ const migrations = [
   '036_activate_be6500c_catalog.sql',
   '046_activate_vigor2927_catalog.sql',
   '049_activate_mikrotik_hexs_catalog.sql',
-  '051_activate_ax3000cv2_easymesh_lab.sql'
+  '051_activate_ax3000cv2_easymesh_lab.sql',
+  '053_activate_ac1000cv2_catalog.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
@@ -152,6 +154,7 @@ assert.equal(be15000?.categories.flatMap((category) => category.lessons || []).l
 
 const expectedLessonCounts = {
   ac1000f: 6,
+  ac1000cv2: 6,
   ax3000c: 7,
   ax3000gz: 6,
   ax3000hv2: 6,

@@ -1,0 +1,536 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+
+var wifi_mode = "";
+var ssid_enable = new Array([4]);
+var ssid_list = new Array([4]);
+var select_security_mode = new Array([4]);
+
+//WPA  PSK
+var encryption_wpa_type = new Array([4]);
+var security_wpa_key = new Array("","","","");
+var security_wpa_ver = new Array("","","","");
+
+//WPA ENTERPRISE
+var wpa_enterpri_interval = new Array([4]);
+var wpa_enterpri_radius_key = new Array([4]);
+var wpa_enterpri_radius_port = new Array([4]);
+var wpa_enterpri_server = new Array([4]);
+
+//WEP
+var wpa_wep_authmode = new Array([4]);
+var wpa_wep_key = new Array("","","","");
+
+
+wifi_mode=0;
+UserPriority=1;
+ssid_enable[0]=1;
+ssid_list[0]=0;
+select_security_mode[0]=0;
+encryption_wpa_type[0]=1;
+security_wpa_key[0]="";
+security_wpa_ver[0]="2";
+ssid_enable[1]=0;
+ssid_list[1]=1;
+select_security_mode[1]=0;
+encryption_wpa_type[1]=1;
+security_wpa_key[1]="12345678";
+security_wpa_ver[1]="2";
+ssid_enable[2]=0;
+ssid_list[2]=2;
+select_security_mode[2]=0;
+encryption_wpa_type[2]=1;
+security_wpa_key[2]="12345678";
+security_wpa_ver[2]="2";
+ssid_enable[3]=0;
+ssid_list[3]=3;
+select_security_mode[3]=0;
+encryption_wpa_type[3]=1;
+security_wpa_key[3]="12345678";
+security_wpa_ver[3]="2";
+
+
+function WebInit()
+{
+    SelectShow(ssid_list[0]);
+    if(select_security_mode[0] == 0)
+    {
+        selectMode(security_wpa_ver[0]);
+    }
+    else
+    {
+        selectMode(select_security_mode[0]+2);
+    }
+    WebStepIndex();
+}
+
+function WebDoSubmit()
+{
+    var security_mode = $("#select_security_mode").val();
+
+    if(security_mode == 3)
+    {
+        if (false == isValidIpAddress($("#server").val()))
+        {
+            alert(WebString.ip_alert);
+            return false;
+        }
+
+        if (false == IsPort($("#port").val()))
+        {
+            alert(Xwifi5secuString[17]);
+            return false;
+        }
+    }
+    
+    var security_wpa_key = $("#security_wpa_key").val();
+    if (security_mode == 0 ||security_mode == 1|| security_mode == 2)
+    {
+        if(security_wpa_key.length < 8 || security_wpa_key.length > 64)
+        {
+            alert(Xwifi5secuString[18]);
+            return false;
+        }
+        else if(security_wpa_key.length == 64)
+        {
+            if(!isValidHexKey(security_wpa_key, 64))
+            {
+                alert(XwifisecuString[18]);
+                return false;
+            }
+        }
+        else if (!isValidSsid(security_wpa_key, false))
+        {
+            alert(XwifisecuString[20]);
+            return false;
+        }
+    }
+    else if(security_mode == 4)
+    {
+        var security_wep_key = $("#security_wep_key").val();
+
+        if (security_wep_key.length == 5  || security_wep_key.length == 13)
+        {
+            if (!isValidSsid(security_wep_key, false))
+            {
+                alert(XwifisecuString[20]);
+                return false;
+            }
+        }
+        else if(security_wep_key.length == 10 || security_wep_key.length == 26)
+        {
+            if(!isValidHexKey(security_wep_key, security_wep_key.length))
+            {
+                alert(XwifisecuString[21]);
+                return false;       
+            }   
+        }
+        else
+        {
+            alert(XwifisecuString[19]);
+            return false;
+        }
+    }
+
+    $("#XForm").submit();
+}
+
+
+
+function SelectShow(i)
+{
+    var security_str = "";
+    for (var j = 0; j < 6; j++) // total 6 type of security 
+    {
+        if (j == 3) //WPA/WPA2 Enterprise
+        {
+           continue;
+        }
+        //11n only(wifi_mode == 3) and wep(j == 4)
+        if (((wifi_mode == 3) || (wifi_mode == 8)) && (j == 4) && (ssid_enable[i] == 1)) 
+        {
+            if (select_security_mode[i] == 2) 
+            {   //should not be here
+                alert(WebString.mode_security_conflict);
+                security_str += "<option value=\"" + j + "\">"+ Xwifi5secuString[22 + j] +"</option>";
+            }
+            else
+            {
+                continue;
+            }
+        }
+        else
+        {
+            security_str += "<option value=\"" + j + "\">"+ Xwifi5secuString[22 + j] +"</option>";
+        }
+    }
+    $("#select_security_mode").html(security_str);
+    $("#ssid_list").val(ssid_list[i]);
+    if(select_security_mode[i] == 0)
+    {
+        set_select_val($("#select_security_mode"), security_wpa_ver[i]);
+    }
+    else
+    {
+        set_select_val($("#select_security_mode"), select_security_mode[i]+2);
+    }
+    if(select_security_mode[i]==0)
+    {
+        $("#encryption_wpa_type").val(encryption_wpa_type[i]);
+        if(security_wpa_key[i] != null || security_wpa_key[i].length !=0)
+        {
+            $("#security_wpa_key").val(security_wpa_key[i]);
+        }
+    }
+    else if(select_security_mode[i]==1)
+    {
+        $("#security_802").hide();
+        $("#security_wpa").show();
+        $("#security_wep").show();
+
+        $("#interval").val(wpa_enterpri_interval[i]);
+        $("#key").val(wpa_enterpri_radius_key[i]);
+        $("#port").val(wpa_enterpri_radius_port[i]);
+        $("#server").val(wpa_enterpri_server[i]);
+    }
+    else if(select_security_mode[i]==2)
+    {
+        $("#security_wep").hide();
+        $("#security_wpa").show();
+        $("#security_802").show();
+
+        $("#encryption_wep_type").val(wpa_wep_authmode[i]);
+        if(wpa_wep_key[i] != null || wpa_wep_key[i].length !=0 )
+        {
+            $("#security_wep_key").val(wpa_wep_key[i]);
+        }
+    }
+    
+    if(select_security_mode[i] == 0)
+    {
+        selectMode(security_wpa_ver[i]);
+    }
+    else
+    {
+        selectMode(select_security_mode[i]+2);
+    }
+}
+
+function selectMode(mode)
+{
+    if(mode == 0||mode == 1||mode == 2)
+    {
+        $("#security_wpa").show();
+        if(wifi_mode == '8' || wifi_mode == '3')
+        {
+            $("#wpa_tkip").hide();
+        }
+
+        $("#security_802").hide();
+        $("#security_wep").hide();
+        $("#security_open").hide();
+        var obj = document.getElementById("ssid_list");
+        var index = obj.options[obj.selectedIndex].value;
+        if(security_wpa_ver[index]!=mode)
+        {
+            $("#security_wpa_key").val("");
+        }
+        else
+        {
+            $("#security_wpa_key").val(security_wpa_key[index]);
+        }
+    }
+    
+    if(mode == 4)
+    {
+        $("#security_wpa").hide();
+        $("#security_802").hide();
+        $("#security_wep").show();
+        $("#security_open").hide();
+        var obj = document.getElementById("ssid_list");
+        var index = obj.options[obj.selectedIndex].value;
+        $("#security_wep_key").val(wpa_wep_key[index]);
+
+    }
+
+    if(mode == 3)
+    {
+        $("#security_wpa").hide();
+        $("#security_802").show();
+        $("#security_wep").hide();
+        $("#security_open").hide();
+    }
+
+    if(mode == 5)
+    {
+        $("#security_wpa").hide();
+        $("#security_802").hide();
+        $("#security_wep").hide();
+        $("#security_open").show();
+    }
+    WebStepIndex();
+}
+
+
+
+$(document).ready(function () {
+    $("#btn_apply1").click(function() {
+        WebDoSubmit();
+    });
+    $("#btn_apply2").click(function() {
+        WebDoSubmit();
+    });
+    $("#btn_apply3").click(function() {
+        WebDoSubmit();
+    });
+    $("#btn_apply4").click(function() {
+        WebDoSubmit();
+    });
+});
+
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+    <p><strong id="XS0"></strong></p>
+    <table>
+    <tr>
+        <td width="200" id="XS1"></td>
+        <td><select name="ssid_list" id="ssid_list" onchange="SelectShow(this.options[this.selectedIndex].value);">
+                <option value="0" selected="selected">SSID 1</option>
+                <option value="1">SSID 2</option>
+                <option value="2">SSID 3</option>
+                <option value="3">SSID 4</option>
+            </select>
+        </td>
+    </tr>
+    </table>
+</div>
+
+<div class="cfgstep">
+    <p><strong id="XS2"></strong></p>
+    <table>
+    <tr>
+        <td width="200" id="XS3"></td>
+        <td>
+        <select name="select_security_mode" id="select_security_mode" onchange="selectMode(this.options[this.selectedIndex].value);">
+        <!--
+            <option value="0">WPA-Personal</option>
+            <option value="1">WPA2-Personal</option>
+            <option value="2">WPA/WPA2-Personal</option>            
+            <option value="3">WPA/WPA2 Enterprise </option>
+            <option value="4">WEP</option>
+            <option value="5">Open</option>
+        -->
+        </select>
+        </td>
+    </tr>
+    </table>
+</div>
+
+<div id="security_open">
+    <div class="cfgstep">
+        <p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+        <a href="#" id="btn_apply1" class="btn"><script>document.write(WebString.Apply);</script></a>
+    </div>
+</div>
+
+<div id="security_wpa">
+    <div class="cfgstep">
+        <p><strong id="XS4"></strong></p>
+        <table>
+            <tr>
+                <td width="200" id="XS5"></td>
+                <td>
+                <select name="encryption_wpa_type" id="encryption_wpa_type">
+                    <option id="wpa_auto" value="0">TKIP/AES</option>
+                    <option id="wpa_aes"  value="1">AES</option>
+                    <option id="wpa_tkip" value="2">TKIP</option>
+                </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="cfgstep">
+        <p><strong id="XS6"></strong></p>
+         <table>
+            <tr>
+            <td width="200" id="XS7"></td>
+            <td ><input name="security_wpa_key" id="security_wpa_key" type="text" value="" size="20" maxlength="64"  /></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="cfgstep">
+        <p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+        <a href="#" id="btn_apply2" class="btn"><script>document.write(WebString.Apply);</script></a>
+    </div>
+</div>
+
+
+
+<div id="security_wep">
+    <div class="cfgstep">
+        <p><strong id="XS8"></strong></p>
+        <table>
+        <tr>
+            <td width="200" id="XS9"></td>
+            <td>
+            <select name="encryption_wep_type" id="encryption_wep_type">
+                <option value="0" selected="selected">Open</option>
+                <option value="1">Shared</option>
+                <option value="2">Open/Shared</option>
+            </select>
+            </td>
+        </tr>
+        </table>
+    </div>
+
+    <div class="cfgstep">
+        <p><strong id="XS10"></strong></p>
+        <table>
+        <tr>
+            <td width="200"  id="XS11"></td>
+            <td><input name="security_wep_key" id="security_wep_key" type="text" size="20" maxlength="26"/></td>
+        </tr>
+        </table>
+    </div>
+
+    <div class="cfgstep">
+        <p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+        <a href="#" id="btn_apply3" class="btn"><script>document.write(WebString.Apply);</script></a>
+    </div>
+
+</div>
+
+<div id="security_802">
+    <div id="disabled">
+        <div class="cfgstep">
+            <p><strong id="XS12"></strong></p>
+            <table>
+            <tr>
+                <td width="200" id="XS13"></td>
+                <td><input name="server" type="text" id="server" maxlength="15" /></td>
+            </tr>
+            <tr>
+                <td width="200" id="XS14"></td>
+                <td><input name="port" type="text" id="port" maxlength="5" size="6" /></td>
+            </tr>
+            <tr>
+                <td width="200" id="XS15"></td>
+                <td><input name="key" type="text" id="key" maxlength="64" size="40" /></td>
+            </tr>
+            <tr>
+                <td width="200" id="XS16"></td>
+                <td><input name="interval" type="text" id="interval" maxlength="5" size="6" />
+                    <script>document.write(WebString.seconds);</script></td>
+            </tr>
+            </table>
+        </div>
+        <div class="cfgstep">
+            <p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+            <a href="#" id="btn_apply4" class="btn"><script>document.write(WebString.Apply);</script></a>
+        </div>
+    </div>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+

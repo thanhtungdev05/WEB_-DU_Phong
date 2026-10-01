@@ -36,7 +36,7 @@ window.TOOLTIPS_AX3000S['LAB_AX3000S_06'] = [
   // Bật Enable nếu đang tắt (mặc định add_vircfg đã bật sẵn)
   {
     selector: '#VirEnable, label[for="enableVir"]',
-    text: 'Bật Enable',
+    text: 'Bước phụ: Bật Enable (nếu đang tắt)',
     position: 'top',
     page: 'portforward',
     condition: function(doc) {

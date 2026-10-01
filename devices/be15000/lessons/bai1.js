@@ -1,16 +1,16 @@
 /**
  * devices/be15000/lessons/bai1.js
- * Bài 1 - Xem thiết bị ONT BE15000
+ * Bài 1 - Xem thiết bị AP BE1500
  */
 
 window.DEVICE_BE15000_LESSONS = [
   {
     id: 'be15-bai1',
-    title: 'Xem thiết bị ONT BE15000',
-    subtitle: 'Khảo sát và xem thông tin thiết bị ONT BE15000',
+    title: 'Xem thiết bị AP BE1500',
+    subtitle: 'Khảo sát và xem thông tin thiết bị AP BE1500',
     noConfig: true,
     instructions: [
-      'Truy cập <b>/sim_be15000</b> và đăng nhập vào thiết bị ONT BE15000.',
+      'Truy cập <b>/sim_be15000</b> và đăng nhập vào thiết bị AP BE1500.',
       'Khảo sát giao diện quản trị, xem thông tin hệ thống, trạng thái mạng và các tính năng.',
       'Bài học này chỉ dùng để xem giao diện thiết bị và <b>không yêu cầu cấu hình</b>.',
       'Bấm <b>Nộp bài</b> để hoàn tất bài khảo sát thiết bị.'
@@ -18,7 +18,7 @@ window.DEVICE_BE15000_LESSONS = [
     practiceUrl: '/sim_be15000/login',
     clearFields: [],
     grading: {
-      description: 'Xem thiết bị ONT BE15000 (không yêu cầu cấu hình)',
+      description: 'Xem thiết bị AP BE1500 (không yêu cầu cấu hình)',
       customGrading: function () {
         return {
           passed: true,
@@ -28,11 +28,11 @@ window.DEVICE_BE15000_LESSONS = [
           details: [
             {
               id: 'view_be15000',
-              name: 'Xem thiết bị ONT BE15000',
+              name: 'Xem thiết bị AP BE1500',
               expected: 'Xem giao diện thiết bị (không cần cấu hình)',
               actual: 'Đã hoàn thành xem thiết bị',
               passed: true,
-              message: 'Đã hoàn thành xem thiết bị ONT BE15000'
+              message: 'Đã hoàn thành xem thiết bị AP BE1500'
             }
           ]
         };

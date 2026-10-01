@@ -1887,6 +1887,35 @@ band = " ("+band+")";
 }
 return band;
 }
+function g_syncMLO24To5G(srcTemplate) {
+try {
+var tId = $(srcTemplate).attr("id") || "";
+var aliasVal = $("[id^='Alias']", srcTemplate).val() || "";
+if (tId === "template_WLANSSIDConf_0" || aliasVal === "SSID1" || tId.indexOf("WLANSSIDConf_0") !== -1) {
+var curSsid = $("[id^='ESSID']", srcTemplate).not(".PostIgnore").val();
+var curEnc = $("[id^='EncryptionType']", srcTemplate).val();
+var curPass = $("[id^='KeyPassphrase']", srcTemplate).not(".PostIgnore").val();
+var target5G = $("#template_WLANSSIDConf_4");
+if (target5G.length > 0) {
+if (curSsid !== undefined && curSsid !== null) {
+$("[id^='ESSID']", target5G).not(".PostIgnore").val(curSsid);
+var elSsid5 = document.getElementById("ESSID:4");
+if (elSsid5) elSsid5.value = curSsid;
+}
+if (curEnc !== undefined && curEnc !== null) {
+$("[id^='EncryptionType']", target5G).val(curEnc);
+var elEnc5 = document.getElementById("EncryptionType:4");
+if (elEnc5) elEnc5.value = curEnc;
+}
+if (curPass !== undefined && curPass !== null) {
+$("[id^='KeyPassphrase']", target5G).val(curPass);
+var elPass5 = document.getElementById("KeyPassphrase:4");
+if (elPass5) elPass5.value = curPass;
+}
+}
+}
+} catch(e) {}
+}
 function g_ApplyPopUp(template)
 {
 $("span",$("[id^='div_KeyPassphrase'],template")).text("Length: "+commConf['passLength']+" ~ 63");
@@ -1907,6 +1936,7 @@ showWaitTip(false);
 else{
 var Head = templateObj.parents(".HeadDIV");
 var ServerAddr = $("address span", Head).text();
+g_syncMLO24To5G(templateObj);
 dataPost("Apply", "fillDataByApplyResult", ServerAddr, templateObj, undefined, true);
 }
 });
@@ -2340,6 +2370,7 @@ if (template.hasError(xml) == 0)
 {
 succHintShow(template);
 var KeyPassphrase = getParaValueInXML(xml, "OBJ_WLANPSK_ID", 0, "KeyPassphrase");
+g_syncMLO24To5G(template);
 }
 });
 template.bind("fillDataByCancelResult", function(event,xml, template){

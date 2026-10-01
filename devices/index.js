@@ -8,6 +8,7 @@
   // Gom tất cả các thiết bị đã được nạp bởi các file JS riêng lẻ
   const DEVICES = [
     window.DEVICE_AC1000F,
+    window.DEVICE_AC1000CV2,
     window.DEVICE_AX3000C,
     window.DEVICE_AX3000GZ,
     window.DEVICE_AX3000HV2,

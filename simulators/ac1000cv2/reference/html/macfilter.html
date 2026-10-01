@@ -1,0 +1,859 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+var macfilter_enable;
+var macfilter_list = new Array();
+var macfilter_white_list = new Array();
+var macfilter_black_list = new Array();
+var LanDevStatus;
+var lan_dev = new Array();
+var wl_num;
+var eth_num;
+var parentalctl_en = "0";
+var macfilterday = 0;
+var splitor = "-";
+ 
+//add mac filter mode by rex
+var macfilter_mode;
+
+macfilter_enable=0;
+macfilter_mode=0;
+parentalctl_en=0;
+macfilter_white_list = [
+
+];
+macfilter_black_list = [
+
+];
+
+LanDevStatus = 2;
+lan_dev[0] = { mac: "bc:ec:a0:05:5f:8d", ip: "192.168.1.244", hostname: "thanhtung", conn_type: "1", uptime: "0h 0m ", dhcp: "1" };
+wl_num  = 0;
+eth_num = 1;
+
+
+function getdayofweek(iday)
+{
+  var sday="";
+  
+  if (iday & 0x1)
+    sday += " Mon";
+  if (iday & 0x2)
+    sday += " Tue";
+  if (iday & 0x4)
+    sday += " Wed";
+  if (iday & 0x8)
+    sday += " Thu";
+  if (iday & 0x10)
+    sday += " Fri";
+  if (iday & 0x20)
+    sday += " Sat";
+  if (iday & 0x40)
+    sday += " Sun";
+
+  return sday;
+}
+
+function FreshTable(msg){
+	var value = "";
+	var TR = "";
+	var tmp_timestart;
+	var tmp_timeend;
+	var tmp_macfilterday;
+	
+  //alert("macfilterday2="+macfilterday + " at " + msg);
+	TR += "<table id='macfilterTable' class='mlist'>";
+	TR += '<tr>';
+    //TR += '<th colspan="3" class="tableTitle">' + XmacfilterString[0] +'</th>\n';
+    //add mac filter allow list by rex
+    if(macfilter_mode == "0") {
+        TR += '<th colspan="4" class="tableTitle">' + XmacfilterString[0] +'</th>\n';
+    }else if(macfilter_mode == "1") {
+        TR += '<th colspan="4" class="tableTitle">' + XmacfilterString[16] +'</th>\n';
+    }
+	TR += '</tr>\n';
+	TR += '<tr>\n';
+	TR += '<th>' + XmacfilterString[1] +'</th>\n';
+	TR += '<th>' + XmacfilterString[2] +'</th>\n';
+	TR += '<th>' + XmacfilterString[32] +'</th>\n';
+	TR += '<th>' + WebString.Edit +'</th>\n';
+	TR += '</tr>\n';
+	
+	if(macfilter_list.length == 0){
+		TR += '</table>\n';
+		$("#macfilter_value").val(value);
+		$("#macFilterDiv").html(TR);
+		return;
+	}else{
+		$.each(macfilter_list, function(id, el){
+			if (id > 0){
+				value += "-.-";
+			}
+
+			value += el.hostname + "#" + el.mac + "#" + el.macfilterday + "#" + el.timestart + "#" + el.timeend + "#" + el.enable + "#" + el.is_parentalctled;
+ 
+      		if (el.enable == "0") {
+				TR += '<tr>\n';	
+				TR += '<td style="width: 15%">' + '<font color="gray">' + el.hostname + '</font>' + '</td>\n';
+				TR += '<td style="width: 25%">' + '<font color="gray">' + el.mac + '</font>' + '</td>\n';
+	      		if (el.is_parentalctled =="1") {
+                    if ((el.timestart=="00:00" && el.timeend == "23:59" && el.macfilterday == 127) || 
+						(el.timestart=="00:00" && el.timeend == "00:00" && el.macfilterday == 0) ||
+						(el.timestart=="" && el.timeend == "" && el.macfilterday == 0)) {
+	      	 		    TR += '<td style="width: 30%">' + '<font color="gray">' + 'Always'  + '</font>'+ '</td>\n';
+                    } else {
+						tmp_timestart = el.timestart;
+						tmp_timeend = el.timeend;
+						tmp_macfilterday = el.macfilterday;
+						if (((el.timestart == "00:00") && (el.timeend == "00:00")) ||
+							((el.timestart == "") && (el.timeend == ""))) {
+							tmp_timestart = "00:00";
+							tmp_timeend = "23:59";
+						}
+						if (el.macfilterday == 0) {
+							tmp_macfilterday = 127;
+						}
+				  	    TR += '<td style="width: 30%">' + '<font color="gray">' + tmp_timestart + '-' + tmp_timeend + ' @ ' + '[' + getdayofweek(tmp_macfilterday) + ' ]' + '</font>' + '</td>\n';
+                    }
+					if (parentalctl_en == "1")
+						TR += '<td style="width: 30%"><a href="#" class="btn enable_btn">'+ WebString.Enable + '</a><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+					else
+						TR += '<td style="width: 30%"><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';						
+	      		} else {
+	      	 		TR += '<td style="width: 30%">' + '<font color="gray">' + 'Always'  + '</font>'+ '</td>\n';
+					TR += '<td style="width: 30%"><a href="#" class="btn enable_btn">'+ WebString.Enable + '</a><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+	      		}
+				TR += '</tr>\n';
+      		} else {
+				TR += '<tr>\n';	
+				TR += '<td style="width: 15%">' + el.hostname + '</td>\n';
+				TR += '<td style="width: 25%">' + el.mac + '</td>\n';
+	      		if (el.is_parentalctled =="1") {
+                    if ((el.timestart=="00:00" && el.timeend == "23:59" && el.macfilterday == 127) ||
+						(el.timestart=="00:00" && el.timeend == "00:00" && el.macfilterday == 0) ||
+						(el.timestart=="" && el.timeend == "" && el.macfilterday == 0)) {
+	      	 	    	TR += '<td style="width: 30%">' + 'Always' + '</td>\n';
+                    } else {            
+						tmp_timestart = el.timestart;
+						tmp_timeend = el.timeend;
+						tmp_macfilterday = el.macfilterday;
+						if (((el.timestart == "00:00") && (el.timeend == "00:00")) ||
+							((el.timestart == "") && (el.timeend == ""))) {
+							tmp_timestart = "00:00";
+							tmp_timeend = "23:59";
+						}
+						if (el.macfilterday == 0) {
+							tmp_macfilterday = 127;
+						}
+				   	    TR += '<td style="width: 30%">' + tmp_timestart + '-' + tmp_timeend + ' @ ' + '[' + getdayofweek(tmp_macfilterday) + ' ]' + '</td>\n';
+                    }
+					TR += '<td style="width: 30%"><a href="#" class="btn disable_btn">'+ WebString.Disable + '</a><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+	      		} else {
+	      	 		TR += '<td style="width: 30%">' + 'Always' + '</td>\n';
+					TR += '<td style="width: 30%"><a href="#" class="btn disable_btn">'+ WebString.Disable + '</a><a href="#" class="btn remove_btn" >' + WebString.Remove + '</a></td>\n';
+	      		}
+				TR += '</tr>\n';
+      		}
+		});
+		
+		TR += '</table>\n';
+	}
+	
+	$("#macfilter_value").val(value);
+	$("#macFilterDiv").html(TR);
+
+	$(".remove_btn").click(function(){
+		if (!confirm(WebString.delete_confirm))
+		{
+			return;
+		}
+
+		var row = this.parentNode.parentNode.rowIndex;
+		macfilter_list[row-2] = macfilter_list[macfilter_list.length-1];
+		macfilter_list.pop();
+		FreshTable("remove");
+		XDoSubmit();
+	});	
+	$(".enable_btn").click(function(){
+		var row = this.parentNode.parentNode.rowIndex;
+		macfilter_list[row-2].enable = "1";
+		
+		FreshTable("enable_rule");
+		XDoSubmit();
+	});	
+	$(".disable_btn").click(function(){
+		var row = this.parentNode.parentNode.rowIndex;
+		macfilter_list[row-2].enable = "0";
+		
+		FreshTable("disable_rule");
+		XDoSubmit();
+	});	
+}
+
+
+function WriteHostnameSel(){
+	var device_sel = '<select id="device_select" style="width:220px">\n';
+	device_sel += '<option value="Manually Enter MAC Address">' + XmacfilterString[13] + '</option>';
+	if (lan_dev.length != 0){
+		$.each(lan_dev, function(id, el){
+			device_sel += '<option>' + el.hostname + splitor + el.mac + '</option>';
+		});
+	}
+
+	device_sel += '</select>';
+	$("#device_select_td").html(device_sel);
+
+	$("#device_select").change(function(){
+		if ("Manually Enter MAC Address" == $("#device_select").val()){
+			$("#mac_addr_tr").show();
+		}else{
+			$("#mac_addr_tr").hide();
+		}
+	});
+}
+
+function checkboxSet(){
+	if (parentalctl_en =="1"){
+    	$("#parentalctl_en").attr("checked", true);
+	}else{
+    	$("#parentalctl_en").attr("checked", false);
+	}
+
+}
+
+function radioSet(enable, mode){
+	if (eval(enable)=="1"){
+		$("#"+enable+"0").get(0).checked=false;
+        if (mode == "0") {
+            $("#"+enable+"1").get(0).checked=true;
+            $("#"+enable+"2").get(0).checked=false;
+        }else if(mode == "1") {
+            $("#"+enable+"1").get(0).checked=false;
+		    $("#"+enable+"2").get(0).checked=true;
+        }
+	}else if (eval(enable)=="0"){
+		$("#"+enable+"0").get(0).checked=true;
+		$("#"+enable+"1").get(0).checked=false;
+		$("#"+enable+"2").get(0).checked=false;
+	}else{
+		return;
+	}
+		
+}
+
+function SetParentalctlState()
+{
+    if (parentalctl_en == "1")
+    {
+    	$("[name='parentctl_hide']").show();
+	}
+	else
+	{
+    	$("[name='parentctl_hide']").hide();
+	}
+}
+
+function SetMode(){
+	/*if (1 == $("input[name='macfilter_enable']:checked").val()){
+		$("[name='hide']").show();
+		WebStepIndex();
+	}else if (0 == $("input[name='macfilter_enable']:checked").val()){
+		$("[name='hide']").hide();
+		WebStepIndex();
+    }*/
+
+	if ("1" == macfilter_enable){
+		$("[name='hide']").show();
+    checkboxSet();
+    SetParentalctlState();
+		WebStepIndex();
+	    FreshTable("setmode");
+	}else if (0 == macfilter_enable){
+    checkboxSet();
+    $("[name='parentctl_hide']").hide();
+		$("[name='hide']").hide();
+		WebStepIndex();
+	}
+}
+
+function getmacfilterdayval(){
+	  var checkboxenable = $("#Monday").attr("checked");
+	  if (checkboxenable == "checked")
+	    macfilterday |= parseInt($("#Monday").val());
+	  else
+	    macfilterday &= ~parseInt($("#Monday").val());
+
+	  checkboxenable = $("#Tuesday").attr("checked");
+	  if (checkboxenable == "checked")
+	    macfilterday |= parseInt($("#Tuesday").val());
+	  else
+	    macfilterday &= ~parseInt($("#Tuesday").val());
+
+	  checkboxenable = $("#Wednesday").attr("checked");
+	  if (checkboxenable == "checked")
+	    macfilterday |= parseInt($("#Wednesday").val());
+	  else
+	    macfilterday &= ~parseInt($("#Wednesday").val());
+
+	  checkboxenable = $("#Thursday").attr("checked");
+	  if (checkboxenable == "checked")
+	    macfilterday |= parseInt($("#Thursday").val());
+	  else
+	    macfilterday &= ~parseInt($("#Thursday").val());
+
+	  checkboxenable = $("#Friday").attr("checked");
+	  if (checkboxenable == "checked")
+	    macfilterday |= parseInt($("#Friday").val());
+	  else
+	    macfilterday &= ~parseInt($("#Friday").val());
+
+	  checkboxenable = $("#Saturday").attr("checked");
+	  if (checkboxenable == "checked")
+	    macfilterday |= parseInt($("#Saturday").val());
+	  else
+	    macfilterday &= ~parseInt($("#Saturday").val());
+
+	  checkboxenable = $("#Sunday").attr("checked");
+	  if (checkboxenable == "checked")
+	    macfilterday |= parseInt($("#Sunday").val());
+	  else
+	    macfilterday &= ~parseInt($("#Sunday").val());
+}
+
+function HaveSameMac(mac, is_parentalctled){
+	for (var i = 0; i < macfilter_list.length; i++ ){
+    //alert("is_parentalctled1:" + macfilter_list[i].is_parentalctled + " is_parentalctled2:" + is_parentalctled + " mac1:" + macfilter_list[i].mac + " mac:" + mac);
+		if(macfilter_list[i].is_parentalctled == is_parentalctled && macfilter_list[i].mac == mac)
+			return true;
+	}	
+	
+	return false;
+}
+
+function timeperiodOverlap (starttm1, endtm1, starttm2, endtm2) {
+  //alert("starttm1:" + starttm1 + " endtm1:" + endtm1 + " starttm2:" + starttm2 + " endtm2:" + endtm2);
+    if ((endtm1 > starttm1) && (endtm2 > starttm2)) {
+		if((endtm2 < starttm1) || (endtm1 < starttm2)){
+			//alert("time no overlap!");
+			return false;
+		} else {
+			//alert("time overlap!");
+			return true;
+		}
+    } else if ((endtm1 > starttm1) && (endtm2 < starttm2)) {
+		if(endtm1 < starttm2){
+			//alert("time no overlap!");
+			return false;
+		} else {
+			//alert("time overlap!");
+			return true;
+		}
+    } else if ((endtm1 < starttm1) && (endtm2 > starttm2)) {
+		if(endtm2 < starttm1){
+			//alert("time no overlap!");
+			return false;
+		} else {
+			//alert("time overlap!");
+			return true;
+		}
+    } else {
+		//alert("time overlap!");
+		return true;
+	}
+}
+
+function HaveSameMacAndTimePeriod(mac, macfilterday, starttm, endtm, is_parentalctled) {
+	for (var i = 0; i < macfilter_list.length; i++ ){
+		//alert ("i:" + i + " parnt:" + macfilter_list[i].is_parentalctled + " parnt2:" + is_parentalctled + " mac1:" + macfilter_list[i].mac + " mac2:" + mac + " macfilterday:" + macfilter_list[i].macfilterday + " macfilterday2:" + macfilterday + " start1:" + macfilter_list[i].timestart + " end1:" + macfilter_list[i].timeend + " start2:" + starttm + " end2:" + endtm);
+		if((macfilter_list[i].is_parentalctled == is_parentalctled)  && (macfilter_list[i].mac == mac) && (macfilter_list[i].macfilterday & macfilterday) && timeperiodOverlap(macfilter_list[i].timestart, macfilter_list[i].timeend, starttm, endtm))
+			return true;
+	}	
+
+	return false;
+}
+
+function isValidTimeFormat(stime) {
+   var c = '';
+   var ihour = 0, iminute = 0;
+   var i = 0, j = 0;
+
+   timeParts = stime.split(':');
+   if ( timeParts.length != 2 ) return false;
+
+   for (i = 0; i < 2; i++) {
+      if ( timeParts[i] == '' )
+         return false;
+	  
+      for ( j = 0; j < timeParts[i].length; j++ ) {
+         c = timeParts[i].toLowerCase().charAt(j);
+         if ( (c >= '0' && c <= '9'))
+            continue;
+         else
+            return false;
+      }
+   }
+
+   ihour = parseInt(timeParts[0]);
+   iminute = parseInt(timeParts[1]);
+   if (ihour >= 0 && ihour <= 23 && iminute >=  0 && iminute <= 59)	  
+      return true;
+    
+    return false;
+}
+
+function trimTimeFormat(time) {
+   var ttime;
+   var i = 0;
+   var timeParts;
+
+   timeParts = time.split(':');
+   for (i = 0; i < 2; i++) {
+      if ( timeParts[i].length == 1 ) { 
+        timeParts[i] = "0" + timeParts[i];
+      }
+
+   }
+   ttime = timeParts[0] + ":" + timeParts[1];
+   
+   return ttime;
+}
+
+function isValidTimePeriod(starttm, endtm) {
+
+  stimeParts = starttm.split(':');
+  etimeParts = endtm.split(':');
+  
+  start_hour = parseInt(stimeParts[0]);
+  start_minute = parseInt(stimeParts[1]);
+  end_hour = parseInt(etimeParts[0]);
+  end_minute = parseInt(etimeParts[1]);
+  
+  if (end_hour < start_hour) {
+		return false;
+  }
+  
+  if (end_hour == start_hour) {
+    if (end_minute <= start_minute) {
+  		return false;
+    }  
+  } 
+  
+  return true;
+}
+
+function doCheckVal(macaddr, macfilterday, starttm, endtm, is_parentalctled){
+	var mac;
+	
+	if (macfilter_list.length >= 32){	
+		alert(XmacfilterString[4]);
+		return false;
+	}
+
+	mac = macaddr.toLowerCase();
+
+	if (mac.length > 20){
+		alert(XmacfilterString[5]);
+		return false;
+	}else if (mac.length == 0){
+		alert(XmacfilterString[6]);
+		return false;
+	}
+
+/*	
+	if(HaveSameMac(mac)){
+		alert(XmacfilterString[7]);
+		return false;	
+	}
+*/
+
+	if(isValidMacAddress(mac) == false){
+		alert(XmacfilterString[8]);
+		return false;
+	}
+
+  //if (parentalctl_en =="1"){
+  if(isValidTimeFormat(starttm) == false){
+		alert(XmacfilterString[33]);
+		return false;
+	}
+
+	if(isValidTimeFormat(endtm) == false){
+		alert(XmacfilterString[33]);
+		return false;
+	}
+
+  //if(isValidTimePeriod(starttm, endtm) == false){
+		//alert(XmacfilterString[34]);
+		//return false;  
+  //}
+
+  if (macfilterday == 0) {
+		alert(XmacfilterString[35]);
+		return false;  
+  }	
+  //}
+
+  if (is_parentalctled == "0"){
+		if(HaveSameMac(mac, is_parentalctled)){
+			alert(XmacfilterString[7]);
+			return false;	
+		}
+	} else {
+    	starttm = trimTimeFormat(starttm);
+    	endtm = trimTimeFormat(endtm);  
+		if(HaveSameMacAndTimePeriod(mac, macfilterday, starttm, endtm, is_parentalctled)){
+			alert(XmacfilterString[7]);
+			return false;	
+		}	
+	}
+
+	return true;
+}
+
+function AddRule(){
+	var obj = new Object();
+    var targetstr;
+    var indexofsplitor;
+
+	if ("Manually Enter MAC Address" == $("#device_select").val()){
+		hostname = "Unknown";
+		macaddr = $("#mac_addr").val();
+	}else{
+		if(1 == lan_dev.length)
+		{
+            var confirm_string;
+            if ("0" == macfilter_mode) {
+                confirm_string = WebString.continue_confirm;
+            }else if("1" == macfilter_mode) {
+                confirm_string = WebString.continue_confirm1;
+            }
+		    if (!confirm(confirm_string))
+		    {
+		        return;
+		    }
+		}
+        
+        targetstr = $("#device_select").val();
+        indexofsplitor = targetstr.lastIndexOf(splitor);
+        hostname = targetstr.substr(0, indexofsplitor);
+        macaddr = targetstr.substr(indexofsplitor+1);
+	}
+
+	hostname = $.trim(hostname);
+	macaddr = $.trim(macaddr);
+
+    if (parentalctl_en == "1")  {
+      getmacfilterdayval();
+      
+  	  starttm = $("#start_time").val();
+  	  starttm = $.trim(starttm);
+  	
+      endtm = $("#end_time").val();
+  	  endtm = $.trim(endtm);
+	  
+	  is_parentalctled = "1";
+	  
+    } else {
+      macfilterday = 127;  //0x7f;
+       
+  	  starttm = "00:00";
+  	  endtm = "23:59";
+	  
+	  is_parentalctled = "0";
+    }
+  
+  	//alert("day="+macfilterday + " tm=" + starttm + "-" + endtm);
+  	if(macfilterday == 0) {
+    	macfilterday = 127;  //0x7f;
+  	}
+
+  	if(starttm == "") {
+  	  	starttm = "00:00";    
+  	}
+  
+  	if(endtm == "") {
+  	  	endtm = "23:59";    
+  	}  
+  
+	if (false == doCheckVal(macaddr, macfilterday, starttm, endtm, is_parentalctled)){
+		return;
+	}	
+
+  	starttm = trimTimeFormat(starttm);
+  	endtm = trimTimeFormat(endtm);
+  //alert("starttm=" + starttm + "|endtm=" + endtm);
+
+	obj.hostname = hostname;
+	obj.mac = macaddr;
+	obj.macfilterday = macfilterday;
+    obj.timestart = starttm;
+    obj.timeend = endtm;
+    obj.enable = "1";
+	obj.is_parentalctled = is_parentalctled;
+  
+	macfilter_list.push(obj);
+	FreshTable("addrule");
+	XDoSubmit();
+}
+
+function updatemacflt(){
+	window.location.href = window.location.href;
+}
+
+function WebDoSubmit(){
+	setInterval("updatemacflt();", 3000);
+	$("#XForm").submit();
+}
+
+function initlist(){
+    if("0" == macfilter_mode) {
+        macfilter_list = macfilter_black_list;
+    }else if("1" == macfilter_mode) {
+        macfilter_list = macfilter_white_list;
+    }
+}
+
+function WebInit(){
+    initlist();
+	WriteHostnameSel();
+	radioSet("macfilter_enable", macfilter_mode);
+	SetMode();
+	FreshTable("webinit");
+}
+
+
+$(document).ready(function () {
+	$("input").css("ime-mode","disabled");
+	$("#macfilter_enable0").change(function(){
+        macfilter_enable = "0";
+        parentalctl_en = "0";        
+		SetMode();
+	});
+	
+	$("#macfilter_enable1").change(function(){
+        macfilter_enable = "1";
+        macfilter_mode = "0";
+        parentalctl_en = "1";
+        initlist();
+		SetMode();
+	});
+
+    //add mac filter mode by rex
+    $("#macfilter_enable2").change(function(){
+        macfilter_enable = "1";
+        macfilter_mode = "1";
+        parentalctl_en = "1";
+        initlist();
+        SetMode();
+		alert(WebString.continue_confirm1);
+    });
+	
+    $("#parentalctl_en").change(function() {
+      var enable = $("#parentalctl_en").attr("checked");
+      if (enable == "checked")
+      {
+    	   $("[name='parentctl_hide']").show();
+           parentalctl_en = "1";
+    	}
+    	else
+    	{
+    	   $("[name='parentctl_hide']").hide();
+           parentalctl_en = "0";
+    	}
+        XDoSubmit();
+    });
+
+	$("#btn_apply").click(function(){
+		XDoSubmit();
+	});
+
+	$("#btn_add").click(function(){
+		AddRule();
+	});
+});
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+<input id="macfilter_value" name="macfilter_value" type="hidden" value="" />
+<div class="cfgstep">
+	<p><strong id="XS9"></strong></p>
+	<table>
+		<tr>
+			<td id="XS10" width="200"></td>
+			<td>
+				<input type="radio" name="macfilter_enable" id="macfilter_enable0" value="0" />
+				<script>document.write(WebString.Disable);</script>&nbsp;&nbsp;
+				<input type="radio" name="macfilter_enable" id="macfilter_enable1" value="1" checked="true"/><script>document.write(WebString.BlockList);</script>
+				<input type="radio" name="macfilter_enable" id="macfilter_enable2" style="display:none" value="2" checked="true"/><p hidden><script>document.write(WebString.AllowList);</script></p>
+			</td>
+		</tr>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(XmacfilterString[3]);</script></strong></p>
+	<a id="btn_apply" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Apply);</script>
+	</a>
+</div>
+
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS11"></strong></p>
+	<table>
+		<tr>
+			<td id="XS12" width="200"></td>
+			<td id="device_select_td"></td>
+     	</tr>
+     	<tr id="mac_addr_tr">
+     	    <td id="XS14" width="200"></td>
+      		<td><input type="text" id="mac_addr" maxlength="17" onkeypress="return OnKeyPress(event, X_INPUT_MAC);"/>
+      			<script>document.write(XmacfilterString[15]);</script></td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong id="XS17"></strong></p>
+	<table>
+        <tr style="display:none" >
+            <td>
+                <input name="parentalctl_en" id="parentalctl_en" type="checkbox" value="1" checked="checked"/>
+            </td>
+            <td id="XS18"></td>
+        </tr>
+        <tr style="display:none" name="parentctl_hide">
+            <td id="XS19"></td>
+        </tr>
+        <tr style="display:none" name="parentctl_hide">
+            <td id="XS20"></td>
+      		<td><input type="text" id="start_time" maxlength="5" onkeypress="return OnKeyPress(event, X_INPUT_MAC);"/>
+      			<script>document.write(XmacfilterString[23]);</script></td>
+        </tr>
+        <tr style="display:none" name="parentctl_hide">
+            <td id="XS21"></td>
+      		<td><input type="text" id="end_time" maxlength="5" onkeypress="return OnKeyPress(event, X_INPUT_MAC);"/>
+      			<script>document.write(XmacfilterString[23]);</script></td>
+        </tr>
+        <tr style="display:none" name="parentctl_hide">
+            <td id="XS22"></td>
+ 			<td><input type="checkbox" name="Monday" id="Monday" value="1"/><script type="text/javascript">document.write(XmacfilterString[24]);</script>
+				<input type="checkbox" name="Tuesday" id="Tuesday" value="2"/><script type="text/javascript">document.write(XmacfilterString[25]);</script>
+				<input type="checkbox" name="Wednesday" id="Wednesday" value="4"/><script type="text/javascript">document.write(XmacfilterString[26]);</script>
+				<input type="checkbox" name="Thursday" id="Thursday" value="8"/><script type="text/javascript">document.write(XmacfilterString[27]);</script>
+				<input type="checkbox" name="Friday" id="Friday" value="16"/><script type="text/javascript">document.write(XmacfilterString[28]);</script>
+				<input type="checkbox" name="Saturday" id="Saturday" value="32"/><script type="text/javascript">document.write(XmacfilterString[29]);</script>
+				<input type="checkbox" name="Sunday" id="Sunday" value="64"/><script type="text/javascript">document.write(XmacfilterString[30]);</script>
+			</td>
+        </tr>
+        <tr style="display:none" name="parentctl_hide">
+           <td></td>
+           <td id="XS31"></td>
+        </tr>
+	</table>
+</div>
+
+<div class="cfgstep" style="display:none" name="hide">
+	<p><strong><script>document.write(WebString.stepAdd);</script></strong></p>
+	<a id="btn_add" class="btn apply_btn" href="#">
+		<script>document.write(WebString.Add);</script>
+	</a>
+</div>
+<div id="macFilterDiv" class="cfglist" style="display:none" name="hide"></div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+ 

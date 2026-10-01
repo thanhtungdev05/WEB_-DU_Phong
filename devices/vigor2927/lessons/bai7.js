@@ -10,21 +10,16 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   title: 'Cấu hình Policy Routing',
   subtitle: 'Cấu hình định tuyến theo chính sách (Policy Route)',
   instructions: [
-    '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình chính sách định tuyến (Policy Routing) trên DrayTek Vigor2927',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
-    '- Vào <b>Routing >> Load-Balance/Route Policy</b>, chọn rule <b>Index 1</b>',
-    '- Enable: <span class="val">có tích chọn</span>',
+    '<b>Yêu cầu (Rule Index 1):</b>',
+    '- Enable: <span class="val">Enable</span>',
     '- Comment: <span class="val">PC A</span>',
     '- Protocol: <span class="val">TCP</span>',
-    '- Source: <span class="val">IP Range, 192.168.1.10 - 192.168.1.10</span>',
-    '- Destination: <span class="val">IP Range, 11.11.11.11 - 11.11.11.11</span>',
-    '- Destination Port: <span class="val">Dest Port Range, 8000 - 8000</span>',
+    '- Source: <span class="val">192.168.1.10 - 192.168.1.10</span>',
+    '- Destination: <span class="val">11.11.11.11 - 11.11.11.11</span>',
+    '- Destination Port: <span class="val">8000 - 8000</span>',
     '- Interface: <span class="val">WAN / WAN1</span>',
     '- Gateway: <span class="val">Default Gateway</span>',
-    '- Priority: <span class="val">200</span>',
-    '- Nhấn <b>OK</b> để lưu cấu hình'
+    '- Priority: <span class="val">200</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
   grading: {

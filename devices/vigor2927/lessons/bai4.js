@@ -11,18 +11,12 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình dịch vụ DHCP Server',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình máy chủ cấp phát IP tự động (DHCP Server) trên DrayTek Vigor2927:',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
-    '- Vào <b>LAN >> General Setup</b>, chọn <b>Details Page</b> tại hàng LAN 1.',
-    '- Hàng <b>IP Address</b>: nhập <span class="val">192.168.100.1</span>.',
-    '- Hàng <b>Subnet Mask</b>: chọn <span class="val">255.255.255.0 / 24</span>.',
-    '- Hàng <b>DHCP Server Configuration</b>: chọn Option <span class="val">Enable Server</span>.',
-    '- Hàng <b>Start IP Address</b>: nhập <span class="val">192.168.100.10</span>.',
-    '- Hàng <b>IP Pool Counts</b>: nhập <span class="val">200</span>.',
-    '- Hàng <b>Gateway IP Address</b>: nhập <span class="val">192.168.100.1</span>.',
-    '- Hàng <b>Lease Time</b>: nhập <span class="val">86400</span>.',
-    '- Các giá trị mặc định khác giữ nguyên, sau đó nhấn <b>OK</b> để hoàn tất.'
+    '- IP Address: <span class="val">192.168.100.1</span>',
+    '- Subnet Mask: <span class="val">255.255.255.0 / 24</span>',
+    '- Start IP Address: <span class="val">192.168.100.10</span>',
+    '- IP Pool Counts: <span class="val">200</span>',
+    '- Gateway IP Address: <span class="val">192.168.100.1</span>',
+    '- Lease Time: <span class="val">86400</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
   grading: {
@@ -117,7 +111,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         required: true
       }
     ],
-    customGrading: function(allDocs) {
+    customGrading: function (allDocs) {
       let docEnet = null;
       for (const d of allDocs) {
         try {
@@ -125,7 +119,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
             docEnet = d;
             break;
           }
-        } catch(e) {}
+        } catch (e) { }
       }
 
       if (!docEnet) {

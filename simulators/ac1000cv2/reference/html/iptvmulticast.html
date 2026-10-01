@@ -1,0 +1,499 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+//init data started
+var cross_vlan_enable = 0; //false
+var cross_vlan = 0;
+var eth = new Array();
+var ssid = new Array();
+var eth_num = 4;
+var ssid_num = 4;
+
+//data from web server started
+
+cross_vlan_enable=0;
+cross_vlan=0;
+
+eth_num=4;
+
+eth[0] = {
+defaultMode:1,
+vlanMode:0,
+vlanTag:0,
+};
+eth[1] = {
+defaultMode:1,
+vlanMode:0,
+vlanTag:0,
+};
+eth[2] = {
+defaultMode:1,
+vlanMode:0,
+vlanTag:0,
+};
+eth[3] = {
+defaultMode:1,
+vlanMode:0,
+vlanTag:0,
+};
+
+
+ssid_num=4;
+
+ssid[0] = {
+defaultMode:1,
+vlanMode:0,
+vlanTag:0,
+};
+ssid[1] = {
+defaultMode:1,
+vlanMode:0,
+vlanTag:0,
+};
+ssid[2] = {
+defaultMode:1,
+vlanMode:0,
+vlanTag:0,
+};
+ssid[3] = {
+defaultMode:1,
+vlanMode:0,
+vlanTag:0,
+};
+
+//data from web server ended
+
+//init data ended
+
+//Client contents started.
+var vlan_min = 1;
+var vlan_max = 4095;
+
+function show_cross_vlan_enable()
+{
+	if(cross_vlan_enable)
+	{
+		$("#cross_vlan_enable_radio_en").attr("checked", true);
+		$("#cross_vlan_content_div").show();
+	}
+	else
+	{
+		$("#cross_vlan_enable_radio_dis").attr("checked", true);
+		$("#cross_vlan_content_div").hide();
+	}
+	WebStepIndex();
+}
+
+function show_cross_vlan()
+{
+	if(cross_vlan != 0)
+		$("#cross_vlan_text").attr("value", cross_vlan);
+}
+
+function do_eth(i)
+{
+	if($('#eth'+i+'_mode_select').attr("value") == "2")
+	{
+		$('#eth'+i+'_vlanTag_text').show();
+	}
+	else
+	{
+		$('#eth'+i+'_vlanTag_text').hide();
+	}
+}
+
+function show_eth()
+{
+	var str = "";
+	var i = 0;
+	var eth_index = 0;
+	var eth_mode_select_value = 0;
+	var eth_vlanTag_text_value = "";
+	
+	for(i=0; i<eth_num; i++)
+	{
+		eth_index = i+1;
+		str += 
+'						<tr>' +
+'							<td width="200">'+XiptvmulticastString[8]+eth_index+'</td>' +
+'							<td>'+
+'								<select id="eth'+i+'_mode_select" onchange="do_eth('+i+')">' +
+'								<option value=0>'+XiptvmulticastString[10]+'</option>' +
+'								<option value=1>'+XiptvmulticastString[11]+'</option>' +
+'								<option value=2>'+XiptvmulticastString[12]+'</option>' +
+'								</select>' +
+'								<input id="eth'+i+'_vlanTag_text" size="4" maxlength="4" type="text">' +
+'							</td>' +
+'						</tr>';
+	}
+	
+	$("#out_going_vlan_tbody").append(str);
+	
+	for(i=0; i<eth_num; i++)
+	{
+		//cacul mode and value
+		if(eth[i].defaultMode != 0)
+			eth_mode_select_value = 0;
+		else if(eth[i].vlanMode == 0)
+			eth_mode_select_value = 1;
+		else if(eth[i].vlanMode == 1)
+		{
+			eth_mode_select_value = 2;
+		}
+		if(eth[i].vlanTag == 0)
+			eth_vlanTag_text_value = "";
+		else
+			eth_vlanTag_text_value = eth[i].vlanTag;
+		$('#eth'+i+'_mode_select').attr("value", eth_mode_select_value);
+		$('#eth'+i+'_vlanTag_text').attr("value", eth_vlanTag_text_value);
+
+		do_eth(i);
+	}
+}
+
+function do_ssid(i)
+{
+	if($('#ssid'+i+'_mode_select').attr("value") == "2")
+	{
+		$('#ssid'+i+'_vlanTag_text').show();
+	}
+	else
+	{
+		$('#ssid'+i+'_vlanTag_text').hide();
+	}
+}
+
+function show_ssid()
+{
+	var str = "";
+	var i = 0;
+	var ssid_index = 0;
+	var ssid_mode_select_value = 0;
+	var ssid_vlanTag_text_value = "";
+	
+	for(i=0; i<ssid_num; i++)
+	{
+		ssid_index = i+1;
+		str += 
+'						<tr>' +
+'							<td width="200">'+XiptvmulticastString[9]+ssid_index+'</td>' +
+'							<td>'+
+'								<select id="ssid'+i+'_mode_select" onchange="do_ssid('+i+')" >' +
+'								<option value="0">'+XiptvmulticastString[10]+'</option>' +
+'								<option value="1">'+XiptvmulticastString[11]+'</option>' +
+'								<option value="2">'+XiptvmulticastString[12]+'</option>' +
+'								</select>' +
+'								<input id="ssid'+i+'_vlanTag_text" size="4" maxlength="4" type="text">' +
+'							</td>' +
+'						</tr>';
+	}
+	
+	$("#out_going_vlan_tbody").append(str);
+	
+	for(i=0; i<ssid_num; i++)
+	{
+		if(ssid[i].defaultMode != 0)
+			ssid_mode_select_value = 0;
+		else if(ssid[i].vlanMode == 0)
+			ssid_mode_select_value = 1;
+		else if(ssid[i].vlanMode == 1)
+		{
+			ssid_mode_select_value = 2;
+		}
+		if(ssid[i].vlanTag == 0)
+			ssid_vlanTag_text_value = "";
+		else
+			ssid_vlanTag_text_value = ssid[i].vlanTag;
+		$('#ssid'+i+'_mode_select').attr("value", ssid_mode_select_value);
+		$('#ssid'+i+'_vlanTag_text').attr("value", ssid_vlanTag_text_value);
+		
+		do_ssid(i);
+	}
+}
+
+function show_data_input_div()
+{
+	var str = "";
+	var var_name = "";
+	var i = 0;
+	
+	var_name = "cross_vlan";
+	str += '<input type="text" name="'+var_name+'" id="'+var_name+'" value="">';
+	
+	for(i=0; i<eth_num; i++)
+	{
+		var_name = "eth"+i+"_defaultMode";
+		str += '<input type="text" name="'+var_name+'" id="'+var_name+'" value="">';
+		var_name = "eth"+i+"_vlanMode";
+		str += '<input type="text" name="'+var_name+'" id="'+var_name+'" value="">';
+		var_name = "eth"+i+"_vlanTag";
+		str += '<input type="text" name="'+var_name+'" id="'+var_name+'" value="">';
+	}
+	
+	for(i=0; i<ssid_num; i++)
+	{
+		var_name = "ssid"+i+"_defaultMode";
+		str += '<input type="text" name="'+var_name+'" id="'+var_name+'" value="">';
+		var_name = "ssid"+i+"_vlanMode";
+		str += '<input type="text" name="'+var_name+'" id="'+var_name+'" value="">';
+		var_name = "ssid"+i+"_vlanTag";
+		str += '<input type="text" name="'+var_name+'" id="'+var_name+'" value="">';
+	}
+	
+	$("#data_input_div").append(str);
+}
+
+function do_data_input_div()
+{
+	var value = "";
+	var i = 0;
+	var eth_defaultMode = 0;
+	var eth_vlanMode = 0;
+	var eth_vlanTag = 0;
+	var ssid_defaultMode = 0;
+	var ssid_vlanMode = 0;
+	var ssid_vlanTag = 0;
+	
+	value = $("#cross_vlan_text").attr("value");
+	if(value == "")
+	{
+		$("#cross_vlan").attr("value", 0);
+	}
+	else
+	{
+		$("#cross_vlan").attr("value", value);
+	}
+}
+
+function do_check_value()
+{
+	var value = 0;
+	var i = 0;
+	var ret = 0;
+	var str = "";
+	var index = 0;
+	
+	value = $("#cross_vlan_text").attr("value");
+	if(value != "" && !(value >= vlan_min && value <= vlan_max))
+	{
+		str += XiptvmulticastString[6] + WebString.invalid_vlan_id + vlan_min + "-" + vlan_max + ".\r\n";
+		ret |= 0x1;
+	}
+	
+	if(ret != 0x0)
+	{
+		alert(str);
+	}
+	
+	return ret;
+}
+
+function doSubmit()
+{
+	var ret = 0;
+
+	ret = do_check_value();
+	if(ret != 0)
+		return -1;
+	
+	//here we need fill values to data_input_div.
+	do_data_input_div();
+	
+	XDoSubmit();
+}
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+//---------------init value--------------------
+function WebInit()
+{
+	show_data_input_div();
+	show_cross_vlan_enable();
+	show_cross_vlan();
+//	show_eth();
+//	show_ssid();
+	
+	//submit
+	$("#qos_en_apply").click(function(){
+		doSubmit(0, 0);
+	});
+
+	//now cross VLAN not support, so hide it.
+	//$("#cross_vlan_enable_radio_dis").attr("checked", "checked");
+	//$("#cross_vlan_enable_radio_en").hide();
+	//$("#XS3").hide();
+	
+	WebStepIndex();
+}
+
+//------------------setup triger----------------
+$(document).ready(function(){
+	var i = 0;
+
+	$("input").css("ime-mode","disabled");
+	//cross_vlan_enable
+	$("#cross_vlan_enable_radio_en").change(function(){
+		if($("#cross_vlan_enable_radio_en").attr("checked"))
+		{
+			$("#cross_vlan_content_div").show();
+			WebStepIndex();
+		}
+	});
+	$("#cross_vlan_enable_radio_dis").change(function(){
+		if($("#cross_vlan_enable_radio_dis").attr("checked"))
+		{
+			$("#cross_vlan_content_div").hide();
+			WebStepIndex();
+		}
+	});
+	
+});
+
+//Client contents ended.
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+			<!-- start qos content -->
+			<div class="cfgstep">
+				<p><strong id="XS0"></strong></p>
+				<table>
+				<tbody>
+				<tr>
+					<td width="200" id="XS1"></td>
+					<td>
+						<input name="cross_vlan_enable" value="0" id="cross_vlan_enable_radio_dis" type="radio"/><label for="cross_vlan_enable_radio_en" id="XS2"></label>
+						<br/>
+						<input name="cross_vlan_enable" value="1" id="cross_vlan_enable_radio_en" type="radio"/><label for="cross_vlan_enable_radio_dis" id="XS3"></label>
+					</td>
+				</tr>
+				</tbody>
+				</table>
+			</div>
+
+			<div id="cross_vlan_content_div">
+				<div class="cfgstep">
+					<p><strong id="XS5"></strong> </p>
+					<table>
+					<tbody>
+						<tr>
+							<td width="200" id="XS6"></td>
+							<td><input name="cross_vlan_text" id="cross_vlan_text" size="4" maxlength="4" type="text"></td>
+						</tr>
+					</tbody>
+					</table>
+				</div>
+			</div>
+			
+			<div class="cfgstep">
+				<p><strong  id="XS4"></strong></p>
+				<a href="#" class="btn apply_btn" id="qos_en_apply"><script>document.write(WebString.Apply);</script></a>
+			</div>
+			
+			<!-- for send data to web server -->
+			<div id="data_input_div" style="display:none">
+			</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

@@ -25,7 +25,7 @@ function isVigor2927Bai3Added(doc) {
     if (doc._ftcLastAddIp === '192.168.1.100' || (window._ftcLastAddIp === '192.168.1.100' && (doc._ftcHasClickedAdd || window._ftcHasClickedAdd))) {
       return true;
     }
-  } catch(e) {}
+  } catch (e) { }
   return false;
 }
 
@@ -35,16 +35,8 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình Bind IP to MAC (Gán cố định IP theo MAC)',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình gán cố định địa chỉ IP theo địa chỉ MAC trên DrayTek Vigor2927:',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
-    '- Vào menu <b>LAN >> Bind IP to MAC</b>',
-    '- Chọn <b>Enable</b>',
-    '- Nhập IP Address: <span class="val">192.168.1.100</span>',
-    '- Nhập MAC Address: <span class="val">AA-BB-CC-DD-EE-FF</span>',
-    '- Nhấn nút <b>Add</b> để lưu vào danh sách IP Bind List',
-    '- Các tùy chọn Strict Bind, MAC Learning Time giữ nguyên mặc định',
-    '- Bấm <b>OK</b> để lưu cấu hình'
+    '- IP Address: <span class="val">192.168.1.100</span>',
+    '- MAC Address: <span class="val">AA-BB-CC-DD-EE-FF</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
   grading: {
@@ -99,7 +91,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         required: true
       }
     ],
-    customGrading: function(allDocs) {
+    customGrading: function (allDocs) {
       let docIpbmac = null;
       for (const d of allDocs) {
         try {
@@ -107,7 +99,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
             docIpbmac = d;
             break;
           }
-        } catch(e) {}
+        } catch (e) { }
       }
 
       if (!docIpbmac) {
@@ -276,19 +268,19 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       text: 'Bước 3: chọn Enable',
       position: 'right',
       offsetX: 8,
-      condition: function(doc) { return !isVigor2927Bai3Added(doc); }
+      condition: function (doc) { return !isVigor2927Bai3Added(doc); }
     },
     {
       selector: '#txt-ipbmac-ip, input[name="sIpAddress"]',
       text: 'Bước 4: nhập địa chỉ IP và MAC muốn cố định<br>ví dụ IP Address 192.168.1.100<br>MAC Address AA-BB-CC-DD-EE-FF<br>==>chọn Add để lưu',
       position: 'top',
-      condition: function(doc) { return !isVigor2927Bai3Added(doc); }
+      condition: function (doc) { return !isVigor2927Bai3Added(doc); }
     },
     {
       selector: '#btn-ipbmac-ok, input[name="btnOk"], input[value="OK"]',
       text: 'Bước 5: chọn OK',
       position: 'top',
-      condition: function(doc) { return isVigor2927Bai3Added(doc); }
+      condition: function (doc) { return isVigor2927Bai3Added(doc); }
     }
   ]
 });

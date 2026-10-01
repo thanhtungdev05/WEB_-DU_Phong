@@ -1,0 +1,338 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+reg_exp_time = 0;
+reg_head_start = 0;
+reg_retry_interval = 0;
+heartbeat = 0;
+heartbeat_time = 0;
+session_heartbeat = 0;
+session_hb_refresh = "";
+session_heartbeat_time = 0;
+session_heartbeat_mintime = 0;
+cw_waiting_1 = 0;
+cw_waiting_2 = 0;
+call_3pty_1 = 0;
+call_3pty_2 = 0;
+call_transfer_1 = 0;
+call_transfer_2 = 0;
+POTS_NUM = 0;
+
+
+function WebDoSubmit()
+{
+	$("#XForm").submit();
+}
+
+function WebInit()
+{
+	$("#sip_hb_time").get(0).disabled = false;
+	$("#sip_hbeat_refmeth").get(0).disabled = false;
+	$("#sip_ses_hbtime").get(0).disabled = false;
+	$("#sip_ses_mintime").get(0).disabled = false;
+	
+	if($("#sip_heart_beat").get(0).checked == false)
+	{
+		$("#sip_hb_time").get(0).disabled = true;
+	}
+	if($("#sip_ses_hbeat").get(0).checked == false)
+	{
+		$("#sip_hbeat_refmeth").get(0).disabled = true;
+		$("#sip_ses_hbtime").get(0).disabled = true;
+		$("#sip_ses_mintime").get(0).disabled = true;
+	}
+	
+	WebStepIndex();
+}
+
+$(document).ready(function(){
+	
+	$("#sip_reg_extime").val(reg_exp_time);
+	$("#sip_reg_hstime").val(reg_head_start);
+	$("#sip_reg_retrytime").val(reg_retry_interval);
+	
+	$("#sip_heart_beat").get(0).checked = (parseInt(heartbeat) == 1)?true:false;
+	$("#sip_hb_time").val(heartbeat_time);
+	
+	$("#sip_ses_hbeat").get(0).checked = (parseInt(session_heartbeat) == 1)?true:false;
+	if(session_hb_refresh == "INVITE")
+		$("#sip_hbeat_refmeth").val(1);
+	else if(session_hb_refresh == "UPDATE")
+		$("#sip_hbeat_refmeth").val(0);
+	$("#sip_ses_hbtime").val(session_heartbeat_time);
+	$("#sip_ses_mintime").val(session_heartbeat_mintime);
+
+	$("#sip_call_wt1").get(0).checked = (parseInt(cw_waiting_1) == 1)?true:false;
+	$("#sip_call_wt2").get(0).checked = (parseInt(cw_waiting_2) == 1)?true:false;
+	$("#sip_call_hold1").get(0).checked = (parseInt(call_3pty_1) == 1)?true:false;
+	$("#sip_call_hold2").get(0).checked = (parseInt(call_3pty_2) == 1)?true:false;
+	$("#sip_call_trans1").get(0).checked = (parseInt(call_transfer_1) == 1)?true:false;
+	$("#sip_call_trans2").get(0).checked = (parseInt(call_transfer_2) == 1)?true:false;
+	
+	$("#sip_heart_beat").change(function(){
+		WebInit();
+	});
+	$("#sip_ses_hbeat").change(function(){
+		WebInit();
+	});
+	if(POTS_NUM > 1)
+	{
+		$("#pots_2").show();
+	}
+	else
+	{
+		$("#pots_2").hide();
+	}
+	$("#btn_apply").click(function(){
+		var etime = parseInt($("#sip_reg_extime").val());
+		var hstime = parseInt($("#sip_reg_hstime").val());
+		var retime = parseInt($("#sip_reg_retrytime").val());
+		var hbtime = parseInt($("#sip_hb_time").val());
+		var shbtime = parseInt($("#sip_ses_hbeat").val());
+		var shbmtime = parseInt($("#sip_ses_mintime").val());
+		
+		if(etime < 1 || etime > 65535)
+		{
+			alert(WebString.sipadv_etime);
+			return false;
+		}
+		if(hstime < 1 || hstime > etime)
+		{
+			alert(WebString.sipadv_hstime);
+			return false;
+		}
+		if(retime < 1 || retime > 65535)
+		{
+			alert(WebString.sipadv_retime);
+			return false;
+		}
+		if(($("#sip_heart_beat").get(0).checked == true) && (hbtime < 1 || hbtime > 65535))
+		{
+			alert(WebString.sipadv_hbtime);
+			return false;
+		}
+		if($("#sip_ses_hbeat").get(0).checked == true)
+		{
+			if(shbtime < 1 || shbtime > 65535)
+			{
+				alert(WebString.sipadv_shbtime);
+				return false;
+			}
+			if(shbmtime < 1 || shbmtime > shbtime)
+			{
+				alert(WebString.sipadv_shbmtime);
+				return false;
+			}
+		}
+		XDoSubmit();
+	});
+});
+
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<div class="cfgstep">
+	<p><strong id="XS0"></strong></p>
+	<table>
+		<tr>
+			<td width="260" id="XS1"></td>
+			<td colspan="2">
+				<input id="sip_reg_extime" name="sip_reg_extime" maxlength="5" size="6" type="text" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+				<script>document.write(WebString.seconds);</script>
+			</td>
+		</tr>
+		<tr>
+			<td width="260" id="XS2"></td>
+			<td colspan="2">
+				<input id="sip_reg_hstime" name="sip_reg_hstime" maxlength="5" size="6" type="text" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+				<script>document.write(WebString.seconds);</script>
+			</td>
+		</tr>
+		<tr>
+			<td width="260" id="XS3"></td>
+			<td colspan="2">
+				<input id="sip_reg_retrytime" name="sip_reg_retrytime" maxlength="5" size="6" type="text" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+				<script>document.write(WebString.seconds);</script>
+			</td>
+		</tr>
+		<tr>
+			<td width="260" id="XS4"></td>
+			<td>
+				<input id="sip_heart_beat" name="sip_heart_beat" type="checkbox" />
+			</td>
+		</tr>
+		<tr>
+			<td width="260" id="XS5"></td>
+			<td colspan="2">
+				<input id="sip_hb_time" name="sip_hb_time" maxlength="5" size="6" type="text" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+				<script>document.write(WebString.seconds);</script>
+			</td>
+		</tr>
+		<tr>
+			<td width="260" id="XS6"></td>
+			<td>
+				<input id="sip_ses_hbeat" name="sip_ses_hbeat" type="checkbox" />
+			</td>
+		</tr>
+		<tr>
+			<td width="260" id="XS7"></td>
+			<td colspan="2">
+				<select name="sip_hbeat_refmeth" id="sip_hbeat_refmeth">
+					<option value="0" selected="selected" id="XS8"></option>
+					<option value="1" id="XS9"></option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td width="260" id="XS10"></td>
+			<td colspan="2">
+				<input id="sip_ses_hbtime" name="sip_ses_hbtime" maxlength="5" size="6" type="text" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+				<script>document.write(WebString.seconds);</script>
+			</td>
+		</tr>
+		<tr>
+			<td width="260" id="XS11"></td>
+			<td colspan="2">
+				<input id="sip_ses_mintime" name="sip_ses_mintime" maxlength="5" size="6" type="text" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+				<script>document.write(WebString.seconds);</script>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<ul style="font-weight:bold" width="260"><script>document.write(WebString.pots_if);</script></ul>
+				<ul style="padding-top:10px" width="260" id="XS12"></ul>
+				<ul style="padding-top:10px" width="260" id="XS13"></ul>
+				<ul style="padding-top:10px" width="260" id="XS14"></ul>
+			</td>
+			<td id="pots_1">
+				<ul style="font-weight:bold"><script>document.write(WebString.pots1);</script></ul>
+				<ul style="padding-top:10px">
+					<input id="sip_call_wt1" name="sip_call_wt1" type="checkbox" />
+				</ul>
+				<ul style="padding-top:10px">
+					<input id="sip_call_hold1" name="sip_call_hold1" type="checkbox" />
+				</ul>
+				<ul style="padding-top:10px">
+					<input id="sip_call_trans1" name="sip_call_trans1" type="checkbox" />
+				</ul>
+			</td>
+			<td id="pots_2">
+				<ul style="font-weight:bold"><script>document.write(WebString.pots2);</script></ul>
+				<ul style="padding-top:10px">
+					<input id="sip_call_wt2" name="sip_call_wt2" type="checkbox" />
+				</ul>
+				<ul style="padding-top:10px">
+					<input id="sip_call_hold2" name="sip_call_hold2" type="checkbox" />
+				</ul>			
+				<ul style="padding-top:10px">
+					<input id="sip_call_trans2" name="sip_call_trans2" type="checkbox" />
+				</ul>
+			</td>	
+		</tr>
+	</table>
+</div>
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.stepApply);</script></strong></p>
+	<a href="#" id="btn_apply" class="btn"><script>document.write(WebString.Apply);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<script language="Javascript" src="script/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="script/menu.js" type="text/javascript"></script>
+<script language="Javascript" src="script/common.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript" src="script/lang_en.js"></script>
+<link href="style/ont.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+</style>
+<script type="text/javascript">
+
+var aggre_mode="";
+var threshold="";
+var dtm="";
+var protection="";
+var beacon_interval="";
+var multicast="";
+var guardInterval="";
+var wifi_mode="3";
+var isRG3T="";
+
+aggre_mode=0;
+threshold=512;
+dtm=1;
+beacon_interval=200;
+protection=0;
+multicast=1;
+guardInterval=1;
+wifi_mode=0;
+isRG3T=0;
+
+
+function WebInit()
+{
+	if (top.WebProject != "hw")
+	{
+		$("#wifi_multicast").show();
+		$("#wifi_shortguard").show();
+	}
+	else
+	{
+		$("#wifi_shortguard").show();
+	}
+	
+	$("#aggre_mode").val(aggre_mode);
+    $("#threshold").val(threshold);
+    $("#dtm").val(dtm);
+
+	// 11n only do not show
+    if (wifi_mode == '3' || wifi_mode == '5')
+    {
+		$("#11g_cfg").hide();
+    } else {
+		$("#11g_cfg").show();
+	    if (protection == '1')
+	    {
+			$("#802_11_mannual").show();   
+			$("#802_11_mode").val(3);   	
+			$("#protection_bg_on").attr("checked", true);
+		}	
+		else if(protection == '0')
+		{	
+			$("#802_11_mannual").show();	
+			$("#802_11_mode").val(3);   	
+			$("#protection_bg_off").attr("checked", true);  
+		}	
+		else if(protection == '2')
+		{
+			$("#802_11_mode").val(2);
+			$("#802_11_mannual").hide();
+		}
+	}
+	
+	$("#beacon_interval").val(beacon_interval);
+	
+    if (multicast == '1')
+		$("#multicast_on").attr("checked", true);
+	else
+		$("#multicast_off").attr("checked", true); 	
+		
+	if (guardInterval == '1')
+		$("#shortguard_on").attr("checked", true);
+	else
+		$("#shortguard_off").attr("checked", true); 		
+    
+	WebStepIndex();
+}
+
+function WebDoSubmit()
+{
+	var threshold = $("#threshold").val();
+	if(threshold > 2347 || threshold < 0)
+	{
+		alert(XwifiadvString[19]);
+		return false;	
+	}
+
+	var dtm = $("#dtm").val();
+	if(dtm > 255 || dtm < 1)
+	{
+		alert(XwifiadvString[20]);
+		return false;	
+	}
+			
+	$("#XForm").submit();
+}
+
+function WebDoRestore()
+{
+    if (!confirm(WebString.config_restore))
+    {
+        return;
+    }
+	
+    //the following values are the same as XML	
+    $("#aggre_mode").val(0);
+    $("#threshold").val(0);
+    $("#dtm").val(1);
+    $("#802_11_mode").val(3);
+    $("#protection_bg_off").attr("checked", true); 	
+
+	if (isRG3T == 1)
+	{
+		$("#beacon_interval").val(100);
+	}
+	if (isRG3T == 0)
+	{
+		$("#beacon_interval").val(200);
+	}	
+    $("#multicast_on").attr("checked", true);
+    $("#shortguard_on").attr("checked", true); 
+    $("#XForm").submit();
+}
+
+$(document).ready(function () {
+	$("input").css("ime-mode","disabled");
+	$("#btn_apply").click(function() {
+		WebDoSubmit();
+	});
+	
+	$("#btn_store").click(function() {
+		WebDoRestore();
+	});
+	
+});
+
+function SelectProtectionMode(mode)
+{
+	if (mode == 2)
+	{
+		$("#802_11_mannual").hide();		
+	
+	}
+	else if(mode == 3)
+	{
+		$("#802_11_mannual").show();	
+	}
+
+}
+
+
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var web_timeout = 0;
+
+function WebResetTimer()
+{
+	$.get("resettm.html");
+	clearTimeout(web_timeout);
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+}
+
+function XLogout()
+{
+	$.post("/GponForm/LogoutForm","logout",function(){
+        top.window.location.href = "logout.html";
+	});	
+}
+
+function InitForm(page)
+{
+	$("#XWebPageName").val(page);
+	$("#XForm").attr("action", "/GponForm/" + page + "_XForm");
+}
+
+function XDoSubmit()
+{
+	WebDoSubmit();
+}
+
+$(function () {
+	if (window.top == window.self) {
+		window.top.location.href = "index.html";
+		return;
+	}	 
+	
+	web_timeout = setTimeout("XLogout();", top.XWebTimeout*1000);
+	InitForm(top.CurSubMenu);
+	WebCreatMenu();
+	WebLoadString();
+	WebInit();
+	$("input:password").attr("autocomplete","off");
+	
+	$("#btn_logout").click(function(){
+	    $.post("/GponForm/LogoutForm","logout",function(){
+            top.window.location.href = "logout.html";
+	    });
+	});
+	
+});
+
+	window.history.forward(1);
+
+//]]>
+</script>
+</head>
+<body>
+<form id="GForm" name="GForm" method="post" action="/GponForm/LogoutForm">
+</form>
+<form id="XForm" name="XForm" method="post" action="">
+<input id="XWebPageName" name="XWebPageName" type="hidden" value="" />
+<div id="wrapper">
+	<div id="header">
+		<h1><a id="logo"><img src="images/logo.png"/></a></h1>
+		<div id="header_right">
+			<table><tr><td><h2 id="device_name"></h2>
+			<a href="#" class="btn" id="btn_logout"><script type="text/javascript">document.write(WebString.Logout);</script></a></td></tr></table>
+		</div>
+		<ul id="main_menu">
+		</ul>
+	</div>
+	<div id="content_left">
+		<ul id="sub_menu">
+		</ul>
+	</div>
+	<div id="content_right">
+		<h1 id="content_title"></h1>
+		<div id="cfgarea">
+
+
+<input type="hidden" id="submit_or_restore" name="submit_or_restore" value="" />
+
+<div class="cfgstep" style="display:none">
+	<p><strong id="XS0"></strong></p>
+    <table>
+    	<tr>
+    		<td width="200" id="XS1"></td>
+    		<td><select name="aggre_mode" id="aggre_mode">
+    		  	<option value="0" selected="selected">A-MPDU</option>
+    		  	<option value="1">A-MSDU</option>
+    		  	<option value="2">Disabled</option>
+    			</select>
+    		</td>
+    	</tr>
+    </table>
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS4"></strong></p>
+	<table>
+		<tr>
+		  	<td width="200" id="XS5"></td>
+		  	<td>
+		  	    <input name="threshold" id="threshold" type="text" size="6" disabled="disabled" maxlength="4" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+		  	</td>
+		</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS6"></strong></p>
+	<table>
+	  	<tr>
+	  	  	<td width="200" id="XS7"></td>
+	  	  	<td>
+	  	  	    <input name="dtm" id="dtm" type="text" size="6" maxlength="3" onkeypress="return OnKeyPress(event, X_INPUT_NUM);" />
+	  	  	</td>
+	  	</tr>
+	</table>
+</div>
+
+<div class="cfgstep" id="11g_cfg" style="display:none">
+	<p><strong id="XS8"></strong></p>
+	
+	<table>
+	  	<tr>
+	  	  	<td width="200" id="XS18"></td>
+    		<td><select name="802_11_mode" id="802_11_mode" onchange="SelectProtectionMode(this.options[this.selectedIndex].value);">
+    		  	<option value="2" selected="selected">Auto by 802.11 mode</option>
+    		  	<option value="3">Manual</option>
+    			</select>
+    		</td>
+	  	</tr>
+	</table>
+	
+	<table id = "802_11_mannual">
+	  	<tr>
+	  	  	<td width="200" id="XS9"></td>
+	  	  	<td>
+	  	  	    <input name="protection" id="protection_bg_on" type="radio" value="1" checked="checked"/><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+	  	  	    <input name="protection" id="protection_bg_off" type="radio" value="0"/><script>document.write(WebString.Disable);</script>
+	  	  	</td>
+	  	</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong id="XS10"></strong></p>
+	<table>
+		<tr>
+	        <td width="200" id="XS11"></td>
+	        <td><select name="beacon_interval" id="beacon_interval">
+	        	<option value="100" selected="selected">100</option>
+	        	<option value="200">200</option>
+				<option value="400">400</option>
+				<option value="600">600</option>
+				<option value="800">800</option>
+				<option value="1000">1000</option>
+	            </select>
+	            <script>document.write(WebString.millisecond);</script>
+	        </td>
+	    </tr>
+	</table>
+
+</div>
+
+<div class="cfgstep" id="wifi_multicast" style="display:none">
+	<p><strong id="XS12"></strong></p>
+	<table>
+	  	<tr>
+	  	  	<td width="200" id="XS13"></td>
+	  	  	<td>
+	  	  	    <input name="multicast" id="multicast_on" type="radio" value="1" checked="checked"/><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+	  	  	    <input name="multicast" id="multicast_off" type="radio" value="0"/><script>document.write(WebString.Disable);</script>
+	  	  	</td>
+	  	</tr>
+	</table>
+</div>
+
+<div class="cfgstep" id="wifi_shortguard" style="display:none">
+	<p><strong id="XS14"></strong></p>
+	<table>
+	  	<tr>
+	  	  	<td width="200" id="XS15"></td>
+	  	  	<td>
+	  	  	    <input name="shortguard" id="shortguard_on" type="radio" value="1" checked="checked"/><script>document.write(WebString.Enable);</script>&nbsp;&nbsp;
+	  	  	    <input name="shortguard" id="shortguard_off" type="radio" value="0"/><script>document.write(WebString.Disable);</script>
+	  	  	</td>
+	  	</tr>
+	</table>
+</div>
+
+<div class="cfgstep">
+	<p><strong><script>document.write(WebString.ApplyRestore);</script></strong></p>
+	<a href="#" id="btn_apply" class="btn"><script>document.write(WebString.Apply);</script></a>&nbsp; 
+	<a href="#" id="btn_store" class="btn"><script>document.write(WebString.Restore);</script></a>
+</div>
+
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+</form>
+</body>
+</html>
+
