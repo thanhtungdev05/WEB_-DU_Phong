@@ -200,6 +200,24 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertNotIn("_allowedDeviceIds", portal)
         self.assertNotIn("_allowedLabIds", portal)
 
+    def test_portal_catalog_fetch_respects_server_cache_headers(self):
+        # cache: 'force-cache' ghi đè Cache-Control của server, khiến trình
+        # duyệt phục vụ catalog cũ vô thời hạn sau mỗi lần thêm/sửa catalog
+        # trong database. Phải để fetch tôn trọng max-age do server gửi.
+        portal = (ROOT / "app.js").read_text(encoding="utf-8")
+        fetch_call = re.search(
+            r"fetch\('/api/index\.php/learning/catalog'[^\n]*", portal
+        )
+        self.assertIsNotNone(fetch_call)
+        self.assertNotIn("force-cache", fetch_call.group(0))
+        self.assertNotIn("cache: 'no-store'", fetch_call.group(0))
+        self.assertIn("credentials: 'include'", fetch_call.group(0))
+
+        api = (ROOT / "api" / "index.php").read_text(encoding="utf-8")
+        self.assertIn(
+            "LEARNING_CATALOG_CACHE_SECONDS", api
+        )
+
     def test_class_member_import_is_previewed_inside_create_tab(self):
         html = (ROOT / "dashboard-authen" / "index.html").read_text(encoding="utf-8")
         javascript = (ROOT / "dashboard-authen" / "js" / "app.js").read_text(encoding="utf-8")

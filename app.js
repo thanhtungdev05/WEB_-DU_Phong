@@ -267,7 +267,7 @@
   }
 
   function loadLearningCatalog() {
-    return fetch('/api/index.php/learning/catalog', { credentials: 'include', cache: 'force-cache' })
+    return fetch('/api/index.php/learning/catalog', { credentials: 'include' })
       .then(function (response) {
         if (!response.ok) throw new Error('Không thể tải danh sách bài luyện tập.');
         return response.json();
