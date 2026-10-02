@@ -835,6 +835,14 @@ people_locations AS (
            ) AS region
       FROM v_ktv_directory roster
      WHERE roster.is_terminated = FALSE
+       AND (
+           roster.last_login_at IS NOT NULL
+           OR EXISTS (
+               SELECT 1
+                 FROM catalog_sessions cs
+                WHERE cs.person_id = roster.user_id::text
+           )
+       )
     UNION ALL
     SELECT 'firebase:' || LOWER(event.normalized_email) AS person_id,
            'FTC' AS region

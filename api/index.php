@@ -2706,7 +2706,7 @@ function handle_dashboard(array $segments, string $method): void
             SELECT user_id, employee_id, email, display_name, class_code, job_title,
                    unit_id, unit_code, unit_name, region_id, region_code, region_name,
                    dashboard_region, dashboard_group, branch_name, location_assigned,
-                   is_terminated, updated_at
+                   is_terminated, last_login_at, updated_at
               FROM v_ktv_directory
              WHERE is_terminated = FALSE
              ORDER BY display_name NULLS LAST, email

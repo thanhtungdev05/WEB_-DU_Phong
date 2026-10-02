@@ -2328,9 +2328,10 @@ function getRegionUsageSeries(year) {
             .filter(item => item.headcount > 0);
     }
 
+    const activeLearnerIdentities = new Set(sessions.map(s => String(s.learner || s.technicianId || '').trim().toLowerCase()).filter(Boolean));
     const headcountByRegion = new Map();
     technicianCatalog
-        .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId))
+        .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId) && (Boolean(technician.lastLoginAt) || activeLearnerIdentities.has(technician.email)))
         .forEach(technician => {
             const region = technician.dashboardRegion || 'FTC';
             headcountByRegion.set(region, (headcountByRegion.get(region) || 0) + 1);
@@ -2472,7 +2473,7 @@ function renderRegionUsageChart() {
         const mismatch = !inSelectedRange
             ? ` Khác kỳ báo cáo đang chọn (${selectedYearsLabel}).`
             : '';
-        periodNote.textContent = `Toàn năm ${state.regionUsageYear}; quy về cơ cấu KTV/khu vực hiện tại.${mismatch}`;
+        periodNote.textContent = `Toàn năm ${state.regionUsageYear}; tính trên KTV đã đăng nhập theo khu vực hiện tại.${mismatch}`;
     }
 
     const series = getRegionUsageSeries(state.regionUsageYear);
@@ -2563,7 +2564,7 @@ function renderRegionUsageChart() {
     const systemRate = totalHeadcount ? Math.round((totalPassedLearners / totalHeadcount) * 1000) / 10 : 0;
     insights.innerHTML = `
         <article><span>Cao nhất · Tháng ${focusMonthIndex + 1}</span><strong>${highest ? escapeHTML(highest.region) : '—'}</strong><small>${highest ? `${(highest.months[focusMonthIndex]?.rate || 0).toFixed(1)}% KTV thực hành đạt` : 'Chưa có khu vực hợp lệ'}</small></article>
-        <article><span>Toàn hệ thống · Tháng ${focusMonthIndex + 1}</span><strong>${systemRate.toFixed(1)}%</strong><small>${totalPassedLearners}/${totalHeadcount} KTV thực hành đạt</small></article>
+        <article><span>Toàn hệ thống · Tháng ${focusMonthIndex + 1}</span><strong>${systemRate.toFixed(1)}%</strong><small>${totalPassedLearners}/${totalHeadcount} KTV đạt / đã đăng nhập</small></article>
     `;
     legend.innerHTML = series.map(item => `
         <button type="button" class="region-usage-legend-item ${state.overviewSelectedRegion === item.region ? 'is-selected' : ''}"
@@ -2713,6 +2714,7 @@ function normalizeTechnicianCatalog(apiTechnicians = []) {
         branchName: item.branch_name || item.branchName || '',
         dashboardRegion: item.dashboard_region || item.dashboardRegion || item.region_name || item.regionName || 'FTC',
         locationAssigned: Boolean(item.location_assigned ?? item.locationAssigned ?? item.region_id ?? item.regionId),
+        lastLoginAt: item.last_login_at || item.lastLoginAt || null,
         isTerminated: Boolean(item.is_terminated ?? item.isTerminated)
     }));
 }

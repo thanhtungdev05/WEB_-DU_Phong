@@ -35,8 +35,8 @@ Tài liệu này là hợp đồng nghiệp vụ dùng chung cho dashboard quả
 
 ## 3. Biểu đồ tổng quan
 
-- **Tỷ lệ KTV thực hành đạt theo khu vực:** số KTV hiện thuộc khu vực có ít nhất một phiên Đạt trong tháng / quân số KTV hiện tại của khu vực × 100. Biểu đồ này dùng cơ cấu khu vực hiện tại và được ghi rõ trên giao diện; báo cáo snapshot lịch sử chính thức nằm ở ma trận khu vực.
-- **Thi đua khu vực:** tổng phiên thực hành trong năm / quân số KTV hiện tại của khu vực.
+- **Tỷ lệ KTV thực hành đạt theo khu vực:** số KTV hiện thuộc khu vực có ít nhất một phiên Đạt trong tháng / quân số KTV đã đăng nhập của khu vực × 100. Mẫu số chỉ tính KTV đang hoạt động đã từng đăng nhập vào hệ thống (hoặc có phát sinh phiên làm bài), không tính nhân sự chưa từng đăng nhập; quy về cơ cấu khu vực hiện tại. Báo cáo snapshot lịch sử toàn bộ danh mục nhân sự nằm ở ma trận khu vực.
+- **Thi đua khu vực:** tổng phiên thực hành trong năm / quân số KTV đã đăng nhập của khu vực.
 - **Xu hướng lượt thực hành tháng:** tổng phiên thực hành của tháng. “Đạt” đi kèm là số phiên Đạt, không phải số bài hoàn thành.
 - **Hoạt động theo giờ:** số phiên hợp lệ có thời điểm bắt đầu thuộc từng khung hai giờ.
 - **Phân bố thiết bị:** số phiên của thiết bị / tổng phiên của KTV × 100.
