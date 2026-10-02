@@ -16,12 +16,11 @@ class ResponsiveLayoutContractTests(unittest.TestCase):
         cls.portal_css = (ROOT / "styles.css").read_text(encoding="utf-8")
         cls.portal_js = (ROOT / "app.js").read_text(encoding="utf-8")
 
-    def test_primary_pages_use_device_viewport_and_safe_area(self):
+    def test_primary_pages_use_expected_viewport_contract(self):
         pages = (
             "index.html",
             "login/index.html",
             "personal-dashboard.html",
-            "portal.html",
             "dashboard-authen/index.html",
         )
         for relative_path in pages:
@@ -33,6 +32,13 @@ class ResponsiveLayoutContractTests(unittest.TestCase):
                 self.assertIn("viewport-fit=cover", viewport.group(1))
                 self.assertNotIn("width=1280", viewport.group(1))
 
+        portal_viewport = re.search(
+            r'<meta\s+name="viewport"\s+content="([^"]+)"',
+            self.portal_html,
+        )
+        self.assertIsNotNone(portal_viewport)
+        self.assertEqual(portal_viewport.group(1), "width=1280, user-scalable=yes")
+
     def test_personal_dashboard_has_mobile_header_and_content_breakpoints(self):
         self.assertIn("@media (max-width: 760px)", self.personal_css)
         self.assertIn("@media (max-width: 420px)", self.personal_css)
@@ -43,12 +49,11 @@ class ResponsiveLayoutContractTests(unittest.TestCase):
         self.assertIn('class="dash-brand-subtitle"', self.personal_html)
         self.assertIn('class="action-label action-label-practice"', self.personal_html)
 
-    def test_portal_collapses_sidebar_on_compact_first_load(self):
-        self.assertIn("window.matchMedia('(max-width: 600px)')", self.portal_js)
-        self.assertIn("sidebar.classList.add('collapsed')", self.portal_js)
+    def test_portal_preserves_ver21_fixed_canvas_layout(self):
+        self.assertNotIn("window.matchMedia('(max-width: 600px)')", self.portal_js)
+        self.assertNotIn("--sidebar-width: min(86vw, 320px)", self.portal_css)
         self.assertIn("@media (max-width: 600px)", self.portal_css)
-        self.assertIn("--sidebar-width: min(86vw, 320px)", self.portal_css)
-        self.assertIn("max-height: calc(100dvh - env(safe-area-inset-top))", self.portal_css)
+        self.assertIn("#lesson-screen { padding: 16px; }", self.portal_css)
 
     def test_changed_assets_have_current_content_hashes(self):
         checks = (

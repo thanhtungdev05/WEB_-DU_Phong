@@ -28,10 +28,16 @@ var lessonData = {
   clearFields: [
     '[id="ESSID:0"]',
     '[id="KeyPassphrase:0"]',
+    '[id="ESSID:4"]',
+    '[id="KeyPassphrase:4"]',
     '#ESSID\\:0',
     '#KeyPassphrase\\:0',
+    '#ESSID\\:4',
+    '#KeyPassphrase\\:4',
     'input[id="ESSID:0"]',
-    'input[id="KeyPassphrase:0"]'
+    'input[id="KeyPassphrase:0"]',
+    'input[id="ESSID:4"]',
+    'input[id="KeyPassphrase:4"]'
   ],
   grading: {
     description: 'Kiểm tra cấu hình Wi-Fi MLO (Wi-Fi 7) trên BE12000',

@@ -68,8 +68,13 @@
       window.__daNapLanDau = true;
       if (window.__simSync) window.__simSync();
       console.log('[wifi_api] da nap gia tri that tu config_store, tab=' + tab);
-      themNutThat(); // Hien nut save ngay tu dau do field da bi lam rong
-    }).catch(function (e) { console.error('[wifi_api] loi nap GET ssids', e); });
+    }).catch(function (e) {
+      console.error('[wifi_api] loi nap GET ssids', e);
+    }).then(function () {
+      // Portal xoa cac field cua bai tap ngay khi iframe mo. Nut Save van
+      // phai xuat hien ke ca khi API nap cau hinh tam thoi loi/cham.
+      themNutThat();
+    });
   }
 
   function docMotBo(i) {
@@ -175,10 +180,11 @@
 
   function themNutThat() {
     if (_thanh) return;
-    var form = document.querySelector('form.css-1w5zf2q');
+    var form = document.querySelector('form.css-1w5zf2q, [role="tabpanel"]:not([hidden]) form, form');
     if (!form) return;
     var wrap = document.createElement('div');
     wrap.className = 'MuiStack-root alternative-layout css-den97n';
+    wrap.setAttribute('data-sim-save', '1');
     wrap.innerHTML =
       '<button class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary formActionButton submit alternative-layout alternative-layout--submit css-g28vy7" tabindex="0" type="button">' +
       '<span class="MuiBox-root css-rrm59m">Save</span>' +
@@ -196,7 +202,7 @@
 
   /* Theo doi thay doi form de hien/an thanh nut giong thiet bi that. */
   function theoDoiThayDoi() {
-    var form = document.querySelector('form.css-1w5zf2q');
+    var form = document.querySelector('form.css-1w5zf2q, [role="tabpanel"]:not([hidden]) form, form');
     if (!form) return;
     ['input', 'change'].forEach(function (loai) {
       form.addEventListener(loai, function (e) {

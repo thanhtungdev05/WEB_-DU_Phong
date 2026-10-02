@@ -12,7 +12,10 @@ const lessonObj3 = {
   instructions: [
     '<b>Yêu cầu:</b>',
     '- SSID Name: <span class="val">FPT Telecom-IoT</span>',
-    '- WPA Key: <span class="val">19006600</span>'
+    '- WPA Key: <span class="val">19006600</span>',
+    '- Bật băng tần 2.4GHz',
+    '- Tắt băng tần 5GHz',
+    '- Tắt Band Steering'
   ],
   practiceUrl: '/sim_ax3000s/app.html#wlanMapSettingAll',
   clearFields: [
