@@ -72,14 +72,21 @@ window.FTC_AX3000C = window.FTC_AX3000C || {};
     });
   };
 
-  // Đặt trạng thái xuất phát riêng của bài (Bài 5, Bài 7) — gọi từ onSimLoad, chỉ một lần
-  // mỗi lượt mở (lúc iframe đang ở trang login do nút Hướng dẫn/Thực hành mở).
+  // Đặt trạng thái xuất phát riêng của bài (Bài 5, Bài 7) — gọi từ onSimLoad.
   F.datTrangThaiBai = function (simWin, bai) {
     try {
-      if (!simWin || simWin._ftcDaDatBai) return;
-      const oLogin = String(simWin.location.href).indexOf('logout=1') !== -1 ||
-        !!simWin.document.querySelector('.login-fpt');
-      if (!oLogin) return;
+      if (!simWin) return;
+      try {
+        if (simWin.sessionStorage) {
+          for (var i = simWin.sessionStorage.length - 1; i >= 0; i--) {
+            var k = simWin.sessionStorage.key(i);
+            if (k && k.indexOf('ftc_luu') !== -1) simWin.sessionStorage.removeItem(k);
+          }
+          simWin.sessionStorage.removeItem('ftc_vua_luu');
+        }
+        if (simWin.document) simWin.document._ftcIsSaved = false;
+      } catch (e) {}
+      if (simWin._ftcDaDatBai) return;
       simWin._ftcDaDatBai = true;
       simWin.fetch('/sim_ax3000c/ftc-dat-bai?bai=' + bai, { cache: 'no-store' });
     } catch (e) { }

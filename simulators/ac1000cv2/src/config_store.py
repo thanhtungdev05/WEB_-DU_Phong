@@ -88,53 +88,90 @@ CAU_HINH_GOC = {
 }
 
 
+import threading
+
+_SESSION_CTX = threading.local()
+
+
+def dat_nguoi_dung_hien_tai(user_key):
+    """Ghi nho user_key cua thread hien tai de phan lap state."""
+    _SESSION_CTX.user_key = user_key
+
+
+def lay_nguoi_dung_hien_tai():
+    return getattr(_SESSION_CTX, "user_key", None)
+
+
 class KhoCauHinh:
     def __init__(self, tep_luu=TEP_LUU_MAC_DINH):
         self.tep_luu = tep_luu
         self.du_lieu = {}
+        self._user_du_lieu = {}
+        self._lock = threading.RLock()
         self.nap()
 
+    def _lay_du_lieu(self):
+        uk = lay_nguoi_dung_hien_tai()
+        if uk:
+            if uk not in self._user_du_lieu:
+                self._user_du_lieu[uk] = json.loads(json.dumps(self.du_lieu))
+            return self._user_du_lieu[uk]
+        return self.du_lieu
+
     def nap(self):
-        if os.path.exists(self.tep_luu):
-            try:
-                with open(self.tep_luu, "r", encoding="utf-8") as f:
-                    self.du_lieu = json.load(f)
-                    return
-            except Exception:
-                pass
-        self.du_lieu = json.loads(json.dumps(CAU_HINH_GOC))
-        self.luu()
+        with self._lock:
+            if os.path.exists(self.tep_luu):
+                try:
+                    with open(self.tep_luu, "r", encoding="utf-8") as f:
+                        self.du_lieu = json.load(f)
+                        return
+                except Exception:
+                    pass
+            self.du_lieu = json.loads(json.dumps(CAU_HINH_GOC))
+            self.luu()
 
     def luu(self):
-        try:
-            with open(self.tep_luu, "w", encoding="utf-8") as f:
-                json.dump(self.du_lieu, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"Loi ghi file config: {e}")
+        with self._lock:
+            if lay_nguoi_dung_hien_tai():
+                return
+            try:
+                with open(self.tep_luu, "w", encoding="utf-8") as f:
+                    json.dump(self.du_lieu, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                print(f"Loi ghi file config: {e}")
 
     def doc(self, khoa, mac_dinh=None):
-        cac_cap = khoa.split(".")
-        cur = self.du_lieu
-        for c in cac_cap:
-            if isinstance(cur, dict) and c in cur:
-                cur = cur[c]
-            else:
-                return mac_dinh
-        return cur
+        with self._lock:
+            cac_cap = khoa.split(".")
+            cur = self._lay_du_lieu()
+            for c in cac_cap:
+                if isinstance(cur, dict) and c in cur:
+                    cur = cur[c]
+                else:
+                    return mac_dinh
+            return json.loads(json.dumps(cur))
 
     def ghi(self, khoa, gia_tri):
-        cac_cap = khoa.split(".")
-        cur = self.du_lieu
-        for c in cac_cap[:-1]:
-            if c not in cur or not isinstance(cur[c], dict):
-                cur[c] = {}
-            cur = cur[c]
-        cur[cac_cap[-1]] = gia_tri
-        self.luu()
+        with self._lock:
+            cac_cap = khoa.split(".")
+            cur = self._lay_du_lieu()
+            for c in cac_cap[:-1]:
+                if c not in cur or not isinstance(cur[c], dict):
+                    cur[c] = {}
+                cur = cur[c]
+            cur[cac_cap[-1]] = json.loads(json.dumps(gia_tri))
+            self.luu()
 
-    def dat_lai(self):
-        self.du_lieu = json.loads(json.dumps(CAU_HINH_GOC))
-        self.luu()
+    def dat_lai(self, user_key=None):
+        with self._lock:
+            base_cfg = self.du_lieu if self.du_lieu else CAU_HINH_GOC
+            uk = user_key or lay_nguoi_dung_hien_tai()
+            if uk:
+                self._user_du_lieu[uk] = json.loads(json.dumps(base_cfg))
+                return
+            self.du_lieu = json.loads(json.dumps(CAU_HINH_GOC))
+            self._user_du_lieu.clear()
+            self.luu()
 
 
 KHO = KhoCauHinh()

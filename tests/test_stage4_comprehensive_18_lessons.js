@@ -431,25 +431,29 @@ const LESSON_TEST_SPECS = [
     id: 'LAB_BE12000_04',
     name: 'Bài 4: Cấu hình DNS (customGrading full IP)',
     correctElements: {
-      '#sub_SerIPAddress10, input[name="sub_SerIPAddress10"]': [{ value: '210' }],
-      '#sub_SerIPAddress11, input[name="sub_SerIPAddress11"]': [{ value: '245' }],
-      '#sub_SerIPAddress12, input[name="sub_SerIPAddress12"]': [{ value: '31' }],
-      '#sub_SerIPAddress13, input[name="sub_SerIPAddress13"]': [{ value: '220' }],
-      '#sub_SerIPAddress20, input[name="sub_SerIPAddress20"]': [{ value: '8' }],
-      '#sub_SerIPAddress21, input[name="sub_SerIPAddress21"]': [{ value: '8' }],
-      '#sub_SerIPAddress22, input[name="sub_SerIPAddress22"]': [{ value: '8' }],
-      '#sub_SerIPAddress23, input[name="sub_SerIPAddress23"]': [{ value: '8' }]
+      '#Btn_apply_DHCPBasicCfg': [{ id: 'Btn_apply_DHCPBasicCfg' }],
+      '#DHCPBasicCfgBar': [{ id: 'DHCPBasicCfgBar' }],
+      '#sub_DNSServer10, input[name="sub_DNSServer10"]': [{ value: '210' }],
+      '#sub_DNSServer11, input[name="sub_DNSServer11"]': [{ value: '245' }],
+      '#sub_DNSServer12, input[name="sub_DNSServer12"]': [{ value: '31' }],
+      '#sub_DNSServer13, input[name="sub_DNSServer13"]': [{ value: '220' }],
+      '#sub_DNSServer20, input[name="sub_DNSServer20"]': [{ value: '8' }],
+      '#sub_DNSServer21, input[name="sub_DNSServer21"]': [{ value: '8' }],
+      '#sub_DNSServer22, input[name="sub_DNSServer22"]': [{ value: '8' }],
+      '#sub_DNSServer23, input[name="sub_DNSServer23"]': [{ value: '8' }]
     },
     wrongElements: {
+      '#Btn_apply_DHCPBasicCfg': [{ id: 'Btn_apply_DHCPBasicCfg' }],
+      '#DHCPBasicCfgBar': [{ id: 'DHCPBasicCfgBar' }],
       // Cố tình nhập lai tạp vô nghĩa: 210.8.1.1
-      '#sub_SerIPAddress10, input[name="sub_SerIPAddress10"]': [{ value: '210' }],
-      '#sub_SerIPAddress11, input[name="sub_SerIPAddress11"]': [{ value: '8' }],
-      '#sub_SerIPAddress12, input[name="sub_SerIPAddress12"]': [{ value: '1' }],
-      '#sub_SerIPAddress13, input[name="sub_SerIPAddress13"]': [{ value: '1' }],
-      '#sub_SerIPAddress20, input[name="sub_SerIPAddress20"]': [{ value: '8' }],
-      '#sub_SerIPAddress21, input[name="sub_SerIPAddress21"]': [{ value: '4' }],
-      '#sub_SerIPAddress22, input[name="sub_SerIPAddress22"]': [{ value: '4' }],
-      '#sub_SerIPAddress23, input[name="sub_SerIPAddress23"]': [{ value: '0' }]
+      '#sub_DNSServer10, input[name="sub_DNSServer10"]': [{ value: '210' }],
+      '#sub_DNSServer11, input[name="sub_DNSServer11"]': [{ value: '8' }],
+      '#sub_DNSServer12, input[name="sub_DNSServer12"]': [{ value: '1' }],
+      '#sub_DNSServer13, input[name="sub_DNSServer13"]': [{ value: '1' }],
+      '#sub_DNSServer20, input[name="sub_DNSServer20"]': [{ value: '8' }],
+      '#sub_DNSServer21, input[name="sub_DNSServer21"]': [{ value: '4' }],
+      '#sub_DNSServer22, input[name="sub_DNSServer22"]': [{ value: '4' }],
+      '#sub_DNSServer23, input[name="sub_DNSServer23"]': [{ value: '0' }]
     }
   },
   {

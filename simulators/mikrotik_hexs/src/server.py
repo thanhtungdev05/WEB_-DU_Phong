@@ -1347,6 +1347,16 @@ def _co_dong(duong_dan, ma_dong):
 
 class H(BaseHTTPRequestHandler):
     def _client_key(self):
+        ck_hdr = (self.headers.get("X-FTC-Client-Key") or "").strip()
+        if ck_hdr:
+            return f"header:{ck_hdr}"
+        try:
+            from urllib.parse import parse_qs, urlparse
+            qs = parse_qs(urlparse(self.path).query)
+            if "client_key" in qs and qs["client_key"][0]:
+                return f"param:{qs['client_key'][0]}"
+        except Exception:
+            pass
         try:
             cookie = SimpleCookie(self.headers.get("Cookie", ""))
             for name in ("ftc_session", "PHPSESSID", "ktv_client_id"):

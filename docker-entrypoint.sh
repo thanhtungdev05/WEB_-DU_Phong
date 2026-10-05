@@ -123,7 +123,7 @@ fi
 
 # 2. PHP API server (built-in, PATH_INFO routing: /api/index.php/<resource>).
 #    Lang nghe theo API_BIND_HOST (127.0.0.1 hoac 0.0.0.0 trong container network).
-PHP_CLI_SERVER_WORKERS="${PHP_API_WORKERS:-4}" \
+PHP_CLI_SERVER_WORKERS="${PHP_API_WORKERS:-16}" \
     php -d post_max_size=30M -d upload_max_filesize=30M -d memory_limit=512M \
     -S ${API_BIND_HOST}:${API_PORT} -t /app > /tmp/php_api.log 2>&1 &
 PHP_PID=$!

@@ -98,29 +98,30 @@ const bai5 = lessons.find(l => l.id === 'LAB_BE12000_05');
 const bai6 = lessons.find(l => l.id === 'LAB_BE12000_06');
 
 // ==========================================
-// TEST 1: Bài 4 (DNS) - 4 Octet Tooltips & Full IP Grading
+// TEST 1: Bài 4 (DNS) - Primary & Secondary DNS in LAN DHCP Server
 // ==========================================
 console.log('Test 1: BE12000 Bài 4 (DNS)...');
 const bai4Tooltips = tooltips['LAB_BE12000_04'];
 assert.ok(bai4Tooltips, 'Bài 4 tooltips must exist');
-// Check all 4 octets present for DNS 1 and DNS 2
-assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress13')), 'Tooltip must cover DNS 1 octet 3');
-assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_SerIPAddress23')), 'Tooltip must cover DNS 2 octet 3');
-assert.ok(bai4Tooltips.some(t => t.selector.includes('Btn_apply_LocalDnsServer')), 'Tooltip must cover Apply button');
-assert.strictEqual(bai4Tooltips.length, 6, 'Bài 4 tooltips should have 6 items (3 nav + 2 editable DNS fields + 1 apply)');
+// Check selectors for Primary DNS, Secondary DNS and Apply
+assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_DNSServer13')), 'Tooltip must cover Primary DNS (octet 3 to prevent covering inputs)');
+assert.ok(bai4Tooltips.some(t => t.selector.includes('sub_DNSServer23')), 'Tooltip must cover Secondary DNS (octet 3 to prevent covering inputs)');
+assert.ok(bai4Tooltips.some(t => t.selector.includes('Btn_apply_DHCPBasicCfg')), 'Tooltip must cover Apply button');
+assert.strictEqual(bai4Tooltips.length, 7, 'Bài 4 tooltips should have 7 items (4 nav/accordion + 2 DNS fields + 1 apply)');
 
 // Test Bài 4 customGrading with valid full IP (210.245.31.220 & 8.8.8.8) and isSaved = true
 function createDnsDoc(dns1Octets, dns2Octets, isSaved) {
   const elements = [
-    createMockElement('button', { id: 'Btn_apply_LocalDnsServer' }),
-    createMockElement('input', { id: 'sub_SerIPAddress10', value: dns1Octets[0] }),
-    createMockElement('input', { id: 'sub_SerIPAddress11', value: dns1Octets[1] }),
-    createMockElement('input', { id: 'sub_SerIPAddress12', value: dns1Octets[2] }),
-    createMockElement('input', { id: 'sub_SerIPAddress13', value: dns1Octets[3] }),
-    createMockElement('input', { id: 'sub_SerIPAddress20', value: dns2Octets[0] }),
-    createMockElement('input', { id: 'sub_SerIPAddress21', value: dns2Octets[1] }),
-    createMockElement('input', { id: 'sub_SerIPAddress22', value: dns2Octets[2] }),
-    createMockElement('input', { id: 'sub_SerIPAddress23', value: dns2Octets[3] })
+    createMockElement('button', { id: 'Btn_apply_DHCPBasicCfg' }),
+    createMockElement('div', { id: 'DHCPBasicCfgBar' }),
+    createMockElement('input', { id: 'sub_DNSServer10', value: dns1Octets[0] }),
+    createMockElement('input', { id: 'sub_DNSServer11', value: dns1Octets[1] }),
+    createMockElement('input', { id: 'sub_DNSServer12', value: dns1Octets[2] }),
+    createMockElement('input', { id: 'sub_DNSServer13', value: dns1Octets[3] }),
+    createMockElement('input', { id: 'sub_DNSServer20', value: dns2Octets[0] }),
+    createMockElement('input', { id: 'sub_DNSServer21', value: dns2Octets[1] }),
+    createMockElement('input', { id: 'sub_DNSServer22', value: dns2Octets[2] }),
+    createMockElement('input', { id: 'sub_DNSServer23', value: dns2Octets[3] })
   ];
   return createMockDocument(elements, isSaved);
 }

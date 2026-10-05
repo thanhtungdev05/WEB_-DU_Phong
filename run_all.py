@@ -770,7 +770,7 @@ def start_php_api():
         log_path = os.path.join(BASE_DIR, 'php_api.log')
         log_file = open(log_path, 'a', encoding='utf-8', errors='replace')
         env = dict(os.environ)
-        workers = env.get('PHP_API_WORKERS') or str(max(8, (os.cpu_count() or 4) * 2))
+        workers = env.get('PHP_API_WORKERS') or str(max(32, (os.cpu_count() or 4) * 4))
         env.setdefault('PHP_CLI_SERVER_WORKERS', workers)
         proc = subprocess.Popen(
             [php, '-d', 'post_max_size=30M', '-d', 'upload_max_filesize=30M', '-d', 'memory_limit=512M',

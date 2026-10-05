@@ -195,9 +195,22 @@ class H(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
+    def _lay_sid(self):
+        sid = (self.headers.get("X-FTC-Client-Key") or "").strip()
+        if sid:
+            return sid
+        from urllib.parse import parse_qs, urlparse
+        try:
+            q = parse_qs(urlparse(self.path).query)
+            if "client_key" in q and q["client_key"][0]:
+                return q["client_key"][0]
+        except Exception:
+            pass
+        return self._cookie("SESSIONID") or self._cookie("ktv_client_id") or self._cookie("ftc_session") or self._cookie("PHPSESSID")
+
     # ---- dinh tuyen ----
     def do_GET(self):                                        # noqa: N802
-        sid = self._cookie("SESSIONID")
+        sid = self._lay_sid()
         kho.dat_phien_hien_tai(sid)
         p = urlparse(self.path).path
 
@@ -275,7 +288,7 @@ class H(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):                                       # noqa: N802
-        sid = self._cookie("SESSIONID")
+        sid = self._lay_sid()
         kho.dat_phien_hien_tai(sid)
         p = urlparse(self.path).path
 

@@ -66,7 +66,12 @@
   function datVaoO(el, gt) {
     if (gt === undefined || gt === null) return false;
     if (el.type === 'checkbox' || el.type === 'radio') el.checked = !!gt;
-    else el.value = String(gt);
+    else {
+      el.value = String(gt);
+      if (typeof window.__capNhatNhan === 'function') {
+        window.__capNhatNhan(el);
+      }
+    }
     return true;
   }
 
@@ -95,6 +100,11 @@
         if (datVaoO(el, docSau(kho[b.resource], b.duong_dan))) da++; else hong++;
       });
       if (window.__simSync) window.__simSync();
+      if (typeof window.__capNhatNhan === 'function') {
+        document.querySelectorAll('.MuiFormControl-root input, .MuiFormControl-root textarea').forEach(function (inp) {
+          window.__capNhatNhan(inp);
+        });
+      }
       khoLuc = kho;                 // giu de biet 'id' khi ghi mang
       console.log('[api_binding] nap ' + da + ' o tu kho cau hinh'
         + (hong ? ', ' + hong + ' o khong nap duoc' : ''));

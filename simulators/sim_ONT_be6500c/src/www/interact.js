@@ -109,11 +109,27 @@
       '.MuiFormHelperText-root.Mui-disabled{color:rgba(0,0,0,.38)}' +
       '.MuiSelect-select.Mui-disabled,.MuiSelect-icon.Mui-disabled{color:rgba(0,0,0,.38);cursor:default}' +
       /* NHAN O SELECT VA O VAN BAN KHONG NHAY LEN -- dam bao luon shrink khi co gia tri hoac focus */
+      '.MuiFormControl-root:focus-within label.MuiInputLabel-root,' +
+      '.MuiFormControl-root:has(input:not([value=""])) label.MuiInputLabel-root,' +
+      '.MuiFormControl-root:has(input:focus) label.MuiInputLabel-root,' +
       '.MuiInputLabel-root.MuiInputLabel-shrink,.MuiInputLabel-root[data-shrink="true"],label.css-1sqw6hd{' +
       'transform:translate(14px,-9px) scale(0.75) !important;' +
       'transform-origin:top left !important;max-width:calc(133% - 32px) !important;' +
       'background:#fff !important;padding:0 4px !important;margin-left:-4px !important;z-index:2 !important;pointer-events:auto !important}' +
-      '.MuiInputLabel-root[data-shrink="false"]:not(.Mui-focused):not(.MuiInputLabel-shrink),label.css-4mi22k:not(.Mui-focused):not(.MuiInputLabel-shrink){' +
+      /* Khung cat vien (notch gap) cua legend cho outlined input */
+      '.MuiFormControl-root:focus-within fieldset legend,' +
+      '.MuiFormControl-root:has(input:not([value=""])) fieldset legend,' +
+      '.MuiFormControl-root:has(input:focus) fieldset legend,' +
+      'fieldset legend.css-14lo706{' +
+      'float:unset !important;width:auto !important;overflow:hidden !important;display:block !important;padding:0 !important;height:11px !important;font-size:0.75em !important;visibility:hidden !important;max-width:100% !important;white-space:nowrap !important}' +
+      '.MuiFormControl-root:focus-within fieldset legend > span,' +
+      '.MuiFormControl-root:has(input:not([value=""])) fieldset legend > span,' +
+      '.MuiFormControl-root:has(input:focus) fieldset legend > span,' +
+      'fieldset legend.css-14lo706 > span{' +
+      'padding-left:5px !important;padding-right:5px !important;display:inline-block !important;opacity:0 !important;visibility:visible !important}' +
+      /* Chi tra nhan ve vi tri giua o khi o THUC SU RONG va KHONG focus */
+      '.MuiFormControl-root:not(:focus-within):not(:has(input:not([value=""]))) .MuiInputLabel-root[data-shrink="false"]:not(.Mui-focused):not(.MuiInputLabel-shrink),' +
+      '.MuiFormControl-root:not(:focus-within):not(:has(input:not([value=""]))) label.css-4mi22k:not(.Mui-focused):not(.MuiInputLabel-shrink){' +
       'transform:translate(14px,16px) scale(1) !important;background:transparent !important;pointer-events:none !important}' +
       /* CHAM GIUA CUA RADIO -- loi bat duoc 2026-08-13 khi kiem bang mat
          trang Advanced > LAN (PD Mode): DOM bao 'Manual' dang chon nhung
@@ -323,8 +339,15 @@
     if (!nhan) return;
     var wrap = inp.closest('.MuiFormControl-root') || inp.closest('.MuiTextField-root');
     var root = inp.closest('.MuiOutlinedInput-root, .MuiInputBase-root');
-    var coGiaTri = !!(inp.value && String(inp.value).trim().length > 0);
+    var val = inp.value !== undefined && inp.value !== null ? String(inp.value) : '';
+    var coGiaTri = !!(val.trim().length > 0);
     var nhay = dangFocus || coGiaTri;
+
+    if (coGiaTri) {
+      inp.setAttribute('value', val);
+    } else if (!dangFocus) {
+      inp.removeAttribute('value');
+    }
 
     nhan.classList.toggle('MuiInputLabel-shrink', nhay);
     nhan.classList.toggle('MuiFormLabel-filled', coGiaTri);
@@ -360,34 +383,56 @@
   };
 
   function wireNhanOVanBan() {
-    document.addEventListener('focusin', function (e) {
+    var sel = 'input[type="text"], input[type="password"], input[type="email"], input[type="number"], input:not([type]), textarea';
+    function handlerFocusIn(e) {
       var t = e.target;
-      if (!t || !t.matches || !t.matches('input[type="text"], input[type="password"], '
-        + 'input[type="email"], input[type="number"], input:not([type]), textarea')) return;
+      if (!t || !t.matches || !t.matches(sel)) return;
       capNhatNhanOVanBan(t, true);
-    }, true);
-    document.addEventListener('focusout', function (e) {
+    }
+    function handlerFocusOut(e) {
       var t = e.target;
-      if (!t || !t.matches || !t.matches('input[type="text"], input[type="password"], '
-        + 'input[type="email"], input[type="number"], input:not([type]), textarea')) return;
+      if (!t || !t.matches || !t.matches(sel)) return;
       capNhatNhanOVanBan(t, false);
-    }, true);
-    document.addEventListener('input', function (e) {
+    }
+    function handlerChange(e) {
       var t = e.target;
-      if (!t || !t.matches || !t.matches('input[type="text"], input[type="password"], '
-        + 'input[type="email"], input[type="number"], input:not([type]), textarea')) return;
+      if (!t || !t.matches || !t.matches(sel)) return;
       capNhatNhanOVanBan(t, document.activeElement === t);
+    }
+
+    document.addEventListener('focusin', handlerFocusIn, true);
+    document.addEventListener('focusout', handlerFocusOut, true);
+    document.addEventListener('input', handlerChange, true);
+    document.addEventListener('change', handlerChange, true);
+    document.addEventListener('keyup', handlerChange, true);
+    document.addEventListener('paste', function (e) {
+      setTimeout(function () { handlerChange(e); }, 10);
     }, true);
-    document.addEventListener('change', function (e) {
-      var t = e.target;
-      if (!t || !t.matches || !t.matches('input[type="text"], input[type="password"], '
-        + 'input[type="email"], input[type="number"], input:not([type]), textarea')) return;
-      capNhatNhanOVanBan(t, document.activeElement === t);
+    document.addEventListener('cut', function (e) {
+      setTimeout(function () { handlerChange(e); }, 10);
     }, true);
+
     // dong bo ngay cac o da co gia tri san (vd sau khi trinh duyet tu dien lai)
     document.querySelectorAll('.MuiFormControl-root input[type="text"], '
       + '.MuiFormControl-root input[type="password"], .MuiFormControl-root textarea')
-      .forEach(function (inp) { capNhatNhanOVanBan(inp, false); });
+      .forEach(function (inp) { capNhatNhanOVanBan(inp, document.activeElement === inp); });
+
+    // Dinh ky dong bo tranh lech trang thai giua gia tri o va nhan
+    setInterval(function () {
+      document.querySelectorAll('.MuiFormControl-root input[type="text"], '
+        + '.MuiFormControl-root input[type="password"], .MuiFormControl-root textarea')
+        .forEach(function (inp) {
+          var val = inp.value !== undefined && inp.value !== null ? String(inp.value).trim() : '';
+          var nhan = nhanCuaOVanBan(inp);
+          if (nhan) {
+            var isShrunk = nhan.getAttribute('data-shrink') === 'true' || nhan.classList.contains('MuiInputLabel-shrink');
+            var shouldShrink = val.length > 0 || document.activeElement === inp;
+            if (isShrunk !== shouldShrink) {
+              capNhatNhanOVanBan(inp, document.activeElement === inp);
+            }
+          }
+        });
+    }, 250);
   }
 
   /* ---------- 4. Select: bao cho nguoi dung biet ---------- */

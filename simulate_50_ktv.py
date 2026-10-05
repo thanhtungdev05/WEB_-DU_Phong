@@ -228,6 +228,18 @@ def simulate_ktv_user(ktv_id, port):
         status, _, body, lat = make_request(port, '/sim_vigor2927/cgi-bin/striobj.cgi?sAct=1&sString=TEST_' + str(ktv_id), headers=headers)
         metrics.record(ok=(status == 200), latency=lat)
 
+    # 3. Mọi KTV đều thử truy cập AC1000C V2 để kiểm tra đa phiên
+    if ktv_id % 7 == 6:
+        status, _, _, lat = make_request(port, '/sim_ac1000cv2/login.html', headers=headers)
+        metrics.record(ok=(status == 200), latency=lat)
+        h = dict(headers)
+        h['Content-Type'] = 'application/x-www-form-urlencoded'
+        status, _, _, lat = make_request(port, '/sim_ac1000cv2/GponForm/login_Form', method='POST', headers=h, body='user=admin&pass=admin')
+        metrics.record(ok=(status in (200, 302)), latency=lat)
+        status, _, _, lat = make_request(port, '/sim_ac1000cv2/wan.html', headers=headers)
+        is_kicked = (status == 401)
+        metrics.record(ok=(status == 200 and not is_kicked), latency=lat, is_kicked=is_kicked)
+
 
 def simulate_chaos_test(port):
     """
@@ -237,13 +249,15 @@ def simulate_chaos_test(port):
     def user_logging_out(ktv_id):
         headers = {'Cookie': f"PHPSESSID=ktv_session_{ktv_id:03d}"}
         # Thử logout trên các thiết bị khác nhau
-        dev = ktv_id % 4
+        dev = ktv_id % 5
         if dev == 0:
             status, _, _, lat = make_request(port, f'/sim_ax3000c/sim-reset-session?sid=fake_or_real_{ktv_id}', headers=headers)
         elif dev == 1:
             status, _, _, lat = make_request(port, '/sim_be12000/?logout=1', headers=headers)
         elif dev == 2:
             status, _, _, lat = make_request(port, '/sim_ac1000HI/cgi-bin/logout.cgi', headers=headers)
+        elif dev == 3:
+            status, _, _, lat = make_request(port, '/sim_ac1000cv2/api/reset', headers=headers)
         else:
             status, _, _, lat = make_request(port, '/sim_vigor2927/logout', headers=headers)
         metrics.record(ok=(status in (200, 302)), latency=lat)

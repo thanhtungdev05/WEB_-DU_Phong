@@ -78,29 +78,46 @@ THE_CHEN = b"<script src=/ftc-ax3000c.js></script>"
 _goc._dong_bo_khung_tu_uci()
 
 
-def dat_lai_thiet_bi():
-    """Huy moi phien + cau hinh ve mac dinh (tuong duong reset_sid + xoa sim_state.json cua ban cu)."""
-    _goc._phien.clear()
-    _goc._TMP.clear()
-    _goc._REBOOT["luc"] = None
-    _goc.KHO.dat_lai()
-    _goc._dong_bo_khung_tu_uci()
+def dat_lai_thiet_bi(client_key=None, target_sid=None):
+    """Huy phien + cau hinh ve mac dinh cho hoc vien cu the.
+    Neu co target_sid hoac client_key, chi xoa phien va cau hinh cua hoc vien do,
+    khong bao gio xoa sach phien cua hoc vien khac."""
+    if target_sid:
+        _goc._phien.pop(target_sid, None)
+    elif client_key and client_key != "default":
+        to_del = [k for k, v in list(_goc._phien.items()) if v.get("client_key") == client_key or k == client_key]
+        for k in to_del:
+            _goc._phien.pop(k, None)
+    else:
+        _goc._phien.clear()
+        _goc._TMP.clear()
+        _goc._REBOOT["luc"] = None
+
+    if client_key or target_sid:
+        user_k = client_key or target_sid
+        _goc.ax3000c_kho_cau_hinh.dat_nguoi_dung_hien_tai(user_k)
+        _goc.KHO.dat_lai(user_key=user_k)
+    else:
+        _goc.KHO.dat_lai()
+        _goc._dong_bo_khung_tu_uci()
 
 
-def dat_trang_thai_bai(bai):
-    """Trang thai xuat phat rieng cua tung bai Lab (goi tu onSimLoad cua bai hoc, luc dang o trang login).
+def dat_trang_thai_bai(bai, client_key=None):
+    """Trang thai xuat phat rieng cua tung bai Lab (goi tu onSimLoad cua bai hoc).
 
     Ghi qua dung loi goi *set cua firmware (nhu bam Apply that) de uci va cac khung *_get
     di theo — khong sua thang kho.
       Bai 2 (Wi-Fi): Dam bao MeshRole = Controller de khong bao gio bi khoa.
-      Bai 5 (DHCP): IP LAN 192.168.1.1, DHCP start 192.168.1.2 (nhu ban cu) — hoc vien doi
-                    sang 192.168.100.1 thi firmware tu nhay dai DHCP (.2 -> .254).
+      Bai 5 (DHCP): IP LAN 192.168.100.1, DHCP start 192.168.100.2, limit 253 (end .254) — hoc vien doi
+                    sang 192.168.10.1 thi firmware tu nhay dai DHCP (.2 -> .254).
       Bai 7 (Mesh): Enabled bat, MeshRole = Agent (anh Huynn chon) — hoc vien doi sang
                     Controller; giao dien Wi-Fi da duoc mo khoa hoan toan khong con bi treo."""
     if str(bai) not in ("2", "5", "7"):
         return False
+    if client_key and client_key != "default":
+        _goc.ax3000c_kho_cau_hinh.dat_nguoi_dung_hien_tai(client_key)
     sid = "ftc" + os.urandom(13).hex()
-    _goc._phien[sid] = {"user": "admin", "luc": time.time()}
+    _goc._phien[sid] = {"user": "admin", "luc": time.time(), "client_key": client_key}
 
     def goi(doi_tuong, ham, ts):
         return _goc._xu_ly_ubus_day_du({"params": [sid, doi_tuong, ham, ts]}).get("result") or [1]
@@ -112,8 +129,10 @@ def dat_trang_thai_bai(bai):
             ts.update({"MeshRole": "Controller"})
             kq = goi("network.wireless.easymesh", "set", ts)
         elif str(bai) == "5":
-            kq = goi("data_repo.cigext", "set", {"network": {"lan": {"ipaddr": "192.168.1.1"}},
-                                                 "dhcp": {"lan": {"start": "192.168.1.2"}}})
+            kq = goi("data_repo.cigext", "set", {
+                "network": {"lan": {"ipaddr": "192.168.100.1", "netmask": "255.255.255.0"}},
+                "dhcp": {"lan": {"start": "192.168.100.2", "limit": "253"}}
+            })
         else:
             hien = goi("network.wireless.easymesh", "get", {})
             ts = dict(hien[1]) if len(hien) > 1 and isinstance(hien[1], dict) else {}
@@ -125,6 +144,22 @@ def dat_trang_thai_bai(bai):
 
 
 class Handler(_goc.H):
+    def _client_key(self):
+        cookie = self.headers.get("Cookie", "") if hasattr(self, "headers") else ""
+        if cookie:
+            import re
+            m = re.search(r'(?:ftc_session|ax3000c_sid|PHPSESSID|ktv_client_id)=([a-zA-Z0-9_-]+)', cookie)
+            if m:
+                return m.group(1)
+        from urllib.parse import urlparse, parse_qs
+        q = parse_qs(urlparse(self.path).query)
+        if "client_key" in q and q["client_key"][0]:
+            return q["client_key"][0]
+        if "sid" in q and q["sid"][0]:
+            return q["sid"][0]
+        addr = getattr(self, "client_address", None)
+        return str(addr[0]) if addr else "default"
+
     def _gui_ftc(self, ma, than, kieu, them=()):
         self.send_response(ma)
         self.send_header("Content-Type", kieu)
@@ -139,21 +174,33 @@ class Handler(_goc.H):
     def do_POST(self):
         p = self.path.split("?")[0].split("#")[0]
         if p.rstrip("/") in ("/sim-reset-session", "/api/reset"):
-            dat_lai_thiet_bi()
+            from urllib.parse import parse_qs, urlparse
+            q = parse_qs(urlparse(self.path).query)
+            target_sid = q.get("sid", [""])[0] or None
+            client_key = q.get("client_key", [""])[0] or self._client_key()
+            dat_lai_thiet_bi(client_key=client_key, target_sid=target_sid)
             return self._gui_ftc(200, b'{"ok":1}', "application/json",
                                  [("Access-Control-Allow-Origin", "*")])
+        ck = self._client_key()
+        _goc.ax3000c_kho_cau_hinh.dat_nguoi_dung_hien_tai(ck)
         return super().do_POST()
 
     def do_GET(self):
         p = self.path.split("?")[0].split("#")[0]
         if p.rstrip("/") in ("/sim-reset-session", "/api/reset"):
-            dat_lai_thiet_bi()
+            from urllib.parse import parse_qs, urlparse
+            q = parse_qs(urlparse(self.path).query)
+            target_sid = q.get("sid", [""])[0] or None
+            client_key = q.get("client_key", [""])[0] or self._client_key()
+            dat_lai_thiet_bi(client_key=client_key, target_sid=target_sid)
             return self._gui_ftc(200, b'{"ok":1}', "application/json",
                                  [("Access-Control-Allow-Origin", "*")])
+        ck = self._client_key()
+        _goc.ax3000c_kho_cau_hinh.dat_nguoi_dung_hien_tai(ck)
         if p == "/ftc-dat-bai":
             from urllib.parse import parse_qs
             bai = (parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "").get("bai") or [""])[0]
-            ok = dat_trang_thai_bai(bai)
+            ok = dat_trang_thai_bai(bai, client_key=ck)
             return self._gui_ftc(200, json.dumps({"ok": 1 if ok else 0}).encode(), "application/json")
         if p == "/ftc-ax3000c.js":
             with open(TEP_FTC_JS, "rb") as f:

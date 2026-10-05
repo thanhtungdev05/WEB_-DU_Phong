@@ -17,6 +17,15 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   clearFields: ['input[name="ipv4Settings.pppoe.username"]', 'input[name="ipv4Settings.pppoe.password"]'],
   grading: {
     description: 'Kiểm tra cấu hình PPPoE',
+    allowedSelectors: [
+      'div[id*="ipv4Settings.protocol"]',
+      'input[name="ipv4Settings.protocol"]',
+      'input[name="radio"]',
+      'input[name="radio-dns4"]',
+      'input[name="radio-dns6"]',
+      '[data-sim-nhom="dns4"] input',
+      '[data-sim-nhom="dns6"] input'
+    ],
     rules: [
       {
         "id": "wan_protocol",
@@ -49,7 +58,12 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   },
   allowedSelectors: [
     'div[id*="ipv4Settings.protocol"]',
-    'input[name="ipv4Settings.protocol"]'
+    'input[name="ipv4Settings.protocol"]',
+    'input[name="radio"]',
+    'input[name="radio-dns4"]',
+    'input[name="radio-dns6"]',
+    '[data-sim-nhom="dns4"] input',
+    '[data-sim-nhom="dns6"] input'
   ],
   guidePopups: [
     {

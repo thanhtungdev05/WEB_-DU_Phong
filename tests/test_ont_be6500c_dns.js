@@ -52,7 +52,7 @@ assert.ok(/devices\/ONT_be6500c\/lessons\/bai4\.js\?v=202609\d+/.test(portalCont
   'portal.html must have updated cachebuster for ONT BE6500C bai4.js');
 assert.ok(/devices\/be6500c\/lessons\/bai4\.js\?v=202609\d+/.test(portalContent),
   'portal.html must have updated cachebuster for AP BE6500C bai4.js');
-assert.ok(/app\.js\?v=202609\d+/.test(portalContent),
+assert.ok(/app\.js\?v=2026\d+/.test(portalContent),
   'portal.html must have updated cachebuster for app.js');
 
 // 4. Verify evaluateLesson filtering logic

@@ -44,6 +44,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ax3000c_kho_cau_hinh
 from ax3000c_kho_cau_hinh import KHO  # noqa: E402
 # md5-crypt dung chung (shared/python) — module crypt cua Python bi go tu 3.13
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -734,6 +735,15 @@ def _xu_ly_ubus(than):
     if _pha_reboot() == "chua_san":
         return _loi(*LOI_KHONG_THAY)
 
+    # Phan lap state theo sid cua phien
+    if sid and sid in _phien:
+        ph_info = _phien.get(sid)
+        uk = ph_info.get("client_key") if ph_info else sid
+        ax3000c_kho_cau_hinh.dat_nguoi_dung_hien_tai(uk)
+    elif sid and sid != SID_TRONG:
+        if not ax3000c_kho_cau_hinh.lay_nguoi_dung_hien_tai():
+            ax3000c_kho_cau_hinh.dat_nguoi_dung_hien_tai(sid)
+
     # ---- dang nhap: sid toan 0 ----
     if doi_tuong == "session" and ham == "login":
         u, m = ts.get("username"), ts.get("password")
@@ -747,7 +757,9 @@ def _xu_ly_ubus(than):
         if not _mat_khau_dung(u, m):
             return _ket_qua(6)
         moi = uuid.uuid4().hex
-        _phien[moi] = {"user": u, "luc": time.time()}
+        curr_uk = ax3000c_kho_cau_hinh.lay_nguoi_dung_hien_tai() or moi
+        _phien[moi] = {"user": u, "luc": time.time(), "client_key": curr_uk}
+        ax3000c_kho_cau_hinh.dat_nguoi_dung_hien_tai(curr_uk)
         # DO THAT: khoa dung thu tu ubus_rpc_session, timeout, acls, data — KHONG co
         # "expires" (truoc day tu them "expires":300 — bia). Goi tin trung tung byte
         # (tru sid): 3916 ky tu, fnv 49f74fa3 khi thay sid bang "<SID>".

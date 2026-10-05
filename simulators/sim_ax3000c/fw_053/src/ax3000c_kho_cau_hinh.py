@@ -138,31 +138,56 @@ def _nap_khung_goc():
     return ra
 
 
+_SESSION_CTX = threading.local()
+
+
+def dat_nguoi_dung_hien_tai(user_key):
+    """Ghi nho user_key/sid cua thread hien tai de phan lap state."""
+    _SESSION_CTX.user_key = user_key
+
+
+def lay_nguoi_dung_hien_tai():
+    return getattr(_SESSION_CTX, "user_key", None)
+
+
 class KhoCauHinh:
     """
     Kho duy nhat. Khoa = 'doi_tuong.ham_get' dung y het ten API that,
     vi du 'data_repo.weboui.wan_get'. Lam vay thi khong phai dich ten,
     va khi doc ma nguon se thay ngay khoa nao ung voi loi goi nao.
+    Ho tro phan lap state theo tung phien hoc vien qua thread-local context.
     """
 
     def __init__(self):
         self._khoa = threading.RLock()
         self._goc = _nap_khung_goc()
         self._du_lieu = json.loads(json.dumps(self._goc))  # ban sao sau
+        self._user_du_lieu = {}
         self._nap()
+
+    def _lay_du_lieu_hien_tai(self):
+        uk = lay_nguoi_dung_hien_tai()
+        if uk:
+            if uk not in self._user_du_lieu:
+                self._user_du_lieu[uk] = json.loads(json.dumps(self._du_lieu))
+            return self._user_du_lieu[uk]
+        return self._du_lieu
 
     # ---- doc/ghi ----------------------------------------------------
 
     def doc(self, khoa):
         with self._khoa:
-            v = self._du_lieu.get(khoa)
+            d = self._lay_du_lieu_hien_tai()
+            v = d.get(khoa)
             return json.loads(json.dumps(v)) if v is not None else None
 
     def ghi(self, khoa, gia_tri):
-        """Ghi de toan bo gia tri cua mot khoa, roi luu xuong dia."""
+        """Ghi de toan bo gia tri cua mot khoa, roi luu xuong dia neu khong phai user state."""
         with self._khoa:
-            self._du_lieu[khoa] = json.loads(json.dumps(gia_tri))
-            self._luu()
+            d = self._lay_du_lieu_hien_tai()
+            d[khoa] = json.loads(json.dumps(gia_tri))
+            if not lay_nguoi_dung_hien_tai():
+                self._luu()
 
     def gop(self, khoa, phan):
         """
@@ -172,27 +197,37 @@ class KhoCauHinh:
         cung xu su vay — khong xoa truong khong duoc nhac toi.
         """
         with self._khoa:
-            hien = self._du_lieu.get(khoa)
+            d = self._lay_du_lieu_hien_tai()
+            hien = d.get(khoa)
             if isinstance(hien, dict) and isinstance(phan, dict):
-                self._du_lieu[khoa] = _tron_sau(hien, phan)
+                d[khoa] = _tron_sau(hien, phan)
             else:
-                self._du_lieu[khoa] = json.loads(json.dumps(phan))
-            self._luu()
+                d[khoa] = json.loads(json.dumps(phan))
+            if not lay_nguoi_dung_hien_tai():
+                self._luu()
             return self.doc(khoa)
 
-    def dat_lai(self):
+    def dat_lai(self, user_key=None):
         """Ve lai dung khung that ban dau (dung cho phep kiem)."""
         with self._khoa:
+            uk = user_key or lay_nguoi_dung_hien_tai()
+            if uk:
+                self._user_du_lieu[uk] = json.loads(json.dumps(self._goc))
+                return
             self._du_lieu = json.loads(json.dumps(self._goc))
+            self._user_du_lieu.clear()
             self._luu()
 
     def cac_khoa(self):
         with self._khoa:
-            return sorted(self._du_lieu.keys())
+            d = self._lay_du_lieu_hien_tai()
+            return sorted(d.keys())
 
     # ---- luu xuong dia ----------------------------------------------
 
     def _luu(self):
+        if lay_nguoi_dung_hien_tai():
+            return
         try:
             with open(TEP_LUU, "w", encoding="utf-8") as f:
                 json.dump(self._du_lieu, f, ensure_ascii=False, indent=1)

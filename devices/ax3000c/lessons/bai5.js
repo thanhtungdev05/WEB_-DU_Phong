@@ -15,10 +15,10 @@ window.DEVICE_AX3000C_LESSONS.push({
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện thay đổi cấu hình địa chỉ IP LAN trên thiết bị theo các thông số được cung cấp dưới đây.',
-    '- Router LAN IPv4 Address: <span class="val">192.168.100.1</span>',
+    '- Router LAN IPv4 Address: <span class="val">192.168.10.1</span>',
     '- Subnet mask: <span class="val">255.255.255.0</span>',
-    '- DHCP start address: <span class="val">192.168.100.2</span>',
-    '- DHCP end address: <span class="val">192.168.100.249</span>',
+    '- DHCP start address: <span class="val">192.168.10.2</span>',
+    '- DHCP end address: <span class="val">192.168.10.254</span>',
   ],
   practiceUrl: '/sim_ax3000c/#/network/lan',
   onSimLoad: function (simWin) { FTC_AX3000C.datTrangThaiBai(simWin, 5); },
@@ -29,7 +29,7 @@ window.DEVICE_AX3000C_LESSONS.push({
         id: 'lan_ip',
         name: 'Router LAN IP Address',
         selector: FTC_AX3000C.o('Router LAN IPv4 Address'),
-        expected: '192.168.100.1',
+        expected: '192.168.10.1',
         type: 'text_exact',
         trim: true,
         required: true
@@ -47,7 +47,7 @@ window.DEVICE_AX3000C_LESSONS.push({
         id: 'dhcp_start',
         name: 'DHCP Start Address',
         selector: FTC_AX3000C.o('DHCP start address'),
-        expected: '192.168.100.2',
+        expected: '192.168.10.2',
         type: 'text_exact',
         trim: true,
         required: true
@@ -56,7 +56,7 @@ window.DEVICE_AX3000C_LESSONS.push({
         id: 'dhcp_end',
         name: 'DHCP End Address',
         selector: FTC_AX3000C.o('DHCP end address'),
-        expected: '192.168.100.249',
+        expected: '192.168.10.254',
         type: 'text_exact',
         trim: true,
         required: true

@@ -9,11 +9,11 @@ var lessonId = 'LAB_BE12000_04';
 var lessonData = {
   id: lessonId,
   title: 'Cấu hình DNS',
-  subtitle: 'Cấu hình DNS Server trên BE12000',
+  subtitle: 'Cấu hình Primary & Secondary DNS trên BE12000',
   instructions: [
     '<b>Yêu cầu:</b>',
-    '- IPv4 DNS Server 1: <span class="val">210.245.31.220</span>',
-    '- IPv4 DNS Server 2: <span class="val">8.8.8.8</span>'
+    '- Primary DNS: <span class="val">210.245.31.220</span>',
+    '- Secondary DNS: <span class="val">8.8.8.8</span>'
   ],
   practiceUrl: '/sim_be12000/login',
   onSimLoad: function (simWin) {
@@ -25,17 +25,17 @@ var lessonData = {
     } catch (e) { }
   },
   clearFields: [
-    '#sub_SerIPAddress10', '#sub_SerIPAddress11', '#sub_SerIPAddress12', '#sub_SerIPAddress13',
-    '#sub_SerIPAddress20', '#sub_SerIPAddress21', '#sub_SerIPAddress22', '#sub_SerIPAddress23',
-    'input[name="sub_SerIPAddress10"]', 'input[name="sub_SerIPAddress11"]', 'input[name="sub_SerIPAddress12"]', 'input[name="sub_SerIPAddress13"]',
-    'input[name="sub_SerIPAddress20"]', 'input[name="sub_SerIPAddress21"]', 'input[name="sub_SerIPAddress22"]', 'input[name="sub_SerIPAddress23"]'
+    '#sub_DNSServer10', '#sub_DNSServer11', '#sub_DNSServer12', '#sub_DNSServer13',
+    '#sub_DNSServer20', '#sub_DNSServer21', '#sub_DNSServer22', '#sub_DNSServer23',
+    'input[name="sub_DNSServer10"]', 'input[name="sub_DNSServer11"]', 'input[name="sub_DNSServer12"]', 'input[name="sub_DNSServer13"]',
+    'input[name="sub_DNSServer20"]', 'input[name="sub_DNSServer21"]', 'input[name="sub_DNSServer22"]', 'input[name="sub_DNSServer23"]'
   ],
   grading: {
-    description: 'Kiểm tra cấu hình máy chủ IPv4 DNS Server 1 & DNS Server 2 (ghép đủ 4 octet) trên BE12000',
+    description: 'Kiểm tra cấu hình máy chủ Primary DNS & Secondary DNS trên BE12000',
     customGrading: function (allDocs) {
       var doc = null;
       for (var i = 0; i < allDocs.length; i++) {
-        if (allDocs[i].querySelector('#sub_SerIPAddress10') || allDocs[i].querySelector('#Btn_apply_LocalDnsServer')) {
+        if (allDocs[i].querySelector('#sub_DNSServer10') || allDocs[i].querySelector('#Btn_apply_DHCPBasicCfg') || allDocs[i].querySelector('#DHCPBasicCfgBar')) {
           doc = allDocs[i];
           break;
         }
@@ -50,11 +50,11 @@ var lessonData = {
           details: [
             {
               id: 'dns_page',
-              name: 'Mở trang cấu hình DNS',
-              expected: 'Vào Local Network > DNS > DNS',
-              actual: 'Chưa mở trang DNS',
+              name: 'Mở trang cấu hình DHCP Server',
+              expected: 'Vào Local Network > LAN > IPv4 > DHCP Server',
+              actual: 'Chưa mở mục DHCP Server',
               passed: false,
-              message: 'Hãy chọn menu Local Network > DNS và mở mục DNS để cấu hình'
+              message: 'Hãy chọn menu Local Network > LAN > IPv4 và mở mục DHCP Server để cấu hình DNS'
             }
           ]
         };
@@ -69,8 +69,8 @@ var lessonData = {
         return parts.join('.');
       };
 
-      var dns1 = getIP('sub_SerIPAddress1');
-      var dns2 = getIP('sub_SerIPAddress2');
+      var dns1 = getIP('sub_DNSServer1');
+      var dns2 = getIP('sub_DNSServer2');
 
       var validDns1 = ['210.245.31.220', '210.245.31.221', '8.8.8.8', '1.1.1.1'];
       var validDns2 = ['8.8.8.8', '8.8.4.4', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
@@ -104,16 +104,16 @@ var lessonData = {
         totalRules: 2,
         details: [
           {
-            id: 'dns_server_1',
-            name: 'IPv4 DNS Server 1 (IP hoàn chỉnh)',
+            id: 'primary_dns',
+            name: 'Primary DNS',
             expected: '210.245.31.220 (hoặc 8.8.8.8)',
             actual: (dns1 || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
             passed: dns1Passed && isSaved,
             message: d1Msg
           },
           {
-            id: 'dns_server_2',
-            name: 'IPv4 DNS Server 2 (IP hoàn chỉnh)',
+            id: 'secondary_dns',
+            name: 'Secondary DNS',
             expected: '8.8.8.8 (hoặc 8.8.4.4)',
             actual: (dns2 || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
             passed: dns2Passed && isSaved,
@@ -124,10 +124,10 @@ var lessonData = {
     }
   },
   allowedSelectors: [
-    '#sub_SerIPAddress10', '#sub_SerIPAddress11', '#sub_SerIPAddress12', '#sub_SerIPAddress13',
-    '#sub_SerIPAddress20', '#sub_SerIPAddress21', '#sub_SerIPAddress22', '#sub_SerIPAddress23',
-    'input[name^="sub_SerIPAddress"]',
-    '#Btn_apply_LocalDnsServer', '#Btn_cancel_LocalDnsServer'
+    '#sub_DNSServer10', '#sub_DNSServer11', '#sub_DNSServer12', '#sub_DNSServer13',
+    '#sub_DNSServer20', '#sub_DNSServer21', '#sub_DNSServer22', '#sub_DNSServer23',
+    'input[name^="sub_DNSServer"]',
+    '#Btn_apply_DHCPBasicCfg', '#Btn_cancel_DHCPBasicCfg'
   ],
   guidePopups: (window.TOOLTIPS_BE12000 && window.TOOLTIPS_BE12000[lessonId]) || []
 };

@@ -11,9 +11,16 @@
       - chuyen route -> lay lai trang thai da nho cua route do. */
 (function () {
   try {
-    if (location.href.indexOf('logout=1') !== -1) {
-      sessionStorage.clear();
-      localStorage.clear();
+    if (location.href.indexOf('logout=1') !== -1 ||
+        (window.parent && window.parent !== window && window.parent._hasClickedSaveInGuide === false)) {
+      for (var k in sessionStorage) {
+        if (k && k.indexOf('ftc_luu') !== -1) sessionStorage.removeItem(k);
+      }
+      sessionStorage.removeItem('ftc_vua_luu');
+      if (location.href.indexOf('logout=1') !== -1) {
+        sessionStorage.clear();
+        localStorage.clear();
+      }
     }
   } catch (e) {}
 
@@ -26,7 +33,13 @@
   function capNhatTheoRoute() {
     var r = routeHienTai();
     var daLuu = false;
-    try { daLuu = sessionStorage.getItem(TIEN_TO + r) === '1'; } catch (e) {}
+    // Neu Portal dang o luot lam moi ma chua bam Save, xoa bo co luu cu cua route nay
+    if (window.parent && window.parent !== window && window.parent._hasClickedSaveInGuide === false) {
+      try { sessionStorage.removeItem(TIEN_TO + r); } catch (e) {}
+      daLuu = false;
+    } else {
+      try { daLuu = sessionStorage.getItem(TIEN_TO + r) === '1'; } catch (e) {}
+    }
     document._ftcIsSaved = daLuu;
   }
 

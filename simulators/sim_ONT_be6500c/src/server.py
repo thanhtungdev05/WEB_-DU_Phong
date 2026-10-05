@@ -74,6 +74,16 @@ class H(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def _client_id(self):
+        ck_hdr = (self.headers.get("X-FTC-Client-Key") or "").strip()
+        if ck_hdr:
+            return ck_hdr
+        from urllib.parse import parse_qs, urlparse
+        try:
+            q = parse_qs(urlparse(self.path).query)
+            if "client_key" in q and q["client_key"][0]:
+                return q["client_key"][0]
+        except Exception:
+            pass
         cookie_raw = self.headers.get("Cookie", "")
         for part in cookie_raw.split(";"):
             part = part.strip()

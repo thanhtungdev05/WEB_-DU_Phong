@@ -159,6 +159,9 @@
     } else {
       el.value = String(gt);
     }
+    if (typeof window.__capNhatNhan === 'function') {
+      window.__capNhatNhan(el);
+    }
     return true;
   }
 
@@ -296,6 +299,11 @@
       });
       apDungPhuThuoc();
       if (window.__simSync) window.__simSync();
+      if (typeof window.__capNhatNhan === 'function') {
+        document.querySelectorAll('.MuiFormControl-root input, .MuiFormControl-root textarea').forEach(function (inp) {
+          window.__capNhatNhan(inp);
+        });
+      }
       console.log('[api_binding] ' + tenTrang() + ': nap ' + da + '/'
         + Object.keys(CAU_HINH.truong).length + ' o'
         + (hong.length ? ' | chua nap: ' + hong.join(', ') : ''));

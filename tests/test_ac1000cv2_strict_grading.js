@@ -89,7 +89,7 @@ const mockDocB1Vlan = [{
     if (sel.includes('ip_mode')) return { value: '1' };
     if (sel.includes('wan_en1')) return { checked: true };
     if (sel.includes('nat_en1') || sel.includes('nat0')) return { checked: true };
-    if (sel.includes('mtu')) return { value: '1492' };
+    if (sel.includes('mtu')) return { value: '1500' };
     if (sel.includes('vlan_en')) return { checked: true, value: '1' }; // Bật VLAN
     return null;
   }
@@ -166,7 +166,102 @@ const mockDocB2Typo = [
 ];
 resB2 = bai2.grading.customGrading(mockDocB2Typo);
 assert.strictEqual(resB2.passed, false, 'Bài 2: Gõ FTP Telecom hoặc fpt12345 phải BÁO SAI');
-console.log('✔ Bài 2: Đạt chuẩn bắt lỗi');
+
+// Test 2.3: Mô phỏng trình duyệt thật — Nộp bài ở trang cuối (wifi5secu), nhưng trang 3 chọn nhầm SSID 2 ở băng tần 5GHz
+window._sessionRuleCache = {
+  wifi24_ssid: { actualValue: 'FPT Telecom', isSaved: true },
+  wifi24_key: { actualValue: '19006600', isSaved: true },
+  wifi5_ssid: { actualValue: 'FPT Telecom', isSaved: true },
+  wifi5_key: { actualValue: '19006600', isSaved: true },
+  wifi5_out_of_scope: { ssid_idx: '1', isSaved: true } // Chọn SSID 2 ở 5G
+};
+const mockDocB2FinalOnly = [{
+  location: { pathname: '/sim_ac1000cv2/wifi5secu.html' },
+  _ftcIsSaved: true,
+  querySelector: (sel) => {
+    if (sel.includes('security_wpa_key')) return { value: '19006600' };
+    if (sel.includes('security_mode')) return { value: '1' };
+    return null;
+  }
+}];
+let resB2CrossPageDisable = bai2.grading.customGrading(mockDocB2FinalOnly);
+assert.strictEqual(resB2CrossPageDisable.passed, false, 'Bài 2: Chọn nhầm SSID 2 ở băng tần 5G xuyên trang phải BÁO SAI');
+assert(resB2CrossPageDisable.details.some(d => d.id === 'err_wifi5_ssid_idx'), 'Phải báo lỗi err_wifi5_ssid_idx');
+
+// Test 2.4: Mô phỏng trang 2 đổi bảo mật sang Open (không pass)
+window._sessionRuleCache = {
+  wifi24_ssid: { actualValue: 'FPT Telecom', isSaved: true },
+  wifi24_key: { actualValue: '', isSaved: true },
+  wifi5_ssid: { actualValue: 'FPT Telecom', isSaved: true },
+  wifi5_key: { actualValue: '19006600', isSaved: true },
+  wifi24_sec_mode: { modeVal: '5', modeText: 'Open', isUnsafe: true, isSaved: true }
+};
+let resB2CrossPageOpen = bai2.grading.customGrading(mockDocB2FinalOnly);
+assert.strictEqual(resB2CrossPageOpen.passed, false, 'Bài 2: Đổi bảo mật 2.4G sang Open xuyên trang phải BÁO SAI');
+assert(resB2CrossPageOpen.details.some(d => d.id === 'err_wifi24_mode'), 'Phải báo lỗi err_wifi24_mode');
+
+// Test 2.5: Mô phỏng trang 1 chọn nhầm SSID 2
+window._sessionRuleCache = {
+  wifi24_ssid: { actualValue: 'FPT Telecom', isSaved: true },
+  wifi24_key: { actualValue: '19006600', isSaved: true },
+  wifi5_ssid: { actualValue: 'FPT Telecom', isSaved: true },
+  wifi5_key: { actualValue: '19006600', isSaved: true },
+  wifi24_out_of_scope: { ssid_idx: '1', isSaved: true } // Chọn SSID 2
+};
+let resB2CrossPageSSIDIdx = bai2.grading.customGrading(mockDocB2FinalOnly);
+assert.strictEqual(resB2CrossPageSSIDIdx.passed, false, 'Bài 2: Chọn nhầm SSID 2 ở trang 1 xuyên trang phải BÁO SAI');
+assert(resB2CrossPageSSIDIdx.details.some(d => d.id === 'err_wifi24_ssid_idx'), 'Phải báo lỗi err_wifi24_ssid_idx');
+
+// Test 2.6: Cấu hình đúng chuẩn toàn bộ 4 trang xuyên trang
+window._sessionRuleCache = {
+  wifi24_ssid: { actualValue: 'FPT Telecom', isSaved: true },
+  wifi24_key: { actualValue: '19006600', isSaved: true },
+  wifi5_ssid: { actualValue: 'FPT Telecom', isSaved: true },
+  wifi5_key: { actualValue: '19006600', isSaved: true },
+  wifi24_out_of_scope: { ssid_idx: null, isSaved: true },
+  wifi5_out_of_scope: { ssid_idx: null, isSaved: true }
+};
+let resB2CrossPageCorrect = bai2.grading.customGrading(mockDocB2FinalOnly);
+assert.strictEqual(resB2CrossPageCorrect.passed, true, 'Bài 2: Cấu hình đúng chuẩn xuyên trang phải ĐẠT');
+assert.strictEqual(resB2CrossPageCorrect.score, 100, 'Bài 2: Điểm phải đạt 100');
+window._sessionRuleCache = {};
+
+// Test 2.7: Chấm điểm lũy tiến (Progressive Validation) ở Chế độ Hướng dẫn (Guide Mode)
+window.currentMode = 'guide';
+window._ftcAc1000cv2FinalApplyClicked = false;
+window._sessionRuleCache = {
+  wifi24_ssid: { actualValue: 'FPT Telecom', isSaved: true }
+};
+const mockDocB2Step1Only = [{
+  location: { pathname: '/sim_ac1000cv2/wifissid.html' },
+  _ftcIsSaved: true,
+  querySelector: (sel) => {
+    if (sel.includes('ssid_network_name')) return { value: 'FPT Telecom' };
+    return null;
+  }
+}];
+let resB2GuideStep1 = bai2.grading.customGrading(mockDocB2Step1Only);
+assert.strictEqual(resB2GuideStep1.trangHienTaiDat, true, 'Bài 2 (Guide): Làm xong Trang 1 đúng thì trang hiện tại phải ĐẠT (không hiện nút lỗi)');
+assert.strictEqual(resB2GuideStep1.daVaoTrangCuoi, false, 'Bài 2 (Guide): Chưa vào trang cuối');
+assert.strictEqual(resB2GuideStep1.passed, false, 'Bài 2 (Guide): Chưa nộp bài được vì mới xong trang 1');
+assert.strictEqual(resB2GuideStep1.details[0].passed, true, 'Bài 2 (Guide): Tiêu chí 1 đạt');
+assert.strictEqual(resB2GuideStep1.details[1].isPending, true, 'Bài 2 (Guide): Tiêu chí 2 phải ở trạng thái pending');
+assert.strictEqual(resB2GuideStep1.details[1].actual, '⏳ Đang chờ thực hiện', 'Bài 2 (Guide): Tiêu chí 2 hiển thị Đang chờ');
+assert.strictEqual(resB2GuideStep1.details[2].isPending, true, 'Bài 2 (Guide): Tiêu chí 3 phải ở trạng thái pending');
+assert.strictEqual(resB2GuideStep1.details[3].isPending, true, 'Bài 2 (Guide): Tiêu chí 4 phải ở trạng thái pending');
+
+// Ở Chế độ Thực hành (Practice Mode): Tiêu chí 2, 3, 4 phải bị đánh trượt nghiêm ngặt
+window.currentMode = 'practice';
+let resB2PracticeStep1 = bai2.grading.customGrading(mockDocB2Step1Only);
+assert.strictEqual(resB2PracticeStep1.passed, false, 'Bài 2 (Practice): Mới làm trang 1 thì không đạt');
+assert.strictEqual(resB2PracticeStep1.details[1].passed, false, 'Bài 2 (Practice): Tiêu chí 2 bị chấm trượt');
+assert.strictEqual(resB2PracticeStep1.details[1].isPending, false, 'Bài 2 (Practice): Không được ở trạng thái pending');
+assert.strictEqual(resB2PracticeStep1.details[1].actual, '(Chưa nhập / Chưa tìm thấy)', 'Bài 2 (Practice): Báo Chưa nhập');
+
+window._sessionRuleCache = {};
+window.currentMode = 'practice';
+
+console.log('✔ Bài 2: Đạt chuẩn chấm điểm lũy tiến Guide mode & bắt lỗi nghiêm ngặt Practice mode');
 
 console.log('--- TEST BÀI 3: WI-FI IOT (SSID 2) ---');
 const bai3 = lessons.find(l => l.id === 'ac1000cv2-bai3');
@@ -370,7 +465,7 @@ const mockDocWithBaseline = [{
     if (sel.includes('ip_mode')) return { value: '1', tagName: 'SELECT' };
     if (sel.includes('wan_en1')) return { checked: true, type: 'radio', value: '1', tagName: 'INPUT' };
     if (sel.includes('nat0') || sel.includes('nat_en1')) return { checked: true, type: 'radio', value: '1', tagName: 'INPUT' };
-    if (sel.includes('mtu')) return { value: '1492', tagName: 'INPUT' };
+    if (sel.includes('mtu')) return { value: '1500', tagName: 'INPUT' };
     if (sel.includes('data-ftc-id="ftc_dscp_1"')) {
       return {
         id: 'dscp_val',

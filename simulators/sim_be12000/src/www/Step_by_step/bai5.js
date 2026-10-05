@@ -66,8 +66,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 // 2. LAN IP Address
                 var lanIP = getIP("sub_IPAddr", ":DHCPBasicCfg");
-                if (lanIP !== "192.168.1.1") {
-                    errors.push("- Hàng 'LAN IP Address': Khuyến nghị giá trị đúng là '192.168.1.1'. Thực tế: '" + (lanIP || 'Trống') + "'");
+                if (lanIP !== "192.168.10.1") {
+                    errors.push("- Hàng 'LAN IP Address': Khuyến nghị giá trị đúng là '192.168.10.1'. Thực tế: '" + (lanIP || 'Trống') + "'");
                 }
 
                 // 3. Subnet Mask
@@ -80,18 +80,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 var startIP = getIP("sub_MinAddress", ":DHCPBasicCfg");
                 var startParts = startIP.split(".");
                 var startOctet3 = parseInt(startParts[3], 10);
-                var validStart = (startIP === "192.168.1.2") || (startParts.length === 4 && startParts[0] === "192" && startParts[1] === "168" && startParts[2] === "1" && !isNaN(startOctet3) && startOctet3 >= 2 && startOctet3 <= 253);
+                var validStart = (startIP === "192.168.10.2") || (startParts.length === 4 && startParts[0] === "192" && startParts[1] === "168" && startParts[2] === "10" && !isNaN(startOctet3) && startOctet3 >= 2 && startOctet3 <= 253);
                 if (!validStart) {
-                    errors.push("- Hàng 'DHCP Start IP Address': Khuyến nghị giá trị đúng là '192.168.1.2'. Thực tế: '" + (startIP || 'Trống') + "'");
+                    errors.push("- Hàng 'DHCP Start IP Address': Khuyến nghị giá trị đúng là '192.168.10.2'. Thực tế: '" + (startIP || 'Trống') + "'");
                 }
 
                 // 5. DHCP End IP Address
                 var endIP = getIP("sub_MaxAddress", ":DHCPBasicCfg");
                 var endParts = endIP.split(".");
                 var endOctet3 = parseInt(endParts[3], 10);
-                var validEnd = (endIP === "192.168.1.254" || endIP === "192.168.1.249" || endIP === "192.168.1.250") || (endParts.length === 4 && endParts[0] === "192" && endParts[1] === "168" && endParts[2] === "1" && !isNaN(endOctet3) && endOctet3 > startOctet3 && endOctet3 <= 254);
+                var validEnd = (endIP === "192.168.10.254" || endIP === "192.168.10.250" || endIP === "192.168.10.200") || (endParts.length === 4 && endParts[0] === "192" && endParts[1] === "168" && endParts[2] === "10" && !isNaN(endOctet3) && endOctet3 > startOctet3 && endOctet3 <= 254);
                 if (!validEnd) {
-                    errors.push("- Hàng 'DHCP End IP Address': Khuyến nghị giá trị đúng là '192.168.1.254'. Thực tế: '" + (endIP || 'Trống') + "'");
+                    errors.push("- Hàng 'DHCP End IP Address': Khuyến nghị giá trị đúng là '192.168.10.254'. Thực tế: '" + (endIP || 'Trống') + "'");
                 }
 
                 if (validStart && validEnd && startOctet3 >= endOctet3) {
@@ -239,11 +239,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 { selector: "#lanMgrIpv4", text: "Chọn IPv4", placement: "bottom", done: false },
                 { selector: "#DHCPBasicCfgBar", text: "Chọn DHCP Server", placement: "top", offsetX: 120, done: false },
                 { selector: "label[for='ServerEnable1']", text: "Bước 1: Chọn On của phần DHCP Server", placement: "top", done: false },
-                { selector: "[id='sub_IPAddr3:DHCPBasicCfg']", text: "Bước 2: LAN IPAddress : 192.168.1.1", placement: "right", done: false },
+                { selector: "[id='sub_IPAddr3:DHCPBasicCfg']", text: "Bước 2: LAN IP Address : 192.168.10.1", placement: "right", done: false },
                 { selector: "#sub_SubMask3", text: "Bước 3: Nhập Subnet Mask : 255.255.255.0", placement: "right", done: false },
-                { selector: "[id='sub_MinAddress3:DHCPBasicCfg']", text: "Bước 4: DHCP Start IP Address : 192.168.1.2", placement: "right", done: false },
-                { selector: "[id='sub_MaxAddress3:DHCPBasicCfg']", text: "Bước 5: DHCP End IP Address : 192.168.1.254", placement: "right", done: false },
-                { selector: "#Btn_apply_DHCPBasicCfg", text: "Bước 6: Nhấn Apply để lưu cấu hình", placement: "top", done: false }
+                { selector: "[id='sub_MinAddress3:DHCPBasicCfg']", text: "Bước 4: DHCP Start IP Address : 192.168.10.2", placement: "right", done: false },
+                { selector: "[id='sub_MaxAddress3:DHCPBasicCfg']", text: "Bước 5: DHCP End IP Address : 192.168.10.254", placement: "right", done: false },
+                { selector: "#Btn_apply_DHCPBasicCfg", text: "Bước 6: Nhấn Apply để lưu cấu hình DHCP", placement: "top", done: false }
             ];
 
             // Function to create and update tooltip

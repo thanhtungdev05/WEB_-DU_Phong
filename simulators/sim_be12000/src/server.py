@@ -76,6 +76,20 @@ class Handler(BaseHTTPRequestHandler):
         return {k: v[0] for k, v in q.items()}
 
     def _client_session_info(self):
+        ck_hdr = (self.headers.get("X-FTC-Client-Key") or "").strip()
+        if ck_hdr:
+            self._has_be_cookie = True
+            self._current_be_sid = ck_hdr
+            return ck_hdr
+        from urllib.parse import parse_qs, urlparse
+        try:
+            q = parse_qs(urlparse(self.path).query)
+            if "client_key" in q and q["client_key"][0]:
+                self._has_be_cookie = True
+                self._current_be_sid = q["client_key"][0]
+                return self._current_be_sid
+        except Exception:
+            pass
         cookie = self.headers.get("Cookie", "")
         if cookie:
             import re
