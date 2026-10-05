@@ -78,6 +78,19 @@ assert.strictEqual(bai2.grading.rules.find(r => r.id === 'band_steering')?.expec
 const bai4 = lessons.find(l => l.id === 'LAB_AX3000CV2_04');
 assert.strictEqual(bai4.grading.rules.find(r => r.id === 'dns_custom_enable')?.expected, '1', 'Bai 4 must expect radio 1 for custom DNS');
 
+const bai5 = lessons.find(l => l.id === 'LAB_AX3000CV2_05');
+const bai5Instructions = bai5.instructions.join(' ');
+assert.ok(bai5Instructions.includes('192.168.100.1'), 'Bai 5 must display the Ver2.1 LAN address');
+assert.ok(bai5Instructions.includes('192.168.100.2'), 'Bai 5 must display the Ver2.1 DHCP start address');
+assert.ok(bai5Instructions.includes('192.168.100.254'), 'Bai 5 must display the Ver2.1 DHCP end address');
+assert.ok(!bai5Instructions.includes('192.168.100.249'), 'Bai 5 must not display the obsolete DHCP end address');
+assert.strictEqual(bai5.grading.rules.find(r => r.id === 'lan_ip')?.expected, '192.168.100.1', 'Bai 5 grading must match the displayed LAN address');
+assert.strictEqual(bai5.grading.rules.find(r => r.id === 'dhcp_start')?.expected, '192.168.100.2', 'Bai 5 grading must match the displayed DHCP start address');
+assert.strictEqual(bai5.grading.rules.find(r => r.id === 'dhcp_end')?.expected, '192.168.100.254', 'Bai 5 grading must match the displayed DHCP end address');
+const bai5Guide = context.window.TOOLTIPS_AX3000C['LAB_AX3000CV2_05'];
+assert.ok(bai5Guide.some(step => String(step.text || '').includes('192.168.100.254')), 'Bai 5 tooltip must use the Ver2.1 DHCP end address');
+assert.ok(!bai5Guide.some(step => String(step.text || '').includes('192.168.100.249')), 'Bai 5 tooltip must not use the obsolete DHCP end address');
+
 const bai6 = lessons.find(l => l.id === 'LAB_AX3000CV2_06');
 assert.strictEqual(bai6.grading.rules.find(r => r.id === 'enable')?.expected, 'on', 'Bai 6 must require Enable = on');
 

@@ -30,10 +30,10 @@ var lessonObj = {
     try {
       if (iframeWindow && iframeWindow.document) {
         const doc = iframeWindow.document;
-        // Chuẩn hóa MTU hiển thị 1500 cho PPPoE nếu chưa có cấu hình tùy chỉnh
+        // Ver2.1 dùng MTU PPPoE 1492; đồng bộ giá trị hiển thị với grading.
         const mtuEl = doc.querySelector('#mtu, input[name="mtu"]');
         if (mtuEl && (!mtuEl.value || mtuEl.value === '1500')) {
-          mtuEl.value = '1500';
+          mtuEl.value = '1492';
         }
 
         if (window._hasClickedSaveInGuide && window._sessionRuleCache) {
@@ -117,7 +117,7 @@ var lessonObj = {
         id: 'mtu',
         name: 'TCP MTU',
         selector: '#mtu, input[name="mtu"]',
-        expected: '1500',
+        expected: '1492',
         type: 'text_exact',
         trim: true,
         required: true
@@ -220,14 +220,14 @@ var lessonObj = {
               });
             }
 
-            // 4. TCP MTU (phải giữ 1500 theo mặc định ONT, không được cố ý phá vỡ)
+            // 4. TCP MTU (giữ đúng giá trị chuẩn Ver2.1)
             if (mtuEl && mtuEl.value && mtuEl.value.trim() !== '') {
               var curMtu = mtuEl.value.trim();
-              if (curMtu !== '1500') {
+              if (curMtu !== '1492') {
                 outOfScopeErrors.push({
                   id: 'err_mtu',
                   name: 'Thao tác ngoài phạm vi: TCP MTU',
-                  expected: '1500',
+                  expected: '1492',
                   actual: curMtu,
                   passed: false,
                   message: 'Cố tình thay đổi thông số MTU ngoài yêu cầu bài học'

@@ -206,8 +206,20 @@ const ax3000cDns = getLesson('ax3000c', 'LAB_AX3000CV2_04');
 assert.equal(expectedRuleValue(ax3000cDns, 'dns_custom_enable'), '1');
 assert.equal(typeof ax3000cDns.customClear, 'function');
 
+const ac1000cv2Pppoe = getLesson('ac1000cv2', 'ac1000cv2-bai1');
+assert.equal(
+  expectedRuleValue(ac1000cv2Pppoe, 'mtu'),
+  '1492',
+  'AC1000CV2 PPPoE MTU must preserve the Ver2.1 grading value'
+);
+
 const ax3000cDhcp = getLesson('ax3000c', 'LAB_AX3000CV2_05');
 assert.equal(ax3000cDhcp.clearFields, undefined, 'DHCP defaults must remain for automatic pool updates');
+assert.equal(
+  expectedRuleValue(ax3000cDhcp, 'dhcp_end'),
+  '192.168.100.254',
+  'AX3000CV2 DHCP end grading must preserve the confirmed Ver2.1 value'
+);
 
 const ax3000cPortForward = getLesson('ax3000c', 'LAB_AX3000CV2_06');
 assert.equal(expectedRuleValue(ax3000cPortForward, 'enable'), 'on');

@@ -2,8 +2,7 @@
  * devices/ax3000c/lessons/bai5.js
  * Bài 5: Cấu hình DHCP (đổi IP LAN) trên AX3000CV2 (firmware 0.5.3)
  * Mở bài thì giả lập đặt IP LAN về 192.168.1.1 (như bản cũ). Sửa IP rồi rời ô thì
- * firmware 0.5.3 tự nhảy dải DHCP thành .2 -> .254 — đáp án end = .249 (anh Huynn sửa lại
- * 2026-09-26, trước đó chốt nhầm .254).
+ * firmware 0.5.3 tự nhảy dải DHCP thành .2 -> .254 — giữ đúng đáp án Ver2.1 là .254.
  */
 
 window.DEVICE_AX3000C_LESSONS = window.DEVICE_AX3000C_LESSONS || [];
@@ -18,7 +17,7 @@ window.DEVICE_AX3000C_LESSONS.push({
     '- Router LAN IPv4 Address: <span class="val">192.168.100.1</span>',
     '- Subnet mask: <span class="val">255.255.255.0</span>',
     '- DHCP start address: <span class="val">192.168.100.2</span>',
-    '- DHCP end address: <span class="val">192.168.100.249</span>',
+    '- DHCP end address: <span class="val">192.168.100.254</span>',
   ],
   practiceUrl: '/sim_ax3000c/#/network/lan',
   onSimLoad: function (simWin) { FTC_AX3000C.datTrangThaiBai(simWin, 5); },
@@ -56,7 +55,7 @@ window.DEVICE_AX3000C_LESSONS.push({
         id: 'dhcp_end',
         name: 'DHCP End Address',
         selector: FTC_AX3000C.o('DHCP end address'),
-        expected: '192.168.100.249',
+        expected: '192.168.100.254',
         type: 'text_exact',
         trim: true,
         required: true

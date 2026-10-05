@@ -1,8 +1,7 @@
 /**
  * devices/ax3000c/tooltips/bai5.js — Tooltip Hướng dẫn cho Bài 5: Cấu hình DHCP (AX3000CV2, firmware 0.5.3)
  * Trang Network >> LAN >> LAN (#/network/lan). Bài bắt đầu ở IP LAN 192.168.1.1 (ftc-dat-bai?bai=5);
- * sửa IP rồi rời ô thì firmware tự nhảy dải DHCP: .2 -> .254. Đáp án DHCP end là .249
- * (anh Huynn sửa lại 2026-09-26, trước đó chốt nhầm .254).
+ * sửa IP rồi rời ô thì firmware tự nhảy dải DHCP: .2 -> .254. Đáp án Ver2.1 là .254.
  */
 
 if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
@@ -29,7 +28,7 @@ if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
     },
     {
       selector: F.o('DHCP end address'),
-      text: 'Bước 4: nhập 192.168.100.249',
+      text: 'Bước 4: nhập 192.168.100.254',
       position: 'right',
       page: 'network/lan'
     },

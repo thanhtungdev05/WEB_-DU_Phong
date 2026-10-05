@@ -89,7 +89,7 @@ const mockDocB1Vlan = [{
     if (sel.includes('ip_mode')) return { value: '1' };
     if (sel.includes('wan_en1')) return { checked: true };
     if (sel.includes('nat_en1') || sel.includes('nat0')) return { checked: true };
-    if (sel.includes('mtu')) return { value: '1500' };
+    if (sel.includes('mtu')) return { value: '1492' };
     if (sel.includes('vlan_en')) return { checked: true, value: '1' }; // Bật VLAN
     return null;
   }
@@ -465,7 +465,7 @@ const mockDocWithBaseline = [{
     if (sel.includes('ip_mode')) return { value: '1', tagName: 'SELECT' };
     if (sel.includes('wan_en1')) return { checked: true, type: 'radio', value: '1', tagName: 'INPUT' };
     if (sel.includes('nat0') || sel.includes('nat_en1')) return { checked: true, type: 'radio', value: '1', tagName: 'INPUT' };
-    if (sel.includes('mtu')) return { value: '1500', tagName: 'INPUT' };
+    if (sel.includes('mtu')) return { value: '1492', tagName: 'INPUT' };
     if (sel.includes('data-ftc-id="ftc_dscp_1"')) {
       return {
         id: 'dscp_val',
