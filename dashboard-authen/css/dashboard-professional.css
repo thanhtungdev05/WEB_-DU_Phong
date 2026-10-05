@@ -1927,6 +1927,10 @@ body.report-export-open {
     box-shadow: none;
 }
 
+#analytics .branch-report-period-filter {
+    min-width: min(560px, 52vw);
+}
+
 .detail-report-summary {
     gap: 10px;
     margin-block: 14px;
@@ -2017,6 +2021,11 @@ body.report-export-open {
 
     .detail-report-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #analytics .branch-report-period-filter {
+        min-width: 0;
+        width: 100%;
     }
 
     .detail-report-stat {
@@ -2561,6 +2570,12 @@ body.report-export-open {
 
 :root[data-theme="dark"] .detail-report-period strong {
     color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .branch-report-period-controls select {
+    color: #e5edf8 !important;
+    background: #111e33 !important;
+    border-color: #496080 !important;
 }
 
 :root[data-theme="dark"] .detail-report-quality-note {

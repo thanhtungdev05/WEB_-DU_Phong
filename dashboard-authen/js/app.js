@@ -148,6 +148,9 @@ const state = {
     regionUsageYear: now.getFullYear(),
     overviewSelectedRegion: '',
     overviewMonthlyExpanded: false,
+    branchReportPeriodType: 'month',
+    branchReportPeriodValue: now.getMonth() + 1,
+    branchReportYear: now.getFullYear(),
 
     filtersBound: false,
     popoversInitialized: false,
@@ -579,6 +582,28 @@ function getKpiComparisonPeriods() {
     };
 }
 
+function getBranchReportPeriods() {
+    const year = Number(state.branchReportYear) || now.getFullYear();
+    const periodType = state.branchReportPeriodType === 'quarter' ? 'quarter' : 'month';
+    const maxValue = periodType === 'quarter' ? 4 : 12;
+    const value = Math.min(maxValue, Math.max(1, Number(state.branchReportPeriodValue) || 1));
+    const startMonth = periodType === 'quarter' ? (value - 1) * 3 : value - 1;
+    const monthCount = periodType === 'quarter' ? 3 : 1;
+    const currentStart = new Date(year, startMonth, 1);
+    const currentEnd = new Date(year, startMonth + monthCount, 0);
+    const previousStart = new Date(year, startMonth - monthCount, 1);
+    const previousEnd = new Date(year, startMonth, 0);
+    return {
+        currentStart: toDateKey(currentStart),
+        currentEnd: toDateKey(currentEnd),
+        previousStart: toDateKey(previousStart),
+        previousEnd: toDateKey(previousEnd),
+        currentLabel: periodType === 'quarter'
+            ? `Quý ${value}/${year}`
+            : `Tháng ${String(value).padStart(2, '0')}/${year}`
+    };
+}
+
 const MIN_DURATION_SAMPLE_COUNT = 30;
 const MIN_DURATION_COVERAGE_RATE = 10;
 
@@ -632,7 +657,11 @@ function mapReportMetrics(metric) {
 
 function dashboardReportMatchesSelectedPeriod() {
     if (activeDashboardView === 'analytics') {
-        return dashboardReport?.meta?.scope === 'lifetime';
+        const periods = getBranchReportPeriods();
+        const reportPeriod = dashboardReport?.meta?.period;
+        return dashboardReport?.meta?.scope === 'period'
+            && reportPeriod?.from === periods.currentStart
+            && reportPeriod?.to === periods.currentEnd;
     }
     const periods = getKpiComparisonPeriods();
     const reportPeriod = dashboardReport?.meta?.period;
@@ -2932,8 +2961,13 @@ let dashboardReportRequestSequence = 0;
 
 function dashboardReportQuery(section = 'summary') {
     if (activeDashboardView === 'analytics') {
+        const periods = getBranchReportPeriods();
         return new URLSearchParams({
-            scope: 'lifetime',
+            scope: 'period',
+            from: periods.currentStart,
+            to: periods.currentEnd,
+            compare_from: periods.previousStart,
+            compare_to: periods.previousEnd,
             cohort: 'assigned_as_of_period_end',
             section,
             include_branch_drilldown: section === 'matrix' ? '1' : '0'
@@ -7613,6 +7647,60 @@ function initDateRangePicker() {
     });
 }
 
+function initBranchReportPeriodFilter() {
+    const typeSelect = document.getElementById('branchReportPeriodType');
+    const valueSelect = document.getElementById('branchReportPeriodValue');
+    const yearSelect = document.getElementById('branchReportYear');
+    const applyButton = document.getElementById('branchReportPeriodApply');
+    if (!typeSelect || !valueSelect || !yearSelect || !applyButton) return;
+
+    yearSelect.replaceChildren(...Array.from({ length: 11 }, (_, index) => {
+        const year = now.getFullYear() - index;
+        return new Option(String(year), String(year));
+    }));
+    yearSelect.value = String(state.branchReportYear);
+
+    let renderedType = state.branchReportPeriodType;
+    const renderPeriodOptions = () => {
+        const isQuarter = typeSelect.value === 'quarter';
+        const optionCount = isQuarter ? 4 : 12;
+        const previousValue = Number(valueSelect.value) || 1;
+        const convertedValue = renderedType === typeSelect.value
+            ? previousValue
+            : (isQuarter ? Math.ceil(previousValue / 3) : ((previousValue - 1) * 3) + 1);
+        const currentValue = Math.min(optionCount, Math.max(1, convertedValue));
+        const selectedYear = Number(yearSelect.value) || now.getFullYear();
+        const currentPeriodValue = isQuarter ? Math.floor(now.getMonth() / 3) + 1 : now.getMonth() + 1;
+        valueSelect.replaceChildren(...Array.from({ length: optionCount }, (_, index) => {
+            const value = index + 1;
+            const option = new Option(isQuarter ? `Quý ${value}` : `Tháng ${value}`, String(value));
+            option.disabled = selectedYear === now.getFullYear() && value > currentPeriodValue;
+            return option;
+        }));
+        valueSelect.value = String(Math.min(currentValue, selectedYear === now.getFullYear() ? currentPeriodValue : optionCount));
+        valueSelect.setAttribute('aria-label', isQuarter ? 'Chọn quý báo cáo' : 'Chọn tháng báo cáo');
+        renderedType = typeSelect.value;
+    };
+
+    typeSelect.value = state.branchReportPeriodType;
+    renderPeriodOptions();
+    valueSelect.value = String(state.branchReportPeriodValue);
+    typeSelect.addEventListener('change', renderPeriodOptions);
+    yearSelect.addEventListener('change', renderPeriodOptions);
+    applyButton.addEventListener('click', () => {
+        state.branchReportPeriodType = typeSelect.value === 'quarter' ? 'quarter' : 'month';
+        state.branchReportPeriodValue = Number(valueSelect.value) || 1;
+        state.branchReportYear = Number(yearSelect.value) || now.getFullYear();
+        state.branchMatrixRegionCode = '';
+        state.branchMatrixUnitCode = '';
+        state.dashboardReportStatus = 'loading';
+        const periodLabel = document.getElementById('detailReportPeriod');
+        if (periodLabel) periodLabel.textContent = getBranchReportPeriods().currentLabel;
+        renderAll();
+        if (state.dashboardDataLoaded && activeDashboardView === 'analytics') void reloadDashboardReport();
+    });
+}
+
 const REPORT_EXPORT_TEMPLATE_VERSION = 'FTC-XLSX-1.0';
 const REPORT_EXPORT_DEFAULT_BY_VIEW = {
     overview: 'activity',
@@ -8686,7 +8774,7 @@ const DASHBOARD_VIEWS = {
     overview: {
         eyebrow: 'Tổng quan',
         title: 'Tổng quan thực hành KTV',
-        subtitle: 'Trong kỳ báo cáo đã chọn'
+        subtitle: 'Trong tháng báo cáo đã chọn'
     },
     instructors: {
         eyebrow: 'Đào tạo',
@@ -8696,7 +8784,7 @@ const DASHBOARD_VIEWS = {
     analytics: {
         eyebrow: 'Báo cáo vận hành',
         title: 'Báo cáo theo khu vực',
-        subtitle: 'Phát sinh trong kỳ; hoàn thành lũy kế đến cuối kỳ'
+        subtitle: 'Phát sinh trong tháng/quý đã chọn; hoàn thành lũy kế đến cuối khoảng lọc'
     },
     class_matrix: {
         eyebrow: 'Báo cáo đào tạo',
@@ -10549,6 +10637,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFilters();
     initSort();
     initDateRangePicker();
+    initBranchReportPeriodFilter();
     initHourlyDatePicker();
     initReportExport();
     initInstructorWorkspace();

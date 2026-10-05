@@ -26,8 +26,8 @@
             document.documentElement.style.colorScheme = resolved;
         })();
     </script>
-    <link rel="stylesheet" href="css/styles.css?v=096dc9ebb400f8ce">
-    <link rel="stylesheet" href="css/dashboard-professional.css?v=2373f189d9b2aa82">
+    <link rel="stylesheet" href="css/styles.css?v=787c885602887198">
+    <link rel="stylesheet" href="css/dashboard-professional.css?v=e8e89bc15cb493d8">
 </head>
 
 <body>
@@ -285,7 +285,7 @@
                         <div class="section-title">
                             <div>
                                 <h2>Tổng quan thực hành KTV</h2>
-                                <span>Hoạt động và kết quả trong kỳ báo cáo đang chọn.</span>
+                                <span>Hoạt động và kết quả trong tháng báo cáo đang chọn.</span>
                             </div>
                             <div class="date-range-picker overview-month-picker" id="dateRangePicker">
                                 <div class="overview-month-field">
@@ -362,7 +362,7 @@
 
                         <section class="kpi-section-group activity-kpis" aria-labelledby="activityKpiGroupTitle">
                             <div class="kpi-section-heading">
-                                <h3 id="activityKpiGroupTitle">Hoạt động trong kỳ</h3>
+                                <h3 id="activityKpiGroupTitle">Hoạt động trong tháng</h3>
                                 <span>Các chỉ số phát sinh trong khoảng thời gian báo cáo đang chọn.</span>
                             </div>
                             <div class="kpi-grid">
@@ -376,13 +376,13 @@
                                 <span class="kpi-action-hint">Xem theo tháng <span aria-hidden="true">→</span></span>
                             </button>
                             <div class="kpi-card" title="Tổng số phiên KTV mở chế độ hướng dẫn từng bước để làm quen thao tác cấu hình">
-                                <div class="kpi-label">Lượt hướng dẫn trong kỳ</div>
+                                <div class="kpi-label">Lượt hướng dẫn trong tháng</div>
                                 <div class="kpi-value violet" id="kpiGuideSessions">0</div>
                                 <div class="kpi-comparison" id="kpiGuideSessionsComparison"></div>
                                 <div class="kpi-note" id="kpiGuideSessionsContext">Đang tính dữ liệu so sánh</div>
                             </div>
-                            <div class="kpi-card" title="Số lượng KTV có phát sinh ít nhất 1 phiên học tập hoặc thực hành trong kỳ">
-                                <div class="kpi-label">KTV tham gia trong kỳ</div>
+                            <div class="kpi-card" title="Số lượng KTV có phát sinh ít nhất 1 phiên học tập hoặc thực hành trong tháng">
+                                <div class="kpi-label">KTV tham gia trong tháng</div>
                                 <div class="kpi-value green" id="kpiLearners">0</div>
                                 <div class="kpi-comparison" id="kpiLearnersComparison"></div>
                                 <div class="kpi-note" id="kpiLearnersContext">Đang tính dữ liệu so sánh</div>
@@ -701,12 +701,21 @@
                                 <div>
                                     <span class="detail-report-eyebrow">Báo cáo quản lý đào tạo</span>
                                     <h2>Kết quả thực hành theo khu vực</h2>
-                                    <p>Lượt thực hành trong kỳ; kết quả hoàn thành tính lũy kế.</p>
+                                    <p>Lượt thực hành trong tháng/quý đã chọn; kết quả hoàn thành tính lũy kế đến cuối khoảng lọc.</p>
                                 </div>
-                                <div class="detail-report-period">
-                                    <span>Thời gian báo cáo</span>
+                                <div class="detail-report-period branch-report-period-filter" aria-label="Bộ lọc thời gian báo cáo chi nhánh">
+                                    <span>Bộ lọc riêng của báo cáo chi nhánh</span>
+                                    <div class="branch-report-period-controls">
+                                        <select id="branchReportPeriodType" aria-label="Chọn loại khoảng thời gian">
+                                            <option value="month">Theo tháng</option>
+                                            <option value="quarter">Theo quý</option>
+                                        </select>
+                                        <select id="branchReportPeriodValue" aria-label="Chọn tháng báo cáo"></select>
+                                        <select id="branchReportYear" aria-label="Chọn năm báo cáo"></select>
+                                        <button type="button" class="button branch-report-apply" id="branchReportPeriodApply">Áp dụng</button>
+                                    </div>
                                     <strong id="detailReportPeriod">Tháng hiện tại</strong>
-                                    <small>Dữ liệu cập nhật theo bộ lọc thời gian</small>
+                                    <small>Không phụ thuộc bộ lọc của tab Tổng quan</small>
                                 </div>
                             </div>
 
@@ -1714,7 +1723,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=54be14f7e0e85845"></script>
+    <script src="js/app.js?v=a9eecc6cc3014db6"></script>
     <script src="js/system_monitor.js?v=adc9b2989e24e00e"></script>
 </body>
 

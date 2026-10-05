@@ -80,9 +80,12 @@ class NeonTransferBudgetTests(unittest.TestCase):
         self.assertIn('from: requestDate', self.dashboard)
         self.assertIn('to: requestDate', self.dashboard)
 
-    def test_branch_report_uses_lifetime_scope_independent_of_overview_range(self):
-        self.assertIn("scope: 'lifetime'", self.dashboard)
-        self.assertIn("dashboardReport?.meta?.scope === 'lifetime'", self.dashboard)
+    def test_branch_report_uses_an_independent_month_or_quarter_period(self):
+        self.assertIn('function getBranchReportPeriods()', self.dashboard)
+        self.assertIn("branchReportPeriodType: 'month'", self.dashboard)
+        self.assertIn("const periods = getBranchReportPeriods();", self.dashboard)
+        self.assertIn("dashboardReport?.meta?.scope === 'period'", self.dashboard)
+        self.assertIn('compare_from: periods.previousStart', self.dashboard)
         self.assertIn("$scope === 'lifetime'", self.report)
         self.assertIn('dashboard_report_matrix(', self.report)
 

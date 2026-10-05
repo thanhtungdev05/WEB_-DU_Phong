@@ -6900,6 +6900,34 @@ th:nth-last-child(2) .header-filter-popover .popover-dropdown {
     font-size: 17px;
 }
 
+.branch-report-period-filter {
+    min-width: min(560px, 52vw);
+}
+
+.branch-report-period-controls {
+    display: grid;
+    grid-template-columns: minmax(110px, 1fr) minmax(100px, 1fr) minmax(82px, .75fr) auto;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.branch-report-period-controls select {
+    min-width: 0;
+    height: 36px;
+    padding: 0 28px 0 10px;
+    border: 1px solid #d7deea;
+    border-radius: 8px;
+    color: #334155;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+}
+
+.branch-report-period-controls .branch-report-apply {
+    min-height: 36px;
+    padding: 0 14px;
+}
+
 .detail-report-summary {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -7350,6 +7378,10 @@ thead th.instructor-progress-lab:hover {
         width: 100%;
     }
 
+    .branch-report-period-filter {
+        min-width: 0;
+    }
+
     .detail-report-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -7372,6 +7404,10 @@ thead th.instructor-progress-lab:hover {
 
     .detail-report-summary {
         grid-template-columns: 1fr;
+    }
+
+    .branch-report-period-controls {
+        grid-template-columns: 1fr 1fr;
     }
 
     .detail-report-table {

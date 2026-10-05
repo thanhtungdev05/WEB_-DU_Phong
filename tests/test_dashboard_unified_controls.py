@@ -344,9 +344,9 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
 
     def test_each_dashboard_view_explains_its_data_scope(self):
         for copy in (
-            "Trong kỳ báo cáo đã chọn",
+            "Trong tháng báo cáo đã chọn",
             "Tiến độ lũy kế; bài nộp trong kỳ báo cáo",
-            "Phát sinh trong kỳ; hoàn thành lũy kế đến cuối kỳ",
+            "Phát sinh trong tháng/quý đã chọn; hoàn thành lũy kế đến cuối khoảng lọc",
             "Tiến độ lũy kế của từng KTV trong lớp",
             "Lịch sử, thiết bị và kết quả của từng KTV trong khoảng ngày đã chọn",
             "Dữ liệu hồ sơ hiện tại; cập nhật danh sách từ Excel",
@@ -368,8 +368,8 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
 
     def test_dashboard_copy_is_short_consistent_and_user_friendly(self):
         for label in (
-            "Hoạt động trong kỳ",
-            "Lượt hướng dẫn trong kỳ",
+            "Hoạt động trong tháng",
+            "Lượt hướng dẫn trong tháng",
             "Tỷ lệ thực hành đạt",
             "Tỷ lệ KTV thực hành đạt",
             "Biểu đồ thi đua giữa các khu vực",
@@ -381,7 +381,6 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         ):
             self.assertIn(label, self.html)
         for old_label in (
-            "Hoạt động trong tháng",
             "Lượt xem hướng dẫn trong tháng",
             "Tỷ lệ KTV có thực hành đạt",
             "Biểu đồ đua giữa các khu vực",
@@ -394,7 +393,12 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertNotIn("Import danh sách KTV", self.javascript)
         self.assertIn("Lượt thực hành ghi nhận", self.html)
         self.assertIn("Gồm lượt hợp lệ và lượt đạt lịch sử.", self.html)
-        self.assertIn("Lượt thực hành trong kỳ; kết quả hoàn thành tính lũy kế.", self.html)
+        self.assertIn("Lượt thực hành trong tháng/quý đã chọn; kết quả hoàn thành tính lũy kế đến cuối khoảng lọc.", self.html)
+        self.assertIn('id="branchReportPeriodType"', self.html)
+        self.assertIn('id="branchReportPeriodValue"', self.html)
+        self.assertIn('id="branchReportYear"', self.html)
+        self.assertIn('id="branchReportPeriodApply"', self.html)
+        self.assertIn("Không phụ thuộc bộ lọc của tab Tổng quan", self.html)
         self.assertIn("Mỗi ô hiển thị lượt đạt / lượt thực hành.", self.html)
         self.assertNotIn("có đầy đủ kết quả và chuỗi lần làm", self.html)
 
