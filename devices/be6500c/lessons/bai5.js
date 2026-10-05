@@ -10,18 +10,18 @@ var bai5 = {
   instructions: [
     "<b>Yêu cầu:</b>",
     "Thực hiện cấu hình IPv4 LAN theo các thông số dưới đây:",
-    "- IP Address (Gateway): <span class=\"val\">192.168.1.1</span>",
+    "- IP Address (Gateway): <span class=\"val\">192.168.10.1</span>",
     "- Subnet Mask: <span class=\"val\">255.255.255.0</span>"
   ],
   practiceUrl: '/sim_be6500c/advanced__lan.html',
-  clearFields: [
-    'input[name="ipv4Settings.ipAddress"]',
-    'input[name="ipv4Settings.mask"]',
-    '.MuiAutocomplete-input'
-  ],
+  clearFields: [],
   allowedSelectors: [
     'input[name="ipv4Settings.ipAddress"]',
     'input[name="ipv4Settings.mask"]',
+    'input[name="ipv4Settings.dhcp.startAddress"]',
+    'input[name="ipv4Settings.dhcp.endAddress"]',
+    'input[name*="dhcp.start"]',
+    'input[name*="dhcp.end"]',
     '.MuiAutocomplete-input',
     '.MuiAutocomplete-clearIndicator',
     '.MuiAutocomplete-popupIndicator',
@@ -36,6 +36,10 @@ var bai5 = {
     allowedSelectors: [
       'input[name="ipv4Settings.ipAddress"]',
       'input[name="ipv4Settings.mask"]',
+      'input[name="ipv4Settings.dhcp.startAddress"]',
+      'input[name="ipv4Settings.dhcp.endAddress"]',
+      'input[name*="dhcp.start"]',
+      'input[name*="dhcp.end"]',
       '.MuiAutocomplete-input',
       'button.alternative-layout--submit',
       '.formActionButton.submit',
@@ -46,7 +50,7 @@ var bai5 = {
         "id": "lan_ip",
         "name": "IP Address",
         "selector": "input[name=\"ipv4Settings.ipAddress\"]",
-        "expected": "192.168.1.1",
+        "expected": "192.168.10.1",
         "type": "text_exact",
         "trim": true,
         "required": true
@@ -75,9 +79,9 @@ var bai5 = {
     },
     {
       "selector": "input[name=\"ipv4Settings.ipAddress\"]",
-      "text": "Bước 3: Nhập IP Address là 192.168.1.1",
+      "text": "Bước 3: Nhập IP Address là 192.168.10.1",
       "position": "right",
-      "expected": "192.168.1.1"
+      "expected": "192.168.10.1"
     },
     {
       "selector": "input[name=\"ipv4Settings.mask\"], .MuiAutocomplete-input",

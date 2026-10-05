@@ -39,8 +39,7 @@ if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
     },
     {
       selector: F.cot('Device/IP'),
-      // Chọn dòng "Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45)" trong danh sách thiết bị
-      text: 'Bước 5: chọn 192.168.100.109',
+      text: 'Bước 5: nhập 192.168.100.109',
       position: 'bottom',
       page: 'network/portfwd'
     },

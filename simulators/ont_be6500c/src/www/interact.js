@@ -404,6 +404,34 @@
     });
   }
 
+  /* ---------- 5. Tu dong dong bo dai IP DHCP khi doi IP LAN ---------- */
+  function wireDhcpAutoSync() {
+    function xuLyDoiIp(target) {
+      if (!target || !target.matches || !target.matches('input[name="ipv4Settings.ipAddress"]')) return;
+      var doc = target.ownerDocument || document;
+      var startInput = doc.querySelector('input[name="ipv4Settings.dhcp.startAddress"]');
+      var endInput = doc.querySelector('input[name="ipv4Settings.dhcp.endAddress"]');
+      if (!startInput || !endInput) return;
+
+      var val = (target.value || '').trim();
+      var m = val.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d{1,3})$/);
+      if (m) {
+        var prefix = m[1];
+        startInput.value = prefix + '.2';
+        startInput.setAttribute('value', prefix + '.2');
+        endInput.value = prefix + '.254';
+        endInput.setAttribute('value', prefix + '.254');
+        if (typeof capNhatNhanOVanBan === 'function') {
+          capNhatNhanOVanBan(startInput, false);
+          capNhatNhanOVanBan(endInput, false);
+        }
+      }
+    }
+
+    document.addEventListener('input', function (e) { xuLyDoiIp(e.target); }, true);
+    document.addEventListener('change', function (e) { xuLyDoiIp(e.target); }, true);
+  }
+
   function init() {
     // dong bo trang thai ban dau tu lop Mui-checked co san
     document.querySelectorAll('.PrivateSwitchBase-root').forEach(function (b) {
@@ -413,6 +441,7 @@
     syncAll(); applyEnableSections();
     wireAccordions(); wireCardCollapse(); moTheTheoTabDaChon(); wireEyes(); wireSelects();
     wireNhanOVanBan();
+    wireDhcpAutoSync();
     var n = document.querySelectorAll('input[type=checkbox],input[type=radio]').length;
     console.log('[interact] ' + n + ' cong tac/hop kiem da hoat dong');
   }

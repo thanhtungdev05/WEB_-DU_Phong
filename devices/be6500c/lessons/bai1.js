@@ -17,7 +17,27 @@ var bai1 = {
   clearFields: ['input[name="ipv4Settings.pppoe.username"]', 'input[name="ipv4Settings.pppoe.password"]'],
   grading: {
     description: 'Kiểm tra cấu hình PPPoE',
+    allowedSelectors: [
+      'input[name="radio"]',
+      '.MuiRadio-root',
+      '.PrivateSwitchBase-input',
+      '.MuiFormControlLabel-root'
+    ],
     rules: [
+      {
+        "id": "ip_version_mode",
+        "name": "Basics IP Mode",
+        "selector": "input[name=\"radio\"][value=\"10\"]:checked, input[name=\"radio\"][value=\"4\"]:checked, input[name=\"radio\"][value=\"6\"]:checked",
+        "expected": "10",
+        "displayExpected": "IPv4 & IPv6",
+        "valueLabels": {
+          "10": "IPv4 & IPv6",
+          "4": "IPv4",
+          "6": "IPv6"
+        },
+        "type": "text_exact",
+        "required": true
+      },
       {
         "id": "wan_protocol",
         "name": "Connection Type",
@@ -49,7 +69,11 @@ var bai1 = {
   },
   allowedSelectors: [
     'div[id*="ipv4Settings.protocol"]',
-    'input[name="ipv4Settings.protocol"]'
+    'input[name="ipv4Settings.protocol"]',
+    'input[name="radio"]',
+    '.MuiRadio-root',
+    '.PrivateSwitchBase-input',
+    '.MuiFormControlLabel-root'
   ],
   guidePopups: [
     {
@@ -58,28 +82,33 @@ var bai1 = {
       "position": "right"
     },
     {
+      "selector": ".MuiFormControlLabel-root:has(input[value=\"10\"]), span:contains(\"IPv4 & IPv6\"), input[name=\"radio\"][value=\"10\"]",
+      "text": "Bước 2: Kiểm tra mục Basics đã tích chọn sẵn IPv4 & IPv6",
+      "position": "bottom"
+    },
+    {
       "selector": ".MuiTypography-subtitle1:contains(\"IPv4 Connection Type\")",
-      "text": "Bước 2: Chọn IPv4 Connection Type",
+      "text": "Bước 3: Chọn IPv4 Connection Type",
       "position": "top"
     },
     {
       "selector": "div[id*=\"ipv4Settings.protocol\"]",
-      "text": "Bước 3: Chọn PPPoE của phần Connection Type",
+      "text": "Bước 4: Chọn PPPoE của phần Connection Type",
       "position": "right"
     },
     {
       "selector": "input[name=\"ipv4Settings.pppoe.username\"]",
-      "text": "Bước 4: Nhập Username: hnfdl-123456-789",
+      "text": "Bước 5: Nhập Username: hnfdl-123456-789",
       "position": "right"
     },
     {
       "selector": "input[name=\"ipv4Settings.pppoe.password\"]",
-      "text": "Bước 5: Nhập Password: d123456",
+      "text": "Bước 6: Nhập Password: d123456",
       "position": "right"
     },
     {
       "selector": "button.alternative-layout--submit, .formActionButton.submit, body:has(input[name=\"ipv4Settings.pppoe.username\"]) button.alternative-layout--submit",
-      "text": "Bước 6: Chọn Save để lưu cấu hình",
+      "text": "Bước 7: Chọn Save để lưu cấu hình",
       "position": "bottom"
     }
   ]

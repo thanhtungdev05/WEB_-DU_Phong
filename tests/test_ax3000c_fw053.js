@@ -93,6 +93,9 @@ assert.ok(!bai5Guide.some(step => String(step.text || '').includes('192.168.100.
 
 const bai6 = lessons.find(l => l.id === 'LAB_AX3000CV2_06');
 assert.strictEqual(bai6.grading.rules.find(r => r.id === 'enable')?.expected, 'on', 'Bai 6 must require Enable = on');
+assert.strictEqual(bai6.grading.rules.find(r => r.id === 'int_ip')?.expected, '192.168.100.109', 'Bai 6 must require Device/IP = 192.168.100.109');
+const bai6Guide = context.window.TOOLTIPS_AX3000C['LAB_AX3000CV2_06'];
+assert.ok(bai6Guide.some(step => String(step.text || '').includes('nhập 192.168.100.109')), 'Bai 6 tooltip must instruct entering 192.168.100.109');
 
 const bai7 = lessons.find(l => l.id === 'LAB_AX3000CV2_07');
 assert.strictEqual(bai7.grading.rules.find(r => r.id === 'mesh_enabled')?.expected, 'on', 'Bai 7 must require Enabled = on');

@@ -69,12 +69,12 @@ var bai6 = {
   },
   guidePopups: [
     {
-      "selector": ".MuiTypography-subtitle2:contains(\"Network\")",
+      "selector": ".MuiTypography-subtitle2:contains(\"Network\"), svg[data-testid=\"LanguageOutlinedIcon\"], svg[data-testid=\"LanguageTwoToneIcon\"], svg[data-testid=\"LanguageIcon\"]",
       "text": "Bước 1: Chọn Network",
       "position": "right"
     },
     {
-      "selector": ".MuiTypography-subtitle2:contains(\"Port Forwarding\")",
+      "selector": "li.MuiMenuItem-root:contains(\"Port Forwarding\"), .MuiTypography-root:contains(\"Port Forwarding\"), span:contains(\"Port Forwarding\"), p:contains(\"Port Forwarding\")",
       "text": "Bước 2: Chọn Port Forwarding",
       "position": "right"
     },

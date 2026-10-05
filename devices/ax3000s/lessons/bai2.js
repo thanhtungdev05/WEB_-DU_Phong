@@ -13,7 +13,6 @@ var lessonObj = {
     '<b>Yêu cầu:</b>',
     '- SSID Name: <span class="val">FPT Telecom</span>',
     '- WPA Key: <span class="val">19006600</span>',
-    '- Bandwidth (2.4G): <span class="val">20Mhz</span>'
   ],
   practiceUrl: '/sim_ax3000s/app.html#wlanBasicSetting2g',
   clearFields: [

@@ -272,11 +272,13 @@ const LESSON_TEST_SPECS = [
     id: 'be6500c-bai1',
     name: 'Bài 1: Cấu hình PPPoE',
     correctElements: {
+      'input[name="radio"][value="10"]:checked, input[name="radio"][value="4"]:checked, input[name="radio"][value="6"]:checked': [{ checked: true, value: '10' }],
       'input[name="ipv4Settings.protocol"]': [{ value: 'pppoe' }],
       'input[name="ipv4Settings.pppoe.username"]': [{ value: 'hnfdl-123456-789' }],
       'input[name="ipv4Settings.pppoe.password"]': [{ value: 'd123456' }]
     },
     wrongElements: {
+      'input[name="radio"][value="10"]:checked, input[name="radio"][value="4"]:checked, input[name="radio"][value="6"]:checked': [{ checked: true, value: 'sai_radio' }],
       'input[name="ipv4Settings.protocol"]': [{ value: 'dhcp' }],
       'input[name="ipv4Settings.pppoe.username"]': [{ value: 'sai_user' }],
       'input[name="ipv4Settings.pppoe.password"]': [{ value: 'sai_pwd' }]
@@ -338,7 +340,7 @@ const LESSON_TEST_SPECS = [
     id: 'be6500c-bai5',
     name: 'Bài 5: Cấu hình mạng LAN',
     correctElements: {
-      'input[name="ipv4Settings.ipAddress"]': [{ value: '192.168.1.1' }],
+      'input[name="ipv4Settings.ipAddress"]': [{ value: '192.168.10.1' }],
       'input[name="ipv4Settings.mask"]': [{ value: '255.255.255.0' }]
     },
     wrongElements: {

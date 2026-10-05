@@ -5,8 +5,9 @@
 
 window.DEVICE_BE15000 = {
   id: 'be15000',
-  name: 'AP BE1500',
-  shortName: 'BE1500',
+  name: 'AP BE15000',
+  shortName: 'BE15000',
+  type: 'AP',
   port: 8080,
   folder: 'sim_be15000',
   serverBat: 'chay_server.bat',

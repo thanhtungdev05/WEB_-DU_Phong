@@ -17,6 +17,43 @@
     }
   } catch (e) {}
 
+  // 0. Cache-bust chunk-82690506 de buoc trinh duyet tai dung ban moi co el-input thay vi cache cu
+  try {
+    var origCreateElement = document.createElement;
+    document.createElement = function (tagName) {
+      var el = origCreateElement.apply(this, arguments);
+      if (el && String(tagName).toLowerCase() === 'script') {
+        var origSetAttr = el.setAttribute;
+        el.setAttribute = function (name, val) {
+          if (name === 'src' && typeof val === 'string' && val.indexOf('chunk-82690506') !== -1 && val.indexOf('v=') === -1) {
+            val += (val.indexOf('?') === -1 ? '?' : '&') + 'v=input_v3';
+          }
+          return origSetAttr.call(this, name, val);
+        };
+        try {
+          var desc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+          Object.defineProperty(el, 'src', {
+            get: function () {
+              return (desc && desc.get) ? desc.get.call(this) : this.getAttribute('src');
+            },
+            set: function (val) {
+              if (typeof val === 'string' && val.indexOf('chunk-82690506') !== -1 && val.indexOf('v=') === -1) {
+                val += (val.indexOf('?') === -1 ? '?' : '&') + 'v=input_v3';
+              }
+              if (desc && desc.set) {
+                desc.set.call(this, val);
+              } else {
+                origSetAttr.call(this, 'src', val);
+              }
+            },
+            configurable: true
+          });
+        } catch (e) {}
+      }
+      return el;
+    };
+  } catch (e) {}
+
   var TIEN_TO = 'ftc_luu:';
 
   function routeHienTai() {
@@ -200,6 +237,183 @@
       }
     } catch (e) {}
   }
-  setInterval(trietTieuLoadingTre, 50);
-  document.addEventListener('DOMContentLoaded', trietTieuLoadingTre);
+  // 5. Port Forwarding: Dam bao cot Device/IP luon cho phep nhap tay (192.168.100.109),
+  // xoa placeholder 'select', va dong bo hai chieu truc tiep voi model Vue cua dong
+  function dongBoDeviceIp() {
+    try {
+      var cells = [];
+      var directCells = document.querySelectorAll('td[data-ftc-cot="Device/IP"]');
+      directCells.forEach(function (c) { cells.push(c); });
+
+      var tables = document.querySelectorAll('.el-table');
+      tables.forEach(function (table) {
+        var headerCells = table.querySelectorAll('.el-table__header th');
+        var ipColIdx = -1;
+        headerCells.forEach(function (th, idx) {
+          if ((th.textContent || '').indexOf('Device/IP') !== -1) ipColIdx = idx;
+        });
+        if (ipColIdx !== -1) {
+          var bodyRows = table.querySelectorAll('.el-table__body tr');
+          bodyRows.forEach(function (tr) {
+            var colTd = tr.children[ipColIdx];
+            if (colTd && cells.indexOf(colTd) === -1) cells.push(colTd);
+          });
+        }
+      });
+
+      cells.forEach(function (td) {
+        var input = td.querySelector('input');
+        if (!input) return;
+
+        // Xoa placeholder 'select' neu con ton tai tu component cu
+        if (input.placeholder === 'select') {
+          input.placeholder = '';
+        }
+
+        // An mui ten dropdown
+        var suf = td.querySelector('.el-input__suffix');
+        if (suf && suf.style.display !== 'none') {
+          suf.style.display = 'none';
+        }
+
+        var tr = td.closest('tr');
+        var table = td.closest('.el-table');
+
+        function layRow() {
+          if (tr && tr.__vue__ && tr.__vue__.row) return tr.__vue__.row;
+          if (table && table.__vue__ && Array.isArray(table.__vue__.data)) {
+            var allTrs = Array.prototype.slice.call(table.querySelectorAll('.el-table__body tr'));
+            var idx = allTrs.indexOf(tr);
+            if (idx !== -1 && table.__vue__.data[idx]) return table.__vue__.data[idx];
+          }
+          return null;
+        }
+
+        function capNhatVue(val) {
+          val = String(val || '').trim();
+          var r = layRow();
+          if (r) r.dest_ip = val;
+          if (table && table.__vue__ && table.__vue__.$parent && Array.isArray(table.__vue__.$parent.redirect)) {
+            var allTrs = Array.prototype.slice.call(table.querySelectorAll('.el-table__body tr'));
+            var rIdx = allTrs.indexOf(tr);
+            if (rIdx !== -1 && table.__vue__.$parent.redirect[rIdx]) {
+              table.__vue__.$parent.redirect[rIdx].dest_ip = val;
+            }
+          }
+        }
+
+        // Neu con ton tai component el-select (do trinh duyet con cache)
+        var selectEl = td.querySelector('.el-select');
+        var selectVm = selectEl ? selectEl.__vue__ : null;
+        if (selectVm && !selectVm._ftcPatched) {
+          selectVm._ftcPatched = true;
+          // Ghi de resetInputVal cua Element UI de khong bi reset ve rong tren blur
+          var gocReset = selectVm.resetInputVal;
+          selectVm.resetInputVal = function () {
+            var r = layRow();
+            var val = (input && input.value) || (r && r.dest_ip) || selectVm.value || selectVm.selectedLabel || '';
+            val = String(val || '').trim();
+            if (val) {
+              selectVm.selectedLabel = val;
+              selectVm.query = val;
+              selectVm.value = val;
+              if (selectVm.input) selectVm.input.value = val;
+              if (input) input.value = val;
+              capNhatVue(val);
+            } else if (gocReset) {
+              gocReset.apply(this, arguments);
+            }
+          };
+          selectVm.handleBlur = function () {
+            var self = this;
+            setTimeout(function () {
+              var r = layRow();
+              var val = (input && input.value) || (r && r.dest_ip) || self.value || self.selectedLabel || '';
+              val = String(val || '').trim();
+              if (val) {
+                self.selectedLabel = val;
+                self.query = val;
+                self.value = val;
+                if (self.input) self.input.value = val;
+                if (input) input.value = val;
+                capNhatVue(val);
+              }
+            }, 60);
+          };
+        }
+
+        if (!input._ftcSyncIp) {
+          input._ftcSyncIp = true;
+          var onType = function () {
+            var val = (input.value || '').trim();
+            input._ftcLastVal = val;
+            if (selectVm) {
+              selectVm.selectedLabel = val;
+              selectVm.query = val;
+              selectVm.value = val;
+              selectVm.$emit('input', val);
+              selectVm.$emit('change', val);
+            }
+            capNhatVue(val);
+          };
+          input.addEventListener('input', onType, true);
+          input.addEventListener('change', onType, true);
+          input.addEventListener('keyup', onType, true);
+          input.addEventListener('blur', function () {
+            var r = layRow();
+            var val = (input.value || (r && r.dest_ip) || (selectVm && selectVm.value) || input._ftcLastVal || '').trim();
+            if (val) {
+              input.value = val;
+              input._ftcLastVal = val;
+              if (selectVm) {
+                selectVm.selectedLabel = val;
+                selectVm.query = val;
+                selectVm.value = val;
+                selectVm.$emit('input', val);
+              }
+              capNhatVue(val);
+            }
+            setTimeout(function () {
+              var r2 = layRow();
+              var val2 = (input.value || (r2 && r2.dest_ip) || (selectVm && selectVm.value) || input._ftcLastVal || val || '').trim();
+              if (val2) {
+                input.value = val2;
+                input._ftcLastVal = val2;
+                if (selectVm) {
+                  selectVm.selectedLabel = val2;
+                  selectVm.query = val2;
+                  selectVm.value = val2;
+                  selectVm.$emit('input', val2);
+                }
+                capNhatVue(val2);
+              }
+            }, 70);
+          }, true);
+        }
+
+        var cur = layRow();
+        if (cur && cur.dest_ip && !input.value) {
+          input.value = cur.dest_ip;
+        } else if (input.value && cur && !cur.dest_ip) {
+          cur.dest_ip = input.value.trim();
+        } else if (input._ftcLastVal && !input.value) {
+          input.value = input._ftcLastVal;
+          if (cur) cur.dest_ip = input._ftcLastVal;
+        }
+      });
+
+      // An triet de popover dropdown cua el-select neu chua Admin-PC / MAC cu
+      document.querySelectorAll('.el-select-dropdown').forEach(function (drop) {
+        var txt = drop.textContent || '';
+        if (txt.indexOf('Admin-PC') !== -1 || txt.indexOf('d8:43:ae') !== -1) {
+          drop.style.setProperty('display', 'none', 'important');
+          drop.style.setProperty('visibility', 'hidden', 'important');
+          drop.style.setProperty('opacity', '0', 'important');
+          drop.style.setProperty('pointer-events', 'none', 'important');
+        }
+      });
+    } catch (e) {}
+  }
+  setInterval(dongBoDeviceIp, 50);
+  document.addEventListener('DOMContentLoaded', dongBoDeviceIp);
 })();

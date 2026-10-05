@@ -67,15 +67,26 @@ THAY_JS = {
     "js__chunk-2d0c8817.9b4ab5b7.1726822665278.js": [  # Wi-Fi Advanced
         (b'attrs:{"element-loading-text":H.$t("Currently in agent mode, can not configure wifi parameters")}', b'attrs:{"element-loading-text":""}'),
     ],
-    "js__app.9b4ab5b7.1726822665278.js": [  # Reboot
+    "js__chunk-82690506.9b4ab5b7.1726822665278.js": [  # Port Forwarding: Device/IP nhap tay thay vi dropdown
+        (
+            b'attrs:{prop:"dest_ip",label:"Device/IP"},scopedSlots:e._u([{key:"default",fn:function(t){return[r("el-select",{staticStyle:{width:"100%"},attrs:{filterable:"","allow-create":"",placeholder:"select"},model:{value:t.row.dest_ip,callback:function(r){e.$set(t.row,"dest_ip",r)},expression:"scope.row.dest_ip"}},e._l(e.leasesIPs,function(e){return r("el-option",{key:e[0],attrs:{label:e[1],value:e[0]}})}),1)]}}])',
+            b'attrs:{prop:"dest_ip",label:"Device/IP"},scopedSlots:e._u([{key:"default",fn:function(t){return[r("el-input",{on:{input:e.forceUpdate},model:{value:t.row.dest_ip,callback:function(r){e.$set(t.row,"dest_ip",r)},expression:"scope.row.dest_ip"}})]}}])',
+        ),
+    ],
+    "js__app.9b4ab5b7.1726822665278.js": [  # Reboot & Cache-bust
         (b"window.setTimeout(o,5e3)}", b"window.setTimeout(o,200)}"),
         (b"window.setTimeout(o,2e3)}", b"window.setTimeout(o,200)}"),
         (b'void 0===t&&(t="/"),void 0===n&&(n=160);', b"void 0===t&&(t=location.pathname),void 0===n&&(n=1);"),
+        (
+            b'function s(e){return c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
+            b'function s(e){return"chunk-82690506"===e?c.p+"js/"+e+".9b4ab5b7.1726822665278.js?v=v3":c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
+        ),
     ],
 }
 
 TEP_FTC_JS = os.path.join(_HERE, "ftc", "ftc-ax3000c.js")
-THE_CHEN = b"<script src=/ftc-ax3000c.js></script>"
+THE_CHEN = b"<script src=/ftc-ax3000c.js?v=v3></script>"
+
 
 # main() cua ban goc khong chay khi nap qua run_all.py -> dong bo khung tu uci mot lan o day
 _goc._dong_bo_khung_tu_uci()
@@ -246,7 +257,7 @@ class Handler(_goc.H):
                 200,
                 js,
                 "text/javascript",
-                cache_control="public, max-age=3600, stale-while-revalidate=86400",
+                cache_control="no-cache, no-store, must-revalidate",
             )
         if ten.endswith(".js") and not self._dang_sap():
             p_tep = os.path.join(_goc.GOC_WWW, ten)

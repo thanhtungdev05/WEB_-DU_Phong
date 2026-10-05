@@ -224,7 +224,7 @@ assert.equal(
 const ax3000cPortForward = getLesson('ax3000c', 'LAB_AX3000CV2_06');
 assert.equal(expectedRuleValue(ax3000cPortForward, 'enable'), 'on');
 assert.equal(expectedRuleValue(ax3000cPortForward, 'protocol'), 'TCP+UDP');
-assert.deepEqual(Array.from(expectedRuleValue(ax3000cPortForward, 'int_ip')), ['Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45)', '192.168.100.109']);
+assert.equal(expectedRuleValue(ax3000cPortForward, 'int_ip'), '192.168.100.109');
 
 const ax3000gzPppoe = getLesson('ax3000gz', 'LAB_AX3000GZ_01');
 assert.equal(expectedRuleValue(ax3000gzPppoe, 'pppoe_user'), 'sgfdl-123456-789');

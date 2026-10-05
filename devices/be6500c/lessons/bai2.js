@@ -48,14 +48,14 @@ var bai2 = {
   },
   guidePopups: [
     {
-      "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\")",
+      "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\"), svg[data-testid=\"WifiOutlinedIcon\"]",
       "text": "Bước 1: Chọn menu Wi-Fi",
       "position": "right"
     },
     {
-      "selector": "input[name=\"useSeparateNetwork\"]",
-      "text": "Bước 2: Tắt nút 'Use separate network' để kích hoạt gộp sóng (Band Steering)",
-      "position": "top"
+      "selector": "li.MuiMenuItem-root:contains(\"General\"), .MuiTypography-root:contains(\"General\"), span:contains(\"General\"), .MuiBreadcrumbs-li:contains(\"General\")",
+      "text": "Bước 2: Chọn General",
+      "position": "right"
     },
     {
       "selector": "input[name=\"networks.1.name\"]",
@@ -68,7 +68,7 @@ var bai2 = {
       "position": "right"
     },
     {
-      "selector": "button:contains(\"Save\")",
+      "selector": "button:contains(\"Save\"), button.alternative-layout--submit, .formActionButton.submit",
       "text": "Bước 5: Nhấp chọn Save để lưu cấu hình",
       "position": "bottom"
     }

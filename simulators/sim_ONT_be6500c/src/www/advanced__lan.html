@@ -31,8 +31,47 @@
       });
     }
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hookSave);
-  else hookSave();
+
+  function wireDhcpAutoSync() {
+    function xuLyDoiIp(target) {
+      if (!target || !target.matches || !target.matches('input[name="ipv4Settings.ipAddress"]')) return;
+      var doc = target.ownerDocument || document;
+      var startInput = doc.querySelector('input[name="ipv4Settings.dhcp.startAddress"]');
+      var endInput = doc.querySelector('input[name="ipv4Settings.dhcp.endAddress"]');
+      if (!startInput || !endInput) return;
+
+      var val = (target.value || '').trim();
+      var m = val.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d{1,3})$/);
+      if (m) {
+        var prefix = m[1];
+        var newStart = prefix + '.2';
+        var newEnd = prefix + '.254';
+        if (startInput.value !== newStart) {
+          startInput.value = newStart;
+          startInput.setAttribute('value', newStart);
+          startInput.dispatchEvent(new Event('input', { bubbles: true }));
+          startInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        if (endInput.value !== newEnd) {
+          endInput.value = newEnd;
+          endInput.setAttribute('value', newEnd);
+          endInput.dispatchEvent(new Event('input', { bubbles: true }));
+          endInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }
+
+    document.addEventListener('input', function(e) { xuLyDoiIp(e.target); }, true);
+    document.addEventListener('change', function(e) { xuLyDoiIp(e.target); }, true);
+  }
+
+  function init() {
+    hookSave();
+    wireDhcpAutoSync();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
   setInterval(hookSave, 400);
 })();
 </script>

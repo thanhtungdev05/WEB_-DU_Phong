@@ -18,10 +18,15 @@ window.DEVICE_AX3000C_LESSONS.push({
     '- Enable: <span class="val">Bật</span>',
     '- Protocol: <span class="val">TCP+UDP</span>',
     '- External Port: <span class="val">8080</span>',
-    '- Device/IP: <span class="val">Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45)</span>',
+    '- Device/IP: <span class="val">192.168.100.109</span>',
     '- Internal Port: <span class="val">80</span>'
   ],
   practiceUrl: '/sim_ax3000c/#/network/portfwd',
+  onSimLoad: function (simWin) {
+    if (window.FTC_AX3000C && typeof window.FTC_AX3000C.xuLyPortfwdDeviceIp === 'function') {
+      window.FTC_AX3000C.xuLyPortfwdDeviceIp(simWin);
+    }
+  },
   grading: {
     description: 'Kiểm tra Port Forwarding Rules trên AX3000CV2',
     rules: [
@@ -57,15 +62,8 @@ window.DEVICE_AX3000C_LESSONS.push({
         id: 'int_ip',
         name: 'Internal IP (Device/IP)',
         selector: FTC_AX3000C.cot('Device/IP'),
-        // Đã đo: chọn Admin-PC thì ô chứa nguyên dòng này (trước và sau Apply), gửi dest_ip 192.168.100.109.
-        // Anh Huynn chốt: gõ tay 192.168.100.109 cũng chấm ĐÚNG -> chấp nhận cả hai.
-        expected: ['Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45)', '192.168.100.109'],
-        // any_of: bảng chấm hiện String(expected) (nối bằng dấu phẩy) -> đổi thành chữ dễ đọc
-        valueLabels: {
-          'Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45),192.168.100.109':
-            'Admin-PC (192.168.100.109 / d8:43:ae:2e:65:45) hoặc 192.168.100.109'
-        },
-        type: 'any_of',
+        expected: '192.168.100.109',
+        type: 'text_exact',
         trim: true,
         required: true
       },

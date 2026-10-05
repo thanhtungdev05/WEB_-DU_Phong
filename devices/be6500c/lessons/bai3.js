@@ -47,30 +47,35 @@ var bai3 = {
   },
   guidePopups: [
     {
-      "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\")",
+      "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\"), svg[data-testid=\"WifiOutlinedIcon\"]",
       "text": "Bước 1: Chọn Wi-Fi",
       "position": "right"
     },
     {
+      "selector": "li.MuiMenuItem-root:contains(\"General\"), .MuiTypography-root:contains(\"General\"), span:contains(\"General\"), .MuiBreadcrumbs-li:contains(\"General\")",
+      "text": "Bước 2: Chọn General",
+      "position": "right"
+    },
+    {
       "selector": "button[id=\"SmartHome\"]",
-      "text": "Bước 2: Chuyển sang tab SMARTHOME NETWORK",
+      "text": "Bước 3: Chuyển sang tab SMARTHOME NETWORK",
       "position": "bottom"
     },
     {
       "selector": "#tabpanel-SmartHome input[name=\"networks.0.name\"], input[name=\"networks.0.name\"]",
-      "text": "Bước 3: Nhập tên Wi-Fi cho IoT (VD: FPT IoT)",
+      "text": "Bước 4: Nhập tên Wi-Fi cho IoT (VD: FPT IoT)",
       "position": "right",
       "expected": "FPT IoT"
     },
     {
       "selector": "#tabpanel-SmartHome input[name=\"networks.0.passphrase\"], input[name=\"networks.0.passphrase\"]",
-      "text": "Bước 4: Nhập mật khẩu cho IoT (VD: fpt12345)",
+      "text": "Bước 5: Nhập mật khẩu cho IoT (VD: fpt12345)",
       "position": "right",
       "expected": "fpt12345"
     },
     {
-      "selector": "button:contains(\"Save\")",
-      "text": "Bước 5: Chọn Save để lưu cấu hình",
+      "selector": "button:contains(\"Save\"), button.alternative-layout--submit, .formActionButton.submit",
+      "text": "Bước 6: Chọn Save để lưu cấu hình",
       "position": "bottom"
     }
   ]
