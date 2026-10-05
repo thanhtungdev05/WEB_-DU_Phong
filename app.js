@@ -848,40 +848,82 @@
                               // Bài 2: Wi-Fi 2.4G & 5G
                               const ssidEl = doc.querySelector('#ssid_network_name, input[name="ssid_network_name"]');
                               const keyEl = doc.querySelector('#security_wpa_key, input[name="security_wpa_key"]');
+                              const sListEl = doc.querySelector('#ssid_list, select[name="ssid_list"]');
+                              const modeEl = doc.querySelector('#select_security_mode, select[name="select_security_mode"], #security_mode, select[name="security_mode"]');
 
                               if (pPath.includes('wifi5ssid') && ssidEl) {
                                 const sVal = (ssidEl.value || '').trim();
                                 window._sessionRuleCache['wifi5_ssid'] = {
                                   actualValue: sVal,
                                   isSaved: true,
-                                  isMatch: (sVal === 'FPT Telecom' || sVal === 'FPT Telecom_5G' || sVal === 'FTP Telecom')
+                                  isMatch: (sVal === 'FPT Telecom')
                                 };
                                 if (_trackingSession) _trackingSession.ruleCache['wifi5_ssid'] = window._sessionRuleCache['wifi5_ssid'];
+
+                                const oos5 = {
+                                  ssid_idx: (sListEl && sListEl.value && sListEl.value !== '0' && sListEl.value !== 'SSID 1') ? String(sListEl.value).trim() : null,
+                                  isSaved: true
+                                };
+                                window._sessionRuleCache['wifi5_out_of_scope'] = oos5;
+                                if (_trackingSession) _trackingSession.ruleCache['wifi5_out_of_scope'] = oos5;
                               } else if (pPath.includes('wifissid') && ssidEl) {
                                 const sVal = (ssidEl.value || '').trim();
                                 window._sessionRuleCache['wifi24_ssid'] = {
                                   actualValue: sVal,
                                   isSaved: true,
-                                  isMatch: (sVal === 'FPT Telecom' || sVal === 'FTP Telecom')
+                                  isMatch: (sVal === 'FPT Telecom')
                                 };
                                 if (_trackingSession) _trackingSession.ruleCache['wifi24_ssid'] = window._sessionRuleCache['wifi24_ssid'];
+
+                                const oos24 = {
+                                  ssid_idx: (sListEl && sListEl.value && sListEl.value !== '0' && sListEl.value !== 'SSID 1') ? String(sListEl.value).trim() : null,
+                                  isSaved: true
+                                };
+                                window._sessionRuleCache['wifi24_out_of_scope'] = oos24;
+                                if (_trackingSession) _trackingSession.ruleCache['wifi24_out_of_scope'] = oos24;
                               }
 
-                              if (pPath.includes('wifi5secu') && keyEl) {
-                                const kVal = (keyEl.value || '').trim();
+                              if (pPath.includes('wifi5secu')) {
+                                const modeVal = modeEl ? (modeEl.value || '').trim() : '';
+                                const modeText = modeEl && modeEl.options && modeEl.selectedIndex >= 0 ? modeEl.options[modeEl.selectedIndex].text : modeVal;
+                                const isUnsafe = (modeVal === '4' || modeVal === '5' || /open|wep/i.test(modeText));
+                                const sec5 = {
+                                  modeVal: modeVal,
+                                  modeText: modeText,
+                                  isUnsafe: isUnsafe,
+                                  isSaved: true
+                                };
+                                window._sessionRuleCache['wifi5_sec_mode'] = sec5;
+                                if (_trackingSession) _trackingSession.ruleCache['wifi5_sec_mode'] = sec5;
+
+                                const kVal = keyEl ? (keyEl.value || '').trim() : '';
+                                const finalKeyVal = isUnsafe ? '' : kVal;
                                 window._sessionRuleCache['wifi5_key'] = {
-                                  actualValue: kVal,
+                                  actualValue: finalKeyVal,
                                   isSaved: true,
-                                  isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                                  isMatch: (!isUnsafe && finalKeyVal === '19006600')
                                 };
                                 if (_trackingSession) _trackingSession.ruleCache['wifi5_key'] = window._sessionRuleCache['wifi5_key'];
                                 window._ftcAc1000cv2FinalApplyClicked = true;
-                              } else if (pPath.includes('wifisecu') && keyEl) {
-                                const kVal = (keyEl.value || '').trim();
+                              } else if (pPath.includes('wifisecu')) {
+                                const modeVal = modeEl ? (modeEl.value || '').trim() : '';
+                                const modeText = modeEl && modeEl.options && modeEl.selectedIndex >= 0 ? modeEl.options[modeEl.selectedIndex].text : modeVal;
+                                const isUnsafe = (modeVal === '4' || modeVal === '5' || /open|wep/i.test(modeText));
+                                const sec24 = {
+                                  modeVal: modeVal,
+                                  modeText: modeText,
+                                  isUnsafe: isUnsafe,
+                                  isSaved: true
+                                };
+                                window._sessionRuleCache['wifi24_sec_mode'] = sec24;
+                                if (_trackingSession) _trackingSession.ruleCache['wifi24_sec_mode'] = sec24;
+
+                                const kVal = keyEl ? (keyEl.value || '').trim() : '';
+                                const finalKeyVal = isUnsafe ? '' : kVal;
                                 window._sessionRuleCache['wifi24_key'] = {
-                                  actualValue: kVal,
+                                  actualValue: finalKeyVal,
                                   isSaved: true,
-                                  isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                                  isMatch: (!isUnsafe && finalKeyVal === '19006600')
                                 };
                                 if (_trackingSession) _trackingSession.ruleCache['wifi24_key'] = window._sessionRuleCache['wifi24_key'];
                               }
@@ -1108,40 +1150,82 @@
                       // Bài 2: Wi-Fi 2.4G & 5G
                       const ssidEl = doc.querySelector('#ssid_network_name, input[name="ssid_network_name"]');
                       const keyEl = doc.querySelector('#security_wpa_key, input[name="security_wpa_key"]');
+                      const sListEl = doc.querySelector('#ssid_list, select[name="ssid_list"]');
+                      const modeEl = doc.querySelector('#select_security_mode, select[name="select_security_mode"], #security_mode, select[name="security_mode"]');
 
                       if (pPath.includes('wifi5ssid') && ssidEl) {
                         const sVal = (ssidEl.value || '').trim();
                         window._sessionRuleCache['wifi5_ssid'] = {
                           actualValue: sVal,
                           isSaved: true,
-                          isMatch: (sVal === 'FPT Telecom' || sVal === 'FPT Telecom_5G' || sVal === 'FTP Telecom')
+                          isMatch: (sVal === 'FPT Telecom')
                         };
                         if (_trackingSession) _trackingSession.ruleCache['wifi5_ssid'] = window._sessionRuleCache['wifi5_ssid'];
+
+                        const oos5 = {
+                          ssid_idx: (sListEl && sListEl.value && sListEl.value !== '0' && sListEl.value !== 'SSID 1') ? String(sListEl.value).trim() : null,
+                          isSaved: true
+                        };
+                        window._sessionRuleCache['wifi5_out_of_scope'] = oos5;
+                        if (_trackingSession) _trackingSession.ruleCache['wifi5_out_of_scope'] = oos5;
                       } else if (pPath.includes('wifissid') && ssidEl) {
                         const sVal = (ssidEl.value || '').trim();
                         window._sessionRuleCache['wifi24_ssid'] = {
                           actualValue: sVal,
                           isSaved: true,
-                          isMatch: (sVal === 'FPT Telecom' || sVal === 'FTP Telecom')
+                          isMatch: (sVal === 'FPT Telecom')
                         };
                         if (_trackingSession) _trackingSession.ruleCache['wifi24_ssid'] = window._sessionRuleCache['wifi24_ssid'];
+
+                        const oos24 = {
+                          ssid_idx: (sListEl && sListEl.value && sListEl.value !== '0' && sListEl.value !== 'SSID 1') ? String(sListEl.value).trim() : null,
+                          isSaved: true
+                        };
+                        window._sessionRuleCache['wifi24_out_of_scope'] = oos24;
+                        if (_trackingSession) _trackingSession.ruleCache['wifi24_out_of_scope'] = oos24;
                       }
 
-                      if (pPath.includes('wifi5secu') && keyEl) {
-                        const kVal = (keyEl.value || '').trim();
+                      if (pPath.includes('wifi5secu')) {
+                        const modeVal = modeEl ? (modeEl.value || '').trim() : '';
+                        const modeText = modeEl && modeEl.options && modeEl.selectedIndex >= 0 ? modeEl.options[modeEl.selectedIndex].text : modeVal;
+                        const isUnsafe = (modeVal === '4' || modeVal === '5' || /open|wep/i.test(modeText));
+                        const sec5 = {
+                          modeVal: modeVal,
+                          modeText: modeText,
+                          isUnsafe: isUnsafe,
+                          isSaved: true
+                        };
+                        window._sessionRuleCache['wifi5_sec_mode'] = sec5;
+                        if (_trackingSession) _trackingSession.ruleCache['wifi5_sec_mode'] = sec5;
+
+                        const kVal = keyEl ? (keyEl.value || '').trim() : '';
+                        const finalKeyVal = isUnsafe ? '' : kVal;
                         window._sessionRuleCache['wifi5_key'] = {
-                          actualValue: kVal,
+                          actualValue: finalKeyVal,
                           isSaved: true,
-                          isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                          isMatch: (!isUnsafe && finalKeyVal === '19006600')
                         };
                         if (_trackingSession) _trackingSession.ruleCache['wifi5_key'] = window._sessionRuleCache['wifi5_key'];
                         window._ftcAc1000cv2FinalApplyClicked = true;
-                      } else if (pPath.includes('wifisecu') && keyEl) {
-                        const kVal = (keyEl.value || '').trim();
+                      } else if (pPath.includes('wifisecu')) {
+                        const modeVal = modeEl ? (modeEl.value || '').trim() : '';
+                        const modeText = modeEl && modeEl.options && modeEl.selectedIndex >= 0 ? modeEl.options[modeEl.selectedIndex].text : modeVal;
+                        const isUnsafe = (modeVal === '4' || modeVal === '5' || /open|wep/i.test(modeText));
+                        const sec24 = {
+                          modeVal: modeVal,
+                          modeText: modeText,
+                          isUnsafe: isUnsafe,
+                          isSaved: true
+                        };
+                        window._sessionRuleCache['wifi24_sec_mode'] = sec24;
+                        if (_trackingSession) _trackingSession.ruleCache['wifi24_sec_mode'] = sec24;
+
+                        const kVal = keyEl ? (keyEl.value || '').trim() : '';
+                        const finalKeyVal = isUnsafe ? '' : kVal;
                         window._sessionRuleCache['wifi24_key'] = {
-                          actualValue: kVal,
+                          actualValue: finalKeyVal,
                           isSaved: true,
-                          isMatch: (kVal === 'fpt12345' || kVal === '19006600')
+                          isMatch: (!isUnsafe && finalKeyVal === '19006600')
                         };
                         if (_trackingSession) _trackingSession.ruleCache['wifi24_key'] = window._sessionRuleCache['wifi24_key'];
                       }
@@ -1610,7 +1694,7 @@
                 // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
                 if (btnGuideErrors) {
                   const isMultiStepIncomplete = Boolean(evalResult && evalResult.daVaoTrangCuoi === false);
-                  const hasMissingSteps = (!trangDangLamSach || !evalResult.passed) && !isMultiStepIncomplete;
+                  const hasMissingSteps = (!trangDangLamSach) || (!evalResult.passed && !isMultiStepIncomplete);
                   if (window._hasClickedSaveInGuide && evalResult && hasMissingSteps) {
                     // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN để trợ giúp học tập
                     btnGuideErrors.style.display = 'flex';
@@ -4406,7 +4490,7 @@
           if (btnGuideErrors) {
             btnGuideErrors.style.display = 'none';
           }
-        } else if (trangDangLamSach || (evalResult && evalResult.daVaoTrangCuoi === false)) {
+        } else if (trangDangLamSach && (evalResult && evalResult.daVaoTrangCuoi === false)) {
           if (btnGuideErrors) btnGuideErrors.style.display = 'none';
           if (btnSubmitLab) {
             btnSubmitLab.disabled = true;

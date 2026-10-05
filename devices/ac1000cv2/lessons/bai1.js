@@ -18,10 +18,24 @@ var lessonObj = {
     'Nhấn <b>Apply</b> để lưu kết nối.'
   ],
   practiceUrl: '/sim_ac1000cv2/wan.html',
+  allowedSelectors: [
+    '#wan_list',
+    'select[name="wan_list"]',
+    '#btn_apply',
+    'input[value="Apply"]',
+    '#apply',
+    '#btn_refresh'
+  ],
   onSimLoad: function (iframeWindow) {
     try {
       if (iframeWindow && iframeWindow.document) {
         const doc = iframeWindow.document;
+        // Chuẩn hóa MTU hiển thị 1500 cho PPPoE nếu chưa có cấu hình tùy chỉnh
+        const mtuEl = doc.querySelector('#mtu, input[name="mtu"]');
+        if (mtuEl && (!mtuEl.value || mtuEl.value === '1500')) {
+          mtuEl.value = '1500';
+        }
+
         if (window._hasClickedSaveInGuide && window._sessionRuleCache) {
           const userEl = doc.querySelector('#ppp_user, input[name="ppp_user"]');
           const passEl = doc.querySelector('#ppp_pass, input[name="ppp_pass"]');
@@ -33,6 +47,16 @@ var lessonObj = {
           }
           doc._ftcIsSaved = true;
         }
+
+        if (!doc._ftcInputResetAttached) {
+          doc._ftcInputResetAttached = true;
+          doc.addEventListener('input', function (e) {
+            var t = e.target;
+            if (t && (t.id === 'ppp_user' || t.name === 'ppp_user' || t.id === 'ppp_pass' || t.name === 'ppp_pass')) {
+              doc._ftcIsSaved = false;
+            }
+          }, true);
+        }
       }
     } catch (e) { }
   },
@@ -42,6 +66,23 @@ var lessonObj = {
     'input[name="ppp_pass"]',
     '#ppp_pass'
   ],
+  customClear: function () {
+    try {
+      var iframe = document.getElementById('device-iframe');
+      if (iframe && iframe.contentWindow) {
+        var doc = iframe.contentWindow.document;
+        var pPath = (doc && doc.location && doc.location.pathname) ? doc.location.pathname.toLowerCase() : '';
+        var cache = window._sessionRuleCache || {};
+
+        if (pPath.indexOf('wan') !== -1 && (!cache['ppp_user'] || !cache['ppp_user'].isSaved)) {
+          var uEl = doc.querySelector('#ppp_user, input[name="ppp_user"]');
+          var pEl = doc.querySelector('#ppp_pass, input[name="ppp_pass"]');
+          if (uEl && (uEl.value === 'fpt' || !cache['ppp_user'])) uEl.value = '';
+          if (pEl && !cache['ppp_pass']) pEl.value = '';
+        }
+      }
+    } catch (e) { }
+  },
   grading: {
     description: 'Kiểm tra cấu hình tài khoản PPPoE WAN & Ràng buộc giao thức WAN',
     rules: [
@@ -57,7 +98,7 @@ var lessonObj = {
       {
         id: 'wan_en',
         name: 'Kích hoạt WAN Connection',
-        selector: '#wan_en1, input[name="wan_en"][value="1"]',
+        selector: '#wan_en0, #wan_en1, input[name="wan_en"][value="1"]',
         expected: '1',
         displayExpected: 'Enable',
         type: 'radio_checked',
@@ -66,7 +107,7 @@ var lessonObj = {
       {
         id: 'nat_en',
         name: 'Kích hoạt NAT',
-        selector: '#nat0, input[name="nat"][value="1"]',
+        selector: '#nat0, #nat_en1, input[name="nat"][value="1"], input[name="nat_en"][value="1"]',
         expected: '1',
         displayExpected: 'Enable',
         type: 'radio_checked',
@@ -76,7 +117,7 @@ var lessonObj = {
         id: 'mtu',
         name: 'TCP MTU',
         selector: '#mtu, input[name="mtu"]',
-        expected: '1492',
+        expected: '1500',
         type: 'text_exact',
         trim: true,
         required: true
@@ -118,8 +159,10 @@ var lessonObj = {
             var uEl = d.querySelector('input[name="ppp_user"], #ppp_user');
             var pEl = d.querySelector('input[name="ppp_pass"], #ppp_pass');
             var ipModeEl = d.querySelector('#ip_mode, select[name="ip_mode"]');
-            var wanEnEl = d.querySelector('#wan_en1, input[name="wan_en"][value="1"]');
+            var wanEnEl = d.querySelector('#wan_en0, input[name="wan_en"][value="1"], #wan_en1');
+            var wanDisEl = d.querySelector('#wan_en1, input[name="wan_en"][value="0"]');
             var natEnEl = d.querySelector('#nat0, #nat_en1, input[name="nat"][value="1"], input[name="nat_en"][value="1"]');
+            var natDisEl = d.querySelector('#nat1, input[name="nat"][value="0"]');
             var mtuEl = d.querySelector('#mtu, input[name="mtu"]');
             var vlanEnEl = d.querySelector('#vlan_en, input[name="vlan_en"]:checked');
             var dnsWrEl = d.querySelector('#dnswr0, input[name="dnswr"][value="1"]');
@@ -142,7 +185,13 @@ var lessonObj = {
             }
 
             // 2. WAN Connection Enable
-            if (wanEnEl && !wanEnEl.checked) {
+            var isWanDisabled = false;
+            if (wanDisEl && wanDisEl.checked && (!wanEnEl || !wanEnEl.checked)) {
+              isWanDisabled = true;
+            } else if (wanEnEl && wanEnEl.checked === false && (!wanDisEl || wanDisEl.checked)) {
+              isWanDisabled = true;
+            }
+            if (isWanDisabled) {
               outOfScopeErrors.push({
                 id: 'err_wan_en',
                 name: 'Thao tác ngoài phạm vi: Trạng thái kết nối WAN',
@@ -154,7 +203,13 @@ var lessonObj = {
             }
 
             // 3. NAT Enable
-            if (natEnEl && !natEnEl.checked) {
+            var isNatDisabled = false;
+            if (natDisEl && natDisEl.checked && (!natEnEl || !natEnEl.checked)) {
+              isNatDisabled = true;
+            } else if (natEnEl && natEnEl.checked === false && (!natDisEl || natDisEl.checked)) {
+              isNatDisabled = true;
+            }
+            if (isNatDisabled) {
               outOfScopeErrors.push({
                 id: 'err_nat_en',
                 name: 'Thao tác ngoài phạm vi: Trạng thái NAT',
@@ -165,16 +220,19 @@ var lessonObj = {
               });
             }
 
-            // 4. TCP MTU (phải giữ 1492)
-            if (mtuEl && mtuEl.value && mtuEl.value.trim() !== '' && mtuEl.value.trim() !== '1492') {
-              outOfScopeErrors.push({
-                id: 'err_mtu',
-                name: 'Thao tác ngoài phạm vi: TCP MTU',
-                expected: '1492',
-                actual: mtuEl.value.trim(),
-                passed: false,
-                message: 'Cố tình thay đổi thông số MTU ngoài yêu cầu bài học'
-              });
+            // 4. TCP MTU (phải giữ 1500 theo mặc định ONT, không được cố ý phá vỡ)
+            if (mtuEl && mtuEl.value && mtuEl.value.trim() !== '') {
+              var curMtu = mtuEl.value.trim();
+              if (curMtu !== '1500') {
+                outOfScopeErrors.push({
+                  id: 'err_mtu',
+                  name: 'Thao tác ngoài phạm vi: TCP MTU',
+                  expected: '1500',
+                  actual: curMtu,
+                  passed: false,
+                  message: 'Cố tình thay đổi thông số MTU ngoài yêu cầu bài học'
+                });
+              }
             }
 
             // 5. VLAN (không được bật VLAN nếu không yêu cầu)

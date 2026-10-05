@@ -21,30 +21,29 @@
     "dhcp_start": "192.168.10.2",
     "dhcp_end": "192.168.10.254",
     "dhcp_lease": "86400",
-    "dns_overwrite": "1",
-    "dns_primary": "8.8.8.8",
-    "dns_secondary": "8.8.4.4"
+    "dns_overwrite": "0",
+    "dns_primary": "",
+    "dns_secondary": ""
   },
   "wifi24": {
     "enable": "1",
-    "ssid": "FPT Telecom",
+    "ssid": "FPT_Telecom_2.4G",
     "channel": "auto",
     "security": "WPA2-PSK",
-    "password": "fpt12345",
-    "hidden": "0",
-    "last_idx": "1"
+    "password": "",
+    "hidden": "0"
   },
   "wifi5": {
     "enable": "1",
-    "ssid": "FPT Telecom",
+    "ssid": "FPT_Telecom_5G",
     "channel": "auto",
     "security": "WPA2-PSK",
-    "password": "fpt12345",
+    "password": "",
     "hidden": "0"
   },
   "dmz": {
-    "enable": "1",
-    "dest_ip": "192.168.1.99"
+    "enable": "0",
+    "dest_ip": "192.168.1.100"
   },
   "ddns": {
     "enable": "0",
@@ -54,12 +53,7 @@
     "hostname": ""
   },
   "portfwd": {
-    "rules": [],
-    "lanip": "192.168.1.254",
-    "lanport": "3389",
-    "wanstart": "3389",
-    "wanend": "3389",
-    "protocol": "1"
+    "rules": []
   },
   "firewall": {
     "enable": "1",
@@ -67,11 +61,12 @@
     "dos_enable": "1"
   },
   "wan": {
-    "ppp_user": "sgfdl-210208-218",
-    "ppp_pass": "fpt12345"
+    "ppp_user": "fpt",
+    "ppp_pass": "08ypih%&*%^#T()#$&E%SUCG6uy$E&"
   },
   "wifi_iot": {
-    "ssid": "FPT Telecom-IoT",
-    "enable": "1"
+    "ssid": "FPT Telecom-C16E-SSID2",
+    "enable": "0",
+    "password": ""
   }
 }

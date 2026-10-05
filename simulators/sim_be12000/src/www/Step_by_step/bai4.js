@@ -18,32 +18,41 @@ document.addEventListener("DOMContentLoaded", function () {
         var clearedFields = {};
         setInterval(function () {
             var selectors = [
-                "#sub_SerIPAddress10", "#sub_SerIPAddress11", "#sub_SerIPAddress12", "#sub_SerIPAddress13",
-                "#sub_SerIPAddress20", "#sub_SerIPAddress21", "#sub_SerIPAddress22", "#sub_SerIPAddress23"
+                "#sub_DNSServer10", "#sub_DNSServer11", "#sub_DNSServer12", "#sub_DNSServer13",
+                "#sub_DNSServer20", "#sub_DNSServer21", "#sub_DNSServer22", "#sub_DNSServer23"
             ];
             selectors.forEach(function (sel) {
                 var el = document.querySelector(sel);
                 if (!el) return;
                 var key = el.id || sel;
-                if (clearedFields[key]) return;                 // ô này đã được xét ở lần xuất hiện đầu tiên
+                if (clearedFields[key]) return;                 // ô này đã được xét và xóa trắng thành công
+
                 if (document.activeElement === el) {            // học viên đang nhập dở -> không đụng tới nữa
                     clearedFields[key] = true;
                     return;
                 }
-                // Xét ĐÚNG MỘT LẦN ngay lần đầu nhìn thấy ô:
-                //  - có dữ liệu mặc định  -> xóa trắng
-                //  - vốn đã rỗng          -> vẫn đánh dấu "đã xử lý"
-                if (el.value !== "") el.value = "";
-                clearedFields[key] = true;
+                // Chỉ xóa và đánh dấu khi router đã đổ dữ liệu mặc định vào (el.value !== "")
+                // Không đánh dấu khi ô còn đang rỗng ("") để tránh race condition trước khi AJAX nạp dữ liệu xong
+                if (el.value !== "") {
+                    el.value = "";
+                    clearedFields[key] = true;
+                }
             });
-        }, 200);
+        }, 100);
+
+        // Reset bộ cờ xóa khi học viên chuyển tab/menu để khi form tải lại vẫn được xóa trắng
+        document.addEventListener('click', function (e) {
+            if (e.target && (e.target.id === 'lanMgrIpv4' || e.target.id === 'DHCPBasicCfgBar' || (e.target.closest && e.target.closest('#DHCPBasicCfgBar')) || e.target.id === 'lanConfig' || e.target.id === 'localnet')) {
+                clearedFields = {};
+            }
+        });
 
         // ====================================================================
         // PHẦN 1: KIỂM TRA ĐIỀU KIỆN (VALIDATION) KHI NHẤN APPLY
         // ====================================================================
         document.addEventListener('click', function (e) {
-            if (e.target && (e.target.id === 'Btn_apply_LocalDnsServer' || (e.target.id && e.target.id.startsWith('Btn_apply_LocalDnsServer')))) {
-                var container = e.target.closest("div[id^='template_LocalDnsServer']") || document.querySelector("#template_LocalDnsServer") || e.target.closest(".HeadDIV");
+            if (e.target && (e.target.id === 'Btn_apply_DHCPBasicCfg' || (e.target.id && e.target.id.startsWith('Btn_apply_DHCPBasicCfg')))) {
+                var container = e.target.closest("div[id^='template_DHCPBasicCfg']") || document.querySelector("#template_DHCPBasicCfg") || e.target.closest(".HeadDIV");
                 var errors = [];
 
                 var getIP = function (prefix) {
@@ -55,18 +64,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     return ipParts.join(".");
                 };
 
-                var dns1 = getIP("sub_SerIPAddress1");
-                var dns2 = getIP("sub_SerIPAddress2");
+                var dns1 = getIP("sub_DNSServer1");
+                var dns2 = getIP("sub_DNSServer2");
 
                 var validDns1 = ["210.245.31.220", "210.245.31.221", "8.8.8.8", "1.1.1.1"];
                 var validDns2 = ["8.8.8.8", "8.8.4.4", "210.245.31.221", "210.245.31.220", "1.1.1.1"];
 
                 if (validDns1.indexOf(dns1) === -1) {
-                    errors.push("- Hàng 'IPv4 DNS Server1' (4 octet): Khuyến nghị giá trị đúng là '210.245.31.220' (hoặc '8.8.8.8'). Thực tế: '" + (dns1 || 'Trống') + "'");
+                    errors.push("- Hàng 'Primary DNS' (4 octet): Khuyến nghị giá trị đúng là '210.245.31.220' (hoặc '8.8.8.8'). Thực tế: '" + (dns1 || 'Trống') + "'");
                 }
 
                 if (validDns2.indexOf(dns2) === -1) {
-                    errors.push("- Hàng 'IPv4 DNS Server2' (4 octet): Khuyến nghị giá trị đúng là '8.8.8.8' (hoặc '8.8.4.4'). Thực tế: '" + (dns2 || 'Trống') + "'");
+                    errors.push("- Hàng 'Secondary DNS' (4 octet): Khuyến nghị giá trị đúng là '8.8.8.8' (hoặc '8.8.4.4'). Thực tế: '" + (dns2 || 'Trống') + "'");
                 }
 
                 if (errors.length > 0) {
@@ -206,11 +215,12 @@ document.addEventListener("DOMContentLoaded", function () {
             // Define steps
             var steps = [
                 { selector: "#localnet", text: "Chọn Local Network", placement: "bottom", done: false },
-                { selector: "#dns", text: "Chọn DNS", placement: "right", done: false },
-                { selector: "#LocalDnsServerBar", text: "Mở mục DNS", placement: "top", done: false },
-                { selector: "#sub_SerIPAddress13", text: "Bước 1: Nhập IPv4 DNS Server 1: 210.245.31.220", placement: "right", done: false },
-                { selector: "#sub_SerIPAddress23", text: "Bước 2: Nhập IPv4 DNS Server 2: 8.8.8.8", placement: "right", done: false },
-                { selector: "#Btn_apply_LocalDnsServer", text: "Bước 3: Nhấn Apply để lưu cấu hình DNS", placement: "top", done: false }
+                { selector: "#lanConfig", text: "Chọn LAN", placement: "bottom", done: false },
+                { selector: "#lanMgrIpv4", text: "Chọn IPv4", placement: "bottom", done: false },
+                { selector: "#DHCPBasicCfgBar", text: "Chọn DHCP Server", placement: "top", offsetX: 120, done: false },
+                { selector: "#sub_DNSServer13", text: "Bước 1: Nhập Primary DNS: 210.245.31.220", placement: "right", done: false },
+                { selector: "#sub_DNSServer23", text: "Bước 2: Nhập Secondary DNS: 8.8.8.8", placement: "right", done: false },
+                { selector: "#Btn_apply_DHCPBasicCfg", text: "Bước 3: Nhấn Apply để lưu cấu hình DNS", placement: "top", done: false }
             ];
 
             // Function to create and update tooltip

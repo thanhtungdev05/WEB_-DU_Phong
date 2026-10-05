@@ -46,8 +46,26 @@ window.TOOLTIPS_BE12000['LAB_BE12000_05'] = [
     }
   },
   {
+    selector: '[id="sub_MinAddress3:DHCPBasicCfg"]:not(:disabled), input[name="sub_MinAddress3:DHCPBasicCfg"]:not(:disabled)',
+    text: 'Bước 7: Đổi DHCP Start IP Address: Nhập 10 vào ô thứ 3 (để thành 192.168.10.2)',
+    position: 'right',
+    condition: function(doc) {
+      const el = doc.querySelector('[id="sub_MinAddress2:DHCPBasicCfg"]');
+      return !el || el.value.trim() !== '10';
+    }
+  },
+  {
+    selector: '[id="sub_MaxAddress3:DHCPBasicCfg"]:not(:disabled), input[name="sub_MaxAddress3:DHCPBasicCfg"]:not(:disabled)',
+    text: 'Bước 8: Đổi DHCP End IP Address: Nhập 10 vào ô thứ 3 (để thành 192.168.10.254)',
+    position: 'right',
+    condition: function(doc) {
+      const el = doc.querySelector('[id="sub_MaxAddress2:DHCPBasicCfg"]');
+      return !el || el.value.trim() !== '10';
+    }
+  },
+  {
     selector: '#Btn_apply_DHCPBasicCfg:not(.disableBtn), [id="Btn_apply_DHCPBasicCfg"]:not(.disableBtn)',
-    text: 'Bước 7: Nhấn Apply để lưu cấu hình DHCP',
+    text: 'Bước 9: Nhấn Apply để lưu cấu hình DHCP',
     position: 'top'
   }
 ];
