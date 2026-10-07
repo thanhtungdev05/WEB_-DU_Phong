@@ -660,7 +660,7 @@
                         btnVal.includes('submit') || 
                         btnVal.includes('lưu') || 
                         ((currentDeviceId === 'vigor2927') && (btnVal === 'ok' || el.name === 'submit')) ||
-                        ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06' || currentLessonId === 'ac1000cv2-bai6' || currentLessonId === 'LAB_AC1000CV2_06') && (btnVal === 'add' || el.name === 'AddBtn' || el.name === 'Add1')) ||
+                        ((currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'be6500c-bai5' || currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06' || currentLessonId === 'ac1000cv2-bai6' || currentLessonId === 'LAB_AC1000CV2_06') && (btnVal === 'add' || el.name === 'AddBtn' || el.name === 'Add1')) ||
                         (el.type === 'submit' && el.tagName === 'INPUT');
                       if (isSaveOrApply) {
                         doc._ftcLastSaveInteraction = Date.now();
@@ -706,7 +706,7 @@
                     })();
                     if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || laNutLuuMikrotik || laNutLuuAc1000cv2) {
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
-                      const isOntBai6 = (currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6');
+                      const isOntBai6 = (currentLessonId === 'ONT_be6500c-bai6' || currentLessonId === 'be6500c-bai6' || currentLessonId === 'be6500c-bai5');
                       const isPortFwdAdd = (currentLessonId === 'LAB_AC1000F_06' || currentLessonId === 'LAB_AC1000HI_06' || currentLessonId === 'ac1000cv2-bai6' || currentLessonId === 'LAB_AC1000CV2_06');
 
                       // Nút "Add New" trên thanh công cụ dùng để mở modal thêm mới, KHÔNG phải nút lưu cấu hình

@@ -79,13 +79,13 @@ THAY_JS = {
         (b'void 0===t&&(t="/"),void 0===n&&(n=160);', b"void 0===t&&(t=location.pathname),void 0===n&&(n=1);"),
         (
             b'function s(e){return c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
-            b'function s(e){return"chunk-82690506"===e?c.p+"js/"+e+".9b4ab5b7.1726822665278.js?v=v3":c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
+            b'function s(e){return"chunk-82690506"===e?c.p+"js/"+e+".9b4ab5b7.1726822665278.js?v=v21_clean_input":c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
         ),
     ],
 }
 
 TEP_FTC_JS = os.path.join(_HERE, "ftc", "ftc-ax3000c.js")
-THE_CHEN = b"<script src=/ftc-ax3000c.js?v=v3></script>"
+THE_CHEN = b"<script src=/ftc-ax3000c.js?v=v21_clean_input></script>"
 
 
 # main() cua ban goc khong chay khi nap qua run_all.py -> dong bo khung tu uci mot lan o day
@@ -239,7 +239,7 @@ class Handler(_goc.H):
                     200,
                     f.read(),
                     "text/javascript",
-                    cache_control="public, max-age=300, stale-while-revalidate=86400",
+                    cache_control="no-cache, no-store, must-revalidate",
                 )
         if p in ("", "/") and not self._dang_sap():
             with open(os.path.join(_goc.GOC_WWW, "__ROOT__index.html"), "rb") as f:

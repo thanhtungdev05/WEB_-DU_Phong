@@ -4,28 +4,16 @@
 window.DEVICE_ONT_BE6500C_LESSONS = window.DEVICE_ONT_BE6500C_LESSONS || [];
 window.DEVICE_ONT_BE6500C_LESSONS.push({
   id: 'ONT_be6500c-bai5',
-  title: 'Cấu hình mạng LAN',
-  subtitle: 'Cấu hình mạng LAN',
+  title: 'Cấu hình DHCP',
+  subtitle: 'Cấu hình DHCP',
   instructions: [
     "<b>Yêu cầu:</b>",
     "Thực hiện cấu hình IPv4 LAN theo các thông số dưới đây:",
-    "- IP Address (Gateway): <span class=\"val\">192.168.1.1</span>",
-    "- Subnet Mask: <span class=\"val\">255.255.255.0</span>",
-    "- Enable DHCP Server: <span class=\"val\">Bật (Enable)</span>",
-    "- Start IP Address: <span class=\"val\">192.168.1.2</span>",
-    "- End IP Address: <span class=\"val\">192.168.1.254</span>",
-    "- Lease time - Day(s): <span class=\"val\">0</span>",
-    "- Lease time - Hour(s): <span class=\"val\">12</span>"
+    "- IP Address (Gateway): <span class=\"val\">192.168.10.1</span>",
+    "- Subnet Mask: <span class=\"val\">255.255.255.0</span>"
   ],
   practiceUrl: '/sim_ONT_be6500c/advanced__lan.html',
-  clearFields: [
-    'input[name="ipv4Settings.ipAddress"]',
-    '.MuiAutocomplete-input',
-    'input[name="ipv4Settings.dhcp.startAddress"]',
-    'input[name="ipv4Settings.dhcp.endAddress"]',
-    'input[name="ipv4Settings.dhcp.leaseTime.days"]',
-    'input[name="ipv4Settings.dhcp.leaseTime.hours"]'
-  ],
+  clearFields: [],
   grading: {
     description: 'Kiểm tra bài 5',
     rules: [
@@ -33,7 +21,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
         "id": "lan_ip",
         "name": "IP Address",
         "selector": "input[name=\"ipv4Settings.ipAddress\"]",
-        "expected": "192.168.1.1",
+        "expected": "192.168.10.1",
         "type": "text_exact",
         "trim": true,
         "required": true
@@ -41,17 +29,8 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       {
         "id": "lan_mask",
         "name": "Subnet Mask",
-        "selector": ".MuiAutocomplete-input",
+        "selector": "input[name=\"ipv4Settings.mask\"], .MuiAutocomplete-input",
         "expected": "255.255.255.0",
-        "type": "text_exact",
-        "trim": true,
-        "required": true
-      },
-      {
-        "id": "lan_dhcp_enabled",
-        "name": "Enable DHCP Server",
-        "selector": "input[name=\"ipv4Settings.dhcp.enabled\"]",
-        "expected": "true",
         "type": "text_exact",
         "trim": true,
         "required": true
@@ -60,7 +39,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
         "id": "lan_dhcp_start",
         "name": "Start IP Address",
         "selector": "input[name=\"ipv4Settings.dhcp.startAddress\"]",
-        "expected": "192.168.1.2",
+        "expected": "192.168.10.2",
         "type": "text_exact",
         "trim": true,
         "required": true
@@ -69,25 +48,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
         "id": "lan_dhcp_end",
         "name": "End IP Address",
         "selector": "input[name=\"ipv4Settings.dhcp.endAddress\"]",
-        "expected": "192.168.1.254",
-        "type": "text_exact",
-        "trim": true,
-        "required": true
-      },
-      {
-        "id": "lan_dhcp_lease_days",
-        "name": "Lease time - Day(s)",
-        "selector": "input[name=\"ipv4Settings.dhcp.leaseTime.days\"]",
-        "expected": "0",
-        "type": "text_exact",
-        "trim": true,
-        "required": true
-      },
-      {
-        "id": "lan_dhcp_lease_hours",
-        "name": "Lease time - Hour(s)",
-        "selector": "input[name=\"ipv4Settings.dhcp.leaseTime.hours\"]",
-        "expected": "12",
+        "expected": "192.168.10.254",
         "type": "text_exact",
         "trim": true,
         "required": true
@@ -96,55 +57,34 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   },
   guidePopups: [
     {
-      "selector": ".MuiTypography-subtitle2:contains(\"Advanced\")",
-      "text": "Chọn Advanced",
+      "selector": ".MuiTypography-subtitle2:contains(\"Advanced\"), svg[data-testid=\"TuneTwoToneIcon\"], svg[data-testid=\"TuneOutlinedIcon\"]",
+      "text": "Bước 1: Chọn Advanced",
       "position": "right"
     },
     {
-      "selector": "li.MuiMenuItem-root:contains(\"LAN\")",
-      "text": "Chọn LAN",
+      "selector": "li.MuiMenuItem-root:contains(\"LAN\"), .MuiTypography-root:contains(\"LAN\"), p:contains(\"LAN\")",
+      "text": "Bước 2: Chọn LAN",
       "position": "right"
     },
     {
       "selector": "input[name=\"ipv4Settings.ipAddress\"]",
-      "text": "Nhập IP Address (Gateway) VD: 192.168.1.1",
+      "text": "Bước 3: Đổi IP Address thành 192.168.10.1",
       "position": "right",
-      "expected": "192.168.1.1"
+      "expected": "192.168.10.1",
+      "urlIncludes": "advanced__lan"
     },
     {
-      "selector": ".MuiAutocomplete-input",
-      "text": "Nhập Subnet Mask VD: 255.255.255.0",
-      "position": "right"
+      "selector": "input[name=\"ipv4Settings.mask\"], .MuiAutocomplete-input",
+      "text": "Bước 4: Kiểm tra Subnet Mask là 255.255.255.0",
+      "position": "right",
+      "expected": "255.255.255.0",
+      "urlIncludes": "advanced__lan"
     },
     {
-      "selector": "input[name=\"ipv4Settings.dhcp.enabled\"]",
-      "text": "Đảm bảo đã Bật DHCP Server",
-      "position": "left"
-    },
-    {
-      "selector": "input[name=\"ipv4Settings.dhcp.startAddress\"]",
-      "text": "Nhập Start IP Address VD: 192.168.1.2",
-      "position": "left"
-    },
-    {
-      "selector": "input[name=\"ipv4Settings.dhcp.endAddress\"]",
-      "text": "Nhập End IP Address VD: 192.168.1.254",
-      "position": "right"
-    },
-    {
-      "selector": "input[name=\"ipv4Settings.dhcp.leaseTime.days\"]",
-      "text": "Nhập Lease time Day(s) VD: 0",
-      "position": "left"
-    },
-    {
-      "selector": "input[name=\"ipv4Settings.dhcp.leaseTime.hours\"]",
-      "text": "Nhập Lease time Hour(s) VD: 12",
-      "position": "right"
-    },
-    {
-      "selector": "button:contains(\"Save\")",
-      "text": "Chọn Save",
-      "position": "bottom"
+      "selector": "button.alternative-layout--submit, .formActionButton.submit, button:contains(\"Save\")",
+      "text": "Bước 5: Chọn Save để lưu cấu hình",
+      "position": "bottom",
+      "urlIncludes": "advanced__lan"
     }
   ]
 });

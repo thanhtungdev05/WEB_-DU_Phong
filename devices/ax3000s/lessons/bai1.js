@@ -11,6 +11,7 @@ var lessonObj = {
   subtitle: 'Cấu hình PPPoE',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Cấu hình kết nối mạng PPPoE cho thiết bị:',
     '- Username: <span class="val">hnfdl-123456-789</span>',
     '- Password: <span class="val">d123456</span>'
   ],

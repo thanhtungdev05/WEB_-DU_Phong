@@ -9,7 +9,7 @@ var index = window.DEVICE_AC1000CV2_LESSONS.findIndex(function (l) { return l.id
 var lessonObj = {
   id: 'ac1000cv2-bai5',
   title: 'Bài 5 - Cấu hình DHCP',
-  subtitle: 'Cấu hình mạng nội bộ LAN & DHCP Server',
+  subtitle: 'Cấu hình DHCP',
   instructions: [
     '<b>Yêu cầu:</b> Thực hiện thay đổi cấu hình DHCP trên thiết bị:',
     '- IP Address: <span class="val">192.168.1.1</span>',

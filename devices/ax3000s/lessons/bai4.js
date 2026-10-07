@@ -11,6 +11,7 @@ const lessonObj4 = {
   subtitle: 'Cấu hình DNS',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện thiết lập thông số DNS thủ công (Manually) trên cổng LAN:',
     '- Primary DNS: <span class="val">210.245.31.220</span>',
     '- Secondary DNS: <span class="val">8.8.8.8</span>'
   ],

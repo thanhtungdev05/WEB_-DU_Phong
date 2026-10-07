@@ -4,8 +4,8 @@
 window.DEVICE_BE6500C_LESSONS = window.DEVICE_BE6500C_LESSONS || [];
 var bai3 = {
   id: 'be6500c-bai3',
-  title: 'Cấu hình mạng Wi-Fi IOT',
-  subtitle: 'Cấu hình mạng Wi-Fi IOT',
+  title: 'Cấu hình Wi-Fi IOT',
+  subtitle: 'Cấu hình Wi-Fi IOT',
   instructions: [
     "<b>Yêu cầu:</b>",
     "Vào phần SMARTHOME NETWORK để cấu hình Wi-Fi IoT:",

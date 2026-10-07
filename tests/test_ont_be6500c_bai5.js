@@ -21,22 +21,17 @@ assert.ok(ontBai5, 'ONT_be6500c-bai5 must exist');
 // guidePopups must contain input[name="ipv4Settings.ipAddress"]
 const ipPopup = ontBai5.guidePopups.find(p => p.selector && p.selector.includes('ipv4Settings.ipAddress'));
 assert.ok(ipPopup, 'guidePopups must contain ipv4Settings.ipAddress tooltip');
-assert.strictEqual(ipPopup.expected, '192.168.1.1', 'ipPopup expected value must be 192.168.1.1');
+assert.strictEqual(ipPopup.expected, '192.168.10.1', 'ipPopup expected value must be 192.168.10.1');
 
-// clearFields must clear ipv4Settings.ipAddress
-assert.ok(ontBai5.clearFields.includes('input[name="ipv4Settings.ipAddress"]'), 'clearFields must include ipv4Settings.ipAddress');
+// clearFields must be empty so default IP 192.168.1.1 is available
+assert.ok(Array.isArray(ontBai5.clearFields) && !ontBai5.clearFields.includes('input[name="ipv4Settings.ipAddress"]'), 'clearFields must not clear ipv4Settings.ipAddress');
 
 // Verify remaining guidePopups
 const expectedPopups = [
   'Advanced',
   'LAN',
-  'IP Address (Gateway)',
+  'IP Address',
   'Subnet Mask',
-  'DHCP Server',
-  'Start IP Address',
-  'End IP Address',
-  'Lease time Day(s)',
-  'Lease time Hour(s)',
   'Save'
 ];
 expectedPopups.forEach(text => {

@@ -12,6 +12,7 @@ var lessonObj = {
   subtitle: 'Cấu hình Wi-Fi',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện cấu hình mạng Wi-Fi chính (Host) theo các thông số dưới đây:',
     '- SSID Name: <span class="val">FPT Telecom-7EA8</span>',
     '- WPA Key: <span class="val">00032934</span>'
   ],

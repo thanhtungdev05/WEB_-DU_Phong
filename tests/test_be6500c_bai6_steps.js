@@ -6,21 +6,21 @@ const path = require('path');
 const vm = require('vm');
 
 console.log('================================================================');
-console.log('KIỂM THỬ ĐẶC TẢ BÀI 6 AP BE6500C: BƯỚC 1 & BƯỚC 2 PORT FORWARDING');
+console.log('KIỂM THỬ ĐẶC TẢ BÀI 5 AP BE6500C: BƯỚC 1 & BƯỚC 2 PORT FORWARDING');
 console.log('================================================================\n');
 
 const root = path.resolve(__dirname, '..');
 
-// 1. Kiểm tra cấu hình bai6.js
-const bai6Code = fs.readFileSync(path.join(root, 'devices/be6500c/lessons/bai6.js'), 'utf8');
+// 1. Kiểm tra cấu hình bai5.js
+const bai5Code = fs.readFileSync(path.join(root, 'devices/be6500c/lessons/bai5.js'), 'utf8');
 const mockWindow = { DEVICE_BE6500C_LESSONS: [] };
-new Function('window', bai6Code)(mockWindow);
-const bai6 = mockWindow.DEVICE_BE6500C_LESSONS.find(l => l.id === 'be6500c-bai6');
-assert.ok(bai6, 'Bài 6 be6500c-bai6 phải tồn tại');
+new Function('window', bai5Code)(mockWindow);
+const bai5 = mockWindow.DEVICE_BE6500C_LESSONS.find(l => l.id === 'be6500c-bai5');
+assert.ok(bai5, 'Bài 5 be6500c-bai5 phải tồn tại');
 
-const step1 = bai6.guidePopups.find(p => p.text && p.text.includes('Bước 1'));
-const step2 = bai6.guidePopups.find(p => p.text && p.text.includes('Bước 2'));
-const step3 = bai6.guidePopups.find(p => p.text && p.text.includes('Bước 3'));
+const step1 = bai5.guidePopups.find(p => p.text && p.text.includes('Bước 1'));
+const step2 = bai5.guidePopups.find(p => p.text && p.text.includes('Bước 2'));
+const step3 = bai5.guidePopups.find(p => p.text && p.text.includes('Bước 3'));
 
 assert.ok(step1, 'Bước 1 phải tồn tại');
 assert.ok(step2, 'Bước 2 phải tồn tại');

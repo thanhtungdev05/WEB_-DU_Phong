@@ -9,7 +9,7 @@ var index = window.DEVICE_AC1000CV2_LESSONS.findIndex(function (l) { return l.id
 var lessonObj = {
   id: 'ac1000cv2-bai2',
   title: 'Bài 2 - Cấu hình Wi-Fi',
-  subtitle: 'Cấu hình mạng không dây Wi-Fi 2.4GHz & 5GHz và Security Passphrase',
+  subtitle: 'Cấu hình Wi-Fi',
   instructions: [
     '<b>Yêu cầu:</b>',
     'Cấu hình đúng cho cả 2 băng tần <b>2.4G</b> và <b>5G</b> theo thông số:',

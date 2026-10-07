@@ -46,10 +46,17 @@ const expectedTitles = [
 ];
 const be6500cTitles = [
   'Cấu hình PPPoE',
-  'Cấu hình mạng Wi-Fi (Gộp sóng Band Steering)',
-  'Cấu hình mạng Wi-Fi IOT',
+  'Cấu hình Wi-Fi',
+  'Cấu hình Wi-Fi IOT',
+  'Cấu hình DHCP',
+  'Cấu hình Port Forwarding'
+];
+const ontBe6500cTitles = [
+  'Cấu hình PPPoE',
+  'Cấu hình Wi-Fi',
+  'Cấu hình Wi-Fi IOT',
   'Cấu hình DNS',
-  'Cấu hình mạng LAN',
+  'Cấu hình DHCP',
   'Cấu hình Port Forwarding'
 ];
 const vigor2927Titles = [
@@ -101,11 +108,17 @@ const migrations = [
   '046_activate_vigor2927_catalog.sql',
   '049_activate_mikrotik_hexs_catalog.sql',
   '051_activate_ax3000cv2_easymesh_lab.sql',
-  '053_activate_ac1000cv2_catalog.sql'
+  '053_activate_ac1000cv2_catalog.sql',
+  '055_deactivate_be6500c_dns_lab.sql',
+  '056_standardize_lab_display_titles.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
-  const expectedLessonCount = (device.id === 'vigor2927' || device.id === 'ax3000c') ? 7 : 6;
+  const expectedLessonCount = (device.id === 'vigor2927' || device.id === 'ax3000c')
+    ? 7
+    : device.id === 'be6500c'
+      ? 5
+      : 6;
   assert.equal(lessons.length, expectedLessonCount, `${device.id} must expose exactly ${expectedLessonCount} labs`);
   assert.equal(new Set(lessons.map((lesson) => lesson.id)).size, expectedLessonCount, `${device.id} lab IDs must be unique`);
 
@@ -129,9 +142,11 @@ for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, it
       : `${expected[device.id]}${index + 1}`;
     const expectedTitle = device.id === 'vigor2927'
       ? vigor2927Titles[index]
-      : device.id === 'be6500c' || device.id === 'ONT_be6500c'
+      : device.id === 'be6500c'
         ? be6500cTitles[index]
-        : expectedTitles[index];
+        : device.id === 'ONT_be6500c'
+          ? ontBe6500cTitles[index]
+          : expectedTitles[index];
     assert.equal(lesson.id, expectedId, `${device.id} lab ${index + 1} uses an unexpected ID`);
     assert.equal(
       normalizeTitle(lesson.title),
@@ -163,7 +178,7 @@ const expectedLessonCounts = {
   be12000: 6,
   be15000: 1,
   vigor2927: 7,
-  be6500c: 6,
+  be6500c: 5,
   ONT_be6500c: 6,
   mikrotik_hexs: 7
 };

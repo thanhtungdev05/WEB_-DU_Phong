@@ -105,7 +105,7 @@
   (function injectCss() {
     var st = document.createElement('style');
     st.textContent =
-      '.MuiFormControl-root{position:relative !important;display:flex !important;flex-direction:column !important}' +
+      '.MuiFormControl-root:not([style*="display: none"]):not([style*="display:none"]){position:relative !important;display:flex;flex-direction:column !important}' +
       '.MuiFormHelperText-root.Mui-disabled{color:rgba(0,0,0,.38)}' +
       '.MuiSelect-select.Mui-disabled,.MuiSelect-icon.Mui-disabled{color:rgba(0,0,0,.38);cursor:default}' +
       /* NHAN O SELECT VA O VAN BAN KHONG NHAY LEN -- dam bao luon shrink khi co gia tri hoac focus */

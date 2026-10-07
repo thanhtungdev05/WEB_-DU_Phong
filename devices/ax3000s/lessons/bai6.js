@@ -11,6 +11,7 @@ const lessonObj6 = {
   subtitle: 'Cấu hình Port Forwarding',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện cấu hình Mở Port trên thiết bị theo các thông số được cung cấp dưới đây:',
     '- Tên dịch vụ: <span class="val">NAT FPT</span>',
     '- External Port: <span class="val">8080</span>',
     '- Internal IP: <span class="val">192.168.1.100</span>',
@@ -98,7 +99,7 @@ const lessonObj6 = {
 
 const existingIndex6 = window.DEVICE_AX3000S_LESSONS.findIndex(l => l.id === 'LAB_AX3000S_06');
 if (existingIndex6 !== -1) {
-    window.DEVICE_AX3000S_LESSONS[existingIndex6] = lessonObj6;
+  window.DEVICE_AX3000S_LESSONS[existingIndex6] = lessonObj6;
 } else {
-    window.DEVICE_AX3000S_LESSONS.push(lessonObj6);
+  window.DEVICE_AX3000S_LESSONS.push(lessonObj6);
 }

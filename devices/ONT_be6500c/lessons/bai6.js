@@ -10,7 +10,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
     "<b>Yêu cầu:</b>",
     "Tạo 1 rule Port Forwarding:",
     "- Tên rule (Name): <span class=\"val\">Camera</span>",
-    "- Giao thức (Protocol): <span class=\"val\">TCP_UDP</span> (hoặc TCP + UDP)",
+    "- Giao thức (Protocol): <span class=\"val\">TCP_UDP</span>",
     "- External Port: <span class=\"val\">8080</span>",
     "- Internal IP: <span class=\"val\">192.168.1.20</span>",
     "- Internal Port: <span class=\"val\">80</span>"
@@ -69,17 +69,17 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   },
   guidePopups: [
     {
-      "selector": ".MuiTypography-subtitle2:contains(\"Network\")",
+      "selector": ".MuiTypography-subtitle2:contains(\"Network\"), svg[data-testid=\"LanguageOutlinedIcon\"], svg[data-testid=\"LanguageTwoToneIcon\"], svg[data-testid=\"LanguageIcon\"]",
       "text": "Bước 1: Chọn Network",
       "position": "right"
     },
     {
-      "selector": ".MuiTypography-subtitle2:contains(\"Port Forwarding\")",
+      "selector": "li.MuiMenuItem-root:contains(\"Port Forwarding\"), .MuiTypography-root:contains(\"Port Forwarding\"), span:contains(\"Port Forwarding\"), p:contains(\"Port Forwarding\")",
       "text": "Bước 2: Chọn Port Forwarding",
       "position": "right"
     },
     {
-      "selector": "button:contains(\"Add New\")",
+      "selector": "button:contains(\"Add New\"), button:contains(\"ADD NEW\")",
       "text": "Bước 3: Thêm Rule mới",
       "position": "right"
     },

@@ -12,6 +12,7 @@ var lessonObj = {
   subtitle: 'Cấu hình wifi IoT',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện cấu hình mạng Wi-Fi IoT theo các thông số dưới đây:',
     '- SSID Index: <span class="val">2</span>',
     '- SSID Name: <span class="val">FPT Telecom_IoT</span>',
     '- WPA Key: <span class="val">fpt12345</span>'

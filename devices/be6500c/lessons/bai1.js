@@ -18,6 +18,10 @@ var bai1 = {
   grading: {
     description: 'Kiểm tra cấu hình PPPoE',
     allowedSelectors: [
+      'input[name="ipv4Settings.protocol"]',
+      'div[id*="ipv4Settings.protocol"]',
+      'input[name="ipv6Settings.protocol"]',
+      'div[id*="ipv6Settings.protocol"]',
       'input[name="radio"]',
       '.MuiRadio-root',
       '.PrivateSwitchBase-input',
@@ -27,7 +31,7 @@ var bai1 = {
       {
         "id": "ip_version_mode",
         "name": "Basics IP Mode",
-        "selector": "input[name=\"radio\"][value=\"10\"]:checked, input[name=\"radio\"][value=\"4\"]:checked, input[name=\"radio\"][value=\"6\"]:checked",
+        "selector": "input[name=\"radio\"][value=\"10\"]:checked, input[name=\"radio\"][value=\"4\"]:checked, input[name=\"radio\"][value=\"6\"]:checked, input[name*=\"radio\"][value=\"10\"]:checked, input[name*=\"radio\"][value=\"4\"]:checked, input[name*=\"radio\"][value=\"6\"]:checked, input[name=\"radio-ipver\"][value=\"10\"]:checked, input[name=\"radio-ipver\"][value=\"4\"]:checked, input[name=\"radio-ipver\"][value=\"6\"]:checked, input[value=\"10\"]:checked, input[value=\"4\"]:checked, input[value=\"6\"]:checked",
         "expected": "10",
         "displayExpected": "IPv4 & IPv6",
         "valueLabels": {
@@ -70,6 +74,8 @@ var bai1 = {
   allowedSelectors: [
     'div[id*="ipv4Settings.protocol"]',
     'input[name="ipv4Settings.protocol"]',
+    'div[id*="ipv6Settings.protocol"]',
+    'input[name="ipv6Settings.protocol"]',
     'input[name="radio"]',
     '.MuiRadio-root',
     '.PrivateSwitchBase-input',
@@ -83,7 +89,7 @@ var bai1 = {
     },
     {
       "selector": ".MuiFormControlLabel-root:has(input[value=\"10\"]), span:contains(\"IPv4 & IPv6\"), input[name=\"radio\"][value=\"10\"]",
-      "text": "Bước 2: Kiểm tra mục Basics đã tích chọn sẵn IPv4 & IPv6",
+      "text": "Bước 2: Kiểm tra/chọn mục Basics là IPv4 & IPv6",
       "position": "bottom"
     },
     {
@@ -99,12 +105,30 @@ var bai1 = {
     {
       "selector": "input[name=\"ipv4Settings.pppoe.username\"]",
       "text": "Bước 5: Nhập Username: hnfdl-123456-789",
-      "position": "right"
+      "position": "right",
+      "condition": function (doc) {
+        var protoInp = doc.querySelector('input[name="ipv4Settings.protocol"]');
+        var protoVal = ((protoInp && protoInp.value) || '').toLowerCase();
+        if (protoVal !== 'pppoe') return false;
+        var el = doc.querySelector('input[name="ipv4Settings.pppoe.username"]');
+        if (!el) return false;
+        var fc = el.closest('.MuiFormControl-root');
+        return !fc || (fc.style.display !== 'none' && fc.offsetWidth > 0);
+      }
     },
     {
       "selector": "input[name=\"ipv4Settings.pppoe.password\"]",
       "text": "Bước 6: Nhập Password: d123456",
-      "position": "right"
+      "position": "right",
+      "condition": function (doc) {
+        var protoInp = doc.querySelector('input[name="ipv4Settings.protocol"]');
+        var protoVal = ((protoInp && protoInp.value) || '').toLowerCase();
+        if (protoVal !== 'pppoe') return false;
+        var el = doc.querySelector('input[name="ipv4Settings.pppoe.password"]');
+        if (!el) return false;
+        var fc = el.closest('.MuiFormControl-root');
+        return !fc || (fc.style.display !== 'none' && fc.offsetWidth > 0);
+      }
     },
     {
       "selector": "button.alternative-layout--submit, .formActionButton.submit, body:has(input[name=\"ipv4Settings.pppoe.username\"]) button.alternative-layout--submit",

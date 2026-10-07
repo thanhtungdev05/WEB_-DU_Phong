@@ -5,13 +5,14 @@
 
 window.DEVICE_AC1000HI_LESSONS = window.DEVICE_AC1000HI_LESSONS || [];
 
-var index = window.DEVICE_AC1000HI_LESSONS.findIndex(function(l) { return l.id === 'LAB_AC1000HI_06'; });
+var index = window.DEVICE_AC1000HI_LESSONS.findIndex(function (l) { return l.id === 'LAB_AC1000HI_06'; });
 var lessonObj = {
   id: 'LAB_AC1000HI_06',
   title: 'Bài 6 - Cấu hình Port Forwarding',
   subtitle: 'Cấu hình Port Forwarding',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện cấu hình Mở Port trên thiết bị theo các thông số được cung cấp dưới đây:',
     '- Start External Port: <span class="val">3389</span>',
     '- End External Port: <span class="val">3389</span>',
     '- IP Address: <span class="val">192.168.1.254</span>',
@@ -19,15 +20,15 @@ var lessonObj = {
     '- End Internal Port: <span class="val">3389</span>'
   ],
   practiceUrl: '/sim_ac1000HI/cgi-bin/index.asp?page=adv_nat_top.asp',
-    // Clear old localStorage when starting a new session
-    onSimLoad: function(iframeWindow) {
-      try {
-        var loc = (iframeWindow.location.href || '').toLowerCase();
-        if (loc.indexOf('adv_nat') === -1) {
-          localStorage.removeItem('ftc_sim_portfwd');
-        }
-      } catch(e) {}
-    },
+  // Clear old localStorage when starting a new session
+  onSimLoad: function (iframeWindow) {
+    try {
+      var loc = (iframeWindow.location.href || '').toLowerCase();
+      if (loc.indexOf('adv_nat') === -1) {
+        localStorage.removeItem('ftc_sim_portfwd');
+      }
+    } catch (e) { }
+  },
 
 
   clearFields: [
@@ -40,7 +41,7 @@ var lessonObj = {
 
   grading: {
     description: 'Kiểm tra cấu hình Port Forwarding (Virtual Server)',
-    customGrading: function(allDocs) {
+    customGrading: function (allDocs) {
       var data = null;
       var isSaved = false;
 
@@ -107,7 +108,7 @@ var lessonObj = {
       function g(data, name) {
         return data && data[name] ? String(data[name]).trim() : '';
       }
-      
+
       var actualStartExt = g(data, 'start_port1');
       var actualEndExt = g(data, 'end_port1');
       var actualIp = g(data, 'Addr1');
@@ -124,11 +125,11 @@ var lessonObj = {
 
       var passedCount = 0;
       var details = [];
-      rules.forEach(function(r) {
+      rules.forEach(function (r) {
         var actualVal = (r.actual || '').toString().trim();
         var expectVal = (r.expected || '').toString().trim();
         var isMatch = (actualVal.toLowerCase() === expectVal.toLowerCase());
-        
+
         if (isMatch) passedCount++;
 
         details.push({

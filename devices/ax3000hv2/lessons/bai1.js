@@ -12,7 +12,7 @@ var lessonObj = {
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình kết nối WAN/Internet trên thiết bị và thiết lập kết nối PPPoE theo các thông số được cung cấp dưới đây:',
-    '- Username: <span class="val">fpt</span>',
+    '- Username: <span class="val">sgfdl-210208-218</span>',
     '- Password: <span class="val">fpt12345</span>',
   ],
   practiceUrl: '/sim_ax3000hv2/cgi-bin/index.asp?page=home_wan.asp',
@@ -27,7 +27,7 @@ var lessonObj = {
         id: 'wan_username',
         name: 'PPPoE Username',
         selector: 'input[name="wan_PPPUsername"], input[name="pppUserName"], input[name="username"]',
-        expected: 'fpt',
+        expected: 'sgfdl-210208-218',
         type: 'text_exact',
         trim: true,
         required: true
