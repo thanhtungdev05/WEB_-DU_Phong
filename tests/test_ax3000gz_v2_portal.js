@@ -72,4 +72,24 @@ lessons.forEach(lesson => assert.ok(migration.includes(`'${lesson.id}'`), `${les
 assert.ok(!migration.includes("'LAB_AX3000GZ_V2_07'"), 'catalog must contain only six AX3000GZ V2 labs');
 assert.ok(!/\bDELETE\s+FROM\b/i.test(migration), 'catalog migration must not delete persisted data');
 
+const shellPages = [
+  'devices/ax3000gz_v2/src/www/login_page.html',
+  'devices/ax3000gz_v2/src/www/common_page.html'
+];
+shellPages.forEach(relative => {
+  const html = read(relative);
+  assert.ok(!/if\s*\(\s*top\s*!=\s*self\s*\)/.test(html), `${relative} must not break out of the portal iframe`);
+  assert.ok(html.includes('if(false && top != self)'), `${relative} keeps the original frame-buster disabled`);
+});
+
+const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const full = path.join(dir, entry.name);
+  return entry.isDirectory() ? walk(full) : [full];
+});
+walk(path.join(root, 'devices/ax3000gz_v2/src/www')).forEach(file => {
+  if (!/\.(html|js)$/.test(file)) return;
+  const source = fs.readFileSync(file, 'utf8');
+  assert.ok(!/top\.location\.href\s*=/.test(source), `${path.relative(root, file)} must reload inside the portal iframe instead of the top window`);
+});
+
 console.log('AX3000GZ V2 portal registration tests passed.');

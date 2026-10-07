@@ -3532,7 +3532,7 @@ preload(preLoadImg);
 </head>
 <body>
 <script type="text/javascript">
-if(top != self)
+if(false && top != self)
 {
 document.getElementsByTagName("body")[0].style.display = 'none';
 top.location = self.location;
@@ -3546,7 +3546,7 @@ if($.isPlainObject(data))
 {
 if ( data.need_refresh )
 {
-top.location.href = top.location.href;
+window.location.href = window.location.href;
 }
 else
 {
@@ -3556,7 +3556,7 @@ showWaitTip(false);
 }
 else
 {
-top.location.href = top.location.href;
+window.location.href = window.location.href;
 }
 });
 }
@@ -3797,7 +3797,7 @@ $.post( "/?_type=loginData&_tag=login_entry", postData, undefined, "json" )
 $("#_sessionTOKEN").val(data.sess_token);
 if ( data.login_need_refresh )
 {
-top.location.href = top.location.href;
+window.location.href = window.location.href;
 }
 else
 {
@@ -4766,7 +4766,7 @@ return 0;
 }
 else if ( ErrorString == "SessionTimeout" )
 {
-top.location.href = top.location.href;
+window.location.href = window.location.href;
 return 1;
 }
 else
@@ -7307,7 +7307,7 @@ $.post( "/?_type=hiddenData&_tag=switchlang_entry", {IF_LanguageSwitch:changeLan
 .done(function( data ) {
 if ( data.need_refresh )
 {
-top.location.href = top.location.href;
+window.location.href = window.location.href;
 }
 else
 {
@@ -7332,7 +7332,7 @@ $.post( "/?_type=loginData&_tag=modeswitch_entry", {IF_ModeSwitch:ChangeModeSwit
 .done(function( data ) {
 if ( data.need_refresh )
 {
-top.location.href = top.location.href;
+window.location.href = window.location.href;
 }
 else
 {

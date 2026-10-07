@@ -363,7 +363,7 @@ template.bind("fillDataByApplyResult", function(event, xml, template){
 ActionByApplyResult(xml, template);
 if(controlList.indexOf("refresh") != -1)
 {
-top.location.href = top.location.href;
+window.location.href = window.location.href;
 }
 });
 template.bind("fillDataByCancelResult", function(event, xml, template){
