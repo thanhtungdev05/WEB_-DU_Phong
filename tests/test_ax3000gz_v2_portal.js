@@ -92,4 +92,42 @@ walk(path.join(root, 'devices/ax3000gz_v2/src/www')).forEach(file => {
   assert.ok(!/top\.location\.href\s*=/.test(source), `${path.relative(root, file)} must reload inside the portal iframe instead of the top window`);
 });
 
+// Nút Login là <input type="submit"> nên 2 listener bắt Save/Apply trong app.js
+// phải bỏ qua trang đăng nhập, nếu không chế độ Hướng dẫn sẽ bật "Xem lỗi sai"
+// ngay khi học viên bấm Login mà chưa cấu hình gì.
+const appJs = read('app.js');
+const loginPage = read('devices/ax3000gz_v2/src/www/login_page.html');
+const commonPage = read('devices/ax3000gz_v2/src/www/common_page.html');
+assert.ok(
+  (appJs.match(/^\s*if \(isLogin\) return;$/gm) || []).length >= 2,
+  'both Save/Apply listeners in app.js must ignore login pages'
+);
+assert.ok(loginPage.includes('id="Frm_Username"'), 'login page must be detected as a login page');
+assert.ok(loginPage.includes('id="LoginId"'), 'AX3000GZ V2 login button is the input the listeners must skip');
+assert.ok(!commonPage.includes('Frm_Username'), 'common page must not be treated as a login page');
+
+// Đổi bài: portal gọi /sim_ax3000gz_v2/api/reset (POST trước, GET dự phòng)
+// nên server của thiết bị phải xử lý cả hai verb và xóa SID + ConfigStore.
+const serverSource = read('devices/ax3000gz_v2/src/server.py');
+const storeSource = read('devices/ax3000gz_v2/src/config_store.py');
+assert.ok(serverSource.includes('"/api/reset"'), 'simulator must expose /api/reset');
+const handlerBody = (source, name) => {
+  const start = source.indexOf(`def ${name}(self):`);
+  assert.ok(start >= 0, `server.py must define ${name}`);
+  const rest = source.slice(start);
+  const next = rest.indexOf('\n    def ', 1);
+  return next >= 0 ? rest.slice(0, next) : rest;
+};
+['do_GET', 'do_POST'].forEach(name => {
+  const body = handlerBody(serverSource, name);
+  const resetAt = body.indexOf('_is_reset_path(u.path)');
+  const sessionAt = body.indexOf('_session(create=True)');
+  assert.ok(resetAt > 0, `${name} must handle /api/reset`);
+  assert.ok(sessionAt > resetAt, `${name} must reset the session before creating one`);
+});
+assert.ok(serverSource.includes('SESSIONS.pop(sid, None)'), '/api/reset must drop only the caller session');
+assert.ok(serverSource.includes('clear_sid=True'), '/api/reset must expire the SID cookie');
+assert.ok(!serverSource.includes('SESSIONS.clear()'), '/api/reset must not wipe every session');
+assert.ok(/def reset\(self\)/.test(storeSource), 'ConfigStore must be resettable');
+
 console.log('AX3000GZ V2 portal registration tests passed.');

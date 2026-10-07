@@ -631,6 +631,9 @@
 
                 // Bắt trước thao tác bấm nút Save/Apply ngay từ pointerdown/mousedown để tránh blur/change của input xóa cờ
                 const markSaveInteraction = function (e) {
+                  // Trang đăng nhập không có thao tác lưu cấu hình: không coi nút
+                  // Login (input type=submit) là Save/Apply.
+                  if (isLogin) return;
                   let el = e.target;
                   while (el && el !== doc) {
                     const laNutLuuMikrotik = (currentDeviceId === 'mikrotik_hexs') && (function () {
@@ -685,6 +688,10 @@
 
                 // Sự kiện click nút Save/Apply
                 doc.addEventListener('click', function (e) {
+                  // Trang đăng nhập không có thao tác lưu cấu hình: nếu không bỏ qua,
+                  // nút Login (input type=submit) sẽ đặt cờ _hasClickedSaveInGuide
+                  // và ở chế độ Hướng dẫn sẽ hiện "Xem lỗi sai" khi chưa cấu hình gì.
+                  if (isLogin) return;
                   let el = e.target;
                   while (el && el !== doc) {
                     const laNutLuuMikrotik = (currentDeviceId === 'mikrotik_hexs') && (function () {

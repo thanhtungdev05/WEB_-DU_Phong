@@ -227,13 +227,31 @@ class Handler(BaseHTTPRequestHandler):
                              "login_token": None, "last_seen": time.monotonic()}
             return sid, SESSIONS[sid], True
 
-    def _send(self, data: bytes, ctype: str, status=200, sid=None):
+    def _is_reset_path(self, path: str) -> bool:
+        return path in ("/api/reset", "/resetsession")
+
+    def _reset_session(self):
+        """Portal gọi khi đổi/trở về bài học: xóa session hiện tại và
+        đưa ConfigStore về trạng thái mặc định, buộc học viên đăng nhập lại."""
+        sid = self._sid()
+        if sid:
+            with LOCK:
+                SESSIONS.pop(sid, None)
+        STORE.reset()
+        body = json.dumps({"status": "ok", "message": "AX3000GZ_V2 state reset"},
+                          separators=(",", ":")).encode("utf-8")
+        self._send(body, "application/json; charset=utf-8", clear_sid=True)
+
+    def _send(self, data: bytes, ctype: str, status=200, sid=None, clear_sid=False):
         self.send_response(status)
         self.send_header("Connection", "close")
         self.send_header("Cache-Control", "no-cache,no-store")
         self.send_header("Pragma", "no-cache")
         self.send_header("Content-Length", str(len(data)))
-        if sid:
+        if clear_sid:
+            self.send_header("Set-Cookie",
+                             "SID=; PATH=/; HttpOnly; SameSite=strict; Max-Age=0")
+        elif sid:
             self.send_header("Set-Cookie", f"SID={sid}; PATH=/; HttpOnly; SameSite=strict")
         self.send_header("Server", "")
         self.send_header("Accept-Ranges", "bytes")
@@ -315,6 +333,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urlparse(self.path)
+        if self._is_reset_path(u.path):
+            return self._reset_session()
         q = parse_qs(u.query)
         typ, tag = q.get("_type", [None])[0], q.get("_tag", [None])[0]
         sid, sess, created = self._session(create=True)
@@ -442,6 +462,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         u = urlparse(self.path)
+        if self._is_reset_path(u.path):
+            return self._reset_session()
         q = parse_qs(u.query)
         typ, tag = q.get("_type", [None])[0], q.get("_tag", [None])[0]
         sid, sess, created = self._session(create=True)

@@ -61,6 +61,13 @@ class ConfigStore:
         # ── Legacy: Internet Status templates (giữ nguyên cho tương thích) ──
         self._templates: dict[str, str] = {}
         self._static_legacy: set[str] = set()
+        # ── Generic: tất cả file *.xml trong www/api/ ──
+        self._generic_templates: dict[str, str] = {}    # tag → XML text
+        self._generic_values: dict[str, list[dict]] = {}  # tag → [{name, value}]
+        self._load_templates()
+
+    def _load_templates(self) -> None:
+        """Nạp template XML từ www/api/ (dùng lúc khởi động và khi reset)."""
         self._data["internet_status"] = {}
         for endpoint, filename in INTERNET_STATUS_FILES.items():
             file_path = os.path.join(API_DIR, filename)
@@ -80,9 +87,6 @@ class ConfigStore:
             self._templates[endpoint] = template_text
             self._data["internet_status"][endpoint] = pairs
 
-        # ── Generic: tất cả file *.xml trong www/api/ ──
-        self._generic_templates: dict[str, str] = {}    # tag → XML text
-        self._generic_values: dict[str, list[dict]] = {}  # tag → [{name, value}]
         for fname in os.listdir(API_DIR):
             if not fname.endswith(".xml"):
                 continue
@@ -105,6 +109,22 @@ class ConfigStore:
             template_text, pairs = res
             self._generic_templates[tag] = template_text
             self._generic_values[tag] = pairs
+
+    def reset(self) -> None:
+        """Trả store về đúng trạng thái như khi khởi động server.
+
+        Dùng cho endpoint /api/reset khi đổi bài học: nạp lại state.json
+        (bộ nhớ trạng thái chỉ mutate RAM nên file trên đĩa luôn là mặc định)
+        và nạp lại toàn bộ template XML từ www/api/.
+        """
+        with self._lock:
+            with open(self.path, encoding="utf-8") as fh:
+                self._data = json.load(fh)
+            self._templates.clear()
+            self._static_legacy.clear()
+            self._generic_templates.clear()
+            self._generic_values.clear()
+            self._load_templates()
 
     # ─────────────────────────────────────────
     # Public helpers
