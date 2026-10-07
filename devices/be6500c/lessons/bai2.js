@@ -4,8 +4,8 @@
 window.DEVICE_BE6500C_LESSONS = window.DEVICE_BE6500C_LESSONS || [];
 var bai2 = {
   id: 'be6500c-bai2',
-  title: 'Cấu hình mạng Wi-Fi (Gộp sóng Band Steering)',
-  subtitle: 'Cấu hình mạng Wi-Fi (Gộp sóng Band Steering)',
+  title: 'Cấu hình Wi-Fi',
+  subtitle: 'Cấu hình Wi-Fi',
   instructions: [
     "<b>Yêu cầu:</b>",
     "Kích hoạt Band Steering (Tắt Use separate network) và cấu hình:",

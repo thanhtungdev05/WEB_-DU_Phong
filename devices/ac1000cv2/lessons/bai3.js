@@ -9,11 +9,10 @@ var index = window.DEVICE_AC1000CV2_LESSONS.findIndex(function (l) { return l.id
 var lessonObj = {
   id: 'ac1000cv2-bai3',
   title: 'Bài 3 - Cấu hình Wi-Fi IoT',
-  subtitle: 'Cấu hình mạng Wi-Fi phụ (SSID 2) và Security Passphrase trên băng tần 2.4GHz',
+  subtitle: 'Cấu hình Wi-Fi IoT',
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình mạng Wi-Fi IoT trên băng tần <b>2.4G</b> theo các thông số dưới đây:',
-    '- SSID Index: <span class="val">2</span>',
     '- SSID Name: <span class="val">FPT Telecom-7EA8</span>',
     '- WPA Key: <span class="val">00032934</span>'
   ],

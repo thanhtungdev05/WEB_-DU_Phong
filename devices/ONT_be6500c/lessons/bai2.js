@@ -4,8 +4,8 @@
 window.DEVICE_ONT_BE6500C_LESSONS = window.DEVICE_ONT_BE6500C_LESSONS || [];
 window.DEVICE_ONT_BE6500C_LESSONS.push({
   id: 'ONT_be6500c-bai2',
-  title: 'Cấu hình mạng Wi-Fi (Gộp sóng Band Steering)',
-  subtitle: 'Cấu hình mạng Wi-Fi (Gộp sóng Band Steering)',
+  title: 'Cấu hình Wi-Fi',
+  subtitle: 'Cấu hình Wi-Fi',
   instructions: [
     "<b>Yêu cầu:</b>",
     "Kích hoạt Band Steering (Tắt Use separate network) và cấu hình:",
@@ -48,14 +48,14 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   },
   guidePopups: [
     {
-      "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\")",
+      "selector": ".MuiTypography-subtitle2:contains(\"Wi-Fi\"), svg[data-testid=\"WifiOutlinedIcon\"]",
       "text": "Bước 1: Chọn menu Wi-Fi",
       "position": "right"
     },
     {
-      "selector": "input[name=\"useSeparateNetwork\"]",
-      "text": "Bước 2: Tắt nút 'Use separate network' để kích hoạt gộp sóng (Band Steering)",
-      "position": "top"
+      "selector": "li.MuiMenuItem-root:contains(\"General\"), .MuiTypography-root:contains(\"General\"), span:contains(\"General\"), .MuiBreadcrumbs-li:contains(\"General\")",
+      "text": "Bước 2: Chọn General",
+      "position": "right"
     },
     {
       "selector": "input[name=\"networks.1.name\"]",
@@ -68,7 +68,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       "position": "right"
     },
     {
-      "selector": "button:contains(\"Save\")",
+      "selector": "button:contains(\"Save\"), button.alternative-layout--submit, .formActionButton.submit",
       "text": "Bước 5: Nhấp chọn Save để lưu cấu hình",
       "position": "bottom"
     }

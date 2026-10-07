@@ -22,21 +22,21 @@ function loadLesson(filePath, globalVarName, lessonId) {
 console.log('--- TEST 1: BÀI 5 (LAN - ONT BE6500C) ---');
 const ontBai5 = loadLesson('devices/ONT_be6500c/lessons/bai5.js', 'DEVICE_ONT_BE6500C_LESSONS', 'ONT_be6500c-bai5');
 
-// 1.1. clearFields must include IP Gateway
-assert.ok(ontBai5.clearFields.includes('input[name="ipv4Settings.ipAddress"]'),
-  'clearFields in ONT_be6500c bai5 must include input[name="ipv4Settings.ipAddress"]');
+// 1.1. clearFields must NOT clear IP Gateway so 192.168.1.1 is available by default
+assert.ok(Array.isArray(ontBai5.clearFields) && !ontBai5.clearFields.includes('input[name="ipv4Settings.ipAddress"]'),
+  'clearFields in ONT_be6500c bai5 must not clear input[name="ipv4Settings.ipAddress"]');
 
-// 1.2. guidePopups must include IP Gateway tooltip with expected: "192.168.1.1"
+// 1.2. guidePopups must include IP Gateway tooltip with expected: "192.168.10.1"
 const ipPopup = ontBai5.guidePopups.find(p => p.selector === 'input[name="ipv4Settings.ipAddress"]');
 assert.ok(ipPopup, 'guidePopups must contain tooltip for input[name="ipv4Settings.ipAddress"]');
-assert.strictEqual(ipPopup.expected, '192.168.1.1', 'ipPopup expected must be 192.168.1.1');
-assert.ok(ipPopup.text.includes('192.168.1.1'), 'ipPopup text must mention 192.168.1.1');
-console.log('✔ Bài 5 (LAN - ONT BE6500C): clearFields and Gateway IP tooltip verified successfully.');
+assert.strictEqual(ipPopup.expected, '192.168.10.1', 'ipPopup expected must be 192.168.10.1');
+assert.ok(ipPopup.text.includes('192.168.10.1'), 'ipPopup text must mention 192.168.10.1');
+console.log('✔ Bài 5 (LAN - ONT BE6500C): clearFields empty and Gateway IP tooltip 192.168.10.1 verified successfully.');
 
 console.log('\n--- TEST 2: BÀI 6 (PORT FORWARDING - ONT & AP BE6500C) ---');
 const portForwardConfigs = [
   { file: 'devices/ONT_be6500c/lessons/bai6.js', global: 'DEVICE_ONT_BE6500C_LESSONS', id: 'ONT_be6500c-bai6' },
-  { file: 'devices/be6500c/lessons/bai6.js', global: 'DEVICE_BE6500C_LESSONS', id: 'be6500c-bai6' }
+  { file: 'devices/be6500c/lessons/bai5.js', global: 'DEVICE_BE6500C_LESSONS', id: 'be6500c-bai5' }
 ];
 
 for (const cfg of portForwardConfigs) {
@@ -180,7 +180,7 @@ console.log('\n--- TEST 4: PORTAL.HTML CACHEBUSTERS ---');
 const portalHtml = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
 const cachebusterChecks = [
   /devices\/be6500c\/lessons\/bai3\.js\?v=[a-f0-9]{16}/,
-  /devices\/be6500c\/lessons\/bai6\.js\?v=[a-f0-9]{16}/,
+  /devices\/be6500c\/lessons\/bai5\.js\?v=[a-f0-9]{16}/,
   /devices\/ONT_be6500c\/lessons\/bai3\.js\?v=[a-f0-9]{16}/,
   /devices\/ONT_be6500c\/lessons\/bai5\.js\?v=[a-f0-9]{16}/,
   /devices\/ONT_be6500c\/lessons\/bai6\.js\?v=[a-f0-9]{16}/

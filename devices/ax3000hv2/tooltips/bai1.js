@@ -12,7 +12,7 @@ window.TOOLTIPS_AX3000HV2['LAB_AX3000HV2_01'] = [
     },
     {
         selector: 'input[name="pppUserName"], #pppUserName',
-        text: 'Bước 3: Nhập Username: fpt',
+        text: 'Bước 3: Nhập Username:  sgfdl-210208-218',
         position: 'right'
     },
     {

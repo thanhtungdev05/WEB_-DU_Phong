@@ -85,60 +85,7 @@ window.FTC_AX3000C = window.FTC_AX3000C || {};
     } catch (e) { }
   };
 
-  // Xử lý ô Device/IP cho Bài 6: Đảm bảo ô Device/IP luôn cho phép gõ trực tiếp 192.168.100.109,
-  // xóa chữ 'select', ẩn mũi tên dropdown, và giữ giá trị khi chuyển sang ô khác (blur)
-  F.xuLyPortfwdDeviceIp = function (simWin) {
-    try {
-      if (!simWin) return;
-      const doc = simWin.document;
-      if (!doc) return;
-      const xuLy = function () {
-        try {
-          const cells = doc.querySelectorAll('td[data-ftc-cot="Device/IP"]');
-          cells.forEach(function (td) {
-            const input = td.querySelector('input');
-            if (!input) return;
-            if (input.placeholder === 'select') input.placeholder = '';
-            const suf = td.querySelector('.el-input__suffix');
-            if (suf && suf.style.display !== 'none') suf.style.display = 'none';
-
-            if (!input._ftcPortalBound) {
-              input._ftcPortalBound = true;
-              input.addEventListener('input', function () {
-                input._ftcLastVal = (input.value || '').trim();
-              }, true);
-              input.addEventListener('blur', function () {
-                const v = (input.value || input._ftcLastVal || '').trim();
-                if (v) {
-                  input._ftcLastVal = v;
-                  setTimeout(function () {
-                    if (!input.value && input._ftcLastVal) {
-                      input.value = input._ftcLastVal;
-                    }
-                  }, 60);
-                }
-              }, true);
-            }
-
-            if (!input.value && input._ftcLastVal) {
-              input.value = input._ftcLastVal;
-            }
-          });
-          doc.querySelectorAll('.el-select-dropdown').forEach(function (d) {
-            var txt = d.textContent || '';
-            if (txt.indexOf('Admin-PC') !== -1 || txt.indexOf('d8:43:ae') !== -1) {
-              d.style.setProperty('display', 'none', 'important');
-              d.style.setProperty('visibility', 'hidden', 'important');
-              d.style.setProperty('opacity', '0', 'important');
-              d.style.setProperty('pointer-events', 'none', 'important');
-            }
-          });
-        } catch (e) {}
-      };
-      xuLy();
-      const iv = setInterval(xuLy, 200);
-      setTimeout(function () { clearInterval(iv); }, 30000);
-    } catch (e) {}
-  };
+  // Bài 6: Ô Device/IP trong firmware chạy thuần el-input giống hệt External Port & Internal Port
+  F.xuLyPortfwdDeviceIp = function (simWin) {};
 })(window.FTC_AX3000C);
 

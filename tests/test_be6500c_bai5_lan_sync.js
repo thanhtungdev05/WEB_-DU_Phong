@@ -6,36 +6,36 @@ const path = require('path');
 const vm = require('vm');
 
 console.log('================================================================');
-console.log('KIỂM THỬ ĐẶC TẢ BÀI 5 AP BE6500C: LAN IP CÓ SẴN & AUTO-SYNC DHCP');
+console.log('KIỂM THỬ ĐẶC TẢ BÀI 4 AP BE6500C: LAN IP CÓ SẴN & AUTO-SYNC DHCP');
 console.log('================================================================\n');
 
 const root = path.resolve(__dirname, '..');
 
-// 1. Kiểm tra bai5.js
-const bai5Code = fs.readFileSync(path.join(root, 'devices/be6500c/lessons/bai5.js'), 'utf8');
+// 1. Kiểm tra bai4.js
+const bai4Code = fs.readFileSync(path.join(root, 'devices/be6500c/lessons/bai4.js'), 'utf8');
 const mockWindow = { DEVICE_BE6500C_LESSONS: [] };
-const fn = new Function('window', bai5Code);
+const fn = new Function('window', bai4Code);
 fn(mockWindow);
-const bai5 = mockWindow.DEVICE_BE6500C_LESSONS.find(l => l.id === 'be6500c-bai5');
-assert.ok(bai5, 'Bài 5 be6500c-bai5 phải tồn tại');
+const bai4 = mockWindow.DEVICE_BE6500C_LESSONS.find(l => l.id === 'be6500c-bai4');
+assert.ok(bai4, 'Bài 4 be6500c-bai4 phải tồn tại');
 
 // 1.1. clearFields không được xóa IP và Mask của Router
-assert.ok(Array.isArray(bai5.clearFields) && bai5.clearFields.length === 0,
+assert.ok(Array.isArray(bai4.clearFields) && bai4.clearFields.length === 0,
   'clearFields phải là mảng rỗng để giữ nguyên IP và Subnet Mask có sẵn của Router');
 
 // 1.2. Hướng dẫn, Tooltip Bước 3 và Luật chấm điểm phải yêu cầu đổi sang 192.168.10.1
-assert.ok(bai5.instructions.some(i => i.includes('192.168.10.1')), 'Instructions phải yêu cầu 192.168.10.1');
-const step3 = bai5.guidePopups.find(p => p.selector && p.selector.includes('ipv4Settings.ipAddress'));
+assert.ok(bai4.instructions.some(i => i.includes('192.168.10.1')), 'Instructions phải yêu cầu 192.168.10.1');
+const step3 = bai4.guidePopups.find(p => p.selector && p.selector.includes('ipv4Settings.ipAddress'));
 assert.ok(step3 && step3.text.includes('192.168.10.1') && step3.expected === '192.168.10.1',
   'Tooltip Bước 3 phải hướng dẫn và mong đợi 192.168.10.1');
-const lanIpRule = bai5.grading.rules.find(r => r.id === 'lan_ip');
+const lanIpRule = bai4.grading.rules.find(r => r.id === 'lan_ip');
 assert.ok(lanIpRule && lanIpRule.expected === '192.168.10.1',
   'Luật chấm điểm lan_ip phải mong đợi 192.168.10.1');
 // 1.3. allowedSelectors phải bao gồm DHCP Start IP và End IP để không bị Auto-Baseline bắt lỗi thao tác thừa
-assert.ok(bai5.allowedSelectors.includes('input[name="ipv4Settings.dhcp.startAddress"]'), 'allowedSelectors phải chứa dhcp.startAddress');
-assert.ok(bai5.allowedSelectors.includes('input[name="ipv4Settings.dhcp.endAddress"]'), 'allowedSelectors phải chứa dhcp.endAddress');
-assert.ok(bai5.grading.allowedSelectors.includes('input[name="ipv4Settings.dhcp.startAddress"]'), 'grading.allowedSelectors phải chứa dhcp.startAddress');
-assert.ok(bai5.grading.allowedSelectors.includes('input[name="ipv4Settings.dhcp.endAddress"]'), 'grading.allowedSelectors phải chứa dhcp.endAddress');
+assert.ok(bai4.allowedSelectors.includes('input[name="ipv4Settings.dhcp.startAddress"]'), 'allowedSelectors phải chứa dhcp.startAddress');
+assert.ok(bai4.allowedSelectors.includes('input[name="ipv4Settings.dhcp.endAddress"]'), 'allowedSelectors phải chứa dhcp.endAddress');
+assert.ok(bai4.grading.allowedSelectors.includes('input[name="ipv4Settings.dhcp.startAddress"]'), 'grading.allowedSelectors phải chứa dhcp.startAddress');
+assert.ok(bai4.grading.allowedSelectors.includes('input[name="ipv4Settings.dhcp.endAddress"]'), 'grading.allowedSelectors phải chứa dhcp.endAddress');
 console.log('✔ Test 1: clearFields là mảng rỗng, đề bài & Tooltip Bước 3 & grading rule mong đợi 192.168.10.1, allowedSelectors chứa DHCP Start/End IP.');
 
 // 2. Kiểm tra giao diện HTML của simulator sim_ONT_be6500c (dùng cho AP BE6500C)

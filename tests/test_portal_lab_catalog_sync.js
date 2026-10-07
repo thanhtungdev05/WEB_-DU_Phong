@@ -48,10 +48,17 @@ const expectedTitles = [
 ];
 const be6500cTitles = [
   'Cấu hình PPPoE',
-  'Cấu hình mạng Wi-Fi (Gộp sóng Band Steering)',
-  'Cấu hình mạng Wi-Fi IOT',
+  'Cấu hình Wi-Fi',
+  'Cấu hình Wi-Fi IOT',
+  'Cấu hình DHCP',
+  'Cấu hình Port Forwarding'
+];
+const ontBe6500cTitles = [
+  'Cấu hình PPPoE',
+  'Cấu hình Wi-Fi',
+  'Cấu hình Wi-Fi IOT',
   'Cấu hình DNS',
-  'Cấu hình mạng LAN',
+  'Cấu hình DHCP',
   'Cấu hình Port Forwarding'
 ];
 const ax3000gzV2Titles = [
@@ -112,11 +119,17 @@ const migrations = [
   '049_activate_mikrotik_hexs_catalog.sql',
   '051_activate_ax3000cv2_easymesh_lab.sql',
   '053_activate_ac1000cv2_catalog.sql',
-  '055_activate_ax3000gz_v2_catalog.sql'
+  '055_activate_ax3000gz_v2_catalog.sql',
+  '055_deactivate_be6500c_dns_lab.sql',
+  '056_standardize_lab_display_titles.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
-  const expectedLessonCount = (device.id === 'vigor2927' || device.id === 'ax3000c') ? 7 : 6;
+  const expectedLessonCount = (device.id === 'vigor2927' || device.id === 'ax3000c')
+    ? 7
+    : device.id === 'be6500c'
+      ? 5
+      : 6;
   assert.equal(lessons.length, expectedLessonCount, `${device.id} must expose exactly ${expectedLessonCount} labs`);
   assert.equal(new Set(lessons.map((lesson) => lesson.id)).size, expectedLessonCount, `${device.id} lab IDs must be unique`);
 
@@ -142,9 +155,11 @@ for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, it
       ? ax3000gzV2Titles[index]
       : device.id === 'vigor2927'
       ? vigor2927Titles[index]
-      : device.id === 'be6500c' || device.id === 'ONT_be6500c'
+      : device.id === 'be6500c'
         ? be6500cTitles[index]
-        : expectedTitles[index];
+        : device.id === 'ONT_be6500c'
+          ? ontBe6500cTitles[index]
+          : expectedTitles[index];
     assert.equal(lesson.id, expectedId, `${device.id} lab ${index + 1} uses an unexpected ID`);
     assert.equal(
       normalizeTitle(lesson.title),
@@ -177,7 +192,7 @@ const expectedLessonCounts = {
   be12000: 6,
   be15000: 1,
   vigor2927: 7,
-  be6500c: 6,
+  be6500c: 5,
   ONT_be6500c: 6,
   mikrotik_hexs: 7
 };
@@ -223,8 +238,8 @@ assert.equal(typeof ax3000cDns.customClear, 'function');
 const ac1000cv2Pppoe = getLesson('ac1000cv2', 'ac1000cv2-bai1');
 assert.equal(
   expectedRuleValue(ac1000cv2Pppoe, 'mtu'),
-  '1492',
-  'AC1000CV2 PPPoE MTU must preserve the Ver2.1 grading value'
+  '1500',
+  'AC1000CV2 PPPoE MTU must use the approved value'
 );
 
 const ax3000cDhcp = getLesson('ax3000c', 'LAB_AX3000CV2_05');
@@ -257,4 +272,4 @@ const ax3000cServer = fs.readFileSync(
 );
 assert.match(ax3000cServer, /AX3000CV2 firmware 0\.5\.3/);
 
-console.log('Portal/catalog audit passed: 14 registered devices, 82 active catalog labs.');
+console.log('Portal/catalog audit passed: 14 registered devices, 81 active catalog labs.');

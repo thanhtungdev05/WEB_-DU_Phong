@@ -10,8 +10,8 @@ const appJsPath = path.join(root, 'app.js');
 const appJsCode = fs.readFileSync(appJsPath, 'utf8');
 
 console.log('================================================================');
-console.log('GIAI ĐOẠN 4: KIỂM THỬ TOÀN DIỆN 18 BÀI CỦA 3 THIẾT BỊ MỚI');
-console.log('(ONT BE6500C, AP BE6500C, ONT BE12000)');
+console.log('GIAI ĐOẠN 4: KIỂM THỬ TOÀN DIỆN 17 BÀI CỦA 3 THIẾT BỊ MỚI');
+console.log('(ONT BE6500C: 6 BÀI, AP BE6500C: 5 BÀI, ONT BE12000: 6 BÀI)');
 console.log('================================================================\n');
 
 // 1. Trích xuất hàm evaluateLesson & isSaveRequiredDevice trực tiếp từ app.js
@@ -157,11 +157,13 @@ const LESSON_TEST_SPECS = [
     id: 'ONT_be6500c-bai1',
     name: 'Bài 1: Cấu hình PPPoE',
     correctElements: {
+      'input[name="radio"][value="10"]:checked, input[name="radio"][value="4"]:checked, input[name="radio"][value="6"]:checked': [{ checked: true, value: '10' }],
       'input[name="ipv4Settings.protocol"]': [{ value: 'pppoe' }],
       'input[name="ipv4Settings.pppoe.username"]': [{ value: 'hnfdl-123456-789' }],
       'input[name="ipv4Settings.pppoe.password"]': [{ value: 'd123456' }]
     },
     wrongElements: {
+      'input[name="radio"][value="10"]:checked, input[name="radio"][value="4"]:checked, input[name="radio"][value="6"]:checked': [{ checked: true, value: 'sai_radio' }],
       'input[name="ipv4Settings.protocol"]': [{ value: 'dhcp' }],
       'input[name="ipv4Settings.pppoe.username"]': [{ value: 'wrong_username' }],
       'input[name="ipv4Settings.pppoe.password"]': [{ value: 'wrong_pass' }]
@@ -224,13 +226,10 @@ const LESSON_TEST_SPECS = [
     id: 'ONT_be6500c-bai5',
     name: 'Bài 5: Cấu hình mạng LAN',
     correctElements: {
-      'input[name="ipv4Settings.ipAddress"]': [{ value: '192.168.1.1' }],
-      '.MuiAutocomplete-input': [{ value: '255.255.255.0' }],
-      'input[name="ipv4Settings.dhcp.enabled"]': [{ value: 'true' }],
-      'input[name="ipv4Settings.dhcp.startAddress"]': [{ value: '192.168.1.2' }],
-      'input[name="ipv4Settings.dhcp.endAddress"]': [{ value: '192.168.1.254' }],
-      'input[name="ipv4Settings.dhcp.leaseTime.days"]': [{ value: '0' }],
-      'input[name="ipv4Settings.dhcp.leaseTime.hours"]': [{ value: '12' }]
+      'input[name="ipv4Settings.ipAddress"]': [{ value: '192.168.10.1' }],
+      'input[name="ipv4Settings.mask"], .MuiAutocomplete-input': [{ value: '255.255.255.0' }],
+      'input[name="ipv4Settings.dhcp.startAddress"]': [{ value: '192.168.10.2' }],
+      'input[name="ipv4Settings.dhcp.endAddress"]': [{ value: '192.168.10.254' }]
     },
     wrongElements: {
       'input[name="ipv4Settings.ipAddress"]': [{ value: '10.0.0.1' }],
@@ -323,22 +322,7 @@ const LESSON_TEST_SPECS = [
     file: 'devices/be6500c/lessons/bai4.js',
     globalVar: 'DEVICE_BE6500C_LESSONS',
     id: 'be6500c-bai4',
-    name: 'Bài 4: Cấu hình DNS',
-    correctElements: {
-      'input[name="ipv4Settings.dns.dnsServers.primary"]': [{ value: '8.8.8.8' }],
-      'input[name="ipv4Settings.dns.dnsServers.secondary"]': [{ value: '8.8.4.4' }]
-    },
-    wrongElements: {
-      'input[name="ipv4Settings.dns.dnsServers.primary"]': [{ value: '1.1.1.1' }],
-      'input[name="ipv4Settings.dns.dnsServers.secondary"]': [{ value: '4.4.4.4' }]
-    }
-  },
-  {
-    device: 'be6500c',
-    file: 'devices/be6500c/lessons/bai5.js',
-    globalVar: 'DEVICE_BE6500C_LESSONS',
-    id: 'be6500c-bai5',
-    name: 'Bài 5: Cấu hình mạng LAN',
+    name: 'Bài 4: Cấu hình mạng LAN',
     correctElements: {
       'input[name="ipv4Settings.ipAddress"]': [{ value: '192.168.10.1' }],
       'input[name="ipv4Settings.mask"]': [{ value: '255.255.255.0' }]
@@ -350,10 +334,10 @@ const LESSON_TEST_SPECS = [
   },
   {
     device: 'be6500c',
-    file: 'devices/be6500c/lessons/bai6.js',
+    file: 'devices/be6500c/lessons/bai5.js',
     globalVar: 'DEVICE_BE6500C_LESSONS',
-    id: 'be6500c-bai6',
-    name: 'Bài 6: Cấu hình Port Forwarding',
+    id: 'be6500c-bai5',
+    name: 'Bài 5: Cấu hình Port Forwarding',
     correctElements: {
       'tbody tr td:nth-child(3)': [{ textContent: 'Camera' }],
       'tbody tr td:nth-child(4)': [{ textContent: 'TCP_UDP' }],
@@ -646,5 +630,5 @@ for (const spec of LESSON_TEST_SPECS) {
 
 console.log('\n================================================================');
 console.log(`KẾT QUẢ: ĐÃ CHẠY THÀNH CÔNG ${totalTestsPassed}/${totalTestsRun} BÀI KIỂM THỬ.`);
-console.log('TOÀN BỘ 18 BÀI CỦA 3 THIẾT BỊ MỚI ĐÃ ĐƯỢC XÁC THỰC HOÀN HẢO 100%!');
+console.log('TOÀN BỘ 17 BÀI CỦA 3 THIẾT BỊ MỚI ĐÃ ĐƯỢC XÁC THỰC HOÀN HẢO 100%!');
 console.log('================================================================');

@@ -3,7 +3,7 @@
  */
 window.DEVICE_ONT_BE6500C_LESSONS = window.DEVICE_ONT_BE6500C_LESSONS || [];
 
-window.DEVICE_ONT_BE6500C_LESSONS.push({
+const bai1_data = {
   id: 'ONT_be6500c-bai1',
   title: 'Cấu hình PPPoE',
   subtitle: 'Cấu hình PPPoE',
@@ -17,7 +17,33 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   clearFields: ['input[name="ipv4Settings.pppoe.username"]', 'input[name="ipv4Settings.pppoe.password"]'],
   grading: {
     description: 'Kiểm tra cấu hình PPPoE',
+    allowedSelectors: [
+      'input[name="ipv4Settings.protocol"]',
+      'div[id*="ipv4Settings.protocol"]',
+      'input[name="ipv6Settings.protocol"]',
+      'div[id*="ipv6Settings.protocol"]',
+      'input[name*="radio"]',
+      'input[name="radio-ipver"]',
+      'input[name="radio"]',
+      '.MuiRadio-root',
+      '.PrivateSwitchBase-input',
+      '.MuiFormControlLabel-root'
+    ],
     rules: [
+      {
+        "id": "ip_version_mode",
+        "name": "Basics IP Mode",
+        "selector": "input[name=\"radio\"][value=\"10\"]:checked, input[name=\"radio\"][value=\"4\"]:checked, input[name=\"radio\"][value=\"6\"]:checked, input[name*=\"radio\"][value=\"10\"]:checked, input[name*=\"radio\"][value=\"4\"]:checked, input[name*=\"radio\"][value=\"6\"]:checked, input[name=\"radio-ipver\"][value=\"10\"]:checked, input[name=\"radio-ipver\"][value=\"4\"]:checked, input[name=\"radio-ipver\"][value=\"6\"]:checked, input[value=\"10\"]:checked, input[value=\"4\"]:checked, input[value=\"6\"]:checked",
+        "expected": "10",
+        "displayExpected": "IPv4 & IPv6",
+        "valueLabels": {
+          "10": "IPv4 & IPv6",
+          "4": "IPv4",
+          "6": "IPv6"
+        },
+        "type": "text_exact",
+        "required": true
+      },
       {
         "id": "wan_protocol",
         "name": "Connection Type",
@@ -49,7 +75,15 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
   },
   allowedSelectors: [
     'div[id*="ipv4Settings.protocol"]',
-    'input[name="ipv4Settings.protocol"]'
+    'input[name="ipv4Settings.protocol"]',
+    'div[id*="ipv6Settings.protocol"]',
+    'input[name="ipv6Settings.protocol"]',
+    'input[name*="radio"]',
+    'input[name="radio-ipver"]',
+    'input[name="radio"]',
+    '.MuiRadio-root',
+    '.PrivateSwitchBase-input',
+    '.MuiFormControlLabel-root'
   ],
   guidePopups: [
     {
@@ -58,29 +92,64 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       "position": "right"
     },
     {
+      "selector": "li.MuiMenuItem-root:contains(\"WAN\"), .MuiTypography-root:contains(\"WAN\"), p:contains(\"WAN\"), span:contains(\"WAN\")",
+      "text": "Bước 2: Chọn WAN",
+      "position": "right"
+    },
+    {
+      "selector": ".MuiFormControlLabel-root:has(input[value=\"10\"]), span:contains(\"IPv4 & IPv6\"), input[name=\"radio\"][value=\"10\"]",
+      "text": "Bước 3: Kiểm tra/chọn mục Basics là IPv4 & IPv6",
+      "position": "bottom"
+    },
+    {
       "selector": ".MuiTypography-subtitle1:contains(\"IPv4 Connection Type\")",
-      "text": "Bước 2: Chọn IPv4 Connection Type",
+      "text": "Bước 4: Chọn IPv4 Connection Type",
       "position": "top"
     },
     {
       "selector": "div[id*=\"ipv4Settings.protocol\"]",
-      "text": "Bước 3: Chọn PPPoE của phần Connection Type",
+      "text": "Bước 5: Chọn PPPoE của phần Connection Type",
       "position": "right"
     },
     {
       "selector": "input[name=\"ipv4Settings.pppoe.username\"]",
-      "text": "Bước 4: Nhập Username: hnfdl-123456-789",
-      "position": "right"
+      "text": "Bước 6: Nhập Username: hnfdl-123456-789",
+      "position": "right",
+      "condition": function (doc) {
+        var protoInp = doc.querySelector('input[name="ipv4Settings.protocol"]');
+        var protoVal = ((protoInp && protoInp.value) || '').toLowerCase();
+        if (protoVal !== 'pppoe') return false;
+        var el = doc.querySelector('input[name="ipv4Settings.pppoe.username"]');
+        if (!el) return false;
+        var fc = el.closest('.MuiFormControl-root');
+        return !fc || (fc.style.display !== 'none' && fc.offsetWidth > 0);
+      }
     },
     {
       "selector": "input[name=\"ipv4Settings.pppoe.password\"]",
-      "text": "Bước 5: Nhập Password: d123456",
-      "position": "right"
+      "text": "Bước 7: Nhập Password: d123456",
+      "position": "right",
+      "condition": function (doc) {
+        var protoInp = doc.querySelector('input[name="ipv4Settings.protocol"]');
+        var protoVal = ((protoInp && protoInp.value) || '').toLowerCase();
+        if (protoVal !== 'pppoe') return false;
+        var el = doc.querySelector('input[name="ipv4Settings.pppoe.password"]');
+        if (!el) return false;
+        var fc = el.closest('.MuiFormControl-root');
+        return !fc || (fc.style.display !== 'none' && fc.offsetWidth > 0);
+      }
     },
     {
       "selector": "button.alternative-layout--submit, .formActionButton.submit, body:has(input[name=\"ipv4Settings.pppoe.username\"]) button.alternative-layout--submit",
-      "text": "Bước 6: Chọn Save để lưu cấu hình",
+      "text": "Bước 8: Chọn Save để lưu cấu hình",
       "position": "bottom"
     }
   ]
-});
+};
+
+var idx = window.DEVICE_ONT_BE6500C_LESSONS.findIndex(function (l) { return l.id === bai1_data.id; });
+if (idx !== -1) {
+  window.DEVICE_ONT_BE6500C_LESSONS[idx] = bai1_data;
+} else {
+  window.DEVICE_ONT_BE6500C_LESSONS.push(bai1_data);
+}

@@ -9,7 +9,7 @@ var index = window.DEVICE_AC1000CV2_LESSONS.findIndex(function (l) { return l.id
 var lessonObj = {
   id: 'ac1000cv2-bai4',
   title: 'Bài 4 - Cấu hình DNS',
-  subtitle: 'Thiết lập địa chỉ máy chủ DNS Server cho mạng LAN',
+  subtitle: 'Cấu hình DNS',
   instructions: [
     '<b>Yêu cầu:</b> Thiết lập thông số DNS thủ công (Manually) trên cổng LAN:',
     '- Primary DNS: <span class="val">8.8.8.8</span>',

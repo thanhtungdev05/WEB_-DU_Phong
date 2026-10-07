@@ -55,6 +55,16 @@ class ResponsiveLayoutContractTests(unittest.TestCase):
         self.assertIn("@media (max-width: 600px)", self.portal_css)
         self.assertIn("#lesson-screen { padding: 16px; }", self.portal_css)
 
+    def test_device_viewport_remains_scrollable_when_legacy_ui_is_taller(self):
+        self.assertRegex(
+            self.portal_css,
+            r"\.iframe-wrap\s*\{[^}]*min-height:\s*0;[^}]*overflow:\s*auto;",
+        )
+        self.assertRegex(
+            self.portal_css,
+            r"#device-iframe\s*\{[^}]*min-width:\s*1100px;[^}]*min-height:\s*900px;",
+        )
+
     def test_changed_assets_have_current_content_hashes(self):
         checks = (
             ("assets/personal-dashboard.css", self.personal_html),

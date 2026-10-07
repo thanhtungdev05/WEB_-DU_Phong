@@ -11,6 +11,7 @@ const lessonObj5 = {
   subtitle: 'Cấu hình DHCP',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện đổi lớp mạng LAN và cấu hình DHCP trên thiết bị theo các thông số:',
     '- IP Address: <span class="val">192.168.2.1</span>',
     '- Subnet Mask: <span class="val">255.255.255.0</span>',
     '- Start IP: <span class="val">192.168.2.2</span>',

@@ -97,10 +97,10 @@
     + 'MuiInputLabel-shrink MuiInputLabel-sizeMedium MuiInputLabel-outlined css-1sqw6hd';
 
   /* O van ban chuan (mau: ipv4Settings.pppoe.username da chup nguyen van) */
-  function oVanBan(ten, nhan, giaTriBanDau, goiY) {
+  function oVanBan(ten, nhan, giaTriBanDau, goiY, styleAttr) {
     var id = 'sim-' + ten.replace(/\W/g, '-');
     var coChu = !!giaTriBanDau;
-    return '<div class="MuiFormControl-root MuiTextField-root css-5p9558">'
+    return '<div class="MuiFormControl-root MuiTextField-root css-5p9558"' + (styleAttr ? ' style="' + styleAttr + '"' : '') + '>'
       + '<label class="' + (coChu ? LOP_NHAN_CO_CHU : LOP_NHAN_RONG) + '" data-shrink="'
       + (coChu ? 'true' : 'false') + '" for="' + id + '" id="' + id + '-label">'
       + esc(nhan) + '</label>'
@@ -274,7 +274,7 @@
   }
 
   function apDungAnHien() {
-    var p4 = giaTri('ipv4Settings.protocol') || 'dhcp';
+    var p4 = giaTri('ipv4Settings.protocol') || 'static';
     var p6 = giaTri('ipv6Settings.protocol') || 'dhcpv6';
 
     // 1. Khoi IPv4 / IPv6 an theo ipVersion
@@ -284,20 +284,43 @@
     if (theV6) theV6.style.display = ipv6DangBat() ? '' : 'none';
 
     // 2. Trong khoi IPv4: PPPoE / Static
+    var laPppoe = (p4 === 'pppoe');
+    var laStatic = (p4 === 'static');
+
     ['ipv4Settings.pppoe.username', 'ipv4Settings.pppoe.password'].forEach(function (n) {
       var el = o(n);
       if (el) {
         var fc = el.closest('.MuiFormControl-root');
-        if (fc) fc.style.display = (p4 === 'pppoe') ? '' : 'none';
+        if (fc) {
+          fc.style.display = (p4 === 'pppoe') ? '' : 'none';
+          if (laPppoe) {
+            fc.style.removeProperty('display');
+          } else {
+            fc.style.setProperty('display', 'none', 'important');
+          }
+        }
       }
     });
     ['ipv4Settings.ipAddress', 'ipv4Settings.mask', 'ipv4Settings.gateway'].forEach(function (n) {
       var el = o(n);
       if (el) {
         var fc = el.closest('.MuiFormControl-root');
-        if (fc) fc.style.display = (p4 === 'static') ? '' : 'none';
+        if (fc) {
+          fc.style.display = (p4 === 'static') ? '' : 'none';
+          if (laStatic) {
+            fc.style.removeProperty('display');
+          } else {
+            fc.style.setProperty('display', 'none', 'important');
+          }
+        }
       }
     });
+
+    try {
+      if (window.parent && typeof window.parent.applyGuidePopups === 'function') {
+        window.parent.applyGuidePopups();
+      }
+    } catch (e) { }
 
     // 3. Trong khoi IPv6: Static
     ['ipv6Settings.ipAddress', 'ipv6Settings.gateway', 'ipv6Settings.prefix'].forEach(function (n) {
@@ -394,13 +417,19 @@
     if (theV4 && !o('ipv4Settings.pppoe.username')) {
       var neo4 = o('ipv4Settings.ipAddress');
       var chen4 = neo4 ? neo4.closest('.MuiFormControl-root') : null;
+      var p4HienTai = giaTri('ipv4Settings.protocol') || 'static';
+      var anBanDau = (p4HienTai !== 'pppoe') ? 'display: none;' : '';
       var tam = document.createElement('div');
-      tam.innerHTML = oVanBan('ipv4Settings.pppoe.username', 'PPP Username', '')
-        + oVanBan('ipv4Settings.pppoe.password', 'PPP Password', '');
+      tam.innerHTML = oVanBan('ipv4Settings.pppoe.username', 'PPP Username', '', null, anBanDau)
+        + oVanBan('ipv4Settings.pppoe.password', 'PPP Password', '', null, anBanDau);
       var dich4 = chen4 ? chen4.parentNode : khoiTheoNhan('IPv4 Connection Type');
       while (tam.firstChild) {
-        if (chen4) dich4.insertBefore(tam.firstChild, chen4);
-        else dich4.appendChild(tam.firstChild);
+        var elCon = tam.firstChild;
+        if (elCon.nodeType === 1 && p4HienTai !== 'pppoe') {
+          elCon.style.setProperty('display', 'none', 'important');
+        }
+        if (chen4) dich4.insertBefore(elCon, chen4);
+        else dich4.appendChild(elCon);
       }
     }
 
@@ -446,6 +475,13 @@
         { gt: 'pppoe', chu: 'PPPoE' },
         { gt: 'static', chu: 'Static' }
       ], function () { apDungAnHien(); rangBuocLienDong('ipv4Settings.protocol'); });
+      if (!i4.__wanBindChange) {
+        i4.__wanBindChange = true;
+        i4.addEventListener('change', function () {
+          apDungAnHien();
+          rangBuocLienDong('ipv4Settings.protocol');
+        });
+      }
     }
     var s6 = document.getElementById('mui-component-select-ipv6Settings.protocol');
     var i6 = o('ipv6Settings.protocol');
@@ -766,9 +802,11 @@
     dungCacNhanhThieu();
     tachTenRadio();
     noiCacOChon();
+    apDungAnHien();
     nap().then(function () {
       theoDoi();
       hienThanhSave();
+      apDungAnHien();
     });
   }
 

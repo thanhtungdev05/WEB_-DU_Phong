@@ -9,7 +9,7 @@ var index = window.DEVICE_AC1000CV2_LESSONS.findIndex(function (l) { return l.id
 var lessonObj = {
   id: 'ac1000cv2-bai6',
   title: 'Bài 6 - Cấu hình Port Forwarding',
-  subtitle: 'Cấu hình chuyển tiếp cổng (Virtual Server / Port Forwarding)',
+  subtitle: 'Cấu hình Port Forwarding',
   instructions: [
     '<b>Yêu cầu:</b>',
     'Truy cập trang Port Forwarding (menu <b>Security Setup > Port Forwarding</b>), mở cổng dịch vụ cho máy chủ nội bộ:',
@@ -17,8 +17,7 @@ var lessonObj = {
     '- Local Port (Cổng nội bộ): <span class="val">3389</span>',
     '- Protocol: <span class="val">TCP</span>',
     '- WAN Start Port (Cổng ngoài bắt đầu): <span class="val">3389</span>',
-    '- WAN End Port (Cổng ngoài kết thúc): <span class="val">3389</span>',
-    'Nhấn <b>Apply</b> / <b>Save</b> để lưu cấu hình.'
+    '- WAN End Port (Cổng ngoài kết thúc): <span class="val">3389</span>'
   ],
   practiceUrl: '/sim_ac1000cv2/portfwd.html',
   clearFields: [

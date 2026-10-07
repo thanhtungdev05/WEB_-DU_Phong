@@ -9,13 +9,12 @@ var index = window.DEVICE_AC1000CV2_LESSONS.findIndex(function (l) { return l.id
 var lessonObj = {
   id: 'ac1000cv2-bai1',
   title: 'Bài 1 - Cấu hình PPPoE',
-  subtitle: 'Cấu hình kết nối WAN/Internet PPPoE',
+  subtitle: 'Cấu hình PPPoE',
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình kết nối WAN Internet với giao thức <b>PPPoE</b> theo các thông số:',
     '- PPPoE Username: <span class="val">sgfdl-210208-218</span>',
     '- PPPoE Password: <span class="val">fpt12345</span>',
-    'Nhấn <b>Apply</b> để lưu kết nối.'
   ],
   practiceUrl: '/sim_ac1000cv2/wan.html',
   allowedSelectors: [
@@ -30,10 +29,10 @@ var lessonObj = {
     try {
       if (iframeWindow && iframeWindow.document) {
         const doc = iframeWindow.document;
-        // Ver2.1 dùng MTU PPPoE 1492; đồng bộ giá trị hiển thị với grading.
+        // Đồng bộ giá trị MTU PPPoE đã được phê duyệt với grading.
         const mtuEl = doc.querySelector('#mtu, input[name="mtu"]');
-        if (mtuEl && (!mtuEl.value || mtuEl.value === '1500')) {
-          mtuEl.value = '1492';
+        if (mtuEl && (!mtuEl.value || mtuEl.value === '1492')) {
+          mtuEl.value = '1500';
         }
 
         if (window._hasClickedSaveInGuide && window._sessionRuleCache) {
@@ -117,7 +116,7 @@ var lessonObj = {
         id: 'mtu',
         name: 'TCP MTU',
         selector: '#mtu, input[name="mtu"]',
-        expected: '1492',
+        expected: '1500',
         type: 'text_exact',
         trim: true,
         required: true
@@ -220,14 +219,14 @@ var lessonObj = {
               });
             }
 
-            // 4. TCP MTU (giữ đúng giá trị chuẩn Ver2.1)
+            // 4. TCP MTU (giữ đúng giá trị đã được phê duyệt)
             if (mtuEl && mtuEl.value && mtuEl.value.trim() !== '') {
               var curMtu = mtuEl.value.trim();
-              if (curMtu !== '1492') {
+              if (curMtu !== '1500') {
                 outOfScopeErrors.push({
                   id: 'err_mtu',
                   name: 'Thao tác ngoài phạm vi: TCP MTU',
-                  expected: '1492',
+                  expected: '1500',
                   actual: curMtu,
                   passed: false,
                   message: 'Cố tình thay đổi thông số MTU ngoài yêu cầu bài học'

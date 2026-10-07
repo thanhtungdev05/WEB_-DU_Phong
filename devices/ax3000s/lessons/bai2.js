@@ -11,8 +11,10 @@ var lessonObj = {
   subtitle: 'Cấu hình wifi',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện cấu hình mạng Wi-Fi chính (Host) theo các thông số dưới đây:',
     '- SSID Name: <span class="val">FPT Telecom</span>',
     '- WPA Key: <span class="val">19006600</span>',
+    '- Bandwidth: <span class="val">20Mhz</span>',
   ],
   practiceUrl: '/sim_ax3000s/app.html#wlanBasicSetting2g',
   clearFields: [
