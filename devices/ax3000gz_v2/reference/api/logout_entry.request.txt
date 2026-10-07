@@ -1,0 +1,2 @@
+# SANITIZED: token phien dong da duoc thay.
+IF_LogOff=1&_sessionTOKEN=<24-char-session-token>

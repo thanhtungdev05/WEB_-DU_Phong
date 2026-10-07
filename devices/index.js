@@ -11,6 +11,7 @@
     window.DEVICE_AC1000CV2,
     window.DEVICE_AX3000C,
     window.DEVICE_AX3000GZ,
+    window.DEVICE_AX3000GZ_V2,
     window.DEVICE_AX3000HV2,
     window.DEVICE_AX3000S,
     window.DEVICE_AC1000HI,

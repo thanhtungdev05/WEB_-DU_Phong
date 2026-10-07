@@ -1,0 +1,1 @@
+<ajax_response_xml_root><IF_ERRORPARAM>SUCC</IF_ERRORPARAM><IF_ERRORTYPE>SUCC</IF_ERRORTYPE><IF_ERRORSTR>SUCC</IF_ERRORSTR><IF_ERRORID>0</IF_ERRORID><OBJ_IGMPPROXYEX_ID><Instance><ParaName>_InstID</ParaName><ParaValue>DEV.IGMPWan1</ParaValue><ParaName>WanCID</ParaName><ParaValue>DEV.IP.IF3</ParaValue></Instance></OBJ_IGMPPROXYEX_ID></ajax_response_xml_root>

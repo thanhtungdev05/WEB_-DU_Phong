@@ -1,0 +1,22 @@
+{
+  "page": "Local Network > Routing > IPv4",
+  "menu_view": "routeIpv4",
+  "source": "reference/api/routeIpv4_view.response.html",
+  "sections": ["Default Routing", "Routing Table", "Static Routing"],
+  "read_endpoints": [
+    "route_routedefault_lua.lua",
+    "route_routetableipv4_lua.lua",
+    "route_routestaticipv4_lua.lua"
+  ],
+  "fields": ["DefRTInterface", "Alias:StaticRoute", "Interface:StaticRoute", "DestIP", "DestIPMask", "GWIP"],
+  "current_state": "DefRTInterface is empty; the temporary static route was deleted and the table is empty again.",
+  "observed_validation": "Default Routing Apply with the unchanged empty WAN selection displays 'This field is required.' and sends no POST.",
+  "write_contract": {
+    "endpoint": "route_routestaticipv4_lua.lua",
+    "actions": ["Apply", "Delete"],
+    "verified_cycle": "Add 192.0.2.0/24 via LAN gateway 192.168.1.254, read it back, then delete it.",
+    "state_model": "Dynamic ConfigStore instances with firmware-compatible instance IDs and exact success XML."
+  },
+  "blocker": null,
+  "level": 4
+}

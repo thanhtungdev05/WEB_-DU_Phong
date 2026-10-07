@@ -1,0 +1,1407 @@
+[
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "homePage",
+    "path": "Home",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "timing: ?_type=hiddenData&_tag=sntp_data (chi sim ban)",
+      "timing: ?_type=loginData&_tag=login_entry (chi sim ban)",
+      "timing: ?_type=loginData&_tag=login_token (chi sim ban)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "mmTopology",
+    "path": "Topology",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=topo_lua.lua (1117 vs 1115 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9307,
+    "over_pct": 0.0693,
+    "id": "ponopticalinfo",
+    "path": "Internet > Status > PON Inform",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=optical_info_lua.lua (1526 vs 1526 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "ethWanStatus",
+    "path": "Internet > Status > WAN",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=wan_internetstatus_lua.lua&TypeUplink=2&pageType=1 (4141 vs 4141 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "tunnel4in6Status",
+    "path": "Internet > Status > DSLite",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "l2tpStatus",
+    "path": "Internet > Status > L2TP",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9538,
+    "over_pct": 0.0462,
+    "id": "conntracks",
+    "path": "Internet > Status > NAT entries/conntracks",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=firewall_conntrack_lua.lua (407 vs 406 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "ethWanConfig",
+    "path": "Internet > WAN > WAN",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=wan_internet_lua.lua&TypeUplink=2&pageType=0 (2886 vs 2862 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "tunnel4in6Config",
+    "path": "Internet > WAN > DSLite",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "l2tpConfig",
+    "path": "Internet > WAN > L2TP",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "firewall",
+    "path": "Internet > Security > Firewall",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9752,
+    "over_pct": 0.0248,
+    "id": "filterCriteria",
+    "path": "Internet > Security > Filter Criteria",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "timing: ?_type=hiddenData&_tag=sntp_data (chi that ban)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9748,
+    "over_pct": 0.0252,
+    "id": "localServiceCtrl",
+    "path": "Internet > Security > Local Service Control",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "timing: ?_type=hiddenData&_tag=sntp_data (chi sim ban)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9748,
+    "over_pct": 0.0252,
+    "id": "alg",
+    "path": "Internet > Security > ALG",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9748,
+    "over_pct": 0.0252,
+    "id": "dmz",
+    "path": "Internet > Security > DMZ",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9748,
+    "over_pct": 0.0252,
+    "id": "portForwarding",
+    "path": "Internet > Security > Port Forwarding",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9748,
+    "over_pct": 0.0252,
+    "id": "portTrigger",
+    "path": "Internet > Security > Port Trigger",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9748,
+    "over_pct": 0.0252,
+    "id": "iplimit",
+    "path": "Internet > IP Rate Limit",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9748,
+    "over_pct": 0.0252,
+    "id": "parentCtrl",
+    "path": "Internet > Parental Controls",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9748,
+    "over_pct": 0.0252,
+    "id": "ddns",
+    "path": "Internet > DDNS",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9572,
+    "over_pct": 0.0428,
+    "id": "sntp",
+    "path": "Internet > SNTP",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=sntp_lua.lua (1123 vs 1123 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9861,
+    "over_pct": 0.0139,
+    "id": "portBinding",
+    "path": "Internet > Port Binding",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9861,
+    "over_pct": 0.0139,
+    "id": "rip",
+    "path": "Internet > Dynamic Routing",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9861,
+    "over_pct": 0.0139,
+    "id": "multicastmode",
+    "path": "Internet > Multicast > Multicast Mode",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9861,
+    "over_pct": 0.0139,
+    "id": "igmp",
+    "path": "Internet > Multicast > IGMP",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9861,
+    "over_pct": 0.0139,
+    "id": "mld",
+    "path": "Internet > Multicast > MLD",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9861,
+    "over_pct": 0.0139,
+    "id": "multicastbasic",
+    "path": "Internet > Multicast > Basic",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "timing: ?_type=hiddenData&_tag=sntp_data (chi that ban)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "IgmpWLANCONF",
+    "path": "Internet > Multicast >  Multicast on Wi-Fi ",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "timing: ?_type=hiddenData&_tag=sntp_data (chi sim ban)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "portlocate",
+    "path": "Internet > Port Locating",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "ponLoid",
+    "path": "Internet > PON Information > LOID",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "ponSn",
+    "path": "Internet > PON Information > SN",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=poninfo_sn_lua.lua (428 vs 428 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "localNetStatus",
+    "path": "Local Network > Status",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=status_lan_info_lua.lua (3795 vs 3795 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "wlanBasic",
+    "path": "Local Network > WLAN > WLAN Basic",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "wlanAdvanced",
+    "path": "Local Network > WLAN > WLAN Advanced",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "wps",
+    "path": "Local Network > WLAN > WPS",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "wlanStaScanAP",
+    "path": "Local Network > WLAN > Surrounding WiFi",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuView&_tag=wlanStaScanAP&Menu3Location=0 (19314 vs 19314 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "wifibandsteer",
+    "path": "Local Network > WLAN > WLAN Band Steering",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "smNetSphereMAP",
+    "path": "Local Network > WLAN > Mesh Wi-Fi",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9681,
+    "over_pct": 0.0319,
+    "id": "lanMgrIpv4",
+    "path": "Local Network > LAN > IPv4",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=Localnet_LanMgrIpv4_DHCPHostInfo_lua.lua (623 vs 623 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9909,
+    "over_pct": 0.0091,
+    "id": "lanMgrIpv6",
+    "path": "Local Network > LAN > IPv6",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "routeIpv4",
+    "path": "Local Network > Routing > IPv4",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=hiddenData&_tag=sntp_data (1123 vs 1123 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "routeIpv6",
+    "path": "Local Network > Routing > IPv6",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "upnp",
+    "path": "Local Network > UPnP",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "bpdu",
+    "path": "Local Network > BPDU",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "dns",
+    "path": "Local Network > DNS",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9451,
+    "over_pct": 0.0549,
+    "id": "statusMgr",
+    "path": "Management & Diagnosis > Status",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuData&_tag=devmgr_statusmgr_lua.lua (2448 vs 2444 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "rebootAndReset",
+    "path": "Management & Diagnosis > System Management > Device Management",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "firmwareUpgr",
+    "path": "Management & Diagnosis > System Management > Software Upgrade",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuView&_tag=firmwareUpgr&Menu3Location=0 (18290 vs 18289 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "usrCfgMgr",
+    "path": "Management & Diagnosis > System Management > User Configuration Management",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuView&_tag=usrCfgMgr&Menu3Location=0 (20261 vs 20265 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "accountMgr",
+    "path": "Management & Diagnosis > Account Management",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "logMgr",
+    "path": "Management & Diagnosis > Log Management",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuView&_tag=logMgr&Menu3Location=0 (30196 vs 30199 byte)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "networkDiag",
+    "path": "Management & Diagnosis > Diagnosis > Network Diagnosis",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "mirror",
+    "path": "Management & Diagnosis > Diagnosis > Mirror Configuration",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9924,
+    "over_pct": 0.0076,
+    "id": "loopbackDetect",
+    "path": "Management & Diagnosis > Diagnosis > Loopback Detection",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "timing: ?_type=hiddenData&_tag=sntp_data (chi that ban)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9908,
+    "over_pct": 0.0092,
+    "id": "arpTable",
+    "path": "Management & Diagnosis > Diagnosis > ARP Table",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "timing: ?_type=hiddenData&_tag=sntp_data (chi sim ban)"
+    ]
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9908,
+    "over_pct": 0.0092,
+    "id": "macTable",
+    "path": "Management & Diagnosis > Diagnosis > MAC Table",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9908,
+    "over_pct": 0.0092,
+    "id": "IPv6SwitchMgr",
+    "path": "Management & Diagnosis > IPv6 Switch",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9908,
+    "over_pct": 0.0092,
+    "id": "HardwareDiag",
+    "path": "Management & Diagnosis > Hardware Diagnosis",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": []
+  },
+  {
+    "same_size": true,
+    "real": [
+      574,
+      1038,
+      3
+    ],
+    "sim": [
+      574,
+      1038,
+      3
+    ],
+    "match_pct": 99.9908,
+    "over_pct": 0.0092,
+    "id": "UserGuideLoad",
+    "path": "Management & Diagnosis > Download User Guide",
+    "console": [],
+    "console_real": [],
+    "console_sim_only": [],
+    "bad_urls": [],
+    "api_missing": [],
+    "api_dynamic": [
+      "khac sha: ?_type=menuView&_tag=UserGuideLoad&Menu3Location=0 (15870 vs 15870 byte)"
+    ]
+  }
+]

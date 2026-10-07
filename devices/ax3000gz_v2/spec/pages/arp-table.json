@@ -1,0 +1,10 @@
+{
+  "page": "Management & Diagnosis > Diagnosis > ARP Table",
+  "menu_view": "arpTable",
+  "source": "reference/api/arpTable_view.response.html",
+  "endpoint": "arp_arptable_lua.lua",
+  "refresh_method": "GET",
+  "refresh_evidence": "reference/har/details/arp_table_refresh.response.xml",
+  "writes": [],
+  "state": "The captured ARP instances are generated through ConfigStore."
+}

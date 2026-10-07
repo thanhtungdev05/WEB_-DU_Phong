@@ -547,7 +547,7 @@
                 const loc = (doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
                 const hsh = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
                 const isMainPage = hsh.includes('#/home') || hsh.includes('#/network') || hsh.includes('#/system') || hsh.includes('#/status') || hsh.includes('#/device');
-                const isLogin = !isMainPage && (loc.includes('login') || hsh.includes('login') || doc.querySelector('.login-fpt, form[action*="login"]'));
+                const isLogin = !isMainPage && (loc.includes('login') || hsh.includes('login') || doc.querySelector('.login-fpt, form[action*="login"], #Frm_Username, #Frm_Password'));
 
                 if (isLogin) {
                   const checkLoginFields = function (e, triggerEl) {
@@ -3825,7 +3825,7 @@
     const hash = (doc && doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
     const isMainConfigPage = hash.includes('#/home') || hash.includes('#/network') || hash.includes('#/system') || hash.includes('#/status') || hash.includes('#/device');
 
-    const isLoginPage = !isMainConfigPage && (href.includes('login') || hash.includes('login') || (doc && doc.querySelector('.login-fpt, form[action*="login"]')));
+    const isLoginPage = !isMainConfigPage && (href.includes('login') || hash.includes('login') || (doc && doc.querySelector('.login-fpt, form[action*="login"], #Frm_Username, #Frm_Password')));
 
     if (isLoginPage && store && store._common_login && store._common_login.length > 0) {
       return store._common_login;

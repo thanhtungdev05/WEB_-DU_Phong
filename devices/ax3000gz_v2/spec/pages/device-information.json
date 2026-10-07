@@ -1,0 +1,27 @@
+{
+  "device": "AX3000GZ_V2",
+  "page": "Management & Diagnosis > Status",
+  "menu_view": "statusMgr",
+  "menu_view_method": "GET",
+  "menu_view_content_type": "text/html; charset=utf-8",
+  "data_endpoint": "/?_type=menuData&_tag=devmgr_statusmgr_lua.lua",
+  "data_method": "GET",
+  "data_content_type": "text/xml; charset=utf-8",
+  "fields": [
+    "Device Type",
+    "Device Serial No.",
+    "Batch No.",
+    "Hardware Version",
+    "Software Version",
+    "Boot Version",
+    "CPU Usage",
+    "Memory Usage",
+    "System Uptime"
+  ],
+  "reference": {
+    "view": "reference/api/statusMgr_view.response.html",
+    "data": "reference/api/device_info_data.response.xml",
+    "screenshot": "reference/screenshots/device_information_1024x768.png",
+    "rendered": "reference/rendered/device_information.html"
+  }
+}

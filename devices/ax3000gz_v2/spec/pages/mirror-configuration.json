@@ -1,0 +1,12 @@
+{
+  "page": "Management & Diagnosis > Diagnosis > Mirror Configuration",
+  "menu_view": "mirror",
+  "source": "reference/api/mirror_view.response.html",
+  "endpoint": "mirror_mirrormgr_lua.lua",
+  "fields": ["_InstID", "MirrorEnable", "MirrorDest", "MirrorSrc"],
+  "measured_state": {"MirrorEnable": "0", "MirrorDest": "DEV.BRIDGING.BR1.BRPORT5", "MirrorSrc": "IGD.WANALL"},
+  "write_contract": {"method": "POST", "action": "Apply"},
+  "request_evidence": "reference/har/details/mirror_apply_off_lan4.request.txt",
+  "response_evidence": "reference/har/details/mirror_apply_off_lan4.response.xml",
+  "state": "Apply updates MirrorEnable, MirrorSrc and MirrorDest through ConfigStore."
+}

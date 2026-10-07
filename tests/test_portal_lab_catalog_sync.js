@@ -11,6 +11,7 @@ const expected = {
   ac1000f: 'LAB_AC1000F_',
   ax3000c: 'LAB_AX3000CV2_',
   ax3000gz: 'LAB_AX3000GZ_',
+  ax3000gz_v2: 'LAB_AX3000GZ_V2_',
   ax3000hv2: 'LAB_AX3000HV2_',
   ax3000s: 'LAB_AX3000S_',
   ac1000HI: 'LAB_AC1000HI_',
@@ -19,7 +20,7 @@ const expected = {
   vigor2927: 'vg2927-bai'
 };
 const supportedPortalDevices = [
-  'ac1000f', 'ac1000cv2', 'ax3000c', 'ax3000gz', 'ax3000hv2', 'ax3000s',
+  'ac1000f', 'ac1000cv2', 'ax3000c', 'ax3000gz', 'ax3000gz_v2', 'ax3000hv2', 'ax3000s',
   'ac1000HI', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c',
   'mikrotik_hexs'
 ];
@@ -28,6 +29,7 @@ const simulatorPrefixes = {
   ac1000cv2: '/sim_ac1000cv2/',
   ax3000c: '/sim_ax3000c/',
   ax3000gz: '/sim_ax3000gz/',
+  ax3000gz_v2: '/sim_ax3000gz_v2/',
   ax3000hv2: '/sim_ax3000hv2/',
   ax3000s: '/sim_ax3000s/',
   ac1000HI: '/sim_ac1000HI/',
@@ -50,6 +52,14 @@ const be6500cTitles = [
   'Cấu hình mạng Wi-Fi IOT',
   'Cấu hình DNS',
   'Cấu hình mạng LAN',
+  'Cấu hình Port Forwarding'
+];
+const ax3000gzV2Titles = [
+  'Cấu hình WAN PPPoE',
+  'Cấu hình Wi-Fi',
+  'Cấu hình Wi-Fi IoT',
+  'Cấu hình DNS',
+  'Cấu hình DHCP',
   'Cấu hình Port Forwarding'
 ];
 const vigor2927Titles = [
@@ -101,7 +111,8 @@ const migrations = [
   '046_activate_vigor2927_catalog.sql',
   '049_activate_mikrotik_hexs_catalog.sql',
   '051_activate_ax3000cv2_easymesh_lab.sql',
-  '053_activate_ac1000cv2_catalog.sql'
+  '053_activate_ac1000cv2_catalog.sql',
+  '055_activate_ax3000gz_v2_catalog.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
@@ -127,7 +138,9 @@ for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, it
     const expectedId = expected[device.id].startsWith('LAB_')
       ? `${expected[device.id]}${String(index + 1).padStart(2, '0')}`
       : `${expected[device.id]}${index + 1}`;
-    const expectedTitle = device.id === 'vigor2927'
+    const expectedTitle = device.id === 'ax3000gz_v2'
+      ? ax3000gzV2Titles[index]
+      : device.id === 'vigor2927'
       ? vigor2927Titles[index]
       : device.id === 'be6500c' || device.id === 'ONT_be6500c'
         ? be6500cTitles[index]
@@ -157,6 +170,7 @@ const expectedLessonCounts = {
   ac1000cv2: 6,
   ax3000c: 7,
   ax3000gz: 6,
+  ax3000gz_v2: 6,
   ax3000hv2: 6,
   ax3000s: 6,
   ac1000HI: 6,
@@ -243,4 +257,4 @@ const ax3000cServer = fs.readFileSync(
 );
 assert.match(ax3000cServer, /AX3000CV2 firmware 0\.5\.3/);
 
-console.log('Portal/catalog audit passed: 12 registered devices, 69 active catalog labs.');
+console.log('Portal/catalog audit passed: 14 registered devices, 82 active catalog labs.');

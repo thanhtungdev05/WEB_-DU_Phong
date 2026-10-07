@@ -1,0 +1,36 @@
+{
+  "device": {
+    "manufacturer_oui": "843C99",
+    "version_date": "2026-03-25 17:33:14",
+    "software_version": "V9.3.10P6N16",
+    "model_name": "F6201B",
+    "batch_number": "07eaP6N160145",
+    "hardware_version": "V9.3.13",
+    "manufacturer": "ZTE",
+    "serial_number": "843C99290EA5",
+    "boot_version": "V9.3.10P10N6",
+    "first_mac": "84:3C:99:29:0E:A5",
+    "pon_sn": "ZTEGd79de403"
+  },
+  "runtime": {
+    "cpu_usage_1": 1,
+    "cpu_usage_2": 1,
+    "cpu_usage_3": 0,
+    "cpu_usage_4": 0,
+    "memory_usage": 39,
+    "power_on_time_seed": 1624,
+    "flash_total": 134217728,
+    "flash_percent_used": 57,
+    "optical_temperature": "42.589",
+    "cpu_temperature": "64℃"
+  },
+  "home": {
+    "firewall_level": "Middle",
+    "anti_attack": "1",
+    "wlan_radio_switch": "1",
+    "current_local_time_seed": "2026-03-25T17:59:17",
+    "ntp_server_1": "vn.pool.ntp.org",
+    "ntp_server_2": "asia.pool.ntp.org",
+    "zone_index": "24"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "page": "Local Network > BPDU",
+  "menu_view": "bpdu",
+  "source": "reference/api/bpdu_view.response.html",
+  "endpoint": "bpdu_lua.lua",
+  "fields": ["_InstID", "BPDUEnable", "Btn_cancel_instCfgArea", "Btn_apply_instCfgArea"],
+  "write_method": "POST",
+  "write_action": "Apply",
+  "request_evidence": "reference/har/details/bpdu_apply.request.txt",
+  "response_evidence": "reference/har/details/bpdu_apply.response.txt",
+  "state": "ConfigStore generic values; Apply updates BPDUEnable returned by GET."
+}

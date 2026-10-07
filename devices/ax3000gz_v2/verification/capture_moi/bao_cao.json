@@ -1,0 +1,48 @@
+{
+  "pages": [
+    "dmz",
+    "iplimit",
+    "filterCriteria",
+    "parentCtrl"
+  ],
+  "session_timeout": [],
+  "api": {
+    "api/firewall_homepage_lua.lua.xml": {
+      "sha": "601f2ef4f35460996cb581154206629b16ab4d64e0dac9cc70787650b51731b0",
+      "len": 392
+    },
+    "api/wlan_homepage_lua.lua.xml": {
+      "sha": "8181040069ea628446387f4c18bf7a61d4998d3b92b628a85a17012514a830bc",
+      "len": 325
+    },
+    "api/sntp_data.xml": {
+      "sha": "136b8242688603d8597d9b8e3aa77cc9d8ba21dc2151de799418c6c658fe839c",
+      "len": 1123
+    },
+    "api/firewall_dmz_lua.lua.xml": {
+      "sha": "652a1c27457afa736f0bbf8c0b8ab9aad18e918c80fa40305a4811b958b305ff",
+      "len": 465
+    },
+    "api/accessdev_data.xml": {
+      "sha": "342a6b3e9a7afde886ee9fc2f054ba0fea243496c196896ba3621bda943c5e57",
+      "len": 458
+    },
+    "api/fpt_iplimitSw_model.lua.json": {
+      "sha": "b87828289bd4917df4b0c12bc95ed1086cc320f4705d7afae3a6b558ea64e4b1",
+      "len": 133
+    },
+    "api/firewall_filterglobal_lua.lua.xml": {
+      "sha": "79c040e918d5464a278ce68dab603d154c2c3150db7da7cd1509822fea1dce56",
+      "len": 526
+    },
+    "api/firewall_parentctrl_lua.lua.xml": {
+      "sha": "f97ecff7fc91d391cba9306d35b116fe8d381a4543a2af2f4d2bda40ac9f0035",
+      "len": 221
+    }
+  },
+  "img": {
+    "leftArrowDisable.png": {
+      "sha": "96df177febc76e22afdb4e8afac3c8028305dab451f08ca689e7d46cfca59d62"
+    }
+  }
+}

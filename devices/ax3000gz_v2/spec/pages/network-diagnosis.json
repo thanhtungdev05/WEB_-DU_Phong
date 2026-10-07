@@ -1,0 +1,32 @@
+{
+  "page": "Management & Diagnosis > Diagnosis > Network Diagnosis",
+  "menu_view": "networkDiag",
+  "source": "reference/api/networkDiag_view.response.html",
+  "sections": ["PING Diagnosis", "TRACEROUTE Diagnosis", "Simulation"],
+  "read_endpoints": [
+    "networkdiag_ping_lua.lua",
+    "networkdiag_traceroute_lua.lua",
+    "networkdiag_svcsimulation_lua.lua"
+  ],
+  "ping_fields": ["Host", "Interface", "NumofRepeat", "DataBlockSize", "Timeout", "PingAck"],
+  "ping_action": "PingDiagnosis",
+  "ping_request_evidence": "reference/har/details/networkdiag_ping_start.request.txt",
+  "ping_response_evidence": [
+    "reference/har/details/networkdiag_ping_start.response.xml",
+    "reference/har/details/networkdiag_ping_result.response.xml"
+  ],
+  "traceroute_fields": ["Host", "Interface", "MaxHopCount", "Timeout", "Protocol", "Control", "Result"],
+  "traceroute_action": "TraceRouteDiagnosis",
+  "traceroute_evidence": [
+    "reference/har/details/networkdiag_traceroute_start.request.txt",
+    "reference/har/details/networkdiag_traceroute_start.response.xml",
+    "reference/har/details/networkdiag_traceroute_result.response.xml"
+  ],
+  "simulation_actions": ["PPPoE_APPLY", "empty action for polling"],
+  "simulation_evidence": [
+    "reference/har/details/networkdiag_sim_pppoe_start.request.txt",
+    "reference/har/details/networkdiag_sim_pppoe_start.response.xml",
+    "reference/har/details/networkdiag_sim_pppoe_complete.response.xml"
+  ],
+  "state": "ConfigStore changes PING and Traceroute from Requested to Complete, and PPPoE Simulation from Running to Complete/Failed during polling."
+}

@@ -1,0 +1,26 @@
+{
+  "page": "Management & Diagnosis > Diagnosis > Loopback Detection",
+  "menu_view": "loopbackDetect",
+  "source": "reference/api/loopbackDetect_view.response.html",
+  "sections": ["Basic Configuration", "Switch Control", "VLAN"],
+  "endpoints": ["loopback_basic_lua.lua", "loopback_enable_lua.lua", "loopback_vlan_lua.lua"],
+  "measured_actions": [
+    "Apply Basic Configuration unchanged",
+    "Apply four Switch Control instances unchanged",
+    "Add VLAN LAN4/4094",
+    "Delete VLAN DEV.LOOP.VLAN1"
+  ],
+  "request_evidence": [
+    "reference/har/details/loopback_basic_apply.request.txt",
+    "reference/har/details/loopback_enable_apply.request.txt",
+    "reference/har/details/loopback_vlan_add.request.txt",
+    "reference/har/details/loopback_vlan_delete.request.txt"
+  ],
+  "response_evidence": [
+    "reference/har/details/loopback_basic_apply.response.xml",
+    "reference/har/details/loopback_enable_apply.response.xml",
+    "reference/har/details/loopback_vlan_add.response.xml",
+    "reference/har/details/loopback_vlan_delete.response.xml"
+  ],
+  "state": "Basic fields, each Switch Control instance and the variable VLAN instance list are maintained in ConfigStore."
+}

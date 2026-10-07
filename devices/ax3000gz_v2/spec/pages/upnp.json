@@ -1,0 +1,12 @@
+{
+  "page": "Local Network > UPnP",
+  "menu_view": "upnp",
+  "source": "reference/api/upnp_view.response.html",
+  "endpoint": "upnp_upnp_lua.lua",
+  "fields": ["_InstID", "EnableUPnPIGD", "ADPeriod", "TTL", "LimitEnable"],
+  "write_method": "POST",
+  "write_action": "Apply",
+  "request_evidence": "reference/har/details/upnp_apply.request.txt",
+  "response_evidence": "reference/har/details/upnp_apply.response.txt",
+  "state": "ConfigStore generic values; Apply updates the same values returned by GET."
+}

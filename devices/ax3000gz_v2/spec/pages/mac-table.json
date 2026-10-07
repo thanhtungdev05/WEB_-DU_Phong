@@ -1,0 +1,10 @@
+{
+  "page": "Management & Diagnosis > Diagnosis > MAC Table",
+  "menu_view": "macTable",
+  "source": "reference/api/macTable_view.response.html",
+  "endpoint": "macinfo_mactable_lua.lua",
+  "refresh_method": "GET",
+  "refresh_evidence": "reference/har/details/mac_table_refresh.response.xml",
+  "writes": [],
+  "state": "The captured MAC instances are generated through ConfigStore."
+}

@@ -1,0 +1,2 @@
+# SANITIZED: gia tri dong da duoc thay, thu tu/ten truong giu nguyen.
+action=login&Password=<sha256(password+login_token)>&Username=admin&_sessionTOKEN=<24-char-session-token>

@@ -76,6 +76,7 @@ import simulators.sim_ac1000f.server2 as ac1000f
 # AX3000CV2 firmware 0.5.3 (fw_053/)
 import simulators.sim_ax3000c.server_fw053 as ax3000c
 import simulators.sim_ax3000gz.server as ax3000gz
+import devices.ax3000gz_v2.src.server as ax3000gz_v2
 import simulators.sim_ax3000hv2.server2 as ax3000hv2
 import simulators.sim_ax3000s.server as ax3000s
 import simulators.sim_be12000.src.server as be12000
@@ -92,6 +93,7 @@ SIM_MODULES = {
     'sim_ac1000f': ac1000f,
     'sim_ax3000c': ax3000c,
     'sim_ax3000gz': ax3000gz,
+    'sim_ax3000gz_v2': ax3000gz_v2,
     'sim_ax3000hv2': ax3000hv2,
     'sim_ax3000s': ax3000s,
     'sim_be12000': be12000,
@@ -109,6 +111,7 @@ SIM_HANDLERS = {
     'sim_ac1000f': ac1000f.H,
     'sim_ax3000c': ax3000c.Handler,
     'sim_ax3000gz': ax3000gz.H,
+    'sim_ax3000gz_v2': ax3000gz_v2.Handler,
     'sim_ax3000hv2': ax3000hv2.H,
     'sim_ax3000s': ax3000s.H,
     'sim_be12000': be12000.Handler,

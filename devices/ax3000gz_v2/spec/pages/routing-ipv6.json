@@ -1,0 +1,21 @@
+{
+  "page": "Local Network > Routing > IPv6",
+  "menu_view": "routeIpv6",
+  "source": "reference/api/routeIpv6_view.response.html",
+  "sections": ["Default Routing", "Routing Table", "Static Routing"],
+  "read_endpoints": [
+    "route_routedefaultipv6_lua.lua",
+    "route_routetableipv6_lua.lua",
+    "route_routestaticipv6_lua.lua"
+  ],
+  "fields": ["DefRTInterface", "Alias:StaticRoute", "Interface:StaticRoute", "DestIP:StaticRoute", "PrefixLen:StaticRoute", "GWIP:StaticRoute"],
+  "current_state": "DefRTInterface is empty; the temporary static route was deleted and the table is empty again.",
+  "write_contract": {
+    "endpoint": "route_routestaticipv6_lua.lua",
+    "actions": ["Apply", "Delete"],
+    "verified_cycle": "Add 2001:db8:ffff::/64 via LAN gateway fe80::2, read it back, then delete it.",
+    "state_model": "Dynamic ConfigStore instances with firmware-compatible instance IDs and exact success XML."
+  },
+  "blocker": null,
+  "level": 4
+}

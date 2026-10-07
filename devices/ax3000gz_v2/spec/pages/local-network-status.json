@@ -1,0 +1,14 @@
+{
+  "page": "Local Network > Status",
+  "menu_view": "localNetStatus",
+  "source": "reference/api/localNetStatus_view.response.html",
+  "sections": ["LAN Information", "WLAN Status", "WLAN Client Status", "LAN Client Status"],
+  "read_endpoints": [
+    "status_lan_info_lua.lua",
+    "wlan_wlanstatus_lua.lua",
+    "wlan_client_stat_lua.lua",
+    "accessdev_landevs_lua.lua"
+  ],
+  "writes": [],
+  "level4_basis": "All four read responses are generated through ConfigStore; browser comparison is pixel-identical at 1038x574."
+}

@@ -1,0 +1,36 @@
+{
+  "page": "Authentication (Login / Logout)",
+  "source": "reference/source/index.html",
+  "endpoints": [
+    {
+      "method": "GET",
+      "query": "?_type=loginData&_tag=login_entry",
+      "purpose": "issue a 24-character session token"
+    },
+    {
+      "method": "GET",
+      "query": "?_type=loginData&_tag=login_token",
+      "purpose": "issue the 8-character password hashing token"
+    },
+    {
+      "method": "POST",
+      "query": "?_type=loginData&_tag=login_entry",
+      "fields": ["action", "Password", "Username", "_sessionTOKEN"]
+    },
+    {
+      "method": "POST",
+      "query": "?_type=loginData&_tag=logout_entry",
+      "fields": ["IF_LogOff", "_sessionTOKEN"]
+    }
+  ],
+  "password_contract": "SHA256(password + login_token)",
+  "evidence": [
+    "reference/har/details/login_success.request.txt",
+    "reference/har/details/login_success.response.txt",
+    "reference/har/details/login_failure.request.txt",
+    "reference/har/details/login_failure.response.txt",
+    "reference/har/details/logout.request.txt",
+    "reference/har/details/logout.response.txt"
+  ],
+  "state": "SID cookie owns logged-in state and rotating sess_token; logout invalidates the authenticated state."
+}
