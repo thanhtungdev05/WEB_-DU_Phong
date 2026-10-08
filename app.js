@@ -656,6 +656,7 @@
                   // Login (input type=submit) là Save/Apply.
                   if (isLogin) return;
                   let el = e.target;
+                  if (el && (el.id === 'LoginId' || (el.value || '').trim().toLowerCase() === 'login')) return;
                   while (el && el !== doc) {
                     const laNutLuuMikrotik = (currentDeviceId === 'mikrotik_hexs') && (function () {
                       try {
@@ -714,6 +715,7 @@
                   // và ở chế độ Hướng dẫn sẽ hiện "Xem lỗi sai" khi chưa cấu hình gì.
                   if (isLogin) return;
                   let el = e.target;
+                  if (el && (el.id === 'LoginId' || (el.value || '').trim().toLowerCase() === 'login')) return;
                   while (el && el !== doc) {
                     const laNutLuuMikrotik = (currentDeviceId === 'mikrotik_hexs') && (function () {
                       try {

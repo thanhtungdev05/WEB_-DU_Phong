@@ -776,6 +776,34 @@ class Handler(BaseHTTPRequestHandler):
                     "<IF_ERRORID>0</IF_ERRORID><IF_ERRORTYPE>SUCC</IF_ERRORTYPE>"
                     "<IF_ERRORSTR>SUCC</IF_ERRORSTR><IF_ERRORPARAM>SUCC</IF_ERRORPARAM>"
                     "</ajax_response_xml_root>").encode("utf-8")
+        lab_tags = {
+            "wan_internet_lua.lua",
+            "wlan_wlansssidconf_lua.lua",
+            "wlan_wlanbasiconoff_lua.lua",
+            "wlan_wlanbasicadconf_lua.lua",
+            "dns_localdns_lua.lua",
+            "Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua",
+            "firewall_portforwarding_lua.lua",
+        }
+        if typ == "menuData" and tag in lab_tags:
+            action = form.get("IF_ACTION", [""])[0]
+            if (not sess["logged_in"] or
+                    form.get("_sessionTOKEN", [""])[0] != sess.get("sess_token") or
+                    action not in {"Apply", "Delete", "Add"}):
+                return self._send(b"SessionTimeout", "text/plain; charset=utf-8", 401)
+            fields = {
+                key: values[0]
+                for key, values in form.items()
+                if key not in {"IF_ACTION", "Btn_cancel", "Btn_apply", "_sessionTOKEN"}
+            }
+            inst_id = form.get("_InstID", ["IGD"])[0]
+            if inst_id == "-1":
+                inst_id = "DEV.INST1"
+            STORE.update_values(tag, fields)
+            body = (f"<ajax_response_xml_root><INSTIDENTITY>{xml_escape(inst_id)}</INSTIDENTITY>"
+                    f"<IF_ERRORID>0</IF_ERRORID><IF_ERRORTYPE>SUCC</IF_ERRORTYPE>"
+                    f"<IF_ERRORSTR>SUCC</IF_ERRORSTR><IF_ERRORPARAM>SUCC</IF_ERRORPARAM>"
+                    f"<_InstID>{xml_escape(inst_id)}</_InstID></ajax_response_xml_root>").encode("utf-8")
             return self._send(body, "text/xml; charset=utf-8")
 
         return self._send(b"Not captured", "text/plain; charset=utf-8", 404)
