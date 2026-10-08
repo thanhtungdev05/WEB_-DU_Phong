@@ -60,9 +60,17 @@ window.FTC_AX3000C = window.FTC_AX3000C || {};
         try {
           const ds = chiODau ? [doc.querySelector(sel)].filter(Boolean) : doc.querySelectorAll(sel);
           ds.forEach(function (el) {
-            if (el._ftcDaXoa || el._ftcUserModified || el === doc.activeElement) return;
-            el._ftcDaXoa = true;
+            if (el._ftcUserModified || el === doc.activeElement) return;
+            if (el.value === 'fpt') {
+              el.value = '';
+              el._ftcDaXoa = true;
+              const win = doc.defaultView || window;
+              el.dispatchEvent(new win.Event('input', { bubbles: true }));
+              return;
+            }
+            if (el._ftcDaXoa) return;
             if (el.value === '') return;
+            el._ftcDaXoa = true;
             el.value = '';
             const win = doc.defaultView || window;
             el.dispatchEvent(new win.Event('input', { bubbles: true }));
