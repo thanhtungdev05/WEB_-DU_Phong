@@ -431,21 +431,10 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình Load Balancing & Route Failover',
   instructions: [
     '<b>Yêu cầu:</b>',
-    '<b>[General Setup]</b>',
-    '- WAN1 & WAN2: Enable: <span class="val">Yes</span>, Load Balance: <span class="val">Yes</span>',
-    '- Mode: <span class="val">Session Based</span>',
-    '- Line Speed: <span class="val">According to Line Speed</span>',
-    '- Load Balance Weights: <span class="val">' + VG2927_BAI6_TEN_WEIGHTS[VG2927_BAI6_DAPAN.overview.lbWeights] + '</span>',
-    '<b>[WAN1]</b>',
-    '- Enable: <span class="val">Yes</span>, Display Name: <span class="val">ISP-1</span>',
-    '- Line Speed: DownLink <span class="val">80000</span> Kbps, UpLink <span class="val">80000</span> Kbps',
-    '- Link Condition Detection: <span class="val">' + VG2927_BAI6_TEN_DETECT[VG2927_BAI6_DAPAN.wan1.detectMode] + '</span>',
-    '- Active Mode: <span class="val">Always On</span>',
-    '<b>[WAN2]</b>',
-    '- Enable: <span class="val">Yes</span>, Display Name: <span class="val">ISP-2</span>',
-    '- Line Speed: DownLink <span class="val">80000</span> Kbps, UpLink <span class="val">80000</span> Kbps',
-    '- Link Condition Detection: <span class="val">' + VG2927_BAI6_TEN_DETECT[VG2927_BAI6_DAPAN.wan2.detectMode] + '</span>',
-    '- Active Mode: <span class="val">Always On</span>'
+    'Cấu hình cân bằng tải trên DrayTek Vigor2927:',
+    '- Thiết lập cho <span class="val">WAN1</span> và <span class="val">WAN2</span> hoạt động đồng thời (Enable và Load Balance)',
+    '- Chế độ cân bằng tải: chọn <span class="val">Session Based</span>',
+    '- <i>(Không cần khai báo đúng băng thông từng WAN để phân tải phù hợp)</i>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
 

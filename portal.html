@@ -11,6 +11,23 @@
   <link rel="icon" type="image/png" href="/assets/logoFPT.png?v=58a119fe563bd62a">
   <link rel="stylesheet" href="styles.css?v=3cb72d39dfa29013">
   <script>window.CATALOG_FINGERPRINT="b94f96017977fc84";</script>
+  <script>
+    (function () {
+      try {
+        var cid = sessionStorage.getItem('ktv_client_id');
+        if (!cid) {
+          var m = document.cookie.match(/(?:^|;\s*)ktv_client_id=([^;]+)/);
+          if (m) cid = m[1];
+        }
+        if (!cid) {
+          cid = 'ktv_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10);
+          sessionStorage.setItem('ktv_client_id', cid);
+        }
+        document.cookie = 'ktv_client_id=' + cid + '; Path=/; SameSite=Lax';
+        window._ktvClientId = cid;
+      } catch (e) { }
+    })();
+  </script>
 </head>
 
 <body>
@@ -313,7 +330,7 @@
   <script src="devices/ac1000cv2/tooltips/bai5.js?v=449c209d469e33a8"></script>
   <script src="devices/ac1000cv2/tooltips/bai6.js?v=f4ca64a26c19c4d2"></script>
 
-  <script src="devices/ac1000cv2/lessons/bai1.js?v=9cb8e13a379f9445"></script>
+  <script src="devices/ac1000cv2/lessons/bai1.js?v=bf3c402931c05698"></script>
   <script src="devices/ac1000cv2/lessons/bai2.js?v=5f126d13e26dd052"></script>
   <script src="devices/ac1000cv2/lessons/bai3.js?v=069dcb7fc765085f"></script>
   <script src="devices/ac1000cv2/lessons/bai4.js?v=d3eaecd22d33d204"></script>
@@ -413,19 +430,19 @@
   <!-- DrayTek Vigor2927 -->
   <script src="devices/vigor2927/tooltips/common_login.js?v=6287f812c0e157be"></script>
   <script src="devices/vigor2927/tooltips/bai1.js?v=657d01e1a66ba4c5"></script>
-  <script src="devices/vigor2927/tooltips/bai2.js?v=a1977000f0fb7da1"></script>
-  <script src="devices/vigor2927/tooltips/bai3.js?v=6f463347580e1196"></script>
+  <script src="devices/vigor2927/tooltips/bai2.js?v=1d224eae5d2001a2"></script>
+  <script src="devices/vigor2927/tooltips/bai3.js?v=ddabd23de002f963"></script>
   <script src="devices/vigor2927/tooltips/bai4.js?v=803a7e40964576f1"></script>
   <script src="devices/vigor2927/tooltips/bai5.js?v=86554cf1478bc8ea"></script>
   <script src="devices/vigor2927/tooltips/bai6.js?v=7cb083ee963e2a49"></script>
   <script src="devices/vigor2927/tooltips/bai7.js?v=9d7014733b79e190"></script>
-  <script src="devices/vigor2927/lessons/bai1.js?v=16dda767c72e5b0d"></script>
-  <script src="devices/vigor2927/lessons/bai2.js?v=a9a75a8031f7094a"></script>
-  <script src="devices/vigor2927/lessons/bai3.js?v=8bcba01b0a4d365d"></script>
-  <script src="devices/vigor2927/lessons/bai4.js?v=7df71e888fb86429"></script>
-  <script src="devices/vigor2927/lessons/bai5.js?v=fc6b383da000e1b7"></script>
-  <script src="devices/vigor2927/lessons/bai6.js?v=37a22b9659a766c6"></script>
-  <script src="devices/vigor2927/lessons/bai7.js?v=06904ab9c8f4c93d"></script>
+  <script src="devices/vigor2927/lessons/bai1.js?v=0442540c9756bf7a"></script>
+  <script src="devices/vigor2927/lessons/bai2.js?v=8b76e2c89894ef41"></script>
+  <script src="devices/vigor2927/lessons/bai3.js?v=c5dbd9c60cc7e7f0"></script>
+  <script src="devices/vigor2927/lessons/bai4.js?v=8f51b231b982ca7f"></script>
+  <script src="devices/vigor2927/lessons/bai5.js?v=61deb16ac378e192"></script>
+  <script src="devices/vigor2927/lessons/bai6.js?v=6c15496099cf81a1"></script>
+  <script src="devices/vigor2927/lessons/bai7.js?v=ce14789b53e603d2"></script>
   <script src="devices/vigor2927/data.js?v=e350b40e3e53e6f2"></script>
 
   <!-- ONT AC1000HI -->
@@ -446,7 +463,7 @@
 
   <!-- AP BE6500C -->
   <script src="devices/be6500c/tooltips/common_login.js?v=ff869eb3c0eb7ccd"></script>
-  <script src="devices/be6500c/lessons/bai1.js?v=177d7832e9b64681"></script>
+  <script src="devices/be6500c/lessons/bai1.js?v=5103eb76cee12c34"></script>
   <script src="devices/be6500c/lessons/bai2.js?v=70b301631080c647"></script>
   <script src="devices/be6500c/lessons/bai3.js?v=da920471ec59b450"></script>
   <script src="devices/be6500c/lessons/bai4.js?v=24f9eaa860bf7abc"></script>
@@ -482,7 +499,7 @@
 
   <script src="devices/index.js?v=ba95af8bf0f1cb50"></script>
   <script src="data.js?v=3d4f2aae932e6d0d"></script>
-  <script src="app.js?v=8806c1527753f6fc"></script>
+  <script src="app.js?v=f20b32634efe7cf2"></script>
 
 </body>
 

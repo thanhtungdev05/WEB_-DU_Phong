@@ -154,11 +154,11 @@ def apply_sim_state_to_html(html_str, p_path, state=None):
 
 
 class H(BaseHTTPRequestHandler):
-    def _send(self, data, ctype, code=200):
+    def _send(self, data, ctype, code=200, cache_control="no-store"):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Cache-Control", cache_control)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "*")
@@ -180,12 +180,30 @@ class H(BaseHTTPRequestHandler):
         self.end_headers()
 
     def _client_key(self):
+        hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip()
+        if hdr:
+            return hdr
+        if "?_ktv=" in getattr(self, "path", "") or "&_ktv=" in getattr(self, "path", ""):
+            try:
+                q = parse_qs(urlparse(self.path).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
         cookie = self.headers.get("Cookie", "")
         if cookie:
             import re
             m = re.search(r'(?:ftc_session|ac1000f_sid|PHPSESSID|ktv_client_id)=([a-zA-Z0-9_-]+)', cookie)
             if m:
                 return m.group(1)
+        ref = self.headers.get("Referer", "")
+        if ref and "_ktv=" in ref:
+            try:
+                q = parse_qs(urlparse(ref).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
         addr = getattr(self, "client_address", None)
         return str(addr[0]) if addr else "default"
 
@@ -361,7 +379,7 @@ class H(BaseHTTPRequestHandler):
             else:
                 with open(f, "rb") as fh:
                     content = fh.read()
-                return self._send(content, CT.get(ext, "application/octet-stream"))
+                return self._send(content, CT.get(ext, "application/octet-stream"), cache_control="public, max-age=86400, stale-while-revalidate=86400")
 
         return self._send(b"Not found: " + p.encode(), "text/plain", 404)
 

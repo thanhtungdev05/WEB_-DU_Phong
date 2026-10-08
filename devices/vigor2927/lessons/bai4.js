@@ -11,6 +11,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình dịch vụ DHCP Server',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện cấu hình máy chủ cấp phát IP tự động (DHCP Server) trên DrayTek Vigor2927:',
     '- IP Address: <span class="val">192.168.100.1</span>',
     '- Subnet Mask: <span class="val">255.255.255.0 / 24</span>',
     '- Start IP Address: <span class="val">192.168.100.10</span>',

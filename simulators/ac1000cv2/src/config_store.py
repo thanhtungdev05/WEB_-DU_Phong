@@ -87,34 +87,59 @@ CAU_HINH_GOC = {
     }
 }
 
+import copy
+import threading
+
+_KHO_LOCK = threading.RLock()
+_KHO_CTX = threading.local()
+
 
 class KhoCauHinh:
     def __init__(self, tep_luu=TEP_LUU_MAC_DINH):
         self.tep_luu = tep_luu
-        self.du_lieu = {}
-        self.nap()
+        self._kho_theo_ktv = {}
+        self._khoa = _KHO_LOCK
+        self._nap_mau_goc()
 
-    def nap(self):
+    def _nap_mau_goc(self):
         if os.path.exists(self.tep_luu):
             try:
                 with open(self.tep_luu, "r", encoding="utf-8") as f:
-                    self.du_lieu = json.load(f)
+                    self._mau_goc = json.load(f)
                     return
             except Exception:
                 pass
-        self.du_lieu = json.loads(json.dumps(CAU_HINH_GOC))
-        self.luu()
+        self._mau_goc = json.loads(json.dumps(CAU_HINH_GOC))
 
-    def luu(self):
-        try:
-            with open(self.tep_luu, "w", encoding="utf-8") as f:
-                json.dump(self.du_lieu, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"Loi ghi file config: {e}")
+    def bind(self, key):
+        """Gắn phiên KTV hiện tại vào ngữ cảnh luồng."""
+        _KHO_CTX.key = key or "default"
+        return self.current_key()
 
-    def doc(self, khoa, mac_dinh=None):
+    def current_key(self):
+        return getattr(_KHO_CTX, "key", "default")
+
+    def _lay_du_lieu_ktv(self, key=None):
+        session_key = key or self.current_key()
+        with self._khoa:
+            if session_key not in self._kho_theo_ktv:
+                self._kho_theo_ktv[session_key] = copy.deepcopy(self._mau_goc)
+            return self._kho_theo_ktv[session_key]
+
+    @property
+    def du_lieu(self):
+        return self._lay_du_lieu_ktv()
+
+    @du_lieu.setter
+    def du_lieu(self, val):
+        session_key = self.current_key()
+        with self._khoa:
+            self._kho_theo_ktv[session_key] = val
+
+    def doc(self, khoa, mac_dinh=None, key=None):
+        session_key = key or self.current_key()
         cac_cap = khoa.split(".")
-        cur = self.du_lieu
+        cur = self._lay_du_lieu_ktv(session_key)
         for c in cac_cap:
             if isinstance(cur, dict) and c in cur:
                 cur = cur[c]
@@ -122,19 +147,26 @@ class KhoCauHinh:
                 return mac_dinh
         return cur
 
-    def ghi(self, khoa, gia_tri):
+    def ghi(self, khoa, gia_tri, key=None):
+        session_key = key or self.current_key()
         cac_cap = khoa.split(".")
-        cur = self.du_lieu
-        for c in cac_cap[:-1]:
-            if c not in cur or not isinstance(cur[c], dict):
-                cur[c] = {}
-            cur = cur[c]
-        cur[cac_cap[-1]] = gia_tri
-        self.luu()
+        with self._khoa:
+            cur = self._lay_du_lieu_ktv(session_key)
+            for c in cac_cap[:-1]:
+                if c not in cur or not isinstance(cur[c], dict):
+                    cur[c] = {}
+                cur = cur[c]
+            cur[cac_cap[-1]] = gia_tri
 
-    def dat_lai(self):
-        self.du_lieu = json.loads(json.dumps(CAU_HINH_GOC))
-        self.luu()
+    def dat_lai(self, key=None):
+        session_key = key or self.current_key()
+        with self._khoa:
+            self._kho_theo_ktv[session_key] = copy.deepcopy(self._mau_goc)
+
+    def xoa_phien(self, key=None):
+        session_key = key or self.current_key()
+        with self._khoa:
+            self._kho_theo_ktv.pop(session_key, None)
 
 
 KHO = KhoCauHinh()

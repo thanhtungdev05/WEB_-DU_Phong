@@ -85,7 +85,7 @@ THAY_JS = {
 }
 
 TEP_FTC_JS = os.path.join(_HERE, "ftc", "ftc-ax3000c.js")
-THE_CHEN = b"<script src=/ftc-ax3000c.js?v=v21_clean_input></script>"
+THE_CHEN = b"<script src=/sim_ax3000c/ftc-ax3000c.js?v=v21_clean_input></script>"
 
 
 # main() cua ban goc khong chay khi nap qua run_all.py -> dong bo khung tu uci mot lan o day
@@ -182,6 +182,17 @@ def dat_trang_thai_bai(bai):
 
 class Handler(_goc.H):
     def _client_key(self):
+        hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip()
+        if hdr:
+            return "cookie:" + hdr
+        if "?_ktv=" in getattr(self, "path", "") or "&_ktv=" in getattr(self, "path", ""):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                q = parse_qs(urlparse(self.path).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return "cookie:" + q["_ktv"][0].strip()
+            except Exception:
+                pass
         cookie = self.headers.get("Cookie", "")
         match = re.search(
             r"(?:ftc_session|ax3000c_sid|PHPSESSID|ktv_client_id)=([a-zA-Z0-9_-]+)",
@@ -189,6 +200,15 @@ class Handler(_goc.H):
         )
         if match:
             return "cookie:" + match.group(1)
+        ref = self.headers.get("Referer", "")
+        if ref and "_ktv=" in ref:
+            try:
+                from urllib.parse import parse_qs, urlparse
+                q = parse_qs(urlparse(ref).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return "cookie:" + q["_ktv"][0].strip()
+            except Exception:
+                pass
         forwarded = (self.headers.get("X-FTC-Client-IP", "") or "").strip()
         if forwarded:
             return "ip:" + forwarded
@@ -233,20 +253,26 @@ class Handler(_goc.H):
             bai = (parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "").get("bai") or [""])[0]
             ok = dat_trang_thai_bai(bai)
             return self._gui_ftc(200, json.dumps({"ok": 1 if ok else 0}).encode(), "application/json")
-        if p == "/ftc-ax3000c.js":
+        if p in ("/ftc-ax3000c.js", "/sim_ax3000c/ftc-ax3000c.js"):
             with open(TEP_FTC_JS, "rb") as f:
                 return self._gui_ftc(
                     200,
                     f.read(),
                     "text/javascript",
-                    cache_control="no-cache, no-store, must-revalidate",
+                    cache_control="public, max-age=86400, stale-while-revalidate=86400",
                 )
         if p in ("", "/") and not self._dang_sap():
             with open(os.path.join(_goc.GOC_WWW, "__ROOT__index.html"), "rb") as f:
                 html = f.read()
+            # Rewrite asset paths sang namespace /sim_ax3000c/ de tranh 404 khi load qua Portal iframe
+            html = html.replace(b"href=/css/", b"href=/sim_ax3000c/css/")
+            html = html.replace(b"href=/js/", b"href=/sim_ax3000c/js/")
+            html = html.replace(b"src=/js/", b"src=/sim_ax3000c/js/")
+            html = html.replace(b"href=/logo-fpt.ico", b"href=/sim_ax3000c/logo-fpt.ico")
             # chen TRUOC bundle de script chay truoc khi SPA doc sessionStorage
+            html = html.replace(b"<script src=/sim_ax3000c/js/chunk-vendors", THE_CHEN + b"<script src=/sim_ax3000c/js/chunk-vendors", 1)
             html = html.replace(b"<script src=/js/chunk-vendors", THE_CHEN + b"<script src=/js/chunk-vendors", 1)
-            return self._gui_ftc(200, html, "text/html")
+            return self._gui_ftc(200, html, "text/html", cache_control="no-cache, must-revalidate")
         ten = _goc._ten_tep(self.path)
         if ten in THAY_JS and not self._dang_sap():
             with open(os.path.join(_goc.GOC_WWW, ten), "rb") as f:
@@ -257,7 +283,7 @@ class Handler(_goc.H):
                 200,
                 js,
                 "text/javascript",
-                cache_control="no-cache, no-store, must-revalidate",
+                cache_control="public, max-age=31536000, immutable",
             )
         if ten.endswith(".js") and not self._dang_sap():
             p_tep = os.path.join(_goc.GOC_WWW, ten)

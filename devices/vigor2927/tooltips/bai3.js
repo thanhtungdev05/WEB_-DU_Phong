@@ -28,35 +28,80 @@ function isVigor2927Bai3Added(doc) {
   return false;
 }
 
+function isVigor2927Bai3Enabled(doc) {
+  if (!doc) return false;
+  var en = doc.querySelector('input[name="sIpBndMacEnable"]:checked');
+  return !!(en && en.value === '1');
+}
+
+function isVigor2927Bai3MacMatch(val) {
+  if (!val) return false;
+  var cleaned = String(val).replace(/[-:]/g, '').trim().toUpperCase();
+  return cleaned === 'AABBCCDDEEFF';
+}
+
+function getVigor2927InputVal(doc, name) {
+  if (!doc) return '';
+  var el = doc.querySelector('input[name="' + name + '"]');
+  return el ? (el.value || '').trim() : '';
+}
+
 window.TOOLTIPS_VIGOR2927['vg2927-bai3'] = [
   {
     selector: '#menu-lan:not(.open) .menu-text, #menu-lan:not(.open)',
     text: 'Bước 1: chọn LAN',
-    position: 'bottom'
-  },
-  {
-    selector: '#sub-lan:not(.hidden) #menu-lan-ipbmac .menu-text, #sub-lan:not(.hidden) #menu-lan-ipbmac',
-    text: 'Bước 2: chọn Blind IP to MAC',
     position: 'bottom',
     hideOnPage: 'ipbmac'
   },
   {
-    selector: '#lbl-ipbmac-disable, b:contains("Disable")',
+    selector: '#sub-lan:not(.hidden) #menu-lan-ipbmac .menu-text, #sub-lan:not(.hidden) #menu-lan-ipbmac',
+    text: 'Bước 2: chọn Bind IP to MAC',
+    position: 'bottom',
+    hideOnPage: 'ipbmac'
+  },
+  {
+    selector: '#lbl-ipbmac-disable, input[name="sIpBndMacEnable"][value="0"] ~ b, text:Disable, input[name="sIpBndMacEnable"][value="1"]',
     text: 'Bước 3: chọn Enable',
     position: 'right',
     offsetX: 8,
-    condition: function(doc) { return !isVigor2927Bai3Added(doc); }
+    condition: function(doc) {
+      return !isVigor2927Bai3Added(doc) && !isVigor2927Bai3Enabled(doc);
+    }
   },
   {
     selector: '#txt-ipbmac-ip, input[name="sIpAddress"]',
-    text: 'Bước 4: nhập địa chỉ IP và MAC muốn cố định<br>ví dụ IP Address 192.168.1.100<br>MAC Address AA-BB-CC-DD-EE-FF<br>==>chọn Add để lưu',
+    text: 'Bước 4: nhập IP Address: 192.168.1.100',
     position: 'top',
-    condition: function(doc) { return !isVigor2927Bai3Added(doc); }
+    condition: function(doc) {
+      return isVigor2927Bai3Enabled(doc) && !isVigor2927Bai3Added(doc) && (getVigor2927InputVal(doc, 'sIpAddress') !== '192.168.1.100');
+    }
+  },
+  {
+    selector: 'input[name="txtMac"]',
+    text: 'Bước 5: nhập MAC Address: AA-BB-CC-DD-EE-FF',
+    position: 'top',
+    condition: function(doc) {
+      return isVigor2927Bai3Enabled(doc) && !isVigor2927Bai3Added(doc) &&
+        (getVigor2927InputVal(doc, 'sIpAddress') === '192.168.1.100') &&
+        !isVigor2927Bai3MacMatch(getVigor2927InputVal(doc, 'txtMac'));
+    }
+  },
+  {
+    selector: 'input[name="btnAdd"], input[value="Add"]',
+    text: 'Bước 6: chọn Add để thêm vào danh sách IP Bind List',
+    position: 'top',
+    condition: function(doc) {
+      return isVigor2927Bai3Enabled(doc) && !isVigor2927Bai3Added(doc) &&
+        (getVigor2927InputVal(doc, 'sIpAddress') === '192.168.1.100') &&
+        isVigor2927Bai3MacMatch(getVigor2927InputVal(doc, 'txtMac'));
+    }
   },
   {
     selector: '#btn-ipbmac-ok, input[name="btnOk"], input[value="OK"]',
-    text: 'Bước 5: chọn OK',
+    text: 'Bước 7: chọn OK để lưu cấu hình',
     position: 'top',
-    condition: function(doc) { return isVigor2927Bai3Added(doc); }
+    condition: function(doc) {
+      return isVigor2927Bai3Added(doc) && !doc._ftcIsSaved;
+    }
   }
 ];

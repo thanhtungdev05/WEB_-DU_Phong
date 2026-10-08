@@ -198,10 +198,15 @@ def nap_lai():
     _nap(bat_buoc=True)
 
 
-def dat_lai_factory():
+def dat_lai_factory(user_key=None):
+    if user_key is None:
+        user_key = lay_nguoi_dung_hien_tai()
     with _khoa:
-        USER_CONFIGS.clear()
-        nap_lai()
+        if user_key:
+            USER_CONFIGS.pop(user_key, None)
+        else:
+            USER_CONFIGS.clear()
+            nap_lai()
 
 
 

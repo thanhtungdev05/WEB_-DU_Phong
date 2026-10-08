@@ -11,6 +11,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình PPPoE',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện cấu hình kết nối WAN/Internet trên thiết bị và thiết lập kết nối PPPoE theo các thông số được cung cấp dưới đây:',
     '- Username: <span class="val">sgfdl-211208-218</span>',
     '- Password: <span class="val">12345678</span>'
   ],

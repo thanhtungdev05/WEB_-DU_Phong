@@ -10,16 +10,12 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   title: 'Cấu hình Policy Routing',
   subtitle: 'Cấu hình định tuyến theo chính sách (Policy Route)',
   instructions: [
-    '<b>Yêu cầu (Rule Index 1):</b>',
-    '- Enable: <span class="val">Enable</span>',
-    '- Comment: <span class="val">PC A</span>',
-    '- Protocol: <span class="val">TCP</span>',
-    '- Source: <span class="val">192.168.1.10 - 192.168.1.10</span>',
-    '- Destination: <span class="val">11.11.11.11 - 11.11.11.11</span>',
-    '- Destination Port: <span class="val">8000 - 8000</span>',
-    '- Interface: <span class="val">WAN / WAN1</span>',
-    '- Gateway: <span class="val">Default Gateway</span>',
-    '- Priority: <span class="val">200</span>'
+    '<b>Yêu cầu:</b>',
+    'Cấu hình Policy Routing trên thiết bị DrayTek Vigor2927:',
+    '- Dải IP áp dụng (Source): từ <span class="val">192.168.1.100</span> đến <span class="val">192.168.1.110</span>',
+    '- Interface chính: ưu tiên sử dụng <span class="val">WAN1</span>',
+    '- Dự phòng (Failover): chỉ chuyển sang <span class="val">WAN2</span> khi WAN1 gặp sự cố (chọn Failover to: WAN2)',
+    '- Khôi phục (Failback): tự động chuyển về ưu tiên WAN1 khi đường truyền khôi phục (tích chọn Failback)'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
   grading: {

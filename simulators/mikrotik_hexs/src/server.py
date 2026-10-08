@@ -1347,6 +1347,17 @@ def _co_dong(duong_dan, ma_dong):
 
 class H(BaseHTTPRequestHandler):
     def _client_key(self):
+        hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip()
+        if hdr:
+            return f"cookie:ktv_client_id:{hdr}"
+        if "?_ktv=" in getattr(self, "path", "") or "&_ktv=" in getattr(self, "path", ""):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                q = parse_qs(urlparse(self.path).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return f"cookie:ktv_client_id:{q['_ktv'][0].strip()}"
+            except Exception:
+                pass
         try:
             cookie = SimpleCookie(self.headers.get("Cookie", ""))
             for name in ("ftc_session", "PHPSESSID", "ktv_client_id"):
@@ -1354,6 +1365,15 @@ class H(BaseHTTPRequestHandler):
                     return f"cookie:{name}:{cookie[name].value}"
         except Exception:
             pass
+        ref = self.headers.get("Referer", "")
+        if ref and "_ktv=" in ref:
+            try:
+                from urllib.parse import parse_qs, urlparse
+                q = parse_qs(urlparse(ref).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return f"cookie:ktv_client_id:{q['_ktv'][0].strip()}"
+            except Exception:
+                pass
         forwarded = (self.headers.get("X-FTC-Client-IP", "") or "").strip()
         if forwarded:
             return f"ip:{forwarded}"
