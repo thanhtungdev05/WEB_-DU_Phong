@@ -42,9 +42,38 @@ _current_nonce = "2H7y9kh6bcXGCMY7K9yLwZmK2F3N7rl8"
 
 
 class GponHandler(BaseHTTPRequestHandler):
-    def _is_authenticated(self):
+    def _client_key(self):
+        hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip() if hasattr(self, "headers") else ""
+        if hdr:
+            return hdr
+        raw_path = getattr(self, "path", "")
+        if "?_ktv=" in raw_path or "&_ktv=" in raw_path:
+            try:
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(raw_path).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
+        raw_cookie = self.headers.get("Cookie", "") if hasattr(self, "headers") else ""
+        if raw_cookie:
+            import re
+            m = re.search(r'(?:ktv_client_id|ftc_session|ac1000cv2_sid|PHPSESSID)=([a-zA-Z0-9_-]+)', raw_cookie)
+            if m:
+                return m.group(1)
+        ref = self.headers.get("Referer", "") if hasattr(self, "headers") else ""
+        if ref and "_ktv=" in ref:
+            try:
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(ref).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
         client_ip = getattr(self, "client_address", ("", 0))[0]
-        if client_ip in _phien_xac_thuc:
+        return client_ip or "default"
+
+    def _is_authenticated(self):
+        client_key = self._client_key()
+        if client_key in _phien_xac_thuc:
             return True
         raw_cookie = self.headers.get("Cookie", "") if hasattr(self, "headers") else ""
         if "ac1000cv2_auth=1" in raw_cookie:
@@ -119,7 +148,9 @@ class GponHandler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
-        client_ip = self.client_address[0]
+        client_key = self._client_key()
+        client_ip = self.client_address[0] if getattr(self, "client_address", None) else "127.0.0.1"
+        KHO.bind(client_key)
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         if path.startswith("/sim_ac1000cv2"):
@@ -132,8 +163,8 @@ class GponHandler(BaseHTTPRequestHandler):
 
         # 0. API Reset session (ho tro Portal)
         if path in ("/api/reset", "/resetsession"):
-            _phien_xac_thuc.discard(client_ip)
-            KHO.dat_lai()
+            _phien_xac_thuc.discard(client_key)
+            KHO.dat_lai(client_key)
             resp = b'{"status":"ok","message":"AC1000CV2 state reset"}'
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -233,7 +264,9 @@ class GponHandler(BaseHTTPRequestHandler):
         self.send_error(404, "Page Not Found")
 
     def do_POST(self):
-        client_ip = self.client_address[0]
+        client_key = self._client_key()
+        client_ip = self.client_address[0] if getattr(self, "client_address", None) else "127.0.0.1"
+        KHO.bind(client_key)
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         if path.startswith("/sim_ac1000cv2"):
@@ -250,8 +283,8 @@ class GponHandler(BaseHTTPRequestHandler):
 
         # 0. API Reset session
         if path in ("/api/reset", "/resetsession"):
-            _phien_xac_thuc.discard(client_ip)
-            KHO.dat_lai()
+            _phien_xac_thuc.discard(client_key)
+            KHO.dat_lai(client_key)
             resp = b'{"status":"ok","message":"AC1000CV2 state reset"}'
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -271,7 +304,7 @@ class GponHandler(BaseHTTPRequestHandler):
             valid_keys = {hashlib.sha256(("admin" + "d2" + p).encode()).hexdigest() for p in allowed_pwds}
 
             if x_ran_id in valid_keys:
-                _phien_xac_thuc.add(client_ip)
+                _phien_xac_thuc.add(client_key)
                 target_url = f"{prefix}/index.html"
                 redirect_html = (
                     '<!DOCTYPE html>\n<html><head>\n<title>GPON Home Gateway</title>\n'
@@ -295,7 +328,7 @@ class GponHandler(BaseHTTPRequestHandler):
 
         # 2. Dang xuat
         if path.endswith("/LogoutForm"):
-            _phien_xac_thuc.discard(client_ip)
+            _phien_xac_thuc.discard(client_key)
             self._send_html("OK", status=200, extra_headers={"Set-Cookie": "ac1000cv2_auth=0; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"})
             return
 

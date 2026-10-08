@@ -155,11 +155,29 @@ class H(SimpleHTTPRequestHandler):
         return None
 
     def _client_id(self):
+        hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip()
+        if hdr:
+            return hdr
+        if "?_ktv=" in getattr(self, "path", "") or "&_ktv=" in getattr(self, "path", ""):
+            try:
+                q = parse_qs(urlparse(self.path).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
         cookie_raw = self.headers.get("Cookie", "")
         for part in cookie_raw.split(";"):
             part = part.strip()
             if part.startswith("ftc_session=") or part.startswith("PHPSESSID=") or part.startswith("ktv_client_id=") or part.startswith("be6500c_sid="):
                 return part.split("=", 1)[1]
+        ref = self.headers.get("Referer", "")
+        if ref and "_ktv=" in ref:
+            try:
+                q = parse_qs(urlparse(ref).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
         client_ip = self.headers.get("X-Forwarded-For") or (self.client_address[0] if getattr(self, "client_address", None) else "default")
         return client_ip.split(",")[0].strip()
 

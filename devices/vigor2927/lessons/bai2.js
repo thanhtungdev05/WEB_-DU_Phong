@@ -10,10 +10,14 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   title: 'Cấu hình giới hạn băng thông',
   subtitle: 'Cấu hình giới hạn băng thông (Bandwidth Limit)',
   instructions: [
-    '<b>Yêu cầu:</b>',
-    '- Default TX Limit: <span class="val">20 Mbps</span>, RX Limit: <span class="val">25 Mbps</span>',
-    '- Start IP: <span class="val">192.168.1.10</span>, End IP: <span class="val">192.168.1.20</span>',
-    '- Option: <span class="val">Each</span>, TX Limit: <span class="val">20 Mbps</span>, RX Limit: <span class="val">25 Mbps</span>'
+    '<b>Yêu cầu cấu hình giới hạn băng thông trên DrayTek Vigor2927:</b>',
+    '- <b>Giới hạn mặc định:</b>',
+    '&nbsp;&nbsp;+ Tốc độ gửi (TX Limit): <span class="val">20 Mbps</span>',
+    '&nbsp;&nbsp;+ Tốc độ tải (RX Limit): <span class="val">25 Mbps</span>',
+    '- <b>Trong đó giới hạn theo dải IP cụ thể (từ <span class="val">192.168.1.10</span> đến <span class="val">192.168.1.20</span>):</b>',
+    '&nbsp;&nbsp;+ Mỗi địa chỉ IP trong dải này được áp dụng mức giới hạn riêng biệt:',
+    '&nbsp;&nbsp;&nbsp;&nbsp;• Tốc độ gửi (TX Limit): <span class="val">20 Mbps</span>',
+    '&nbsp;&nbsp;&nbsp;&nbsp;• Tốc độ tải (RX Limit): <span class="val">25 Mbps</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
   grading: {
@@ -427,71 +431,64 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     {
       selector: '#menu-bandwidth:not(.open) .menu-text, #menu-bandwidth:not(.open)',
       text: 'Bước 1: chọn Bandwidth Management',
-      position: 'bottom'
+      position: 'bottom',
+      hideOnPage: 'ipbandw'
     },
     {
       selector: '#sub-bandwidth:not(.hidden) #menu-bandwidth-limit .menu-text, #sub-bandwidth:not(.hidden) #menu-bandwidth-limit',
       text: 'Bước 2: chọn Bandwidth Limit',
-      position: 'bottom'
+      position: 'bottom',
+      hideOnPage: 'ipbandw'
     },
     {
-      selector: '#lbl-bandwidth-disable, b:contains("Disable")',
+      selector: '#lbl-bandwidth-disable, input[name="sIpBandwEnable"][value="0"] ~ b, text:Disable',
       text: 'Bước 3: chọn Enable',
       position: 'right',
       offsetX: 8,
       condition: function (doc) {
         if (!doc) return false;
-        var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
-        var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
-        var txU = doc.querySelector('select[name="iDefTx"]');
-        var rxU = doc.querySelector('select[name="iDefRx"]');
-        if (!tx || !rx) return false;
-        var txVal = (tx.value || '').trim();
-        var rxVal = (rx.value || '').trim();
-        var tU = txU ? txU.value : '1';
-        var rU = rxU ? rxU.value : '1';
-        return !(txVal === '20' && rxVal === '25' && (tU === '1' || tU === 'Mbps') && (rU === '1' || rU === 'Mbps'));
+        var en = doc.querySelector('input[name="sIpBandwEnable"]:checked');
+        return !(en && en.value === '1');
       }
     },
     {
       selector: '#opt-bandwidth-tx-limit, input[name="sIpBandwDefTx"]',
-      text: 'Bước 4: nhập giới hạn tốc độ truyền cho tất cả thiết bị, ví dụ 20 Mbps',
+      text: 'Bước 4: nhập giới hạn tốc độ truyền (TX Limit) mặc định cho tất cả thiết bị là 20 Mbps',
       position: 'bottom',
       condition: function (doc) {
         if (!doc) return false;
+        var en = doc.querySelector('input[name="sIpBandwEnable"]:checked');
         var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
-        var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
         var txU = doc.querySelector('select[name="iDefTx"]');
-        var rxU = doc.querySelector('select[name="iDefRx"]');
-        if (!tx || !rx) return false;
-        var txVal = (tx.value || '').trim();
-        var rxVal = (rx.value || '').trim();
-        var tU = txU ? txU.value : '1';
-        var rU = rxU ? rxU.value : '1';
-        return !(txVal === '20' && rxVal === '25' && (tU === '1' || tU === 'Mbps') && (rU === '1' || rU === 'Mbps'));
+        var isEn = !!(en && en.value === '1');
+        var txVal = tx ? (tx.value || '').trim() : '';
+        var u = txU ? txU.value : '1';
+        return isEn && !(txVal === '20' && (u === '1' || u === 'Mbps'));
       }
     },
     {
       selector: '#opt-bandwidth-rx-limit, input[name="sIpBandwDefRx"]',
-      text: 'Bước 5: nhập giới hạn tốc độ nhận cho tất cả thiết bị, ví dụ 25 Mbps',
+      text: 'Bước 5: nhập giới hạn tốc độ nhận (RX Limit) mặc định cho tất cả thiết bị là 25 Mbps',
       position: 'top',
       condition: function (doc) {
         if (!doc) return false;
+        var en = doc.querySelector('input[name="sIpBandwEnable"]:checked');
         var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
         var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
         var txU = doc.querySelector('select[name="iDefTx"]');
         var rxU = doc.querySelector('select[name="iDefRx"]');
-        if (!tx || !rx) return false;
-        var txVal = (tx.value || '').trim();
-        var rxVal = (rx.value || '').trim();
-        var tU = txU ? txU.value : '1';
-        var rU = rxU ? rxU.value : '1';
-        return !(txVal === '20' && rxVal === '25' && (tU === '1' || tU === 'Mbps') && (rU === '1' || rU === 'Mbps'));
+        var isEn = !!(en && en.value === '1');
+        var txVal = tx ? (tx.value || '').trim() : '';
+        var rxVal = rx ? (rx.value || '').trim() : '';
+        var tu = txU ? txU.value : '1';
+        var ru = rxU ? rxU.value : '1';
+        var isTxDone = (txVal === '20' && (tu === '1' || tu === 'Mbps'));
+        return isEn && isTxDone && !(rxVal === '25' && (ru === '1' || ru === 'Mbps'));
       }
     },
     {
-      selector: 'text:End IP',
-      text: 'Bước 6: thay đổi băng thông cho một dãy hay một IP cụ thể (cao hơn hoặc thấp hơn)<br>ví dụ: điền vào Start IP: 192.168.1.10 và End IP: 192.168.1.20, đồng thời gán tốc độ TX,<br>ví dụ: 20 Mbps và RX, ví dụ: 25 Mbps cho thiết bị (hoặc dãy thiết bị) đó.<br>- Trong đó, “Each” là mỗi IP trong dãy đều được sử dụng tối đa băng thông quy định;<br>“Share” là tất cả IP trong dãy sử dụng tổng băng thông quy định. Ở đây chọn "Each"<br>==> Sau đó chọn Add để lưu',
+      selector: 'input[name="sIpBandwFrom"]',
+      text: 'Bước 6: nhập Start IP: 192.168.1.10',
       position: 'top',
       condition: function (doc) {
         if (!doc) return false;
@@ -499,48 +496,149 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
         var txU = doc.querySelector('select[name="iDefTx"]');
         var rxU = doc.querySelector('select[name="iDefRx"]');
-        if (!tx || !rx) return false;
-        var txVal = (tx.value || '').trim();
-        var rxVal = (rx.value || '').trim();
-        var tU = txU ? txU.value : '1';
-        var rU = rxU ? rxU.value : '1';
-        return (txVal === '20' && rxVal === '25' && (tU === '1' || tU === 'Mbps') && (rU === '1' || rU === 'Mbps'));
+        var tu = txU ? txU.value : '1';
+        var ru = rxU ? rxU.value : '1';
+        var isDefDone = (tx && (tx.value || '').trim() === '20' && (tu === '1' || tu === 'Mbps')) &&
+                        (rx && (rx.value || '').trim() === '25' && (ru === '1' || ru === 'Mbps'));
+        var fromEl = doc.querySelector('input[name="sIpBandwFrom"]');
+        var fromVal = fromEl ? (fromEl.value || '').trim() : '';
+        var win = doc.defaultView || doc.parentWindow;
+        var isAdded = (win && Array.isArray(win.aryIpBandw) && win.aryIpBandw.length > 0 && win.aryIpBandw.some(function (r) { return r && (r[0] === '192.168.1.10' || r[1] === '192.168.1.20'); })) ||
+                      !!doc._ftcHasClickedAdd || !!window._ftcHasClickedAdd;
+        return isDefDone && !isAdded && (fromVal !== '192.168.1.10');
+      }
+    },
+    {
+      selector: 'input[name="sIpBandwTo"]',
+      text: 'Bước 7: nhập End IP: 192.168.1.20',
+      position: 'top',
+      condition: function (doc) {
+        if (!doc) return false;
+        var fromEl = doc.querySelector('input[name="sIpBandwFrom"]');
+        var toEl = doc.querySelector('input[name="sIpBandwTo"]');
+        var fromVal = fromEl ? (fromEl.value || '').trim() : '';
+        var toVal = toEl ? (toEl.value || '').trim() : '';
+        var win = doc.defaultView || doc.parentWindow;
+        var isAdded = (win && Array.isArray(win.aryIpBandw) && win.aryIpBandw.length > 0 && win.aryIpBandw.some(function (r) { return r && (r[0] === '192.168.1.10' || r[1] === '192.168.1.20'); })) ||
+                      !!doc._ftcHasClickedAdd || !!window._ftcHasClickedAdd;
+        return !isAdded && (fromVal === '192.168.1.10') && (toVal !== '192.168.1.20');
+      }
+    },
+    {
+      selector: 'input[name="sIpBandwShrd"][value="N"]',
+      text: 'Bước 8: chọn Each (mỗi IP trong dải đều sử dụng tối đa băng thông quy định)',
+      position: 'left',
+      condition: function (doc) {
+        if (!doc) return false;
+        var fromEl = doc.querySelector('input[name="sIpBandwFrom"]');
+        var toEl = doc.querySelector('input[name="sIpBandwTo"]');
+        var txEl = doc.querySelector('input[name="sIpBandwTx"]');
+        var fromVal = fromEl ? (fromEl.value || '').trim() : '';
+        var toVal = toEl ? (toEl.value || '').trim() : '';
+        var txVal = txEl ? (txEl.value || '').trim() : '';
+        var win = doc.defaultView || doc.parentWindow;
+        var isAdded = (win && Array.isArray(win.aryIpBandw) && win.aryIpBandw.length > 0 && win.aryIpBandw.some(function (r) { return r && (r[0] === '192.168.1.10' || r[1] === '192.168.1.20'); })) ||
+                      !!doc._ftcHasClickedAdd || !!window._ftcHasClickedAdd;
+        if (isAdded || fromVal !== '192.168.1.10' || toVal !== '192.168.1.20') return false;
+        if (!doc._ftcEachHooked) {
+          doc._ftcEachHooked = true;
+          var eachRadio = doc.querySelector('input[name="sIpBandwShrd"][value="N"]');
+          if (eachRadio) {
+            eachRadio.addEventListener('click', function () { doc._ftcEachConfirmed = true; });
+            eachRadio.addEventListener('change', function () { doc._ftcEachConfirmed = true; });
+          }
+          if (txEl) {
+            txEl.addEventListener('focus', function () { doc._ftcEachConfirmed = true; });
+            txEl.addEventListener('input', function () { doc._ftcEachConfirmed = true; });
+          }
+        }
+        if (doc._ftcEachConfirmed || txVal === '20') return false;
+        return true;
+      }
+    },
+    {
+      selector: 'input[name="sIpBandwTx"]',
+      text: 'Bước 9: nhập TX Limit cho dải IP: 20 Mbps',
+      position: 'bottom',
+      condition: function (doc) {
+        if (!doc) return false;
+        var fromEl = doc.querySelector('input[name="sIpBandwFrom"]');
+        var toEl = doc.querySelector('input[name="sIpBandwTo"]');
+        var txEl = doc.querySelector('input[name="sIpBandwTx"]');
+        var fromVal = fromEl ? (fromEl.value || '').trim() : '';
+        var toVal = toEl ? (toEl.value || '').trim() : '';
+        var txVal = txEl ? (txEl.value || '').trim() : '';
+        var win = doc.defaultView || doc.parentWindow;
+        var isAdded = (win && Array.isArray(win.aryIpBandw) && win.aryIpBandw.length > 0 && win.aryIpBandw.some(function (r) { return r && (r[0] === '192.168.1.10' || r[1] === '192.168.1.20'); })) ||
+                      !!doc._ftcHasClickedAdd || !!window._ftcHasClickedAdd;
+        if (isAdded || fromVal !== '192.168.1.10' || toVal !== '192.168.1.20') return false;
+        return (doc._ftcEachConfirmed || txVal !== '') && (txVal !== '20');
+      }
+    },
+    {
+      selector: 'input[name="sIpBandwRx"]',
+      text: 'Bước 10: nhập RX Limit cho dải IP: 25 Mbps',
+      position: 'bottom',
+      condition: function (doc) {
+        if (!doc) return false;
+        var fromEl = doc.querySelector('input[name="sIpBandwFrom"]');
+        var toEl = doc.querySelector('input[name="sIpBandwTo"]');
+        var txEl = doc.querySelector('input[name="sIpBandwTx"]');
+        var rxEl = doc.querySelector('input[name="sIpBandwRx"]');
+        var fromVal = fromEl ? (fromEl.value || '').trim() : '';
+        var toVal = toEl ? (toEl.value || '').trim() : '';
+        var txVal = txEl ? (txEl.value || '').trim() : '';
+        var rxVal = rxEl ? (rxEl.value || '').trim() : '';
+        var win = doc.defaultView || doc.parentWindow;
+        var isAdded = (win && Array.isArray(win.aryIpBandw) && win.aryIpBandw.length > 0 && win.aryIpBandw.some(function (r) { return r && (r[0] === '192.168.1.10' || r[1] === '192.168.1.20'); })) ||
+                      !!doc._ftcHasClickedAdd || !!window._ftcHasClickedAdd;
+        if (isAdded || fromVal !== '192.168.1.10' || toVal !== '192.168.1.20') return false;
+        return (txVal === '20') && (rxVal !== '25');
+      }
+    },
+    {
+      selector: 'input[name="btnAdd"]',
+      text: 'Bước 11: chọn Add để thêm dải IP vào danh sách Limitation List',
+      position: 'top',
+      condition: function (doc) {
+        if (!doc) return false;
+        var fromEl = doc.querySelector('input[name="sIpBandwFrom"]');
+        var toEl = doc.querySelector('input[name="sIpBandwTo"]');
+        var txEl = doc.querySelector('input[name="sIpBandwTx"]');
+        var rxEl = doc.querySelector('input[name="sIpBandwRx"]');
+        var fromVal = fromEl ? (fromEl.value || '').trim() : '';
+        var toVal = toEl ? (toEl.value || '').trim() : '';
+        var txVal = txEl ? (txEl.value || '').trim() : '';
+        var rxVal = rxEl ? (rxEl.value || '').trim() : '';
+        var win = doc.defaultView || doc.parentWindow;
+        var isAdded = (win && Array.isArray(win.aryIpBandw) && win.aryIpBandw.length > 0 && win.aryIpBandw.some(function (r) { return r && (r[0] === '192.168.1.10' || r[1] === '192.168.1.20'); })) ||
+                      !!doc._ftcHasClickedAdd || !!window._ftcHasClickedAdd;
+        if (isAdded || fromVal !== '192.168.1.10' || toVal !== '192.168.1.20') return false;
+        return (txVal === '20') && (rxVal === '25');
       }
     },
     {
       selector: 'select[name="nSch1"]',
-      text: 'Bước 7: Bạn có thể quy định thời gian để chức năng Bandwidth Limit<br>có hiệu lực bằng cách chỉnh Time Schedule. Ở đây chọn None.',
+      text: 'Bước 12: Time Schedule giữ nguyên mặc định là None',
       position: 'bottom',
       condition: function (doc) {
         if (!doc) return false;
-        var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
-        var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
-        var txU = doc.querySelector('select[name="iDefTx"]');
-        var rxU = doc.querySelector('select[name="iDefRx"]');
-        if (!tx || !rx) return false;
-        var txVal = (tx.value || '').trim();
-        var rxVal = (rx.value || '').trim();
-        var tU = txU ? txU.value : '1';
-        var rU = rxU ? rxU.value : '1';
-        return (txVal === '20' && rxVal === '25' && (tU === '1' || tU === 'Mbps') && (rU === '1' || rU === 'Mbps'));
+        var win = doc.defaultView || doc.parentWindow;
+        var isAdded = (win && Array.isArray(win.aryIpBandw) && win.aryIpBandw.length > 0 && win.aryIpBandw.some(function (r) { return r && (r[0] === '192.168.1.10' || r[1] === '192.168.1.20'); })) ||
+                      !!doc._ftcHasClickedAdd || !!window._ftcHasClickedAdd;
+        return isAdded && !doc._ftcIsSaved;
       }
     },
     {
       selector: 'input[name="btnOk"], input[value="OK"]',
-      text: 'Bước 8: chọn OK',
+      text: 'Bước 13: chọn OK để lưu cấu hình',
       position: 'top',
       condition: function (doc) {
         if (!doc) return false;
-        var tx = doc.querySelector('input[name="sIpBandwDefTx"]');
-        var rx = doc.querySelector('input[name="sIpBandwDefRx"]');
-        var txU = doc.querySelector('select[name="iDefTx"]');
-        var rxU = doc.querySelector('select[name="iDefRx"]');
-        if (!tx || !rx) return false;
-        var txVal = (tx.value || '').trim();
-        var rxVal = (rx.value || '').trim();
-        var tU = txU ? txU.value : '1';
-        var rU = rxU ? rxU.value : '1';
-        return (txVal === '20' && rxVal === '25' && (tU === '1' || tU === 'Mbps') && (rU === '1' || rU === 'Mbps'));
+        var win = doc.defaultView || doc.parentWindow;
+        var isAdded = (win && Array.isArray(win.aryIpBandw) && win.aryIpBandw.length > 0 && win.aryIpBandw.some(function (r) { return r && (r[0] === '192.168.1.10' || r[1] === '192.168.1.20'); })) ||
+                      !!doc._ftcHasClickedAdd || !!window._ftcHasClickedAdd;
+        return isAdded && !doc._ftcIsSaved;
       }
     }
   ]

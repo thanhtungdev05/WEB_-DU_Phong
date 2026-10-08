@@ -15,6 +15,24 @@ var bai1 = {
   ],
   practiceUrl: '/sim_be6500c/advanced__wan.html',
   clearFields: ['input[name="ipv4Settings.pppoe.username"]', 'input[name="ipv4Settings.pppoe.password"]'],
+  customClear: function () {
+    try {
+      var iframe = document.getElementById('device-iframe') || document.getElementById('deviceIframe');
+      var doc = iframe && (iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document));
+      if (doc) {
+        var u = doc.querySelector('input[name="ipv4Settings.pppoe.username"]');
+        var p = doc.querySelector('input[name="ipv4Settings.pppoe.password"]');
+        if (u && !u._ftcUserModified && u.value === 'fpt') {
+          u.value = '';
+          delete u.dataset.ftcCleared;
+        }
+        if (p && !p._ftcUserModified && p.value === 'fpt') {
+          p.value = '';
+          delete p.dataset.ftcCleared;
+        }
+      }
+    } catch (e) { }
+  },
   grading: {
     description: 'Kiểm tra cấu hình PPPoE',
     allowedSelectors: [

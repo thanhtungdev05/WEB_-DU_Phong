@@ -20,6 +20,27 @@
   window.CurMainMenu = 0;
   window.CurSubMenu = 'devinfo';
 
+  // Đảm bảo định danh phiên KTV độc lập theo từng trình duyệt, chống đụng độ NAT IP trong phòng đào tạo
+  function getKtvClientId() {
+    let cid = '';
+    try {
+      cid = sessionStorage.getItem('ktv_client_id') || '';
+      if (!cid) {
+        const match = document.cookie.match(/(?:^|;\s*)ktv_client_id=([^;]+)/);
+        if (match) cid = match[1];
+      }
+      if (!cid) {
+        cid = 'ktv_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10);
+        sessionStorage.setItem('ktv_client_id', cid);
+      }
+      document.cookie = 'ktv_client_id=' + cid + '; Path=/; SameSite=Lax';
+    } catch (e) {
+      if (!cid) cid = 'ktv_' + Date.now().toString(36);
+    }
+    return cid;
+  }
+  window.getKtvClientId = getKtvClientId;
+
   // ── State ────────────────────────────────────────────────────────
   let currentDeviceId = null;
   let currentLessonId = null;
@@ -2347,6 +2368,7 @@
         // simulator state has been reset.
         const urlObj = new URL(url, window.location.origin);
         urlObj.searchParams.set('_t', Date.now());
+        urlObj.searchParams.set('_ktv', getKtvClientId());
         deviceIframe.src = urlObj.toString();
       }, 80);
     });
@@ -2433,6 +2455,11 @@
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPPassword');
     } catch (e) { }
 
+    window._inFlightResets = window._inFlightResets || {};
+    if (window._inFlightResets[targetDev]) {
+      return window._inFlightResets[targetDev];
+    }
+
     const normDev = normalizeDeviceId(targetDev);
     const resetEndpoints = new Set(['/' + simFolder + '/api/reset']);
     if (normDev === 'ont_be6500c') {
@@ -2455,14 +2482,18 @@
       resetEndpoints.add(devResetUrl);
     }
 
+    const ktvId = (typeof getKtvClientId === 'function' ? getKtvClientId() : '') || 'ktv_default';
     const resetPromises = Array.from(resetEndpoints).map(function (endpoint) {
-      const resetUrl = endpoint + '?_t=' + Date.now();
+      const resetUrl = endpoint + '?_t=' + Date.now() + '&_ktv=' + encodeURIComponent(ktvId);
       try {
         return fetch(resetUrl, {
           method: 'POST',
           credentials: 'same-origin',
           cache: 'no-store',
-          headers: { 'X-FTC-Simulator-Reset': 'current-session' }
+          headers: {
+            'X-FTC-Simulator-Reset': 'current-session',
+            'X-KTV-Session-ID': ktvId
+          }
         }).then(function (response) {
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           return true;
@@ -2470,12 +2501,23 @@
           return fetch(resetUrl, {
             method: 'GET',
             credentials: 'same-origin',
-            cache: 'no-store'
+            cache: 'no-store',
+            headers: {
+              'X-KTV-Session-ID': ktvId
+            }
           }).then(function (response) { return response.ok; }).catch(function () { return false; });
         });
       } catch (error) {
         console.warn(`[Simulator] Không thể gửi yêu cầu đặt lại phiên ${endpoint}:`, error);
         return Promise.resolve(false);
+      }
+    });
+
+    const resetExecutionPromise = Promise.allSettled(resetPromises).then(function () { return true; });
+    window._inFlightResets[targetDev] = resetExecutionPromise;
+    resetExecutionPromise.finally(function () {
+      if (window._inFlightResets && window._inFlightResets[targetDev] === resetExecutionPromise) {
+        delete window._inFlightResets[targetDev];
       }
     });
 

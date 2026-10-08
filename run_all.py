@@ -300,6 +300,8 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         self.send_header('Referrer-Policy', 'strict-origin-when-cross-origin')
         self.send_header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
         self.send_header("Content-Security-Policy", "frame-ancestors 'self'")
+        if getattr(self, '_ktv_id', None) and 'ktv_client_id=' not in self.headers.get('Cookie', ''):
+            self.send_header('Set-Cookie', f'ktv_client_id={self._ktv_id}; Path=/; SameSite=Lax')
         SimpleHTTPRequestHandler.end_headers(self)
 
     def list_directory(self, path):
@@ -332,6 +334,20 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         # Ngoại lệ cho AC1000CV2: thiết bị này dùng /GponForm/ cho mọi submit form
         if path.startswith('/GponForm/'):
             return 'sim_ac1000cv2'
+
+        # Ngoại lệ cho AX3000CV2 (fw 0.5.3):
+        # 1. Các asset tĩnh Vue Webpack (/js/chunk-*, /css/chunk-*, /js/app.*, /css/app.*, /fonts/*, /img/*, /logo-fpt.ico)
+        # 2. Các endpoint đặc thù (/ubus, /ftc-ax3000c.js, /cgi-bin/cgi-backup, /cgi-bin/cgi-upload)
+        # luôn route vào sim_ax3000c để chống 404 trắng màn hình khi tải qua iframe.
+        if (
+            path.startswith(('/js/chunk-', '/css/chunk-', '/js/app.', '/css/app.'))
+            or path in ('/ubus', '/ftc-ax3000c.js', '/logo-fpt.ico', '/cgi-bin/cgi-backup', '/cgi-bin/cgi-upload')
+            or (path.startswith('/js/') and '9b4ab5b7' in path)
+            or (path.startswith('/css/') and ('06c49f94' in path or '7705225a' in path))
+            or (path.startswith('/fonts/') and ('element-icons' in path or 'NotoSans' in path))
+            or (path.startswith('/img/') and ('element-icons' in path or 'logo' in path))
+        ):
+            return 'sim_ax3000c'
 
         # 1. Kiểm tra prefix trong URL path
         for sim_id in SIM_MODULES.keys():
@@ -524,7 +540,42 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError):
                 pass
 
+    def _get_or_create_ktv_id(self):
+        ktv_id = (self.headers.get('X-KTV-Session-ID') or '').strip()
+        if ktv_id:
+            return ktv_id
+        if '?_ktv=' in self.path or '&_ktv=' in self.path:
+            try:
+                from urllib.parse import parse_qs
+                query = self.path.split('?', 1)[1] if '?' in self.path else ''
+                q = parse_qs(query)
+                if '_ktv' in q and q['_ktv'][0]:
+                    return q['_ktv'][0].strip()
+            except Exception:
+                pass
+        cookie = self.headers.get('Cookie', '')
+        if cookie:
+            import re
+            m = re.search(r'(?:ktv_client_id|ftc_session|PHPSESSID)=([a-zA-Z0-9_-]+)', cookie)
+            if m:
+                return m.group(1).strip()
+        referer = self.headers.get('Referer', '')
+        if referer and '_ktv=' in referer:
+            try:
+                from urllib.parse import parse_qs
+                ref_q = parse_qs(urlparse(referer).query)
+                if '_ktv' in ref_q and ref_q['_ktv'][0]:
+                    return ref_q['_ktv'][0].strip()
+            except Exception:
+                pass
+        import uuid
+        return f"ktv_{uuid.uuid4().hex[:16]}"
+
     def dispatch(self, method):
+        # Đảm bảo định danh phiên KTV độc lập theo từng trình duyệt (chống đụng độ IP NAT phòng đào tạo)
+        self._ktv_id = self._get_or_create_ktv_id()
+        self.headers['X-KTV-Session-ID'] = self._ktv_id
+
         # Chuyen tiep /api/* -> PHP noi bo (browser chi can 1 cong 8080)
         # Ngoai tru /api/v1/data/* thuoc ve simulator ONT BE6500C
         path_only = self.path.split('?')[0]
@@ -617,8 +668,21 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
 
                 def custom_send_header(keyword, value):
                     nonlocal cache_control_sent
+                    response_path = self.path.split('?', 1)[0].lower()
+                    extension = os.path.splitext(response_path)[1]
+                    static_extensions = {
+                        '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg',
+                        '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.map',
+                    }
                     if keyword.lower() == 'cache-control':
+                        # Nếu handler con gửi no-store / no-cache cho tài nguyên tĩnh,
+                        # bỏ qua để custom_end_headers gán cache tối ưu (chống cạn kiệt băng thông Render khi 60 KTV thao tác)
+                        if method in ('GET', 'HEAD') and extension in static_extensions:
+                            if 'no-store' in value.lower() or 'no-cache' in value.lower():
+                                return
                         cache_control_sent = True
+                    if keyword.lower() in ('pragma', 'expires') and method in ('GET', 'HEAD') and extension in static_extensions:
+                        return
                     if keyword.lower() == 'location':
                         if value.startswith('/') and not value.startswith('/' + sim_id + '/') and value != '/' + sim_id:
                             value = '/' + sim_id + value
@@ -634,6 +698,8 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
 
                 def custom_end_headers():
                     original_send_header('Set-Cookie', f'current_sim={sim_id}; Path=/; SameSite=Lax')
+                    if getattr(self, '_ktv_id', None) and 'ktv_client_id=' not in self.headers.get('Cookie', ''):
+                        original_send_header('Set-Cookie', f'ktv_client_id={self._ktv_id}; Path=/; SameSite=Lax')
                     if not cache_control_sent:
                         response_path = self.path.split('?', 1)[0].lower()
                         extension = os.path.splitext(response_path)[1]
@@ -646,7 +712,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                             if re.search(r'(?:^|[._-])[a-f0-9]{8,}(?:[._-]|$)', filename):
                                 cache_value = 'public, max-age=31536000, immutable'
                             else:
-                                cache_value = 'public, max-age=3600, stale-while-revalidate=86400'
+                                cache_value = 'public, max-age=86400, stale-while-revalidate=86400'
                         elif response_path in ('/ubus', '/sim-reset-session', '/api/reset', '/ftc-dat-bai') \
                                 or response_path.startswith('/api/'):
                             cache_value = 'no-store'

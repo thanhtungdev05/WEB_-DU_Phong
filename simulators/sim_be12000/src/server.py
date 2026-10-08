@@ -76,6 +76,21 @@ class Handler(BaseHTTPRequestHandler):
         return {k: v[0] for k, v in q.items()}
 
     def _client_session_info(self):
+        hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip()
+        if hdr:
+            self._has_be_cookie = True
+            self._current_be_sid = hdr
+            return hdr
+        if "?_ktv=" in getattr(self, "path", "") or "&_ktv=" in getattr(self, "path", ""):
+            try:
+                q = parse_qs(urlparse(self.path).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    sid = q["_ktv"][0].strip()
+                    self._has_be_cookie = True
+                    self._current_be_sid = sid
+                    return sid
+            except Exception:
+                pass
         cookie = self.headers.get("Cookie", "")
         if cookie:
             import re
@@ -84,6 +99,17 @@ class Handler(BaseHTTPRequestHandler):
                 self._has_be_cookie = True
                 self._current_be_sid = m.group(1)
                 return m.group(1)
+        ref = self.headers.get("Referer", "")
+        if ref and "_ktv=" in ref:
+            try:
+                q = parse_qs(urlparse(ref).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    sid = q["_ktv"][0].strip()
+                    self._has_be_cookie = True
+                    self._current_be_sid = sid
+                    return sid
+            except Exception:
+                pass
         addr = getattr(self, "client_address", None)
         ip = str(addr[0]) if addr else "127.0.0.1"
         self._has_be_cookie = False

@@ -11,6 +11,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   subtitle: 'Cấu hình hệ thống phân giải tên miền (DNS)',
   instructions: [
     '<b>Yêu cầu:</b>',
+    'Thực hiện cấu hình DNS Server trên thiết bị DrayTek Vigor2927:',
     '- Primary IP Address: <span class="val">210.245.31.220</span>',
     '- Secondary IP Address: <span class="val">8.8.8.8</span>'
   ],

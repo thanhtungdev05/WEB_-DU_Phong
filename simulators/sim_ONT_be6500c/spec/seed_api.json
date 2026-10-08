@@ -1234,8 +1234,8 @@
     "ipv4Settings": {
      "gateway": "",
      "pppoe": {
-      "password": "fpt",
-      "username": "fpt"
+      "password": "",
+      "username": ""
      },
      "mask": "",
      "ipAddress": "",
