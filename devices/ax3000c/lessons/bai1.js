@@ -19,6 +19,23 @@ window.DEVICE_AX3000C_LESSONS.push({
   // Xoá trắng PPP Username/Password khi mở trang (ô Vue: xem FTC_AX3000C.xoaO)
   customClear: function () {
     FTC_AX3000C.xoaO([FTC_AX3000C.o('PPP Username'), FTC_AX3000C.o('PPP Password')]);
+    try {
+      var iframe = document.getElementById('device-iframe') || document.getElementById('deviceIframe');
+      var doc = iframe && (iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document));
+      if (doc) {
+        doc.querySelectorAll('.el-form-item').forEach(function (fi) {
+          var l = fi.querySelector('.el-form-item__label');
+          var txt = l ? l.textContent.trim() : '';
+          if (txt.includes('PPP Username') || txt.includes('PPP Password')) {
+            var inp = fi.querySelector('input');
+            if (inp && !inp._ftcUserModified && inp !== doc.activeElement && inp.value === 'fpt') {
+              inp.value = '';
+              inp.dispatchEvent(new (doc.defaultView || window).Event('input', { bubbles: true }));
+            }
+          }
+        });
+      }
+    } catch (e) { }
   },
   grading: {
     description: 'Kiểm tra cấu hình PPPoE trên AX3000CV2',

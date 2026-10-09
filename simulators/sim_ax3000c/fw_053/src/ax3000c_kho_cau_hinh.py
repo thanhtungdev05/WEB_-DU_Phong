@@ -26,6 +26,7 @@ TEP_LUU = os.path.join(_HERE, "cau_hinh.json")
 TEP_GOC = os.path.join(_HERE, "..", "reference", "api", "khung_that_7_bai_lab.json")
 THU_MUC_BACKUP = os.path.join(_HERE, "..", "reference", "backup")
 KHOA_CAY_UCI = "uci.cay_cau_hinh"
+KHOA_CAY_CIGEXT = "data_repo.cigext.cay_cau_hinh"
 
 import sys  # noqa: E402
 sys.path.insert(0, os.path.join(_HERE, "..", "..", "..", "shared", "python"))
@@ -129,6 +130,18 @@ def _nap_khung_goc():
     cay = ra.setdefault(KHOA_CAY_UCI, {})
     for cfg, c in cay_uci_tu_backup().items():
         cay.setdefault(cfg, c)
+    # Dam bao PPP Username va Password khong mac dinh la 'fpt' de cac phien deu rong
+    if "network" in cay and "wan" in cay["network"]:
+        if cay["network"]["wan"].get("username") == "fpt":
+            cay["network"]["wan"]["username"] = ""
+        if cay["network"]["wan"].get("password") == "fpt":
+            cay["network"]["wan"]["password"] = ""
+    cig = ra.get(KHOA_CAY_CIGEXT)
+    if isinstance(cig, dict) and "network" in cig and "wan" in cig["network"]:
+        if cig["network"]["wan"].get("username") == "fpt":
+            cig["network"]["wan"]["username"] = ""
+        if cig["network"]["wan"].get("password") == "fpt":
+            cig["network"]["wan"]["password"] = ""
     # 2026-09-26: moi khung *_get la ham cua tep uci (do that — uci_doc_nguoc.py, UR1). Khung
     # goc gom tu nhieu lan do khac thoi diem (vd dmz_get dest_ip '' do TRUOC nhom 2, trong khi
     # tep firewall trong Backup da co dest_ip .109 — thiet bi luc chup Backup tra .109) ->
