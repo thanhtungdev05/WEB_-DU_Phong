@@ -12,31 +12,35 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   instructions: [
     '<b>Yêu cầu:</b>',
     'Cấu hình Policy Routing trên thiết bị DrayTek Vigor2927:',
+    '- Tên gợi nhớ (Comment): nhập <span class="val">Ưu tiên Wan 1</span>',
     '- Dải IP áp dụng (Source): từ <span class="val">192.168.1.100</span> đến <span class="val">192.168.1.110</span>',
     '- Interface chính: ưu tiên sử dụng <span class="val">WAN1</span>',
     '- Dự phòng (Failover): chỉ chuyển sang <span class="val">WAN2</span> khi WAN1 gặp sự cố (chọn Failover to: WAN2)',
+    '- Mức độ ưu tiên (Priority): đặt mức ưu tiên là <span class="val">1</span>',
     '- Khôi phục (Failback): tự động chuyển về ưu tiên WAN1 khi đường truyền khôi phục (tích chọn Failback)'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
+  allowedSelectors: [
+    'input[name="rdGWIp"]',
+    'input[name="sPRSGatewayIp"]'
+  ],
   grading: {
     description: 'Kiểm tra cấu hình Policy Routing Vigor2927 (rule Index 1)',
+    allowedSelectors: [
+      'input[name="rdGWIp"]',
+      'input[name="sPRSGatewayIp"]'
+    ],
     rules: [
       { id: 'pr_enable', name: 'Enable: có tích chọn', selector: 'input[name="iPREnable"]', expected: 'Checked', type: 'text_exact', required: true },
-      { id: 'pr_comment', name: 'Comment: PC A', selector: 'input[name="comment"]', expected: 'PC A', type: 'text_exact', required: true },
-      { id: 'pr_protocol', name: 'Protocol: TCP', selector: 'select[name="iPRProtocol"]', expected: 'TCP', type: 'text_exact', required: true },
+      { id: 'pr_comment', name: 'Comment: Ưu tiên Wan 1', selector: 'input[name="comment"]', expected: 'Ưu tiên Wan 1', type: 'text_exact', required: true },
       { id: 'pr_src_mode', name: 'Source: IP Range', selector: 'select[name="rdSIpAny"]', expected: 'IP Range', type: 'text_exact', required: true },
-      { id: 'pr_src_start', name: 'Source Start: 192.168.1.10', selector: 'input[name="sPRSIpStart"]', expected: '192.168.1.10', type: 'text_exact', required: true },
-      { id: 'pr_src_end', name: 'Source End: 192.168.1.10', selector: 'input[name="iPRSIpCount"]', expected: '192.168.1.10', type: 'text_exact', required: true },
-      { id: 'pr_dst_mode', name: 'Destination: IP Range', selector: 'select[name="rdDIpAny"]', expected: 'IP Range', type: 'text_exact', required: true },
-      { id: 'pr_dst_start', name: 'Destination Start: 11.11.11.11', selector: 'input[name="sPRDIpStart"]', expected: '11.11.11.11', type: 'text_exact', required: true },
-      { id: 'pr_dst_end', name: 'Destination End: 11.11.11.11', selector: 'input[name="iPRDIpCount"]', expected: '11.11.11.11', type: 'text_exact', required: true },
-      { id: 'pr_dport_mode', name: 'Destination Port: Dest Port Range', selector: 'select[name="rdDPortAny"]', expected: 'Dest Port Range', type: 'text_exact', required: true },
-      { id: 'pr_dport_start', name: 'Dest Port Start: 8000', selector: 'input[name="iPRDPortStart"]', expected: '8000', type: 'text_exact', required: true },
-      { id: 'pr_dport_end', name: 'Dest Port End: 8000', selector: 'input[name="iPRDPortCount"]', expected: '8000', type: 'text_exact', required: true },
-      { id: 'pr_iface_type', name: 'Interface: WAN', selector: 'select[name="interfaceType"]', expected: 'WAN', type: 'text_exact', required: true },
+      { id: 'pr_src_start', name: 'Source Start: 192.168.1.100', selector: 'input[name="sPRSIpStart"]', expected: '192.168.1.100', type: 'text_exact', required: true },
+      { id: 'pr_src_end', name: 'Source End: 192.168.1.110', selector: 'input[name="iPRSIpCount"]', expected: '192.168.1.110', type: 'text_exact', required: true },
       { id: 'pr_iface_wan', name: 'Interface: WAN1', selector: 'select[name="multiwanWanIf"]', expected: 'WAN1', type: 'text_exact', required: true },
-      { id: 'pr_gateway', name: 'Gateway: Default Gateway', selector: 'input[name="rdGWIp"]', expected: 'Default Gateway', type: 'text_exact', required: true },
-      { id: 'pr_priority', name: 'Priority: 200', selector: 'input[name="sPriority"]', expected: '200', type: 'text_exact', required: true }
+      { id: 'pr_failover', name: 'Failover to: có tích chọn', selector: 'input[name="iPRFailover"]', expected: 'Checked', type: 'text_exact', required: true },
+      { id: 'pr_failover_wan', name: 'Failover Interface: WAN2', selector: 'select[name="failoverwan"]', expected: 'WAN2', type: 'text_exact', required: true },
+      { id: 'pr_priority', name: 'Priority: 1', selector: 'input[name="sPriority"]', expected: '1', type: 'text_exact', required: true },
+      { id: 'pr_failback', name: 'Failback: có tích chọn', selector: 'input[name="iPRFailback"]', expected: 'Checked', type: 'text_exact', required: true }
     ],
     customGrading: function(allDocs) {
       let docRule = null;
@@ -54,7 +58,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
           passed: false,
           score: 0,
           passedCount: 0,
-          totalRules: 16,
+          totalRules: 10,
           details: [
             {
               id: 'not_on_page',
@@ -68,7 +72,9 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         };
       }
 
-      const isSaved = !!docRule._ftcIsSaved;
+      const win = docRule.defaultView || docRule.parentWindow;
+      const topWin = (win && win.top) ? win.top : ((typeof window !== 'undefined' && window.top) ? window.top : window);
+      const isSaved = Boolean(docRule._ftcIsSaved || (win && win._ftcIsSaved) || (topWin && topWin._ftcIsSaved));
 
       // 1. Enable
       const enableEl = docRule.querySelector('input[name="iPREnable"]');
@@ -78,121 +84,78 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       // 2. Comment
       const commentEl = docRule.querySelector('input[name="comment"]');
       const actualComment = commentEl ? commentEl.value.trim() : '';
-      const commentPassed = (actualComment === 'PC A') && isSaved;
+      const commentPassed = (actualComment === 'Ưu tiên Wan 1' || actualComment === 'Wan 1') && isSaved;
 
-      // 3. Protocol
-      const protoEl = docRule.querySelector('select[name="iPRProtocol"]');
-      let actualProto = '';
-      if (protoEl) {
-        const opt = protoEl.options[protoEl.selectedIndex];
-        actualProto = opt ? (opt.text || '').trim() : '';
-      }
-      const protoPassed = (actualProto === 'TCP') && isSaved;
-
-      // 4-6. Source
+      // 3. Source Mode
       const srcModeEl = docRule.querySelector('select[name="rdSIpAny"]');
       let actualSrcMode = '';
       if (srcModeEl) {
         const opt = srcModeEl.options[srcModeEl.selectedIndex];
         actualSrcMode = opt ? (opt.text || '').trim() : '';
       }
-      const srcModePassed = (actualSrcMode === 'IP Range') && isSaved;
+      const srcModePassed = (actualSrcMode === 'IP Range' || (srcModeEl && srcModeEl.value === '1')) && isSaved;
+
+      // 4. Source Start
       const srcStartEl = docRule.querySelector('input[name="sPRSIpStart"]');
       const actualSrcStart = srcStartEl ? srcStartEl.value.trim() : '';
-      const srcStartPassed = (actualSrcStart === '192.168.1.10') && isSaved;
+      const srcStartPassed = (actualSrcStart === '192.168.1.100') && isSaved;
+
+      // 5. Source End
       const srcEndEl = docRule.querySelector('input[name="iPRSIpCount"]');
       const actualSrcEnd = srcEndEl ? srcEndEl.value.trim() : '';
-      const srcEndPassed = (actualSrcEnd === '192.168.1.10') && isSaved;
+      const srcEndPassed = (actualSrcEnd === '192.168.1.110') && isSaved;
 
-      // 7-9. Destination
-      const dstModeEl = docRule.querySelector('select[name="rdDIpAny"]');
-      let actualDstMode = '';
-      if (dstModeEl) {
-        const opt = dstModeEl.options[dstModeEl.selectedIndex];
-        actualDstMode = opt ? (opt.text || '').trim() : '';
-      }
-      const dstModePassed = (actualDstMode === 'IP Range') && isSaved;
-      const dstStartEl = docRule.querySelector('input[name="sPRDIpStart"]');
-      const actualDstStart = dstStartEl ? dstStartEl.value.trim() : '';
-      const dstStartPassed = (actualDstStart === '11.11.11.11') && isSaved;
-      const dstEndEl = docRule.querySelector('input[name="iPRDIpCount"]');
-      const actualDstEnd = dstEndEl ? dstEndEl.value.trim() : '';
-      const dstEndPassed = (actualDstEnd === '11.11.11.11') && isSaved;
-
-      // 10-12. Destination Port
-      const dportModeEl = docRule.querySelector('select[name="rdDPortAny"]');
-      let actualDportMode = '';
-      if (dportModeEl) {
-        const opt = dportModeEl.options[dportModeEl.selectedIndex];
-        actualDportMode = opt ? (opt.text || '').trim() : '';
-      }
-      const dportModePassed = (actualDportMode === 'Dest Port Range') && isSaved;
-      const dportStartEl = docRule.querySelector('input[name="iPRDPortStart"]');
-      const actualDportStart = dportStartEl ? dportStartEl.value.trim() : '';
-      const dportStartPassed = (actualDportStart === '8000') && isSaved;
-      const dportEndEl = docRule.querySelector('input[name="iPRDPortCount"]');
-      const actualDportEnd = dportEndEl ? dportEndEl.value.trim() : '';
-      const dportEndPassed = (actualDportEnd === '8000') && isSaved;
-
-      // 13. Interface (WAN)
-      const ifaceTypeEl = docRule.querySelector('select[name="interfaceType"]');
-      let actualIfaceType = '';
-      if (ifaceTypeEl) {
-        const opt = ifaceTypeEl.options[ifaceTypeEl.selectedIndex];
-        actualIfaceType = opt ? (opt.text || '').trim() : '';
-      }
-      const ifaceTypePassed = (actualIfaceType === 'WAN') && isSaved;
-
-      // 14. Interface (WAN1) — ô chọn WAN thật sự HIỂN THỊ trên màn hình là
-      // select[name="multiwanWanIf"] (danh sách WAN1/WAN2/WAN5/WAN6).
-      // KHÔNG dùng select[name="iPRWanIf1"]: ô đó bị Angular ẩn hoàn toàn
-      // (nằm trong <tr> có class ng-hide) và luôn giữ giá trị mặc định LAN1,
-      // nên chấm theo nó thì học viên chọn đúng vẫn bị báo sai.
-      // Cũng KHÔNG dùng hidden field input[name="iPRWanIf"]: hàm gốc
-      // onClkBtnOk() chỉ ghi vào đó khi dataCheck() pass, trong giả lập luôn rỗng.
+      // 6. Interface WAN1
       const ifaceWanEl = docRule.querySelector('select[name="multiwanWanIf"]');
       let actualIfaceWan = '';
       if (ifaceWanEl && ifaceWanEl.selectedIndex >= 0) {
         const opt = ifaceWanEl.options[ifaceWanEl.selectedIndex];
         actualIfaceWan = opt ? (opt.text || '').trim() : '';
       }
-      const ifaceWanPassed = (actualIfaceWan === 'WAN1') && isSaved;
+      const ifaceWanPassed = (actualIfaceWan === 'WAN1' || (ifaceWanEl && ifaceWanEl.value === '3')) && isSaved;
 
-      // 15. Gateway
-      const gwChecked = docRule.querySelector('input[name="rdGWIp"][value="0"]');
-      const gwPassed = !!(gwChecked && gwChecked.checked) && isSaved;
+      // 7. Failover to
+      const failoverEl = docRule.querySelector('input[name="iPRFailover"]');
+      const failoverChecked = failoverEl ? !!failoverEl.checked : false;
+      const failoverPassed = failoverChecked && isSaved;
 
-      // 16. Priority (input được tạo động khi kéo thanh trượt Priority)
+      // 8. Failover WAN (WAN2)
+      const failoverWanEl = docRule.querySelector('select[name="failoverwan"]');
+      let actualFailoverWan = '';
+      if (failoverWanEl && failoverWanEl.selectedIndex >= 0) {
+        const opt = failoverWanEl.options[failoverWanEl.selectedIndex];
+        actualFailoverWan = opt ? (opt.text || '').trim() : '';
+      }
+      const failoverWanPassed = (actualFailoverWan.includes('WAN2') || (failoverWanEl && failoverWanEl.value === '4')) && isSaved;
+
+      // 9. Priority
       const priorityEl = docRule.querySelector('input[name="sPriority"]');
       const actualPriority = priorityEl ? priorityEl.value.trim() : '';
-      const priorityPassed = (actualPriority === '200') && isSaved;
+      const priorityPassed = (actualPriority === '1' || actualPriority === '0') && isSaved;
+
+      // 10. Failback
+      const failbackEl = docRule.querySelector('input[name="iPRFailback"]');
+      const failbackChecked = failbackEl ? !!failbackEl.checked : false;
+      const failbackPassed = failbackChecked && isSaved;
 
       const details = [
         { id: 'pr_enable', name: 'Enable: có tích chọn', expected: 'Checked', actual: enableChecked ? 'Checked' : 'Chưa tích', passed: enablePassed, message: enablePassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : 'Chưa tích Enable') },
-        { id: 'pr_comment', name: 'Comment: PC A', expected: 'PC A', actual: actualComment || '(trống)', passed: commentPassed, message: commentPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Comment không đúng (đang là ${actualComment || 'trống'})`) },
-        { id: 'pr_protocol', name: 'Protocol: TCP', expected: 'TCP', actual: actualProto || '(trống)', passed: protoPassed, message: protoPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Protocol không đúng (đang là ${actualProto || 'trống'})`) },
+        { id: 'pr_comment', name: 'Comment: Ưu tiên Wan 1', expected: 'Ưu tiên Wan 1', actual: actualComment || '(trống)', passed: commentPassed, message: commentPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Comment không đúng (đang là ${actualComment || 'trống'})`) },
         { id: 'pr_src_mode', name: 'Source: IP Range', expected: 'IP Range', actual: actualSrcMode || '(trống)', passed: srcModePassed, message: srcModePassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Source không đúng (đang là ${actualSrcMode || 'trống'})`) },
-        { id: 'pr_src_start', name: 'Source Start: 192.168.1.10', expected: '192.168.1.10', actual: actualSrcStart || '(trống)', passed: srcStartPassed, message: srcStartPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Source Start không đúng (đang là ${actualSrcStart || 'trống'})`) },
-        { id: 'pr_src_end', name: 'Source End: 192.168.1.10', expected: '192.168.1.10', actual: actualSrcEnd || '(trống)', passed: srcEndPassed, message: srcEndPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Source End không đúng (đang là ${actualSrcEnd || 'trống'})`) },
-        { id: 'pr_dst_mode', name: 'Destination: IP Range', expected: 'IP Range', actual: actualDstMode || '(trống)', passed: dstModePassed, message: dstModePassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Destination không đúng (đang là ${actualDstMode || 'trống'})`) },
-        { id: 'pr_dst_start', name: 'Destination Start: 11.11.11.11', expected: '11.11.11.11', actual: actualDstStart || '(trống)', passed: dstStartPassed, message: dstStartPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Destination Start không đúng (đang là ${actualDstStart || 'trống'})`) },
-        { id: 'pr_dst_end', name: 'Destination End: 11.11.11.11', expected: '11.11.11.11', actual: actualDstEnd || '(trống)', passed: dstEndPassed, message: dstEndPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Destination End không đúng (đang là ${actualDstEnd || 'trống'})`) },
-        { id: 'pr_dport_mode', name: 'Destination Port: Dest Port Range', expected: 'Dest Port Range', actual: actualDportMode || '(trống)', passed: dportModePassed, message: dportModePassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Destination Port không đúng (đang là ${actualDportMode || 'trống'})`) },
-        { id: 'pr_dport_start', name: 'Dest Port Start: 8000', expected: '8000', actual: actualDportStart || '(trống)', passed: dportStartPassed, message: dportStartPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Dest Port Start không đúng (đang là ${actualDportStart || 'trống'})`) },
-        { id: 'pr_dport_end', name: 'Dest Port End: 8000', expected: '8000', actual: actualDportEnd || '(trống)', passed: dportEndPassed, message: dportEndPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Dest Port End không đúng (đang là ${actualDportEnd || 'trống'})`) },
-        { id: 'pr_iface_type', name: 'Interface: WAN', expected: 'WAN', actual: actualIfaceType || '(trống)', passed: ifaceTypePassed, message: ifaceTypePassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Interface không đúng (đang là ${actualIfaceType || 'trống'})`) },
+        { id: 'pr_src_start', name: 'Source Start: 192.168.1.100', expected: '192.168.1.100', actual: actualSrcStart || '(trống)', passed: srcStartPassed, message: srcStartPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Source Start không đúng (đang là ${actualSrcStart || 'trống'})`) },
+        { id: 'pr_src_end', name: 'Source End: 192.168.1.110', expected: '192.168.1.110', actual: actualSrcEnd || '(trống)', passed: srcEndPassed, message: srcEndPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Source End không đúng (đang là ${actualSrcEnd || 'trống'})`) },
         { id: 'pr_iface_wan', name: 'Interface: WAN1', expected: 'WAN1', actual: actualIfaceWan || '(trống)', passed: ifaceWanPassed, message: ifaceWanPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Interface không đúng (đang là ${actualIfaceWan || 'trống'})`) },
-        { id: 'pr_gateway', name: 'Gateway: Default Gateway', expected: 'Default Gateway', actual: (gwChecked && gwChecked.checked) ? 'Default Gateway' : 'Khác', passed: gwPassed, message: gwPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : 'Gateway không đúng, cần chọn Default Gateway') },
-        { id: 'pr_priority', name: 'Priority: 200', expected: '200', actual: actualPriority || '(chưa kéo thanh trượt)', passed: priorityPassed, message: priorityPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : (actualPriority ? `Priority không đúng (đang là ${actualPriority})` : 'Chưa kéo thanh trượt Priority tới số 200')) }
+        { id: 'pr_failover', name: 'Failover to: có tích chọn', expected: 'Checked', actual: failoverChecked ? 'Checked' : 'Chưa tích', passed: failoverPassed, message: failoverPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : 'Chưa tích Failover to') },
+        { id: 'pr_failover_wan', name: 'Failover Interface: WAN2', expected: 'WAN2', actual: actualFailoverWan || '(trống)', passed: failoverWanPassed, message: failoverWanPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : `Failover Interface không đúng (đang là ${actualFailoverWan || 'trống'})`) },
+        { id: 'pr_priority', name: 'Priority: 1', expected: '1', actual: actualPriority || '(chưa nhập/kéo)', passed: priorityPassed, message: priorityPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : (actualPriority ? `Priority không đúng (đang là ${actualPriority})` : 'Chưa nhập hoặc kéo thanh trượt Priority tới 1')) },
+        { id: 'pr_failback', name: 'Failback: có tích chọn', expected: 'Checked', actual: failbackChecked ? 'Checked' : 'Chưa tích', passed: failbackPassed, message: failbackPassed ? 'Chính xác' : (!isSaved ? 'Chưa bấm OK để lưu cấu hình' : 'Chưa tích chọn Failback') }
       ];
 
       const passedList = [
-        enablePassed, commentPassed, protoPassed,
-        srcModePassed, srcStartPassed, srcEndPassed,
-        dstModePassed, dstStartPassed, dstEndPassed,
-        dportModePassed, dportStartPassed, dportEndPassed,
-        ifaceTypePassed, ifaceWanPassed,
-        gwPassed, priorityPassed
+        enablePassed, commentPassed, srcModePassed,
+        srcStartPassed, srcEndPassed, ifaceWanPassed,
+        failoverPassed, failoverWanPassed,
+        priorityPassed, failbackPassed
       ];
 
       const passedCount = passedList.filter(Boolean).length;
@@ -230,61 +193,73 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     },
     {
       selector: 'input[name="iPREnable"]',
-      text: 'Bước 4: check vào Enble',
+      text: 'Bước 4: check vào Enable',
       position: 'left',
       page: 'v2x00.cgi'
     },
     {
       selector: 'input[name="comment"]',
-      text: 'Bước 5: nhập PC A',
+      text: 'Bước 5: nhập Ưu tiên Wan 1',
       position: 'top',
-      page: 'v2x00.cgi'
-    },
-    {
-      selector: 'select[name="iPRProtocol"]',
-      text: 'Bước 6: chọn TCP',
-      position: 'right',
       page: 'v2x00.cgi'
     },
     {
       selector: 'select[name="rdSIpAny"]',
-      text: 'Bước 7: chọn IP Range, ví dụ: 192.168.1.10 - 192.168.1.10',
+      text: 'Bước 6: chọn IP Range',
       position: 'right',
       page: 'v2x00.cgi'
     },
     {
-      selector: 'select[name="rdDIpAny"]',
-      text: 'Bước 8: chọn IP Range, ví dụ: 11.11.11.11 - 11.11.11.11',
+      selector: 'input[name="sPRSIpStart"]',
+      text: 'Bước 7: nhập 192.168.1.100',
+      position: 'bottom',
+      page: 'v2x00.cgi'
+    },
+    {
+      selector: 'input[name="iPRSIpCount"]',
+      text: 'Bước 8: nhập 192.168.1.110',
+      position: 'bottom',
+      page: 'v2x00.cgi'
+    },
+    {
+      selector: 'select[name="multiwanWanIf"]',
+      text: 'Bước 9: Interface chính chọn WAN1',
       position: 'right',
       page: 'v2x00.cgi'
     },
     {
-      selector: 'select[name="rdDPortAny"]',
-      text: 'Bước 9: chọn Dest Port Range, ví dụ: 8000 - 8000',
-      position: 'right',
-      page: 'v2x00.cgi'
-    },
-    {
-      selector: '#dfgateway, td:contains("Default Gateway")',
-      text: 'Bước 10: chọn Default Gateway',
-      position: 'right',
-      page: 'v2x00.cgi'
-    },
-    {
-      selector: '#image_option',
-      text: 'Bước 11: click vào +',
+      selector: 'input[name="iPRFailover"]',
+      text: 'Bước 10: check vào Failover to',
       position: 'left',
       page: 'v2x00.cgi'
     },
     {
-      selector: '#idShow',
-      text: 'Bước 12: kéo hoặc nhập số 200',
+      selector: 'select[name="failoverwan"]',
+      text: 'Bước 11: chọn WAN2',
+      position: 'right',
+      page: 'v2x00.cgi'
+    },
+    {
+      selector: '#image_option, td[onclick*="onClkMoreoption"]',
+      text: 'Bước 12: click vào + Priority',
+      position: 'left',
+      page: 'v2x00.cgi'
+    },
+    {
+      selector: '#idShow, input[name="sPriority"]',
+      text: 'Bước 13: kéo hoặc nhập số 1',
       position: 'top',
       page: 'v2x00.cgi'
     },
     {
-      selector: 'input[name="btnOk"]',
-      text: 'Bước 13: chọn OK',
+      selector: 'input[name="iPRFailback"]',
+      text: 'Bước 14: check vào Failback',
+      position: 'left',
+      page: 'v2x00.cgi'
+    },
+    {
+      selector: 'input[name="btnOk"], input[value="OK"]',
+      text: 'Bước 15: chọn OK để lưu cấu hình',
       position: 'bottom',
       page: 'v2x00.cgi'
     }

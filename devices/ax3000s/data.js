@@ -5,7 +5,7 @@
 
 window.DEVICE_AX3000S = {
   id: 'ax3000s',
-  name: 'Internet Hub AX3000S',
+  name: 'ONT AX3000S',
   shortName: 'AX3000S',
   port: 8080,
   folder: 'sim_ax3000s',

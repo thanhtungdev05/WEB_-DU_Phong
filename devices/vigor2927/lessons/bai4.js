@@ -114,16 +114,24 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     ],
     customGrading: function (allDocs) {
       let docEnet = null;
+      let docGeneral = null;
       for (const d of allDocs) {
         try {
-          if (d.querySelector('input[name="sLanIp"]') || (d.location && d.location.href.toLowerCase().includes('enet.sht'))) {
+          if (d.querySelector('input[name="sLanIp"]') ||
+              (d.location && (d.location.href.toLowerCase().includes('enet.sht') || d.location.href.toLowerCase().includes('lan_dt_1')))) {
             docEnet = d;
             break;
+          }
+          if (d.querySelector('input[name="btnDtPage0"]') || (d.location && d.location.href.toLowerCase().includes('enet1.htm'))) {
+            docGeneral = d;
           }
         } catch (e) { }
       }
 
       if (!docEnet) {
+        const msg = docGeneral
+          ? 'Bạn đang ở trang General Setup. Vui lòng nhấn nút "Details Page" tại dòng LAN 1 để mở trang cấu hình DHCP'
+          : 'Vui lòng nhấn Details Page tại hàng LAN 1 để thực hiện cấu hình';
         return {
           passed: false,
           score: 0,
@@ -136,13 +144,22 @@ window.DEVICE_VIGOR2927_LESSONS.push({
               expected: 'Đã vào trang LAN 1 Details Page',
               actual: 'Chưa mở trang Details Page',
               passed: false,
-              message: 'Vui lòng nhấn Details Page tại hàng LAN 1 để thực hiện cấu hình'
+              message: msg
             }
           ]
         };
       }
 
-      const isSaved = !!docEnet._ftcIsSaved;
+      const win = docEnet.defaultView || docEnet.parentWindow;
+      const topWin = (typeof window !== 'undefined' && window.top) ? window.top : window;
+
+      const isSaved = !!(
+        docEnet._ftcIsSaved ||
+        (win && win._ftcIsSaved) ||
+        window._hasClickedSaveInGuide ||
+        topWin._hasClickedSaveInGuide ||
+        docEnet._ftcLastSaveInteraction
+      );
 
       // 1. IP Address
       const ipEl = docEnet.querySelector('input[name="sLanIp"]');
@@ -314,13 +331,13 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       selector: '#menu-lan:not(.open) .menu-text, #menu-lan:not(.open)',
       text: 'Bước 1: chọn LAN',
       position: 'bottom',
-      hideOnPage: 'enet1|sht'
+      hideOnPage: 'enet1|sht|enet'
     },
     {
       selector: '#sub-lan:not(.hidden) #menu-lan-general .menu-text, #sub-lan:not(.hidden) #menu-lan-general',
       text: 'Bước 2: chọn General Setup',
       position: 'bottom',
-      hideOnPage: 'enet1|sht'
+      hideOnPage: 'enet1|sht|enet'
     },
     {
       selector: '#lan1 input[name="btnDtPage0"], input[name="btnDtPage0"], #lan1 input[value="Details Page"]',
@@ -329,22 +346,52 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       hideOnPage: 'sht'
     },
     {
+      selector: 'input[name="sLanIp"]',
+      text: 'Bước 4: điền IP Address: 192.168.100.1',
+      position: 'bottom',
+      page: 'sht'
+    },
+    {
       selector: 'select[name="sLanMask"]',
-      text: 'Bước 4: điền IP Address 192.168.100.1<br>chọn Subnet Mask 255.255.255.0',
+      text: 'Bước 5: chọn Subnet Mask: 255.255.255.0 / 24',
       position: 'bottom',
       page: 'sht'
     },
     {
       selector: 'input[name="sDHCP"][value="1"] + translate, input[name="sDHCP"][value="1"]',
-      text: 'Bước 5: chọn Enable Server<br>- Start IP Address: 192.168.100.10<br>- IP Pool Counts: 200<br>- Gateway IP Address: 192.168.100.1<br>- Lease Time: 86400',
+      text: 'Bước 6: chọn Enable Server',
       position: 'top',
       minTop: -4,
       offsetY: 3,
       page: 'sht'
     },
     {
+      selector: 'input[name="sDHCPStIP"]',
+      text: 'Bước 7: điền Start IP Address: 192.168.100.10',
+      position: 'bottom',
+      page: 'sht'
+    },
+    {
+      selector: 'input[name="iDHCPNo"]',
+      text: 'Bước 8: điền IP Pool Counts: 200',
+      position: 'bottom',
+      page: 'sht'
+    },
+    {
+      selector: 'input[name="sDHCPGwIP"]',
+      text: 'Bước 9: điền Gateway IP Address: 192.168.100.1',
+      position: 'bottom',
+      page: 'sht'
+    },
+    {
+      selector: 'input[name="sDHCPLsTime"]',
+      text: 'Bước 10: điền Lease Time: 86400',
+      position: 'bottom',
+      page: 'sht'
+    },
+    {
       selector: 'input[name="btnOK"], input[value="OK"]',
-      text: 'Bước 5: chọn OK',
+      text: 'Bước 11: chọn OK để lưu cấu hình',
       position: 'top',
       page: 'sht'
     }

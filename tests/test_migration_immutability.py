@@ -26,6 +26,17 @@ class MigrationImmutabilityTests(unittest.TestCase):
         self.assertNotIn("schema_migrations", sql.lower())
         self.assertNotRegex(sql, r"(?i)\b(delete|drop|truncate)\b")
 
+    def test_standardize_device_display_names_is_forward_only(self):
+        correction = MIGRATIONS / "058_standardize_device_display_names.sql"
+        sql = correction.read_text(encoding="utf-8")
+        self.assertIn("device_name = 'ONT AX3000S'", sql)
+        self.assertIn("device_name = 'ONT AC1000C V2'", sql)
+        self.assertIn("device_name = 'ONT BE1200Z'", sql)
+        self.assertIn("device_name = 'AP BE1500Z'", sql)
+        self.assertIn("lab_name = 'Xem thiết bị AP BE1500Z'", sql)
+        self.assertNotIn("schema_migrations", sql.lower())
+        self.assertNotRegex(sql, r"(?i)\b(delete|drop|truncate)\b")
+
 
 if __name__ == "__main__":
     unittest.main()

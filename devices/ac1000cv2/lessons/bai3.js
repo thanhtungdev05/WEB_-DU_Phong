@@ -13,8 +13,8 @@ var lessonObj = {
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình mạng Wi-Fi IoT trên băng tần <b>2.4G</b> theo các thông số dưới đây:',
-    '- SSID Name: <span class="val">FPT Telecom-7EA8</span>',
-    '- WPA Key: <span class="val">00032934</span>'
+    '- SSID Name: <span class="val">FPT IoT</span>',
+    '- WPA Key: <span class="val">fptiot123</span>'
   ],
   practiceUrl: '/sim_ac1000cv2/wifissid.html',
   onSimLoad: function (iframeWindow) {
@@ -135,7 +135,7 @@ var lessonObj = {
         id: 'wifi_iot_ssid',
         name: 'Tên Wi-Fi IoT (SSID 2)',
         selector: '#ssid_network_name, input[name="ssid_network_name"]',
-        expected: 'FPT Telecom-7EA8',
+        expected: 'FPT IoT',
         type: 'text_exact',
         trim: true,
         required: true
@@ -144,8 +144,8 @@ var lessonObj = {
         id: 'wifi_iot_key',
         name: 'Security Passphrase (SSID 2)',
         selector: '#security_wpa_key, input[name="security_wpa_key"]',
-        expected: '00032934',
-        displayExpected: '00032934',
+        expected: 'fptiot123',
+        displayExpected: 'fptiot123',
         type: 'text_exact',
         trim: true,
         required: true

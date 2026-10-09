@@ -1475,6 +1475,19 @@
                       window._hasClickedSaveInGuide = true;
                       doc._ftcIsSaved = true;
                       try {
+                        const formData = new FormData(form);
+                        const params = new URLSearchParams();
+                        for (const pair of formData.entries()) {
+                          params.append(pair[0], pair[1]);
+                        }
+                        const act = form.action || "/sim_vigor2927/cgi-bin/enet.cgi";
+                        fetch(act, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                          body: params.toString()
+                        }).catch(function() {});
+                      } catch (e) { }
+                      try {
                         if (typeof window.onSimulatorSave === 'function') {
                           window.onSimulatorSave(doc.defaultView || doc.parentWindow);
                         }
@@ -2664,6 +2677,7 @@
     const activeDeviceId = (device && device.id) ? device.id : (typeof currentDeviceId !== 'undefined' ? currentDeviceId : '');
 
     function getLabelForElement(el, doc) {
+    if (el.name === 'rdGWIp' || (el.id && el.id.includes('rdGWIp'))) return 'Gateway (Cổng kết nối)';
     if (el.labels && el.labels.length > 0) return el.labels[0].textContent.trim().replace(/:$/, '');
     if (el.id) {
       const label = doc.querySelector(`label[for="${el.id}"]`);
@@ -4177,18 +4191,20 @@
 
     function isPageActiveInTree(rootWin, pageName) {
       if (!rootWin || !pageName) return false;
-      const p = pageName.toLowerCase();
+      const pageNames = pageName.toLowerCase().split('|').map(s => s.trim()).filter(Boolean);
       try {
-        // Kiểm tra biến global oldpath của simulator
-        if (rootWin.oldpath && rootWin.oldpath.toLowerCase().includes(p)) {
-          return true;
+        if (rootWin.oldpath) {
+          const op = rootWin.oldpath.toLowerCase();
+          if (pageNames.some(p => op.includes(p))) return true;
         }
         const docs = getAllAccessibleDocuments(rootWin);
         for (const d of docs) {
           const h = (d.location && d.location.href) ? d.location.href.toLowerCase() : '';
           const ha = (d.location && d.location.hash) ? d.location.hash.toLowerCase() : '';
-          if (h.includes(p) || ha.includes(p)) return true;
-          if (p === 'lan' && (h.includes('dhcp') || ha.includes('dhcp'))) return true;
+          for (const p of pageNames) {
+            if (h.includes(p) || ha.includes(p)) return true;
+            if (p === 'lan' && (h.includes('dhcp') || ha.includes('dhcp'))) return true;
+          }
         }
       } catch (e) { }
       return false;
@@ -4204,8 +4220,8 @@
       // Filter by page / hideOnPage if specified
       const targetPage = pop.page || pop.urlIncludes;
       if (targetPage) {
-        const pName = targetPage.toLowerCase();
-        const active = isPageActiveInTree(deviceIframe.contentWindow, pName) || fullUrl.includes(pName);
+        const pNames = targetPage.toLowerCase().split('|').map(s => s.trim()).filter(Boolean);
+        const active = pNames.some(pName => isPageActiveInTree(deviceIframe.contentWindow, pName) || fullUrl.includes(pName));
         if (!active) {
           const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
           if (oldBubble) oldBubble.remove();
@@ -4214,8 +4230,8 @@
       }
       const hidePage = pop.hideOnPage || pop.hideOnUrlIncludes;
       if (hidePage) {
-        const hName = hidePage.toLowerCase();
-        const hidden = isPageActiveInTree(deviceIframe.contentWindow, hName) || fullUrl.includes(hName);
+        const hNames = hidePage.toLowerCase().split('|').map(s => s.trim()).filter(Boolean);
+        const hidden = hNames.some(hName => isPageActiveInTree(deviceIframe.contentWindow, hName) || fullUrl.includes(hName));
         if (hidden) {
           const oldBubble = doc.querySelector(`.ftc-guide-bubble[data-guide-index="${idx}"]`);
           if (oldBubble) oldBubble.remove();

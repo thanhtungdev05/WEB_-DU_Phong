@@ -3498,7 +3498,9 @@
      "192.168.16.1",
      "192.168.254.1"
     ],
-    "IP_MAC_NUM": "1024"
+    "IP_MAC_NUM": "1024",
+    "sIpBndMacEnable": 0,
+    "sIpBndMacStrict": 0
    },
    "inputs": {
     "sIpBndMacEnable": "0",

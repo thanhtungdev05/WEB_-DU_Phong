@@ -39,9 +39,9 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai1'] = [
   },
   {
     selector: '#opt-pppoe-password, input[name="sDOutPass1"]',
-    text: 'Bước 7: nhập 12345678',
+    text: 'Bước 7: nhập fpt12345',
     position: 'right',
-    expected: '12345678'
+    expected: 'fpt12345'
   },
   {
     selector: '#btn-pppoe-ok, input[name="submit"][value="OK"], input[type="submit"][value="OK"]',

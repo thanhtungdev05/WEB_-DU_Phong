@@ -13,7 +13,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình kết nối WAN/Internet trên thiết bị và thiết lập kết nối PPPoE theo các thông số được cung cấp dưới đây:',
     '- Username: <span class="val">sgfdl-211208-218</span>',
-    '- Password: <span class="val">12345678</span>'
+    '- Password: <span class="val">fpt12345</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
 
@@ -57,7 +57,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         id: 'opt_pppoe_password',
         name: 'PPPoE Password',
         selector: '#opt-pppoe-password, input[name="sDOutPass1"]',
-        expected: '12345678',
+        expected: 'fpt12345',
         type: 'text_exact',
         trim: true,
         required: true
@@ -99,9 +99,9 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     },
     {
       selector: '#opt-pppoe-password, input[name="sDOutPass1"]',
-      text: 'Bước 7: nhập 12345678',
+      text: 'Bước 7: nhập fpt12345',
       position: 'right',
-      expected: '12345678'
+      expected: 'fpt12345'
     },
     {
       selector: '#btn-pppoe-ok, input[name="submit"][value="OK"], input[type="submit"][value="OK"]',

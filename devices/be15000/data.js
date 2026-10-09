@@ -5,7 +5,7 @@
 
 window.DEVICE_BE15000 = {
   id: 'be15000',
-  name: 'AP BE15000',
+  name: 'AP BE1500Z',
   shortName: 'BE15000',
   type: 'AP',
   port: 8080,

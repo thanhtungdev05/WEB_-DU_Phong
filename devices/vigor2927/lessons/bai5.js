@@ -142,7 +142,16 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         };
       }
 
-      const isSaved = !!docEnet._ftcIsSaved;
+      const win = docEnet.defaultView || docEnet.parentWindow;
+      const topWin = (typeof window !== 'undefined' && window.top) ? window.top : window;
+
+      const isSaved = !!(
+        docEnet._ftcIsSaved ||
+        (win && win._ftcIsSaved) ||
+        window._hasClickedSaveInGuide ||
+        topWin._hasClickedSaveInGuide ||
+        docEnet._ftcLastSaveInteraction
+      );
 
       // 1. Primary IP Address (DNS)
       const dnsPriEl = docEnet.querySelector('input[name="sDNSPri"]');
@@ -329,15 +338,15 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   guidePopups: (window.TOOLTIPS_VIGOR2927 && window.TOOLTIPS_VIGOR2927['vg2927-bai5']) || [
     {
       selector: '#menu-lan:not(.open) .menu-text, #menu-lan:not(.open)',
-      text: 'Bước 1: Chọn LAN',
+      text: 'Bước 1: chọn LAN',
       position: 'bottom',
-      hideOnPage: 'enet1|sht'
+      hideOnPage: 'enet1|sht|enet'
     },
     {
       selector: '#sub-lan:not(.hidden) #menu-lan-general .menu-text, #sub-lan:not(.hidden) #menu-lan-general',
       text: 'Bước 2: chọn General Setup',
       position: 'bottom',
-      hideOnPage: 'enet1|sht'
+      hideOnPage: 'enet1|sht|enet'
     },
     {
       selector: '#lan1 input[name="btnDtPage0"], input[name="btnDtPage0"], #lan1 input[value="Details Page"]',
@@ -346,16 +355,19 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       hideOnPage: 'sht'
     },
     {
-      selector: 'b:contains("DNS Server IP Address"), text:DNS Server IP Address',
-      text: 'Bước 4: nhập DNS của công ty và google, ví dụ:<br>- Primary IP Address: 210.245.31.220<br>- Secondary IP Address: 8.8.8.8',
-      position: 'top',
-      page: 'sht'
+      selector: 'input[name="sDNSPri"]',
+      text: 'Bước 4: điền Primary IP Address: 210.245.31.220',
+      position: 'bottom'
+    },
+    {
+      selector: 'input[name="sDNSSnd"]',
+      text: 'Bước 5: điền Secondary IP Address: 8.8.8.8',
+      position: 'bottom'
     },
     {
       selector: 'input[name="btnOK"], input[value="OK"]',
-      text: 'Bước 5: chọn OK',
-      position: 'top',
-      page: 'sht'
+      text: 'Bước 6: chọn OK để lưu cấu hình',
+      position: 'top'
     }
   ]
 });
