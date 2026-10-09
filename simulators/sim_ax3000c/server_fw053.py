@@ -51,6 +51,7 @@ THAY_JS = {
         (b"checkNetworkStatus(2e4)", b"checkNetworkStatus(100)"),
         (b"checkNetworkStatus(2e3)", b"checkNetworkStatus(100)"),
         (b'loadingText:"WAN settings are unavailable currently in bridge agent mode."', b'loadingText:""'),
+        (b'username:"fpt",password:"fpt"', b'username:"",password:""'),
     ],
     "js__chunk-7266f7c8.9b4ab5b7.1726822665278.js": [  # LAN
         (b"checkNetworkStatus(2e4)", b"checkNetworkStatus(100)"),
@@ -87,6 +88,22 @@ THAY_JS = {
 TEP_FTC_JS = os.path.join(_HERE, "ftc", "ftc-ax3000c.js")
 THE_CHEN = b"<script src=/sim_ax3000c/ftc-ax3000c.js?v=v21_clean_input></script>"
 
+
+def _xoa_fpt_wan(kho_dict):
+    if not isinstance(kho_dict, dict):
+        return
+    for khoa in (_goc.KHOA_CAY_UCI, _goc.KHOA_CAY_CIGEXT):
+        c = kho_dict.get(khoa)
+        if isinstance(c, dict) and "network" in c and isinstance(c["network"], dict):
+            wan = c["network"].get("wan")
+            if isinstance(wan, dict):
+                if wan.get("username") == "fpt":
+                    wan["username"] = ""
+                if wan.get("password") == "fpt":
+                    wan["password"] = ""
+
+_xoa_fpt_wan(_goc.KHO._goc)
+_xoa_fpt_wan(_goc.KHO._du_lieu)
 
 # main() cua ban goc khong chay khi nap qua run_all.py -> dong bo khung tu uci mot lan o day
 _goc._dong_bo_khung_tu_uci()
@@ -136,6 +153,8 @@ def dat_lai_thiet_bi(client_key):
             _goc._phien.pop(sid, None)
     _TMP_THEO_KTV.reset(client_key)
     _goc.KHO.reset(client_key)
+    _xoa_fpt_wan(_goc.KHO._goc)
+    _xoa_fpt_wan(_goc.KHO._du_lieu)
     _goc._dong_bo_khung_tu_uci()
 
 

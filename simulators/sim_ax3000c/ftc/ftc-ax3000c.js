@@ -200,6 +200,18 @@
           Array.prototype.forEach.call(tr.children, function (td, i) { if (dau[i]) datNhan(td, 'data-ftc-cot', dau[i]); });
         });
       });
+      // Xoa triet de gia tri mac dinh 'fpt' trong o PPP Username va PPP Password tren trang WAN
+      var dsO = document.querySelectorAll('.el-form-item[data-ftc-nhan="PPP Username"] input, .el-form-item[data-ftc-nhan="PPP Password"] input');
+      dsO.forEach(function (inp) {
+        if (!inp._ftcBound) {
+          inp._ftcBound = true;
+          inp.addEventListener('input', function (ev) { if (ev.isTrusted) inp._ftcUserModified = true; });
+        }
+        if (!inp._ftcUserModified && inp !== document.activeElement && inp.value === 'fpt') {
+          inp.value = '';
+          inp.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
     } catch (e) {}
   }
   setInterval(ganNhan, 300);
