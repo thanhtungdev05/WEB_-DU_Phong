@@ -154,9 +154,9 @@ Các lệnh CLI hữu ích để quản lý cơ sở dữ liệu:
 
 ### A. Chuẩn Hóa Tên Danh Mục Thiết Bị
 - Tên thiết bị trên Dropdown Menu đã được cấu trúc lại với các tiền tố rõ ràng để KTV dễ phân biệt chủng loại:
-  - **Dòng ONT:** `ONT AC1000F`, `ONT AC1000HI`, `ONT AX3000CV2`, `ONT AX3000GZ`, `ONT AX3000HV2`, `ONT BE12000`, `ONT BE15000`, `ONT BE6500C`
-  - **Dòng Khác:** `Internet Hub AX3000S`, `AP BE6500C`, `Router MikroTik`, `DrayTek Vigor2927`
-- Thứ tự (Order) hiển thị trên giao diện đã được sắp xếp đồng bộ thành một khối logic chuẩn (ONT -> Hub -> Router) quản lý tập trung trong file `data.js`.
+  - **Dòng ONT:** `ONT AC1000F`, `ONT AC1000HI`, `ONT AX3000CV2`, `ONT AX3000GZ`, `ONT AX3000HV2`, `ONT AX3000S`, `ONT AC1000C V2`, `ONT BE1200Z`, `ONT BE6500C`
+  - **Dòng AP / Router:** `AP BE6500C`, `AP BE1500Z`, `Router MikroTik`, `DrayTek Vigor 2927`
+- Thứ tự (Order) hiển thị trên giao diện được quản lý đồng bộ qua database catalog và các file `data.js`.
 
 ### B. Auto-Baseline Tracker (Tối ưu thiết bị SPA)
 - Thay vì lấy Baseline toàn bộ DOM ngay lúc load (gây lỗi với các thiết bị dạng SPA sinh form trễ do AJAX như AX3000S), hệ thống đổi sang **Interaction-Based Baseline**.

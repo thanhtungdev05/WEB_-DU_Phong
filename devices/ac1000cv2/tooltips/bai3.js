@@ -101,7 +101,7 @@ var bai3_popups = [
       if (!sEn || !sEn.checked) return false;
       var sName = doc.querySelector('#ssid_network_name, input[name="ssid_network_name"]');
       var val = sName ? (sName.value || '').trim() : '';
-      var isTyped = (val === 'FPT Telecom-7EA8');
+      var isTyped = (val === 'FPT IoT');
       var isSaved = isAc1000cV2Saved(doc, 'wifi_iot_ssid', val);
       return !isTyped && !isSaved;
     }
@@ -121,7 +121,7 @@ var bai3_popups = [
       if (!sEn || !sEn.checked) return false;
       var sName = doc.querySelector('#ssid_network_name, input[name="ssid_network_name"]');
       var val = sName ? (sName.value || '').trim() : '';
-      var isTyped = (val === 'FPT Telecom-7EA8');
+      var isTyped = (val === 'FPT IoT');
       var isSaved = isAc1000cV2Saved(doc, 'wifi_iot_ssid', val);
       return isTyped && !isSaved;
     }
@@ -161,9 +161,9 @@ var bai3_popups = [
   {
     page: 'wifisecu.html',
     selector: '#security_wpa_key, input[name="security_wpa_key"]',
-    text: 'Bước 7: Nhập Security Passphrase: 00032934',
+    text: 'Bước 7: Nhập Security Passphrase: fptiot123',
     position: 'right',
-    expected: '00032934',
+    expected: 'fptiot123',
     condition: function (doc) {
       var p = getAc1000cV2DocPath(doc);
       if (p.indexOf('wifisecu') === -1) return false;
@@ -171,7 +171,7 @@ var bai3_popups = [
       if (!sList || String(sList.value).trim() !== '1') return false;
       var el = doc.querySelector('#security_wpa_key, input[name="security_wpa_key"]');
       var val = el ? (el.value || '').trim() : '';
-      var isTyped = (val === '00032934');
+      var isTyped = (val === 'fptiot123');
       var isSaved = isAc1000cV2Saved(doc, 'wifi_iot_key', val);
       return !isTyped && !isSaved;
     }
@@ -189,7 +189,7 @@ var bai3_popups = [
       if (!sList || String(sList.value).trim() !== '1') return false;
       var el = doc.querySelector('#security_wpa_key, input[name="security_wpa_key"]');
       var val = el ? (el.value || '').trim() : '';
-      var isTyped = (val === '00032934');
+      var isTyped = (val === 'fptiot123');
       var isSaved = isAc1000cV2Saved(doc, 'wifi_iot_key', val);
       return isTyped && !isSaved;
     }
@@ -215,6 +215,6 @@ window.TOOLTIPS_AC1000CV2['ac1000cv2-bai3'] = bai3_popups;
 window.TOOLTIPS_AC1000CV2['LAB_AC1000CV2_03'] = bai3_popups;
 
 if (window.DEVICE_AC1000CV2_LESSONS) {
-  var targetLesson = window.DEVICE_AC1000CV2_LESSONS.find(function(l) { return l.id === 'ac1000cv2-bai3' || l.id === 'LAB_AC1000CV2_03'; });
+  var targetLesson = window.DEVICE_AC1000CV2_LESSONS.find(function (l) { return l.id === 'ac1000cv2-bai3' || l.id === 'LAB_AC1000CV2_03'; });
   if (targetLesson) targetLesson.guidePopups = bai3_popups;
 }

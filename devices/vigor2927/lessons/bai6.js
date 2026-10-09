@@ -135,9 +135,18 @@ function vg2927Bai6HookNutXemLoi() {
 /* Nhận diện đang ở trang nào: 'overview' | 'wan1' | 'wan2' | null */
 function vg2927Bai6WhichPage(win) {
   try {
+    if (!win || !win.document) return null;
     var doc = win.document;
-    if (doc.getElementsByName('iBwLBMode').length > 0 && doc.getElementsByName('enchkwan0').length > 0) {
+    if (doc.getElementsByName('iBwLBMode').length > 0 &&
+        (doc.getElementsByName('iBwLBBased').length > 0 || doc.getElementsByName('enchkwan0').length > 0)) {
       return 'overview';
+    }
+    var dis = doc.getElementsByName('sBwWanDisName')[0];
+    if (dis) {
+      var v = (dis.value || '').trim();
+      var def = (dis.defaultValue || '').trim();
+      if (v === 'ISP-2' || def === 'ISP-2') return 'wan2';
+      return 'wan1';
     }
     if (doc.getElementsByName('iBwWanEnable').length > 0) {
       var idx = String(win.iInetWanIdx);
@@ -281,6 +290,64 @@ function vg2927Bai6InstallWatcher() {
 
         if (page === 'wan1' || page === 'wan2') vg2927Bai6UnlockLineSpeed(doc);
 
+        if (page === 'overview') {
+          // Bắt chặn hàm onClkBtnOK() của DrayTek trên trang mwangen1.htm
+          if (typeof w.onClkBtnOK === 'function' && !w._ftcHookedOnClkBtnOK) {
+            w._ftcHookedOnClkBtnOK = true;
+            w.onClkBtnOK = function () {
+              var lsn = window._currentLesson;
+              if (lsn && typeof lsn.onSimSave === 'function') {
+                lsn.onSimSave(w);
+              }
+              return false;
+            };
+          }
+          var btnOk = doc.getElementsByName('btnOk')[0];
+          if (btnOk && !btnOk._ftcBai6Hooked) {
+            btnOk._ftcBai6Hooked = true;
+            btnOk.onclick = function (e) {
+              if (e) {
+                if (e.preventDefault) e.preventDefault();
+                if (e.stopPropagation) e.stopPropagation();
+              }
+              var lsn = window._currentLesson;
+              if (lsn && typeof lsn.onSimSave === 'function') {
+                lsn.onSimSave(w);
+              }
+              return false;
+            };
+          }
+        }
+
+        // Chặn submit reload toàn trang cho các trang của Bài 6 để giữ nguyên DOM và giá trị vừa chọn
+        if (doc.frm1 && !doc._ftcBai6SubmitHooked) {
+          doc._ftcBai6SubmitHooked = true;
+          var origSubmit = doc.frm1.submit;
+          doc.frm1.submit = function () {
+            // Trên mwangen1.htm, gotoWanSet(1/2) dùng fid=102 để chuyển sang WAN1/WAN2 -> cho phép submit
+            if (page === 'overview' && doc.frm1.fid && String(doc.frm1.fid.value) === '102') {
+              if (typeof origSubmit === 'function') return origSubmit.apply(doc.frm1, arguments);
+            }
+            var lsn = window._currentLesson;
+            if (lsn && typeof lsn.onSimSave === 'function') {
+              lsn.onSimSave(w);
+            }
+            return false;
+          };
+          doc.frm1.addEventListener('submit', function (e) {
+            if (page === 'overview' && doc.frm1.fid && String(doc.frm1.fid.value) === '102') {
+              return true;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            var lsn = window._currentLesson;
+            if (lsn && typeof lsn.onSimSave === 'function') {
+              lsn.onSimSave(w);
+            }
+            return false;
+          }, true);
+        }
+
         if (!doc._ftcBai6Restored) {
           doc._ftcBai6Restored = true;
           var snap = store[page];
@@ -291,7 +358,7 @@ function vg2927Bai6InstallWatcher() {
         }
       });
     } catch (e) {}
-  }, 600);
+  }, 400);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -400,6 +467,10 @@ function vg2927Bai6TrangDaDung(store, key) {
    nếu không học viên bấm OK mà trang đứng yên sẽ tưởng nút bị hỏng. */
 function vg2927Bai6BaoTrangThai(doc, ok, chu) {
   try {
+    doc._ftcIsSaved = !!ok;
+    var win = doc.defaultView || doc.parentWindow;
+    if (win) win._ftcIsSaved = !!ok;
+
     // app.js tự chèn dòng xanh "✔ Đã lưu cấu hình!" mỗi lần bấm OK. Khi trang đang SAI,
     // để nguyên dòng đó cạnh dòng báo lỗi đỏ sẽ mâu thuẫn -> xoá đi cho rõ ràng.
     if (!ok) {
@@ -471,8 +542,23 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         if (vg2927Bai6TrangDaDung(store, 'overview')) {
           vg2927Bai6BaoTrangThai(doc, true, '✔ Đã lưu cấu hình General Setup. Bấm vào WAN1 để cấu hình tiếp.');
         } else {
-          vg2927Bai6BaoTrangThai(doc, false,
-            '⚠ Cấu hình trang General Setup chưa đúng — vui lòng kiểm tra và sửa lại, sau đó bấm OK lại.');
+          var lyDo = [];
+          if (store.overview.lbMode !== '0') {
+            lyDo.push('Cần chọn Line Speed là "According to Line Speed" thay vì "Auto Detect"');
+          }
+          if (store.overview.lbBased !== '1') {
+            lyDo.push('Cần chọn Mode là "Session Based"');
+          }
+          if (!store.overview.enWan1 || !store.overview.lbWan1) {
+            lyDo.push('WAN1 cần tick Enable và Load Balance');
+          }
+          if (!store.overview.enWan2 || !store.overview.lbWan2) {
+            lyDo.push('WAN2 cần tick Enable và Load Balance');
+          }
+          var thongBao = lyDo.length > 0
+            ? ('⚠ Cấu hình trang General Setup chưa đúng: ' + lyDo.join('; ') + '!')
+            : '⚠ Cấu hình trang General Setup chưa đúng — vui lòng kiểm tra và sửa lại, sau đó bấm OK lại.';
+          vg2927Bai6BaoTrangThai(doc, false, thongBao);
         }
         return;
       }
@@ -482,8 +568,22 @@ window.DEVICE_VIGOR2927_LESSONS.push({
 
         // CÒN SAI thì Ở LẠI trang WAN1 để học viên sửa, không cho qua trang khác.
         if (!vg2927Bai6TrangDaDung(store, 'wan1')) {
-          vg2927Bai6BaoTrangThai(doc, false,
-            '⚠ Cấu hình WAN1 chưa đúng — vui lòng kiểm tra và sửa lại ngay trên trang này, sau đó bấm OK lại.');
+          var wan1Loi = [];
+          if (store.wan1.displayName !== VG2927_BAI6_DAPAN.wan1.displayName) {
+            wan1Loi.push('Display Name cần nhập là "' + VG2927_BAI6_DAPAN.wan1.displayName + '"');
+          }
+          var wan1Down = vg2927Bai6ToKbps(store.wan1.downLink, store.wan1.downUnit);
+          if (wan1Down !== VG2927_BAI6_DAPAN.wan1.downKbps) {
+            wan1Loi.push('Line Speed DownLink cần là 80 Mbps');
+          }
+          var wan1Up = vg2927Bai6ToKbps(store.wan1.upLink, store.wan1.upUnit);
+          if (wan1Up !== VG2927_BAI6_DAPAN.wan1.upKbps) {
+            wan1Loi.push('Line Speed UpLink cần là 80 Mbps');
+          }
+          var msg1 = wan1Loi.length > 0
+            ? ('⚠ Cấu hình WAN1 chưa đúng: ' + wan1Loi.join('; ') + '!')
+            : '⚠ Cấu hình WAN1 chưa đúng — vui lòng kiểm tra và sửa lại ngay trên trang này, sau đó bấm OK lại.';
+          vg2927Bai6BaoTrangThai(doc, false, msg1);
           return;
         }
 
@@ -503,8 +603,22 @@ window.DEVICE_VIGOR2927_LESSONS.push({
 
         // CÒN SAI thì Ở LẠI trang WAN2 để học viên sửa — y hệt General Setup và WAN1.
         if (!vg2927Bai6TrangDaDung(store, 'wan2')) {
-          vg2927Bai6BaoTrangThai(doc, false,
-            '⚠ Cấu hình WAN2 chưa đúng — vui lòng kiểm tra và sửa lại ngay trên trang này, sau đó bấm OK lại.');
+          var wan2Loi = [];
+          if (store.wan2.displayName !== VG2927_BAI6_DAPAN.wan2.displayName) {
+            wan2Loi.push('Display Name cần nhập là "' + VG2927_BAI6_DAPAN.wan2.displayName + '"');
+          }
+          var wan2Down = vg2927Bai6ToKbps(store.wan2.downLink, store.wan2.downUnit);
+          if (wan2Down !== VG2927_BAI6_DAPAN.wan2.downKbps) {
+            wan2Loi.push('Line Speed DownLink cần là 80 Mbps');
+          }
+          var wan2Up = vg2927Bai6ToKbps(store.wan2.upLink, store.wan2.upUnit);
+          if (wan2Up !== VG2927_BAI6_DAPAN.wan2.upKbps) {
+            wan2Loi.push('Line Speed UpLink cần là 80 Mbps');
+          }
+          var msg2 = wan2Loi.length > 0
+            ? ('⚠ Cấu hình WAN2 chưa đúng: ' + wan2Loi.join('; ') + '!')
+            : '⚠ Cấu hình WAN2 chưa đúng — vui lòng kiểm tra và sửa lại ngay trên trang này, sau đó bấm OK lại.';
+          vg2927Bai6BaoTrangThai(doc, false, msg2);
           return;
         }
 
@@ -656,57 +770,71 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       position: 'top',
       page: 'mwangen1'
     },
+    /* Chuyển tiếp sang WAN1 trên trang General Setup */
+    {
+      selector: 'a[href*="gotoWanSet(1)"]',
+      text: 'Bước 6: chọn WAN1',
+      position: 'right',
+      page: 'mwangen1'
+    },
     /* Trang WAN1 (doc/mwangen.htm) — dùng 'mwangen.htm' (có đuôi .htm) để KHÔNG bị trùng
        với trang tổng 'mwangen1.htm' (so khớp theo chuỗi con: "mwangen.htm" không nằm
        trong "mwangen1.htm" vì có số 1 chen giữa). */
     {
       selector: 'input[name="sBwWanDisName"]',
-      text: 'Bước 6: nhập ISP-1',
+      text: 'Bước 7: nhập ISP-1',
       position: 'right',
       page: 'mwangen.htm'
     },
     {
       selector: 'select[name="uilBwLBInRateUnit"]',
-      text: 'Bước 7: nhập 80 Mbps',
-      position: 'right',
-      page: 'mwangen.htm'
-    },
-    {
-      selector: 'select[name="uilBwLBOutRateUnit"]',
       text: 'Bước 8: nhập 80 Mbps',
       position: 'right',
       page: 'mwangen.htm'
     },
     {
+      selector: 'select[name="uilBwLBOutRateUnit"]',
+      text: 'Bước 9: nhập 80 Mbps',
+      position: 'right',
+      page: 'mwangen.htm'
+    },
+    {
       selector: 'input[name="submit"], input[value="OK"]',
-      text: 'Bước 9: chọn OK',
+      text: 'Bước 10: chọn OK',
       position: 'top',
       page: 'mwangen.htm'
+    },
+    /* Khi lưu xong WAN1, router quay lại General Setup -> điều hướng sang WAN2 */
+    {
+      selector: 'a[href*="gotoWanSet(2)"]',
+      text: 'Bước 11: chọn WAN2',
+      position: 'right',
+      page: 'mwangen1'
     },
     /* Trang WAN2 — xem giải thích chi tiết trong devices/vigor2927/tooltips/bai6.js (file thực
        sự có tác dụng, nạp trước file này). "wan.cgi" là chuỗi duy nhất trong URL của trang WAN2
        trong phạm vi Bài 6, không lẫn với General Setup hay WAN1. */
     {
       selector: 'input[name="sBwWanDisName"]',
-      text: 'Bước 10: nhập ISP-2',
+      text: 'Bước 12: nhập ISP-2',
       position: 'right',
       page: 'wan.cgi'
     },
     {
       selector: 'select[name="uilBwLBInRateUnit"]',
-      text: 'Bước 11: nhập 80 Mbps',
+      text: 'Bước 13: nhập 80 Mbps',
       position: 'right',
       page: 'wan.cgi'
     },
     {
       selector: 'select[name="uilBwLBOutRateUnit"]',
-      text: 'Bước 12: nhập 80 Mbps',
+      text: 'Bước 14: nhập 80 Mbps',
       position: 'right',
       page: 'wan.cgi'
     },
     {
       selector: 'input[name="submit"], input[value="OK"]',
-      text: 'Bước 13: chọn OK',
+      text: 'Bước 15: chọn OK',
       position: 'top',
       page: 'wan.cgi'
     }

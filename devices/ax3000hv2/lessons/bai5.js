@@ -88,10 +88,10 @@ var lessonObj = {
   },
   guidePopups: [
     {
-      selector: 'a[onclick="change_basic(this);"], #MainMenu a',
+      selector: 'a[onclick="change_basic(this);"]',
       text: 'Bước 1: Chọn Network',
       position: 'top',
-      hideOnPage: 'home_lan.asp'
+      hideOnPage: 'home_lan.asp|navigation-basic'
     },
     {
       selector: 'a[href*="home_lan.asp"]',

@@ -5,7 +5,7 @@
 
 window.DEVICE_BE12000 = {
   id: 'be12000',
-  name: 'ONT BE12000',
+  name: 'ONT BE1200Z',
   shortName: 'BE12000',
   port: 8080,
   folder: 'sim_be12000',

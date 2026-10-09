@@ -52,6 +52,21 @@ def sua_top_thanh_parent(s):
     return _TOP_VE_PARENT.sub(r'parent.\1', s)
 
 
+_RE_GETSTROBJ = re.compile(r'function getStrObj\(\)\{.*?\$http\.post\(.*?\n?.*?\}\);?\}')
+
+
+def sua_getStrObj(s):
+    """Triet tieu getStrObj() polling fid=4048 trong cac trang DrayTek (p2_188, p2_103, v.v.).
+    Trang goc DrayTek goi de quy $http.post('/cgi-bin/v2x00.cgi', data) lay Object String;
+    khi gap trang loi no se roi vao vong lap vo tan gay tran HTTP requests va spam log."""
+    if "function getStrObj()" in s:
+        s = _RE_GETSTROBJ.sub(
+            "function getStrObj(){status=-1;if(typeof sCommentIdx!=='undefined'&&sCommentIdx!=0&&typeof aryObjStr!=='undefined'&&aryObjStr[sCommentIdx-1]){$scope.comment=aryObjStr[sCommentIdx-1];}else if(typeof $scope!=='undefined'){$scope.comment='';}}",
+            s
+        )
+    return s
+
+
 # ------------------------------------------------------ bat tab IPv6 (Vigor2927)
 # KHONG PHAI bia dat: phan HTML/JS cho tab IPv6 (Enable/Disable, Default Limit,
 # Limitation List... rieng cho IPv6) da CO SAN nguyen ven trong chinh trang goc
@@ -98,6 +113,7 @@ def sua_ipbmac_add(s):
     chan ngay khong cho luu duoc vao IP Bind List. Van giu nguyen 2 kiem tra
     con lai cua checkInput(): dung dinh dang IPv4 (bg.isStrIp) va MAC bat buoc
     hop le (bg.isValidMac) — chi bo phan rang buoc theo dai LAN.
+    Dong thoi bo sung id ho tro tooltip va dong bo co luu _ftcIsSaved.
     """
     old = ("function checkInput(ip1,mac1){if(!bg.isStrIp(ip1)){alert(errMSG[0]);return false;}"
            "for(var k=0;k<aryLanAlsEn.length;k++){if(aryLanAlsEn[k]==1&&bg.isEqualLan(aryLanAlsIp[k],aryLanAlsMsk[k],ip1))break;}"
@@ -111,6 +127,114 @@ def sua_ipbmac_add(s):
            "if(!bg.isValidMac(mac1))return false;return true;}")
     if old in s:
         s = s.replace(old, new, 1)
+
+    # Them ID de tooltip tro dung phan tu
+    s = s.replace('<b translate>Disable</b>', '<b id="lbl-ipbmac-disable" translate>Disable</b>', 1)
+    if 'id="txt-ipbmac-ip"' not in s:
+        s = s.replace('name=sIpAddress', 'id="txt-ipbmac-ip" name=sIpAddress', 1)
+    if 'id="btn-ipbmac-ok"' not in s:
+        s = s.replace('name=btnOk onClick=onClkBtnOk()', 'id="btn-ipbmac-ok" name=btnOk onClick=onClkBtnOk()', 1)
+
+    # Luu co khi bam Add
+    old_add = 'addToIpMacList(idx);clrTempInput();}'
+    new_add = ('addToIpMacList(idx);clrTempInput();'
+               'document._ftcHasClickedAdd=true;window._ftcHasClickedAdd=true;'
+               'document._ftcLastAddIp=ip1;document._ftcLastAddMac=mac1;'
+               'try{if(parent){parent._ftcHasClickedAdd=true;parent._ftcLastAddIp=ip1;parent._ftcLastAddMac=mac1;}'
+               'if(top){top._ftcHasClickedAdd=true;top._ftcLastAddIp=ip1;top._ftcLastAddMac=mac1;}}catch(e){}}')
+    if old_add in s:
+        s = s.replace(old_add, new_add, 1)
+
+    # Luu co khi bam OK
+    old_ok = 'f.submit();}}'
+    new_ok = ('document._ftcIsSaved=true;window._ftcIsSaved=true;'
+              'try{if(parent)parent._hasClickedSaveInGuide=true;if(top)top._hasClickedSaveInGuide=true;}catch(e){}'
+              'f.submit();}}')
+    if old_ok in s:
+        s = s.replace(old_ok, new_ok, 1)
+
+    # Danh dau _ftcIsSaved khi trang load lai da co cau hinh Bind IP to MAC duoc luu tren server
+    old_init = 'noteMsg.innerHTML=noteMsg.innerHTML.replace("###MAC1###",exMac[0]).replace("###MAC2###",exMac[1]);}'
+    new_init = ('noteMsg.innerHTML=noteMsg.innerHTML.replace("###MAC1###",exMac[0]).replace("###MAC2###",exMac[1]);'
+                'if(sIpBndMacEnable==1&&aryIpBindMac&&aryIpBindMac.length>0){'
+                'document._ftcIsSaved=true;window._ftcIsSaved=true;'
+                'try{if(parent)parent._hasClickedSaveInGuide=true;if(top)top._hasClickedSaveInGuide=true;}catch(e){}}}')
+    if old_init in s:
+        s = s.replace(old_init, new_init, 1)
+
+    return s
+
+
+def sua_enet_sht(s):
+    """Dong bo co luu _ftcIsSaved va xu ly luu cau hinh DHCP Vigor 2927 (doc/ENET.SHT)."""
+    # 1. Luu co khi bam OK trong onClkBtnOk
+    old_submit = 'f.sAct.value="";f.submit();}'
+    new_submit = ('f.sAct.value="";'
+                  'document._ftcIsSaved=true;window._ftcIsSaved=true;'
+                  'try{if(parent)parent._hasClickedSaveInGuide=true;if(top)top._hasClickedSaveInGuide=true;}catch(e){}'
+                  'f.submit();}')
+    if old_submit in s:
+        s = s.replace(old_submit, new_submit, 1)
+
+    # 2. Tu dong chap nhan hop thoai confirm de tranh chan thao tac luu
+    old_confirm = "if(str!=\"\"&&!confirm(str+gettext('Do you want to continue to save? The new configuration will take effect after rebooting the router.'))){return;}"
+    new_confirm = ("document._ftcIsSaved=true;window._ftcIsSaved=true;"
+                   "try{if(parent)parent._hasClickedSaveInGuide=true;if(top)top._hasClickedSaveInGuide=true;}catch(e){}")
+    if old_confirm in s:
+        s = s.replace(old_confirm, new_confirm, 1)
+
+    # 3. Danh dau _ftcIsSaved khi trang load lai da co save_success=1
+    old_init = "$scope.bPSTNTrunk=parseInt('0');$scope.$apply();}"
+    new_init = ("$scope.bPSTNTrunk=parseInt('0');$scope.$apply();"
+                "if(window.location.search&&window.location.search.indexOf('save_success=1')!==-1){"
+                "document._ftcIsSaved=true;window._ftcIsSaved=true;"
+                "try{if(parent)parent._hasClickedSaveInGuide=true;if(top)top._hasClickedSaveInGuide=true;}catch(e){}}}")
+    if old_init in s:
+        s = s.replace(old_init, new_init, 1)
+
+    # 4. Tu dong dong bo Start IP va Gateway IP khi thay doi IP Address (sLanIp)
+    auto_sync_js = (
+        "<script>"
+        "(function(){"
+        "function syncLanToDhcp(){"
+        "var ipEl=document.querySelector('input[name=\"sLanIp\"]');"
+        "var stEl=document.querySelector('input[name=\"sDHCPStIP\"]');"
+        "var gwEl=document.querySelector('input[name=\"sDHCPGwIP\"]');"
+        "if(!ipEl||!stEl||!gwEl)return;"
+        "var v=(ipEl.value||'').trim();"
+        "var p=v.split('.');"
+        "if(p.length===4&&p[0]!==''&&p[1]!==''&&p[2]!==''&&p[3]!==''){"
+        "var prefix=p[0]+'.'+p[1]+'.'+p[2];"
+        "stEl.value=prefix+'.10';"
+        "gwEl.value=v;"
+        "try{"
+        "stEl.dispatchEvent(new Event('input',{bubbles:true}));"
+        "stEl.dispatchEvent(new Event('change',{bubbles:true}));"
+        "gwEl.dispatchEvent(new Event('input',{bubbles:true}));"
+        "gwEl.dispatchEvent(new Event('change',{bubbles:true}));"
+        "}catch(e){}"
+        "}"
+        "}"
+        "function attachSync(){"
+        "var ipEl=document.querySelector('input[name=\"sLanIp\"]');"
+        "if(!ipEl||ipEl._ftcSyncBound)return;"
+        "ipEl._ftcSyncBound=true;"
+        "ipEl.addEventListener('input',syncLanToDhcp);"
+        "ipEl.addEventListener('change',syncLanToDhcp);"
+        "ipEl.addEventListener('blur',syncLanToDhcp);"
+        "syncLanToDhcp();"
+        "}"
+        "if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',attachSync);}"
+        "else{attachSync();}"
+        "setTimeout(attachSync,300);"
+        "})();"
+        "</script>"
+    )
+    if "</body>" in s:
+        s = s.replace("</body>", auto_sync_js + "</body>", 1)
+    else:
+        s += auto_sync_js
+
     return s
 
 
@@ -119,12 +243,30 @@ def sua_policyrt_detail(s, iPRIdx):
     fid=4041/gotoDetailSet): day la ban chup TINH cu, luon hien cung "Index: 0"
     va gia tri an iPRIdx=0 bat ke hoc vien bam vao rule so may. Thay bang so
     that lay tu tham so POST iPRIdx de hoc vien thay dung so rule dang sua."""
-    if not iPRIdx:
-        return s
-    s = s.replace("<b>Index:&nbsp;0</b>", "<b>Index:&nbsp;" + str(iPRIdx) + "</b>", 1)
-    s = s.replace('name=iPRIdx type=hidden value="0"',
-                   'name=iPRIdx type=hidden value="' + str(iPRIdx) + '"', 1)
+    if iPRIdx:
+        s = s.replace("<b>Index:&nbsp;0</b>", "<b>Index:&nbsp;" + str(iPRIdx) + "</b>", 1)
+        s = s.replace('name=iPRIdx type=hidden value="0"',
+                       'name=iPRIdx type=hidden value="' + str(iPRIdx) + '"', 1)
+    # Dong bo co luu _ftcIsSaved va ngan submit lam mat trang chi tiet
+    save_sync = (
+        "document._ftcIsSaved=true;window._ftcIsSaved=true;"
+        "try{if(parent){parent._hasClickedSaveInGuide=true;parent._ftcIsSaved=true;}}catch(e){}"
+        "try{if(top){top._hasClickedSaveInGuide=true;top._ftcIsSaved=true;}}catch(e){}"
+    )
+    if "function onClkBtnOk(){" in s:
+        s = s.replace("function onClkBtnOk(){", "function onClkBtnOk(){" + save_sync, 1)
+    old_tail = "f.multiWanAlias.value=composeMultiWanAlias(interfaceNum);}f.submit();}}"
+    if old_tail in s:
+        s = s.replace(old_tail, "f.multiWanAlias.value=composeMultiWanAlias(interfaceNum);}" + save_sync + "return true;}}", 1)
+    # Dat cac gia tri mac dinh cho rule moi (tranh loi parseInt("") -> NaN khien Source/Dest bi bien thanh IP Subnet)
+    s = s.replace('var rdSrcIPAny = parseInt("");', 'var rdSrcIPAny = parseInt("0");', 1)
+    s = s.replace('var rdDstIPAny = parseInt("");', 'var rdDstIPAny = parseInt("0");', 1)
+    s = s.replace('var rdDstPortAny = parseInt("");', 'var rdDstPortAny = parseInt("0");', 1)
+    s = s.replace('var rdGWDefault = parseInt("5");', 'var rdGWDefault = parseInt("0");', 1)
+    s = s.replace('var iPRNATforSrcSub = parseInt("0");', 'var iPRNATforSrcSub = parseInt("1");', 1)
+    s = s.replace('var iPRWanIf = parseInt("0");', 'var iPRWanIf = parseInt("3");', 1)
     return s
+
 
 
 
@@ -248,7 +390,7 @@ def _quet_khai_bao(s, i):
             if j < 0:
                 break
         else:
-            m2 = re.match(r'''(-?\d+(?:\.\d+)?|"[^"]*"|'[^']*'|true|false|null)''', s[i:])
+            m2 = re.match(r'''(parseInt\s*\(\s*['"]?(-?\d+)['"]?\s*\)|-?\d+(?:\.\d+)?|"[^"]*"|'[^']*'|true|false|null)''', s[i:])
             if not m2:
                 break
             j = i + m2.end()
@@ -283,6 +425,9 @@ def _thay_bien(s, vars_):
             # tung ky tu (ke ca kieu dau nhay) — nguyen tac 2.2.
             goc_txt = s[j:k]
             try:
+                m_pi = re.match(r"parseInt\s*\(\s*['\"]?(-?\d+)['\"]?\s*\)", goc_txt)
+                if m_pi and int(m_pi.group(1)) == int(vars_[ten]):
+                    continue
                 if json.loads(goc_txt.replace("'", '"')) == vars_[ten]:
                     continue
             except Exception:
@@ -417,6 +562,8 @@ def render(duong_dan_goc):
         s2 = sua_ipbandw_add(s2)
     if "ipbmac.htm" in duong_dan_goc:
         s2 = sua_ipbmac_add(s2)
+    if "ENET.SHT" in duong_dan_goc or "enet.sht" in duong_dan_goc.lower():
+        s2 = sua_enet_sht(s2)
     return s2.encode(enc, "replace"), {"bien": n_var, "input": n_inp,
                                        "goc_bytes": len(raw), "ra_bytes": len(s2)}
 

@@ -4,7 +4,7 @@
 
 window.DEVICE_AC1000CV2 = {
   id: 'ac1000cv2',
-  name: 'Internet Hub AC1000C V2',
+  name: 'ONT AC1000C V2',
   shortName: 'AC1000C V2',
   type: 'ONT',
   port: 8080,

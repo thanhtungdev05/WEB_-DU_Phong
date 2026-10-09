@@ -241,12 +241,15 @@ class H(BaseHTTPRequestHandler):
                     enc = "latin-1"
                 txt = render.sua_top_thanh_parent(txt)
                 txt = render.bat_tab_ipv6(txt)
+                txt = render.sua_getStrObj(txt)
                 if "ipbandw.htm" in rl:
                     txt = render.sua_ipbandw_add(txt)
                 if "ipbmac.htm" in rl:
                     txt = render.sua_ipbmac_add(txt)
-                if "p2_188.html" in rl and params:
-                    txt = render.sua_policyrt_detail(txt, params.get("iPRIdx"))
+                if "ENET.SHT" in rl or "enet.sht" in rl.lower():
+                    txt = render.sua_enet_sht(txt)
+                if "p2_188.html" in rl:
+                    txt = render.sua_policyrt_detail(txt, params.get("iPRIdx") if params else None)
                 data = txt.encode(enc, "replace")
             self._send(data, CT.get(ext, "application/octet-stream"))
             return True
@@ -293,7 +296,71 @@ class H(BaseHTTPRequestHandler):
                 break
         return b"[1]"
 
+    def _xu_ly_post_ipbmac(self, params):
+        """Xu ly luu cau hinh Bind IP to MAC (fid=126):
+        Chuyen doi tham so tu form sIpBndMac sang chuoi NVRAM sIpBindMac de render.
+        """
+        raw_bind = params.get("sIpBndMac", "")
+        enable = str(params.get("sIpBndMacEnable", "0")) == "1"
+        strict = str(params.get("sIpBndMacStrict", "0")) == "1"
+        en_str = "ON" if enable else "OFF"
+        st_str = "ON" if strict else "OFF"
+
+        header = f"##ip bind mac function is turned {en_str}##ip bind mac function is STRICT {st_str}##Show all IP Bind MAC entries."
+
+        entries = []
+        for line in raw_bind.strip().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            m = re.match(r'^(\S+)\s+([0-9A-Fa-f:-]+)(?:\s+"([^"]*)")?', line)
+            if m:
+                ip = m.group(1)
+                mac = m.group(2).upper().replace(":", "-")
+                cmt = m.group(3) or ""
+                entries.append(f"##IP : {ip} bind MAC : {mac} HOST ID : --- Comment : {cmt}")
+
+        full_str = header + "".join(entries)
+        config_store.dat("doc/ipbmac.htm", "sIpBindMac", full_str)
+        config_store.dat("doc/ipbmac.htm", "sIpBndMacEnable", 1 if enable else 0)
+        config_store.dat("doc/ipbmac.htm", "sIpBndMacStrict", 1 if strict else 0)
+
+    def _xu_ly_post_enet(self, params):
+        """Xu ly luu cau hinh DHCP / LAN 1 (doc/ENET.SHT, enet.cgi)."""
+        lan_ip = params.get("sLanIp")
+        if lan_ip:
+            ary_ip = config_store.lay("doc/ENET.SHT", "aryLanIp")
+            if isinstance(ary_ip, list) and ary_ip:
+                ary_ip[0] = lan_ip
+                config_store.dat("doc/ENET.SHT", "aryLanIp", ary_ip)
+            ary_als = config_store.lay("doc/enet1.htm", "aryLanAlsIp")
+            if isinstance(ary_als, list) and ary_als:
+                ary_als[0] = lan_ip
+                config_store.dat("doc/enet1.htm", "aryLanAlsIp", ary_als)
+            config_store.dat("doc/ENET.SHT", "sLanIp", lan_ip)
+
+        mask = params.get("sLanMask")
+        if mask:
+            config_store.dat("doc/ENET.SHT", "sLanMask", mask)
+
+        dhcp = params.get("sDHCP")
+        if dhcp is not None:
+            config_store.dat("doc/ENET.SHT", "sDHCP", str(dhcp))
+
+        for k in ("sDHCPStIP", "iDHCPNo", "sDHCPGwIP", "sDHCPLsTime", "iRIPLAN", "sDNSPri", "sDNSSnd"):
+            if k in params:
+                config_store.dat("doc/ENET.SHT", k, params[k])
+
+        if "chkrmclnts" in params:
+            config_store.dat("doc/ENET.SHT", "chkrmclnts", 1 if params.get("chkrmclnts") in ("1", 1, True, "on") else 0)
+
     def _serve_cgi(self, path, params, method="GET"):
+        # DrayTek Object String polling (fid=4048): thiet bi that tra ve chuoi ket thuc bang -1 khi het du lieu.
+        # Tra ve ngay -1 de ngan vong lap polling vo tan (gay spam [CU] POST -> _pages/page_195.html).
+        if path.lower() == "/cgi-bin/v2x00.cgi" and str(params.get("fid")) == "4048":
+            self._log("DULIEU", path, "-> fid=4048 Object String (-1)")
+            return self._send(b"-1", "text/plain")
+
         goc, st, ct = tim_trang_goc(method, path, params)
 
         # 0) Hop dong ghi status=200 => day la DU LIEU (JSON/JS/text), khong phai trang.
@@ -447,14 +514,36 @@ class H(BaseHTTPRequestHandler):
             return self._redirect("/index.htm")
 
         if p.endswith(".cgi"):
+            # Dac biet: General Setup WAN (fid=101) luu tren mwangen1.htm, thiet bi that tra 302 ve lai mwangen1.htm
+            if p == "/cgi-bin/wan.cgi" and params.get("fid") == "101":
+                self._log("302", p, "-> /doc/mwangen1.htm (General Setup)")
+                return self._redirect("/doc/mwangen1.htm")
+            if p.lower() == "/cgi-bin/v2x00.cgi" and str(params.get("fid")) == "4048":
+                self._log("DULIEU", p, "-> fid=4048 Object String (-1)")
+                return self._send(b"-1", "text/plain")
+            if p.lower() == "/cgi-bin/v2x00.cgi" and str(params.get("fid")) in ("4042", "4044"):
+                self._log("302", p, "-> Policy Routing (fid=4042/4044)")
+                return self._redirect("/cgi-bin/v2x00.cgi?fid=4041&iAct=1&iModeWizAdv=1")
+
             goc, _st, _ct = tim_trang_goc("POST", p, params)
             # POST co GHI cau hinh khi mang co `webchange` (DrayTek dung co nay
             # de danh dau form Apply/Save, xem spec/cgi-map.json).
-            if params.get("webchange") and goc and goc in da_dung():
+            is_ipbmac = (goc == "doc/ipbmac.htm" or params.get("fid") == "126")
+            is_enet = (p == "/cgi-bin/enet.cgi" or goc == "doc/ENET.SHT")
+            if (params.get("webchange") or is_ipbmac or is_enet) and (goc or is_enet):
+                if is_enet and not goc:
+                    goc = "doc/ENET.SHT"
+                if goc == "doc/ipbmac.htm":
+                    self._xu_ly_post_ipbmac(params)
+                elif is_enet:
+                    self._xu_ly_post_enet(params)
                 n = config_store.ghi_post(p, params, goc)
                 self._log("GHI", p, f"-> config_store: {n} gia tri  (trang {goc})")
                 # Hop dong 2.4: thiet bi that tra 302 kem Location tro sang trang dich
-                return self._redirect("/" + goc)
+                red_path = "/" + goc
+                if is_enet:
+                    red_path += "?save_success=1"
+                return self._redirect(red_path)
             # Dieu huong POST (bam dong bang -> form.submit): phuc vu dung trang
             return self._serve_cgi(p, params, method="POST")
 

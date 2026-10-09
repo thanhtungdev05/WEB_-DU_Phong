@@ -140,8 +140,17 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         };
       }
 
-      const isSaved = !!docIpbmac._ftcIsSaved;
       const win = docIpbmac.defaultView || docIpbmac.parentWindow;
+      const topWin = (typeof window !== 'undefined' && window.top) ? window.top : window;
+
+      // Nhận diện trạng thái lưu cấu hình: cờ DOM, cờ window của trang, hoặc cờ từ portal top window
+      const isSaved = !!(
+        docIpbmac._ftcIsSaved ||
+        (win && win._ftcIsSaved) ||
+        window._hasClickedSaveInGuide ||
+        topWin._hasClickedSaveInGuide ||
+        docIpbmac._ftcLastSaveInteraction
+      );
 
       // 1. Tiêu chí Enable
       const enableEl = docIpbmac.querySelector('input[name="sIpBndMacEnable"]:checked');
@@ -212,7 +221,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
           expected: 'Enable',
           actual: enableVal === '1' ? 'Enable' : 'Disable',
           passed: enablePassed,
-          message: !isSaved ? 'Chưa bấm OK để lưu cấu hình' : (enableVal === '1' ? 'Đã chọn Enable' : 'Chưa chọn Enable (hiện đang là Disable)')
+          message: !isSaved ? (enableVal === '1' ? 'Đã chọn Enable nhưng chưa bấm OK để lưu cấu hình' : 'Chưa chọn Enable (hiện đang là Disable)') : (enableVal === '1' ? 'Đã chọn Enable' : 'Chưa chọn Enable (hiện đang là Disable)')
         },
         {
           id: 'ipbmac_ip_val',
@@ -220,7 +229,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
           expected: '192.168.1.100',
           actual: foundIp || (docIpbmac.querySelector('input[name="sIpAddress"]') ? docIpbmac.querySelector('input[name="sIpAddress"]').value : 'Chưa nhập'),
           passed: ipPassed,
-          message: !isSaved ? 'Chưa bấm OK để lưu cấu hình' : (foundIp === '192.168.1.100' ? 'Đúng IP 192.168.1.100' : 'IP chưa đúng hoặc chưa thêm vào IP Bind List')
+          message: !isSaved ? (foundIp === '192.168.1.100' ? 'Đã thêm IP 192.168.1.100 nhưng chưa bấm OK để lưu cấu hình' : 'IP chưa đúng hoặc chưa thêm vào IP Bind List') : (foundIp === '192.168.1.100' ? 'Đúng IP 192.168.1.100' : 'IP chưa đúng hoặc chưa thêm vào IP Bind List')
         },
         {
           id: 'ipbmac_mac_val',
@@ -228,7 +237,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
           expected: 'AA-BB-CC-DD-EE-FF',
           actual: foundMac || (docIpbmac.querySelector('input[name="txtMac"]') ? docIpbmac.querySelector('input[name="txtMac"]').value : 'Chưa nhập'),
           passed: macPassed,
-          message: !isSaved ? 'Chưa bấm OK để lưu cấu hình' : (foundMac === 'AA-BB-CC-DD-EE-FF' ? 'Đúng MAC AA-BB-CC-DD-EE-FF' : 'MAC chưa đúng hoặc chưa thêm vào IP Bind List')
+          message: !isSaved ? (foundMac === 'AA-BB-CC-DD-EE-FF' ? 'Đã thêm MAC AA-BB-CC-DD-EE-FF nhưng chưa bấm OK để lưu cấu hình' : 'MAC chưa đúng hoặc chưa thêm vào IP Bind List') : (foundMac === 'AA-BB-CC-DD-EE-FF' ? 'Đúng MAC AA-BB-CC-DD-EE-FF' : 'MAC chưa đúng hoặc chưa thêm vào IP Bind List')
         },
         {
           id: 'ipbmac_btn_add',
@@ -236,7 +245,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
           expected: 'Đã thêm vào IP Bind List',
           actual: hasAddedEntry ? 'Đã thêm' : 'Chưa thêm',
           passed: addPassed,
-          message: !isSaved ? 'Chưa bấm OK để lưu cấu hình' : (hasAddedEntry ? 'Đã thêm thiết bị vào danh sách' : 'Chưa nhấn nút Add để thêm thiết bị vào IP Bind List')
+          message: !isSaved ? (hasAddedEntry ? 'Đã thêm thiết bị vào danh sách nhưng chưa bấm OK để lưu cấu hình' : 'Chưa nhấn nút Add để thêm thiết bị vào IP Bind List') : (hasAddedEntry ? 'Đã thêm thiết bị vào danh sách' : 'Chưa nhấn nút Add để thêm thiết bị vào IP Bind List')
         },
         {
           id: 'ipbmac_strict_bind',
@@ -244,7 +253,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
           expected: 'Không chọn (Tắt)',
           actual: strictChecked ? 'Đang bật' : 'Không chọn (Tắt)',
           passed: strictPassed,
-          message: !isSaved ? 'Chưa bấm OK để lưu cấu hình' : (strictChecked ? 'Đang chọn Strict Bind (yêu cầu giữ mặc định không chọn)' : 'Đúng mặc định (không chọn)')
+          message: !isSaved ? (strictChecked ? 'Đang chọn Strict Bind (yêu cầu giữ mặc định không chọn)' : 'Đúng mặc định (không chọn) nhưng cần bấm OK để hoàn tất lưu cấu hình') : (strictChecked ? 'Đang chọn Strict Bind (yêu cầu giữ mặc định không chọn)' : 'Đúng mặc định (không chọn)')
         },
         {
           id: 'ipbmac_mac_learn',
@@ -252,7 +261,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
           expected: 'Không chọn (Tắt)',
           actual: macLearnChecked ? 'Đang bật' : 'Không chọn (Tắt)',
           passed: macLearnPassed,
-          message: !isSaved ? 'Chưa bấm OK để lưu cấu hình' : (macLearnChecked ? 'Đang chọn MAC Learning Time (yêu cầu giữ mặc định không chọn)' : 'Đúng mặc định (không chọn)')
+          message: !isSaved ? (macLearnChecked ? 'Đang chọn MAC Learning Time (yêu cầu giữ mặc định không chọn)' : 'Đúng mặc định (không chọn) nhưng cần bấm OK để hoàn tất lưu cấu hình') : (macLearnChecked ? 'Đang chọn MAC Learning Time (yêu cầu giữ mặc định không chọn)' : 'Đúng mặc định (không chọn)')
         }
       ];
 
