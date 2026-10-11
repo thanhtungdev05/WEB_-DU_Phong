@@ -68,15 +68,19 @@ class GponHandler(BaseHTTPRequestHandler):
                     return q["_ktv"][0].strip()
             except Exception:
                 pass
-        client_ip = getattr(self, "client_address", ("", 0))[0]
-        return client_ip or "default"
+        if not hasattr(self, "_generated_client_key"):
+            import uuid
+            self._generated_client_key = f"ktv_{uuid.uuid4().hex[:16]}"
+            self._need_set_client_cookie = True
+        return self._generated_client_key
 
     def _is_authenticated(self):
         client_key = self._client_key()
         if client_key in _phien_xac_thuc:
             return True
         raw_cookie = self.headers.get("Cookie", "") if hasattr(self, "headers") else ""
-        if "ac1000cv2_auth=1" in raw_cookie:
+        if f"ac1000cv2_sid={client_key}" in raw_cookie and "ac1000cv2_auth=1" in raw_cookie:
+            _phien_xac_thuc.add(client_key)
             return True
         return False
 
@@ -100,6 +104,9 @@ class GponHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Server", "nginx/1.16.0")
+        if getattr(self, "_need_set_client_cookie", False):
+            self.send_header("Set-Cookie", f"ac1000cv2_sid={self._generated_client_key}; Path=/; SameSite=Lax")
+            self._need_set_client_cookie = False
         if extra_headers:
             for k, v in extra_headers.items():
                 self.send_header(k, v)
@@ -144,6 +151,9 @@ class GponHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", mime)
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Server", "nginx/1.16.0")
+        if getattr(self, "_need_set_client_cookie", False):
+            self.send_header("Set-Cookie", f"ac1000cv2_sid={self._generated_client_key}; Path=/; SameSite=Lax")
+            self._need_set_client_cookie = False
         self.end_headers()
         self.wfile.write(data)
 
@@ -232,12 +242,12 @@ class GponHandler(BaseHTTPRequestHandler):
 
         # 6. Trang logout.html
         if path == "/logout.html":
-            _phien_xac_thuc.discard(client_ip)
+            _phien_xac_thuc.discard(client_key)
             target = f"{prefix}/login.html" if prefix else "login.html"
             html_logout = (f'<html><head><meta http-equiv="refresh" content="0; url={target}"></head>'
                            f'<body><script>window.location.replace("{target}");</script>'
                            f'<p>Logged out. Redirecting to login page...</p></body></html>')
-            self._send_html(html_logout, extra_headers={"Set-Cookie": "ac1000cv2_auth=0; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"})
+            self._send_html(html_logout, extra_headers={"Set-Cookie": f"ac1000cv2_auth=0; ac1000cv2_sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"})
             return
 
         # 7. Kiem tra xac thuc cho cac trang HTML con lai (ke ca index.html)
@@ -313,7 +323,7 @@ class GponHandler(BaseHTTPRequestHandler):
                     f'<script>window.location.replace("{target_url}");</script>\n'
                     f'</head><body><p>Redirecting to <a href="{target_url}">index.html</a>...</p></body></html>'
                 )
-                self._send_html(redirect_html, status=200, extra_headers={"Set-Cookie": "ac1000cv2_auth=1; Path=/; SameSite=Lax"})
+                self._send_html(redirect_html, status=200, extra_headers={"Set-Cookie": f"ac1000cv2_auth=1; ac1000cv2_sid={client_key}; Path=/; SameSite=Lax"})
             else:
                 err_url = f"{prefix}/login.html?login_err=1"
                 redirect_err = (
@@ -329,7 +339,7 @@ class GponHandler(BaseHTTPRequestHandler):
         # 2. Dang xuat
         if path.endswith("/LogoutForm"):
             _phien_xac_thuc.discard(client_key)
-            self._send_html("OK", status=200, extra_headers={"Set-Cookie": "ac1000cv2_auth=0; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"})
+            self._send_html("OK", status=200, extra_headers={"Set-Cookie": f"ac1000cv2_auth=0; ac1000cv2_sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"})
             return
 
         # 3. Luu cau hinh cac trang /GponForm/<page>_XForm

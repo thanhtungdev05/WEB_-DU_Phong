@@ -732,7 +732,7 @@
       + 'MuiButton-containedSizeMedium MuiButton-colorPrimary '
       + 'formActionButton submit alternative-layout '
       + 'alternative-layout--submit css-g28vy7" tabindex="0">'
-      + '<span class="MuiBox-root css-rrm59m">Save</span>'
+      + '<span class="MuiBox-root css-rrm59m">SAVE</span>'
       + '<span class="MuiCircularProgress-root MuiCircularProgress-indeterminate '
       + 'MuiCircularProgress-colorPrimary css-1i7o5xq" role="progressbar" '
       + 'style="width: 16px; height: 16px;"><svg class="MuiCircularProgress-svg '

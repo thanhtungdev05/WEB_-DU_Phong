@@ -255,4 +255,40 @@ class ConfigStore:
                 "</OBJ_WLANRADIO_ID></ajax_response_xml_root>").encode()
 
 
-STORE = ConfigStore()
+_USER_STORES: dict[str, ConfigStore] = {}
+_STORE_LOCK = threading.RLock()
+_STORE_CTX = threading.local()
+
+
+def bind_user(user_key: str):
+    _STORE_CTX.key = user_key or "default"
+
+
+def current_user_key() -> str:
+    return getattr(_STORE_CTX, "key", "default")
+
+
+def get_user_store(user_key: str | None = None) -> ConfigStore:
+    key = user_key or current_user_key()
+    with _STORE_LOCK:
+        if key not in _USER_STORES:
+            _USER_STORES[key] = ConfigStore()
+        return _USER_STORES[key]
+
+
+def reset_user_store(user_key: str | None = None) -> None:
+    key = user_key or current_user_key()
+    with _STORE_LOCK:
+        if key in _USER_STORES:
+            _USER_STORES[key].reset()
+        else:
+            _USER_STORES[key] = ConfigStore()
+
+
+class _StoreProxy:
+    def __getattr__(self, name):
+        return getattr(get_user_store(), name)
+
+
+STORE = _StoreProxy()
+

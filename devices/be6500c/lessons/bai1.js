@@ -106,23 +106,28 @@ var bai1 = {
       "position": "right"
     },
     {
+      "selector": "li.MuiMenuItem-root:contains(\"WAN\"), .MuiTypography-root:contains(\"WAN\"), p:contains(\"WAN\"), span:contains(\"WAN\")",
+      "text": "Bước 2: Chọn WAN",
+      "position": "right"
+    },
+    {
       "selector": ".MuiFormControlLabel-root:has(input[value=\"10\"]), span:contains(\"IPv4 & IPv6\"), input[name=\"radio\"][value=\"10\"]",
-      "text": "Bước 2: Kiểm tra/chọn mục Basics là IPv4 & IPv6",
+      "text": "Bước 3: Kiểm tra/chọn mục Basics là IPv4 & IPv6",
       "position": "bottom"
     },
     {
       "selector": ".MuiTypography-subtitle1:contains(\"IPv4 Connection Type\")",
-      "text": "Bước 3: Chọn IPv4 Connection Type",
+      "text": "Bước 4: Chọn IPv4 Connection Type",
       "position": "top"
     },
     {
       "selector": "div[id*=\"ipv4Settings.protocol\"]",
-      "text": "Bước 4: Chọn PPPoE của phần Connection Type",
+      "text": "Bước 5: Chọn PPPoE của phần Connection Type",
       "position": "right"
     },
     {
       "selector": "input[name=\"ipv4Settings.pppoe.username\"]",
-      "text": "Bước 5: Nhập Username: hnfdl-123456-789",
+      "text": "Bước 6: Nhập Username: hnfdl-123456-789",
       "position": "right",
       "condition": function (doc) {
         var protoInp = doc.querySelector('input[name="ipv4Settings.protocol"]');
@@ -136,7 +141,7 @@ var bai1 = {
     },
     {
       "selector": "input[name=\"ipv4Settings.pppoe.password\"]",
-      "text": "Bước 6: Nhập Password: d123456",
+      "text": "Bước 7: Nhập Password: d123456",
       "position": "right",
       "condition": function (doc) {
         var protoInp = doc.querySelector('input[name="ipv4Settings.protocol"]');
@@ -150,7 +155,7 @@ var bai1 = {
     },
     {
       "selector": "button.alternative-layout--submit, .formActionButton.submit, body:has(input[name=\"ipv4Settings.pppoe.username\"]) button.alternative-layout--submit",
-      "text": "Bước 7: Chọn Save để lưu cấu hình",
+      "text": "Bước 8: Chọn Save để lưu cấu hình",
       "position": "bottom"
     }
   ]

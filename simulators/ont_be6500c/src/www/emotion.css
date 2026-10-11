@@ -307,7 +307,7 @@ body::backdrop { background-color: rgb(255, 255, 255); }
   .css-1axh8uu { min-height: 100dvh; }
 }
 .css-1nmx4e2 { height: 100vh; position: fixed; border-right: 2px solid rgb(235, 238, 245); left: 0px; top: 0px; z-index: 1202; background: rgb(255, 255, 255); }
-.css-1hiau50 { width: 52px; height: -webkit-fill-available; min-height: 600px; background: rgb(255, 255, 255); display: flex; }
+.css-1hiau50 { width: 52px; height: 100vh; background: rgb(255, 255, 255); display: flex; }
 .css-1hiau50.isExpand { width: 160px; }
 @supports not (height: -webkit-fill-available) {
   .css-1hiau50 { height: 100%; }
@@ -3128,8 +3128,12 @@ html { -webkit-font-smoothing: antialiased; box-sizing: border-box; text-size-ad
 /* inline data-emotion=css */
 .css-16xjmht .custom-snackbar-container { display: flex; flex-direction: column-reverse; }
 .css-2e7z0p { padding: 16px 0px 8px; width: 160px; }
-.css-1uxy527 { display: flex; flex-direction: column; padding: 16px 0px 8px; width: 160px; }
-.css-1eazcgd { display: flex; flex-direction: column; gap: 8px; -webkit-box-flex: 1; flex-grow: 1; overflow: auto; }
+.css-1uxy527 { display: flex; flex-direction: column; padding: 16px 0px 8px; width: 160px; height: 100vh; box-sizing: border-box; }
+.css-1eazcgd { display: flex; flex-direction: column; gap: 8px; -webkit-box-flex: 1; flex-grow: 1; min-height: 0; overflow-y: auto !important; overflow-x: hidden; }
+.css-1eazcgd::-webkit-scrollbar { width: 8px; }
+.css-1eazcgd::-webkit-scrollbar-track { background: #f1f1f1; }
+.css-1eazcgd::-webkit-scrollbar-thumb { background: #888888; border-radius: 4px; }
+.css-1eazcgd::-webkit-scrollbar-thumb:hover { background: #555555; }
 .css-bh8ylr { height: 38px; padding-left: 8px; flex-direction: row; -webkit-box-align: center; align-items: center; gap: 8px; cursor: pointer; }
 .css-bh8ylr:hover { background: rgb(250, 250, 250); }
 .css-bh8ylr:active { background: rgb(255, 255, 255); }

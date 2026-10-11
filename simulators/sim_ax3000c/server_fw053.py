@@ -78,6 +78,7 @@ THAY_JS = {
         (b"window.setTimeout(o,5e3)}", b"window.setTimeout(o,200)}"),
         (b"window.setTimeout(o,2e3)}", b"window.setTimeout(o,200)}"),
         (b'void 0===t&&(t="/"),void 0===n&&(n=160);', b"void 0===t&&(t=location.pathname),void 0===n&&(n=1);"),
+        (b'c.p="/"', b'c.p="/sim_ax3000c/"'),
         (
             b'function s(e){return c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
             b'function s(e){return"chunk-82690506"===e?c.p+"js/"+e+".9b4ab5b7.1726822665278.js?v=v21_clean_input":c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
@@ -152,6 +153,7 @@ def dat_lai_thiet_bi(client_key):
         if session.get("client_key") == client_key:
             _goc._phien.pop(sid, None)
     _TMP_THEO_KTV.reset(client_key)
+    _goc._REBOOT_THEO_KTV.pop(client_key, None)
     _goc.KHO.reset(client_key)
     _xoa_fpt_wan(_goc.KHO._goc)
     _xoa_fpt_wan(_goc.KHO._du_lieu)
@@ -287,6 +289,9 @@ class Handler(_goc.H):
             html = html.replace(b"href=/css/", b"href=/sim_ax3000c/css/")
             html = html.replace(b"href=/js/", b"href=/sim_ax3000c/js/")
             html = html.replace(b"src=/js/", b"src=/sim_ax3000c/js/")
+            html = html.replace(b"href=/icons/", b"href=/sim_ax3000c/icons/")
+            html = html.replace(b"src=/icons/", b"src=/sim_ax3000c/icons/")
+            html = html.replace(b"src=/img/", b"src=/sim_ax3000c/img/")
             html = html.replace(b"href=/logo-fpt.ico", b"href=/sim_ax3000c/logo-fpt.ico")
             # chen TRUOC bundle de script chay truoc khi SPA doc sessionStorage
             html = html.replace(b"<script src=/sim_ax3000c/js/chunk-vendors", THE_CHEN + b"<script src=/sim_ax3000c/js/chunk-vendors", 1)

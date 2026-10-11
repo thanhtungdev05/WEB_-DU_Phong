@@ -44,55 +44,51 @@
     return n.replace(/__t\d+$/, '');
   }
 
-  /* ---------- 1. Menu ben trai ---------- */
-  function menuItems() {
-    var sb = document.querySelector('.css-1nmx4e2');
-    if (!sb) return [];
-    var out = [];
-    var seen = new Set();
 
-    // 1. Uu tien cac dong menu (li) day du hang de click toan bo dong
-    var lis = sb.querySelectorAll('li.MuiMenuItem-root, li[role="menuitem"], li');
-    for (var i = 0; i < lis.length; i++) {
-      var li = lis[i], t = txt(li);
-      if (t && t.length <= 24 && !seen.has(t)) {
-        seen.add(t);
-        out.push({ el: li, text: t, hasIcon: !!li.querySelector('svg') });
-      }
-    }
 
-    // 2. Cac nhan nhom category (.css-1mtremo, .css-1fdfqlq)
-    var cats = sb.querySelectorAll('.css-1mtremo, .css-1fdfqlq');
-    for (var j = 0; j < cats.length; j++) {
-      var cat = cats[j], tc = txt(cat);
-      if (tc && tc.length <= 24 && !seen.has(tc)) {
-        seen.add(tc);
-        out.push({ el: cat, text: tc, hasIcon: !!cat.querySelector('svg') });
-      }
-    }
-
-    // 3. Fallback cho cac the text con lai neu co
-    if (out.length === 0) {
-      var all = sb.querySelectorAll('div,li,span,p');
-      for (var k = 0; k < all.length; k++) {
-        var e = all[k], te = txt(e);
-        if (!te || te.length > 24) continue;
-        var kid = e.querySelector('div,li,span,p');
-        if (kid && txt(kid) === te) continue;
-        var row = e.closest('li, button') || e;
-        if (!seen.has(te)) {
-          seen.add(te);
-          out.push({ el: row, text: te, hasIcon: !!row.querySelector('svg') });
-        }
-      }
-    }
-    return out;
+  function tenNhomHienTai() {
+    var t = tenTrang().replace(/__t\d+$/, '');
+    if (t === 'index' || t === '') return 'Home';
+    var prefix = t.split('__')[0];
+    var mapNhom = {
+      'home': 'Home',
+      'wifi': 'Wi-Fi',
+      'network': 'Network',
+      'security': 'Security',
+      'system': 'System',
+      'advanced': 'Advanced',
+      'help': 'Help'
+    };
+    return mapNhom[prefix] || '';
   }
 
-  /* Hop thoai Reboot: dung markup THAT (dialog_data.js). Sau khi bam
-     "Reboot Now", ban gia lap KHONG khoi dong lai thiet bi that -- bao ro
-     dieu do (giong cach techsupport_binding.js cua AP da lam, trung thuc
-     ve gioi han cua ban gia lap). */
+  /* Template collapse markup goc cho 6 nhom chuc nang */
+  var CAT_TEMPLATES = {
+    'Home': '<div class="MuiCollapse-root MuiCollapse-vertical MuiCollapse-hidden css-1ld0r7j" style="min-height: 0px; height: 0px; display: none;"><div class="MuiCollapse-wrapper MuiCollapse-vertical css-hboir5"><div class="MuiCollapse-wrapperInner MuiCollapse-vertical css-8atqhb"><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Overview</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Topology</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Ethernet Status</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li></div></div></div></div>',
+    'Wi-Fi': '<div class="MuiCollapse-root MuiCollapse-vertical MuiCollapse-hidden css-1ld0r7j" style="min-height: 0px; height: 0px; display: none;"><div class="MuiCollapse-wrapper MuiCollapse-vertical css-hboir5"><div class="MuiCollapse-wrapperInner MuiCollapse-vertical css-8atqhb"><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">General</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Advanced</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li></div></div></div></div>',
+    'Network': '<div class="MuiCollapse-root MuiCollapse-vertical MuiCollapse-hidden css-1ld0r7j" style="min-height: 0px; height: 0px; display: none;"><div class="MuiCollapse-wrapper MuiCollapse-vertical css-hboir5"><div class="MuiCollapse-wrapperInner MuiCollapse-vertical css-8atqhb"><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Port Forwarding</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Speed Test</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Diagnostics</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li></div></div></div></div>',
+    'Security': '<div class="MuiCollapse-root MuiCollapse-vertical MuiCollapse-hidden css-1ld0r7j" style="min-height: 0px; height: 0px; display: none;"><div class="MuiCollapse-wrapper MuiCollapse-vertical css-hboir5"><div class="MuiCollapse-wrapperInner MuiCollapse-vertical css-8atqhb"><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Firewall</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Parental Control</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li></div></div></div></div>',
+    'System': '<div class="MuiCollapse-root MuiCollapse-vertical MuiCollapse-hidden css-1ld0r7j" style="min-height: 0px; height: 0px; display: none;"><div class="MuiCollapse-wrapper MuiCollapse-vertical css-hboir5"><div class="MuiCollapse-wrapperInner MuiCollapse-vertical css-8atqhb"><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">System Settings</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Update &amp; Restore</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">User</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Wi-Fi Timer</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Reboot Timer</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">System Log</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Tech Support Info</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li></div></div></div></div>',
+    'Advanced': '<div class="MuiCollapse-root MuiCollapse-vertical MuiCollapse-hidden css-1ld0r7j" style="min-height: 0px; height: 0px; display: none;"><div class="MuiCollapse-wrapper MuiCollapse-vertical css-hboir5"><div class="MuiCollapse-wrapperInner MuiCollapse-vertical css-8atqhb"><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">WAN</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">LAN</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Dynamic DNS</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">Static Routing</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">DMZ</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">UPnP</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li><li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters MuiMenuItem-root MuiMenuItem-gutters css-1oa4er1" tabindex="-1" role="menuitem"><p class="MuiTypography-root MuiTypography-body2 css-1t3jziq">TCPDump</p><span class="MuiTouchRipple-root css-w0pj6f"></span></li></div></div></div></div>'
+  };
+
+  /* Dam bao tat ca cac category deu co the collapse de co the dong/mo tai cho */
+  function damBaoMuiCollapse(sb) {
+    var container = sb.querySelector('.css-1eazcgd');
+    if (!container) return;
+    var boxes = container.children;
+    for (var i = 0; i < boxes.length; i++) {
+      var box = boxes[i];
+      var hdr = box.querySelector('.css-1mtremo, .css-1fdfqlq');
+      if (!hdr) continue;
+      var t = txt(hdr);
+      var collapse = box.querySelector('.MuiCollapse-root');
+      if (!collapse && CAT_TEMPLATES[t]) {
+        box.insertAdjacentHTML('beforeend', CAT_TEMPLATES[t]);
+      }
+    }
+  }
+
   function moHopThoaiReboot() {
     if (!window.__moHopThoai) { alert('Reboot: ban gia lap khong khoi dong lai thiet bi that.'); return; }
     var h = window.__moHopThoai('reboot_confirm');
@@ -104,37 +100,110 @@
     });
   }
 
+  /* ---------- 1. Menu ben trai ---------- */
   function wireMenu() {
+    var sb = document.querySelector('.css-1nmx4e2');
+    if (!sb) return 0;
     var n = 0;
-    menuItems().forEach(function (it) {
-      var t = it.text, target = null;
-      // "Advanced" trung ten: nhom cha /advanced (co icon) vs muc con
-      // wifi/advanced (khong icon) -- phan biet giong het thiet bi that.
-      if (t === 'Advanced') target = it.hasIcon ? GROUP['Advanced'] : 'wifi__advanced';
-      else if (MAP[t]) target = MAP[t];
-      else if (GROUP[t]) target = GROUP[t];
-      else if (t === 'Reboot') {
-        it.el.style.cursor = 'pointer';
-        it.el.addEventListener('click', function (e) { e.stopPropagation(); moHopThoaiReboot(); });
-        return;
-      } else if (t === 'Log out') {
-        it.el.style.cursor = 'pointer';
-        it.el.addEventListener('click', function (e) {
+
+    // 1. Uu tien cac dong submenu (li) de chuyen trang
+    var lis = sb.querySelectorAll('li.MuiMenuItem-root, li[role="menuitem"], li');
+    lis.forEach(function (li) {
+      var t = txt(li);
+      if (!t || t.length > 24) return;
+      var target = null;
+      var box = li.closest('.MuiBox-root');
+      var headerText = box ? txt(box.querySelector('h6') || {}) : '';
+      if (t === 'Advanced' && headerText === 'Wi-Fi') {
+        target = 'wifi__advanced';
+      } else if (t === 'Routing' || t === 'Static Routing') {
+        target = 'advanced__routing';
+      } else if (t === 'DDNS' || t === 'Dynamic DNS') {
+        target = 'advanced__ddns';
+      } else if (MAP[t]) {
+        target = MAP[t];
+      } else if (t === 'Ethernet Status') {
+        target = 'home__lanstatus';
+      }
+
+      if (target) {
+        li.style.cursor = 'pointer';
+        var kids = li.querySelectorAll('*');
+        for (var k = 0; k < kids.length; k++) { kids[k].style.cursor = 'pointer'; }
+        li.addEventListener('click', function (e) {
           e.stopPropagation();
-          alert('Log out: ban gia lap khong co phien dang nhap.');
+          go(target);
         });
-        return;
+        n++;
       }
-      if (!target) return;
-      it.el.style.cursor = 'pointer';
-      // Dam bao moi phan tu con deu co cursor pointer
-      var kids = it.el.querySelectorAll('*');
-      for (var k = 0; k < kids.length; k++) {
-        kids[k].style.cursor = 'pointer';
-      }
-      it.el.addEventListener('click', function (e) { e.stopPropagation(); go(target); });
+    });
+
+    // 2. Cac nhan nhom category (.css-1mtremo, .css-1fdfqlq) - Dong/mo tai cho (in-place accordion)
+    var hdrs = sb.querySelectorAll('.css-1mtremo, .css-1fdfqlq');
+    hdrs.forEach(function (hdr) {
+      var t = txt(hdr);
+      if (!t || t.length > 24) return;
+      var box = hdr.closest('.MuiBox-root') || hdr.parentElement;
+      var collapse = box ? box.querySelector('.MuiCollapse-root') : null;
+
+      hdr.style.cursor = 'pointer';
+      var kids = hdr.querySelectorAll('*');
+      for (var k = 0; k < kids.length; k++) { kids[k].style.cursor = 'pointer'; }
+
+      hdr.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (collapse) {
+          var isHidden = collapse.style.display === 'none' || collapse.classList.contains('MuiCollapse-hidden');
+          if (isHidden) {
+            collapse.style.display = '';
+            collapse.style.height = '';
+            collapse.classList.remove('MuiCollapse-hidden');
+            collapse.classList.add('MuiCollapse-entered');
+            var icon = hdr.querySelector('svg');
+            if (icon) {
+              icon.classList.remove('categoryIcon');
+              icon.classList.add('currentCategoryIcon');
+            }
+            var h6 = hdr.querySelector('h6');
+            if (h6) {
+              h6.classList.remove('css-1i4skbg');
+              h6.classList.add('css-bznab9');
+            }
+          } else {
+            collapse.style.display = 'none';
+            collapse.classList.remove('MuiCollapse-entered');
+            collapse.classList.add('MuiCollapse-hidden');
+            if (t !== tenNhomHienTai()) {
+              var icon = hdr.querySelector('svg');
+              if (icon) {
+                icon.classList.remove('currentCategoryIcon');
+                icon.classList.add('categoryIcon');
+              }
+              var h6 = hdr.querySelector('h6');
+              if (h6) {
+                h6.classList.remove('css-bznab9');
+                h6.classList.add('css-1i4skbg');
+              }
+            }
+          }
+          return;
+        }
+        if (t === 'Reboot') {
+          moHopThoaiReboot();
+          return;
+        }
+        if (t === 'Log out') {
+          alert('Log out: ban gia lap khong co phien dang nhap.');
+          return;
+        }
+        if (t === 'Help') {
+          go('help');
+          return;
+        }
+      });
       n++;
     });
+
     return n;
   }
 
@@ -180,6 +249,9 @@
     var hoverTimer = null;
     function datTrangThai(dangMo) {
       oNgoai.innerHTML = dangMo ? MO[k.mo] : GON[k.gon];
+      if (dangMo) {
+        damBaoMuiCollapse(oNgoai);
+      }
       wireMenu();
     }
 
@@ -195,6 +267,13 @@
       hoverTimer = setTimeout(function () {
         datTrangThai(false);
       }, 200);
+    });
+    oNgoai.addEventListener('click', function () {
+      var isExpanded = oNgoai.querySelector('.isExpand');
+      if (!isExpanded) {
+        if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+        datTrangThai(true);
+      }
     });
 
     datTrangThai(false);

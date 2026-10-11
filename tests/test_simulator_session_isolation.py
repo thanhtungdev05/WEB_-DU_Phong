@@ -206,5 +206,97 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         self.assertNotIn("stale", module.USER_STATES)
 
 
+    def test_ac1000cv2_logout_under_same_ip_does_not_kick_other_ktv(self):
+        module = load_server("simulators/ac1000cv2/src/server.py", "test_ac1000cv2_server")
+        # Giả lập 2 KTV cùng phòng học (chung IP 192.168.1.100), khác session ID
+        ktv_a_id = "ktv_student_A_123"
+        ktv_b_id = "ktv_student_B_456"
+
+        module._phien_xac_thuc.add(ktv_a_id)
+        module._phien_xac_thuc.add(ktv_b_id)
+
+        # KTV-A và KTV-B lưu cấu hình khác nhau
+        module.KHO.bind(ktv_a_id)
+        module.KHO.ghi("lan.ip", "192.168.10.50")
+        module.KHO.bind(ktv_b_id)
+        module.KHO.ghi("lan.ip", "192.168.10.99")
+
+        self.assertEqual(module.KHO.doc("lan.ip", key=ktv_a_id), "192.168.10.50")
+        self.assertEqual(module.KHO.doc("lan.ip", key=ktv_b_id), "192.168.10.99")
+
+        # KTV-A đăng xuất
+        module._phien_xac_thuc.discard(ktv_a_id)
+
+        # KTV-A mất phiên, nhưng KTV-B PHẢI VẪN CÒN PHIÊN
+        self.assertNotIn(ktv_a_id, module._phien_xac_thuc)
+        self.assertIn(ktv_b_id, module._phien_xac_thuc, "KTV-B khong duoc bi kick khi KTV-A dang xuat")
+        self.assertEqual(module.KHO.doc("lan.ip", key=ktv_b_id), "192.168.10.99")
+
+    def test_vigor2927_multi_ktv_isolation_and_no_global_wipe(self):
+        import sys
+        vg_dir = str(ROOT / "simulators/sim_vigor2927/src")
+        if vg_dir not in sys.path:
+            sys.path.insert(0, vg_dir)
+        import vg_config_store as vg_store
+
+        ktv_a = "ktv_vg_user_A"
+        ktv_b = "ktv_vg_user_B"
+
+        vg_store.dat_nguoi_dung_hien_tai(ktv_a)
+        c_a = vg_store._nap(user_key=ktv_a)
+        c_a["pages"]["doc/enet1.htm"]["vars"]["aryLanDhcp"] = "192.168.1.100"
+
+        vg_store.dat_nguoi_dung_hien_tai(ktv_b)
+        c_b = vg_store._nap(user_key=ktv_b)
+        c_b["pages"]["doc/enet1.htm"]["vars"]["aryLanDhcp"] = "192.168.2.200"
+
+        self.assertEqual(vg_store.USER_CONFIGS[ktv_a]["pages"]["doc/enet1.htm"]["vars"]["aryLanDhcp"], "192.168.1.100")
+        self.assertEqual(vg_store.USER_CONFIGS[ktv_b]["pages"]["doc/enet1.htm"]["vars"]["aryLanDhcp"], "192.168.2.200")
+
+        # Reset KTV-A
+        vg_store.dat_lai_factory(ktv_a)
+        self.assertNotIn(ktv_a, vg_store.USER_CONFIGS)
+        self.assertIn(ktv_b, vg_store.USER_CONFIGS, "Reset KTV-A khong duoc xoa state cua KTV-B")
+        self.assertEqual(vg_store.USER_CONFIGS[ktv_b]["pages"]["doc/enet1.htm"]["vars"]["aryLanDhcp"], "192.168.2.200")
+
+    def test_ax3000gz_v2_multi_ktv_isolation_and_reset(self):
+        gz_store = load_server("devices/ax3000gz_v2/src/config_store.py", "test_ax3000gz_v2_store")
+
+        ktv_a = "ktv_gz_A"
+        ktv_b = "ktv_gz_B"
+
+        gz_store.bind_user(ktv_a)
+        gz_store.STORE.update_section("home", {"firewall_level": "High"})
+
+        gz_store.bind_user(ktv_b)
+        gz_store.STORE.update_section("home", {"firewall_level": "Low"})
+
+        gz_store.bind_user(ktv_a)
+        self.assertEqual(gz_store.STORE.get("home")["firewall_level"], "High")
+        gz_store.bind_user(ktv_b)
+        self.assertEqual(gz_store.STORE.get("home")["firewall_level"], "Low")
+
+        # Reset KTV-A
+        gz_store.reset_user_store(ktv_a)
+        gz_store.bind_user(ktv_a)
+        self.assertNotEqual(gz_store.STORE.get("home")["firewall_level"], "High")
+        gz_store.bind_user(ktv_b)
+        self.assertEqual(gz_store.STORE.get("home")["firewall_level"], "Low", "Reset KTV-A khong duoc anh huong KTV-B")
+
+    def test_ax3000c_reboot_isolation_per_ktv(self):
+        module = load_server("simulators/sim_ax3000c/fw_053/src/server.py", "test_ax3000c_reboot")
+        ktv_a = "cookie:ktv-reboot-a"
+        ktv_b = "cookie:ktv-reboot-b"
+
+        module.KHO.bind(ktv_a)
+        module._REBOOT_THEO_KTV[ktv_a] = time.time()
+
+        module.KHO.bind(ktv_b)
+        # KTV-B KHÔNG hề bị reboot
+        self.assertIsNone(module._pha_reboot(ktv_b), "KTV-B khong duoc bi coi la dang reboot")
+        self.assertEqual(module._pha_reboot(ktv_a), "sap", "KTV-A phai o pha sap khi vua reboot")
+
+
 if __name__ == "__main__":
     unittest.main()
+

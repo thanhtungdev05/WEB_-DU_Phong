@@ -336,16 +336,19 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             return 'sim_ac1000cv2'
 
         # Ngoại lệ cho AX3000CV2 (fw 0.5.3):
-        # 1. Các asset tĩnh Vue Webpack (/js/chunk-*, /css/chunk-*, /js/app.*, /css/app.*, /fonts/*, /img/*, /logo-fpt.ico)
+        # 1. Các asset tĩnh Vue Webpack (/js/, /css/, /fonts/, /img/, /views/, /icons/, /i18n/, /logo-fpt.ico)
         # 2. Các endpoint đặc thù (/ubus, /ftc-ax3000c.js, /cgi-bin/cgi-backup, /cgi-bin/cgi-upload)
         # luôn route vào sim_ax3000c để chống 404 trắng màn hình khi tải qua iframe.
         if (
-            path.startswith(('/js/chunk-', '/css/chunk-', '/js/app.', '/css/app.'))
+            path.startswith((
+                '/js/chunk-', '/css/chunk-', '/js/app.', '/css/app.',
+                '/views/', '/icons/', '/i18n/'
+            ))
             or path in ('/ubus', '/ftc-ax3000c.js', '/logo-fpt.ico', '/cgi-bin/cgi-backup', '/cgi-bin/cgi-upload')
-            or (path.startswith('/js/') and '9b4ab5b7' in path)
-            or (path.startswith('/css/') and ('06c49f94' in path or '7705225a' in path))
+            or (path.startswith('/js/') and ('9b4ab5b7' in path or 'chunk-' in path))
+            or (path.startswith('/css/') and ('06c49f94' in path or '7705225a' in path or 'chunk-' in path))
             or (path.startswith('/fonts/') and ('element-icons' in path or 'NotoSans' in path))
-            or (path.startswith('/img/') and ('element-icons' in path or 'logo' in path))
+            or (path.startswith('/img/') and ('element-icons' in path or 'logo' in path or 'Up-side' in path or 'product_' in path))
         ):
             return 'sim_ax3000c'
 
@@ -826,12 +829,38 @@ def listening_pids(local_target):
 def process_name(pid):
     """Ten tien trinh (chu thuong) theo PID; tra ve '' neu khong lay duoc."""
     try:
+        import psutil
+        return psutil.Process(pid).name().lower()
+    except Exception:
+        pass
+    try:
         return subprocess.run(
             ['tasklist', '/fi', 'PID eq %d' % pid, '/fo', 'csv', '/nh'],
-            capture_output=True, text=True, timeout=10
+            capture_output=True, text=True, timeout=3
         ).stdout.lower()
     except Exception:
         return ''
+
+
+def kill_pid(pid):
+    """Dong tien trinh theo PID bang psutil truoc, fallback ve taskkill."""
+    try:
+        import psutil
+        p = psutil.Process(pid)
+        for child in p.children(recursive=True):
+            try:
+                child.kill()
+            except Exception:
+                pass
+        p.kill()
+        return
+    except Exception:
+        pass
+    try:
+        subprocess.run(['taskkill', '/pid', str(pid), '/f', '/t'],
+                       capture_output=True, text=True, timeout=5)
+    except Exception:
+        pass
 
 
 def wait_port_free(port, timeout=3.0, step=0.3):
@@ -852,8 +881,7 @@ def kill_orphan_php():
     for pid in listening_pids('127.0.0.1:%d' % API_PORT):
         if 'php' not in process_name(pid):
             continue
-        subprocess.run(['taskkill', '/pid', str(pid), '/f'],
-                       capture_output=True, text=True, timeout=10)
+        kill_pid(pid)
         print('[API] Da dong PHP mo coi (pid %d) tren 127.0.0.1:%d.' % (pid, API_PORT))
 
 
@@ -901,8 +929,7 @@ def start_php_api():
 def kill_orphan_django():
     """Dong Django Admin mo coi dang lang nghe 127.0.0.1:DJANGO_PORT tu lan chay truoc."""
     for pid in listening_pids('127.0.0.1:%d' % DJANGO_PORT):
-        subprocess.run(['taskkill', '/pid', str(pid), '/f'],
-                       capture_output=True, text=True, timeout=10)
+        kill_pid(pid)
         print('[ADMIN] Da dong Django mo coi (pid %d) tren 127.0.0.1:%d.' % (pid, DJANGO_PORT))
 
 
@@ -979,8 +1006,7 @@ def start_server():
         name = process_name(pid)
         if 'python' in name or name.strip().startswith('"py'):
             print("[API] Phat hien instance cu (pid %d) dang giu cong %d -> tu dong tat." % (pid, PORT))
-            subprocess.run(['taskkill', '/pid', str(pid), '/f', '/t'],
-                           capture_output=True, text=True, timeout=10)
+            kill_pid(pid)
         else:
             foreign.append(pid)
 

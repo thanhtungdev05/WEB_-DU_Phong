@@ -66,7 +66,8 @@ def da_dung():
     except OSError:
         return set()
     if m != _cache["mt_dung"]:
-        d = json.load(open(DA_DUNG_FILE, encoding="utf-8"))
+        with open(DA_DUNG_FILE, "r", encoding="utf-8") as f:
+            d = json.load(f)
         _cache.update(mt_dung=m, da_dung=set(d.get("trang", [])))
     return _cache["da_dung"]
 
@@ -186,6 +187,9 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        if getattr(self, "_need_set_vg_cookie", False):
+            self.send_header("Set-Cookie", f"vg_session={self._generated_vg_id}; Path=/; SameSite=Lax")
+            self._need_set_vg_cookie = False
         self.end_headers()
         try:
             self.wfile.write(data)
@@ -216,13 +220,19 @@ class H(BaseHTTPRequestHandler):
                     return q["_ktv"][0].strip()
             except Exception:
                 pass
-        client_ip = self.headers.get("X-Forwarded-For") or (self.client_address[0] if getattr(self, "client_address", None) else "default")
-        return client_ip.split(",")[0].strip()
+        if not hasattr(self, "_generated_vg_id"):
+            import uuid
+            self._generated_vg_id = f"ktv_vg_{uuid.uuid4().hex[:16]}"
+            self._need_set_vg_cookie = True
+        return self._generated_vg_id
 
     def _redirect(self, to):
         self.send_response(302)
         self.send_header("Location", to)
         self.send_header("Content-Length", "0")
+        if getattr(self, "_need_set_vg_cookie", False):
+            self.send_header("Set-Cookie", f"vg_session={self._generated_vg_id}; Path=/; SameSite=Lax")
+            self._need_set_vg_cookie = False
         self.end_headers()
 
     def _file(self, rel, params=None):

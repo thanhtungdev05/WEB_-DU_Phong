@@ -28,9 +28,9 @@ from urllib.parse import parse_qs, urlparse
 
 try:
     # Imported by the portal dispatcher as a namespace package.
-    from .config_store import STORE
+    from .config_store import STORE, bind_user, reset_user_store
 except ImportError:  # pragma: no cover - standalone ``python server.py`` path
-    from config_store import STORE
+    from config_store import STORE, bind_user, reset_user_store
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
@@ -227,6 +227,32 @@ class Handler(BaseHTTPRequestHandler):
                              "login_token": None, "last_seen": time.monotonic()}
             return sid, SESSIONS[sid], True
 
+    def _client_key(self):
+        hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip()
+        if hdr:
+            return hdr
+        if "?_ktv=" in getattr(self, "path", "") or "&_ktv=" in getattr(self, "path", ""):
+            try:
+                q = parse_qs(urlparse(self.path).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
+        cookie_raw = self.headers.get("Cookie", "")
+        for part in cookie_raw.split(";"):
+            part = part.strip()
+            if part.startswith("ftc_session=") or part.startswith("PHPSESSID=") or part.startswith("ktv_client_id="):
+                return part.split("=", 1)[1]
+        ref = self.headers.get("Referer", "")
+        if ref and "_ktv=" in ref:
+            try:
+                q = parse_qs(urlparse(ref).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
+        return "default"
+
     def _is_reset_path(self, path: str) -> bool:
         return path in ("/api/reset", "/resetsession")
 
@@ -234,10 +260,11 @@ class Handler(BaseHTTPRequestHandler):
         """Portal gọi khi đổi/trở về bài học: xóa session hiện tại và
         đưa ConfigStore về trạng thái mặc định, buộc học viên đăng nhập lại."""
         sid = self._sid()
+        client_key = self._client_key()
         if sid:
             with LOCK:
                 SESSIONS.pop(sid, None)
-        STORE.reset()
+        reset_user_store(client_key)
         body = json.dumps({"status": "ok", "message": "AX3000GZ_V2 state reset"},
                           separators=(",", ":")).encode("utf-8")
         self._send(body, "application/json; charset=utf-8", clear_sid=True)
@@ -332,6 +359,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send(text.encode("utf-8"), "text/html; charset=utf-8")
 
     def do_GET(self):
+        bind_user(self._client_key())
         u = urlparse(self.path)
         if self._is_reset_path(u.path):
             return self._reset_session()
@@ -461,6 +489,7 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(b"Not captured", "text/plain; charset=utf-8", 404)
 
     def do_POST(self):
+        bind_user(self._client_key())
         u = urlparse(self.path)
         if self._is_reset_path(u.path):
             return self._reset_session()
