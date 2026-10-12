@@ -1689,6 +1689,7 @@ function AjaxPageGet(PageName, MenuClass, Area)
 {
 var pageContainer = $("#commPageContainer");
 pageContainer.succfunction = function(html){
+showWaitTip(false);
 pageContainer.html(html);
 var _MenuInfo = $("#_MenuInfo");
 var selectPageID = $("#_NextPageInfo",_MenuInfo).text();

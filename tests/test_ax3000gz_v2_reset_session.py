@@ -14,6 +14,7 @@ import threading
 import unittest
 from http.server import ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urlencode
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -165,6 +166,86 @@ class Ax3000GzV2ResetSessionTests(unittest.TestCase):
         status, _, payload = self.request("POST", "/api/reset")
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(payload.decode())["status"], "ok")
+
+    def test_all_six_lab_views_data_and_apply_endpoints(self):
+        """Mọi bài lab phải mở được form, đọc được XML và Apply thành công."""
+        sid = self.login()
+        session_token = self.module.SESSIONS[sid]["sess_token"]
+
+        views = {
+            "ethWanConfig": (b'id="UserName"', b'id="Password"'),
+            "wlanBasic": (b'id="ESSID"', b'id="HiddenKeyPass"'),
+            "dns": (b'id="sub_SerIPAddress10"', b'id="sub_SerIPAddress23"'),
+            "lanMgrIpv4": (b'id="ServerEnable1"', b'id="sub_IPAddr0:DHCPBasicCfg"'),
+            "portForwarding": (b'id="InternalClient"', b'id="ExternalPort"'),
+        }
+        for tag, markers in views.items():
+            with self.subTest(view=tag):
+                status, _, payload = self.request(
+                    "GET", f"/?_type=menuView&_tag={tag}", cookie=sid)
+                self.assertEqual(status, 200)
+                for marker in markers:
+                    self.assertIn(marker, payload)
+
+        data_tags = (
+            "wan_internet_lua.lua",
+            "wlan_wlanbasiconoff_lua.lua",
+            "wlan_wlanbasicadconf_lua.lua",
+            "wlan_wlansssidconf_lua.lua",
+            "dns_localdns_lua.lua",
+            "dns_hostname_lua.lua",
+            "Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua",
+            "Localnet_LanMgrIpv4_DHCPHostInfo_lua.lua",
+            "Localnet_LanMgrIpv4_DHCPStaticRule_lua.lua",
+            "Localnet_LanDevDHCPSource_lua.lua",
+            "firewall_portforwarding_lua.lua",
+        )
+        for tag in data_tags:
+            with self.subTest(data=tag):
+                status, _, payload = self.request(
+                    "GET", f"/?_type=menuData&_tag={tag}", cookie=sid)
+                self.assertEqual(status, 200)
+                self.assertIn(b"ajax_response_xml_root", payload)
+
+        apply_cases = (
+            ("wan_internet_lua.lua", {
+                "_InstID": "DEV.WAN1", "UserName": "sgfdl-123456-789",
+                "Password": "fpt12345",
+            }),
+            # Bài 2 và 3 dùng chung endpoint nhưng cấu hình hai instance SSID khác nhau.
+            ("wlan_wlansssidconf_lua.lua", {
+                "_InstID": "DEV.WIFI.SSID1", "ESSID": "FPT Telecom",
+                "EncryptionType": "WPA2-PSK-AES", "HiddenKeyPass": "Fptwifi123",
+            }),
+            ("wlan_wlansssidconf_lua.lua", {
+                "_InstID": "DEV.WIFI.SSID4", "ESSID": "FPT IoT",
+                "EncryptionType": "WPA2-PSK-AES", "HiddenKeyPass": "Fptiot123",
+            }),
+            ("dns_localdns_lua.lua", {
+                "_InstID": "IGD", "SerIPAddress1": "8.8.8.8",
+                "SerIPAddress2": "8.8.4.4",
+            }),
+            ("Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua", {
+                "_InstID": "IGD", "ServerEnable": "1", "IPAddr": "192.168.10.1",
+            }),
+            ("firewall_portforwarding_lua.lua", {
+                "_InstID": "-1", "Alias": "FPT Telecom", "Protocol": "BOTH",
+                "InternalClient": "192.168.1.254", "ExternalPort": "8080",
+                "InternalPort": "8080",
+            }),
+        )
+        for tag, fields in apply_cases:
+            with self.subTest(apply=tag, instance=fields["_InstID"]):
+                body = urlencode({
+                    "IF_ACTION": "Apply",
+                    "_sessionTOKEN": session_token,
+                    **fields,
+                })
+                status, _, payload = self.request(
+                    "POST", f"/?_type=menuData&_tag={tag}", body=body, cookie=sid)
+                self.assertEqual(status, 200)
+                self.assertIn(b"<IF_ERRORID>0</IF_ERRORID>", payload)
+                self.assertIn(b"<IF_ERRORTYPE>SUCC</IF_ERRORTYPE>", payload)
 
     def login_with_sid(self, sid):
         _, _, payload = self.request("GET", "/?_type=loginData&_tag=login_entry", cookie=sid)

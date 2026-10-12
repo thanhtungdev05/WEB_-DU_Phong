@@ -6,7 +6,14 @@ const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
-const hash16 = relative => crypto.createHash('sha256').update(fs.readFileSync(path.join(root, relative))).digest('hex').slice(0, 16);
+const hash16 = relative => {
+  const absolute = path.join(root, relative);
+  let content = fs.readFileSync(absolute);
+  if (/\.(?:css|js|svg)$/i.test(absolute)) {
+    content = Buffer.from(content.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
+  }
+  return crypto.createHash('sha256').update(content).digest('hex').slice(0, 16);
+};
 
 const portal = read('portal.html');
 const modules = [
@@ -105,6 +112,22 @@ assert.ok(
 assert.ok(loginPage.includes('id="Frm_Username"'), 'login page must be detected as a login page');
 assert.ok(loginPage.includes('id="LoginId"'), 'AX3000GZ V2 login button is the input the listeners must skip');
 assert.ok(!commonPage.includes('Frm_Username'), 'common page must not be treated as a login page');
+
+// Mỗi lần chuyển menu, firmware bật lớp chờ trước khi gọi AJAX. Lớp này phải
+// được tắt ngay ở nhánh thành công; nếu không trang đã render nhưng toàn bộ
+// giao diện vẫn bị màn xám + vòng xoay che kín (đặc biệt dễ thấy trên Safari).
+const ajaxPageGet = commonPage.slice(
+  commonPage.indexOf('function AjaxPageGet'),
+  commonPage.indexOf('function AjaxQuery_ClassMenuClick')
+);
+const ajaxPageSuccess = ajaxPageGet.slice(
+  ajaxPageGet.indexOf('pageContainer.succfunction'),
+  ajaxPageGet.indexOf('pageContainer.errorfunction')
+);
+assert.ok(
+  ajaxPageSuccess.includes('showWaitTip(false);'),
+  'successful AX3000GZ V2 menu navigation must dismiss the blocking wait overlay'
+);
 
 // Đổi bài: portal gọi /sim_ax3000gz_v2/api/reset (POST trước, GET dự phòng)
 // nên server của thiết bị phải xử lý cả hai verb và xóa SID + ConfigStore.
