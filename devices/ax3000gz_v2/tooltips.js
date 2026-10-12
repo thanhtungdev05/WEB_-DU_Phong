@@ -62,15 +62,13 @@
     step('#internetConfig', 'Bước 2: Chọn WAN', 'right', function (doc) {
       return isVisible(doc, '#internetConfig') && !isVisible(doc, '#ethWanConfig') && !isVisible(doc, '[id="instName_Internet:0"]');
     }),
-    step('#ethWanConfig', 'Bước 3: Chọn WAN', 'right', function (doc) {
-      return isVisible(doc, '#ethWanConfig') && !isVisible(doc, '[id="instName_Internet:0"]');
-    }),
-    step('[id="instName_Internet:0"]', 'Bước 4: Mở cấu hình internet_tr069', 'right', function (doc) {
+    // Chọn WAN ở trên đã tải thẳng trang cấu hình; không tính ethWanConfig là thao tác thứ hai.
+    step('[id="instName_Internet:0"]', 'Bước 3: Mở cấu hình internet_tr069', 'right', function (doc) {
       return isVisible(doc, '[id="instName_Internet:0"]') && !isVisible(doc, '[id="UserName:0"]');
     }),
-    step('[id="UserName:0"]', 'Bước 5: Nhập Username: sgfdl-123456-789', 'right', visibleAndUnsaved('[id="UserName:0"]')),
-    step('[id="Password:0"]', 'Bước 6: Nhập Password: fpt12345', 'right', visibleAndUnsaved('[id="Password:0"]')),
-    step('[id="Btn_apply_internet:0"]', 'Bước 7: Chọn Apply', 'top', visibleAndUnsaved('[id="Btn_apply_internet:0"]'))
+    step('[id="UserName:0"]', 'Bước 4: Nhập Username: sgfdl-123456-789', 'right', visibleAndUnsaved('[id="UserName:0"]')),
+    step('[id="Password:0"]', 'Bước 5: Nhập Password: fpt12345', 'right', visibleAndUnsaved('[id="Password:0"]')),
+    step('[id="Btn_apply_internet:0"]', 'Bước 6: Chọn Apply', 'top', visibleAndUnsaved('[id="Btn_apply_internet:0"]'))
   ];
 
   // Bài 2: Cấu hình Wi-Fi 2.4 GHz
@@ -81,18 +79,16 @@
     step('#wlanConfig', 'Bước 2: Chọn WLAN', 'right', function (doc) {
       return isVisible(doc, '#wlanConfig') && !isVisible(doc, '#wlanBasic') && !isVisible(doc, '#WLANSSIDConfBar');
     }),
-    step('#wlanBasic', 'Bước 3: Chọn WLAN Basic', 'right', function (doc) {
-      return isVisible(doc, '#wlanBasic') && !isVisible(doc, '#WLANSSIDConfBar');
-    }),
-    step('#WLANSSIDConfBar', 'Bước 4: Mở WLAN SSID Configuration', 'right', function (doc) {
+    // WLAN tải thẳng WLAN Basic mặc định.
+    step('#WLANSSIDConfBar', 'Bước 3: Mở WLAN SSID Configuration', 'right', function (doc) {
       return isVisible(doc, '#WLANSSIDConfBar') && !isVisible(doc, '[id="instName_WLANSSIDConf:0"]');
     }),
-    step('[id="instName_WLANSSIDConf:0"]', 'Bước 5: Mở SSID1 băng tần 2.4 GHz', 'right', function (doc) {
+    step('[id="instName_WLANSSIDConf:0"]', 'Bước 4: Mở SSID1 băng tần 2.4 GHz', 'right', function (doc) {
       return isVisible(doc, '[id="instName_WLANSSIDConf:0"]') && !isVisible(doc, '[id="ESSID:0"]');
     }),
-    step('[id="ESSID:0"]', 'Bước 6: Nhập SSID Name: FPT Telecom', 'right', visibleAndUnsaved('[id="ESSID:0"]')),
-    step('[id="HiddenKeyPass:0"]', 'Bước 7: Nhập WPA Passphrase: Fptwifi123', 'right', visibleAndUnsaved('[id="HiddenKeyPass:0"]')),
-    step('[id="Btn_apply_WLANSSIDConf:0"]', 'Bước 8: Chọn Apply', 'top', visibleAndUnsaved('[id="Btn_apply_WLANSSIDConf:0"]'))
+    step('[id="ESSID:0"]', 'Bước 5: Nhập SSID Name: FPT Telecom', 'right', visibleAndUnsaved('[id="ESSID:0"]')),
+    step('[id="HiddenKeyPass:0"]', 'Bước 6: Nhập WPA Passphrase: Fptwifi123', 'right', visibleAndUnsaved('[id="HiddenKeyPass:0"]')),
+    step('[id="Btn_apply_WLANSSIDConf:0"]', 'Bước 7: Chọn Apply', 'top', visibleAndUnsaved('[id="Btn_apply_WLANSSIDConf:0"]'))
   ];
 
   // Bài 3: Cấu hình Wi-Fi IoT
@@ -103,19 +99,16 @@
     step('#wlanConfig', 'Bước 2: Chọn WLAN', 'right', function (doc) {
       return isVisible(doc, '#wlanConfig') && !isVisible(doc, '#wlanBasic') && !isVisible(doc, '#WLANSSIDConfBar');
     }),
-    step('#wlanBasic', 'Bước 3: Chọn WLAN Basic', 'right', function (doc) {
-      return isVisible(doc, '#wlanBasic') && !isVisible(doc, '#WLANSSIDConfBar');
-    }),
-    step('#WLANSSIDConfBar', 'Bước 4: Mở WLAN SSID Configuration', 'right', function (doc) {
+    step('#WLANSSIDConfBar', 'Bước 3: Mở WLAN SSID Configuration', 'right', function (doc) {
       return isVisible(doc, '#WLANSSIDConfBar') && !isVisible(doc, '[id="instName_WLANSSIDConf:3"]');
     }),
-    step('[id="instName_WLANSSIDConf:3"]', 'Bước 5: Mở SSID4 băng tần 2.4 GHz (IoT)', 'right', function (doc) {
+    step('[id="instName_WLANSSIDConf:3"]', 'Bước 4: Mở SSID4 băng tần 2.4 GHz (IoT)', 'right', function (doc) {
       return isVisible(doc, '[id="instName_WLANSSIDConf:3"]') && !isVisible(doc, '[id="ESSID:3"]');
     }),
-    step('[id="ESSID:3"]', 'Bước 6: Nhập SSID Name: FPT IoT', 'right', visibleAndUnsaved('[id="ESSID:3"]')),
-    step('[id="EncryptionType:3"]', 'Bước 7: Chọn WPA2-PSK-AES', 'right', visibleAndUnsaved('[id="EncryptionType:3"]')),
-    step('[id="HiddenKeyPass:3"]', 'Bước 8: Nhập WPA Passphrase: Fptiot123', 'right', visibleAndUnsaved('[id="HiddenKeyPass:3"]')),
-    step('[id="Btn_apply_WLANSSIDConf:3"]', 'Bước 9: Chọn Apply', 'top', visibleAndUnsaved('[id="Btn_apply_WLANSSIDConf:3"]'))
+    step('[id="ESSID:3"]', 'Bước 5: Nhập SSID Name: FPT IoT', 'right', visibleAndUnsaved('[id="ESSID:3"]')),
+    step('[id="EncryptionType:3"]', 'Bước 6: Chọn WPA2-PSK-AES', 'right', visibleAndUnsaved('[id="EncryptionType:3"]')),
+    step('[id="HiddenKeyPass:3"]', 'Bước 7: Nhập WPA Passphrase: Fptiot123', 'right', visibleAndUnsaved('[id="HiddenKeyPass:3"]')),
+    step('[id="Btn_apply_WLANSSIDConf:3"]', 'Bước 8: Chọn Apply', 'top', visibleAndUnsaved('[id="Btn_apply_WLANSSIDConf:3"]'))
   ];
 
   // Bài 4: Cấu hình DNS
@@ -142,17 +135,15 @@
     step('#lanConfig', 'Bước 2: Chọn LAN', 'right', function (doc) {
       return isVisible(doc, '#lanConfig') && !isVisible(doc, '#lanMgrIpv4') && !isVisible(doc, '#DHCPBasicCfgBar');
     }),
-    step('#lanMgrIpv4', 'Bước 3: Chọn IPv4', 'right', function (doc) {
-      return isVisible(doc, '#lanMgrIpv4') && !isVisible(doc, '#DHCPBasicCfgBar');
-    }),
-    step('#DHCPBasicCfgBar', 'Bước 4: Mở DHCP Server', 'right', function (doc) {
+    // LAN tải thẳng trang IPv4 mặc định.
+    step('#DHCPBasicCfgBar', 'Bước 3: Mở DHCP Server', 'right', function (doc) {
       return isVisible(doc, '#DHCPBasicCfgBar') && !isVisible(doc, '[id="sub_IPAddr0:DHCPBasicCfg"]');
     }),
-    step('[id="sub_IPAddr0:DHCPBasicCfg"]', 'Bước 5: Nhập LAN IP Address: 192.168.10.1', 'right', visibleAndUnsaved('[id="sub_IPAddr0:DHCPBasicCfg"]')),
-    step('#sub_SubMask0', 'Bước 6: Nhập Subnet Mask: 255.255.255.0', 'right', visibleAndUnsaved('#sub_SubMask0')),
-    step('[id="sub_MinAddress0:DHCPBasicCfg"]', 'Bước 7: Nhập DHCP Start IP Address: 192.168.10.2', 'right', visibleAndUnsaved('[id="sub_MinAddress0:DHCPBasicCfg"]')),
-    step('[id="sub_MaxAddress0:DHCPBasicCfg"]', 'Bước 8: Nhập DHCP End IP Address: 192.168.10.254', 'right', visibleAndUnsaved('[id="sub_MaxAddress0:DHCPBasicCfg"]')),
-    step('#Btn_apply_DHCPBasicCfg', 'Bước 9: Chọn Apply', 'top', visibleAndUnsaved('#Btn_apply_DHCPBasicCfg'))
+    step('[id="sub_IPAddr0:DHCPBasicCfg"]', 'Bước 4: Nhập LAN IP Address: 192.168.10.1', 'right', visibleAndUnsaved('[id="sub_IPAddr0:DHCPBasicCfg"]')),
+    step('#sub_SubMask0', 'Bước 5: Nhập Subnet Mask: 255.255.255.0', 'right', visibleAndUnsaved('#sub_SubMask0')),
+    step('[id="sub_MinAddress0:DHCPBasicCfg"]', 'Bước 6: Nhập DHCP Start IP Address: 192.168.10.2', 'right', visibleAndUnsaved('[id="sub_MinAddress0:DHCPBasicCfg"]')),
+    step('[id="sub_MaxAddress0:DHCPBasicCfg"]', 'Bước 7: Nhập DHCP End IP Address: 192.168.10.254', 'right', visibleAndUnsaved('[id="sub_MaxAddress0:DHCPBasicCfg"]')),
+    step('#Btn_apply_DHCPBasicCfg', 'Bước 8: Chọn Apply', 'top', visibleAndUnsaved('#Btn_apply_DHCPBasicCfg'))
   ];
 
   // Bài 6: Cấu hình Port Forwarding
@@ -166,17 +157,15 @@
     step('#portForwarding', 'Bước 3: Chọn Port Forwarding', 'right', function (doc) {
       return isVisible(doc, '#portForwarding') && !isVisible(doc, '#addInstBar_PortForwarding');
     }),
-    step('#addInstBar_PortForwarding', 'Bước 4: Chọn Create New Item', 'right', function (doc) {
-      return isVisible(doc, '#addInstBar_PortForwarding') && !isVisible(doc, '[id^="Alias"]');
-    }),
-    step('[id^="Alias"]', 'Bước 5: Nhập Name: FPT Telecom', 'right', visibleAndUnsaved('[id^="Alias"]')),
-    step('[id^="S_Interface"]', 'Bước 6: Chọn WAN Connection: internet_tr069', 'right', visibleAndUnsaved('[id^="S_Interface"]')),
-    step('[id^="Protocol"]', 'Bước 7: Chọn TCP And UDP', 'right', visibleAndUnsaved('[id^="Protocol"]')),
-    step('[id^="InternalClient"]', 'Bước 8: Nhập LAN Host: 192.168.1.254', 'right', visibleAndUnsaved('[id^="InternalClient"]')),
-    step('[id^="ExternalPort"]:not([id*="EndRange"])', 'Bước 9: Nhập WAN Port bắt đầu: 8080', 'right', visibleAndUnsaved('[id^="ExternalPort"]:not([id*="EndRange"])')),
-    step('[id^="ExternalPortEndRange"]', 'Bước 10: Nhập WAN Port kết thúc: 8080', 'right', visibleAndUnsaved('[id^="ExternalPortEndRange"]')),
-    step('[id^="InternalPort"]:not([id*="EndRange"])', 'Bước 11: Nhập LAN Host Port bắt đầu: 8080', 'right', visibleAndUnsaved('[id^="InternalPort"]:not([id*="EndRange"])')),
-    step('[id^="InternalPortEndRange"]', 'Bước 12: Nhập LAN Host Port kết thúc: 8080', 'right', visibleAndUnsaved('[id^="InternalPortEndRange"]')),
-    step('[id^="Btn_apply_PortForwarding"]', 'Bước 13: Chọn Apply', 'top', visibleAndUnsaved('[id^="Btn_apply_PortForwarding"]'))
+    // Khi chưa có rule, trang Port Forwarding tự mở form New Item.
+    step('[id^="Alias"]', 'Bước 4: Nhập Name: FPT Telecom', 'right', visibleAndUnsaved('[id^="Alias"]')),
+    step('[id^="S_Interface"]', 'Bước 5: Chọn WAN Connection: internet_tr069', 'right', visibleAndUnsaved('[id^="S_Interface"]')),
+    step('[id^="Protocol"]', 'Bước 6: Chọn TCP And UDP', 'right', visibleAndUnsaved('[id^="Protocol"]')),
+    step('[id^="InternalClient"]', 'Bước 7: Nhập LAN Host: 192.168.1.254', 'right', visibleAndUnsaved('[id^="InternalClient"]')),
+    step('[id^="ExternalPort"]:not([id*="EndRange"])', 'Bước 8: Nhập WAN Port bắt đầu: 8080', 'right', visibleAndUnsaved('[id^="ExternalPort"]:not([id*="EndRange"])')),
+    step('[id^="ExternalPortEndRange"]', 'Bước 9: Nhập WAN Port kết thúc: 8080', 'right', visibleAndUnsaved('[id^="ExternalPortEndRange"]')),
+    step('[id^="InternalPort"]:not([id*="EndRange"])', 'Bước 10: Nhập LAN Host Port bắt đầu: 8080', 'right', visibleAndUnsaved('[id^="InternalPort"]:not([id*="EndRange"])')),
+    step('[id^="InternalPortEndRange"]', 'Bước 11: Nhập LAN Host Port kết thúc: 8080', 'right', visibleAndUnsaved('[id^="InternalPortEndRange"]')),
+    step('[id^="Btn_apply_PortForwarding"]', 'Bước 12: Chọn Apply', 'top', visibleAndUnsaved('[id^="Btn_apply_PortForwarding"]'))
   ];
 })();

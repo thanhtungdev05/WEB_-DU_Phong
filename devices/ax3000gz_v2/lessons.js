@@ -102,21 +102,15 @@
     subtitle: 'Đổi địa chỉ LAN và dải cấp phát DHCP của ONT',
     instructions: [
       '<b>Yêu cầu:</b>',
-      '- LAN IP Address: <span class="val">192.168.10.1</span>',
-      '- Subnet Mask: <span class="val">255.255.255.0</span>',
-      '- DHCP Start IP Address: <span class="val">192.168.10.2</span>',
-      '- DHCP End IP Address: <span class="val">192.168.10.254</span>'
+      'Thực hiện thay đổi cấu hình địa chỉ IP LAN trên thiết bị theo các thông số được cung cấp dưới đây.',
+      '- Router LAN IPv4 Address: <span class="val">192.168.10.1</span>',
+      '- Subnet mask: <span class="val">255.255.255.0</span>',
+      '- DHCP start address: <span class="val">192.168.10.2</span>',
+      '- DHCP end address: <span class="val">192.168.10.254</span>'
     ],
     practiceUrl: '/sim_ax3000gz_v2/?_type=menuView&_tag=lanMgrIpv4',
-    clearFields: [
-      '[id="sub_IPAddr0:DHCPBasicCfg"]', '[id="sub_IPAddr1:DHCPBasicCfg"]',
-      '[id="sub_IPAddr2:DHCPBasicCfg"]', '[id="sub_IPAddr3:DHCPBasicCfg"]',
-      '#sub_SubMask0', '#sub_SubMask1', '#sub_SubMask2', '#sub_SubMask3',
-      '[id="sub_MinAddress0:DHCPBasicCfg"]', '[id="sub_MinAddress1:DHCPBasicCfg"]',
-      '[id="sub_MinAddress2:DHCPBasicCfg"]', '[id="sub_MinAddress3:DHCPBasicCfg"]',
-      '[id="sub_MaxAddress0:DHCPBasicCfg"]', '[id="sub_MaxAddress1:DHCPBasicCfg"]',
-      '[id="sub_MaxAddress2:DHCPBasicCfg"]', '[id="sub_MaxAddress3:DHCPBasicCfg"]'
-    ],
+    // Giữ dữ liệu mặc định của firmware để KTV chỉnh từ 192.168.1.x sang 192.168.10.x.
+    clearFields: [],
     grading: { description: 'Kiểm tra LAN IP, subnet và dải cấp phát DHCP', rules: [
       rule('lan_ip_1', 'LAN IP - ô 1', '[id="sub_IPAddr0:DHCPBasicCfg"]', '192'),
       rule('lan_ip_2', 'LAN IP - ô 2', '[id="sub_IPAddr1:DHCPBasicCfg"]', '168'),

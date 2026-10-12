@@ -519,6 +519,29 @@
           try {
             const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
             allDocs.forEach(doc => {
+              // AX3000GZ V2 tải nhiều panel bằng AJAX. Đồng bộ dày ngay sau click để
+              // tooltip của bước kế tiếp xuất hiện trước khi KTV có thể thao tác tiếp.
+              const isAx3000gzV2 = currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ax3000gz_v2';
+              if (isAx3000gzV2 && !doc._ftcGuideBurstSyncBound) {
+                doc._ftcGuideBurstSyncBound = true;
+                doc.addEventListener('click', function () {
+                  if (currentMode !== 'guide') return;
+                  if (doc._ftcGuideBurstSyncTimer) {
+                    clearInterval(doc._ftcGuideBurstSyncTimer);
+                  }
+                  let refreshCount = 0;
+                  setTimeout(applyGuidePopups, 0);
+                  doc._ftcGuideBurstSyncTimer = setInterval(function () {
+                    applyGuidePopups();
+                    refreshCount += 1;
+                    if (refreshCount >= 25) {
+                      clearInterval(doc._ftcGuideBurstSyncTimer);
+                      doc._ftcGuideBurstSyncTimer = null;
+                    }
+                  }, 100);
+                }, true);
+              }
+
               // Liên tục Tắt gợi ý mật khẩu/tự động điền (Autocomplete/Saved Info) bằng phương pháp mạnh (readonly hack)
               try {
                 const skipAutofillHack = (currentDeviceId === 'ONT_be6500c' || currentDeviceId === 'be6500c' ||

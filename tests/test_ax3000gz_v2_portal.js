@@ -47,6 +47,16 @@ lessons.forEach((lesson, index) => {
   assert.ok(Array.isArray(lesson.guidePopups) && lesson.guidePopups.length >= 5, `${expectedId} needs step-by-step tooltips`);
   assert.ok(lesson.grading && lesson.grading.rules.length > 0, `${expectedId} needs grading rules`);
   assert.ok(lesson.practiceUrl.startsWith('/sim_ax3000gz_v2/'), `${expectedId} must target the new simulator`);
+
+  const numberedSteps = Array.from(lesson.guidePopups)
+    .map(item => /^Bước\s+(\d+):/.exec(item.text))
+    .filter(Boolean)
+    .map(match => Number(match[1]));
+  assert.deepStrictEqual(
+    numberedSteps,
+    Array.from({ length: numberedSteps.length }, (_, stepIndex) => stepIndex + 1),
+    `${expectedId} must not skip a visible step number`
+  );
 });
 
 const portForwardingLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_06');
@@ -77,9 +87,15 @@ assert.deepStrictEqual(
 const wifiLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_02');
 assert.ok(!wifiLesson.grading.rules.some(rule => rule.id === 'wifi_security'), 'lab 2 must keep Encryption Type at its default');
 assert.ok(!wifiLesson.guidePopups.some(item => item.selector === '[id="EncryptionType:0"]'), 'lab 2 must not guide a needless Encryption Type change');
+assert.ok(wifiLesson.guidePopups.some(item => item.selector === '[id="instName_WLANSSIDConf:0"]'), 'lab 2 must visibly guide opening SSID1 before editing it');
 
 const dhcpLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_05');
 assert.strictEqual(dhcpLesson.grading.rules.length, 16, 'lab 5 must grade LAN IP, subnet, DHCP start and DHCP end');
+assert.deepStrictEqual(Array.from(dhcpLesson.clearFields), [], 'lab 5 must preserve the firmware default IP values');
+assert.ok(
+  dhcpLesson.instructions.some(line => line.includes('Thực hiện thay đổi cấu hình địa chỉ IP LAN')),
+  'lab 5 must use the tester-approved task wording'
+);
 ['#sub_SubMask0', '[id="sub_MinAddress0:DHCPBasicCfg"]', '[id="sub_MaxAddress0:DHCPBasicCfg"]'].forEach(selector => {
   assert.ok(dhcpLesson.guidePopups.some(item => item.selector === selector), `lab 5 must guide ${selector}`);
 });
@@ -193,6 +209,10 @@ assert.ok(!commonPage.includes('Frm_Username'), 'common page must not be treated
 assert.ok(
   appJs.includes("currentDeviceId === 'ax3000gz_v2'"),
   'AX3000GZ V2 fields must stay editable instead of relying on the desktop-only readonly autofill hack'
+);
+assert.ok(
+  appJs.includes('_ftcGuideBurstSyncTimer'),
+  'AX3000GZ V2 must refresh guide popups immediately after AJAX-triggering clicks'
 );
 
 // Mỗi lần chuyển menu, firmware bật lớp chờ trước khi gọi AJAX. Lớp này phải
