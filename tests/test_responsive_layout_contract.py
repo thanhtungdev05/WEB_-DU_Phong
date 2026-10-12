@@ -5,6 +5,14 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+TEXT_ASSET_EXTENSIONS = {".css", ".js", ".svg"}
+
+
+def deployed_content_version(path: Path) -> str:
+    content = path.read_bytes()
+    if path.suffix.lower() in TEXT_ASSET_EXTENSIONS:
+        content = content.replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()[:16]
 
 
 class ResponsiveLayoutContractTests(unittest.TestCase):
@@ -73,7 +81,7 @@ class ResponsiveLayoutContractTests(unittest.TestCase):
         )
         for relative_path, html in checks:
             with self.subTest(asset=relative_path):
-                expected = hashlib.sha256((ROOT / relative_path).read_bytes()).hexdigest()[:16]
+                expected = deployed_content_version(ROOT / relative_path)
                 self.assertIn(f'{relative_path}?v={expected}', html)
 
 

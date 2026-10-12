@@ -5,6 +5,14 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+TEXT_ASSET_EXTENSIONS = {".css", ".js", ".svg"}
+
+
+def deployed_content_version(path: Path) -> str:
+    content = path.read_bytes()
+    if path.suffix.lower() in TEXT_ASSET_EXTENSIONS:
+        content = content.replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()[:16]
 
 
 class PortalAssetVersionTests(unittest.TestCase):
@@ -21,7 +29,7 @@ class PortalAssetVersionTests(unittest.TestCase):
         for relative_path, actual_version in assets:
             asset_path = ROOT / relative_path.lstrip("/")
             self.assertTrue(asset_path.is_file(), f"Missing portal asset: {relative_path}")
-            expected_version = hashlib.sha256(asset_path.read_bytes()).hexdigest()[:16]
+            expected_version = deployed_content_version(asset_path)
             self.assertEqual(actual_version, expected_version, f"Stale cache key for {relative_path}")
 
     def test_every_public_entrypoint_uses_content_hash_versions(self):
@@ -42,7 +50,7 @@ class PortalAssetVersionTests(unittest.TestCase):
             for url_path, actual_version in local_assets:
                 asset_path = (ROOT / url_path.lstrip("/")) if url_path.startswith("/") else (document.parent / url_path)
                 self.assertTrue(asset_path.is_file(), f"Missing public asset: {url_path}")
-                expected_version = hashlib.sha256(asset_path.read_bytes()).hexdigest()[:16]
+                expected_version = deployed_content_version(asset_path)
                 self.assertEqual(actual_version, expected_version, f"Stale cache key for {url_path}")
 
             unversioned = re.findall(

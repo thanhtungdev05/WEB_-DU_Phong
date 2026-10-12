@@ -3,6 +3,14 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+TEXT_ASSET_EXTENSIONS = {".css", ".js", ".svg"}
+
+
+def deployed_content_version(path: Path) -> str:
+    content = path.read_bytes()
+    if path.suffix.lower() in TEXT_ASSET_EXTENSIONS:
+        content = content.replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()[:16]
 
 
 class DashboardUnifiedControlsContractTests(unittest.TestCase):
@@ -309,9 +317,9 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
             self.assertIn(f':root[data-theme="dark"] .class-overview-progress.is-{level}', self.professional_css)
 
     def test_asset_version_prevents_stale_control_styles(self):
-        styles_hash = hashlib.sha256((ROOT / "dashboard-authen" / "css" / "styles.css").read_bytes()).hexdigest()[:16]
-        professional_hash = hashlib.sha256((ROOT / "dashboard-authen" / "css" / "dashboard-professional.css").read_bytes()).hexdigest()[:16]
-        app_hash = hashlib.sha256((ROOT / "dashboard-authen" / "js" / "app.js").read_bytes()).hexdigest()[:16]
+        styles_hash = deployed_content_version(ROOT / "dashboard-authen" / "css" / "styles.css")
+        professional_hash = deployed_content_version(ROOT / "dashboard-authen" / "css" / "dashboard-professional.css")
+        app_hash = deployed_content_version(ROOT / "dashboard-authen" / "js" / "app.js")
         self.assertIn(f"css/styles.css?v={styles_hash}", self.html)
         self.assertIn(f"css/dashboard-professional.css?v={professional_hash}", self.html)
         self.assertIn(f"js/app.js?v={app_hash}", self.html)

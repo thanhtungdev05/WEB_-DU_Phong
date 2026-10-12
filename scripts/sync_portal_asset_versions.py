@@ -31,10 +31,17 @@ CATALOG_FINGERPRINT_PATTERN = re.compile(
 CATALOG_FINGERPRINT_GLOBAL = (
     'window.CATALOG_FINGERPRINT="{fingerprint}";'
 )
+TEXT_ASSET_EXTENSIONS = {".css", ".js", ".svg"}
 
 
 def content_version(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+    # Git and the Linux deployment serve text assets with LF line endings.
+    # Normalize Windows checkouts so the generated key is stable and matches
+    # the bytes deployed by Render instead of depending on core.autocrlf.
+    content = path.read_bytes()
+    if path.suffix.lower() in TEXT_ASSET_EXTENSIONS:
+        content = content.replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()[:16]
 
 
 def catalog_sources() -> list[Path]:
@@ -108,7 +115,7 @@ def main() -> int:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="fail instead of rewriting portal.html when cache keys are stale",
+        help="fail instead of rewriting public HTML entrypoints when cache keys are stale",
     )
     args = parser.parse_args()
 
