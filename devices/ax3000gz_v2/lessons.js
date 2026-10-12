@@ -28,10 +28,10 @@
       '- Các thông số còn lại giữ mặc định.'
     ],
     practiceUrl: '/sim_ax3000gz_v2/?_type=menuView&_tag=ethWanConfig',
-    clearFields: ['[id^="UserName"]', '[id^="Password"]'],
+    clearFields: ['[id="UserName:0"]', '[id="Password:0"]'],
     grading: { description: 'Kiểm tra tài khoản PPPoE', rules: [
-      rule('pppoe_user', 'Username', '[id^="UserName"]', 'sgfdl-123456-789'),
-      rule('pppoe_password', 'Password', '[id^="Password"]', 'fpt12345')
+      rule('pppoe_user', 'Username', '[id="UserName:0"]', 'sgfdl-123456-789'),
+      rule('pppoe_password', 'Password', '[id="Password:0"]', 'fpt12345')
     ]}
   });
 
@@ -42,14 +42,13 @@
     instructions: [
       '<b>Yêu cầu:</b>',
       '- SSID Name: <span class="val">FPT Telecom</span>',
-      '- Encryption Type: <span class="val">WPA2-PSK-AES</span>',
-      '- WPA Passphrase: <span class="val">Fptwifi123</span>'
+      '- WPA Passphrase: <span class="val">Fptwifi123</span>',
+      '- Các thông số còn lại giữ mặc định.'
     ],
     practiceUrl: '/sim_ax3000gz_v2/?_type=menuView&_tag=wlanBasic',
     clearFields: ['[id="ESSID:0"]', '[id="HiddenKeyPass:0"]'],
-    grading: { description: 'Kiểm tra SSID chính và bảo mật Wi-Fi', rules: [
+    grading: { description: 'Kiểm tra SSID chính và mật khẩu Wi-Fi', rules: [
       rule('wifi_ssid', 'SSID Name', '[id="ESSID:0"]', 'FPT Telecom'),
-      rule('wifi_security', 'Encryption Type', '[id="EncryptionType:0"]', 'WPA2-PSK-AES'),
       rule('wifi_password', 'WPA Passphrase', '[id="HiddenKeyPass:0"]', 'Fptwifi123')
     ]}
   });
@@ -100,24 +99,41 @@
   register({
     id: 'LAB_AX3000GZ_V2_05',
     title: 'Bài 5 - Cấu hình DHCP',
-    subtitle: 'Bật DHCP Server và đổi địa chỉ LAN của ONT',
+    subtitle: 'Đổi địa chỉ LAN và dải cấp phát DHCP của ONT',
     instructions: [
       '<b>Yêu cầu:</b>',
-      '- DHCP Server: <span class="val">On</span>',
       '- LAN IP Address: <span class="val">192.168.10.1</span>',
-      '- Các thông số còn lại giữ mặc định.'
+      '- Subnet Mask: <span class="val">255.255.255.0</span>',
+      '- DHCP Start IP Address: <span class="val">192.168.10.2</span>',
+      '- DHCP End IP Address: <span class="val">192.168.10.254</span>'
     ],
     practiceUrl: '/sim_ax3000gz_v2/?_type=menuView&_tag=lanMgrIpv4',
     clearFields: [
       '[id="sub_IPAddr0:DHCPBasicCfg"]', '[id="sub_IPAddr1:DHCPBasicCfg"]',
-      '[id="sub_IPAddr2:DHCPBasicCfg"]', '[id="sub_IPAddr3:DHCPBasicCfg"]'
+      '[id="sub_IPAddr2:DHCPBasicCfg"]', '[id="sub_IPAddr3:DHCPBasicCfg"]',
+      '#sub_SubMask0', '#sub_SubMask1', '#sub_SubMask2', '#sub_SubMask3',
+      '[id="sub_MinAddress0:DHCPBasicCfg"]', '[id="sub_MinAddress1:DHCPBasicCfg"]',
+      '[id="sub_MinAddress2:DHCPBasicCfg"]', '[id="sub_MinAddress3:DHCPBasicCfg"]',
+      '[id="sub_MaxAddress0:DHCPBasicCfg"]', '[id="sub_MaxAddress1:DHCPBasicCfg"]',
+      '[id="sub_MaxAddress2:DHCPBasicCfg"]', '[id="sub_MaxAddress3:DHCPBasicCfg"]'
     ],
-    grading: { description: 'Kiểm tra DHCP Server và LAN IP', rules: [
-      rule('dhcp_enable', 'DHCP Server', '[name="ServerEnable"]:checked', '1'),
+    grading: { description: 'Kiểm tra LAN IP, subnet và dải cấp phát DHCP', rules: [
       rule('lan_ip_1', 'LAN IP - ô 1', '[id="sub_IPAddr0:DHCPBasicCfg"]', '192'),
       rule('lan_ip_2', 'LAN IP - ô 2', '[id="sub_IPAddr1:DHCPBasicCfg"]', '168'),
       rule('lan_ip_3', 'LAN IP - ô 3', '[id="sub_IPAddr2:DHCPBasicCfg"]', '10'),
-      rule('lan_ip_4', 'LAN IP - ô 4', '[id="sub_IPAddr3:DHCPBasicCfg"]', '1')
+      rule('lan_ip_4', 'LAN IP - ô 4', '[id="sub_IPAddr3:DHCPBasicCfg"]', '1'),
+      rule('subnet_1', 'Subnet Mask - ô 1', '#sub_SubMask0', '255'),
+      rule('subnet_2', 'Subnet Mask - ô 2', '#sub_SubMask1', '255'),
+      rule('subnet_3', 'Subnet Mask - ô 3', '#sub_SubMask2', '255'),
+      rule('subnet_4', 'Subnet Mask - ô 4', '#sub_SubMask3', '0'),
+      rule('dhcp_start_1', 'DHCP Start IP - ô 1', '[id="sub_MinAddress0:DHCPBasicCfg"]', '192'),
+      rule('dhcp_start_2', 'DHCP Start IP - ô 2', '[id="sub_MinAddress1:DHCPBasicCfg"]', '168'),
+      rule('dhcp_start_3', 'DHCP Start IP - ô 3', '[id="sub_MinAddress2:DHCPBasicCfg"]', '10'),
+      rule('dhcp_start_4', 'DHCP Start IP - ô 4', '[id="sub_MinAddress3:DHCPBasicCfg"]', '2'),
+      rule('dhcp_end_1', 'DHCP End IP - ô 1', '[id="sub_MaxAddress0:DHCPBasicCfg"]', '192'),
+      rule('dhcp_end_2', 'DHCP End IP - ô 2', '[id="sub_MaxAddress1:DHCPBasicCfg"]', '168'),
+      rule('dhcp_end_3', 'DHCP End IP - ô 3', '[id="sub_MaxAddress2:DHCPBasicCfg"]', '10'),
+      rule('dhcp_end_4', 'DHCP End IP - ô 4', '[id="sub_MaxAddress3:DHCPBasicCfg"]', '254')
     ]}
   });
 
@@ -128,6 +144,7 @@
     instructions: [
       '<b>Yêu cầu:</b>',
       '- Name: <span class="val">FPT Telecom</span>',
+      '- WAN Connection: <span class="val">internet_tr069</span>',
       '- Protocol: <span class="val">TCP And UDP</span>',
       '- LAN Host: <span class="val">192.168.1.254</span>',
       '- WAN Port (Start / End): <span class="val">8080 / 8080</span>',
@@ -137,6 +154,7 @@
     clearFields: ['[id^="Alias"]', '[id^="InternalClient"]', '[id^="ExternalPort"]', '[id^="InternalPort"]'],
     grading: { description: 'Kiểm tra Port Forwarding', rules: [
       rule('pf_name', 'Name', '[id^="Alias"]', 'FPT Telecom'),
+      rule('pf_wan_connection', 'WAN Connection', '[id^="S_Interface"]', 'DEV.IP.IF3'),
       rule('pf_protocol', 'Protocol', '[id^="Protocol"]', 'BOTH'),
       rule('pf_lan_host', 'LAN Host', '[id^="InternalClient"]', '192.168.1.254'),
       rule('pf_wan_port', 'WAN Port', '[id^="ExternalPort"]:not([id*="EndRange"])', '8080'),

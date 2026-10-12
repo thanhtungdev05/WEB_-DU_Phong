@@ -65,6 +65,70 @@ assert.ok(portForwardingGuideSelectors.includes('[id^="InternalPortEndRange"]'),
 
 const login = context.window.TOOLTIPS_AX3000GZ_V2._common_login;
 assert.deepStrictEqual(Array.from(login, item => item.selector), ['#Frm_Username', '#Frm_Password', '#LoginId']);
+login.forEach(item => assert.ok(!/Bước\s+\d+/i.test(item.text), 'login actions must not be numbered lab steps'));
+
+const wanLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_01');
+assert.deepStrictEqual(
+  Array.from(wanLesson.grading.rules, rule => rule.selector),
+  ['[id="UserName:0"]', '[id="Password:0"]'],
+  'lab 1 must grade the existing internet_tr069 interface, not a newly-created interface'
+);
+
+const wifiLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_02');
+assert.ok(!wifiLesson.grading.rules.some(rule => rule.id === 'wifi_security'), 'lab 2 must keep Encryption Type at its default');
+assert.ok(!wifiLesson.guidePopups.some(item => item.selector === '[id="EncryptionType:0"]'), 'lab 2 must not guide a needless Encryption Type change');
+
+const dhcpLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_05');
+assert.strictEqual(dhcpLesson.grading.rules.length, 16, 'lab 5 must grade LAN IP, subnet, DHCP start and DHCP end');
+['#sub_SubMask0', '[id="sub_MinAddress0:DHCPBasicCfg"]', '[id="sub_MaxAddress0:DHCPBasicCfg"]'].forEach(selector => {
+  assert.ok(dhcpLesson.guidePopups.some(item => item.selector === selector), `lab 5 must guide ${selector}`);
+});
+
+const visibleElement = () => ({
+  isConnected: true,
+  nodeType: 1,
+  parentElement: null,
+  value: '',
+  offsetParent: {},
+  getClientRects: () => [{}],
+  getBoundingClientRect: () => ({ width: 120, height: 28 })
+});
+const hiddenParent = { nodeType: 1, parentElement: null };
+const collapsedField = { ...visibleElement(), parentElement: hiddenParent };
+const wanListItem = visibleElement();
+const collapsedWanDoc = {
+  _ftcIsSaved: false,
+  defaultView: {
+    getComputedStyle: element => element === hiddenParent
+      ? { display: 'none', visibility: 'visible' }
+      : { display: 'block', visibility: 'visible' }
+  },
+  querySelector: selector => selector === '[id="instName_Internet:0"]' ? wanListItem : collapsedField
+};
+const openExistingWan = context.window.TOOLTIPS_AX3000GZ_V2.LAB_AX3000GZ_V2_01.find(item => item.selector === '[id="instName_Internet:0"]');
+assert.strictEqual(openExistingWan.condition(collapsedWanDoc), true, 'collapsed WAN fields must not hide the internet_tr069 opening guide');
+
+const visibleDoc = {
+  _ftcIsSaved: false,
+  defaultView: { getComputedStyle: () => ({ display: 'block', visibility: 'visible' }) },
+  querySelector: () => visibleElement()
+};
+const simultaneousSelectors = {
+  LAB_AX3000GZ_V2_01: ['[id="UserName:0"]', '[id="Password:0"]', '[id="Btn_apply_internet:0"]'],
+  LAB_AX3000GZ_V2_02: ['[id="ESSID:0"]', '[id="HiddenKeyPass:0"]', '[id="Btn_apply_WLANSSIDConf:0"]'],
+  LAB_AX3000GZ_V2_03: ['[id="ESSID:3"]', '[id="EncryptionType:3"]', '[id="HiddenKeyPass:3"]', '[id="Btn_apply_WLANSSIDConf:3"]'],
+  LAB_AX3000GZ_V2_04: ['#sub_SerIPAddress10', '#sub_SerIPAddress20', '#Btn_apply_LocalDnsServer'],
+  LAB_AX3000GZ_V2_05: ['[id="sub_IPAddr0:DHCPBasicCfg"]', '#sub_SubMask0', '[id="sub_MinAddress0:DHCPBasicCfg"]', '[id="sub_MaxAddress0:DHCPBasicCfg"]', '#Btn_apply_DHCPBasicCfg'],
+  LAB_AX3000GZ_V2_06: ['[id^="Alias"]', '[id^="S_Interface"]', '[id^="Protocol"]', '[id^="InternalClient"]', '[id^="ExternalPort"]:not([id*="EndRange"])', '[id^="ExternalPortEndRange"]', '[id^="InternalPort"]:not([id*="EndRange"])', '[id^="InternalPortEndRange"]', '[id^="Btn_apply_PortForwarding"]']
+};
+Object.entries(simultaneousSelectors).forEach(([labId, selectors]) => {
+  const items = context.window.TOOLTIPS_AX3000GZ_V2[labId];
+  selectors.forEach(selector => {
+    const item = items.find(candidate => candidate.selector === selector);
+    assert.ok(item, `${labId} must guide ${selector}`);
+    assert.strictEqual(item.condition(visibleDoc), true, `${labId} must show ${selector} together with other visible fields`);
+  });
+});
 
 const selectorSources = {
   LAB_AX3000GZ_V2_01: 'devices/ax3000gz_v2/src/www/api/ethWanConfig.html',
@@ -79,8 +143,8 @@ const requiredMarkers = {
   LAB_AX3000GZ_V2_02: ['id="ESSID"', 'id="HiddenKeyPass"'],
   LAB_AX3000GZ_V2_03: ['id="ESSID"', 'id="HiddenKeyPass"'],
   LAB_AX3000GZ_V2_04: ['id="sub_SerIPAddress10"', 'id="sub_SerIPAddress23"'],
-  LAB_AX3000GZ_V2_05: ['id="ServerEnable1"', 'id="sub_IPAddr0:DHCPBasicCfg"'],
-  LAB_AX3000GZ_V2_06: ['id="InternalClient"', 'id="ExternalPort"']
+  LAB_AX3000GZ_V2_05: ['id="sub_IPAddr0:DHCPBasicCfg"', 'id="sub_SubMask0"', 'id="sub_MinAddress0:DHCPBasicCfg"', 'id="sub_MaxAddress0:DHCPBasicCfg"'],
+  LAB_AX3000GZ_V2_06: ['id="S_Interface"', 'id="InternalClient"', 'id="ExternalPort"']
 };
 Object.entries(selectorSources).forEach(([labId, relative]) => {
   const html = read(relative);
@@ -126,6 +190,10 @@ assert.ok(
 assert.ok(loginPage.includes('id="Frm_Username"'), 'login page must be detected as a login page');
 assert.ok(loginPage.includes('id="LoginId"'), 'AX3000GZ V2 login button is the input the listeners must skip');
 assert.ok(!commonPage.includes('Frm_Username'), 'common page must not be treated as a login page');
+assert.ok(
+  appJs.includes("currentDeviceId === 'ax3000gz_v2'"),
+  'AX3000GZ V2 fields must stay editable instead of relying on the desktop-only readonly autofill hack'
+);
 
 // Mỗi lần chuyển menu, firmware bật lớp chờ trước khi gọi AJAX. Lớp này phải
 // được tắt ngay ở nhánh thành công; nếu không trang đã render nhưng toàn bộ

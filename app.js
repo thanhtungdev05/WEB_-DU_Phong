@@ -523,7 +523,8 @@
               try {
                 const skipAutofillHack = (currentDeviceId === 'ONT_be6500c' || currentDeviceId === 'be6500c' ||
                     currentDeviceId === 'ONT_be12000' || currentDeviceId === 'be12000' ||
-                    currentDeviceId === 'ONT_be15000' || currentDeviceId === 'be15000');
+                    currentDeviceId === 'ONT_be15000' || currentDeviceId === 'be15000' ||
+                    currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ax3000gz_v2');
                 if (!skipAutofillHack) {
                   doc.querySelectorAll('form:not([data-autofill-disabled]), input:not([data-autofill-disabled])').forEach(el => {
                     el.setAttribute('data-autofill-disabled', 'true');
