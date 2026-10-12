@@ -9792,6 +9792,28 @@ select:not(.searchable-select-source):focus-visible {
     color: var(--blue, #2563eb);
 }
 
+.upload-file-info.is-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.upload-file-errors {
+    max-height: 240px;
+    margin: 8px 0 0;
+    padding-left: 24px;
+    overflow-y: auto;
+}
+
+.upload-file-errors li + li {
+    margin-top: 6px;
+}
+
+.upload-file-errors-more {
+    margin: 8px 0 0;
+    font-weight: 600;
+}
+
 /* --- Import actions --- */
 .roster-import-layout {
     max-width: 700px;

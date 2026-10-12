@@ -9983,7 +9983,7 @@ function resetTrainingClassForm() {
     if (cancel) cancel.hidden = true;
     if (tab) tab.textContent = 'Đăng ký lớp mới';
     const info = document.getElementById('classMemberFileInfo');
-    if (info) { info.hidden = true; info.textContent = ''; }
+    if (info) { info.hidden = true; info.classList.remove('is-error'); info.textContent = ''; }
     const fileInput = document.getElementById('classMemberFileInput');
     if (fileInput) fileInput.value = '';
     updateTrainingClassSummary();
@@ -10272,6 +10272,32 @@ function addKtvToClass(userId) {
     }
 }
 
+function renderClassMemberImportErrors(info, file, errors) {
+    if (!info) return;
+    const allErrors = Array.isArray(errors) ? errors : [];
+    const visibleErrors = allErrors.slice(0, 100);
+    const items = visibleErrors.map(error => {
+        const sheet = String(error?.sheet || '').trim();
+        const row = error?.row;
+        let location = 'Không xác định vị trí';
+        if (sheet && row) location = `Sheet ${sheet}, dòng ${row}`;
+        else if (row) location = `Dòng ${row}`;
+        else if (sheet) location = `Sheet ${sheet}`;
+        return `<li><strong>${escapeHTML(location)}</strong>: ${escapeHTML(error?.message || 'Dữ liệu không hợp lệ')}</li>`;
+    }).join('');
+    const remaining = allErrors.length - visibleErrors.length;
+    const remainingNote = remaining > 0
+        ? `<p class="upload-file-errors-more">Còn ${remaining} lỗi khác. Hãy sửa các lỗi đang hiển thị rồi tải lại file.</p>`
+        : '';
+    info.hidden = false;
+    info.classList.add('is-error');
+    info.innerHTML = `
+        <strong>${escapeHTML(file.name)} — ${allErrors.length} lỗi, chưa nạp KTV nào</strong>
+        <ol class="upload-file-errors">${items}</ol>
+        ${remainingNote}
+    `;
+}
+
 async function previewClassMembers(file) {
     if (!classDraftIsValid()) {
         showToast('Nhập tên lớp và ngày hiệu lực hợp lệ trước khi chọn file KTV.', 'error');
@@ -10288,7 +10314,11 @@ async function previewClassMembers(file) {
     state.classMemberImportFile = file;
     state.classMemberImportBusy = true;
     const info = document.getElementById('classMemberFileInfo');
-    if (info) { info.hidden = false; info.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB) — đang kiểm tra...`; }
+    if (info) {
+        info.hidden = false;
+        info.classList.remove('is-error');
+        info.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB) — đang kiểm tra...`;
+    }
     const form = new FormData();
     form.append('file', file);
     form.append('class_name', document.getElementById('className')?.value.trim() || '');
@@ -10299,10 +10329,8 @@ async function previewClassMembers(file) {
         if (!response.ok) throw new Error(json.error?.message || `HTTP ${response.status}`);
         const data = json.data || {};
         if (data.errors && data.errors.length > 0) {
-            const firstError = data.errors[0];
-            const msg = firstError ? `Dòng ${firstError.row || '?'}: ${firstError.message || 'Dữ liệu không hợp lệ'}` : 'File KTV có lỗi.';
-            if (info) info.textContent = `${file.name} — file có lỗi, chưa nạp được KTV nào. Kiểm tra lại file.`;
-            showToast(`File KTV không hợp lệ: ${msg}`, 'error');
+            renderClassMemberImportErrors(info, file, data.errors);
+            showToast(`File KTV có ${data.errors.length} lỗi. Xem chi tiết theo dòng bên dưới.`, 'error');
             return;
         }
         (data.members || []).forEach(member => {
@@ -10317,11 +10345,17 @@ async function previewClassMembers(file) {
             }
         });
         const total = (data.members || []).length;
-        if (info) info.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB) — Đã nạp ${total} KTV`;
+        if (info) {
+            info.classList.remove('is-error');
+            info.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB) — Đã nạp ${total} KTV`;
+        }
         showToast(`Đã đọc thành công ${total} KTV từ file. Hãy kiểm tra thành viên và chọn thiết bị.`, 'success');
         await openClassConfigModal();
     } catch (error) {
-        if (info) info.textContent = `${file.name} — không đọc được file. Hãy thử lại.`;
+        if (info) {
+            info.classList.add('is-error');
+            info.textContent = `${file.name} — không đọc được file. Hãy thử lại.`;
+        }
         showToast(`Không thể đọc file KTV: ${error.message}`, 'error');
     } finally {
         state.classMemberImportBusy = false;
