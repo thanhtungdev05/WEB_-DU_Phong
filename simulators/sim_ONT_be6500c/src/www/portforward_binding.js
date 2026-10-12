@@ -233,6 +233,11 @@
             if (window.top && typeof window.top.onSimulatorSave === 'function') {
               try { window.top.onSimulatorSave(window); } catch (e) {}
             }
+            try {
+              window._ftcIsSaved = true;
+              if (window.parent) window.parent._ftcIsSaved = true;
+              if (window.top) window.top._ftcIsSaved = true;
+            } catch (e) {}
           });
         }
       }

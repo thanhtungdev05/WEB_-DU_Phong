@@ -75,6 +75,7 @@ REBOOT_SAP_S = 93.0
 REBOOT_CHUA_SAN_S = 101.5
 REBOOT_GOC_UPTIME_S = 22.0
 _REBOOT = {"luc": None}
+_REBOOT_THEO_KTV = {}
 
 
 # Khoa noi bo: md5-crypt (muoi rong) mat khau admin sau khi doi qua Change Password. Khong co -> mat khau goc.
@@ -99,19 +100,32 @@ def _phien_song(sid):
     return True
 
 
-def _goc_uptime():
+def _goc_uptime(client_key=None):
     """Moc tinh uptime: luc chay server, hoac ~22 s sau lenh reboot gan nhat."""
+    if client_key is None:
+        try:
+            client_key = KHO.current_key()
+        except Exception:
+            client_key = "anonymous"
+    luc = _REBOOT_THEO_KTV.get(client_key)
+    if luc is not None:
+        return luc + REBOOT_GOC_UPTIME_S
     if _REBOOT["luc"] is not None:
         return _REBOOT["luc"] + REBOOT_GOC_UPTIME_S
     return _LUC_KHOI_DONG
 
 
-def _pha_reboot():
+def _pha_reboot(client_key=None):
     """'sap' | 'chua_san' | None theo thoi gian tu lenh reboot gan nhat."""
-    t = _REBOOT["luc"]
-    if t is None:
+    if client_key is None:
+        try:
+            client_key = KHO.current_key()
+        except Exception:
+            client_key = "anonymous"
+    luc = _REBOOT_THEO_KTV.get(client_key)
+    if luc is None:
         return None
-    d = time.time() - t
+    d = time.time() - luc
     if d < REBOOT_SAP_S:
         return "sap"
     if d < REBOOT_CHUA_SAN_S:
@@ -795,8 +809,8 @@ def _xu_ly_ubus(than):
     if doi_tuong == "system" and ham == "reboot":
         # Giữ hành vi reboot trong phạm vi thiết bị ảo của KTV hiện tại.
         # Không được làm mất phiên của các KTV khác đang dùng cùng tiến trình.
-        _REBOOT["luc"] = time.time()
         client_key = KHO.current_key()
+        _REBOOT_THEO_KTV[client_key] = time.time()
         for active_sid, active_session in list(_phien.items()):
             if active_session.get("client_key") == client_key:
                 _phien.pop(active_sid, None)

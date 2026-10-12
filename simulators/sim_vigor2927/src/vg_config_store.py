@@ -64,19 +64,9 @@ def _ghi(user_key=None):
     if user_key is None:
         user_key = lay_nguoi_dung_hien_tai()
 
-    global _mtime
     with _khoa:
-        if user_key and user_key in USER_CONFIGS:
-            # User dang thao tac tren ban sao rieng trong bo nho -> khong de len config.json tren dia
-            return
-        tmp = FILE + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(_cfg, f, ensure_ascii=False, indent=1)
-        os.replace(tmp, FILE)
-        try:
-            _mtime = os.path.getmtime(FILE)
-        except OSError:
-            pass
+        # User thao tac tren ban sao RAM rieng -> khong de len config.json goc tren dia
+        return
 
 
 
@@ -204,9 +194,6 @@ def dat_lai_factory(user_key=None):
     with _khoa:
         if user_key:
             USER_CONFIGS.pop(user_key, None)
-        else:
-            USER_CONFIGS.clear()
-            nap_lai()
 
 
 

@@ -55,20 +55,15 @@ class ResponsiveLayoutContractTests(unittest.TestCase):
         self.assertIn("@media (max-width: 600px)", self.portal_css)
         self.assertIn("#lesson-screen { padding: 16px; }", self.portal_css)
 
-    def test_device_viewport_preserves_ver21_iframe_sizing(self):
+    def test_device_viewport_remains_scrollable_when_legacy_ui_is_taller(self):
         self.assertRegex(
             self.portal_css,
-            r"\.iframe-wrap\s*\{[^}]*flex:\s*1;[^}]*overflow:\s*auto;",
+            r"\.iframe-wrap\s*\{[^}]*min-height:\s*0;[^}]*overflow:\s*auto;",
         )
         self.assertRegex(
             self.portal_css,
-            r"#device-iframe\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*min-width:\s*1100px;",
+            r"#device-iframe\s*\{[^}]*min-width:\s*1100px;[^}]*min-height:\s*900px;",
         )
-        self.assertNotRegex(
-            self.portal_css,
-            r"#device-iframe\s*\{[^}]*min-height:",
-        )
-        self.assertNotIn("overscroll-behavior: contain", self.portal_css)
 
     def test_changed_assets_have_current_content_hashes(self):
         checks = (

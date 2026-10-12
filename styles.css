@@ -286,6 +286,7 @@ html, body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -439,6 +440,7 @@ html, body {
 /* ── CONTENT AREA ─────────────────────────────────────────── */
 #content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--content-bg);
@@ -696,6 +698,7 @@ html, body {
   display: none;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 }
 
 #practice-screen.visible {
@@ -1186,8 +1189,11 @@ html, body {
 /* iframe wrapper */
 .iframe-wrap {
   flex: 1;
+  min-height: 0;
   position: relative;
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   background: #f0f2f8;
 }
 
@@ -1226,6 +1232,7 @@ html, body {
   width: 100%;
   height: 100%;
   min-width: 1100px;
+  min-height: 900px;
   border: none;
   background: #fff;
   transition: opacity 0.3s ease;

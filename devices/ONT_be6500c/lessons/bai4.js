@@ -59,7 +59,7 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       "position": "right"
     },
     {
-      "selector": ".MuiTypography-subtitle2:contains(\"WAN\")",
+      "selector": "li.MuiMenuItem-root:contains(\"WAN\"), .MuiTypography-root:contains(\"WAN\"), p:contains(\"WAN\"), span:contains(\"WAN\")",
       "text": "Bước 2: Chọn WAN",
       "position": "right"
     },

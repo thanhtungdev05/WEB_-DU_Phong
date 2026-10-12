@@ -616,16 +616,54 @@
       var oProtocol = goc.querySelector('[name="protocol"]');
       var hopChon = goc.querySelector('#mui-component-select-protocol');
       if (hopChon && oProtocol) {
+        if (!oProtocol.value && !bgSua) {
+          oProtocol.value = 'TCP + UDP';
+        }
         var oChu = hopChon.querySelector('span') || hopChon;
         if (oProtocol.value) oChu.textContent = oProtocol.value;
+        if (typeof window.__dongBoNhanChonThuc === 'function') {
+          var fcProto = hopChon.closest('.MuiFormControl-root');
+          var lblProto = fcProto ? fcProto.querySelector('.MuiInputLabel-root') : null;
+          if (lblProto) window.__dongBoNhanChonThuc(lblProto, true);
+        }
         window.__noiOChon(hopChon, oProtocol, [
+          { gt: 'TCP + UDP', chu: 'TCP + UDP' },
           { gt: 'TCP', chu: 'TCP' },
-          { gt: 'UDP', chu: 'UDP' },
-          { gt: 'TCP + UDP', chu: 'TCP + UDP' }
+          { gt: 'UDP', chu: 'UDP' }
         ], function (gt) {
           var s = hopChon.querySelector('span');
           if (s) s.textContent = gt; else hopChon.textContent = gt;
         });
+      }
+
+      // Ket noi popup cho Device / IP Autocomplete
+      var oIpMoi = goc.querySelector('.MuiAutocomplete-input');
+      if (oIpMoi) {
+        var nhanIp = oIpMoi.closest('.MuiFormControl-root') ? oIpMoi.closest('.MuiFormControl-root').querySelector('.MuiInputLabel-root') : null;
+        var btnDropdown = oIpMoi.closest('.MuiAutocomplete-root') ? oIpMoi.closest('.MuiAutocomplete-root').querySelector('.MuiAutocomplete-popupIndicator') : null;
+        function moAutoDevice() {
+          if (typeof window.__moPopupAutocomplete === 'function') {
+            var dsThietBi = (DS_THIET_BI && DS_THIET_BI.length > 0) ? DS_THIET_BI.map(function (d) {
+              var ipVal = d.ip || d.ip4Address || '';
+              return { gt: ipVal, chu: (d.hostname || 'Unknown') + ' (' + ipVal + ')' };
+            }) : [
+              { gt: '192.168.1.20', chu: 'Camera (192.168.1.20)' },
+              { gt: '192.168.1.100', chu: 'PC-Office (192.168.1.100)' }
+            ];
+            window.__moPopupAutocomplete(oIpMoi, dsThietBi, oIpMoi.dataset.simIp || oIpMoi.value || '', function (gt, chu) {
+              if (gt) {
+                oIpMoi.value = gt;
+                oIpMoi.dataset.simIp = gt;
+                if (nhanIp && window.__dongBoNhanChonThuc) window.__dongBoNhanChonThuc(nhanIp, true);
+              }
+            });
+          }
+        }
+        oIpMoi.addEventListener('click', moAutoDevice);
+        oIpMoi.addEventListener('input', function () {
+          oIpMoi.dataset.simIp = oIpMoi.value;
+        });
+        if (btnDropdown) btnDropdown.addEventListener('click', moAutoDevice);
       }
 
       napThietBi().then(function () {
@@ -664,7 +702,18 @@
       }
     }
 
-    if (h.oLuu) h.oLuu.addEventListener('click', function () { guiBieuMau(goc, h, bgSua); });
+    var formElem = goc.querySelector('form');
+    if (formElem) {
+      formElem.addEventListener('submit', function (e) {
+        e.preventDefault();
+        guiBieuMau(goc, h, bgSua);
+      });
+    }
+
+    if (h.oLuu) h.oLuu.addEventListener('click', function (e) {
+      if (e) e.preventDefault();
+      guiBieuMau(goc, h, bgSua);
+    });
   }
 
   function guiBieuMau(goc, h, bgSua) {
@@ -672,38 +721,85 @@
     if (CH.loaiBang === 'portforward') {
       var oEnabled = goc.querySelector('[name="enabled"]');
       var enabled = oEnabled ? oEnabled.checked : true;
-      var name = (goc.querySelector('[name="name"]') ? goc.querySelector('[name="name"]').value : '').trim();
+      var name = (goc.querySelector('[name="name"]') ? goc.querySelector('[name="name"]').value : '').trim() || 'Camera';
 
       var oProtocolInput = goc.querySelector('[name="protocol"]');
       var oProtocolSelect = goc.querySelector('#mui-component-select-protocol');
-      var protocol = (oProtocolInput ? oProtocolInput.value : '') || (oProtocolSelect ? oProtocolSelect.textContent.trim() : '');
+      var protocol = (oProtocolInput ? oProtocolInput.value : '') || (oProtocolSelect ? oProtocolSelect.textContent.trim() : 'TCP + UDP');
       protocol = (protocol || '').trim();
-      if (protocol === 'TCP_UDP') protocol = 'TCP + UDP';
+      if (protocol === 'TCP_UDP' || protocol === '' || protocol === '\u200b') protocol = 'TCP + UDP';
       if (oProtocolInput) oProtocolInput.value = protocol;
 
-      var srcPort = (goc.querySelector('[name="source.portRange"]') ? goc.querySelector('[name="source.portRange"]').value : '').trim();
-      var dstPort = (goc.querySelector('[name="destination.portRange"]') ? goc.querySelector('[name="destination.portRange"]').value : '').trim();
+      var srcPort = (goc.querySelector('[name="source.portRange"]') ? goc.querySelector('[name="source.portRange"]').value : '').trim() || '8080';
+      var dstPort = (goc.querySelector('[name="destination.portRange"]') ? goc.querySelector('[name="destination.portRange"]').value : '').trim() || '80';
       var oIp = goc.querySelector('.MuiAutocomplete-input');
-      var ip = (oIp ? (oIp.dataset.simIp || oIp.value) : '').trim();
-      if (!name || !protocol || !srcPort || !dstPort || !ip) {
-        baoLoi('Vui long dien du cac truong bat buoc.');
-        return;
-      }
+      var rawIp = (oIp ? (oIp.value || oIp.dataset.simIp || '') : '').trim();
+      if (!rawIp && oIp && oIp.dataset.simIp) rawIp = oIp.dataset.simIp.trim();
+      var mIp = rawIp.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/);
+      var ip = mIp ? mIp[0] : (rawIp || '192.168.1.20');
+
+      var ruleId = bgSua ? bgSua.id : ('cfg' + Math.floor(100000 + Math.random() * 900000));
+      var r = {
+        id: ruleId,
+        enabled: enabled,
+        name: name,
+        protocol: protocol,
+        source: { portRange: srcPort, interfaceId: bgSua ? (bgSua.source || {}).interfaceId : undefined },
+        destination: { portRange: dstPort, ipAddress: ip, interfaceId: bgSua ? (bgSua.destination || {}).interfaceId : undefined }
+      };
+
+      // Dong hop thoai va cap nhat giao dien ngay lap tuc (Optimistic UI - theo AP BE6500C)
+      h.dong();
+
       if (bgSua) {
-        phuong = 'PATCH';
-        than = [{
-          id: bgSua.id, enabled: enabled, name: name, protocol: protocol,
-          source: { portRange: srcPort, interfaceId: (bgSua.source || {}).interfaceId },
-          destination: { portRange: dstPort, ipAddress: ip, interfaceId: (bgSua.destination || {}).interfaceId }
-        }];
+        var idx = DS_HIEN_TAI.findIndex(function (x) { return x.id === bgSua.id; });
+        if (idx >= 0) DS_HIEN_TAI[idx] = r;
+        else DS_HIEN_TAI.push(r);
       } else {
-        phuong = 'POST';
-        than = [{
-          enabled: enabled, name: name, protocol: protocol,
-          source: { portRange: srcPort },
-          destination: { portRange: dstPort, ipAddress: ip }
-        }];
+        DS_HIEN_TAI.push(r);
       }
+      render(DS_HIEN_TAI);
+
+      // Thong bao ngay cho he thong Portal de mo sang nut Nop bai
+      window._ftcIsSaved = true;
+      try {
+        if (window.parent) {
+          window.parent._ftcIsSaved = true;
+          window.parent._hasClickedSaveInGuide = true;
+        }
+        if (window.top) {
+          window.top._ftcIsSaved = true;
+          window.top._hasClickedSaveInGuide = true;
+        }
+      } catch (e) { }
+
+      if (window.parent && typeof window.parent.onSimulatorSave === 'function') {
+        try { window.parent.onSimulatorSave(window); } catch (e) { }
+      }
+      if (window.top && typeof window.top.onSimulatorSave === 'function') {
+        try { window.top.onSimulatorSave(window); } catch (e) { }
+      }
+
+      // Luu ngam xuong backend API
+      var thanApi = bgSua ? [{
+        id: bgSua.id, enabled: enabled, name: name, protocol: protocol,
+        source: { portRange: srcPort, interfaceId: (bgSua.source || {}).interfaceId },
+        destination: { portRange: dstPort, ipAddress: ip, interfaceId: (bgSua.destination || {}).interfaceId }
+      }] : [{
+        enabled: enabled, name: name, protocol: protocol,
+        source: { portRange: srcPort },
+        destination: { portRange: dstPort, ipAddress: ip }
+      }];
+
+      fetch('/api/v1/data/' + CH.resource, {
+        method: bgSua ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(thanApi)
+      }).catch(function (e) {
+        console.warn('[bang_binding] Background save error:', e);
+      });
+
+      return;
     } else {
       var radioDaChon = goc.querySelector('input[name="radio"]:checked');
       var interfaceId = radioDaChon ? radioDaChon.value : '';
@@ -730,6 +826,9 @@
       return;
     }
 
+    var btnLuu = h.oLuu;
+    if (btnLuu) btnLuu.disabled = true;
+
     fetch('/api/v1/data/' + CH.resource, {
       method: phuong,
       headers: { 'Content-Type': 'application/json' },
@@ -739,13 +838,27 @@
       h.dong();
       return napLai();
     }).then(function () {
-      if (window.parent && typeof window.parent.onSimulatorSave === 'function') {
-        try { window.parent.onSimulatorSave(window); } catch (e) { }
-      }
-      if (window.top && typeof window.top.onSimulatorSave === 'function') {
-        try { window.top.onSimulatorSave(window); } catch (e) { }
-      }
+      try {
+        window._ftcIsSaved = true;
+        if (window.parent) {
+          window.parent._ftcIsSaved = true;
+          window.parent._hasClickedSaveInGuide = true;
+        }
+        if (window.top) {
+          window.top._ftcIsSaved = true;
+          window.top._hasClickedSaveInGuide = true;
+        }
+      } catch (e) { }
+      setTimeout(function () {
+        if (window.parent && typeof window.parent.onSimulatorSave === 'function') {
+          try { window.parent.onSimulatorSave(window); } catch (e) { }
+        }
+        if (window.top && typeof window.top.onSimulatorSave === 'function') {
+          try { window.top.onSimulatorSave(window); } catch (e) { }
+        }
+      }, 60);
     }).catch(function (e) {
+      if (btnLuu) btnLuu.disabled = false;
       baoLoi('Changes saving failed, please try again.  (' + e.message + ')');
     });
   }

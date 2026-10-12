@@ -422,9 +422,7 @@
     ],
     "lastChangeTime": 1786328185000,
     "name": "wan",
-    "dnsServers": [
-     "8.8.8.8"
-    ],
+    "dnsServers": [],
     "usage": "Internet",
     "ipv4Addresses": [
      {
@@ -503,9 +501,9 @@
    },
    {
     "ipv4Settings": {
-     "gateway": "192.168.1.254",
-     "ipAddress": "192.168.1.1",
-     "mask": "255.255.255.0",
+     "gateway": "",
+     "ipAddress": "",
+     "mask": "",
      "pppoe": {
       "username": "",
       "password": ""
@@ -518,9 +516,7 @@
     ],
     "name": "wan",
     "mtu": 1500,
-    "dnsServers": [
-     "8.8.8.8"
-    ],
+    "dnsServers": [],
     "usage": "Internet",
     "vlan": {
      "autoDetectionEnabled": false,

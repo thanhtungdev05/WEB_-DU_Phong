@@ -114,9 +114,9 @@ window.DEVICE_ONT_BE6500C_LESSONS.push({
       "expected": "80"
     },
     {
-      "selector": "button.dlg-luu",
+      "selector": ".MuiDialog-paper button.dlg-luu, .MuiDialogActions-root button.dlg-luu, .MuiDialog-root button.dlg-luu, form.css-1w5zf2q button.dlg-luu",
       "text": "Bước 9: Lưu cấu hình",
-      "position": "bottom"
+      "position": "top"
     }
   ]
 });

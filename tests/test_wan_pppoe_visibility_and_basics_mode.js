@@ -19,14 +19,15 @@ vm.runInNewContext(bai1Code, lessonCtx);
 const bai1 = lessonCtx.window.DEVICE_BE6500C_LESSONS.find(l => l.id === 'be6500c-bai1');
 assert.ok(bai1, 'Phải nạp được be6500c-bai1');
 
-// Kiểm tra rule và tooltip Bước 2
+// Kiểm tra rule và tooltip Bước 2 (Chọn WAN) & Bước 3 (Basics)
 const ipRule = (bai1.grading.rules || []).find(r => r.id === 'ip_version_mode');
 assert.ok(ipRule, 'Phải có rule chấm điểm ip_version_mode');
 
 const step2 = bai1.guidePopups.find(g => g.text.includes('Bước 2'));
-assert.ok(step2, 'Phải có Bước 2');
-assert.ok(step2.text.includes('Basics') && step2.text.includes('IPv4 & IPv6'), 'Bước 2 phải hướng dẫn mục Basics IPv4 & IPv6');
-console.log('✔ Tooltip Bước 2 chính xác: ' + step2.text);
+assert.ok(step2 && step2.text.includes('WAN'), 'Bước 2 phải hướng dẫn Chọn WAN');
+const step3 = bai1.guidePopups.find(g => g.text.includes('Bước 3'));
+assert.ok(step3 && step3.text.includes('Basics') && step3.text.includes('IPv4 & IPv6'), 'Bước 3 phải hướng dẫn mục Basics IPv4 & IPv6');
+console.log('✔ Tooltip Bước 2 & Bước 3 chính xác: ' + step2.text + ' | ' + step3.text);
 
 // 2. Kiểm tra HTML simulator sim_ONT_be6500c/src/www/advanced__wan.html
 console.log('\n--- 2. Kiểm tra simulator AP BE6500C (advanced__wan.html) ---');
