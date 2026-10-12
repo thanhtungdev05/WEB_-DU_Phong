@@ -29,7 +29,7 @@ assert.match(
 );
 
 const helperMatch = dashboard.match(
-  /(function renderClassMemberImportErrors\(info, file, errors\) \{[\s\S]*?\n\})\n\nasync function previewClassMembers/,
+  /(function renderClassMemberImportErrors\(info, file, errors\) \{[\s\S]*?\r?\n\})\r?\n\r?\nasync function previewClassMembers/,
 );
 assert.ok(helperMatch, 'Detailed import error renderer must be extractable for behavior testing.');
 const escapeHTMLForTest = value => String(value).replace(/[&<>"']/g, character => ({
