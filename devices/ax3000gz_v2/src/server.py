@@ -324,10 +324,15 @@ class Handler(BaseHTTPRequestHandler):
             text = payload.decode("utf-8")
         except UnicodeDecodeError:
             return payload
-        match = re.search(r"<encode>([^<]*)</encode>", text)
-        if not match:
+        encode_groups = re.findall(r"<encode>([^<]*)</encode>", text)
+        if not encode_groups:
             return payload
-        names = [name.strip() for name in match.group(1).split(",") if name.strip()]
+        names = list(dict.fromkeys(
+            name.strip()
+            for group in encode_groups
+            for name in group.split(",")
+            if name.strip()
+        ))
         token = sess.get("sess_token")
         if not names or not token:
             return payload

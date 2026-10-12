@@ -231,7 +231,8 @@ class Ax3000GzV2ResetSessionTests(unittest.TestCase):
             ("firewall_portforwarding_lua.lua", {
                 "_InstID": "-1", "Alias": "FPT Telecom", "Protocol": "BOTH",
                 "InternalClient": "192.168.1.254", "ExternalPort": "8080",
-                "InternalPort": "8080",
+                "ExternalPortEndRange": "8080", "InternalPort": "8080",
+                "InternalPortEndRange": "8080",
             }),
         )
         for tag, fields in apply_cases:
@@ -246,6 +247,33 @@ class Ax3000GzV2ResetSessionTests(unittest.TestCase):
                 self.assertEqual(status, 200)
                 self.assertIn(b"<IF_ERRORID>0</IF_ERRORID>", payload)
                 self.assertIn(b"<IF_ERRORTYPE>SUCC</IF_ERRORTYPE>", payload)
+
+    def test_every_encode_group_is_encrypted_with_the_current_session_token(self):
+        """WLAN has three encode tags; skipping the later tags breaks CryptoJS in the UI."""
+        token = "test-session-token"
+        source = (
+            b"<root>"
+            b"<ParaName>First</ParaName><ParaValue>alpha</ParaValue>"
+            b"<encode>First</encode>"
+            b"<ParaName>Second</ParaName><ParaValue>beta</ParaValue>"
+            b"<ParaName>Third</ParaName><ParaValue>gamma</ParaValue>"
+            b"<encode>Second,Third</encode>"
+            b"</root>"
+        )
+
+        encrypted = self.module.Handler._enc(
+            None, source, {"sess_token": token}).decode()
+
+        for name, value in (("First", "alpha"), ("Second", "beta"), ("Third", "gamma")):
+            expected = self.module.zte_encrypt(value, token)
+            self.assertIn(
+                f"<ParaName>{name}</ParaName><ParaValue>{expected}</ParaValue>",
+                encrypted,
+            )
+            self.assertNotIn(
+                f"<ParaName>{name}</ParaName><ParaValue>{value}</ParaValue>",
+                encrypted,
+            )
 
     def login_with_sid(self, sid):
         _, _, payload = self.request("GET", "/?_type=loginData&_tag=login_entry", cookie=sid)

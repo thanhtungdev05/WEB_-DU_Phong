@@ -206,11 +206,17 @@
     step('[id^="ExternalPort"]:not([id*="EndRange"])', 'Bước 8: Nhập WAN Port: 8080', 'right', function (doc) {
       return val(doc, '[id^="Alias"]') === 'FPT Telecom' && val(doc, '[id^="Protocol"]') === 'BOTH' && val(doc, '[id^="InternalClient"]') === '192.168.1.254' && val(doc, '[id^="ExternalPort"]:not([id*="EndRange"])') !== '8080' && !doc._ftcIsSaved;
     }),
-    step('[id^="InternalPort"]:not([id*="EndRange"])', 'Bước 9: Nhập LAN Host Port: 8080', 'right', function (doc) {
-      return val(doc, '[id^="Alias"]') === 'FPT Telecom' && val(doc, '[id^="Protocol"]') === 'BOTH' && val(doc, '[id^="InternalClient"]') === '192.168.1.254' && val(doc, '[id^="ExternalPort"]:not([id*="EndRange"])') === '8080' && val(doc, '[id^="InternalPort"]:not([id*="EndRange"])') !== '8080' && !doc._ftcIsSaved;
+    step('[id^="ExternalPortEndRange"]', 'Bước 9: Nhập WAN Port kết thúc: 8080', 'right', function (doc) {
+      return val(doc, '[id^="ExternalPort"]:not([id*="EndRange"])') === '8080' && val(doc, '[id^="ExternalPortEndRange"]') !== '8080' && !doc._ftcIsSaved;
     }),
-    step('[id^="Btn_apply_PortForwarding"]', 'Bước 10: Chọn Apply', 'top', function (doc) {
-      return val(doc, '[id^="Alias"]') === 'FPT Telecom' && val(doc, '[id^="Protocol"]') === 'BOTH' && val(doc, '[id^="InternalClient"]') === '192.168.1.254' && val(doc, '[id^="ExternalPort"]:not([id*="EndRange"])') === '8080' && val(doc, '[id^="InternalPort"]:not([id*="EndRange"])') === '8080' && !doc._ftcIsSaved;
+    step('[id^="InternalPort"]:not([id*="EndRange"])', 'Bước 10: Nhập LAN Host Port: 8080', 'right', function (doc) {
+      return val(doc, '[id^="ExternalPortEndRange"]') === '8080' && val(doc, '[id^="InternalPort"]:not([id*="EndRange"])') !== '8080' && !doc._ftcIsSaved;
+    }),
+    step('[id^="InternalPortEndRange"]', 'Bước 11: Nhập LAN Host Port kết thúc: 8080', 'right', function (doc) {
+      return val(doc, '[id^="InternalPort"]:not([id*="EndRange"])') === '8080' && val(doc, '[id^="InternalPortEndRange"]') !== '8080' && !doc._ftcIsSaved;
+    }),
+    step('[id^="Btn_apply_PortForwarding"]', 'Bước 12: Chọn Apply', 'top', function (doc) {
+      return val(doc, '[id^="Alias"]') === 'FPT Telecom' && val(doc, '[id^="Protocol"]') === 'BOTH' && val(doc, '[id^="InternalClient"]') === '192.168.1.254' && val(doc, '[id^="ExternalPort"]:not([id*="EndRange"])') === '8080' && val(doc, '[id^="ExternalPortEndRange"]') === '8080' && val(doc, '[id^="InternalPort"]:not([id*="EndRange"])') === '8080' && val(doc, '[id^="InternalPortEndRange"]') === '8080' && !doc._ftcIsSaved;
     })
   ];
 })();

@@ -130,7 +130,8 @@
       '- Name: <span class="val">FPT Telecom</span>',
       '- Protocol: <span class="val">TCP And UDP</span>',
       '- LAN Host: <span class="val">192.168.1.254</span>',
-      '- WAN Port / LAN Host Port: <span class="val">8080</span>'
+      '- WAN Port (Start / End): <span class="val">8080 / 8080</span>',
+      '- LAN Host Port (Start / End): <span class="val">8080 / 8080</span>'
     ],
     practiceUrl: '/sim_ax3000gz_v2/?_type=menuView&_tag=portForwarding',
     clearFields: ['[id^="Alias"]', '[id^="InternalClient"]', '[id^="ExternalPort"]', '[id^="InternalPort"]'],
@@ -139,7 +140,9 @@
       rule('pf_protocol', 'Protocol', '[id^="Protocol"]', 'BOTH'),
       rule('pf_lan_host', 'LAN Host', '[id^="InternalClient"]', '192.168.1.254'),
       rule('pf_wan_port', 'WAN Port', '[id^="ExternalPort"]:not([id*="EndRange"])', '8080'),
-      rule('pf_lan_port', 'LAN Host Port', '[id^="InternalPort"]:not([id*="EndRange"])', '8080')
+      rule('pf_wan_port_end', 'WAN Port End', '[id^="ExternalPortEndRange"]', '8080'),
+      rule('pf_lan_port', 'LAN Host Port', '[id^="InternalPort"]:not([id*="EndRange"])', '8080'),
+      rule('pf_lan_port_end', 'LAN Host Port End', '[id^="InternalPortEndRange"]', '8080')
     ]}
   });
 })();

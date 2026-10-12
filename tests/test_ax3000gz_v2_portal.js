@@ -49,6 +49,20 @@ lessons.forEach((lesson, index) => {
   assert.ok(lesson.practiceUrl.startsWith('/sim_ax3000gz_v2/'), `${expectedId} must target the new simulator`);
 });
 
+const portForwardingLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_06');
+const portForwardingSelectors = Array.from(
+  portForwardingLesson.grading.rules,
+  rule => rule.selector
+);
+assert.ok(portForwardingSelectors.includes('[id^="ExternalPortEndRange"]'), 'lab 6 must grade WAN end port');
+assert.ok(portForwardingSelectors.includes('[id^="InternalPortEndRange"]'), 'lab 6 must grade LAN end port');
+const portForwardingGuideSelectors = Array.from(
+  context.window.TOOLTIPS_AX3000GZ_V2.LAB_AX3000GZ_V2_06,
+  step => step.selector
+);
+assert.ok(portForwardingGuideSelectors.includes('[id^="ExternalPortEndRange"]'), 'lab 6 must guide WAN end port');
+assert.ok(portForwardingGuideSelectors.includes('[id^="InternalPortEndRange"]'), 'lab 6 must guide LAN end port');
+
 const login = context.window.TOOLTIPS_AX3000GZ_V2._common_login;
 assert.deepStrictEqual(Array.from(login, item => item.selector), ['#Frm_Username', '#Frm_Password', '#LoginId']);
 
