@@ -54,6 +54,19 @@ $unlimitedProjectMetrics = neon_project_metrics([
 assert($unlimitedProjectMetrics['storageLimitBytes'] === null, 'Zero storage quota means unavailable/unlimited');
 assert($unlimitedProjectMetrics['computeLimitHours'] === null, 'Zero compute quota means unavailable/unlimited');
 
+$freeMetrics = neon_apply_plan_allowances($unlimitedProjectMetrics, 'free');
+assert($freeMetrics['computeLimitHours'] === 100, 'Verified Free plan should receive its current compute allowance');
+assert($freeMetrics['dataTransferLimitMb'] === 5000, 'Verified Free plan should receive its current transfer allowance');
+assert($freeMetrics['computeLimitSource'] === 'neon_free_plan_policy', 'Free plan fallback source should be explicit');
+
+$paidMetrics = neon_apply_plan_allowances($unlimitedProjectMetrics, 'launch');
+assert($paidMetrics['computeLimitHours'] === null, 'Paid plans must not inherit Free compute allowances');
+assert($paidMetrics['dataTransferLimitMb'] === null, 'Paid plans must not inherit Free transfer allowances');
+
+$apiQuotaMetrics = neon_apply_plan_allowances($projectMetrics, 'free');
+assert($apiQuotaMetrics['computeLimitHours'] === 100.0, 'Project API quota should take precedence over plan fallback');
+assert($apiQuotaMetrics['computeLimitSource'] === 'neon_project_api', 'API quota source should remain authoritative');
+
 $systemUsageSource = file_get_contents(dirname(__DIR__) . '/api/lib/system_usage.php');
 assert(
     str_contains($systemUsageSource, "neon_resolve_project_id(\$apiKey, true)"),

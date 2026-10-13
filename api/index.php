@@ -3579,6 +3579,15 @@ function handle_system(array $segments, string $method): void
                             'available' => !empty($neonMetrics['available']) && isset($neonMetrics['dataTransferBytes']),
                             'bytes' => (int)($neonMetrics['dataTransferBytes'] ?? 0),
                             'mb' => isset($neonMetrics['dataTransferBytes']) ? round((float)$neonMetrics['dataTransferBytes'] / (1024 * 1024), 2) : 0.0,
+                            'limitBytes' => isset($neonMetrics['dataTransferLimitBytes']) ? (int)$neonMetrics['dataTransferLimitBytes'] : null,
+                            'limitMb' => isset($neonMetrics['dataTransferLimitMb']) ? (int)$neonMetrics['dataTransferLimitMb'] : null,
+                            'usagePercent' => isset($neonMetrics['dataTransferLimitMb'])
+                                ? system_usage_percent(
+                                    round((float)($neonMetrics['dataTransferBytes'] ?? 0) / (1024 * 1024), 2),
+                                    (float)$neonMetrics['dataTransferLimitMb']
+                                )
+                                : null,
+                            'limitSource' => $neonMetrics['dataTransferLimitSource'] ?? null,
                             'source' => !empty($neonMetrics['available']) ? 'neon_project_api' : 'not_exposed_by_postgresql',
                             'writtenDataBytes' => (int)($neonMetrics['writtenDataBytes'] ?? 0),
                         ],
@@ -3588,6 +3597,7 @@ function handle_system(array $segments, string $method): void
                         'used' => $computeUsed,
                         'configured' => !empty($neonMetrics['configured']),
                         'source' => $computeSource,
+                        'limitSource' => $neonMetrics['computeLimitSource'] ?? null,
                         'note' => $computeNote,
                     ],
                     'neon' => $neonMetrics,

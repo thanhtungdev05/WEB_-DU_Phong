@@ -139,7 +139,9 @@
         const netTransfer = data.database?.networkTransfer;
         if (dbTransferRow && dbTransferText) {
             if (netTransfer?.available && netTransfer.bytes > 0) {
-                dbTransferText.textContent = formatBytes(netTransfer.bytes);
+                dbTransferText.textContent = netTransfer.limitMb
+                    ? `${Math.round(Number(netTransfer.mb) || 0)} / ${netTransfer.limitMb} MB (${netTransfer.usagePercent || 0}%)`
+                    : formatBytes(netTransfer.bytes);
                 dbTransferRow.hidden = false;
             } else {
                 dbTransferRow.hidden = true;

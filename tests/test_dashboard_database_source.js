@@ -129,6 +129,7 @@ assert.match(dashboardHtml, />Render Web Service</);
 assert.doesNotMatch(dashboardHtml, /systemStorageMeasurement|systemComputeNote|systemRenderBillingHint/);
 assert.doesNotMatch(systemMonitor, /quota xem Billing|quota chưa được API công bố/);
 assert.match(systemMonitor, /render\.memory\.limitBytes/);
+assert.match(systemMonitor, /Math\.round\(Number\(netTransfer\.mb\)/);
 assert.match(dashboard, /endDate: fmtDate\(now\)/);
 assert.match(dashboard, /fetchAndBuildRegionCatalog\(\)/);
 assert.match(dashboard, /group\.toLocaleLowerCase\('vi'\) !== label\.toLocaleLowerCase\('vi'\)/);

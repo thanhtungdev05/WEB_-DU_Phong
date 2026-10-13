@@ -472,6 +472,62 @@ function neon_project_metrics(array $project): array
     ];
 }
 
+/** @return array<string, int|string|null> */
+function neon_plan_allowances(?string $plan): array
+{
+    if (strtolower(trim((string)$plan)) !== 'free') {
+        return [
+            'computeLimitSeconds' => null,
+            'computeLimitHours' => null,
+            'dataTransferLimitBytes' => null,
+            'dataTransferLimitMb' => null,
+            'source' => null,
+        ];
+    }
+
+    // Neon currently exposes the account plan through GET /users/me, but not
+    // these Free Plan allowances in the project quota payload. Keep this
+    // fallback scoped to a verified Free account; API-provided quotas win.
+    // https://neon.com/blog/neon-free-plan-1-gb-per-project
+    // https://neon.com/blog/how-to-make-the-most-of-neons-free-plan
+    return [
+        'computeLimitSeconds' => 100 * 3600,
+        'computeLimitHours' => 100,
+        'dataTransferLimitBytes' => 5_000_000_000,
+        'dataTransferLimitMb' => 5000,
+        'source' => 'neon_free_plan_policy',
+    ];
+}
+
+function neon_current_plan(string $apiKey): ?string
+{
+    $response = neon_api_request('https://console.neon.tech/api/v2/users/me', $apiKey, 6);
+    $plan = $response['success'] ? trim((string)($response['data']['plan'] ?? '')) : '';
+    return $plan === '' ? null : strtolower($plan);
+}
+
+/** @return array<string, mixed> */
+function neon_apply_plan_allowances(array $metrics, ?string $plan): array
+{
+    $allowances = neon_plan_allowances($plan);
+    if (($metrics['computeLimitSeconds'] ?? null) === null
+        && $allowances['computeLimitSeconds'] !== null
+    ) {
+        $metrics['computeLimitSeconds'] = $allowances['computeLimitSeconds'];
+        $metrics['computeLimitHours'] = $allowances['computeLimitHours'];
+        $metrics['computeLimitSource'] = $allowances['source'];
+    } else {
+        $metrics['computeLimitSource'] = ($metrics['computeLimitSeconds'] ?? null) === null
+            ? null
+            : 'neon_project_api';
+    }
+    $metrics['dataTransferLimitBytes'] = $allowances['dataTransferLimitBytes'];
+    $metrics['dataTransferLimitMb'] = $allowances['dataTransferLimitMb'];
+    $metrics['dataTransferLimitSource'] = $allowances['source'];
+    $metrics['plan'] = $plan;
+    return $metrics;
+}
+
 /** @return array<string, mixed> */
 function neon_usage_unavailable(string $reason): array
 {
@@ -551,7 +607,10 @@ function neon_usage_metrics(): array
     }
 
     $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-    $metrics = neon_project_metrics($projectResponse['data']['project']);
+    $metrics = neon_apply_plan_allowances(
+        neon_project_metrics($projectResponse['data']['project']),
+        neon_current_plan($apiKey)
+    );
 
     $result = [
         'configured' => true,
