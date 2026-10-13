@@ -4068,6 +4068,11 @@
           user-select: none !important;
           animation: ftcGuidePopIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
+        .ftc-guide-bubble.ftc-guide-avoid-overlap {
+          max-width: min(240px, calc(100vw - 20px)) !important;
+          white-space: normal !important;
+          overflow-wrap: anywhere !important;
+        }
         .ftc-guide-bubble::before {
           content: '' !important;
           position: absolute !important;
@@ -4238,6 +4243,10 @@
     const hash = (doc && doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
     const topHref = (window.location && window.location.href) ? window.location.href.toLowerCase() : '';
     const fullUrl = href + ' ' + hash + ' ' + topHref;
+
+    // AX3000GZ V2 hiển nhiều bước cùng lúc. Lưu target để bố trí lại
+    // sau khi tất cả bubble đã có kích thước thực tế trong DOM.
+    const renderedGuides = [];
 
     // Render popups
     popups.forEach((pop, idx) => {
@@ -4427,7 +4436,13 @@
           : Math.max(12, Math.min(bWidth - 12, (targetLeft + targetW / 2) - calcLeft));
         bubble.style.setProperty('--arrow-left', Math.round(arrowX) + 'px');
       }
+
+      renderedGuides.push({ bubble, target, pop, index: idx });
     });
+
+    if (currentDeviceId === 'ax3000gz_v2') {
+      layoutGuidePopupsWithoutOverlap(doc, renderedGuides);
+    }
 
     // Dọn dẹp các bubble thừa khi danh sách popups ngắn hơn
     doc.querySelectorAll('.ftc-guide-bubble').forEach(b => {
@@ -4435,6 +4450,145 @@
       if (isNaN(gIndex) || gIndex >= popups.length) {
         b.remove();
       }
+    });
+  }
+
+  function layoutGuidePopupsWithoutOverlap(doc, guides) {
+    if (!doc || !doc.body || !Array.isArray(guides) || guides.length < 2) return;
+
+    const win = doc.defaultView || window;
+    const winW = win.innerWidth || doc.documentElement.clientWidth || 1024;
+    const winH = win.innerHeight || doc.documentElement.clientHeight || 768;
+    const margin = 6;
+    const gap = 10;
+    const collisionPadding = 4;
+    const bodyStyle = win.getComputedStyle(doc.body);
+    const offsetParent = bodyStyle && bodyStyle.position !== 'static' ? doc.body : doc.documentElement;
+    const parentRect = offsetParent.getBoundingClientRect();
+
+    const intersects = (a, b, padding) => (
+      a.left < b.right + padding &&
+      a.right > b.left - padding &&
+      a.top < b.bottom + padding &&
+      a.bottom > b.top - padding
+    );
+
+    const visibleRect = element => {
+      if (!element || element.offsetParent === null) return null;
+      const rect = element.getBoundingClientRect();
+      if (!rect || rect.width <= 0 || rect.height <= 0) return null;
+      if (rect.bottom < 0 || rect.top > winH || rect.right < 0 || rect.left > winW) return null;
+      return rect;
+    };
+
+    // Không cho tooltip che các ô mà KTV cần nhập/chọn hoặc nút thao tác.
+    const controlRects = Array.from(doc.querySelectorAll(
+      'input:not([type="hidden"]), select, textarea, button, [contenteditable="true"]'
+    )).map(visibleRect).filter(Boolean);
+
+    const occupied = [];
+    const ordered = guides
+      .filter(item => item && item.bubble && item.target && item.bubble.style.display !== 'none')
+      .sort((a, b) => {
+        const ar = a.target.getBoundingClientRect();
+        const br = b.target.getBoundingClientRect();
+        return ar.top - br.top || ar.left - br.left || a.index - b.index;
+      });
+
+    const makeRect = (left, top, width, height) => ({
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height
+    });
+
+    const clampCandidate = (left, top, width, height) => makeRect(
+      Math.max(margin, Math.min(left, winW - width - margin)),
+      Math.max(margin, Math.min(top, winH - height - margin)),
+      width,
+      height
+    );
+
+    const isFree = candidate => (
+      !controlRects.some(rect => intersects(candidate, rect, collisionPadding)) &&
+      !occupied.some(rect => intersects(candidate, rect, collisionPadding))
+    );
+
+    ordered.forEach(item => {
+      const bubble = item.bubble;
+      const targetRect = item.target.getBoundingClientRect();
+      bubble.classList.add('ftc-guide-avoid-overlap');
+
+      const width = bubble.offsetWidth || 180;
+      const height = bubble.offsetHeight || 30;
+      const centerX = targetRect.left + targetRect.width / 2;
+      const centerY = targetRect.top + targetRect.height / 2;
+      const preferred = item.pop.position || 'right';
+      const positions = [preferred, 'right', 'left', 'top', 'bottom']
+        .filter((value, index, all) => all.indexOf(value) === index);
+
+      const candidates = [];
+      positions.forEach(position => {
+        if (position === 'right') {
+          candidates.push({ position, rect: clampCandidate(targetRect.right + gap, centerY - height / 2, width, height) });
+        } else if (position === 'left') {
+          candidates.push({ position, rect: clampCandidate(targetRect.left - width - gap, centerY - height / 2, width, height) });
+        } else if (position === 'top') {
+          candidates.push({ position, rect: clampCandidate(centerX - width / 2, targetRect.top - height - gap, width, height) });
+        } else if (position === 'bottom') {
+          candidates.push({ position, rect: clampCandidate(centerX - width / 2, targetRect.bottom + gap, width, height) });
+        }
+      });
+
+      // Nếu bốn vị trí sát target đều bận, tìm khe trống gần nhất theo
+      // các dải trái/phải. Cách này xử lý cả hai tooltip cùng một hàng
+      // (cổng bắt đầu/kết thúc) mà không đẩy chúng lên ô nhập khác.
+      const railXs = [
+        winW - width - margin,
+        margin,
+        targetRect.right + gap,
+        targetRect.left - width - gap
+      ];
+      for (let distance = 0; distance <= winH; distance += Math.max(8, height + 6)) {
+        const ys = distance === 0
+          ? [centerY - height / 2]
+          : [centerY - height / 2 - distance, centerY - height / 2 + distance];
+        railXs.forEach(left => {
+          ys.forEach(top => {
+            const rect = clampCandidate(left, top, width, height);
+            const position = rect.right <= targetRect.left ? 'left'
+              : (rect.left >= targetRect.right ? 'right'
+                : (rect.bottom <= targetRect.top ? 'top' : 'bottom'));
+            candidates.push({ position, rect });
+          });
+        });
+      }
+
+      let selected = candidates.find(candidate => isFree(candidate.rect));
+      if (!selected) {
+        // Trường hợp viewport quá chật: vẫn tách tooltip khỏi nhau;
+        // control được ưu tiên bằng cách chọn vị trí có số va chạm ít nhất.
+        selected = candidates
+          .map(candidate => ({
+            ...candidate,
+            collisions: controlRects.filter(rect => intersects(candidate.rect, rect, collisionPadding)).length
+              + occupied.filter(rect => intersects(candidate.rect, rect, collisionPadding)).length * 100
+          }))
+          .sort((a, b) => a.collisions - b.collisions)[0];
+      }
+      if (!selected) return;
+
+      bubble.className = `ftc-guide-bubble ftc-guide-avoid-overlap pos-${selected.position}`;
+      bubble.style.left = Math.round(selected.rect.left - parentRect.left) + 'px';
+      bubble.style.top = Math.round(selected.rect.top - parentRect.top) + 'px';
+
+      if (selected.position === 'top' || selected.position === 'bottom') {
+        const arrowX = Math.max(12, Math.min(width - 12, centerX - selected.rect.left));
+        bubble.style.setProperty('--arrow-left', Math.round(arrowX) + 'px');
+      }
+      occupied.push(selected.rect);
     });
   }
 

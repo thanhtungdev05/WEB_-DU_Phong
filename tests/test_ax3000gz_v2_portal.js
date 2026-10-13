@@ -214,6 +214,22 @@ assert.ok(
   appJs.includes('_ftcGuideBurstSyncTimer'),
   'AX3000GZ V2 must refresh guide popups immediately after AJAX-triggering clicks'
 );
+assert.ok(
+  appJs.includes("if (currentDeviceId === 'ax3000gz_v2') {\n      layoutGuidePopupsWithoutOverlap(doc, renderedGuides);"),
+  'collision-safe tooltip layout must stay scoped to AX3000GZ V2'
+);
+assert.ok(
+  appJs.includes('function layoutGuidePopupsWithoutOverlap(doc, guides)'),
+  'AX3000GZ V2 must lay out simultaneous tooltips as one collision-aware group'
+);
+assert.ok(
+  appJs.includes("'input:not([type=\"hidden\"]), select, textarea, button, [contenteditable=\"true\"]'"),
+  'tooltip collision detection must protect editable fields and action controls'
+);
+assert.ok(
+  appJs.includes('!occupied.some(rect => intersects(candidate, rect, collisionPadding))'),
+  'tooltip collision detection must keep visible guide bubbles apart'
+);
 
 // Mỗi lần chuyển menu, firmware bật lớp chờ trước khi gọi AJAX. Lớp này phải
 // được tắt ngay ở nhánh thành công; nếu không trang đã render nhưng toàn bộ
