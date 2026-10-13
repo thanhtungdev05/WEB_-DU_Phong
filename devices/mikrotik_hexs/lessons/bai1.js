@@ -163,15 +163,9 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   subtitle: 'Cấu hình quay số PPPoE trên MikroTik',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Cấu hình quay số PPPoE trên router MikroTik hEX S',
-    '<b>Mô hình:</b> SFU kết nối với Router qua cổng Ethernet1',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
-    '- Vào menu <b>PPP</b>, nhấn đúp vào giao diện <b>pppoe-out1</b>',
-    '- Mở rộng mục <b>Dial Out</b>',
+    'Cấu hình quay số PPPoE trên router MikroTik',
     '- User: <span class="val">sgfdl-211208-218</span>',
-    '- Password: <span class="val">ftc1234</span>',
-    '- Nhấn <b>OK</b> để lưu cấu hình'
+    '- Password: <span class="val">ftc1234</span>'
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
   grading: {
@@ -203,9 +197,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         } catch (e) {}
       }
 
-      // Bấm OK xong WebFig TỰ ĐÓNG trang chi tiết (quay về #PPP) nên lúc chấm
-      // thường không còn DOM để đọc -> lấy bản chụp đã lưu trong onSimSave.
-      const banChup = window._FTC_MK_BAI1 || null;
+      // Cả hai nút Apply và OK đều lưu cấu hình; nếu trang chi tiết đóng thì lấy bản chụp đã lưu.
+      const banChup = window._FTC_MK_BAI1 || window._FTC_MK_BAI1_LIVE || null;
 
       if (!doc && !banChup) {
         return {
@@ -236,7 +229,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         let loi;
         if (dat) loi = 'Chính xác';
         else if (gt === null || gt === undefined) loi = 'Chưa mở mục chứa ô này nên không đọc được giá trị';
-        else if (!daLuu) loi = 'Chưa nhấn OK để lưu cấu hình';
+        else if (!daLuu) loi = 'Chưa nhấn Apply/OK để lưu cấu hình';
         else if (muc.deBai) loi = 'Giá trị không đúng yêu cầu đề bài';
         else loi = 'Đây là giá trị mặc định, không được thay đổi';
 
@@ -270,26 +263,56 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       if (doc && doc.querySelector('input#name') && doc.querySelector('input#password')) {
         // Đang ở màn đăng nhập = lượt làm bài mới: xoá bản chụp cũ và gọi máy
         // chủ đặt lại User/Password về mặc định fpt/123.
-        // PHẢI đặt lại ở MÁY CHỦ, không đặt được bằng JS: WebFig đồng bộ liên
-        // tục nên mọi thay đổi phía trình duyệt bị ghi đè lại sau ~4 giây
-        // (đã đo thực tế 2026-09-18).
         window._FTC_MK_BAI1 = null;
+        window._FTC_MK_BAI1_LIVE = null;
         simWin._ftcMkBai1DaDatLai = false;
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=1'); } catch (e) {}
       }
       mkBai1CaiTheoDoi(simWin);
+
+      if (!simWin._ftcMkBai1BatNutLuu) {
+        simWin._ftcMkBai1BatNutLuu = true;
+        simWin.setInterval(function () {
+          try {
+            const d = simWin.document;
+            if (d && mkBai1HangTheoNhan(d, 'Name')) {
+              const live = mkBai1ChupTatCa(d);
+              if (live) window._FTC_MK_BAI1_LIVE = live;
+            }
+          } catch (e) {}
+        }, 400);
+
+        const batNutLuu = function (e) {
+          try {
+            let el = e.target;
+            while (el && el !== simWin.document) {
+              if (el.tagName === 'A' && (el.textContent || '').trim().toLowerCase().match(/^(ok|apply)$/)) {
+                const d = simWin.document;
+                if (d) {
+                  d._ftcIsSaved = true;
+                  window._hasClickedSaveInGuide = true;
+                  const snapshot = mkBai1ChupTatCa(d);
+                  if (snapshot) window._FTC_MK_BAI1 = snapshot;
+                }
+                break;
+              }
+              el = el.parentNode;
+            }
+          } catch (ex) {}
+        };
+        simWin.document.addEventListener('pointerdown', batNutLuu, true);
+        simWin.document.addEventListener('click', batNutLuu, true);
+      }
     } catch (e) {}
   },
 
   /**
-   * Chụp lại User/Password NGAY LÚC bấm OK. Bắt buộc phải có: sau khi bấm OK,
-   * WebFig tự đóng trang chi tiết và quay về danh sách #PPP, lúc chấm điểm sẽ
-   * không còn ô nào để đọc nữa.
+   * Chụp lại cấu hình ngay lúc bấm Apply/OK.
    */
   onSimSave: function (simWin) {
     try {
       const doc = simWin.document;
-      const ban = mkBai1ChupTatCa(doc);
+      const ban = mkBai1ChupTatCa(doc) || window._FTC_MK_BAI1_LIVE;
       if (ban) window._FTC_MK_BAI1 = ban;
     } catch (e) {}
   },

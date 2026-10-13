@@ -22,6 +22,22 @@ function mkBai1ManDangNhap(doc) {
   } catch (e) { return false; }
 }
 
+/** Đang ở màn hình Quick Set (chưa bấm WebFig)? */
+function mkBai1OQuickSet(doc) {
+  try {
+    if (mkBai1ManDangNhap(doc)) return false;
+    const h = mkBai1Hash(doc);
+    if (h.indexOf('Quick') !== -1 || h === '' || h === '#') return true;
+    const qsItem = doc.getElementById('id_Quick_Set');
+    if (qsItem && (qsItem.classList.contains('opened') || qsItem.classList.contains('active'))) return true;
+    const btnWebFig = doc.getElementById('id_WebFig');
+    if (btnWebFig && !btnWebFig.classList.contains('opened')) return true;
+    const aPPP = doc.querySelector('#menu a#id_PPP, a#id_PPP, #menu a[href="#PPP"]');
+    if (!aPPP || aPPP.offsetParent === null) return true;
+  } catch (e) {}
+  return false;
+}
+
 /** Đang ở trang chi tiết một interface? (trang này có hàng nhãn "Name") */
 function mkBai1OTrangChiTiet(doc) {
   try {
@@ -97,17 +113,25 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai1'] = [
 
   // ── Các bước cấu hình ──────────────────────────────────────────────
   {
-    selector: 'text:PPP',
-    text: 'Bước 1: chọn PPP',
+    selector: '#id_WebFig, a#id_WebFig, text:WebFig',
+    text: 'Bước 1: chọn WebFig',
+    position: 'bottom',
+    condition: function (doc) {
+      return !mkBai1ManDangNhap(doc) && mkBai1OQuickSet(doc);
+    }
+  },
+  {
+    selector: '#menu a#id_PPP, a#id_PPP, #id_PPP, #menu a[href="#PPP"], #menu li:has-text("PPP")',
+    text: 'Bước 2: chọn PPP',
     position: 'right',
     condition: function (doc) {
-      return !mkBai1ManDangNhap(doc) && !mkBai1OTrangChiTiet(doc)
-        && !mkBai1OTrangDanhSachPPP(doc);
+      return !mkBai1ManDangNhap(doc) && !mkBai1OQuickSet(doc)
+        && !mkBai1OTrangChiTiet(doc) && !mkBai1OTrangDanhSachPPP(doc);
     }
   },
   {
     selector: 'text:pppoe-out1',
-    text: 'Bước 2: nhấn đúp vào dòng pppoe-out1',
+    text: 'Bước 3: nhấn đúp vào dòng pppoe-out1',
     position: 'right',
     condition: function (doc) {
       return !mkBai1OTrangChiTiet(doc) && mkBai1OTrangDanhSachPPP(doc);
@@ -115,7 +139,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai1'] = [
   },
   {
     selector: 'text:Dial Out',
-    text: 'Bước 3: nhấn Dial Out để mở rộng',
+    text: 'Bước 4: nhấn Dial Out để mở rộng',
     position: 'right',
     condition: function (doc) {
       return mkBai1OTrangChiTiet(doc) && !mkBai1DialOutDaMo(doc);
@@ -123,20 +147,20 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai1'] = [
   },
   {
     selector: '#ftc-mk-user, tr:has-text("User") input',
-    text: 'Bước 4: nhập sgfdl-211208-218',
+    text: 'Bước 5: nhập sgfdl-211208-218',
     position: 'right',
     condition: function (doc) { return mkBai1DialOutDaMo(doc); }
   },
   {
     selector: '#ftc-mk-pass, tr:has-text("Password") input',
-    text: 'Bước 5: nhập ftc1234',
+    text: 'Bước 6: nhập ftc1234',
     position: 'right',
     condition: function (doc) { return mkBai1DialOutDaMo(doc); }
   },
   {
     // Dời sang phải để không che nút OK (anh Huynn yêu cầu 2026-09-18).
     selector: 'text:OK',
-    text: 'Bước 6: nhấn Apply để lưu',
+    text: 'Bước 7: nhấn Apply để lưu',
     position: 'left',
     offsetX: -120,
     condition: function (doc) { return mkBai1DialOutDaMo(doc); }

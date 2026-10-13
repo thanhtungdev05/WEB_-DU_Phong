@@ -188,13 +188,13 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     {
       selector: 'a[href*="gotoDetailSet(1)"], tr.row0 td:first-child a',
       text: 'Bước 3: chọn 1',
-      position: 'left',
+      position: 'right',
       page: 'policyrt1'
     },
     {
       selector: 'input[name="iPREnable"]',
       text: 'Bước 4: check vào Enable',
-      position: 'left',
+      position: 'right',
       page: 'v2x00.cgi'
     },
     {
@@ -230,7 +230,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     {
       selector: 'input[name="iPRFailover"]',
       text: 'Bước 10: check vào Failover to',
-      position: 'left',
+      position: 'right',
       page: 'v2x00.cgi'
     },
     {
@@ -242,7 +242,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     {
       selector: '#image_option, td[onclick*="onClkMoreoption"]',
       text: 'Bước 12: click vào + Priority',
-      position: 'left',
+      position: 'right',
       page: 'v2x00.cgi'
     },
     {
@@ -254,7 +254,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     {
       selector: 'input[name="iPRFailback"]',
       text: 'Bước 14: check vào Failback',
-      position: 'left',
+      position: 'right',
       page: 'v2x00.cgi'
     },
     {

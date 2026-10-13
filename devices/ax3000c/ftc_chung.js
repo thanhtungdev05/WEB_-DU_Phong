@@ -17,24 +17,24 @@ window.FTC_AX3000C = window.FTC_AX3000C || {};
   F.nut = function (chu) { return '.el-main button[data-ftc-nut="' + chu + '"]'; };
   F.cot = function (cot) { return '.el-table__body td[data-ftc-cot="' + cot + '"] input'; };
 
-  // 3 bước chọn menu trái: nhóm Network -> nhóm con -> mục trang
+  // 3 bước chọn menu trái: nhóm Network -> nhóm con -> mục trang (Bước 1 -> Bước 3)
   F.menu = function (nhomCon, muc, trang, chuNhomCon, chuMuc) {
     return [
       {
         selector: 'li.el-submenu:not(.is-opened) > .el-submenu__title[data-ftc-menu="Network"]',
-        text: 'Chọn Network',
+        text: 'Bước 1: Chọn Network',
         position: 'right',
         hideOnPage: trang
       },
       {
         selector: 'li.el-submenu.is-opened li.el-submenu:not(.is-opened) > .el-submenu__title[data-ftc-menu="' + nhomCon + '"]',
-        text: 'Chọn ' + (chuNhomCon || nhomCon),
+        text: 'Bước 2: Chọn ' + (chuNhomCon || nhomCon),
         position: 'right',
         hideOnPage: trang
       },
       {
         selector: 'li.el-submenu.is-opened li.el-submenu.is-opened li.el-menu-item[data-ftc-menu="' + muc + '"]',
-        text: 'Chọn ' + (chuMuc || muc),
+        text: 'Bước 3: Chọn ' + (chuMuc || muc),
         position: 'right',
         hideOnPage: trang
       }

@@ -129,12 +129,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   instructions: [
     '<b>Yêu cầu:</b>',
     'Rút gọn danh sách máy chủ DNS của router, chỉ dùng DNS của Google',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
-    '- Vào <b>IP > DNS</b>',
-    '- Tại ô <b>Servers</b>, xoá 4 máy chủ: <span class="val">1.1.1.1</span>, <span class="val">1.0.0.1</span>, <span class="val">2606:4700:4700::1111</span>, <span class="val">2606:4700:4700::1001</span>',
-    '- Giữ lại 4 máy chủ: <span class="val">8.8.8.8</span>, <span class="val">8.8.4.4</span>, <span class="val">2001:4860:4860::8888</span>, <span class="val">2001:4860:4860::8844</span>',
-    '- Các thông số còn lại giữ nguyên mặc định, sau đó nhấn <b>Apply</b> để lưu.'
+    '- Xoá 4 máy chủ Cloudflare: <span class="val">1.1.1.1</span>, <span class="val">1.0.0.1</span>, <span class="val">2606:4700:4700::1111</span>, <span class="val">2606:4700:4700::1001</span>',
+    '- Giữ lại 4 máy chủ Google: <span class="val">8.8.8.8</span>, <span class="val">8.8.4.4</span>, <span class="val">2001:4860:4860::8888</span>, <span class="val">2001:4860:4860::8844</span>'
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
   grading: {
@@ -150,8 +146,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         } catch (e) {}
       }
 
-      const banChup = window._FTC_MK_BAI5 || null;
-      const daLuu = !!window._FTC_MK_BAI5_SAVED;
+      const banChup = window._FTC_MK_BAI5 || window._FTC_MK_BAI5_LIVE || null;
+      const daLuu = !!(window._FTC_MK_BAI5_SAVED || banChup || (doc && doc._ftcIsSaved) || window._hasClickedSaveInGuide);
 
       if (!doc && !banChup) {
         const tong = MK_BAI5_CHUAN.length + MK_BAI5_PHAI_XOA.length + 1;
@@ -255,6 +251,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       const doc = simWin.document;
       if (doc && doc.querySelector('input#name') && doc.querySelector('input#password')) {
         window._FTC_MK_BAI5 = null;
+        window._FTC_MK_BAI5_LIVE = null;
         window._FTC_MK_BAI5_SAVED = false;
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=5'); } catch (e) {}
       }
@@ -265,18 +262,49 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
             if (typeof mkBai5CaiTheoDoi === 'function') {
               mkBai5CaiTheoDoi(simWin.document);
             }
+            const d = simWin.document;
+            if (d && typeof mkBai5OTrangDNS === 'function' && mkBai5OTrangDNS(d)) {
+              const live = mkBai5ChupTatCa(d);
+              if (live) window._FTC_MK_BAI5_LIVE = live;
+            }
           } catch (e) {}
-        }, 500);
+        }, 400);
+
+        const batNutLuu = function (e) {
+          try {
+            let el = e.target;
+            while (el && el !== simWin.document) {
+              const txt = (el.textContent || el.value || '').trim().toLowerCase();
+              if (el.tagName === 'A' && txt.match(/^(ok|apply)$/)) {
+                const d = simWin.document;
+                if (d) {
+                  d._ftcIsSaved = true;
+                  window._hasClickedSaveInGuide = true;
+                  const snapshot = mkBai5ChupTatCa(d);
+                  if (snapshot) {
+                    window._FTC_MK_BAI5 = snapshot;
+                    window._FTC_MK_BAI5_SAVED = true;
+                  }
+                }
+                break;
+              }
+              el = el.parentNode;
+            }
+          } catch (ex) {}
+        };
+        simWin.document.addEventListener('pointerdown', batNutLuu, true);
+        simWin.document.addEventListener('click', batNutLuu, true);
       }
     } catch (e) {}
   },
 
-  /** Chụp giá trị NGAY LÚC bấm Apply (phòng khi học viên rời trang rồi mới nộp). */
+  /** Chụp giá trị NGAY LÚC bấm Apply/OK. */
   onSimSave: function (simWin) {
     try {
       const doc = simWin.document;
-      if (typeof mkBai5OTrangDNS !== 'function' || !mkBai5OTrangDNS(doc)) return;
-      const ban = mkBai5ChupTatCa(doc);
+      const ban = (doc && typeof mkBai5OTrangDNS === 'function' && mkBai5OTrangDNS(doc))
+        ? mkBai5ChupTatCa(doc)
+        : (window._FTC_MK_BAI5_LIVE || null);
       if (ban) {
         window._FTC_MK_BAI5 = ban;
         window._FTC_MK_BAI5_SAVED = true;

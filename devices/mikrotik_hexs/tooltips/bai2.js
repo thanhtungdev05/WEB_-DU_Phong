@@ -15,6 +15,22 @@ function mkBai2Hash(doc) {
   try { return (doc.location && doc.location.hash) || ''; } catch (e) { return ''; }
 }
 
+/** Đang ở màn hình Quick Set (chưa bấm WebFig)? */
+function mkBai2OQuickSet(doc) {
+  try {
+    if (mkBai2ManDangNhap(doc)) return false;
+    const h = mkBai2Hash(doc);
+    if (h.indexOf('Quick') !== -1 || h === '' || h === '#') return true;
+    const qsItem = doc.getElementById('id_Quick_Set');
+    if (qsItem && (qsItem.classList.contains('opened') || qsItem.classList.contains('active'))) return true;
+    const btnWebFig = doc.getElementById('id_WebFig');
+    if (btnWebFig && !btnWebFig.classList.contains('opened')) return true;
+    const aQueues = doc.querySelector('#id_Queues, a#id_Queues, #menu a[href*="Queues"]');
+    if (!aQueues || aQueues.offsetParent === null) return true;
+  } catch (e) {}
+  return false;
+}
+
 /** Đang ở trang chi tiết tạo/sửa Simple Queue (Hình 5, có nhãn "Max Limit" trong bảng cấu hình)? */
 function mkBai2OTrangNewQueue(doc) {
   try {
@@ -89,30 +105,41 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
     condition: function (doc) { return mkBai2ManDangNhap(doc); }
   },
 
-  // ── Bước 1: chọn Queues (Hình 3) ──────────────────────────────────
+  // ── Bước 1: chọn WebFig ───────────────────────────────────────────
   {
-    selector: '#id_Queues span, a#id_Queues, #id_Queues, text:Queues',
-    text: 'Bước 1: chọn Queues',
-    position: 'right',
+    selector: '#id_WebFig, a#id_WebFig, text:WebFig',
+    text: 'Bước 1: chọn WebFig',
+    position: 'bottom',
     condition: function (doc) {
-      return !mkBai2ManDangNhap(doc) && !mkBai2OTrangDanhSachQueues(doc) && !mkBai2OTrangNewQueue(doc);
+      return !mkBai2ManDangNhap(doc) && mkBai2OQuickSet(doc);
     }
   },
 
-  // ── Bước 2: chọn Add New (Hình 4) ─────────────────────────────────
+  // ── Bước 2: chọn Queues (Hình 3) ──────────────────────────────────
+  {
+    selector: '#id_Queues span, a#id_Queues, #id_Queues, text:Queues',
+    text: 'Bước 2: chọn Queues',
+    position: 'right',
+    condition: function (doc) {
+      return !mkBai2ManDangNhap(doc) && !mkBai2OQuickSet(doc)
+        && !mkBai2OTrangDanhSachQueues(doc) && !mkBai2OTrangNewQueue(doc);
+    }
+  },
+
+  // ── Bước 3: chọn Add New (Hình 4) ─────────────────────────────────
   {
     selector: 'a.button:has-text("Add New"), a[draggable="false"]:has-text("Add New"), text:Add New',
-    text: 'Bước 2: chọn Add New',
+    text: 'Bước 3: chọn Add New',
     position: 'bottom',
     condition: function (doc) {
       return mkBai2OTrangDanhSachQueues(doc);
     }
   },
 
-  // ── Bước 3: nhập under_5M (Hình 5) ────────────────────────────────
+  // ── Bước 4: nhập under_5M (Hình 5) ────────────────────────────────
   {
     selector: '#ftc-mk2-name, tr:has-text("Name") input',
-    text: 'Bước 3: nhập under_5M',
+    text: 'Bước 4: nhập under_5M',
     position: 'right',
     condition: function (doc) {
       mkBai2CaiTheoDoi(doc);
@@ -120,10 +147,10 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
     }
   },
 
-  // ── Bước 4: chọn Target<br>nhập 192.168.1.0/24 (Hình 5) ─────────
+  // ── Bước 5: chọn Target<br>nhập 192.168.1.0/24 (Hình 5) ─────────
   {
     selector: '#ftc-mk2-target-inp, #ftc-mk2-target-btn, #ftc-mk2-target-lbl, #ftc-mk2-target, text:Target',
-    text: 'Bước 4: chọn Target<br>nhập 192.168.1.0/24',
+    text: 'Bước 5: chọn Target<br>nhập 192.168.1.0/24',
     position: 'left',
     condition: function (doc) {
       mkBai2CaiTheoDoi(doc);
@@ -131,10 +158,10 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
     }
   },
 
-  // ── Bước 5: nhập 2M (Hình 5) ──────────────────────────────────────
+  // ── Bước 6: nhập 2M (Hình 5) ──────────────────────────────────────
   {
     selector: '#ftc-mk2-upload-limit, tr:has-text("Max Limit") td.tvalue input, tr:has-text("Max Limit") input',
-    text: 'Bước 5: nhập 2M',
+    text: 'Bước 6: nhập 2M',
     position: 'bottom',
     condition: function (doc) {
       mkBai2CaiTheoDoi(doc);
@@ -142,10 +169,10 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
     }
   },
 
-  // ── Bước 6: nhập 5M (Hình 5) ──────────────────────────────────────
+  // ── Bước 7: nhập 5M (Hình 5) ──────────────────────────────────────
   {
     selector: '#ftc-mk2-download-limit, tr:has-text("Max Limit") td.value input',
-    text: 'Bước 6: nhập 5M',
+    text: 'Bước 7: nhập 5M',
     position: 'bottom',
     condition: function (doc) {
       mkBai2CaiTheoDoi(doc);
@@ -153,10 +180,10 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
     }
   },
 
-  // ── Bước 7: nhấn Apply và OK để lưu (Hình 5) ─────────────────────
+  // ── Bước 8: nhấn Apply và OK để lưu (Hình 5) ─────────────────────
   {
     selector: 'text:OK',
-    text: 'Bước 7: nhấn Apply và OK để lưu',
+    text: 'Bước 8: nhấn Apply và OK để lưu',
     position: 'top',
     condition: function (doc) {
       return mkBai2OTrangNewQueue(doc);

@@ -186,12 +186,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   instructions: [
     '<b>Yêu cầu:</b>',
     'Đổi lớp mạng LAN của router MikroTik hEX S sang 192.168.10.0/24',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
-    '- Vào <b>IP > DHCP Server</b>, tab <b>Networks</b>, sửa rule đầu tiên:',
-    '&nbsp;&nbsp;Address: <span class="val">192.168.10.0/24</span>, Gateway: <span class="val">192.168.10.1</span>',
-    '- Vào <b>IP > Addresses</b>, sửa item của <b>bridge-LAN</b>:',
-    '&nbsp;&nbsp;Address: <span class="val">192.168.10.1/24</span>, Network: <span class="val">192.168.10.0</span>'
+    '- DHCP Server > Networks: Address <span class="val">192.168.10.0/24</span>, Gateway <span class="val">192.168.10.1</span>',
+    '- IP > Addresses (bridge-LAN): Address <span class="val">192.168.10.1/24</span>, Network <span class="val">192.168.10.0</span>'
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
   grading: {
@@ -212,8 +208,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       }
 
       const banChup = window._FTC_MK_BAI4 || { networks: null, addresses: null };
-      const netDaLuu = !!window._FTC_MK_BAI4_NETWORKS_SAVED;
-      const addrDaLuu = !!window._FTC_MK_BAI4_ADDRESSES_SAVED;
+      const netDaLuu = !!(window._FTC_MK_BAI4_NETWORKS_SAVED || (banChup && banChup.networks) || (docNet && docNet._ftcIsSaved));
+      const addrDaLuu = !!(window._FTC_MK_BAI4_ADDRESSES_SAVED || (banChup && banChup.addresses) || (docAddr && docAddr._ftcIsSaved));
 
       function chamNhom(tienTo, dsChuan, doc, daLuu, banChupNhom) {
         return dsChuan.map(function (muc, idx) {
@@ -224,7 +220,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
           let loi;
           if (dat) loi = 'Chính xác';
           else if (gt === null || gt === undefined) loi = 'Chưa mở trang này nên không đọc được giá trị';
-          else if (!daLuu) loi = 'Chưa nhấn OK để lưu cấu hình';
+          else if (!daLuu) loi = 'Chưa nhấn Apply/OK để lưu cấu hình';
           else if (muc.deBai) loi = 'Giá trị không đúng yêu cầu đề bài';
           else loi = 'Đây là giá trị mặc định, không được thay đổi';
 
@@ -306,33 +302,62 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=4'); } catch (e) {}
       }
       mkBai4CaiTheoDoi(simWin);
+
+      if (!simWin._ftcMkBai4BatNutLuu) {
+        simWin._ftcMkBai4BatNutLuu = true;
+
+        simWin.setInterval(function () {
+          try {
+            const d = simWin.document;
+            if (!window._FTC_MK_BAI4) window._FTC_MK_BAI4 = { networks: null, addresses: null };
+            if (d && mkBai4LaTrangNetworks(d)) {
+              const liveNet = mkBai4ChupNhom(d, MK_BAI4_CHUAN_NETWORKS);
+              if (liveNet) window._FTC_MK_BAI4.networks = liveNet;
+            } else if (d && mkBai4LaTrangAddresses(d)) {
+              const liveAddr = mkBai4ChupNhom(d, MK_BAI4_CHUAN_ADDRESSES);
+              if (liveAddr) window._FTC_MK_BAI4.addresses = liveAddr;
+            }
+          } catch (e) {}
+        }, 400);
+
+        const batNutLuu = function (e) {
+          try {
+            let el = e.target;
+            while (el && el !== simWin.document) {
+              if (el.tagName === 'A' && (el.textContent || '').trim().toLowerCase().match(/^(ok|apply)$/)) {
+                const d = simWin.document;
+                if (d) {
+                  d._ftcIsSaved = true;
+                  window._hasClickedSaveInGuide = true;
+                  if (!window._FTC_MK_BAI4) window._FTC_MK_BAI4 = { networks: null, addresses: null };
+                  if (mkBai4LaTrangNetworks(d)) {
+                    const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_NETWORKS);
+                    if (ban) {
+                      window._FTC_MK_BAI4.networks = ban;
+                      window._FTC_MK_BAI4_NETWORKS_SAVED = true;
+                    }
+                  } else if (mkBai4LaTrangAddresses(d)) {
+                    const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_ADDRESSES);
+                    if (ban) {
+                      window._FTC_MK_BAI4.addresses = ban;
+                      window._FTC_MK_BAI4_ADDRESSES_SAVED = true;
+                    }
+                  }
+                }
+                break;
+              }
+              el = el.parentNode;
+            }
+          } catch (ex) {}
+        };
+        simWin.document.addEventListener('pointerdown', batNutLuu, true);
+        simWin.document.addEventListener('click', batNutLuu, true);
+      }
     } catch (e) {}
   },
 
   /**
-   * Chụp lại giá trị NGAY LÚC bấm OK (trang tự đóng ngay sau đó).
-   *
-   * QUAN TRỌNG — cạm bẫy riêng của MikroTik (SPA, không có Bài nào trước đó
-   * gặp phải vì mọi thiết bị khác đều TẢI LẠI TRANG thật giữa các bước):
-   * `app.js` có `applyGuidePopups()` — hễ cờ chặn tooltip là true thì KHOÁ
-   * CỨNG, không hiện tooltip nào nữa (`app.js` dòng ~2092). Cờ này thường tự
-   * về false nhờ các sự kiện input/change phát sinh khi trang TẢI LẠI THẬT
-   * (Vigor/DrayTek). MikroTik dùng chung 1 document/window suốt phiên (SPA,
-   * hash-only navigation) nên KHÔNG BAO GIỜ tự về false — nếu không tự đặt
-   * lại, tooltip Bước 7 trở đi sẽ vĩnh viễn không hiện sau khi lưu trang đầu
-   * tiên (đã đo thật, tái hiện lỗi này 2026-09-18).
-   *
-   * ⚠️ SỬA LẠI 2026-09-19 (anh Huynn báo lại): bản đầu đặt lại thẳng
-   * `window._hasClickedSaveInGuide` — nhưng `app.js` CŨNG dùng ĐÚNG cờ này
-   * (interval 400ms, dòng ~710) để quyết định nút "Xem lỗi sai" có được BẬT
-   * (đỏ, bấm được) hay TẮT (xám) — 2 mục đích khác nhau dùng chung 1 cờ. Hậu
-   * quả: bấm Apply sai ➔ nút lỗi hiện đỏ đúng 1 nhịp ➔ 200ms sau bị đặt lại
-   * `false` ➔ nút TỰ TẮT XÁM NGAY LẬP TỨC, không kịp bấm xem chi tiết lỗi.
-   * Nay dùng CỜ RIÊNG `window._ftcMkChanTooltip` (chỉ `app.js` dùng cho
-   * MikroTik, xem `applyGuidePopups()`) — không còn đụng đến
-   * `_hasClickedSaveInGuide` nữa nên nút "Xem lỗi sai"/"Nộp bài" phản ánh
-   * đúng liên tục theo `customGrading`, không tắt/chớp bất ngờ. Điểm số vẫn
-   * dùng cờ RIÊNG (`_FTC_MK_BAI4_..._SAVED`), không phụ thuộc cờ nào ở đây.
+   * Chụp lại giá trị NGAY LÚC bấm OK/Apply.
    */
   onSimSave: function (simWin) {
     try {

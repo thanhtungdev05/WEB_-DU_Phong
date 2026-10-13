@@ -12,7 +12,7 @@ if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
   window.TOOLTIPS_AX3000C['LAB_AX3000CV2_06'] = F.menu('Access', 'Port Forwarding', 'network/portfwd').concat([
     {
       selector: F.nut('Add'),
-      text: 'Bước 1: chọn Add để thêm rule',
+      text: 'Bước 4: chọn Add để thêm rule',
       position: 'bottom',
       page: 'network/portfwd'
     },
@@ -20,38 +20,38 @@ if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
     // Đặt phía trên để không che nút Add; chỉ hiện khi công tắc còn tắt.
     {
       selector: '.el-table__body td[data-ftc-cot="Enable"] .el-switch:not(.is-checked)',
-      text: 'Bước 2: Bật Enable',
+      text: 'Bước 5: Bật Enable',
       position: 'top',
       page: 'network/portfwd'
     },
-    // Bước 3–6 cùng một hàng, trỏ thẳng vào ô (chữ đã ngắn nên không đè nhau)
+    // Bước 6–9 cùng một hàng, trỏ thẳng vào ô (chữ đã ngắn nên không đè nhau)
     {
       selector: F.cot('Protocol'),
-      text: 'Bước 3: chọn TCP+UDP',
+      text: 'Bước 6: chọn TCP+UDP',
       position: 'bottom',
       page: 'network/portfwd'
     },
     {
       selector: F.cot('External port'),
-      text: 'Bước 4: nhập 8080',
+      text: 'Bước 7: nhập 8080',
       position: 'bottom',
       page: 'network/portfwd'
     },
     {
       selector: F.cot('Device/IP'),
-      text: 'Bước 5: nhập 192.168.100.109',
+      text: 'Bước 8: nhập 192.168.100.109',
       position: 'bottom',
       page: 'network/portfwd'
     },
     {
       selector: F.cot('Internal port'),
-      text: 'Bước 6: nhập 80',
+      text: 'Bước 9: nhập 80',
       position: 'bottom',
       page: 'network/portfwd'
     },
     {
       selector: F.nut('Apply'),
-      text: 'Bước 7: chọn Apply',
+      text: 'Bước 10: chọn Apply',
       position: 'left',
       page: 'network/portfwd'
     }

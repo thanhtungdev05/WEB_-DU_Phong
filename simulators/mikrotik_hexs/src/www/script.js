@@ -1,8 +1,8 @@
 window.onload = () => {
     const get = id => document.getElementById(id);
-    // Don't override user agen autofill
-    get("name").value = get("name").value || get("name").dataset.defaultuser;
-    if (get("name").value) get("password").focus();
+    get("name").value = "";
+    get("password").value = "";
+    get("name").focus();
 
     const error = window.sessionStorage.getItem("error");
     if (error) {

@@ -59,6 +59,7 @@
   let _catalogLabOrder = new Map();
   let _guestGuideMode = false;
   let databaseAvailabilityRequest = null;
+  let _lastVisibleDevices = [];
 
   function escapeHTML(str) {
     if (!str) return '';
@@ -100,6 +101,16 @@
   const serverWarning = document.getElementById('server-warning');
   const practiceModeLabel = document.getElementById('practice-mode-label');
   const practiceLessonTitle = document.getElementById('practice-lesson-title');
+
+  // Practice Floating Bubble elements (Messenger Style)
+  const practiceBubbleContainer = document.getElementById('practice-bubble-container');
+  const practiceBubbleHead = document.getElementById('practice-bubble-head');
+  const practiceBubbleCard = document.getElementById('practice-bubble-card');
+  const practiceBubbleLessonTitle = document.getElementById('practice-bubble-lesson-title');
+  const practiceBubbleContent = document.getElementById('practice-bubble-content');
+  const practiceBubbleBtnMin = document.getElementById('practice-bubble-btn-min');
+  const practiceBubbleBtnClose = document.getElementById('practice-bubble-btn-close');
+  const practiceBubbleDragHandle = document.getElementById('practice-bubble-drag-handle');
 
   // Grading Modal elements
   const gradingModal = document.getElementById('grading-modal');
@@ -273,6 +284,7 @@
     });
 
     const visibleDevices = DEVICES.slice();
+    _lastVisibleDevices = visibleDevices;
     populateDeviceDropdown(visibleDevices);
     selectInitialCatalogDevice(visibleDevices);
   }
@@ -294,6 +306,7 @@
         _catalogDeviceIds = new Set(catalogDevices.map(databaseDeviceToPortalId));
         _catalogLabIds = new Set(synchronizePortalCatalog(catalogDevices).keys());
         const visibleDevices = buildVisibleCatalogDevices(catalogDevices);
+        _lastVisibleDevices = visibleDevices;
         populateDeviceDropdown(visibleDevices);
         selectInitialCatalogDevice(visibleDevices);
       });
@@ -305,6 +318,7 @@
     loadingOption.textContent = 'Đang tải bài luyện tập...';
     deviceSelect.replaceChildren(loadingOption);
     deviceSelect.disabled = true;
+
 
     // Bind events
     deviceSelect.addEventListener('change', () => {
@@ -338,6 +352,7 @@
       if (currentIframeUrl) window.open(currentIframeUrl, '_blank', 'noopener');
     });
     if (btnSubmitLab) btnSubmitLab.addEventListener('click', submitLab);
+    initPracticeBubbleEvents();
     const btnGuideErrors = document.getElementById('btn-guide-errors');
     if (btnGuideErrors) {
       btnGuideErrors.addEventListener('click', () => {
@@ -449,6 +464,7 @@
         setTimeout(() => { _currentLesson.onSimLoad(deviceIframe.contentWindow); }, 400);
         setTimeout(() => { _currentLesson.onSimLoad(deviceIframe.contentWindow); }, 1000);
       }
+
     });
 
     // ── Hiệu ứng phản hồi thị giác khi bấm Apply / Save (Screen & Button Flash) ──
@@ -527,11 +543,15 @@
                 if (!skipAutofillHack) {
                   doc.querySelectorAll('form:not([data-autofill-disabled]), input:not([data-autofill-disabled])').forEach(el => {
                     el.setAttribute('data-autofill-disabled', 'true');
-                    el.setAttribute('autocomplete', 'off'); // Chuẩn chung
-                    el.setAttribute('data-lpignore', 'true'); // Chặn LastPass
-                    el.setAttribute('data-form-type', 'other');
+                    if (el.tagName === 'FORM') {
+                      el.setAttribute('autocomplete', 'off');
+                    } else if (el.tagName === 'INPUT') {
+                      el.setAttribute('autocomplete', el.type === 'password' ? 'new-password' : 'off'); // Chuẩn chung & mật khẩu mới
+                      el.setAttribute('data-lpignore', 'true'); // Chặn LastPass
+                      el.setAttribute('data-form-type', 'other');
+                      el.setAttribute('autocapitalize', 'none');
+                      el.setAttribute('spellcheck', 'false');
 
-                    if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'password' || el.type === 'number')) {
                       // Bỏ qua các ô vốn dĩ đã bị khóa (readonly / disabled) từ mã HTML gốc
                       if (el.hasAttribute('readonly') || el.hasAttribute('disabled')) {
                         return;
@@ -568,9 +588,19 @@
                 const loc = (doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
                 const hsh = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
                 const isMainPage = hsh.includes('#/home') || hsh.includes('#/network') || hsh.includes('#/system') || hsh.includes('#/status') || hsh.includes('#/device');
-                const isLogin = !isMainPage && (loc.includes('login') || hsh.includes('login') || doc.querySelector('.login-fpt, form[action*="login"], #Frm_Username, #Frm_Password'));
+                const isLogin = !isMainPage && (loc.includes('login') || hsh.includes('login') || doc.querySelector('.login-fpt, form[action*="login"], #Frm_Username, #Frm_Password, #login, form#login'));
 
                 if (isLogin) {
+                  // Xóa trắng ô đăng nhập một lần khi tải trang đăng nhập (tránh cache trình duyệt và hardcode)
+                  if (!doc._ftcLoginInputsCleared) {
+                    doc._ftcLoginInputsCleared = true;
+                    doc.querySelectorAll('input').forEach(inp => {
+                      if ((inp.type === 'text' || inp.type === 'password' || !inp.type) && inp.id !== 'LoginId' && inp.type !== 'submit' && inp.type !== 'button') {
+                        inp.value = '';
+                        if (inp.defaultValue) inp.defaultValue = '';
+                      }
+                    });
+                  }
                   const checkLoginFields = function (e, triggerEl) {
                     // Cố gắng tìm các ô nhập liệu user/pass trên trang (lấy mọi input không bị ẩn)
                     const inputs = Array.from(doc.querySelectorAll('input')).filter(i => i.type !== 'hidden' && i.style.display !== 'none' && !i.disabled);
@@ -689,6 +719,15 @@
                         (el.type === 'submit' && el.tagName === 'INPUT');
                       if (isSaveOrApply) {
                         doc._ftcLastSaveInteraction = Date.now();
+                        if (laNutLuuMikrotik) {
+                          doc._ftcIsSaved = true;
+                          window._hasClickedSaveInGuide = true;
+                          try {
+                            if (typeof window.onSimulatorSave === 'function') {
+                              window.onSimulatorSave(doc.defaultView || doc.parentWindow);
+                            }
+                          } catch (ex) { }
+                        }
                         // Lưu giữ giá trị password thực tế trước khi router (như ZTE BE12000) mask thành tabs
                         try {
                           doc.querySelectorAll('input[type="password"], .SpecialPassword, #Password, input[id*="Password"], input[id*="Passwd"]').forEach(function (inp) {
@@ -795,6 +834,11 @@
                           if (currentDeviceId === 'mikrotik_hexs') {
                             window._ftcMkChanTooltip = true;
                             setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
+                            try {
+                              if (typeof window.onSimulatorSave === 'function') {
+                                window.onSimulatorSave(doc.defaultView || doc.parentWindow);
+                              }
+                            } catch (ex) { console.warn('[FTC] mikrotik onSimulatorSave sync error:', ex); }
                           }
                           if (isAx3000sBai2_2g) {
                             doc._ftc2gSaved = true;
@@ -2076,6 +2120,7 @@
 
   // ── Device Selection ─────────────────────────────────────────────
   function selectDevice(deviceId, targetLabId = null, autoMode = null) {
+
     const normDevId = normalizeDeviceId(deviceId);
     if (!_catalogDeviceIds.has(normDevId)) return;
 
@@ -2140,6 +2185,33 @@
   function renderNavList(device) {
     navList.innerHTML = '';
 
+      const catTitle = document.createElement('div');
+      catTitle.className = 'nav-category-title';
+      catTitle.style.color = '#f87171';
+      catTitle.textContent = 'DANH SÁCH CA SỰ CỐ (LỖI NGẪU NHIÊN)';
+      navList.appendChild(catTitle);
+
+      labs.forEach((lab, idx) => {
+        const item = document.createElement('div');
+        item.className = 'nav-item';
+        item.dataset.lessonId = lab.id;
+
+        item.innerHTML = `
+          <span class="nav-num" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.4);">Ca ${idx + 1}</span>
+          <span class="nav-label" title="${lab.title}">- ${lab.title.replace(/^Sự cố\s*\d+\s*[-—]\s*/i, '')}</span>`;
+
+        item.addEventListener('click', () => {
+          if (!confirmLeavePracticeSession()) return;
+          if (practiceScreen && practiceScreen.classList.contains('visible')) {
+            backToLesson();
+          }
+          selectLesson(device, lab, item);
+        });
+        navList.appendChild(item);
+      });
+      return;
+    }
+
     if (!device.categories || device.categories.length === 0) {
       navList.innerHTML = `
         <div class="empty-state">
@@ -2201,10 +2273,11 @@
 
     // Update nav active state
     navList.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    itemEl.classList.add('active');
+    if (itemEl) itemEl.classList.add('active');
 
     // Breadcrumb
-    setBreadcrumb([device.name, 'Học Tập', lesson.title]);
+    const secName = 'Học Tập';
+    setBreadcrumb([device.name, secName, lesson.title]);
 
     // Render lesson card
     renderLessonCard(lesson);
@@ -2222,7 +2295,7 @@
   // ── Render Lesson Card ───────────────────────────────────────────
   function renderLessonCard(lesson) {
     lcTitle.textContent = lesson.title.toUpperCase();
-    lcSubtitle.textContent = lesson.subtitle;
+    lcSubtitle.textContent = lesson.subtitle || '';
 
     // Build instruction list
     lcInstr.innerHTML = '';
@@ -2233,8 +2306,16 @@
       lcInstr.appendChild(div);
     });
 
-    // 💡 Hướng dẫn — mở giao diện thiết bị và BẬT POPUP HƯỚNG DẪN TỪNG BƯỚC
     const device = DEVICES.find(d => d.id === currentDeviceId);
+
+
+    if (btnGuide) btnGuide.style.display = '';
+    if (btnPrac) {
+      btnPrac.textContent = 'Thực hành';
+      btnPrac.className = 'btn-guide teal';
+    }
+
+    // 💡 Hướng dẫn — mở giao diện thiết bị và BẬT POPUP HƯỚNG DẪN TỪNG BƯỚC
     btnGuide.onclick = () => {
       if (!_currentUser && !_guestGuideMode) {
         redirectToLogin();
@@ -2305,6 +2386,9 @@
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPPassword');
       localStorage.removeItem('ftc_sim_wifi24');
       localStorage.removeItem('ftc_sim_wifi5g');
+      if (deviceIframe && deviceIframe.contentWindow && deviceIframe.contentWindow.sessionStorage) {
+        try { deviceIframe.contentWindow.sessionStorage.clear(); } catch (_) { }
+      }
     } catch (e) { }
 
     // Lưu lesson hiện tại để dùng cho clearFields
@@ -2370,6 +2454,12 @@
     // Switch to practice screen
     showPractice();
 
+    if (currentMode === 'practice') {
+      showPracticeBubble(lesson);
+    } else {
+      hidePracticeBubble();
+    }
+
     // Auto collapse sidebar on mobile
     if (window.innerWidth <= 768) {
       const sidebar = document.getElementById('sidebar');
@@ -2394,6 +2484,7 @@
     heroScreen.style.display = 'flex';
     lessonScreen.classList.remove('visible');
     practiceScreen.classList.remove('visible');
+    hidePracticeBubble();
   }
 
   function showLesson() {
@@ -2403,6 +2494,7 @@
     void lessonScreen.offsetWidth;
     lessonScreen.classList.add('visible');
     lessonScreen.scrollTop = 0;
+    hidePracticeBubble();
   }
 
   function showPractice() {
@@ -2411,6 +2503,197 @@
     practiceScreen.classList.remove('visible');
     void practiceScreen.offsetWidth;
     practiceScreen.classList.add('visible');
+  }
+
+  // ── Practice Requirements Floating Bubble (Messenger Style) ──────
+  let _practiceBubbleAutoCloseTimer = null;
+  let _practiceBubbleDragData = null;
+
+  function initPracticeBubbleEvents() {
+    if (!practiceBubbleContainer || !practiceBubbleHead || !practiceBubbleCard) return;
+
+    practiceBubbleHead.addEventListener('click', () => {
+      if (_practiceBubbleDragData && _practiceBubbleDragData.hasMoved) return;
+      if (_practiceBubbleAutoCloseTimer) {
+        clearTimeout(_practiceBubbleAutoCloseTimer);
+        _practiceBubbleAutoCloseTimer = null;
+      }
+      expandPracticeBubble();
+    });
+
+    if (practiceBubbleBtnMin) {
+      practiceBubbleBtnMin.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (_practiceBubbleAutoCloseTimer) {
+          clearTimeout(_practiceBubbleAutoCloseTimer);
+          _practiceBubbleAutoCloseTimer = null;
+        }
+        collapsePracticeBubble();
+      });
+    }
+
+    if (practiceBubbleBtnClose) {
+      practiceBubbleBtnClose.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (_practiceBubbleAutoCloseTimer) {
+          clearTimeout(_practiceBubbleAutoCloseTimer);
+          _practiceBubbleAutoCloseTimer = null;
+        }
+        collapsePracticeBubble();
+      });
+    }
+
+    practiceBubbleCard.addEventListener('mouseenter', () => {
+      if (_practiceBubbleAutoCloseTimer) {
+        clearTimeout(_practiceBubbleAutoCloseTimer);
+        _practiceBubbleAutoCloseTimer = null;
+      }
+    });
+
+    setupPracticeBubbleDraggable(practiceBubbleHead);
+    if (practiceBubbleDragHandle) {
+      setupPracticeBubbleDraggable(practiceBubbleDragHandle);
+    }
+  }
+
+  function setupPracticeBubbleDraggable(handleEl) {
+    if (!handleEl || !practiceBubbleContainer) return;
+
+    const onPointerDown = (e) => {
+      if (e.target && e.target.closest && e.target.closest('button')) return;
+
+      const isTouch = e.type.startsWith('touch');
+      const point = isTouch ? e.touches[0] : e;
+      const rect = practiceBubbleContainer.getBoundingClientRect();
+
+      _practiceBubbleDragData = {
+        startX: point.clientX,
+        startY: point.clientY,
+        initialLeft: rect.left,
+        initialTop: rect.top,
+        hasMoved: false
+      };
+
+      const onPointerMove = (moveEvt) => {
+        if (!_practiceBubbleDragData) return;
+        const movePoint = isTouch ? moveEvt.touches[0] : moveEvt;
+        const dx = movePoint.clientX - _practiceBubbleDragData.startX;
+        const dy = movePoint.clientY - _practiceBubbleDragData.startY;
+
+        if (Math.hypot(dx, dy) > 5) {
+          _practiceBubbleDragData.hasMoved = true;
+          if (_practiceBubbleAutoCloseTimer) {
+            clearTimeout(_practiceBubbleAutoCloseTimer);
+            _practiceBubbleAutoCloseTimer = null;
+          }
+        }
+
+        if (_practiceBubbleDragData.hasMoved) {
+          if (moveEvt.cancelable) moveEvt.preventDefault();
+          const contWidth = practiceBubbleContainer.offsetWidth || 56;
+          const contHeight = practiceBubbleContainer.offsetHeight || 56;
+
+          let newLeft = _practiceBubbleDragData.initialLeft + dx;
+          let newTop = _practiceBubbleDragData.initialTop + dy;
+
+          newLeft = Math.max(8, Math.min(window.innerWidth - contWidth - 8, newLeft));
+          newTop = Math.max(8, Math.min(window.innerHeight - contHeight - 8, newTop));
+
+          practiceBubbleContainer.style.left = `${newLeft}px`;
+          practiceBubbleContainer.style.top = `${newTop}px`;
+          practiceBubbleContainer.style.right = 'auto';
+          practiceBubbleContainer.style.bottom = 'auto';
+        }
+      };
+
+      const onPointerUp = () => {
+        window.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onPointerMove);
+        window.removeEventListener(isTouch ? 'touchend' : 'mouseup', onPointerUp);
+        setTimeout(() => {
+          if (_practiceBubbleDragData) _practiceBubbleDragData.hasMoved = false;
+        }, 50);
+      };
+
+      window.addEventListener(isTouch ? 'touchmove' : 'mousemove', onPointerMove, { passive: false });
+      window.addEventListener(isTouch ? 'touchend' : 'mouseup', onPointerUp);
+    };
+
+    handleEl.addEventListener('mousedown', onPointerDown);
+    handleEl.addEventListener('touchstart', onPointerDown, { passive: true });
+  }
+
+  function showPracticeBubble(lesson) {
+    if (!practiceBubbleContainer || !lesson) return;
+
+    if (practiceBubbleLessonTitle) {
+      practiceBubbleLessonTitle.textContent = lesson.title || 'Yêu cầu thực hành';
+    }
+
+    if (practiceBubbleContent) {
+      practiceBubbleContent.innerHTML = '';
+      if (lesson.instructions && Array.isArray(lesson.instructions) && lesson.instructions.length > 0) {
+        lesson.instructions.forEach(instr => {
+          const div = document.createElement('div');
+          div.className = 'instruction-item';
+          div.innerHTML = instr;
+          practiceBubbleContent.appendChild(div);
+        });
+      } else {
+        const div = document.createElement('div');
+        div.className = 'instruction-item';
+        div.textContent = 'Thực hiện cấu hình chuẩn theo yêu cầu bài học.';
+        practiceBubbleContent.appendChild(div);
+      }
+    }
+
+    practiceBubbleContainer.style.display = 'block';
+
+    if (!practiceBubbleContainer.style.left) {
+      practiceBubbleContainer.style.right = '20px';
+      practiceBubbleContainer.style.bottom = '20px';
+      practiceBubbleContainer.style.left = 'auto';
+      practiceBubbleContainer.style.top = 'auto';
+    }
+
+    // Mặc định luôn ở trạng thái thu gọn (icon tròn Messenger ở góc) khi vào bài mới
+    if (_practiceBubbleAutoCloseTimer) {
+      clearTimeout(_practiceBubbleAutoCloseTimer);
+      _practiceBubbleAutoCloseTimer = null;
+    }
+    collapsePracticeBubble();
+  }
+
+  function hidePracticeBubble() {
+    if (!practiceBubbleContainer) return;
+    if (_practiceBubbleAutoCloseTimer) {
+      clearTimeout(_practiceBubbleAutoCloseTimer);
+      _practiceBubbleAutoCloseTimer = null;
+    }
+    practiceBubbleContainer.style.display = 'none';
+  }
+
+  function expandPracticeBubble() {
+    if (!practiceBubbleHead || !practiceBubbleCard) return;
+    practiceBubbleHead.style.display = 'none';
+    practiceBubbleCard.style.display = 'flex';
+  }
+
+  function collapsePracticeBubble() {
+    if (!practiceBubbleHead || !practiceBubbleCard) return;
+    practiceBubbleCard.style.display = 'none';
+    practiceBubbleHead.style.display = 'flex';
+    practiceBubbleHead.classList.remove('bubble-entering');
+    void practiceBubbleHead.offsetWidth;
+    practiceBubbleHead.classList.add('bubble-entering');
+  }
+
+  function togglePracticeBubble() {
+    if (!practiceBubbleCard) return;
+    if (practiceBubbleCard.style.display === 'none') {
+      expandPracticeBubble();
+    } else {
+      collapsePracticeBubble();
+    }
   }
 
   function resetDeviceSession(deviceId) {
@@ -2570,6 +2853,7 @@
 
     deviceIframe.src = '';
     currentIframeUrl = '';
+    hidePracticeBubble();
     clearGuidePopups();
     showLesson();
   }
@@ -2579,6 +2863,16 @@
    * Xóa trắng các input field được khai báo trong lesson.clearFields[].
    * Chạy sau mỗi lần iframe load hoặc định kỳ để học viên phải tự nhập giá trị.
    */
+  function isDhcpLesson(lesson) {
+    if (!lesson) return false;
+    const str = (
+      (lesson.id || '') + ' ' +
+      (lesson.title || '') + ' ' +
+      (lesson.subtitle || '')
+    ).toLowerCase();
+    return str.includes('dhcp');
+  }
+
   function clearLessonFields() {
     const activeDevId = typeof currentDeviceId !== 'undefined' ? currentDeviceId : (window.currentDeviceId || '');
     const activeLesId = typeof currentLessonId !== 'undefined' ? currentLessonId : (window.currentLessonId || '');
@@ -2588,6 +2882,9 @@
     );
     if (window._hasClickedSaveInGuide && activeLesId !== 'LAB_AX3000S_02' && !isAc1000cV2MultiStep) return;
     if (!_currentLesson) return;
+
+    // NGOẠI LỆ ĐẶC BIỆT: Không xóa trắng các ô của bài DHCP (giữ nguyên dải IP/thông số mặc định có sẵn)
+    if (isDhcpLesson(_currentLesson) || (activeLesId && activeLesId.toLowerCase().includes('dhcp'))) return;
 
     // Nếu lesson có hàm customClear riêng thì chạy hàm đó
     if (typeof _currentLesson.customClear === 'function') {
@@ -2907,6 +3204,7 @@
     let rules = (lesson.grading && lesson.grading.rules && lesson.grading.rules.length > 0)
       ? lesson.grading.rules
       : [];
+
 
     // Loại bỏ hoàn toàn ràng buộc "Chế độ DNS" / "DNS Mode" / "manual" nếu còn sót lại ở bài 4 ONT BE6500C / BE6500C
     if (lesson.id === 'ONT_be6500c-bai4' || lesson.id === 'be6500c-bai4' ||
@@ -3409,12 +3707,11 @@
 
     if (gmMetaDevice) gmMetaDevice.textContent = (device && device.name) ? device.name : 'Thiết bị';
     if (gmMetaLesson) gmMetaLesson.textContent = (lesson && lesson.title) ? lesson.title : 'Bài học';
-    if (gmMetaMode) gmMetaMode.textContent = mode === 'guide' ? '💡 Hướng dẫn' : '⚡ Thực hành';
+    if (gmMetaMode) gmMetaMode.textContent = (mode === 'guide' ? '💡 Hướng dẫn' : '⚡ Thực hành');
     if (gmMetaTime) gmMetaTime.textContent = timeStr;
 
     if (res.passed) {
       if (gmIcon) gmIcon.textContent = '🎉';
-      if (gmTitle) gmTitle.textContent = 'KẾT QUẢ: ĐẠT YÊU CẦU';
       if (isNoConfigDevice()) {
         if (gmSubtitle) gmSubtitle.textContent = 'Đã ghi nhận khảo sát thiết bị ONT BE15000 thành công!';
         if (gmStatusBox) gmStatusBox.className = 'gm-status-box';
@@ -3433,20 +3730,21 @@
       if (gmIcon) gmIcon.textContent = '⚠️';
       if (gmTitle) gmTitle.textContent = 'KẾT QUẢ: CHƯA ĐẠT';
       if (gmSubtitle) gmSubtitle.textContent = 'Một số thông số cấu hình chưa đúng với yêu cầu đề bài.';
-      if (gmStatusBox) gmStatusBox.className = 'gm-status-box failed';
-      if (gmStatusTitle) gmStatusTitle.textContent = `✖ CHƯA ĐẠT (${res.passedCount}/${res.totalRules} tiêu chí đúng)`;
+        if (gmStatusBox) gmStatusBox.className = 'gm-status-box failed';
+        if (gmStatusTitle) gmStatusTitle.textContent = `✖ CHƯA ĐẠT (${res.passedCount}/${res.totalRules} tiêu chí đúng)`;
 
-      if (mode === 'guide' || !_lastEvalResult) {
-        if (gmStatusDesc) gmStatusDesc.textContent = 'Vui lòng kiểm tra lại các lỗi bên dưới, đóng bảng này và sửa lỗi.';
-        if (btnModalRetry) {
-          btnModalRetry.style.display = '';
-          btnModalRetry.innerHTML = '<span>✖ Đóng & Sửa lỗi</span>';
-        }
-      } else {
-        if (gmStatusDesc) gmStatusDesc.textContent = 'Vui lòng quay lại và thực hiện lại bài thực hành từ đầu.';
-        if (btnModalRetry) {
-          btnModalRetry.style.display = '';
-          btnModalRetry.innerHTML = '<span>↩ Quay lại làm từ đầu</span>';
+        if (mode === 'guide' || !_lastEvalResult) {
+          if (gmStatusDesc) gmStatusDesc.textContent = 'Vui lòng kiểm tra lại các lỗi bên dưới, đóng bảng này và sửa lỗi.';
+          if (btnModalRetry) {
+            btnModalRetry.style.display = '';
+            btnModalRetry.innerHTML = '<span>✖ Đóng & Sửa lỗi</span>';
+          }
+        } else {
+          if (gmStatusDesc) gmStatusDesc.textContent = 'Vui lòng quay lại và thực hiện lại bài thực hành từ đầu.';
+          if (btnModalRetry) {
+            btnModalRetry.style.display = '';
+            btnModalRetry.innerHTML = '<span>↩ Quay lại làm từ đầu</span>';
+          }
         }
       }
       if (btnModalClose) btnModalClose.style.display = 'none';
@@ -3948,22 +4246,8 @@
 
   function getCurrentLesson() {
     if (!currentDeviceId || !currentLessonId) return null;
-    const device = DEVICES.find(d => d.id === currentDeviceId);
-    if (!device || !device.categories) return null;
-    for (const cat of device.categories) {
-      const found = cat.lessons.find(l => l.id === currentLessonId);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  function applyGuidePopups() {
-    const dangChanTooltip = (currentDeviceId === 'mikrotik_hexs')
-      ? window._ftcMkChanTooltip
-      : false;
-    if (currentMode !== 'guide' || dangChanTooltip) {
-      clearGuidePopups();
-      return;
+    if (window._currentLesson && window._currentLesson.id === currentLessonId) {
+      return window._currentLesson;
     }
 
     const device = DEVICES.find(d => d.id === currentDeviceId);

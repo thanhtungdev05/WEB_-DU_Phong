@@ -265,7 +265,7 @@ console.log('✔ Bài 2: Đạt chuẩn chấm điểm lũy tiến Guide mode & 
 
 console.log('--- TEST BÀI 3: WI-FI IOT (SSID 2) ---');
 const bai3 = lessons.find(l => l.id === 'ac1000cv2-bai3');
-// Test 3.1: Đúng chuẩn FPT Telecom-7EA8 & 00032934
+// Test 3.1: Đúng chuẩn FPT IoT & fptiot123
 const mockDocB3Correct = [
   {
     location: { pathname: '/sim_ac1000cv2/wifissid.html' },
@@ -273,7 +273,7 @@ const mockDocB3Correct = [
     querySelector: (sel) => {
       if (sel.includes('ssid_list')) return { value: '1' };
       if (sel.includes('ssid_enable')) return { checked: true };
-      if (sel.includes('ssid_network_name')) return { value: 'FPT Telecom-7EA8' };
+      if (sel.includes('ssid_network_name')) return { value: 'FPT IoT' };
       return null;
     }
   },
@@ -282,7 +282,7 @@ const mockDocB3Correct = [
     _ftcIsSaved: true,
     querySelector: (sel) => {
       if (sel.includes('ssid_list')) return { value: '1' };
-      if (sel.includes('security_wpa_key')) return { value: '00032934' };
+      if (sel.includes('security_wpa_key')) return { value: 'fptiot123' };
       return null;
     }
   }
@@ -297,7 +297,7 @@ const mockDocB3TamperSSID1 = [
     _ftcIsSaved: true,
     querySelector: (sel) => {
       if (sel.includes('ssid_list')) return { value: '0' }; // Đang chọn SSID 1
-      if (sel.includes('ssid_network_name')) return { value: 'FPT Telecom-7EA8' };
+      if (sel.includes('ssid_network_name')) return { value: 'FPT IoT' };
       return null;
     }
   },
@@ -306,7 +306,7 @@ const mockDocB3TamperSSID1 = [
     _ftcIsSaved: true,
     querySelector: (sel) => {
       if (sel.includes('ssid_list')) return { value: '0' };
-      if (sel.includes('security_wpa_key')) return { value: '00032934' };
+      if (sel.includes('security_wpa_key')) return { value: 'fptiot123' };
       return null;
     }
   }
