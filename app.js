@@ -2290,33 +2290,6 @@
   function renderNavList(device) {
     navList.innerHTML = '';
 
-      const catTitle = document.createElement('div');
-      catTitle.className = 'nav-category-title';
-      catTitle.style.color = '#f87171';
-      catTitle.textContent = 'DANH SÁCH CA SỰ CỐ (LỖI NGẪU NHIÊN)';
-      navList.appendChild(catTitle);
-
-      labs.forEach((lab, idx) => {
-        const item = document.createElement('div');
-        item.className = 'nav-item';
-        item.dataset.lessonId = lab.id;
-
-        item.innerHTML = `
-          <span class="nav-num" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.4);">Ca ${idx + 1}</span>
-          <span class="nav-label" title="${lab.title}">- ${lab.title.replace(/^Sự cố\s*\d+\s*[-—]\s*/i, '')}</span>`;
-
-        item.addEventListener('click', () => {
-          if (!confirmLeavePracticeSession()) return;
-          if (practiceScreen && practiceScreen.classList.contains('visible')) {
-            backToLesson();
-          }
-          selectLesson(device, lab, item);
-        });
-        navList.appendChild(item);
-      });
-      return;
-    }
-
     if (!device.categories || device.categories.length === 0) {
       navList.innerHTML = `
         <div class="empty-state">
