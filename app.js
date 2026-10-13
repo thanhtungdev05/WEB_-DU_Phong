@@ -145,6 +145,23 @@
     return clean;
   }
 
+  function isSimulatorLoginDocument(doc) {
+    if (!doc || !doc.querySelector) return false;
+    try {
+      // Some firmware login shells keep a configuration-looking #/home hash.
+      // The credential controls in the rendered DOM are therefore authoritative.
+      if (doc.querySelector('#Frm_Username, #Frm_Password, .login-fpt, form[action*="login"]')) {
+        return true;
+      }
+      const href = (doc.location && doc.location.href ? doc.location.href : '').toLowerCase();
+      const hash = (doc.location && doc.location.hash ? doc.location.hash : '').toLowerCase();
+      const isMainPage = hash.includes('#/home') || hash.includes('#/network') || hash.includes('#/system') || hash.includes('#/status') || hash.includes('#/device');
+      return !isMainPage && (href.includes('login') || hash.includes('login'));
+    } catch (error) {
+      return false;
+    }
+  }
+
   function databaseDeviceToPortalId(device) {
     const rawId = typeof device === 'string' ? device : (device.device_id || device.id || '');
     return normalizeDeviceId(rawId);
@@ -587,20 +604,13 @@
               } catch (e) { }
 
               if (isAx3000gzV2) {
-                const axLoc = (doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
-                const axHash = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
-                const axIsMainPage = axHash.includes('#/home') || axHash.includes('#/network') || axHash.includes('#/system') || axHash.includes('#/status') || axHash.includes('#/device');
-                const axIsLogin = !axIsMainPage && (axLoc.includes('login') || axHash.includes('login') || doc.querySelector('#Frm_Username, #Frm_Password, .login-fpt, form[action*="login"]'));
-                prepareAx3000gzV2Autofill(doc, Boolean(axIsLogin));
+                prepareAx3000gzV2Autofill(doc, isSimulatorLoginDocument(doc));
               }
 
               if (!doc._ftcSaveListenerAttached) {
 
                 // Ràng buộc đăng nhập thiết bị bắt buộc nhập admin / admin
-                const loc = (doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
-                const hsh = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
-                const isMainPage = hsh.includes('#/home') || hsh.includes('#/network') || hsh.includes('#/system') || hsh.includes('#/status') || hsh.includes('#/device');
-                const isLogin = !isMainPage && (loc.includes('login') || hsh.includes('login') || doc.querySelector('.login-fpt, form[action*="login"], #Frm_Username, #Frm_Password'));
+                const isLogin = isSimulatorLoginDocument(doc);
 
                 if (isLogin) {
                   const checkLoginFields = function (e, triggerEl) {
@@ -2599,7 +2609,7 @@
 
       if (!isLoginPage) return;
       doc.querySelectorAll('#Frm_Username, #Frm_Password').forEach(input => {
-        if (hasCurrentAttemptInteraction(input) || input === doc.activeElement) return;
+        if (hasCurrentAttemptInteraction(input)) return;
         if (input.value !== '') {
           input.value = '';
           input.removeAttribute('data-ftc-real-value');
@@ -4115,12 +4125,7 @@
     const storeKey = 'TOOLTIPS_' + deviceId.toUpperCase();
     const store = window[storeKey];
 
-    // Check xem iframe/doc hiện tại có đang ở màn hình Đăng Nhập (login.asp / #/login) không
-    const href = (doc && doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
-    const hash = (doc && doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
-    const isMainConfigPage = hash.includes('#/home') || hash.includes('#/network') || hash.includes('#/system') || hash.includes('#/status') || hash.includes('#/device');
-
-    const isLoginPage = !isMainConfigPage && (href.includes('login') || hash.includes('login') || (doc && doc.querySelector('.login-fpt, form[action*="login"], #Frm_Username, #Frm_Password')));
+    const isLoginPage = isSimulatorLoginDocument(doc);
 
     if (isLoginPage && store && store._common_login && store._common_login.length > 0) {
       return store._common_login;

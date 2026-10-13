@@ -7,6 +7,27 @@ const root = path.resolve(__dirname, '..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const appJs = read('app.js');
 
+const loginHelperMatch = appJs.match(/function isSimulatorLoginDocument\(doc\) \{[\s\S]*?\n  \}/);
+assert.ok(loginHelperMatch, 'the simulator login detector must exist');
+const loginContext = vm.createContext({});
+vm.runInContext(`${loginHelperMatch[0]}; this.isSimulatorLoginDocument = isSimulatorLoginDocument;`, loginContext);
+assert.strictEqual(
+  loginContext.isSimulatorLoginDocument({
+    location: { href: 'https://example.test/sim_ax3000gz_v2/', hash: '#/home' },
+    querySelector: selector => selector.includes('#Frm_Username') ? {} : null
+  }),
+  true,
+  'visible credential fields must identify the login page even when firmware keeps #/home'
+);
+assert.strictEqual(
+  loginContext.isSimulatorLoginDocument({
+    location: { href: 'https://example.test/sim_ax3000gz_v2/', hash: '#/home' },
+    querySelector: () => null
+  }),
+  false,
+  'a real #/home configuration page without login controls must not be treated as login'
+);
+
 const helperMatch = appJs.match(/function getAttemptRuleEvidence\(ruleId, attemptId, trackingSession\) \{[\s\S]*?\n  \}/);
 assert.ok(helperMatch, 'the current-attempt evidence helper must exist');
 const context = vm.createContext({});
@@ -76,5 +97,9 @@ assert.strictEqual(
   "msg = 'Chưa thao tác trường này trong lượt làm hiện tại'",
   "msg = 'Chưa bấm Apply sau khi thay đổi trong lượt làm hiện tại'"
 ].forEach(marker => assert.ok(appJs.includes(marker), `app.js must retain: ${marker}`));
+assert.ok(
+  !appJs.includes('hasCurrentAttemptInteraction(input) || input === doc.activeElement'),
+  'focused credentials must still be cleared until the KTV produces a genuine input event'
+);
 
 console.log('AX3000GZ V2 current-attempt isolation tests passed.');
