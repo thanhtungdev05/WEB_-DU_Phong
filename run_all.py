@@ -142,7 +142,8 @@ DOWNLOADABLE_ROOT_FILES = {
 }
 PUBLIC_ROOT_PREFIXES = ('/devices/', '/assets/', '/login/')
 DASHBOARD_PUBLIC_PATHS = {
-    '/', '/index.html', '/css/styles.css', '/css/dashboard-professional.css', '/js/app.js'
+    '/', '/index.html', '/css/styles.css', '/css/dashboard-professional.css',
+    '/js/app.js', '/js/system_monitor.js'
 }
 HTML_DOCUMENT_PATHS = {
     '/', '/index.html', '/portal.html', '/personal-dashboard.html',

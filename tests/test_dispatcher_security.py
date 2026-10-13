@@ -55,6 +55,8 @@ class DispatcherSecurityTests(unittest.TestCase):
             '/dashboard/',
             '/dashboard/css/dashboard-professional.css',
             '/dashboard/js/app.js',
+            '/dashboard/js/system_monitor.js',
+            '/dashboard-authen/js/system_monitor.js',
             '/devices/ax3000s/data.js',
             '/sim_be6500c/login.html',
             '/sim_ONT_be6500c/login.html',
