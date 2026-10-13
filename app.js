@@ -2685,6 +2685,8 @@
         }
       });
     } catch (error) { }
+  }
+
   // ── Practice Requirements Floating Bubble (Messenger Style) ──────
   let _practiceBubbleAutoCloseTimer = null;
   let _practiceBubbleDragData = null;
@@ -3962,7 +3964,6 @@
         }
       }
       if (btnModalClose) btnModalClose.style.display = 'none';
-    }
 
     // Render danh sách checklist — chỉ hiện tiêu chí SAI, giữ header phân biệt phần
     if (gmChecklistBody) {
