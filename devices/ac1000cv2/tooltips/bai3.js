@@ -85,13 +85,13 @@ var bai3_popups = [
       return !sEn || !sEn.checked;
     }
   },
-  // Bước 3: Nhập tên Wi-Fi IoT: FPT Telecom-7EA8
+  // Bước 3: Nhập tên Wi-Fi IoT: FPT IoT
   {
     page: 'wifissid.html',
     selector: 'input[name="ssid_network_name"], #ssid_network_name',
-    text: 'Bước 3: Nhập tên Wi-Fi IoT: FPT Telecom-7EA8',
+    text: 'Bước 3: Nhập tên Wi-Fi IoT: FPT IoT',
     position: 'right',
-    expected: 'FPT Telecom-7EA8',
+    expected: 'FPT IoT',
     condition: function (doc) {
       var p = getAc1000cV2DocPath(doc);
       if (p.indexOf('wifissid') === -1) return false;

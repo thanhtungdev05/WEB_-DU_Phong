@@ -190,7 +190,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai2'] = [
   {
     selector: 'input[name="sIpBandwShrd"][value="N"]',
     text: 'Bước 8: chọn Each (mỗi IP trong dải đều sử dụng tối đa băng thông quy định)',
-    position: 'left',
+    position: 'right',
     condition: function (doc) {
       if (!isVigor2927Bai2LimitDone(doc) || isVigor2927Bai2Added(doc)) return false;
       if (getVigor2927InputVal(doc, 'sIpBandwFrom') !== '192.168.1.10' || getVigor2927InputVal(doc, 'sIpBandwTo') !== '192.168.1.20') return false;
@@ -901,13 +901,13 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
   {
     selector: 'a[href*="gotoDetailSet(1)"], tr.row0 td:first-child a',
     text: 'Bước 3: chọn 1',
-    position: 'left',
+    position: 'right',
     page: 'policyrt1'
   },
   {
     selector: 'input[name="iPREnable"]',
     text: 'Bước 4: check vào Enable',
-    position: 'left',
+    position: 'right',
     page: 'v2x00.cgi',
     condition: function (doc) {
       return !isVigor2927Bai7EnableDone(doc);
@@ -961,7 +961,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
   {
     selector: 'input[name="iPRFailover"]',
     text: 'Bước 10: check vào Failover to',
-    position: 'left',
+    position: 'right',
     page: 'v2x00.cgi',
     condition: function (doc) {
       return isVigor2927Bai7EnableDone(doc) && isVigor2927Bai7CommentDone(doc) && isVigor2927Bai7SrcRangeDone(doc) && isVigor2927Bai7SrcStartDone(doc) && isVigor2927Bai7SrcEndDone(doc) && !isVigor2927Bai7FailoverDone(doc);
@@ -979,7 +979,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
   {
     selector: '#image_option, td[onclick*="onClkMoreoption"]',
     text: 'Bước 12: click vào + Priority',
-    position: 'left',
+    position: 'right',
     page: 'v2x00.cgi',
     condition: function (doc) {
       return isVigor2927Bai7EnableDone(doc) && isVigor2927Bai7CommentDone(doc) && isVigor2927Bai7SrcRangeDone(doc) && isVigor2927Bai7SrcStartDone(doc) && isVigor2927Bai7SrcEndDone(doc) && isVigor2927Bai7FailoverDone(doc) && isVigor2927Bai7FailoverWanDone(doc) && !isVigor2927Bai7PriorityOpenDone(doc);
@@ -997,7 +997,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
   {
     selector: 'input[name="iPRFailback"]',
     text: 'Bước 14: check vào Failback',
-    position: 'left',
+    position: 'right',
     page: 'v2x00.cgi',
     condition: function (doc) {
       return isVigor2927Bai7EnableDone(doc) && isVigor2927Bai7CommentDone(doc) && isVigor2927Bai7SrcRangeDone(doc) && isVigor2927Bai7SrcStartDone(doc) && isVigor2927Bai7SrcEndDone(doc) && isVigor2927Bai7FailoverDone(doc) && isVigor2927Bai7FailoverWanDone(doc) && isVigor2927Bai7PriorityValDone(doc) && !isVigor2927Bai7FailbackDone(doc);

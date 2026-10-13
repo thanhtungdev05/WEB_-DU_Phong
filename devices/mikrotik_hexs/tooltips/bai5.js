@@ -1,11 +1,13 @@
 /**
  * devices/mikrotik_hexs/tooltips/bai5.js — Tooltip Hướng dẫn Bài 5: Cấu hình DNS
  *
- * 9 bước / các bước thực hiện:
- * - Bước 1: chọn IP (Hình 1) — trỏ vào IP menu trái
- * - Bước 2: chọn DNS (Hình 2) — trỏ vào DNS trong menu xổ xuống
- * - Bước 3: chọn bỏ 1.1.1.1 và 1.0.0.1<br>2606:4700:4700::1111 và 2606:4700:4700::1001 (Hình 3) — trỏ vào hình tam giác đen thứ 3 đếm từ trên xuống
- * - Bước 4: chọn Apply để lưu (Hình 3) — nằm ngang bên trái và trỏ vào nút Apply
+ * Các bước thực hiện:
+ * - Bước 1: chọn WebFig — khi vừa đăng nhập xong ở màn hình Quick Set
+ * - Bước 2: chọn IP — trỏ vào IP menu trái
+ * - Bước 3: chọn DNS — trỏ vào DNS trong menu xổ xuống
+ * - Bước 4: Nhấn nút ▲ bên phải để xoá lần lượt từng máy chủ Cloudflare:
+ *   (1.1.1.1 -> 1.0.0.1 -> 2606:4700:4700::1111 -> 2606:4700:4700::1001)
+ * - Bước 5: chọn Apply để lưu — chỉ hiện ra khi đã xoá xong toàn bộ 4 máy chủ trên
  */
 
 if (!window.TOOLTIPS_MIKROTIK_HEXS) window.TOOLTIPS_MIKROTIK_HEXS = {};
@@ -15,6 +17,26 @@ function mkBai5ManDangNhap(doc) {
   try {
     return !!(doc.querySelector('input#name') && doc.querySelector('input#password'));
   } catch (e) { return false; }
+}
+
+function mkBai5Hash(doc) {
+  try { return (doc.location && doc.location.hash) || ''; } catch (e) { return ''; }
+}
+
+/** Đang ở màn hình Quick Set (chưa bấm WebFig)? */
+function mkBai5OQuickSet(doc) {
+  try {
+    if (mkBai5ManDangNhap(doc)) return false;
+    const h = mkBai5Hash(doc);
+    if (h.indexOf('Quick') !== -1 || h === '' || h === '#') return true;
+    const qsItem = doc.getElementById('id_Quick_Set');
+    if (qsItem && (qsItem.classList.contains('opened') || qsItem.classList.contains('active'))) return true;
+    const btnWebFig = doc.getElementById('id_WebFig');
+    if (btnWebFig && !btnWebFig.classList.contains('opened')) return true;
+    const aIP = doc.querySelector('#menu a#id_IP, a#id_IP, #menu a[href*="IP"]');
+    if (!aIP || aIP.offsetParent === null) return true;
+  } catch (e) {}
+  return false;
 }
 
 /** Kiểm tra text có hiển thị trên màn hình không (bỏ qua bong bóng tooltip) */
@@ -31,7 +53,7 @@ function mkBai5CoTextHienThi(doc, chuoi) {
   return false;
 }
 
-/** Menu IP đã được click mở (Hình 2)? */
+/** Menu IP đã được click mở? */
 function mkBai5MenuIPDaMo(doc) {
   try {
     const ip = doc.querySelector('li#IP');
@@ -45,12 +67,12 @@ function mkBai5MenuIPDaMo(doc) {
   return false;
 }
 
-/** Đang ở trang Cấu hình DNS (Hình 3)? */
+/** Đang ở trang Cấu hình DNS? */
 function mkBai5OTrangDNS(doc) {
   try {
     const win = doc.defaultView || window;
     const h = (win.location.hash || '');
-    if (h.includes('#IP:DNS')) return true;
+    if (h.includes('#IP:DNS') || h.includes('#IP.DNS')) return true;
     const trs = Array.from(doc.querySelectorAll('tr'));
     return trs.some(tr => tr.textContent.includes('Servers') && tr.textContent.includes('Allow Remote Requests'));
   } catch (e) { }
@@ -65,15 +87,33 @@ var MK_BAI5_CAN_XOA = [
   '2606:4700:4700::1001'
 ];
 
+/** Lấy máy chủ Cloudflare đầu tiên còn lại trên trang cần xoá */
+function mkBai5ServerHienTaiCanXoa(doc) {
+  try {
+    for (const tr of doc.querySelectorAll('tr')) {
+      const lb = tr.querySelector('td.label');
+      if (!lb || lb.textContent.trim() !== 'Servers') continue;
+      const os = Array.from(tr.querySelectorAll('input'));
+      for (let i = 0; i < os.length; i++) {
+        const val = (os[i].value || '').trim();
+        if (MK_BAI5_CAN_XOA.indexOf(val) !== -1) {
+          return val;
+        }
+      }
+      break;
+    }
+  } catch (e) { }
+  return null;
+}
+
+/** Còn máy chủ nào trong danh sách cần xoá chưa xoá không? */
+function mkBai5ConCanXoa(doc) {
+  return mkBai5ServerHienTaiCanXoa(doc) !== null;
+}
+
 /**
  * Gắn ID động `#ftc-mk5-triangle-3` cho nút tam giác `▲` (xoá dòng) của máy
  * chủ ĐẦU TIÊN CÒN LẠI trong danh sách cần xoá.
- *
- * LỖI ĐÃ TRÁNH (phát hiện khi đo thật 2026-09-19): bản đầu gắn cứng vào nút
- * thứ 3 đếm từ trên xuống. Đúng ở lần xoá đầu (dòng 3 = 1.1.1.1), nhưng WebFig
- * DỒN DÒNG sau mỗi lần xoá, nên xoá xong 1.1.1.1 và 1.0.0.1 thì "dòng thứ 3"
- * lại chính là 2001:4860:4860::8888 — máy chủ PHẢI GIỮ LẠI. Mũi tên sẽ chỉ học
- * viên xoá nhầm và bị chấm sai. Nay dò theo GIÁ TRỊ nên đúng suốt cả 4 lần.
  */
 function mkBai5CaiTheoDoi(doc) {
   try {
@@ -91,27 +131,11 @@ function mkBai5CaiTheoDoi(doc) {
           break;
         }
       }
-      if (!dich && upBtns.length > 2) {
-        dich = upBtns[2];
-      }
       break;
     }
     if (cu && cu !== dich) cu.id = '';
     if (dich && !dich.id) dich.id = 'ftc-mk5-triangle-3';
   } catch (e) { }
-}
-
-/** Còn máy chủ nào trong danh sách cần xoá chưa xoá không? */
-function mkBai5ConCanXoa(doc) {
-  try {
-    for (const tr of doc.querySelectorAll('tr')) {
-      const lb = tr.querySelector('td.label');
-      if (!lb || lb.textContent.trim() !== 'Servers') continue;
-      return Array.from(tr.querySelectorAll('input'))
-        .some(o => MK_BAI5_CAN_XOA.indexOf((o.value || '').trim()) !== -1);
-    }
-  } catch (e) { }
-  return false;
 }
 
 window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
@@ -129,46 +153,81 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     condition: function (doc) { return mkBai5ManDangNhap(doc); }
   },
 
-  // ── Bước 1: chọn IP (Hình 1) ───────────────────────────────────────
+  // ── Bước 1: chọn WebFig ───────────────────────────────────────────
+  {
+    selector: '#id_WebFig, a#id_WebFig, text:WebFig',
+    text: 'Bước 1: chọn WebFig',
+    position: 'bottom',
+    condition: function (doc) {
+      return !mkBai5ManDangNhap(doc) && mkBai5OQuickSet(doc);
+    }
+  },
+
+  // ── Bước 2: chọn IP ───────────────────────────────────────────────
   {
     selector: 'li#IP span, text:IP',
-    text: 'Bước 1: chọn IP',
+    text: 'Bước 2: chọn IP',
     position: 'right',
     condition: function (doc) {
-      return !mkBai5ManDangNhap(doc) && !mkBai5MenuIPDaMo(doc) && !mkBai5OTrangDNS(doc);
+      return !mkBai5ManDangNhap(doc) && !mkBai5OQuickSet(doc) && !mkBai5MenuIPDaMo(doc) && !mkBai5OTrangDNS(doc);
     }
   },
 
-  // ── Bước 2: chọn DNS (Hình 2) ──────────────────────────────────────
+  // ── Bước 3: chọn DNS ──────────────────────────────────────────────
   {
     selector: '#menu li:has-text("DNS"), li#IP li:has-text("DNS"), text:DNS',
-    text: 'Bước 2: chọn DNS',
+    text: 'Bước 3: chọn DNS',
     position: 'right',
     condition: function (doc) {
-      return !mkBai5ManDangNhap(doc) && mkBai5MenuIPDaMo(doc) && !mkBai5OTrangDNS(doc);
+      return !mkBai5ManDangNhap(doc) && !mkBai5OQuickSet(doc) && mkBai5MenuIPDaMo(doc) && !mkBai5OTrangDNS(doc);
     }
   },
 
-  // ── Bước 3: chọn bỏ 1.1.1.1 và 1.0.0.1... (Hình 3) ────────────────
+  // ── Bước 4: Nhấn nút ▲ để xoá lần lượt từng máy chủ Cloudflare ────
   {
     selector: '#ftc-mk5-triangle-3, a.sbtn img[src*="up"], a.sbtn',
-    text: 'Bước 3: chọn bỏ<br>- 1.1.1.1<br>- 1.0.0.1<br>- 2606:4700:4700::1111<br>- 2606:4700:4700::1001',
+    text: 'Bước 4: Nhấn nút ▲ để xoá 1.1.1.1',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      // Xoá xong cả 4 máy chủ thì không còn gì để chỉ nữa — ẩn bước 3 đi,
-      // chỉ còn bước 4 (Apply). Nếu vẫn hiện, mũi tên sẽ không có chỗ neo.
-      return !mkBai5ManDangNhap(doc) && mkBai5OTrangDNS(doc) && mkBai5ConCanXoa(doc);
+      return !mkBai5ManDangNhap(doc) && mkBai5OTrangDNS(doc) && mkBai5ServerHienTaiCanXoa(doc) === '1.1.1.1';
+    }
+  },
+  {
+    selector: '#ftc-mk5-triangle-3, a.sbtn img[src*="up"], a.sbtn',
+    text: 'Bước 4: Nhấn nút ▲ để xoá 1.0.0.1',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return !mkBai5ManDangNhap(doc) && mkBai5OTrangDNS(doc) && mkBai5ServerHienTaiCanXoa(doc) === '1.0.0.1';
+    }
+  },
+  {
+    selector: '#ftc-mk5-triangle-3, a.sbtn img[src*="up"], a.sbtn',
+    text: 'Bước 4: Nhấn nút ▲ để xoá 2606:4700:4700::1111',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return !mkBai5ManDangNhap(doc) && mkBai5OTrangDNS(doc) && mkBai5ServerHienTaiCanXoa(doc) === '2606:4700:4700::1111';
+    }
+  },
+  {
+    selector: '#ftc-mk5-triangle-3, a.sbtn img[src*="up"], a.sbtn',
+    text: 'Bước 4: Nhấn nút ▲ để xoá 2606:4700:4700::1001',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return !mkBai5ManDangNhap(doc) && mkBai5OTrangDNS(doc) && mkBai5ServerHienTaiCanXoa(doc) === '2606:4700:4700::1001';
     }
   },
 
-  // ── Bước 4: chọn Apply để lưu (Hình 3) ────────────────────────────
+  // ── Bước 5: chọn Apply để lưu (chỉ hiện khi đã xoá xong cả 4 máy chủ) ──
   {
     selector: 'a.button:has-text("Apply"), text:Apply',
-    text: 'Bước 4: chọn Apply để lưu',
+    text: 'Bước 5: chọn Apply để lưu',
     position: 'left',
     condition: function (doc) {
-      return !mkBai5ManDangNhap(doc) && mkBai5OTrangDNS(doc);
+      return !mkBai5ManDangNhap(doc) && mkBai5OTrangDNS(doc) && !mkBai5ConCanXoa(doc);
     }
   }
 ];

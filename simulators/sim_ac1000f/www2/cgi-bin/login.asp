@@ -30,13 +30,13 @@
 
 			#usr
 			{
-				background:url(/usr.png) no-repeat center right;
+				background:url(/usr.png?v=2) no-repeat center right;
 				height:60px;
 			}
 
 			#pwd
 			{
-			 	background:url(/pwd.png) no-repeat center right;
+			 	background:url(/pwd.png?v=2) no-repeat center right;
 				height:60px;
 			}
 

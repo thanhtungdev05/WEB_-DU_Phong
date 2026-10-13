@@ -10,31 +10,31 @@ if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
   window.TOOLTIPS_AX3000C['LAB_AX3000CV2_05'] = F.menu('LAN', 'LAN', 'network/lan').concat([
     {
       selector: F.o('Router LAN IPv4 Address'),
-      text: 'Bước 1: nhập 192.168.100.1',
+      text: 'Bước 4: nhập 192.168.100.1',
       position: 'right',
       page: 'network/lan'
     },
     {
       selector: F.o('Subnet mask'),
-      text: 'Bước 2: nhập 255.255.255.0',
+      text: 'Bước 5: nhập 255.255.255.0',
       position: 'right',
       page: 'network/lan'
     },
     {
       selector: F.o('DHCP start address'),
-      text: 'Bước 3: nhập 192.168.100.2',
+      text: 'Bước 6: nhập 192.168.100.2',
       position: 'right',
       page: 'network/lan'
     },
     {
       selector: F.o('DHCP end address'),
-      text: 'Bước 4: nhập 192.168.100.254',
+      text: 'Bước 7: nhập 192.168.100.254',
       position: 'right',
       page: 'network/lan'
     },
     {
       selector: F.nut('Apply'),
-      text: 'Bước 5: chọn Apply',
+      text: 'Bước 8: chọn Apply',
       position: 'left',
       page: 'network/lan'
     }

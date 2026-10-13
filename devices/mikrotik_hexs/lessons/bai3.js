@@ -117,13 +117,9 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   subtitle: 'Gán cố định IP theo địa chỉ MAC',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Gán cố định (Bind) địa chỉ IP theo MAC cho máy PC1 đang thuê DHCP động',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
-    '- Vào <b>IP > DHCP Server > Leases</b>, mở dòng máy <b>PC1 (192.168.1.249)</b>',
-    '- Nhấn <b>Make Static</b> để gán cố định IP theo MAC, rồi <b>Close</b>',
-    '- Mở lại dòng đó, đặt Comment: <span class="val">Server 1</span>',
-    '- Các thông số còn lại giữ nguyên mặc định, sau đó nhấn <b>Apply</b> và <b>OK</b> để lưu.'
+    'Gán cố định (Bind) địa chỉ IP theo MAC cho máy PC1 (192.168.1.249) bằng Make Static',
+    '- Thực hiện: Nhấn <b>Make Static</b>',
+    '- Comment: <span class="val">Server 1</span>'
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
   grading: {
@@ -137,8 +133,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         try { if (mkBai3LaLeasePC1(d)) { doc = d; break; } } catch (e) {}
       }
 
-      const banChup = window._FTC_MK_BAI3 || null;
-      const daLuu = !!window._FTC_MK_BAI3_SAVED;
+      const banChup = window._FTC_MK_BAI3 || window._FTC_MK_BAI3_LIVE || null;
+      const daLuu = !!(window._FTC_MK_BAI3_SAVED || banChup || (doc && doc._ftcIsSaved) || window._hasClickedSaveInGuide);
 
       if (!doc && !banChup) {
         const tong = MK_BAI3_CHUAN.length + 1;
@@ -220,6 +216,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       const doc = simWin.document;
       if (doc && doc.querySelector('input#name') && doc.querySelector('input#password')) {
         window._FTC_MK_BAI3 = null;
+        window._FTC_MK_BAI3_LIVE = null;
         window._FTC_MK_BAI3_SAVED = false;
         window._FTC_MK_BAI3_DA_STATIC = false;
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=3'); } catch (e) {}
@@ -231,23 +228,66 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
             if (typeof mkBai3CaiTheoDoi === 'function') {
               mkBai3CaiTheoDoi(simWin.document);
             }
+            const d = simWin.document;
+            if (d && mkBai3LaLeasePC1(d)) {
+              const live = mkBai3ChupTatCa(d);
+              if (live) window._FTC_MK_BAI3_LIVE = live;
+              if (typeof mkBai3ChiTietCoMakeStatic === 'function' && !mkBai3ChiTietCoMakeStatic(d)) {
+                window._FTC_MK_BAI3_DA_STATIC = true;
+              }
+            }
           } catch (e) {}
-        }, 500);
+        }, 400);
+
+        const batNutLuu = function (e) {
+          try {
+            let el = e.target;
+            while (el && el !== simWin.document) {
+              const txt = (el.textContent || el.value || '').trim().toLowerCase();
+              if (txt === 'make static') {
+                window._FTC_MK_BAI3_DA_STATIC = true;
+              }
+              if (el.tagName === 'A' && txt.match(/^(ok|apply)$/)) {
+                const d = simWin.document;
+                if (d) {
+                  d._ftcIsSaved = true;
+                  window._hasClickedSaveInGuide = true;
+                  const snapshot = mkBai3ChupTatCa(d);
+                  if (snapshot) {
+                    window._FTC_MK_BAI3 = snapshot;
+                    window._FTC_MK_BAI3_SAVED = true;
+                  }
+                  if (typeof mkBai3ChiTietCoMakeStatic === 'function') {
+                    window._FTC_MK_BAI3_DA_STATIC = !mkBai3ChiTietCoMakeStatic(d);
+                  } else {
+                    window._FTC_MK_BAI3_DA_STATIC = true;
+                  }
+                }
+                break;
+              }
+              el = el.parentNode;
+            }
+          } catch (ex) {}
+        };
+        simWin.document.addEventListener('pointerdown', batNutLuu, true);
+        simWin.document.addEventListener('click', batNutLuu, true);
       }
     } catch (e) {}
   },
 
-  /** Chụp giá trị NGAY LÚC bấm Apply/OK (trang chi tiết tự đóng ngay sau đó). */
+  /** Chụp giá trị NGAY LÚC bấm Apply/OK. */
   onSimSave: function (simWin) {
     try {
       const doc = simWin.document;
-      if (!mkBai3LaLeasePC1(doc)) return;
-      const ban = mkBai3ChupTatCa(doc);
+      const ban = (doc && mkBai3LaLeasePC1(doc)) ? mkBai3ChupTatCa(doc) : (window._FTC_MK_BAI3_LIVE || null);
       if (ban) {
         window._FTC_MK_BAI3 = ban;
         window._FTC_MK_BAI3_SAVED = true;
-        window._FTC_MK_BAI3_DA_STATIC = (typeof mkBai3ChiTietCoMakeStatic === 'function')
-          ? !mkBai3ChiTietCoMakeStatic(doc) : null;
+        if (doc && typeof mkBai3ChiTietCoMakeStatic === 'function') {
+          window._FTC_MK_BAI3_DA_STATIC = !mkBai3ChiTietCoMakeStatic(doc);
+        } else {
+          window._FTC_MK_BAI3_DA_STATIC = true;
+        }
       }
     } catch (e) {}
   },

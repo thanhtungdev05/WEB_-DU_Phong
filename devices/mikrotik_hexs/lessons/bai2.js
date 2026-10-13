@@ -118,13 +118,9 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   instructions: [
     '<b>Yêu cầu:</b>',
     'Giới hạn băng thông cho dải LAN 192.168.1.0/24 bằng Simple Queue',
-    '- Username: <span class="val">admin</span>',
-    '- Password: <span class="val">admin</span>',
-    '- Vào <b>Queues</b>, nhấn <b>Add New</b> để tạo Simple Queue mới:',
-    '&nbsp;&nbsp;Name: <span class="val">under_5M</span>',
-    '&nbsp;&nbsp;Target: <span class="val">192.168.1.0/24</span>',
-    '&nbsp;&nbsp;Max Limit — Target Upload: <span class="val">2M</span>, Target Download: <span class="val">5M</span>',
-    '- Các thông số còn lại giữ nguyên mặc định, sau đó nhấn <b>Apply</b> và <b>OK</b> để lưu.'
+    '- Name: <span class="val">under_5M</span>',
+    '- Target: <span class="val">192.168.1.0/24</span>',
+    '- Max Limit — Target Upload: <span class="val">2M</span>, Target Download: <span class="val">5M</span>'
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
   grading: {
@@ -140,8 +136,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         try { if (!doc && mkBai2LaTrangQueue(d)) doc = d; } catch (e) {}
       }
 
-      const banChup = window._FTC_MK_BAI2 || null;
-      const daLuu = !!window._FTC_MK_BAI2_SAVED;
+      const banChup = window._FTC_MK_BAI2 || window._FTC_MK_BAI2_LIVE || null;
+      const daLuu = !!(banChup || window._FTC_MK_BAI2_SAVED || (doc && doc._ftcIsSaved) || window._hasClickedSaveInGuide);
 
       const details = [];
       let soDung = 0;
@@ -154,7 +150,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         let loi;
         if (dat) loi = 'Chính xác';
         else if (gt === null || gt === undefined) loi = 'Chưa mở trang cấu hình hoặc chưa nhập giá trị';
-        else if (!daLuu) loi = 'Chưa nhấn Apply để lưu cấu hình';
+        else if (!daLuu) loi = 'Chưa nhấn Apply/OK để lưu cấu hình';
         else if (muc.deBai) loi = 'Giá trị không đúng yêu cầu đề bài';
         else loi = 'Đây là giá trị mặc định, không được thay đổi';
 
@@ -185,6 +181,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       const doc = simWin.document;
       if (doc && doc.querySelector('input#name') && doc.querySelector('input#password')) {
         window._FTC_MK_BAI2 = null;
+        window._FTC_MK_BAI2_LIVE = null;
         window._FTC_MK_BAI2_SAVED = false;
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=2'); } catch (e) {}
       }
@@ -194,30 +191,54 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         simWin.setInterval(function () {
           try {
             if (typeof mkBai2CaiTheoDoi === 'function') mkBai2CaiTheoDoi(simWin.document);
+            const d = simWin.document;
+            if (d && mkBai2LaTrangQueue(d)) {
+              const live = mkBai2ChupTatCa(d);
+              if (live) window._FTC_MK_BAI2_LIVE = live;
+            }
           } catch (e) {}
-        }, 500);
+        }, 400);
+
+        // Bắt trực tiếp sự kiện click / pointerdown trên nút OK và Apply trong simWin
+        const batNutLuu = function (e) {
+          try {
+            let el = e.target;
+            while (el && el !== simWin.document) {
+              if (el.tagName === 'A' && (el.textContent || '').trim().toLowerCase().match(/^(ok|apply)$/)) {
+                const d = simWin.document;
+                if (d) {
+                  d._ftcIsSaved = true;
+                  window._hasClickedSaveInGuide = true;
+                  const snapshot = mkBai2ChupTatCa(d);
+                  if (snapshot) {
+                    window._FTC_MK_BAI2 = snapshot;
+                    window._FTC_MK_BAI2_SAVED = true;
+                  }
+                }
+                break;
+              }
+              el = el.parentNode;
+            }
+          } catch (ex) {}
+        };
+        simWin.document.addEventListener('pointerdown', batNutLuu, true);
+        simWin.document.addEventListener('click', batNutLuu, true);
       }
     } catch (e) {}
   },
 
   /**
-   * Chụp giá trị ngay lúc bấm Apply/OK — anh Huynn chốt "nút Apply là nút
-   * kiểm tra". Bấm Apply thì WebFig GIỮ trang mở (vẫn đọc được trực tiếp),
-   * còn bấm OK thì trang đóng lại nên phải có bản chụp này mới chấm được.
-   *
-   * Việc đặt lại cờ ẩn tooltip sau khi lưu (`_ftcMkChanTooltip`) do `app.js`
-   * lo TẬP TRUNG cho mọi bài MikroTik — xem `window.onSimulatorSave`. Không
-   * đặt lại thì sau lần bấm Apply đầu tiên là mất sạch tooltip vĩnh viễn
-   * (SPA không tự nạp lại trang), anh Huynn đã báo lỗi này ở Bài 2 ngày
-   * 2026-09-19.
+   * Chụp giá trị ngay lúc bấm Apply/OK — cả hai nút Apply và OK đều lưu cấu hình
+   * và giữ dữ liệu đồng bộ cho việc chấm điểm.
    */
   onSimSave: function (simWin) {
     try {
       const doc = simWin.document;
-      if (!mkBai2LaTrangQueue(doc)) return;
-      const ban = mkBai2ChupTatCa(doc);
+      const ban = mkBai2ChupTatCa(doc) || window._FTC_MK_BAI2_LIVE;
       if (ban) {
         window._FTC_MK_BAI2 = ban;
+        window._FTC_MK_BAI2_SAVED = true;
+      } else if (mkBai2LaTrangQueue(doc)) {
         window._FTC_MK_BAI2_SAVED = true;
       }
     } catch (e) {}

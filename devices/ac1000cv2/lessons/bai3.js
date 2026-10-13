@@ -111,7 +111,7 @@ var lessonObj = {
     } catch (e) { }
   },
   grading: {
-    description: 'Kiểm tra thông số cấu hình Wi-Fi phụ SSID 2 (Tên mạng FPT Telecom-7EA8 & Mật khẩu 00032934)',
+    description: 'Kiểm tra thông số cấu hình Wi-Fi phụ SSID 2 (Tên mạng FPT IoT & Mật khẩu fptiot123)',
     rules: [
       {
         id: 'wifi_iot_index',
@@ -178,7 +178,7 @@ var lessonObj = {
               // ── Bắt lỗi KTV cấu hình nhầm hoặc đè vào SSID 1 (SSID chính) ──
               if (sVal === '0') {
                 var curName = sName ? (sName.value || '').trim() : '';
-                if (curName === 'FPT Telecom-7EA8' || curName === 'FPT Telecom-IoT') {
+                if (curName === 'FPT IoT' || curName === 'FPT Telecom-7EA8' || curName === 'FPT Telecom-IoT') {
                   outOfScopeErrors.push({
                     id: 'err_tamper_ssid1',
                     name: 'Thao tác ngoài phạm vi: Sửa đè SSID 1',
@@ -208,7 +208,7 @@ var lessonObj = {
               } else if (sSecVal === '0') {
                 // Đang chọn SSID 1 ở trang bảo mật
                 var curKey = kEl ? (kEl.value || '').trim() : '';
-                if (curKey === '00032934' || curKey === 'fpt12345') {
+                if (curKey === 'fptiot123' || curKey === '00032934' || curKey === 'fpt12345') {
                   outOfScopeErrors.push({
                     id: 'err_tamper_key_ssid1',
                     name: 'Thao tác ngoài phạm vi: Đổi mật khẩu SSID 1',
@@ -305,16 +305,16 @@ var lessonObj = {
       if (r2.passed) passedCount++;
       details.push(r2);
 
-      // 3. Tên Wi-Fi IoT: FPT Telecom-7EA8
-      var r3 = evaluateCriteria('wifi_iot_ssid', 'Tên Wi-Fi IoT (SSID 2)', 'FPT Telecom-7EA8', function (v) {
-        return v === 'FPT Telecom-7EA8';
+      // 3. Tên Wi-Fi IoT: FPT IoT
+      var r3 = evaluateCriteria('wifi_iot_ssid', 'Tên Wi-Fi IoT (SSID 2)', 'FPT IoT', function (v) {
+        return v === 'FPT IoT';
       });
       if (r3.passed) passedCount++;
       details.push(r3);
 
-      // 4. Mật khẩu Wi-Fi IoT: 00032934
-      var r4 = evaluateCriteria('wifi_iot_key', 'Security Passphrase (SSID 2)', '00032934', function (v) {
-        return v === '00032934';
+      // 4. Mật khẩu Wi-Fi IoT: fptiot123
+      var r4 = evaluateCriteria('wifi_iot_key', 'Security Passphrase (SSID 2)', 'fptiot123', function (v) {
+        return v === 'fptiot123';
       });
       if (r4.passed) passedCount++;
       details.push(r4);

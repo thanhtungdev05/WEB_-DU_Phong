@@ -11,25 +11,25 @@ if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
     {
       // Trỏ vào chữ Disable (radio thứ 2), bong bóng nằm bên phải nên không che chữ
       selector: '.el-form-item[data-ftc-nhan="Define custom servers"] .el-radio:last-of-type',
-      text: 'Bước 1: chọn Enable',
+      text: 'Bước 4: chọn Enable',
       position: 'right',
       page: 'network/lan'
     },
     {
       selector: F.o('DNS Server 1'),
-      text: 'Bước 2: nhập DNS Server 1<br>ví dụ: 210.245.31.220',
+      text: 'Bước 5: nhập DNS Server 1<br>ví dụ: 210.245.31.220',
       position: 'right',
       page: 'network/lan'
     },
     {
       selector: F.o('DNS Server 2'),
-      text: 'Bước 3: nhập DNS Server 2<br>ví dụ: 8.8.8.8',
+      text: 'Bước 6: nhập DNS Server 2<br>ví dụ: 8.8.8.8',
       position: 'right',
       page: 'network/lan'
     },
     {
       selector: F.nut('Apply'),
-      text: 'Bước 4: chọn Apply',
+      text: 'Bước 7: chọn Apply',
       position: 'left',
       page: 'network/lan'
     }

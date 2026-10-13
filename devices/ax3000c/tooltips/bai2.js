@@ -9,28 +9,28 @@ if (!window.TOOLTIPS_AX3000C) window.TOOLTIPS_AX3000C = {};
   function dangOTabHost(doc) { return !!doc.querySelector('#tab-hostssid.is-active'); }
 
   window.TOOLTIPS_AX3000C['LAB_AX3000CV2_02'] = F.menu('Wi-Fi', 'Wi-Fi', 'network/wifi', 'WIFI', 'WIFI').concat([
-    // Bước 1: chỉ hiện khi đang ở tab khác
+    // Bước 4: chỉ hiện khi đang ở tab khác
     {
       selector: '#tab-hostssid:not(.is-active)',
-      text: 'Bước 1: Cấu hình mạng Host SSID',
+      text: 'Bước 4: Cấu hình mạng Host SSID',
       position: 'top',
       page: 'network/wifi'
     },
     {
       selector: '#pane-hostssid ' + F.o('SSID'),
-      text: 'Bước 2: Đặt tên WIFI VD: FPT Telecom',
+      text: 'Bước 5: Đặt tên WIFI VD: FPT Telecom',
       position: 'right',
       page: 'network/wifi'
     },
     {
       selector: '#pane-hostssid ' + F.o('Passphrase'),
-      text: 'Bước 3: Đặt mật khẩu WIFI VD: fpt12345',
+      text: 'Bước 6: Đặt mật khẩu WIFI VD: fpt12345',
       position: 'right',
       page: 'network/wifi'
     },
     {
       selector: F.nut('Apply'),
-      text: 'Bước 4: Chọn Apply',
+      text: 'Bước 7: Chọn Apply',
       position: 'left',
       page: 'network/wifi',
       condition: dangOTabHost
