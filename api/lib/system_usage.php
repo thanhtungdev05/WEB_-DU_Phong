@@ -1,15 +1,6 @@
 <?php
 declare(strict_types=1);
 
-function system_usage_float(string $key, float $default, float $minimum, float $maximum): float
-{
-    $raw = env_value($key);
-    if ($raw === null || !is_numeric($raw)) {
-        return $default;
-    }
-    return max($minimum, min($maximum, (float)$raw));
-}
-
 function system_usage_status(float $percent): string
 {
     if ($percent >= 92.0) {
@@ -106,19 +97,22 @@ function render_usage_metrics(): array
     $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
     $monthStart = $now->modify('first day of this month')->setTime(0, 0);
     $hourStart = $now->modify('-1 hour');
+    // Render currently mis-parses a URL-encoded "+00:00" offset as a space.
+    // Use the equivalent RFC 3339 UTC Z form accepted by the metrics API.
+    $renderTime = static fn(DateTimeImmutable $value): string => $value->format('Y-m-d\TH:i:s\Z');
     $base = 'https://api.render.com/v1/metrics/';
     $common = '&resource=' . rawurlencode($serviceId);
     $requests = [
-        'bandwidth' => $base . 'bandwidth?startTime=' . rawurlencode($monthStart->format(DATE_ATOM))
-            . '&endTime=' . rawurlencode($now->format(DATE_ATOM)) . $common,
-        'cpu' => $base . 'cpu?startTime=' . rawurlencode($hourStart->format(DATE_ATOM))
-            . '&endTime=' . rawurlencode($now->format(DATE_ATOM)) . '&resolutionSeconds=300' . $common,
-        'cpu_limit' => $base . 'cpu-limit?startTime=' . rawurlencode($hourStart->format(DATE_ATOM))
-            . '&endTime=' . rawurlencode($now->format(DATE_ATOM)) . '&resolutionSeconds=300' . $common,
-        'memory' => $base . 'memory?startTime=' . rawurlencode($hourStart->format(DATE_ATOM))
-            . '&endTime=' . rawurlencode($now->format(DATE_ATOM)) . '&resolutionSeconds=300' . $common,
-        'memory_limit' => $base . 'memory-limit?startTime=' . rawurlencode($hourStart->format(DATE_ATOM))
-            . '&endTime=' . rawurlencode($now->format(DATE_ATOM)) . '&resolutionSeconds=300' . $common,
+        'bandwidth' => $base . 'bandwidth?startTime=' . rawurlencode($renderTime($monthStart))
+            . '&endTime=' . rawurlencode($renderTime($now)) . $common,
+        'cpu' => $base . 'cpu?startTime=' . rawurlencode($renderTime($hourStart))
+            . '&endTime=' . rawurlencode($renderTime($now)) . '&resolutionSeconds=300' . $common,
+        'cpu_limit' => $base . 'cpu-limit?startTime=' . rawurlencode($renderTime($hourStart))
+            . '&endTime=' . rawurlencode($renderTime($now)) . '&resolutionSeconds=300' . $common,
+        'memory' => $base . 'memory?startTime=' . rawurlencode($renderTime($hourStart))
+            . '&endTime=' . rawurlencode($renderTime($now)) . '&resolutionSeconds=300' . $common,
+        'memory_limit' => $base . 'memory-limit?startTime=' . rawurlencode($renderTime($hourStart))
+            . '&endTime=' . rawurlencode($renderTime($now)) . '&resolutionSeconds=300' . $common,
     ];
 
     $multi = curl_multi_init();
@@ -172,8 +166,10 @@ function render_usage_metrics(): array
         $bandwidthBytes += array_sum($series['values']);
     }
     $bandwidthGb = round($bandwidthBytes / 1024 ** 3, 3);
-    $bandwidthLimitGb = system_usage_float('RENDER_BANDWIDTH_LIMIT_GB', 100.0, 0.0, 1000000.0);
-    $bandwidthPercent = system_usage_percent($bandwidthGb, $bandwidthLimitGb);
+    // The public Render metrics API exposes usage but not the workspace's
+    // included monthly quota. Never infer a quota from a plan name here.
+    $bandwidthLimitGb = null;
+    $bandwidthPercent = null;
 
     $cpuSeries = render_metric_series($payloads['cpu'] ?? null);
     $cpuLimitSeries = render_metric_series($payloads['cpu_limit'] ?? null);
@@ -204,7 +200,8 @@ function render_usage_metrics(): array
             'usedGb' => $bandwidthGb,
             'limitGb' => $bandwidthLimitGb,
             'usagePercent' => $bandwidthPercent,
-            'status' => $bandwidthPercent === null ? 'UNKNOWN' : system_usage_status($bandwidthPercent),
+            'status' => 'UNKNOWN',
+            'quotaAvailable' => false,
             'periodStart' => $monthStart->format(DATE_ATOM),
             'source' => 'render_metrics_api',
         ],
@@ -267,6 +264,214 @@ function neon_api_request(string $url, string $apiKey, int $timeoutSeconds = 5):
     return ['success' => false, 'status' => $status, 'data' => null];
 }
 
+function neon_endpoint_id_from_database_url(string $databaseUrl): ?string
+{
+    $host = (string)parse_url($databaseUrl, PHP_URL_HOST);
+    if ($host === '' || preg_match('/^(ep-[a-z0-9-]+?)(?:-pooler)?\./i', $host, $matches) !== 1) {
+        return null;
+    }
+    return strtolower((string)$matches[1]);
+}
+
+function neon_project_id_for_endpoint(array $projects, string $endpointId, string $apiKey): ?string
+{
+    if (!function_exists('curl_multi_init')) {
+        return null;
+    }
+    $projectIds = [];
+    foreach (array_slice($projects, 0, 100) as $project) {
+        $projectId = trim((string)($project['id'] ?? ''));
+        if ($projectId !== '') {
+            $projectIds[] = $projectId;
+        }
+    }
+
+    // Resolve projects in small concurrent batches so accounts with several
+    // projects do not make the dashboard wait one HTTP timeout per project.
+    foreach (array_chunk($projectIds, 20) as $batch) {
+        $multi = curl_multi_init();
+        $handles = [];
+        foreach ($batch as $projectId) {
+            $url = 'https://console.neon.tech/api/v2/projects/'
+                . rawurlencode($projectId) . '/endpoints';
+            $handle = curl_init($url);
+            if ($handle === false) {
+                continue;
+            }
+            curl_setopt_array($handle, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CONNECTTIMEOUT => 3,
+                CURLOPT_TIMEOUT => 5,
+                CURLOPT_HTTPHEADER => [
+                    'Accept: application/json',
+                    'Authorization: Bearer ' . $apiKey,
+                ],
+                CURLOPT_USERAGENT => 'FTC-VirtualDevices-SystemMonitor/1.0',
+            ]);
+            curl_multi_add_handle($multi, $handle);
+            $handles[$projectId] = $handle;
+        }
+
+        do {
+            $status = curl_multi_exec($multi, $running);
+            if ($running > 0) {
+                curl_multi_select($multi, 0.5);
+            }
+        } while ($running > 0 && $status === CURLM_OK);
+
+        $matchedProjectId = null;
+        foreach ($handles as $projectId => $handle) {
+            if ((int)curl_getinfo($handle, CURLINFO_RESPONSE_CODE) === 200) {
+                $decoded = json_decode((string)curl_multi_getcontent($handle), true);
+                $endpoints = is_array($decoded['endpoints'] ?? null) ? $decoded['endpoints'] : [];
+                foreach ($endpoints as $endpoint) {
+                    if (strtolower((string)($endpoint['id'] ?? '')) === $endpointId) {
+                        $matchedProjectId = $projectId;
+                        break;
+                    }
+                }
+            }
+            curl_multi_remove_handle($multi, $handle);
+            curl_close($handle);
+        }
+        curl_multi_close($multi);
+
+        if ($matchedProjectId !== null) {
+            return $matchedProjectId;
+        }
+    }
+    return null;
+}
+
+/** @return array{projectId: ?string, source: string, reason: ?string, status: int} */
+function neon_resolve_project_id(string $apiKey, bool $ignoreConfiguredProject = false): array
+{
+    $configuredProjectId = trim((string)env_value('NEON_PROJECT_ID', ''));
+    if (!$ignoreConfiguredProject && $configuredProjectId !== '') {
+        return ['projectId' => $configuredProjectId, 'source' => 'environment', 'reason' => null, 'status' => 200];
+    }
+
+    $endpointId = neon_endpoint_id_from_database_url((string)env_value('DATABASE_URL', ''));
+    $projectsResponse = neon_api_request('https://console.neon.tech/api/v2/projects?limit=400', $apiKey, 6);
+    if (!$projectsResponse['success'] && (int)$projectsResponse['status'] === 400) {
+        // Personal API keys need org_id for organization projects. Discover
+        // organizations from the key instead of asking operators to hardcode it.
+        $organizationsResponse = neon_api_request(
+            'https://console.neon.tech/api/v2/users/me/organizations',
+            $apiKey,
+            6
+        );
+        $organizations = is_array($organizationsResponse['data']['organizations'] ?? null)
+            ? $organizationsResponse['data']['organizations']
+            : [];
+        $organizationProjects = [];
+        $successfulOrganizationRequests = 0;
+        foreach (array_slice($organizations, 0, 50) as $organization) {
+            $organizationId = trim((string)($organization['id'] ?? ''));
+            if ($organizationId === '') {
+                continue;
+            }
+            $response = neon_api_request(
+                'https://console.neon.tech/api/v2/projects?limit=400&org_id=' . rawurlencode($organizationId),
+                $apiKey,
+                6
+            );
+            if (!$response['success']) {
+                continue;
+            }
+            $successfulOrganizationRequests++;
+            $projectsForOrganization = is_array($response['data']['projects'] ?? null)
+                ? $response['data']['projects']
+                : [];
+            array_push($organizationProjects, ...$projectsForOrganization);
+        }
+        if ($successfulOrganizationRequests > 0) {
+            $projectsResponse = [
+                'success' => true,
+                'status' => 200,
+                'data' => ['projects' => $organizationProjects],
+            ];
+        }
+    }
+    if (!$projectsResponse['success']) {
+        return [
+            'projectId' => null,
+            'source' => 'projects_api',
+            'reason' => 'projects_request_failed',
+            'status' => (int)$projectsResponse['status'],
+        ];
+    }
+
+    $projects = is_array($projectsResponse['data']['projects'] ?? null)
+        ? $projectsResponse['data']['projects']
+        : [];
+    if (count($projects) === 1 && !empty($projects[0]['id'])) {
+        return [
+            'projectId' => (string)$projects[0]['id'],
+            'source' => 'single_accessible_project',
+            'reason' => null,
+            'status' => 200,
+        ];
+    }
+    if ($endpointId === null) {
+        return [
+            'projectId' => null,
+            'source' => 'projects_api',
+            'reason' => $projects === [] ? 'no_accessible_projects' : 'database_endpoint_not_detected',
+            'status' => 0,
+        ];
+    }
+
+    // DATABASE_URL identifies a compute endpoint (ep-*), not a project. Match
+    // that endpoint against the projects visible to the configured API key.
+    $matchedProjectId = neon_project_id_for_endpoint($projects, $endpointId, $apiKey);
+    if ($matchedProjectId !== null) {
+        return [
+            'projectId' => $matchedProjectId,
+            'source' => 'database_endpoint_match',
+            'reason' => null,
+            'status' => 200,
+        ];
+    }
+
+    return [
+        'projectId' => null,
+        'source' => 'projects_api',
+        'reason' => count($projects) > 100 ? 'too_many_projects_to_match' : 'database_project_not_found',
+        'status' => 0,
+    ];
+}
+
+function neon_positive_number(mixed $value): ?float
+{
+    return is_numeric($value) && (float)$value > 0.0 ? (float)$value : null;
+}
+
+/** @return array<string, mixed> */
+function neon_project_metrics(array $project): array
+{
+    $quota = is_array($project['settings']['quota'] ?? null) ? $project['settings']['quota'] : [];
+    $storageLimitBytes = neon_positive_number($quota['logical_size_bytes'] ?? null)
+        ?? neon_positive_number($project['branch_logical_size_limit_bytes'] ?? null);
+    $computeLimitSeconds = neon_positive_number($quota['compute_time_seconds'] ?? null);
+    $computeSeconds = max(0.0, (float)($project['compute_time_seconds'] ?? 0.0));
+
+    return [
+        'storageLimitBytes' => $storageLimitBytes === null ? null : (int)round($storageLimitBytes),
+        'computeTimeSeconds' => (int)round($computeSeconds),
+        'computeHours' => round($computeSeconds / 3600, 2),
+        'computeLimitSeconds' => $computeLimitSeconds === null ? null : (int)round($computeLimitSeconds),
+        'computeLimitHours' => $computeLimitSeconds === null ? null : round($computeLimitSeconds / 3600, 2),
+        'dataTransferBytes' => max(0, (int)($project['data_transfer_bytes'] ?? 0)),
+        'writtenDataBytes' => max(0, (int)($project['written_data_bytes'] ?? 0)),
+        'consumptionPeriodStart' => $project['consumption_period_start'] ?? null,
+        'consumptionPeriodEnd' => $project['consumption_period_end'] ?? null,
+        'quotaSource' => $storageLimitBytes !== null || $computeLimitSeconds !== null
+            ? 'neon_project_api'
+            : 'not_exposed_for_project',
+    ];
+}
+
 /** @return array<string, mixed> */
 function neon_usage_unavailable(string $reason): array
 {
@@ -288,10 +493,11 @@ function neon_usage_metrics(): array
         return neon_usage_unavailable('curl_unavailable');
     }
 
-    $projectId = trim((string)env_value('NEON_PROJECT_ID', ''));
     $cacheTtl = env_int('SYSTEM_USAGE_PROVIDER_CACHE_SECONDS', 300, 60, 3600);
+    $projectHint = trim((string)env_value('NEON_PROJECT_ID', ''));
+    $endpointHint = neon_endpoint_id_from_database_url((string)env_value('DATABASE_URL', '')) ?? '';
     $cachePath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
-        . DIRECTORY_SEPARATOR . 'ftc-neon-usage-' . hash('sha256', $apiKey . $projectId) . '.json';
+        . DIRECTORY_SEPARATOR . 'ftc-neon-usage-' . hash('sha256', $apiKey . $projectHint . $endpointHint) . '.json';
 
     if (is_file($cachePath) && (time() - (int)filemtime($cachePath)) < $cacheTtl) {
         $cached = json_decode((string)file_get_contents($cachePath), true);
@@ -301,79 +507,63 @@ function neon_usage_metrics(): array
         }
     }
 
+    $resolvedProject = neon_resolve_project_id($apiKey);
+    $projectId = $resolvedProject['projectId'];
+    if ($projectId === null) {
+        return [
+            'configured' => true,
+            'available' => false,
+            'reason' => $resolvedProject['reason'],
+            'httpStatus' => $resolvedProject['status'],
+            'projectIdSource' => $resolvedProject['source'],
+        ];
+    }
+
+    $requestProject = static fn(string $id): array => neon_api_request(
+        'https://console.neon.tech/api/v2/projects/' . rawurlencode($id),
+        $apiKey,
+        6
+    );
+    $projectResponse = $requestProject($projectId);
+
+    // A stale or endpoint-shaped NEON_PROJECT_ID used to leave the widget in
+    // an endless checking state. Treat it as an optional hint: on 404, resolve
+    // the project again by matching DATABASE_URL's ep-* endpoint.
+    if (!$projectResponse['success']
+        && (int)$projectResponse['status'] === 404
+        && $resolvedProject['source'] === 'environment'
+    ) {
+        $automaticProject = neon_resolve_project_id($apiKey, true);
+        if ($automaticProject['projectId'] !== null && $automaticProject['projectId'] !== $projectId) {
+            $resolvedProject = $automaticProject;
+            $projectId = $automaticProject['projectId'];
+            $projectResponse = $requestProject($projectId);
+        }
+    }
+    if (!$projectResponse['success'] || !is_array($projectResponse['data']['project'] ?? null)) {
+        return [
+            'configured' => true,
+            'available' => false,
+            'reason' => 'project_request_failed',
+            'httpStatus' => (int)$projectResponse['status'],
+            'projectIdSource' => $resolvedProject['source'],
+        ];
+    }
+
     $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-
-    // Tự động tìm project ID từ DATABASE_URL hoặc từ API /projects
-    if ($projectId === '') {
-        $dbUrl = (string)env_value('DATABASE_URL', '');
-        $host = (string)parse_url($dbUrl, PHP_URL_HOST);
-        if (preg_match('/^ep-([a-z0-9\-]+?)(?:-pooler)?\.[a-z0-9\.\-]+neon\.tech$/i', $host, $m)) {
-            $projectId = $m[1];
-        }
-    }
-
-    if ($projectId === '') {
-        $projectsRes = neon_api_request('https://api.neon.tech/api/v2/projects', $apiKey, 6);
-        if ($projectsRes['success'] && is_array($projectsRes['data']['projects'] ?? null)) {
-            $projects = $projectsRes['data']['projects'];
-            if (!empty($projects[0]['id'])) {
-                $projectId = (string)$projects[0]['id'];
-            }
-        }
-    }
-
-    if ($projectId === '') {
-        return neon_usage_unavailable('project_id_not_found');
-    }
-
-    // Lấy consumption metrics cho project
-    $metricsUrl = 'https://api.neon.tech/api/v2/projects/' . rawurlencode($projectId) . '/consumption_metrics';
-    $res = neon_api_request($metricsUrl, $apiKey, 6);
-
-    $storageBytes = 0.0;
-    $computeSeconds = 0.0;
-    $dataTransferBytes = 0.0;
-    $writtenDataBytes = 0.0;
-    $available = false;
-
-    if ($res['success'] && is_array($res['data'])) {
-        $data = $res['data'];
-        $period = is_array($data['periods'][0] ?? null) ? $data['periods'][0] : $data;
-        $storageBytes = (float)($period['synthetic_storage_size'] ?? $period['data_storage_bytes'] ?? 0.0);
-        $computeSeconds = (float)($period['compute_time_seconds'] ?? 0.0);
-        $dataTransferBytes = (float)($period['data_transfer_bytes'] ?? 0.0);
-        $writtenDataBytes = (float)($period['written_data_bytes'] ?? 0.0);
-        $available = true;
-    } else {
-        // Fallback gọi trực tiếp project info
-        $projectUrl = 'https://api.neon.tech/api/v2/projects/' . rawurlencode($projectId);
-        $projRes = neon_api_request($projectUrl, $apiKey, 6);
-        if ($projRes['success'] && is_array($projRes['data']['project'] ?? null)) {
-            $proj = $projRes['data']['project'];
-            $storageBytes = (float)($proj['synthetic_storage_size'] ?? 0.0);
-            $computeSeconds = (float)($proj['compute_time_seconds'] ?? 0.0);
-            $available = true;
-        }
-    }
-
-    $storageMb = round($storageBytes / (1024 * 1024), 2);
-    $computeHours = round($computeSeconds / 3600, 2);
-    $storageLimitMb = system_usage_float('NEON_STORAGE_LIMIT_MB', 512.0, 1.0, 10485760.0);
-    $computeLimitHours = env_int('NEON_COMPUTE_HOURS_LIMIT', 100, 1, 1000000);
+    $metrics = neon_project_metrics($projectResponse['data']['project']);
 
     $result = [
         'configured' => true,
-        'available' => $available,
+        'available' => true,
         'projectId' => $projectId,
-        'syntheticStorageBytes' => (int)round($storageBytes),
-        'syntheticStorageMb' => $storageMb,
-        'storageUsagePercent' => system_usage_percent($storageMb, $storageLimitMb),
-        'computeTimeSeconds' => (int)round($computeSeconds),
-        'computeHours' => $computeHours,
-        'computeUsagePercent' => system_usage_percent($computeHours, (float)$computeLimitHours),
-        'dataTransferBytes' => (int)round($dataTransferBytes),
-        'writtenDataBytes' => (int)round($writtenDataBytes),
-        'source' => 'neon_management_api',
+        'projectIdSource' => $resolvedProject['source'],
+        ...$metrics,
+        'computeUsagePercent' => system_usage_percent(
+            (float)$metrics['computeTimeSeconds'],
+            (float)($metrics['computeLimitSeconds'] ?? 0)
+        ),
+        'source' => 'neon_project_api',
         'checkedAt' => $now->format(DATE_ATOM),
         'cache' => ['hit' => false, 'ttlSeconds' => $cacheTtl],
     ];
@@ -385,5 +575,3 @@ function neon_usage_metrics(): array
     );
     return $result;
 }
-
-

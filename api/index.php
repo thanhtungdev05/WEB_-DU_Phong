@@ -3449,9 +3449,6 @@ function handle_system(array $segments, string $method): void
         try {
             $dbSizeBytes = (int)$pdo->query('SELECT pg_database_size(current_database())')->fetchColumn();
             $dbSizeMb = round($dbSizeBytes / 1024 / 1024, 2);
-            $neonFreeLimitMb = system_usage_float('NEON_STORAGE_LIMIT_MB', 512.0, 1.0, 10485760.0);
-            $usagePct = round(($dbSizeMb / $neonFreeLimitMb) * 100, 1);
-            $status = system_usage_status($usagePct);
 
             $tableSizes = $pdo->query(<<<'SQL'
                 SELECT schemaname || '.' || tablename AS table_name,
@@ -3498,14 +3495,9 @@ function handle_system(array $segments, string $method): void
                 $connectionCount = (int)$pdo->query(
                     'SELECT COUNT(*) FROM pg_stat_activity WHERE datname = current_database()'
                 )->fetchColumn();
-                // Ưu tiên giới hạn từ nhà cung cấp (Neon pooler): 10 connections free plan.
-                // SHOW max_connections trả về giới hạn PG server (~100), sai 10x với Neon.
-                $neonConnectionLimit = env_int('NEON_CONNECTION_LIMIT', 0, 0, 100000);
-                if ($neonConnectionLimit > 0) {
-                    $connectionLimit = $neonConnectionLimit;
-                } else {
-                    $connectionLimit = (int)$pdo->query('SHOW max_connections')->fetchColumn();
-                }
+                // This is the live PostgreSQL backend limit reported by the
+                // active Neon compute, not a guessed pooler or plan quota.
+                $connectionLimit = (int)$pdo->query('SHOW max_connections')->fetchColumn();
             } catch (Throwable) {}
             $connectionPercent = system_usage_percent($connectionCount, $connectionLimit);
 
@@ -3516,33 +3508,45 @@ function handle_system(array $segments, string $method): void
 
             $neonMetrics = neon_usage_metrics();
 
-            // Storage determination:
-            $neonActualMb = null;
+            // The current logical DB size comes from PostgreSQL. Its limit,
+            // when Neon exposes one, comes exclusively from the project API.
+            $storageLimitBytes = isset($neonMetrics['storageLimitBytes'])
+                && is_numeric($neonMetrics['storageLimitBytes'])
+                && (float)$neonMetrics['storageLimitBytes'] > 0
+                    ? (float)$neonMetrics['storageLimitBytes']
+                    : null;
+            $storageLimitMb = $storageLimitBytes === null
+                ? null
+                : round($storageLimitBytes / 1024 / 1024, 2);
+            $usagePct = $storageLimitMb === null
+                ? null
+                : system_usage_percent($dbSizeMb, $storageLimitMb);
+            $status = $usagePct === null ? 'UNKNOWN' : system_usage_status($usagePct);
             $storageSource = 'postgres_logical_database_size';
-            if (env_value('NEON_STORAGE_ACTUAL_MB') !== null) {
-                $neonActualMb = (float)env_value('NEON_STORAGE_ACTUAL_MB');
-                $storageSource = 'manual_neon_console';
-            } elseif (!empty($neonMetrics['available']) && isset($neonMetrics['syntheticStorageMb'])) {
-                $neonActualMb = (float)$neonMetrics['syntheticStorageMb'];
-                $storageSource = 'neon_management_api';
-            }
+            $storageLimitSource = $storageLimitMb !== null
+                ? 'neon_project_api'
+                : (empty($neonMetrics['configured'])
+                    ? 'not_configured'
+                    : (empty($neonMetrics['available']) ? 'api_error' : 'not_exposed'));
 
-            // Compute hours determination:
-            $computeLimit = env_int('NEON_COMPUTE_HOURS_LIMIT', 100, 0, 1000000);
+            // Compute usage and quota both come from GET /projects/{id}.
+            $computeLimit = isset($neonMetrics['computeLimitHours'])
+                && is_numeric($neonMetrics['computeLimitHours'])
+                    ? (float)$neonMetrics['computeLimitHours']
+                    : null;
             $computeUsed = null;
-            $computeSource = 'unconfigured';
-            $computeNote = 'Reset đầu tháng.';
-            if (env_value('NEON_COMPUTE_HOURS_USED') !== null) {
-                $computeUsed = (float)env_value('NEON_COMPUTE_HOURS_USED');
-                $computeSource = 'manual_neon_console';
-                $computeNote = 'Nhập thủ công từ Neon Console > Billing (reset đầu tháng).';
-            } elseif (!empty($neonMetrics['available']) && isset($neonMetrics['computeHours'])) {
+            $computeSource = 'neon_project_api';
+            $computeNote = 'Neon API chưa cung cấp số liệu cho project này.';
+            if (!empty($neonMetrics['available']) && isset($neonMetrics['computeHours'])) {
                 $computeUsed = (float)$neonMetrics['computeHours'];
-                $computeSource = 'neon_management_api';
-                $computeNote = 'Tự động từ Neon Management API v2 (chu kỳ tính phí hiện tại).';
+                $computeNote = $computeLimit === null
+                    ? 'Usage tự động từ Neon API; project không công bố quota qua API.'
+                    : 'Usage và quota tự động từ Neon Project API.';
             } elseif (!empty($neonMetrics['configured'])) {
-                $computeSource = 'neon_management_api';
-                $computeNote = 'Đã cấu hình Neon API nhưng chưa lấy được số liệu.';
+                $httpStatus = (int)($neonMetrics['httpStatus'] ?? 0);
+                $computeNote = $httpStatus > 0
+                    ? 'Neon API chưa lấy được số liệu (HTTP ' . $httpStatus . ').'
+                    : 'Neon API chưa xác định được project đang sử dụng.';
             }
 
             respond([
@@ -3555,13 +3559,14 @@ function handle_system(array $segments, string $method): void
                     'storage' => [
                         'databaseSizeBytes' => $dbSizeBytes,
                         'databaseSizeMb' => $dbSizeMb,
-                        'neonLimitMb' => $neonFreeLimitMb,
+                        'neonLimitMb' => $storageLimitMb,
                         'usagePercent' => $usagePct,
                         'status' => $status,
                         'measurement' => $storageSource,
                         'source' => $storageSource,
-                        'isEstimate' => $neonActualMb === null,
-                        'neonActualMb' => $neonActualMb,
+                        'isEstimate' => false,
+                        'neonActualMb' => null,
+                        'limitSource' => $storageLimitSource,
                     ],
                     'database' => [
                         'connections' => [
@@ -3574,14 +3579,14 @@ function handle_system(array $segments, string $method): void
                             'available' => !empty($neonMetrics['available']) && isset($neonMetrics['dataTransferBytes']),
                             'bytes' => (int)($neonMetrics['dataTransferBytes'] ?? 0),
                             'mb' => isset($neonMetrics['dataTransferBytes']) ? round((float)$neonMetrics['dataTransferBytes'] / (1024 * 1024), 2) : 0.0,
-                            'source' => !empty($neonMetrics['available']) ? 'neon_management_api' : 'not_exposed_by_postgresql',
+                            'source' => !empty($neonMetrics['available']) ? 'neon_project_api' : 'not_exposed_by_postgresql',
                             'writtenDataBytes' => (int)($neonMetrics['writtenDataBytes'] ?? 0),
                         ],
                     ],
                     'computeHours' => [
                         'limit' => $computeLimit,
                         'used' => $computeUsed,
-                        'configured' => $computeUsed !== null || !empty($neonMetrics['configured']) || env_value('NEON_COMPUTE_HOURS_LIMIT') !== null,
+                        'configured' => !empty($neonMetrics['configured']),
                         'source' => $computeSource,
                         'note' => $computeNote,
                     ],
