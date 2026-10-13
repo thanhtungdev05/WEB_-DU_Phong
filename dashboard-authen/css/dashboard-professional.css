@@ -2935,17 +2935,23 @@ body.report-export-open {
 .system-usage-popover-body {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .system-metric-card {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 9px;
+    gap: 7px;
+    padding: 10px;
     border: 1px solid var(--ui-border, #e2e8f0);
     border-radius: 8px;
     background: var(--ui-bg-subtle, #f8fafc);
+}
+
+.system-provider-title {
+    color: var(--ui-text, #1e293b);
+    font-size: 12px;
+    line-height: 1.2;
 }
 
 .system-metric-row {
@@ -2996,12 +3002,12 @@ body.report-export-open {
     justify-content: space-between;
     gap: 12px;
     color: var(--ui-muted, #64748b);
-    font-size: 10.5px;
+    font-size: 11px;
 }
 
 .system-provider-row strong {
     color: var(--ui-text, #1e293b);
-    font-size: 10.5px;
+    font-size: 11px;
     text-align: right;
 }
 

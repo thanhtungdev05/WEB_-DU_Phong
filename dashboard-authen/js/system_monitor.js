@@ -67,9 +67,6 @@
         const dot = document.getElementById('systemStatusDot');
         const label = document.getElementById('systemUsageTier');
         const tierBadge = document.getElementById('systemTierBadge');
-        const cutoverMode = document.getElementById('systemCutoverMode');
-        const renderStatus = document.getElementById('systemRenderStatus');
-        const renderDetail = document.getElementById('systemRenderDetail');
 
         // Ưu tiên hiển thị số thực từ Neon Console nếu có
         const displayMb = neonActualMb != null ? neonActualMb : sizeMb;
@@ -97,88 +94,36 @@
             tierBadge.className = 'system-tier-badge' + (isFallback ? ' is-fallback' : '');
         }
 
-        if (cutoverMode) {
-            cutoverMode.textContent = data.standbyConfigured
-                ? 'Standby đã cấu hình • Chuyển đổi có kiểm soát'
-                : 'Chưa cấu hình standby';
-        }
-
-        if (renderStatus) {
-            renderStatus.textContent = data.isRender ? 'Đang phục vụ' : 'Môi trường cục bộ';
-        }
-
-        if (renderDetail) {
-            renderDetail.textContent = data.isRender
-                ? (data.renderSelfPingEnabled
-                    ? 'Self-health ping đang bật • Không phải cam kết uptime'
-                    : 'Render health hoạt động • Self-health ping đang tắt')
-                : 'Không chạy trên Render';
-        }
-
         // Popover detail
         const storageText = document.getElementById('systemStorageText');
         const storageProgress = document.getElementById('systemStorageProgress');
-        const storageStatusText = document.getElementById('systemStorageStatusText');
         const sessionCount = document.getElementById('systemSessionCount');
         const expiredSessionCount = document.getElementById('systemExpiredSessionCount');
-        const storageMeasurement = document.getElementById('systemStorageMeasurement');
         const dbConnections = document.getElementById('systemDbConnections');
         const dbConnectionsProgress = document.getElementById('systemDbConnectionsProgress');
         const renderBandwidth = document.getElementById('systemRenderBandwidth');
-        const renderBandwidthProgress = document.getElementById('systemRenderBandwidthProgress');
-        const renderBandwidthPeriod = document.getElementById('systemRenderBandwidthPeriod');
         const renderCpu = document.getElementById('systemRenderCpu');
         const renderMemory = document.getElementById('systemRenderMemory');
-        const renderBillingHint = document.getElementById('systemRenderBillingHint');
         const computeText = document.getElementById('systemComputeText');
-        const computeProgress = document.getElementById('systemComputeProgress');
-        const computeNote = document.getElementById('systemComputeNote');
 
         // Storage
         if (storageText) {
             if (limitMb != null && displayPct != null) {
                 storageText.textContent = `${displayMb} MB / ${limitMb} MB (${displayPct}%)`;
             } else {
-                storageText.textContent = `${displayMb} MB • quota chưa được API công bố`;
+                storageText.textContent = `${displayMb} MB`;
             }
         }
 
         updateProgress(storageProgress, displayPct, displayStatus);
-
-        if (storageMeasurement) {
-            if (storage.limitSource === 'neon_project_api') {
-                storageMeasurement.textContent = `Dung lượng DB từ PostgreSQL • quota tự động từ Neon Project API`;
-            } else if (storage.limitSource === 'not_configured') {
-                storageMeasurement.textContent = `Dung lượng DB từ pg_database_size • chưa cấu hình NEON_API_KEY`;
-            } else if (storage.limitSource === 'api_error') {
-                storageMeasurement.textContent = `Dung lượng DB từ pg_database_size • chưa lấy được quota từ Neon API`;
-            } else {
-                storageMeasurement.textContent = `Dung lượng DB từ pg_database_size • Neon API không công bố quota cho project`;
-            }
-        }
-
-        if (storageStatusText) {
-            if (displayStatus === 'CRITICAL') {
-                storageStatusText.textContent = 'Trạng thái: Nguy hiểm (> 92%) - Sắp chạm giới hạn!';
-                storageStatusText.style.color = '#ef4444';
-            } else if (displayStatus === 'WARNING') {
-                storageStatusText.textContent = 'Trạng thái: Cảnh báo (> 80%) - Cần dọn dẹp';
-                storageStatusText.style.color = '#f59e0b';
-            } else if (displayStatus === 'OK') {
-                storageStatusText.textContent = 'Trạng thái: An toàn (< 80%)';
-                storageStatusText.style.color = '';
-            } else {
-                storageStatusText.textContent = 'Đã lấy dung lượng; chưa thể tính tỷ lệ vì API không công bố quota';
-                storageStatusText.style.color = '';
-            }
-        }
 
         if (sessionCount && data.sessions) {
             sessionCount.textContent = `PHP: ${data.sessions.phpSessions || 0} • Django: ${data.sessions.djangoSessions || 0}`;
         }
         if (expiredSessionCount && data.sessions) {
             const expired = Number(data.sessions.php?.expired || 0) + Number(data.sessions.django?.expired || 0);
-            expiredSessionCount.textContent = `Hết hạn chờ dọn: ${expired}`;
+            expiredSessionCount.textContent = `${expired} phiên hết hạn chờ dọn`;
+            expiredSessionCount.hidden = expired === 0;
         }
 
         const connection = data.database?.connections;
@@ -195,9 +140,9 @@
         if (dbTransferRow && dbTransferText) {
             if (netTransfer?.available && netTransfer.bytes > 0) {
                 dbTransferText.textContent = formatBytes(netTransfer.bytes);
-                dbTransferRow.style.display = 'flex';
+                dbTransferRow.hidden = false;
             } else {
-                dbTransferRow.style.display = 'none';
+                dbTransferRow.hidden = true;
             }
         }
 
@@ -206,31 +151,11 @@
         const bandwidth = render.bandwidth || {};
         if (renderBandwidth) {
             if (!render.configured) {
-                renderBandwidth.textContent = 'Chưa cấu hình Render API';
+                renderBandwidth.textContent = '--';
             } else if (!bandwidth.available) {
-                const errorCodes = Object.values(render.errors || {}).filter(Boolean);
-                renderBandwidth.textContent = errorCodes.length
-                    ? `Không lấy được (${[...new Set(errorCodes)].join(', ')})`
-                    : 'Tạm thời không lấy được';
+                renderBandwidth.textContent = 'Không lấy được';
             } else {
-                renderBandwidth.textContent = bandwidth.limitGb != null
-                    ? `${bandwidth.usedGb || 0} / ${bandwidth.limitGb} GB (${bandwidth.usagePercent || 0}%)`
-                    : `${bandwidth.usedGb || 0} GB đã dùng • quota xem Billing`;
-            }
-        }
-        updateProgress(renderBandwidthProgress, bandwidth.usagePercent, bandwidth.status);
-
-        if (renderBandwidthPeriod) {
-            if (bandwidth.periodStart) {
-                const from = new Date(bandwidth.periodStart);
-                const to = new Date(from);
-                to.setMonth(to.getMonth() + 1);
-                to.setDate(0); // last day of month
-                const fmt = (d) => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-                renderBandwidthPeriod.textContent = `Chu kỳ: ${fmt(from)} – ${fmt(to)}/${to.getFullYear()}`;
-                renderBandwidthPeriod.hidden = false;
-            } else {
-                renderBandwidthPeriod.hidden = true;
+                renderBandwidth.textContent = `${bandwidth.usedGb || 0} GB`;
             }
         }
 
@@ -241,13 +166,8 @@
         }
         if (renderMemory) {
             renderMemory.textContent = render.memory?.available
-                ? `${formatBytes(render.memory.currentBytes)} / ${formatBytes(render.memory.peakLastHourBytes)} (${render.memory.usagePercent || 0}%)`
+                ? `${formatBytes(render.memory.currentBytes)} / ${formatBytes(render.memory.limitBytes)} (${render.memory.usagePercent || 0}%)`
                 : '-- / --';
-        }
-        if (renderBillingHint) {
-            renderBillingHint.textContent = render.configured
-                ? 'Render Metrics API không công bố quota workspace; giờ instance, build và quota xem Billing'
-                : 'Thêm RENDER_API_KEY để lấy bandwidth, CPU và RAM; giờ/build vẫn xem Billing';
         }
 
         // Neon Compute hours
@@ -256,37 +176,24 @@
             if (computeHours.used != null) {
                 if (computeHours.limit != null && Number(computeHours.limit) > 0) {
                     const pct = Math.round((computeHours.used / computeHours.limit) * 1000) / 10;
-                    computeText.textContent = `${computeHours.used} / ${computeHours.limit} h (${pct}%) • API`;
-                    const cStatus = pct >= 92 ? 'CRITICAL' : pct >= 80 ? 'WARNING' : 'OK';
-                    updateProgress(computeProgress, pct, cStatus);
+                    computeText.textContent = `${computeHours.used} / ${computeHours.limit} h (${pct}%)`;
                 } else {
-                    computeText.textContent = `${computeHours.used} h đã dùng • quota chưa được API công bố`;
-                    updateProgress(computeProgress, 0, 'UNKNOWN');
+                    computeText.textContent = `${computeHours.used} h`;
                 }
-            } else if (!computeHours.configured) {
-                computeText.textContent = 'Chưa cấu hình NEON_API_KEY';
             } else {
-                computeText.textContent = 'Chưa lấy được usage từ Neon API';
+                computeText.textContent = '--';
             }
-        }
-        if (computeNote) {
-            computeNote.textContent = computeHours.note || 'Reset đầu tháng theo chu kỳ Neon.';
         }
     }
 
     function setSystemUsageUnavailable() {
         const label = document.getElementById('systemUsageTier');
         const tierBadge = document.getElementById('systemTierBadge');
-        const statusText = document.getElementById('systemStorageStatusText');
         const progress = document.getElementById('systemStorageProgress');
         if (label) label.textContent = 'DB: Không lấy được trạng thái';
         if (tierBadge) {
             tierBadge.textContent = 'Không xác định';
             tierBadge.className = 'system-tier-badge';
-        }
-        if (statusText) {
-            statusText.textContent = 'Không thể xác minh dung lượng database';
-            statusText.style.color = '#ef4444';
         }
         if (progress) progress.style.width = '0';
     }
