@@ -230,6 +230,12 @@ assert.ok(
   appJs.includes('!occupied.some(rect => intersects(candidate, rect, collisionPadding))'),
   'tooltip collision detection must keep visible guide bubbles apart'
 );
+assert.ok(
+  appJs.includes('range.selectNodeContents(textNode)')
+    && appJs.includes('const protectedRects = controlRects.concat(textRects)')
+    && appJs.includes('!protectedRects.some(rect => intersects(candidate, rect, collisionPadding))'),
+  'tooltip collision detection must protect the rendered device text as well as form controls'
+);
 
 // Mỗi lần chuyển menu, firmware bật lớp chờ trước khi gọi AJAX. Lớp này phải
 // được tắt ngay ở nhánh thành công; nếu không trang đã render nhưng toàn bộ

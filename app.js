@@ -4486,6 +4486,37 @@
       'input:not([type="hidden"]), select, textarea, button, [contenteditable="true"]'
     )).map(visibleRect).filter(Boolean);
 
+    // Element.getBoundingClientRect() thường bao trùm cả một hàng/panel và làm mất
+    // các khoảng trống hợp lệ. Range.getClientRects() chỉ trả về đúng hình chữ
+    // đang hiển thị, nên tooltip có thể nằm trong khoảng trống mà không che nhãn.
+    const textRects = [];
+    const textWalker = doc.createTreeWalker(
+      doc.body,
+      (win.NodeFilter && win.NodeFilter.SHOW_TEXT) || 4,
+      null,
+      false
+    );
+    let textNode;
+    while ((textNode = textWalker.nextNode())) {
+      if (!textNode.nodeValue || !textNode.nodeValue.trim()) continue;
+      const parent = textNode.parentElement;
+      if (!parent || parent.closest('.ftc-guide-bubble, script, style, noscript, template')) continue;
+      const parentStyle = win.getComputedStyle(parent);
+      if (!parentStyle || parentStyle.display === 'none' || parentStyle.visibility === 'hidden') continue;
+      try {
+        const range = doc.createRange();
+        range.selectNodeContents(textNode);
+        Array.from(range.getClientRects()).forEach(rect => {
+          if (rect.width <= 0 || rect.height <= 0) return;
+          if (rect.bottom < 0 || rect.top > winH || rect.right < 0 || rect.left > winW) return;
+          textRects.push(rect);
+        });
+        if (typeof range.detach === 'function') range.detach();
+      } catch (error) { }
+    }
+
+    const protectedRects = controlRects.concat(textRects);
+
     const occupied = [];
     const ordered = guides
       .filter(item => item && item.bubble && item.target && item.bubble.style.display !== 'none')
@@ -4512,7 +4543,7 @@
     );
 
     const isFree = candidate => (
-      !controlRects.some(rect => intersects(candidate, rect, collisionPadding)) &&
+      !protectedRects.some(rect => intersects(candidate, rect, collisionPadding)) &&
       !occupied.some(rect => intersects(candidate, rect, collisionPadding))
     );
 
@@ -4568,17 +4599,11 @@
 
       let selected = candidates.find(candidate => isFree(candidate.rect));
       if (!selected) {
-        // Trường hợp viewport quá chật: vẫn tách tooltip khỏi nhau;
-        // control được ưu tiên bằng cách chọn vị trí có số va chạm ít nhất.
-        selected = candidates
-          .map(candidate => ({
-            ...candidate,
-            collisions: controlRects.filter(rect => intersects(candidate.rect, rect, collisionPadding)).length
-              + occupied.filter(rect => intersects(candidate.rect, rect, collisionPadding)).length * 100
-          }))
-          .sort((a, b) => a.collisions - b.collisions)[0];
+        // Không hạ tiêu chuẩn khi viewport quá chật: tạm ẩn thay vì che
+        // chữ, control hoặc tooltip khác. Lần sync sau sẽ thử bố trí lại.
+        bubble.style.display = 'none';
+        return;
       }
-      if (!selected) return;
 
       bubble.className = `ftc-guide-bubble ftc-guide-avoid-overlap pos-${selected.position}`;
       bubble.style.left = Math.round(selected.rect.left - parentRect.left) + 'px';
