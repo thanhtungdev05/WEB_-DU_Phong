@@ -12,9 +12,13 @@
             const response = await fetch('/api/system/usage', {
                 headers: { 'Accept': 'application/json' },
                 cache: 'no-store',
+                credentials: 'same-origin',
                 signal: controller.signal,
             });
-            if (!response.ok) return null;
+            if (!response.ok) {
+                console.warn(`System usage request failed with HTTP ${response.status}.`);
+                return null;
+            }
             const result = await response.json();
             return result?.data || null;
         } catch (e) {
