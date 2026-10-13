@@ -7,6 +7,17 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync(path.resolve(__dirname, '..', 'app.js'), 'utf8');
 
+assert.match(source, /function applyGuidePopups\(\)/, 'guide mode must expose its tooltip injector');
+const getCurrentLessonSource = source.match(
+  /function getCurrentLesson\(\)\s*\{([\s\S]*?)\n  \}\n\n  function applyGuidePopups/
+);
+assert.ok(getCurrentLessonSource, 'getCurrentLesson must end before the tooltip injector');
+assert.doesNotMatch(
+  getCurrentLessonSource[1],
+  /getCurrentLesson\(\)/,
+  'getCurrentLesson must not recursively call itself instead of resolving the active lesson'
+);
+
 function createElement() {
   return {
     addEventListener() {},

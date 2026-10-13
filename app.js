@@ -4461,6 +4461,23 @@
     }
 
     const device = DEVICES.find(d => d.id === currentDeviceId);
+    if (!device || !device.categories) return null;
+    for (const category of device.categories) {
+      const lesson = (category.lessons || []).find(item => item.id === currentLessonId);
+      if (lesson) return lesson;
+    }
+    return null;
+  }
+
+  function applyGuidePopups() {
+    const dangChanTooltip = (currentDeviceId === 'mikrotik_hexs')
+      ? window._ftcMkChanTooltip
+      : false;
+    if (currentMode !== 'guide' || dangChanTooltip) {
+      clearGuidePopups();
+      return;
+    }
+
     const lesson = getCurrentLesson();
     if (!lesson) return;
 
