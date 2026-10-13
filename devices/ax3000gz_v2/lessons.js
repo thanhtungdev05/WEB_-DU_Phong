@@ -5,8 +5,8 @@
   const lessons = window.DEVICE_AX3000GZ_V2_LESSONS = window.DEVICE_AX3000GZ_V2_LESSONS || [];
   const tooltips = window.TOOLTIPS_AX3000GZ_V2 || {};
 
-  function rule(id, name, selector, expected, type = 'text_exact') {
-    return { id, name, selector, expected, type, trim: true, required: true };
+  function rule(id, name, selector, expected, type = 'text_exact', interactionSelector = selector) {
+    return { id, name, selector, expected, type, interactionSelector, trim: true, required: true, requireInteraction: true };
   }
 
   function register(definition) {
@@ -85,14 +85,14 @@
     practiceUrl: '/sim_ax3000gz_v2/?_type=menuView&_tag=dns',
     clearFields: ['[id^="sub_SerIPAddress1"]', '[id^="sub_SerIPAddress2"]'],
     grading: { description: 'Kiểm tra hai địa chỉ DNS', rules: [
-      rule('dns1_1', 'DNS Server 1 - ô 1', '#sub_SerIPAddress10', '8'),
-      rule('dns1_2', 'DNS Server 1 - ô 2', '#sub_SerIPAddress11', '8'),
-      rule('dns1_3', 'DNS Server 1 - ô 3', '#sub_SerIPAddress12', '8'),
-      rule('dns1_4', 'DNS Server 1 - ô 4', '#sub_SerIPAddress13', '8'),
-      rule('dns2_1', 'DNS Server 2 - ô 1', '#sub_SerIPAddress20', '8'),
-      rule('dns2_2', 'DNS Server 2 - ô 2', '#sub_SerIPAddress21', '8'),
-      rule('dns2_3', 'DNS Server 2 - ô 3', '#sub_SerIPAddress22', '4'),
-      rule('dns2_4', 'DNS Server 2 - ô 4', '#sub_SerIPAddress23', '4')
+      rule('dns1_1', 'DNS Server 1 - ô 1', '#sub_SerIPAddress10', '8', 'text_exact', '[id^="sub_SerIPAddress1"]'),
+      rule('dns1_2', 'DNS Server 1 - ô 2', '#sub_SerIPAddress11', '8', 'text_exact', '[id^="sub_SerIPAddress1"]'),
+      rule('dns1_3', 'DNS Server 1 - ô 3', '#sub_SerIPAddress12', '8', 'text_exact', '[id^="sub_SerIPAddress1"]'),
+      rule('dns1_4', 'DNS Server 1 - ô 4', '#sub_SerIPAddress13', '8', 'text_exact', '[id^="sub_SerIPAddress1"]'),
+      rule('dns2_1', 'DNS Server 2 - ô 1', '#sub_SerIPAddress20', '8', 'text_exact', '[id^="sub_SerIPAddress2"]'),
+      rule('dns2_2', 'DNS Server 2 - ô 2', '#sub_SerIPAddress21', '8', 'text_exact', '[id^="sub_SerIPAddress2"]'),
+      rule('dns2_3', 'DNS Server 2 - ô 3', '#sub_SerIPAddress22', '4', 'text_exact', '[id^="sub_SerIPAddress2"]'),
+      rule('dns2_4', 'DNS Server 2 - ô 4', '#sub_SerIPAddress23', '4', 'text_exact', '[id^="sub_SerIPAddress2"]')
     ]}
   });
 
@@ -112,22 +112,22 @@
     // Giữ dữ liệu mặc định của firmware để KTV chỉnh từ 192.168.1.x sang 192.168.10.x.
     clearFields: [],
     grading: { description: 'Kiểm tra LAN IP, subnet và dải cấp phát DHCP', rules: [
-      rule('lan_ip_1', 'LAN IP - ô 1', '[id="sub_IPAddr0:DHCPBasicCfg"]', '192'),
-      rule('lan_ip_2', 'LAN IP - ô 2', '[id="sub_IPAddr1:DHCPBasicCfg"]', '168'),
-      rule('lan_ip_3', 'LAN IP - ô 3', '[id="sub_IPAddr2:DHCPBasicCfg"]', '10'),
-      rule('lan_ip_4', 'LAN IP - ô 4', '[id="sub_IPAddr3:DHCPBasicCfg"]', '1'),
-      rule('subnet_1', 'Subnet Mask - ô 1', '#sub_SubMask0', '255'),
-      rule('subnet_2', 'Subnet Mask - ô 2', '#sub_SubMask1', '255'),
-      rule('subnet_3', 'Subnet Mask - ô 3', '#sub_SubMask2', '255'),
-      rule('subnet_4', 'Subnet Mask - ô 4', '#sub_SubMask3', '0'),
-      rule('dhcp_start_1', 'DHCP Start IP - ô 1', '[id="sub_MinAddress0:DHCPBasicCfg"]', '192'),
-      rule('dhcp_start_2', 'DHCP Start IP - ô 2', '[id="sub_MinAddress1:DHCPBasicCfg"]', '168'),
-      rule('dhcp_start_3', 'DHCP Start IP - ô 3', '[id="sub_MinAddress2:DHCPBasicCfg"]', '10'),
-      rule('dhcp_start_4', 'DHCP Start IP - ô 4', '[id="sub_MinAddress3:DHCPBasicCfg"]', '2'),
-      rule('dhcp_end_1', 'DHCP End IP - ô 1', '[id="sub_MaxAddress0:DHCPBasicCfg"]', '192'),
-      rule('dhcp_end_2', 'DHCP End IP - ô 2', '[id="sub_MaxAddress1:DHCPBasicCfg"]', '168'),
-      rule('dhcp_end_3', 'DHCP End IP - ô 3', '[id="sub_MaxAddress2:DHCPBasicCfg"]', '10'),
-      rule('dhcp_end_4', 'DHCP End IP - ô 4', '[id="sub_MaxAddress3:DHCPBasicCfg"]', '254')
+      rule('lan_ip_1', 'LAN IP - ô 1', '[id="sub_IPAddr0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_IPAddr"]'),
+      rule('lan_ip_2', 'LAN IP - ô 2', '[id="sub_IPAddr1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_IPAddr"]'),
+      rule('lan_ip_3', 'LAN IP - ô 3', '[id="sub_IPAddr2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_IPAddr"]'),
+      rule('lan_ip_4', 'LAN IP - ô 4', '[id="sub_IPAddr3:DHCPBasicCfg"]', '1', 'text_exact', '[id^="sub_IPAddr"]'),
+      rule('subnet_1', 'Subnet Mask - ô 1', '#sub_SubMask0', '255', 'text_exact', '[id^="sub_SubMask"]'),
+      rule('subnet_2', 'Subnet Mask - ô 2', '#sub_SubMask1', '255', 'text_exact', '[id^="sub_SubMask"]'),
+      rule('subnet_3', 'Subnet Mask - ô 3', '#sub_SubMask2', '255', 'text_exact', '[id^="sub_SubMask"]'),
+      rule('subnet_4', 'Subnet Mask - ô 4', '#sub_SubMask3', '0', 'text_exact', '[id^="sub_SubMask"]'),
+      rule('dhcp_start_1', 'DHCP Start IP - ô 1', '[id="sub_MinAddress0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_MinAddress"]'),
+      rule('dhcp_start_2', 'DHCP Start IP - ô 2', '[id="sub_MinAddress1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_MinAddress"]'),
+      rule('dhcp_start_3', 'DHCP Start IP - ô 3', '[id="sub_MinAddress2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_MinAddress"]'),
+      rule('dhcp_start_4', 'DHCP Start IP - ô 4', '[id="sub_MinAddress3:DHCPBasicCfg"]', '2', 'text_exact', '[id^="sub_MinAddress"]'),
+      rule('dhcp_end_1', 'DHCP End IP - ô 1', '[id="sub_MaxAddress0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_MaxAddress"]'),
+      rule('dhcp_end_2', 'DHCP End IP - ô 2', '[id="sub_MaxAddress1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_MaxAddress"]'),
+      rule('dhcp_end_3', 'DHCP End IP - ô 3', '[id="sub_MaxAddress2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_MaxAddress"]'),
+      rule('dhcp_end_4', 'DHCP End IP - ô 4', '[id="sub_MaxAddress3:DHCPBasicCfg"]', '254', 'text_exact', '[id^="sub_MaxAddress"]')
     ]}
   });
 

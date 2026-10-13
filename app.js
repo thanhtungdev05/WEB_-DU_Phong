@@ -586,6 +586,14 @@
                 }
               } catch (e) { }
 
+              if (isAx3000gzV2) {
+                const axLoc = (doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
+                const axHash = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
+                const axIsMainPage = axHash.includes('#/home') || axHash.includes('#/network') || axHash.includes('#/system') || axHash.includes('#/status') || axHash.includes('#/device');
+                const axIsLogin = !axIsMainPage && (axLoc.includes('login') || axHash.includes('login') || doc.querySelector('#Frm_Username, #Frm_Password, .login-fpt, form[action*="login"]'));
+                prepareAx3000gzV2Autofill(doc, Boolean(axIsLogin));
+              }
+
               if (!doc._ftcSaveListenerAttached) {
 
                 // Ràng buộc đăng nhập thiết bị bắt buộc nhập admin / admin
@@ -816,6 +824,11 @@
                           doc._ftcLastSaveInteraction = Date.now();
                           doc._ftcIsSaved = true;
                           window._hasClickedSaveInGuide = true;
+                          if (isAx3000gzV2 && e.isTrusted && _trackingSession && _trackingSession.attemptId) {
+                            _trackingSession.lastSavedAt = Date.now();
+                            _trackingSession.savedAttemptId = _trackingSession.attemptId;
+                            doc._ftcSavedAttemptId = _trackingSession.attemptId;
+                          }
                           if (currentDeviceId === 'mikrotik_hexs') {
                             window._ftcMkChanTooltip = true;
                             setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
@@ -1545,9 +1558,33 @@
 
                 // Đánh dấu người dùng đã chạm vào ô nhập liệu để tránh bị clear tự động
                 // Đồng thời hủy bỏ trạng thái "Đã Save" nếu người dùng sửa lại dữ liệu
+                const isGenuineAxTextInput = function (e) {
+                  if (!isAx3000gzV2 || !e || !e.isTrusted || !e.target) return false;
+                  const inputType = String(e.inputType || '');
+                  if (inputType === 'insertReplacementText') return false;
+                  if (inputType) return /^(insert|delete|history)/.test(inputType);
+                  return e.target._ftcAxPhysicalIntentAttemptId === getCurrentAttemptId();
+                };
+
+                doc.addEventListener('focusin', function (e) {
+                  if (!isAx3000gzV2 || !isLogin || !e.target) return;
+                  if (e.target.matches && e.target.matches('#Frm_Username, #Frm_Password') && !hasCurrentAttemptInteraction(e.target)) {
+                    e.target.value = '';
+                    e.target.removeAttribute('data-ftc-real-value');
+                    e.target._ftcRealValue = '';
+                  }
+                }, true);
+
                 doc.addEventListener('keydown', function (e) {
                   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
-                    e.target._ftcUserModified = true;
+                    if (isAx3000gzV2) {
+                      if (e.isTrusted) {
+                        e.target._ftcAxPhysicalIntentAttemptId = getCurrentAttemptId();
+                        markCurrentAttemptInteraction(doc, e.target);
+                      }
+                    } else {
+                      e.target._ftcUserModified = true;
+                    }
                   }
                   if (e.isTrusted) {
                     if (isEventOnAx3000s2g(e, doc)) {
@@ -1559,9 +1596,34 @@
                     }
                   }
                 }, true);
+                doc.addEventListener('beforeinput', function (e) {
+                  if (isGenuineAxTextInput(e)) {
+                    e.target._ftcAxPhysicalIntentAttemptId = getCurrentAttemptId();
+                    markCurrentAttemptInteraction(doc, e.target);
+                  }
+                }, true);
+                ['paste', 'drop'].forEach(function (eventName) {
+                  doc.addEventListener(eventName, function (e) {
+                    if (isAx3000gzV2 && e.isTrusted && e.target) {
+                      e.target._ftcAxPhysicalIntentAttemptId = getCurrentAttemptId();
+                      markCurrentAttemptInteraction(doc, e.target);
+                    }
+                  }, true);
+                });
+                doc.addEventListener('click', function (e) {
+                  if (!isAx3000gzV2 || !e.isTrusted || !e.target) return;
+                  if (e.target.tagName === 'SELECT' || e.target.type === 'radio' || e.target.type === 'checkbox') {
+                    markCurrentAttemptInteraction(doc, e.target);
+                  }
+                }, true);
                 doc.addEventListener('input', function (e) {
                   if (e.target) {
-                    e.target._ftcUserModified = true;
+                    const genuineAxInput = isGenuineAxTextInput(e);
+                    if (isAx3000gzV2) {
+                      if (genuineAxInput) markCurrentAttemptInteraction(doc, e.target);
+                    } else {
+                      e.target._ftcUserModified = true;
+                    }
                     if (e.isTrusted && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
                       const val = e.target.value;
                       if (typeof val === 'string' && val.replace(/[\t\s]/g, '') !== '') {
@@ -1582,7 +1644,13 @@
                 }, true);
                 doc.addEventListener('change', function (e) {
                   if (e.target) {
-                    e.target._ftcUserModified = true;
+                    if (isAx3000gzV2) {
+                      if (e.isTrusted && (e.target.tagName === 'SELECT' || e.target.type === 'radio' || e.target.type === 'checkbox' || hasCurrentAttemptInteraction(e.target))) {
+                        markCurrentAttemptInteraction(doc, e.target);
+                      }
+                    } else {
+                      e.target._ftcUserModified = true;
+                    }
                     if (e.isTrusted && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
                       const val = e.target.value;
                       if (typeof val === 'string' && val.replace(/[\t\s]/g, '') !== '') {
@@ -2344,12 +2412,17 @@
     const targetLabId = (lesson && lesson.id) ? lesson.id : currentLessonId;
     window._sessionRuleCache = {};
     window._sessionRuleCacheScope = `${targetDevId}:${targetLabId}`;
+    const attemptId = crypto.randomUUID ? crypto.randomUUID() : ('attempt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10));
     _trackingSession = {
       device: device,
       lesson: lesson,
       mode: enableGuide ? 'Hướng dẫn' : 'Thực hành',
       startedAt: new Date().toISOString(),
-      submissionId: crypto.randomUUID ? crypto.randomUUID() : ('sub-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10)),
+      submissionId: attemptId,
+      attemptId: attemptId,
+      interactedRules: {},
+      lastSavedAt: 0,
+      savedAttemptId: null,
       ruleCache: {},
       cachedUnexpectedErrors: []
     };
@@ -2401,7 +2474,21 @@
     }
 
     // Load URL into iframe
-    Promise.resolve(resetPromise).finally(() => {
+    Promise.resolve(resetPromise).then(resetSucceeded => {
+      const requiresVerifiedReset = normalizeDeviceId(currentDeviceId) === 'ax3000gz_v2';
+      if (requiresVerifiedReset && resetSucceeded !== true) {
+        iframeLoading.classList.add('hidden');
+        stopPracticeTimer();
+        if (btnSubmitLab) btnSubmitLab.disabled = true;
+        if (serverWarning) {
+          const warningText = serverWarning.querySelector('#server-warning-text');
+          if (warningText) {
+            warningText.textContent = 'Không thể khởi tạo phiên AX3000GZ V2 mới. Vui lòng quay lại và thử lại.';
+          }
+          serverWarning.style.display = 'flex';
+        }
+        return;
+      }
       setTimeout(() => {
         // Force reload even if only hash changes, after the current user's
         // simulator state has been reset.
@@ -2435,6 +2522,91 @@
     practiceScreen.classList.remove('visible');
     void practiceScreen.offsetWidth;
     practiceScreen.classList.add('visible');
+  }
+
+  function isAx3000gzV2Active() {
+    return normalizeDeviceId(currentDeviceId) === 'ax3000gz_v2';
+  }
+
+  function getCurrentAttemptId() {
+    return _trackingSession && _trackingSession.attemptId
+      ? _trackingSession.attemptId
+      : null;
+  }
+
+  function getAttemptRuleEvidence(ruleId, attemptId, trackingSession) {
+    const interactionAt = attemptId && trackingSession && trackingSession.interactedRules
+      ? Number(trackingSession.interactedRules[ruleId] || 0)
+      : 0;
+    return {
+      interactionAt: interactionAt,
+      savedAfterInteraction: Boolean(
+        interactionAt > 0 &&
+        trackingSession &&
+        trackingSession.savedAttemptId === attemptId &&
+        Number(trackingSession.lastSavedAt || 0) >= interactionAt
+      )
+    };
+  }
+
+  function markCurrentAttemptInteraction(doc, element) {
+    const attemptId = getCurrentAttemptId();
+    if (!isAx3000gzV2Active() || !attemptId || !element) return;
+
+    const now = Date.now();
+    element._ftcUserModified = true;
+    element._ftcModifiedAttemptId = attemptId;
+    element._ftcModifiedAt = now;
+    if (!_trackingSession.interactedRules) _trackingSession.interactedRules = {};
+
+    const lesson = getCurrentLesson();
+    const rules = lesson && lesson.grading && Array.isArray(lesson.grading.rules)
+      ? lesson.grading.rules
+      : [];
+    rules.forEach(rule => {
+      const selector = rule.interactionSelector || rule.selector;
+      if (!selector || !doc || !doc.querySelectorAll) return;
+      try {
+        if (Array.from(doc.querySelectorAll(selector)).includes(element)) {
+          _trackingSession.interactedRules[rule.id] = now;
+        }
+      } catch (error) { }
+    });
+  }
+
+  function hasCurrentAttemptInteraction(element) {
+    const attemptId = getCurrentAttemptId();
+    return Boolean(element && attemptId && element._ftcModifiedAttemptId === attemptId);
+  }
+
+  function prepareAx3000gzV2Autofill(doc, isLoginPage) {
+    if (!isAx3000gzV2Active() || !doc || !doc.querySelectorAll) return;
+    try {
+      doc.querySelectorAll('form').forEach(form => {
+        form.setAttribute('autocomplete', 'off');
+        form.setAttribute('data-lpignore', 'true');
+      });
+      doc.querySelectorAll('input').forEach(input => {
+        input.setAttribute('data-lpignore', 'true');
+        input.setAttribute('data-1p-ignore', 'true');
+        input.setAttribute('data-form-type', 'other');
+        if (input.type === 'password') {
+          input.setAttribute('autocomplete', 'new-password');
+        } else if (input.type === 'text') {
+          input.setAttribute('autocomplete', 'off');
+        }
+      });
+
+      if (!isLoginPage) return;
+      doc.querySelectorAll('#Frm_Username, #Frm_Password').forEach(input => {
+        if (hasCurrentAttemptInteraction(input) || input === doc.activeElement) return;
+        if (input.value !== '') {
+          input.value = '';
+          input.removeAttribute('data-ftc-real-value');
+          input._ftcRealValue = '';
+        }
+      });
+    } catch (error) { }
   }
 
   function resetDeviceSession(deviceId) {
@@ -2552,7 +2724,13 @@
       }
     });
 
-    const resetExecutionPromise = Promise.allSettled(resetPromises).then(function () { return true; });
+    const requireSuccessfulReset = normDev === 'ax3000gz_v2';
+    const resetExecutionPromise = Promise.all(resetPromises).then(function (results) {
+      if (!requireSuccessfulReset) return true;
+      return results.some(Boolean);
+    }).catch(function () {
+      return !requireSuccessfulReset;
+    });
     window._inFlightResets[targetDev] = resetExecutionPromise;
     resetExecutionPromise.finally(function () {
       if (window._inFlightResets && window._inFlightResets[targetDev] === resetExecutionPromise) {
@@ -2560,7 +2738,7 @@
       }
     });
 
-    return Promise.allSettled(resetPromises).then(function () { return true; });
+    return resetExecutionPromise;
   }
 
   function confirmLeavePracticeSession() {
@@ -2606,6 +2784,7 @@
   function clearLessonFields() {
     const activeDevId = typeof currentDeviceId !== 'undefined' ? currentDeviceId : (window.currentDeviceId || '');
     const activeLesId = typeof currentLessonId !== 'undefined' ? currentLessonId : (window.currentLessonId || '');
+    const isAx3000gzV2Attempt = String(activeDevId || '').trim().replace(/^DEV_/i, '').toLowerCase() === 'ax3000gz_v2';
     const isAc1000cV2MultiStep = (activeDevId === 'ac1000cv2' || activeDevId === 'sim_ac1000cv2') && (
       activeLesId === 'ac1000cv2-bai2' || activeLesId === 'LAB_AC1000CV2_02' ||
       activeLesId === 'ac1000cv2-bai3' || activeLesId === 'LAB_AC1000CV2_03'
@@ -2656,7 +2835,11 @@
         _currentLesson.clearFields.forEach(selector => {
           try {
             doc.querySelectorAll(selector).forEach(el => {
-              if (el.dataset.ftcCleared || el._ftcUserModified) return;
+              if (isAx3000gzV2Attempt) {
+                if (hasCurrentAttemptInteraction(el)) return;
+              } else if (el.dataset.ftcCleared || el._ftcUserModified) {
+                return;
+              }
               if (el === doc.activeElement) {
                 el.dataset.ftcCleared = 'true';
                 return;
@@ -3036,6 +3219,8 @@
       let elementFound = false;
       let isSaved = hasStoredNotification;
       let isMatch = false;
+      let missingCurrentAttemptInteraction = false;
+      let missingCurrentAttemptSave = false;
 
       // Khai báo trước vòng lặp: nhánh "fallback về session cache" bên dưới đọc
       // effectiveDeviceId/currentLessonKey, nếu khai báo sau sẽ rơi vào TDZ.
@@ -3242,6 +3427,23 @@
         isSaved = true;
       }
 
+      // AX3000GZ V2 is graded only from actions performed in the current attempt.
+      // Autofill, simulator defaults, and previous-attempt values are not user work.
+      const isAx3000gzV2Rule = String(effectiveDeviceId || '').trim().replace(/^DEV_/i, '').toLowerCase() === 'ax3000gz_v2';
+      if (isMatch && isAx3000gzV2Rule && rule.requireInteraction !== false) {
+        const currentAttemptId = getCurrentAttemptId();
+        const attemptEvidence = getAttemptRuleEvidence(rule.id, currentAttemptId, _trackingSession);
+
+        if (!attemptEvidence.interactionAt) {
+          isMatch = false;
+          missingCurrentAttemptInteraction = true;
+        } else if (!attemptEvidence.savedAfterInteraction) {
+          isMatch = false;
+          isSaved = false;
+          missingCurrentAttemptSave = true;
+        }
+      }
+
       if (isMatch) {
         // Bắt buộc trang chứa phần tử phải được bấm Save/Apply thành công
         if (isSaveRequiredDevice(effectiveDeviceId) && !isSaved) {
@@ -3322,7 +3524,11 @@
       if (isMatch) {
         msg = 'Chính xác';
       } else {
-        if (isSaveRequiredDevice(effectiveDeviceId) && elementFound && !isSaved) {
+        if (missingCurrentAttemptInteraction) {
+          msg = 'Chưa thao tác trường này trong lượt làm hiện tại';
+        } else if (missingCurrentAttemptSave) {
+          msg = 'Chưa bấm Apply sau khi thay đổi trong lượt làm hiện tại';
+        } else if (isSaveRequiredDevice(effectiveDeviceId) && elementFound && !isSaved) {
           msg = 'Chưa bấm Save để lưu cấu hình';
         } else {
           msg = `Mong muốn: "${gradingDisplayValue(rule, expectedVal)}", Thực tế: "${gradingDisplayValue(rule, actualValue) || 'Trống'}"`;

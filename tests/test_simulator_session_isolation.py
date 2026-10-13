@@ -134,11 +134,13 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
 
     def test_portal_waits_for_current_session_reset_before_loading(self):
         self.assertIn("const resetPromise = resetDeviceSession(currentDeviceId)", self.portal_js)
-        self.assertIn("Promise.resolve(resetPromise).finally", self.portal_js)
+        self.assertIn("Promise.resolve(resetPromise).then", self.portal_js)
         self.assertIn("const resetPromises = Array.from(resetEndpoints).map", self.portal_js)
         self.assertIn("method: 'POST'", self.portal_js)
         self.assertIn("credentials: 'same-origin'", self.portal_js)
-        self.assertIn("return Promise.allSettled(resetPromises)", self.portal_js)
+        self.assertIn("const resetExecutionPromise = Promise.all(resetPromises)", self.portal_js)
+        self.assertIn("const requiresVerifiedReset = normalizeDeviceId(currentDeviceId) === 'ax3000gz_v2'", self.portal_js)
+        self.assertIn("if (requiresVerifiedReset && resetSucceeded !== true)", self.portal_js)
         self.assertIn("window._sessionRuleCacheScope", self.portal_js)
 
     def test_select_device_and_lesson_scope_the_session_rule_cache(self):
