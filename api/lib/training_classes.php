@@ -1065,7 +1065,7 @@ function validate_training_class_member_preview(PDO $pdo, array $parsed): array
         }
         $memberWarnings = [];
         if (training_class_normalize_person_name((string)($matched['display_name'] ?? '')) !== training_class_normalize_person_name($displayName)) {
-            $message = 'Tên trong file khác tên hồ sơ; hệ thống sẽ dùng tên hồ sơ hiện tại.';
+            $message = 'Tên trong file khác tên hồ sơ IAM; hệ thống ưu tiên dùng tên từ hồ sơ IAM.';
             $memberWarnings[] = $message;
             $warnings[] = ['sheet'=>$sheet, 'row'=>$rowNumber, 'message'=>$message];
         }
