@@ -1004,14 +1004,59 @@ function validate_training_class_member_preview(PDO $pdo, array $parsed): array
             ];
             continue;
         }
-        if (count($matches) !== 1) {
-            $errors[] = ['sheet'=>$sheet, 'row'=>$rowNumber, 'message'=>'Mã NV và email đang trỏ tới hai người dùng khác nhau.'];
+        if (count($matches) > 1) {
+            $userByEmp = null;
+            $userByEmail = null;
+            foreach ($matches as $m) {
+                if ((string)($m['employee_id'] ?? '') === $employeeId) {
+                    $userByEmp = $m;
+                }
+                if (strtolower((string)($m['email'] ?? '')) === $email) {
+                    $userByEmail = $m;
+                }
+            }
+            $empOwner = $userByEmp ? (string)$userByEmp['email'] : 'người dùng khác';
+            $mailEmpId = $userByEmail && !empty($userByEmail['employee_id']) ? (string)$userByEmail['employee_id'] : '(chưa có)';
+            $errors[] = [
+                'sheet' => $sheet,
+                'row' => $rowNumber,
+                'message' => "Mã NV $employeeId (đang thuộc về $empOwner) và email $email (có Mã NV $mailEmpId) đang trỏ tới hai tài khoản khác nhau."
+            ];
             continue;
         }
         $matched = $matches[0];
-        if ((string)$matched['employee_id'] !== $employeeId || strtolower((string)$matched['email']) !== $email) {
-            $errors[] = ['sheet'=>$sheet, 'row'=>$rowNumber, 'message'=>'Mã NV và email không cùng khớp với hồ sơ KTV.'];
+        $matchedEmpId = trim((string)($matched['employee_id'] ?? ''));
+        $matchedEmail = strtolower(trim((string)($matched['email'] ?? '')));
+        if ($matchedEmpId !== '' && $matchedEmpId !== $employeeId) {
+            $errors[] = [
+                'sheet' => $sheet,
+                'row' => $rowNumber,
+                'message' => "Mã NV trong file ($employeeId) không khớp với Mã NV trong hồ sơ ($matchedEmpId) của email $email."
+            ];
             continue;
+        }
+        if ($matchedEmail !== $email) {
+            $errors[] = [
+                'sheet' => $sheet,
+                'row' => $rowNumber,
+                'message' => "Email trong file ($email) không khớp với email trong hồ sơ ($matchedEmail) của Mã NV $employeeId."
+            ];
+            continue;
+        }
+        if ($matchedEmpId === '') {
+            $updateEmp = $pdo->prepare(
+                "UPDATE users
+                    SET employee_id = :employee_id,
+                        updated_at = NOW()
+                  WHERE user_id = CAST(:user_id AS uuid)
+                    AND (employee_id IS NULL OR employee_id = '')"
+            );
+            $updateEmp->execute([
+                'employee_id' => $employeeId,
+                'user_id' => $matched['user_id'],
+            ]);
+            $matched['employee_id'] = $employeeId;
+            $matchedEmpId = $employeeId;
         }
         $isTerminated = in_array(strtolower(trim((string)($matched['is_terminated'] ?? ''))), ['1', 't', 'true', 'yes', 'on'], true);
         if (strtoupper((string)($matched['role'] ?? '')) !== 'KTV' || $isTerminated) {
@@ -1027,7 +1072,7 @@ function validate_training_class_member_preview(PDO $pdo, array $parsed): array
         $members[] = [
             'source_row'=>$rowNumber,
             'user_id'=>(string)$matched['user_id'],
-            'employee_id'=>(string)$matched['employee_id'],
+            'employee_id'=>$matchedEmpId,
             'display_name'=>(string)($matched['display_name'] ?? ''),
             'email'=>(string)$matched['email'],
             'imported_display_name'=>$displayName,
@@ -1160,12 +1205,50 @@ function validate_training_class_import(PDO $pdo, array $parsed): array
             $errors[] = ['sheet'=>$row['source_sheet'], 'row'=>$row['source_row'], 'message'=>'Mã lớp, mã NV hoặc email không hợp lệ.'];
             continue;
         }
-        $lookup = $pdo->prepare("SELECT user_id, employee_id, email, display_name, region_id FROM users WHERE employee_id = :employee_id AND LOWER(email) = :email AND role = 'KTV' AND is_terminated = FALSE");
+        $lookup = $pdo->prepare(
+            "SELECT user_id, employee_id, email, display_name, region_id
+               FROM users
+              WHERE (employee_id = :employee_id OR (LOWER(email) = :email AND (employee_id IS NULL OR employee_id = '')))
+                AND role = 'KTV'
+                AND is_terminated = FALSE
+              ORDER BY CASE WHEN employee_id = :employee_id THEN 0 ELSE 1 END
+              LIMIT 1"
+        );
         $lookup->execute(['employee_id'=>$employeeId, 'email'=>$email]);
         $user = $lookup->fetch();
         if (!$user) {
-            $errors[] = ['sheet'=>$row['source_sheet'], 'row'=>$row['source_row'], 'message'=>"Không tìm thấy KTV đang hoạt động khớp mã NV $employeeId và email $email."];
+            $checkEmp = $pdo->prepare("SELECT email FROM users WHERE employee_id = :employee_id LIMIT 1");
+            $checkEmp->execute(['employee_id' => $employeeId]);
+            $foundEmail = $checkEmp->fetchColumn();
+
+            $checkMail = $pdo->prepare("SELECT employee_id FROM users WHERE LOWER(email) = :email LIMIT 1");
+            $checkMail->execute(['email' => $email]);
+            $foundEmpId = $checkMail->fetchColumn();
+
+            if ($foundEmail !== false && $foundEmpId !== false) {
+                $errors[] = ['sheet'=>$row['source_sheet'], 'row'=>$row['source_row'], 'message'=>"Mã NV $employeeId (đang thuộc $foundEmail) và email $email đang thuộc về hai tài khoản khác nhau."];
+            } elseif ($foundEmail !== false) {
+                $errors[] = ['sheet'=>$row['source_sheet'], 'row'=>$row['source_row'], 'message'=>"Email trong file ($email) không khớp với email trong hồ sơ ($foundEmail) của Mã NV $employeeId."];
+            } elseif ($foundEmpId !== false) {
+                $errors[] = ['sheet'=>$row['source_sheet'], 'row'=>$row['source_row'], 'message'=>"Mã NV trong file ($employeeId) không khớp với Mã NV trong hồ sơ (" . ($foundEmpId ?: 'chưa có') . ") của email $email."];
+            } else {
+                $errors[] = ['sheet'=>$row['source_sheet'], 'row'=>$row['source_row'], 'message'=>"Không tìm thấy KTV đang hoạt động với mã NV $employeeId hoặc email $email."];
+            }
             continue;
+        }
+        if (empty($user['employee_id'])) {
+            $updateEmp = $pdo->prepare(
+                "UPDATE users
+                    SET employee_id = :employee_id,
+                        updated_at = NOW()
+                  WHERE user_id = CAST(:user_id AS uuid)
+                    AND (employee_id IS NULL OR employee_id = '')"
+            );
+            $updateEmp->execute([
+                'employee_id' => $employeeId,
+                'user_id' => $user['user_id'],
+            ]);
+            $user['employee_id'] = $employeeId;
         }
         $canonicalName = preg_replace('/\s+/u', ' ', mb_strtolower(trim((string)($user['display_name'] ?? '')), 'UTF-8'));
         $importedName = preg_replace('/\s+/u', ' ', mb_strtolower($displayName, 'UTF-8'));

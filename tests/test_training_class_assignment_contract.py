@@ -248,6 +248,9 @@ class TrainingClassAssignmentContractTests(unittest.TestCase):
         self.assertIn("'action'=>'existing'", library)
         self.assertIn("'class-member-import'", library)
         self.assertRegex(library, re.compile(r"INSERT INTO users \(.*?'KTV'", re.S))
+        self.assertIn("Mã NV trong file ($employeeId) không khớp với Mã NV trong hồ sơ", library)
+        self.assertIn("Email trong file ($email) không khớp với email trong hồ sơ", library)
+        self.assertIn("employee_id IS NULL OR employee_id = ''", library)
 
     def test_local_bypass_actor_does_not_break_foreign_keys(self):
         library = (ROOT / "api" / "lib" / "training_classes.php").read_text(encoding="utf-8")
