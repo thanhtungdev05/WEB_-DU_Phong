@@ -110,6 +110,7 @@ let scrolled = false;
 let clickHandler = null;
 const mockBtn = {
   scrollIntoView: function() { scrolled = true; },
+  getBoundingClientRect: function() { return { top: 1200, bottom: 1230 }; },
   addEventListener: function(event, handler) {
     if (event === 'click') clickHandler = handler;
   }

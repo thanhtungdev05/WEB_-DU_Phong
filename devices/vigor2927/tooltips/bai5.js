@@ -17,46 +17,58 @@ function isVigor2927Bai5SndDone(doc) {
 }
 
 function hookVigor2927Bai5Scroll(doc) {
-  if (!doc || doc._ftcBai5ScrollHooked) return;
-  doc._ftcBai5ScrollHooked = true;
+  if (!doc) return;
   var pri = doc.querySelector ? doc.querySelector('input[name="sDNSPri"]') : null;
   var snd = doc.querySelector ? doc.querySelector('input[name="sDNSSnd"]') : null;
   var btn = doc.querySelector ? doc.querySelector('input[name="btnOK"], input[value="OK"]') : null;
+
+  // Chỉ hook khi đã tìm thấy đầy đủ các trường trên trang lan_dt_1.html
+  if (!pri || !snd || !btn) return;
+  if (doc._ftcBai5ScrollHooked) return;
+  doc._ftcBai5ScrollHooked = true;
+
+  var triggerPortalPopups = function () {
+    try {
+      var topWin = doc.defaultView ? (doc.defaultView.top || doc.defaultView.parent) : null;
+      if (topWin) {
+        topWin.postMessage({ type: 'REQUEST_GUIDE_POPUPS' }, '*');
+        if (typeof topWin.applyGuidePopups === 'function') {
+          topWin.applyGuidePopups();
+        }
+      }
+    } catch (e) { }
+  };
 
   var checkAndScroll = function () {
     if (isVigor2927Bai5PriDone(doc) && isVigor2927Bai5SndDone(doc) && !doc._ftcIsSaved) {
       if (btn && typeof btn.scrollIntoView === 'function') {
         try {
-          btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          btn.scrollIntoView({ behavior: 'auto', block: 'center' });
         } catch (e) {
           btn.scrollIntoView();
         }
       }
+      triggerPortalPopups();
+      setTimeout(triggerPortalPopups, 80);
+      setTimeout(triggerPortalPopups, 250);
     }
   };
 
-  if (pri && typeof pri.addEventListener === 'function') {
-    pri.addEventListener('input', checkAndScroll);
-    pri.addEventListener('change', checkAndScroll);
-    pri.addEventListener('blur', checkAndScroll);
-  }
-  if (snd && typeof snd.addEventListener === 'function') {
-    snd.addEventListener('input', checkAndScroll);
-    snd.addEventListener('change', checkAndScroll);
-    snd.addEventListener('blur', checkAndScroll);
-  }
-  if (btn && typeof btn.addEventListener === 'function') {
-    btn.addEventListener('click', function () {
-      doc._ftcIsSaved = true;
-      try {
-        var win = doc.defaultView || doc.parentWindow;
-        if (win) win._ftcIsSaved = true;
-        if (typeof window !== 'undefined') window._hasClickedSaveInGuide = true;
-        if (typeof parent !== 'undefined' && parent) parent._hasClickedSaveInGuide = true;
-        if (typeof top !== 'undefined' && top) top._hasClickedSaveInGuide = true;
-      } catch (e) { }
-    });
-  }
+  ['input', 'change', 'blur', 'keyup'].forEach(function (ev) {
+    pri.addEventListener(ev, checkAndScroll);
+    snd.addEventListener(ev, checkAndScroll);
+  });
+
+  btn.addEventListener('click', function () {
+    doc._ftcIsSaved = true;
+    try {
+      var win = doc.defaultView || doc.parentWindow;
+      if (win) win._ftcIsSaved = true;
+      if (typeof window !== 'undefined') window._hasClickedSaveInGuide = true;
+      if (typeof parent !== 'undefined' && parent) parent._hasClickedSaveInGuide = true;
+      if (typeof top !== 'undefined' && top) top._hasClickedSaveInGuide = true;
+    } catch (e) { }
+  });
 }
 
 window.TOOLTIPS_VIGOR2927['vg2927-bai5'] = [
@@ -103,14 +115,18 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai5'] = [
     condition: function(doc) {
       hookVigor2927Bai5Scroll(doc);
       var isReady = isVigor2927Bai5PriDone(doc) && isVigor2927Bai5SndDone(doc) && !doc._ftcIsSaved;
-      if (isReady && doc && !doc._ftcScrolledToOk) {
-        doc._ftcScrolledToOk = true;
+      if (isReady && doc) {
         var btn = doc.querySelector ? doc.querySelector('input[name="btnOK"], input[value="OK"]') : null;
-        if (btn && typeof btn.scrollIntoView === 'function') {
+        if (btn) {
           try {
-            btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            var win = doc.defaultView || window;
+            var winH = win.innerHeight || (doc.documentElement && doc.documentElement.clientHeight) || 768;
+            var rect = btn.getBoundingClientRect();
+            if (rect.top > winH || rect.bottom < 0) {
+              btn.scrollIntoView({ behavior: 'auto', block: 'center' });
+            }
           } catch (e) {
-            btn.scrollIntoView();
+            try { btn.scrollIntoView(); } catch (err) {}
           }
         }
       }
