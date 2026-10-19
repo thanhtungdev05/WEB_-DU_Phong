@@ -324,10 +324,20 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         # 0. Các file/thư mục Portal luôn do Portal phục vụ (chống bị 'cướp' bởi Referer/Cookie)
         path = self.path.split('?')[0]
         
-        # Ngoại lệ cho BE12000: thiết bị này dùng /?_type=... cho mọi AJAX request.
+        # Ngoại lệ cho BE12000 và AX3000GZ_V2: các thiết bị này dùng /?_type=... cho mọi AJAX request.
         # Nếu path là / nhưng có tham số _type=, ta bỏ qua check Portal để nó được
         # route xuống simulator dựa vào Referer/Cookie.
         if path == '/' and ('?_type=' in self.path or '&_type=' in self.path):
+            referer = self.headers.get('Referer', '')
+            if referer:
+                for sim_id in SIM_MODULES.keys():
+                    if ('/' + sim_id + '/') in referer or ('/' + sim_id + '?') in referer or referer.endswith('/' + sim_id):
+                        return sim_id
+            cookie = self.headers.get('Cookie', '')
+            if cookie:
+                m = re.search(r'(?:current_sim|active_sim|sim_id)=(sim_[a-zA-Z0-9_]+)', cookie)
+                if m and m.group(1) in SIM_MODULES:
+                    return m.group(1)
             return 'sim_be12000'
         elif is_portal_path(path):
             return None
