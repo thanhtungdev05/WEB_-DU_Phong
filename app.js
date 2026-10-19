@@ -755,6 +755,7 @@
                       const btnVal = (el.value || el.textContent || '').trim().toLowerCase();
                       const isSaveOrApply = laNutLuuMikrotik ||
                         laNutLuuAc1000cv2 ||
+                        (el.id && el.id.toLowerCase().includes('btn_apply')) ||
                         btnVal.includes('save') ||
                         btnVal.includes('apply') || 
                         btnVal.includes('submit') || 
@@ -854,6 +855,7 @@
                         const isSaveOrApply = laNutLuuMikrotik ||
                           laNutLuuAc1000cv2 ||
                           isAx3000sApply ||
+                          (el.id && el.id.toLowerCase().includes('btn_apply')) ||
                           btnVal.includes('save') ||
                           btnVal.includes('apply') || 
                           btnVal.includes('submit') || 
@@ -880,6 +882,13 @@
                             _trackingSession.lastSavedAt = Date.now();
                             _trackingSession.savedAttemptId = _trackingSession.attemptId;
                             doc._ftcSavedAttemptId = _trackingSession.attemptId;
+                          }
+                          if (isAx3000gzV2) {
+                            try {
+                              if (typeof window.onSimulatorSave === 'function') {
+                                window.onSimulatorSave(doc.defaultView || doc.parentWindow);
+                              }
+                            } catch (ex) { console.warn('[FTC] ax3000gz_v2 onSimulatorSave sync error:', ex); }
                           }
                           if (currentDeviceId === 'mikrotik_hexs') {
                             window._ftcMkChanTooltip = true;
@@ -1845,6 +1854,11 @@
             if (hasSuccHint) {
               window._hasSuccHintStored = true;
               window._hasClickedSaveInGuide = true;
+            }
+
+            if (currentDeviceId === 'ax3000gz_v2' || currentDeviceId === 'ONT_ax3000gz_v2') {
+              hasSuccHint = false;
+              window._hasSuccHintStored = false;
             }
 
             const evalResult = evaluateLesson(device, lesson);
@@ -3487,6 +3501,12 @@
           if (hasStoredNotification) break;
         } catch (e) { }
       }
+    }
+    const isAx3000gzV2Eval = (device && (device.id === 'ax3000gz_v2' || device.id === 'ONT_ax3000gz_v2')) ||
+      currentDeviceId === 'ax3000gz_v2' || currentDeviceId === 'ONT_ax3000gz_v2';
+    if (isAx3000gzV2Eval) {
+      hasStoredNotification = false;
+      window._hasSuccHintStored = false;
     }
     if (hasStoredNotification) {
       window._hasSuccHintStored = true;
@@ -5275,6 +5295,9 @@
     const device = DEVICES.find(d => d.id === currentDeviceId);
     const lesson = getCurrentLesson();
     if (device && lesson) {
+      if (currentDeviceId === 'ax3000gz_v2' || currentDeviceId === 'ONT_ax3000gz_v2') {
+        window._hasSuccHintStored = false;
+      }
       const evalResult = evaluateLesson(device, lesson);
       const btnGuideErrors = document.getElementById('btn-guide-errors');
       const noConfigSaved = isNoConfigDevice();

@@ -328,7 +328,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         # Nếu path là / nhưng có tham số _type=, ta bỏ qua check Portal để nó được
         # route xuống simulator dựa vào Referer/Cookie.
         if path == '/' and ('?_type=' in self.path or '&_type=' in self.path):
-            pass
+            return 'sim_be12000'
         elif is_portal_path(path):
             return None
 

@@ -12,36 +12,119 @@
   
   <style>
     :root {
-      --bg-app: #080d1a;
-      --bg-card: #0f172a;
-      --bg-card-hover: #1e293b;
-      --border-color: #1e293b;
-      --border-light: #334155;
-      --border-accent: #38bdf8;
+      /* Base Theme: Light Mode (Matches Portal & Dashboard) */
+      --theme-name: 'light';
+      --bg-app: #f4f7fb;
+      --bg-topbar: #1a1d2e;          /* Match Portal Topbar & Sidebar */
+      --text-topbar: #f8fafc;
+      --border-topbar: rgba(255, 255, 255, 0.08);
 
-      --fpt-orange: #f26f21;
+      --bg-ribbon: #ffffff;
+      --border-ribbon: #e2e8f0;
+      --text-ribbon: #475569;
+      --btn-ribbon-bg: #f8fafc;
+      --btn-ribbon-border: #cbd5e1;
+      --btn-ribbon-text: #334155;
+
+      --bg-canvas: #f8fafc;          /* Soft light slate canvas */
+      --canvas-dot: #cbd5e1;          /* Subtle grid dots */
+      --canvas-grid: rgba(226, 232, 240, 0.8);
+
+      --bg-node: #ffffff;
+      --border-node: #cbd5e1;
+      --border-node-hover: #2563eb;
+      --shadow-node: 0 4px 16px rgba(15, 23, 42, 0.08);
+      --text-node-title: #0f172a;
+      --text-node-sub: #64748b;
+      --bg-node-header: #f8fafc;
+      --border-node-header: #f1f5f9;
+
+      --bg-palette: #ffffff;
+      --border-palette: #e2e8f0;
+      --bg-palette-tab: #f1f5f9;
+      --text-palette-tab: #64748b;
+      --bg-palette-item: #ffffff;
+      --border-palette-item: #e2e8f0;
+      --text-palette-name: #0f172a;
+      --text-palette-sub: #64748b;
+
+      --bg-modal: #ffffff;
+      --border-modal: #e2e8f0;
+      --bg-modal-header: #f8fafc;
+      --text-modal-title: #0f172a;
+      --text-modal-body: #334155;
+      --bg-modal-item: #f8fafc;
+      --border-modal-item: #e2e8f0;
+      --text-modal-sub: #64748b;
+
+      /* FPT Brand Accents */
       --fpt-blue: #2563eb;
-      --fpt-cyan: #06b6d4;
-
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --purple: #8b5cf6;
-
-      --text-main: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
+      --fpt-blue-hover: #1d4ed8;
+      --fpt-orange: #f26f21;
+      --fpt-orange-hover: #ea580c;
+      --fpt-teal: #00b8d4;
+      --fpt-purple: #7c3aed;
+      --fpt-green: #10b981;
+      --fpt-amber: #f59e0b;
+      --fpt-red: #ef4444;
 
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --font-mono: 'JetBrains Mono', 'Consolas', monospace;
       --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Dark Mode (When user toggles) */
+    body.dark-theme {
+      --theme-name: 'dark';
+      --bg-app: #0b1324;
+      --bg-topbar: #111827;
+      --text-topbar: #f8fafc;
+      --border-topbar: #1f2937;
+
+      --bg-ribbon: #151f32;
+      --border-ribbon: #1e293b;
+      --text-ribbon: #94a3b8;
+      --btn-ribbon-bg: #1e293b;
+      --btn-ribbon-border: #334155;
+      --btn-ribbon-text: #cbd5e1;
+
+      --bg-canvas: #0b1324;
+      --canvas-dot: #1e293b;
+      --canvas-grid: rgba(30, 41, 59, 0.5);
+
+      --bg-node: #162138;
+      --border-node: #273654;
+      --border-node-hover: #38bdf8;
+      --shadow-node: 0 8px 24px rgba(0, 0, 0, 0.5);
+      --text-node-title: #f8fafc;
+      --text-node-sub: #94a3b8;
+      --bg-node-header: #1b2844;
+      --border-node-header: #243352;
+
+      --bg-palette: #111827;
+      --border-palette: #1f2937;
+      --bg-palette-tab: #1f2937;
+      --text-palette-tab: #94a3b8;
+      --bg-palette-item: #162035;
+      --border-palette-item: #243352;
+      --text-palette-name: #f8fafc;
+      --text-palette-sub: #94a3b8;
+
+      --bg-modal: #111827;
+      --border-modal: #374151;
+      --bg-modal-header: #1f2937;
+      --text-modal-title: #f8fafc;
+      --text-modal-body: #cbd5e1;
+      --bg-modal-item: #1f2937;
+      --border-modal-item: #374151;
+      --text-modal-sub: #9ca3af;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: var(--bg-app);
-      color: var(--text-main);
+      color: var(--text-node-title);
       font-family: var(--font-sans);
       font-size: 13px;
       height: 100vh;
@@ -49,57 +132,89 @@
       flex-direction: column;
       overflow: hidden;
       user-select: none;
+      transition: background 0.25s ease, color 0.25s ease;
     }
 
     /* ════════════════════════════════════════════════════════════════
-       1. TOPBAR
+       1. TOPBAR (52px, FPT Brand Identity, Matches Portal)
        ════════════════════════════════════════════════════════════════ */
     header.lab-topbar {
-      height: 48px;
-      background: #0f172a;
-      border-bottom: 1px solid var(--border-color);
+      height: 52px;
+      background: var(--bg-topbar);
+      border-bottom: 1px solid var(--border-topbar);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 16px;
       z-index: 100;
       flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
     }
 
     .brand-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .brand-logo-img {
-      height: 24px;
+      height: 26px;
       width: auto;
       object-fit: contain;
     }
     .brand-divider {
       width: 1px;
-      height: 20px;
-      background: var(--border-light);
+      height: 22px;
+      background: rgba(255, 255, 255, 0.15);
     }
     .brand-title-group {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     .brand-title {
-      font-size: 12.5px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 800;
       color: #ffffff;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
     }
     .brand-badge {
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 600;
       color: #38bdf8;
-      background: rgba(56, 189, 248, 0.12);
-      padding: 2px 8px;
-      border-radius: 4px;
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      background: rgba(56, 189, 248, 0.15);
+      padding: 3px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    /* Preset Selector */
+    .preset-selector-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .preset-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .preset-select {
+      background: transparent;
+      border: none;
+      color: #38bdf8;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+    }
+    .preset-select option {
+      background: #111827;
+      color: #ffffff;
     }
 
     .topbar-actions {
@@ -108,80 +223,206 @@
       gap: 8px;
     }
 
-    /* Preset Selector */
-    .preset-selector-wrap {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #1e293b;
-      padding: 3px 8px;
-      border-radius: 6px;
-      border: 1px solid var(--border-light);
-    }
-    .preset-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
-    .preset-select {
-      background: transparent;
-      border: none;
-      color: #38bdf8;
-      font-family: var(--font-sans);
-      font-size: 11.5px;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
-    }
-    .preset-select option {
-      background: #0f172a;
-      color: #ffffff;
-    }
-
     .btn-top {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 5px 10px;
-      font-size: 11.5px;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
       font-weight: 600;
-      border-radius: 6px;
+      border-radius: 7px;
       cursor: pointer;
       text-decoration: none;
       transition: var(--transition);
       border: 1px solid transparent;
       white-space: nowrap;
     }
+
+    .btn-top-theme {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+    }
+    .btn-top-theme:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+    }
+
     .btn-top-missions {
       background: rgba(37, 99, 235, 0.2);
-      border-color: #2563eb;
-      color: #60a5fa;
+      border-color: rgba(37, 99, 235, 0.5);
+      color: #93c5fd;
     }
-    .btn-top-missions:hover { background: #2563eb; color: #ffffff; }
+    .btn-top-missions:hover {
+      background: #2563eb;
+      color: #ffffff;
+    }
 
     .btn-top-grade {
-      background: linear-gradient(135deg, #f26f21, #ea580c);
+      background: linear-gradient(135deg, #f26f21 0%, #ea580c 100%);
       color: #ffffff;
-      box-shadow: 0 2px 6px rgba(242, 111, 33, 0.35);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(242, 111, 33, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    .btn-top-grade:hover { opacity: 0.92; }
+    .btn-top-grade:hover {
+      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(242, 111, 33, 0.5);
+    }
 
     .btn-top-reset {
-      background: #1e293b;
-      border-color: var(--border-light);
-      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
     }
-    .btn-top-reset:hover { background: #7f1d1d; border-color: #ef4444; color: #fecaca; }
+    .btn-top-reset:hover {
+      background: #dc2626;
+      border-color: #ef4444;
+      color: #ffffff;
+    }
 
     .btn-top-portal {
-      background: #1e293b;
-      border-color: var(--border-light);
-      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
     }
-    .btn-top-portal:hover { background: #334155; color: #ffffff; }
+    .btn-top-portal:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+    }
 
     /* ════════════════════════════════════════════════════════════════
-       2. STUDIO WORKSPACE LAYOUT
+       2. STUDIO CONTROL RIBBON (42px, Fixed Docked Subheader)
+       ════════════════════════════════════════════════════════════════ */
+    .studio-ribbon {
+      height: 42px;
+      background: var(--bg-ribbon);
+      border-bottom: 1px solid var(--border-ribbon);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 50;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .ribbon-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .ribbon-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ribbon-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-ribbon);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-right: 2px;
+    }
+
+    .ribbon-sep {
+      width: 1px;
+      height: 22px;
+      background: var(--border-ribbon);
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tool-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--btn-ribbon-bg);
+      border: 1px solid var(--btn-ribbon-border);
+      color: var(--btn-ribbon-text);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .tool-btn:hover {
+      background: var(--border-ribbon);
+      color: var(--text-node-title);
+    }
+    .tool-btn.active {
+      background: var(--fpt-blue);
+      border-color: var(--fpt-blue);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+    }
+
+    /* Cable Type Indicators */
+    .cable-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .cable-dot.eth   { background: #2563eb; }
+    .cable-dot.fiber { background: #ea580c; }
+    .cable-dot.wifi  { background: #7c3aed; }
+
+    /* Telemetry HUD in Ribbon */
+    .hud-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .hud-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .hud-chip.good {
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+    .hud-chip.good .hud-dot { background: #10b981; box-shadow: 0 0 6px #10b981; }
+
+    .hud-chip.warn {
+      background: rgba(245, 158, 11, 0.12);
+      color: #d97706;
+      border-color: rgba(245, 158, 11, 0.25);
+    }
+    .hud-chip.warn .hud-dot { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+
+    .hud-chip.bad {
+      background: rgba(239, 68, 68, 0.12);
+      color: #dc2626;
+      border-color: rgba(239, 68, 68, 0.25);
+    }
+    .hud-chip.bad .hud-dot { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+
+    body.dark-theme .hud-chip.good { color: #34d399; }
+    body.dark-theme .hud-chip.warn { color: #fbbf24; }
+    body.dark-theme .hud-chip.bad  { color: #f87171; }
+
+    /* ════════════════════════════════════════════════════════════════
+       3. INTERACTIVE NETWORK CANVAS
        ════════════════════════════════════════════════════════════════ */
     .studio-container {
       flex: 1;
@@ -192,105 +433,20 @@
       min-height: 0;
     }
 
-    /* Floating Studio Toolbar */
-    .studio-toolbar {
-      position: absolute;
-      top: 12px;
-      left: 16px;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 4px 8px;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-
-    .tool-group {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .tool-sep {
-      width: 1px;
-      height: 18px;
-      background: #334155;
-      margin: 0 2px;
-    }
-
-    .tool-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: var(--text-secondary);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    .tool-btn:hover {
-      background: #253349;
-      color: #f1f5f9;
-      border-color: #475569;
-    }
-    .tool-btn.active {
-      background: #0284c7;
-      border-color: #38bdf8;
-      color: #ffffff;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-    }
-
-    /* Telemetry HUD (Top Right of Canvas) */
-    .studio-hud {
-      position: absolute;
-      top: 12px;
-      right: 16px;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 5px 10px;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-    .hud-chip {
-      font-size: 10.5px;
-      font-family: var(--font-mono);
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 4px;
-      border: 1px solid transparent;
-    }
-    .hud-chip.good { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
-    .hud-chip.warn { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); }
-    .hud-chip.bad  { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
-
-    /* ════════════════════════════════════════════════════════════════
-       3. INTERACTIVE NETWORK CANVAS (CISCO PACKET TRACER STYLE)
-       ════════════════════════════════════════════════════════════════ */
     .net-canvas {
       flex: 1;
       width: 100%;
       height: 100%;
       position: relative;
       overflow: hidden;
-      background-color: #070b14;
+      background-color: var(--bg-canvas);
       background-image: 
-        radial-gradient(rgba(148, 163, 184, 0.12) 1.2px, transparent 1.2px),
-        linear-gradient(rgba(15, 23, 42, 0.4) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(15, 23, 42, 0.4) 1px, transparent 1px);
+        radial-gradient(var(--canvas-dot) 1.4px, transparent 1.4px),
+        linear-gradient(var(--canvas-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--canvas-grid) 1px, transparent 1px);
       background-size: 24px 24px, 120px 120px, 120px 120px;
-      cursor: crosshair;
+      cursor: default;
+      transition: background-color 0.25s ease;
     }
 
     /* SVG Layer for Cables & Data flow */
@@ -312,13 +468,13 @@
     }
     .svg-cable:hover {
       stroke-width: 6 !important;
-      filter: drop-shadow(0 0 6px currentColor);
+      filter: drop-shadow(0 0 8px currentColor);
     }
-    .svg-cable.eth-optimal { stroke: #0284c7; stroke-width: 4; }
-    .svg-cable.eth-bottleneck { stroke: #f59e0b; stroke-width: 3.5; stroke-dasharray: 6, 3; }
-    .svg-cable.fiber { stroke: #f97316; stroke-width: 4; stroke-dasharray: 5, 2; }
-    .svg-cable.wifi-mesh { stroke: #a855f7; stroke-width: 3; stroke-dasharray: 6, 4; }
-    .svg-cable.broken { stroke: #ef4444; stroke-width: 2.5; stroke-dasharray: 4, 4; }
+    .svg-cable.eth-optimal { stroke: #2563eb; stroke-width: 4; }
+    .svg-cable.eth-bottleneck { stroke: #d97706; stroke-width: 3.5; stroke-dasharray: 6, 3; }
+    .svg-cable.fiber { stroke: #ea580c; stroke-width: 4; stroke-dasharray: 6, 2; }
+    .svg-cable.wifi-mesh { stroke: #7c3aed; stroke-width: 3; stroke-dasharray: 6, 4; }
+    .svg-cable.broken { stroke: #dc2626; stroke-width: 2.5; stroke-dasharray: 4, 4; }
 
     .cable-label-pill {
       pointer-events: all;
@@ -339,225 +495,362 @@
       pointer-events: none;
     }
 
-    /* Node Device Card */
+    /* ════════════════════════════════════════════════════════════════
+       NODE DEVICE CARD (CLEAN & PROFESSIONAL HARDWARE APPLIANCE)
+       ════════════════════════════════════════════════════════════════ */
     .node-device {
       position: absolute;
-      width: 190px;
-      background: #0f172a;
-      border: 1.5px solid #334155;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      width: 215px;
+      background: var(--bg-node);
+      border: 1.5px solid var(--border-node);
+      border-radius: 10px;
+      box-shadow: var(--shadow-node);
       cursor: move;
       pointer-events: all;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
     .node-device:hover {
-      border-color: #38bdf8;
-      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.2);
+      border-color: var(--border-node-hover);
+      box-shadow: 0 10px 28px rgba(37, 99, 235, 0.16);
+      transform: translateY(-2px);
     }
     .node-device.selected {
-      border-color: #38bdf8 !important;
-      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4), 0 12px 30px rgba(0, 0, 0, 0.6) !important;
+      border-color: var(--fpt-blue) !important;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), 0 12px 30px rgba(0, 0, 0, 0.15) !important;
     }
-    .node-device.controller { border-top: 3px solid #2563eb; }
-    .node-device.agent      { border-top: 3px solid #7c3aed; }
-    .node-device.client     { border-top: 3px solid #10b981; }
-    .node-device.olt        { border-top: 3px solid #f97316; }
+
+    /* Top Role Accent Bar */
+    .node-role-bar {
+      height: 4px;
+      width: 100%;
+      flex-shrink: 0;
+    }
+    .node-role-bar.master  { background: linear-gradient(90deg, #2563eb, #38bdf8); }
+    .node-role-bar.slave   { background: linear-gradient(90deg, #7c3aed, #c084fc); }
+    .node-role-bar.client  { background: linear-gradient(90deg, #10b981, #34d399); }
+    .node-role-bar.core    { background: linear-gradient(90deg, #ea580c, #f97316); }
 
     .node-header {
-      padding: 6px 8px;
-      background: #182235;
+      padding: 8px 10px 6px;
+      background: var(--bg-node-header);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid #1e293b;
+      border-bottom: 1px solid var(--border-node-header);
     }
     .node-title-group {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       overflow: hidden;
+      min-width: 0;
     }
-    .node-icon { font-size: 14px; }
+    .node-icon {
+      font-size: 16px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .node-name-wrap {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      line-height: 1.25;
+    }
     .node-name {
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 700;
-      color: #f8fafc;
+      color: var(--text-node-title);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .node-model-sub {
+      font-size: 9.5px;
+      color: var(--text-node-sub);
+      font-family: var(--font-mono);
+    }
     .node-role-tag {
-      font-size: 8px;
+      font-size: 8.5px;
       font-family: var(--font-mono);
       font-weight: 700;
-      padding: 1px 4px;
-      border-radius: 3px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
     }
-    .node-role-tag.master { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; }
-    .node-role-tag.slave  { background: #3b0764; color: #d8b4fe; border: 1px solid #7c3aed; }
-    .node-role-tag.client { background: #0f362b; color: #34d399; }
-    .node-role-tag.core   { background: #431407; color: #fdba74; }
+    .node-role-tag.master { background: rgba(37, 99, 235, 0.12); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.3); }
+    .node-role-tag.slave  { background: rgba(124, 58, 237, 0.12); color: #7c3aed; border: 1px solid rgba(124, 58, 237, 0.3); }
+    .node-role-tag.client { background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .node-role-tag.core   { background: rgba(234, 88, 12, 0.12); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.3); }
 
     .node-body {
-      padding: 6px 8px;
+      padding: 7px 10px 9px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
 
-    .node-info-row {
+    .node-meta-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 9.5px;
+      gap: 4px;
+    }
+    .node-ip-badge {
+      font-size: 10px;
       font-family: var(--font-mono);
-      color: #94a3b8;
+      font-weight: 600;
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--fpt-blue);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(37, 99, 235, 0.2);
     }
 
     /* LEDs on Node */
     .node-leds {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
     .led-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: #334155;
+      background: #cbd5e1;
       display: inline-block;
     }
     .led-dot.on-green { background: #10b981; box-shadow: 0 0 5px #10b981; }
-    .led-dot.on-blue  { background: #38bdf8; box-shadow: 0 0 5px #38bdf8; }
+    .led-dot.on-blue  { background: #0284c7; box-shadow: 0 0 5px #0284c7; }
     .led-dot.on-red   { background: #ef4444; box-shadow: 0 0 5px #ef4444; }
+
+    /* Mini Hardware Ports Rack on Card */
+    .node-ports-rack {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-wrap: wrap;
+      background: var(--bg-palette-tab);
+      padding: 4px 6px;
+      border-radius: 5px;
+      border: 1px solid var(--border-ribbon);
+    }
+    .port-chip {
+      font-size: 8px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--text-node-sub);
+      background: var(--bg-node);
+      border: 1px solid var(--border-node);
+      padding: 1px 4px;
+      border-radius: 3px;
+      line-height: 1.2;
+    }
+    .port-chip.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #1d4ed8;
+      box-shadow: 0 0 4px rgba(37, 99, 235, 0.4);
+    }
+    .port-chip.more {
+      font-size: 7.5px;
+      color: var(--text-node-sub);
+      background: transparent;
+      border: none;
+    }
 
     /* Node Quick Actions Bar */
     .node-actions {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 4px;
-      border-top: 1px solid #1e293b;
-      padding-top: 4px;
       margin-top: 2px;
     }
     .node-btn {
       flex: 1;
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #cbd5e1;
-      font-size: 9px;
-      font-weight: 600;
-      padding: 3px 4px;
-      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 6px;
+      border-radius: 5px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 3px;
       transition: var(--transition);
+      border: 1px solid transparent;
+      white-space: nowrap;
     }
-    .node-btn:hover {
-      background: #334155;
-      color: #38bdf8;
-      border-color: #475569;
-    }
-    .node-btn.config {
-      background: #0369a1;
-      border-color: #0284c7;
+    .node-btn.primary-config {
+      flex: 1.5;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
     }
-    .node-btn.config:hover {
-      background: #0284c7;
+    .node-btn.primary-config:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      transform: translateY(-1px);
+    }
+
+    .node-btn.secondary-wire {
+      background: var(--btn-ribbon-bg);
+      border-color: var(--btn-ribbon-border);
+      color: var(--btn-ribbon-text);
+    }
+    .node-btn.secondary-wire:hover {
+      background: var(--border-ribbon);
+      color: var(--fpt-blue);
+      border-color: var(--fpt-blue);
+    }
+
+    .node-btn.danger-del {
+      flex: 0 0 26px;
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.2);
+      color: #dc2626;
+      padding: 4px 0;
+    }
+    .node-btn.danger-del:hover {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #b91c1c;
     }
 
     /* ════════════════════════════════════════════════════════════════
-       4. BOTTOM DEVICE PALETTE SHELF (CISCO PACKET TRACER STYLE)
+       4. BOTTOM DEVICE PALETTE DRAWER (CISCO PACKET TRACER STYLE)
        ════════════════════════════════════════════════════════════════ */
     .device-palette {
-      height: 98px;
-      background: #0c1220;
-      border-top: 1px solid var(--border-color);
+      height: 106px;
+      background: var(--bg-palette);
+      border-top: 1px solid var(--border-palette);
       display: flex;
       flex-direction: column;
       z-index: 40;
       flex-shrink: 0;
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .palette-header {
+      height: 32px;
+      background: var(--bg-palette-tab);
+      border-bottom: 1px solid var(--border-palette);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 10px;
     }
 
     .palette-tabs-bar {
-      height: 28px;
-      background: #090e18;
-      border-bottom: 1px solid #1e293b;
       display: flex;
       align-items: center;
-      padding: 0 12px;
-      gap: 6px;
+      gap: 5px;
     }
+    .palette-title {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--text-node-title);
+      letter-spacing: 0.5px;
+      margin-right: 4px;
+    }
+
     .palette-tab-btn {
       background: transparent;
-      border: none;
-      color: var(--text-muted);
+      border: 1px solid transparent;
+      color: var(--text-palette-tab);
       font-size: 11px;
       font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 4px;
+      padding: 3px 10px;
+      border-radius: 5px;
       cursor: pointer;
       transition: var(--transition);
     }
-    .palette-tab-btn:hover { color: #f8fafc; }
+    .palette-tab-btn:hover {
+      color: var(--text-node-title);
+      background: rgba(0, 0, 0, 0.04);
+    }
     .palette-tab-btn.active {
-      background: #1e293b;
-      color: #38bdf8;
+      background: var(--fpt-blue);
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+
+    .palette-hint {
+      font-size: 10.5px;
+      color: var(--text-palette-sub);
     }
 
     .palette-shelf {
       flex: 1;
       display: flex;
       align-items: center;
-      padding: 0 12px;
+      padding: 0 14px;
       gap: 10px;
       overflow-x: auto;
     }
 
     .palette-item {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      background: #131c2e;
-      border: 1px solid #253349;
-      border-radius: 6px;
-      padding: 5px 8px;
-      min-width: 95px;
-      height: 56px;
+      gap: 8px;
+      background: var(--bg-palette-item);
+      border: 1.5px solid var(--border-palette-item);
+      border-radius: 8px;
+      padding: 6px 10px;
+      min-width: 125px;
+      height: 52px;
       cursor: grab;
       transition: var(--transition);
-      gap: 2px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
     .palette-item:hover {
-      background: #1e293b;
-      border-color: #38bdf8;
+      border-color: var(--fpt-blue);
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
     }
     .palette-item:active { cursor: grabbing; }
 
-    .palette-item-icon { font-size: 16px; }
+    .palette-item-icon-box {
+      font-size: 18px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--bg-palette-tab);
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .palette-item-text {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+      line-height: 1.25;
+    }
     .palette-item-name {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
-      color: #f1f5f9;
+      color: var(--text-palette-name);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .palette-item-sub {
-      font-size: 8px;
+      font-size: 8.5px;
       font-family: var(--font-mono);
-      color: #94a3b8;
+      color: var(--text-palette-sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* ════════════════════════════════════════════════════════════════
@@ -568,19 +861,22 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 920px;
-      height: 640px;
-      max-width: 95vw;
-      max-height: 92vh;
-      background: #0f172a;
-      border: 1.5px solid #334155;
-      border-radius: 10px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      width: 1240px;
+      height: 88vh;
+      max-width: 96vw;
+      max-height: 94vh;
+      min-width: 820px;
+      min-height: 520px;
+      background: var(--bg-modal);
+      border: 1.5px solid var(--border-modal);
+      border-radius: 12px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
       z-index: 1000;
       display: none;
       flex-direction: column;
       overflow: hidden;
       animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      resize: both;
     }
     .cisco-dev-window.maximized {
       top: 0 !important;
@@ -591,6 +887,7 @@
       max-width: 100vw !important;
       max-height: 100vh !important;
       border-radius: 0 !important;
+      resize: none !important;
     }
 
     @keyframes modalPop {
@@ -600,21 +897,21 @@
 
     /* Window Titlebar (Draggable Handle) */
     .cisco-titlebar {
-      height: 38px;
-      background: #182235;
-      border-bottom: 1px solid #1e293b;
+      height: 42px;
+      background: var(--bg-topbar);
+      border-bottom: 1px solid var(--border-topbar);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 12px;
+      padding: 0 14px;
       cursor: move;
       flex-shrink: 0;
     }
     .cisco-title-info {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 12px;
+      gap: 10px;
+      font-size: 13px;
       font-weight: 700;
       color: #ffffff;
     }
@@ -624,27 +921,27 @@
       gap: 6px;
     }
     .cisco-win-btn {
-      width: 22px;
-      height: 22px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 4px;
-      color: #94a3b8;
+      width: 26px;
+      height: 26px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 5px;
+      color: #cbd5e1;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
+      font-size: 12px;
       cursor: pointer;
       transition: var(--transition);
     }
-    .cisco-win-btn:hover { background: #334155; color: #ffffff; }
+    .cisco-win-btn:hover { background: rgba(255, 255, 255, 0.2); color: #ffffff; }
     .cisco-win-btn.close:hover { background: #dc2626; color: #ffffff; border-color: #ef4444; }
 
     /* Window Tabs (Physical / Web GUI / CLI) */
     .cisco-tabs-bar {
-      height: 36px;
-      background: #0c1220;
-      border-bottom: 1px solid #1e293b;
+      height: 38px;
+      background: var(--bg-modal-header);
+      border-bottom: 1px solid var(--border-modal);
       display: flex;
       align-items: center;
       padding: 0 12px;
@@ -656,20 +953,22 @@
       align-items: center;
       gap: 6px;
       padding: 6px 14px;
-      font-size: 11.5px;
+      font-size: 12px;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--text-modal-sub);
       background: transparent;
       border: 1px solid transparent;
       border-radius: 6px;
       cursor: pointer;
       transition: var(--transition);
     }
-    .cisco-tab:hover { color: #ffffff; background: #182235; }
+    .cisco-tab:hover { color: var(--text-modal-title); background: rgba(0, 0, 0, 0.05); }
     .cisco-tab.active {
-      background: #1e293b;
-      border-color: #334155;
-      color: #38bdf8;
+      background: var(--fpt-blue);
+      border-color: var(--fpt-blue);
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
     }
 
     /* Window Body Container */
@@ -679,6 +978,7 @@
       overflow: hidden;
       display: none;
       flex-direction: column;
+      background: var(--bg-modal);
     }
     .cisco-tab-content.active { display: flex; }
 
@@ -690,16 +990,17 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      background: #090e18;
+      background: var(--bg-app);
     }
     .physical-chassis-box {
-      background: #0f172a;
-      border: 1.5px solid #334155;
-      border-radius: 8px;
-      padding: 16px;
+      background: var(--bg-modal);
+      border: 1.5px solid var(--border-modal);
+      border-radius: 10px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
     .physical-ports-rack {
       display: grid;
@@ -707,54 +1008,107 @@
       gap: 10px;
     }
     .physical-port-card {
-      background: #1e293b;
-      border: 1.5px solid #334155;
-      border-radius: 6px;
-      padding: 8px;
+      background: var(--bg-modal-item);
+      border: 1.5px solid var(--border-modal-item);
+      border-radius: 8px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       gap: 4px;
       cursor: pointer;
       transition: var(--transition);
     }
-    .physical-port-card:hover { border-color: #38bdf8; background: #253349; }
+    .physical-port-card:hover { border-color: var(--fpt-blue); }
     .physical-port-card.connected {
       border-color: #10b981;
-      background: rgba(16, 185, 129, 0.12);
+      background: rgba(16, 185, 129, 0.1);
     }
     .physical-port-card.bottleneck {
       border-color: #f59e0b;
-      background: rgba(245, 158, 11, 0.12);
+      background: rgba(245, 158, 11, 0.1);
     }
 
     /* TAB 2: WEB GUI (SIMULATOR IFRAME) */
     .cisco-browser-bar {
-      height: 36px;
-      background: #182235;
-      border-bottom: 1px solid #1e293b;
+      height: 40px;
+      background: var(--bg-modal-header);
+      border-bottom: 1px solid var(--border-modal);
       display: flex;
       align-items: center;
-      padding: 0 10px;
+      padding: 0 12px;
       gap: 8px;
       flex-shrink: 0;
     }
     .browser-url-input {
       flex: 1;
-      background: #0f172a;
-      border: 1px solid #334155;
-      color: #38bdf8;
+      background: var(--bg-modal);
+      border: 1px solid var(--border-modal);
+      color: var(--fpt-blue);
       font-family: var(--font-mono);
-      font-size: 11.5px;
-      padding: 3px 8px;
-      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 6px;
       outline: none;
     }
-    .cisco-iframe-frame {
+
+    .device-subpages-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      background: var(--bg-node-header);
+      border-bottom: 1px solid var(--border-modal);
+      overflow-x: auto;
+      flex-shrink: 0;
+      white-space: nowrap;
+      scrollbar-width: thin;
+    }
+    .subpage-chip-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-modal-sub);
+      background: var(--bg-modal);
+      border: 1px solid var(--border-modal);
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+    .subpage-chip-btn:hover {
+      color: var(--fpt-blue);
+      border-color: var(--fpt-blue);
+      background: rgba(37, 99, 235, 0.05);
+    }
+    .subpage-chip-btn.active {
+      color: #ffffff !important;
+      background: var(--fpt-blue) !important;
+      border-color: var(--fpt-blue) !important;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+
+    .cisco-iframe-wrap {
       flex: 1;
       width: 100%;
       height: 100%;
+      position: relative;
+      overflow: auto;
+      background: #ffffff;
+      -webkit-overflow-scrolling: touch;
+    }
+    .cisco-iframe-frame {
+      width: 100%;
+      height: 100%;
+      min-width: 1020px;
+      min-height: 520px;
       border: none;
       background: #ffffff;
+      display: block;
     }
 
     /* TAB 3: CLI TERMINAL */
@@ -767,21 +1121,21 @@
     }
     .cisco-term-screen {
       flex: 1;
-      padding: 12px;
+      padding: 14px;
       overflow-y: auto;
       color: #38bdf8;
-      font-size: 11.5px;
-      line-height: 1.5;
+      font-size: 12px;
+      line-height: 1.55;
       white-space: pre-wrap;
     }
     .cisco-term-prompt {
-      height: 36px;
+      height: 40px;
       background: #0f172a;
       border-top: 1px solid #1e293b;
       display: flex;
       align-items: center;
-      padding: 0 10px;
-      gap: 6px;
+      padding: 0 12px;
+      gap: 8px;
     }
     .cisco-term-input {
       flex: 1;
@@ -794,12 +1148,12 @@
     }
 
     /* ════════════════════════════════════════════════════════════════
-       6. PORT SELECTOR MODAL & CABLE INSPECTOR
+       6. MODAL OVERLAYS (PORT SELECTOR, CABLE INSPECTOR, MISSIONS, GRADE)
        ════════════════════════════════════════════════════════════════ */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(15, 23, 42, 0.65);
       backdrop-filter: blur(4px);
       z-index: 2000;
       display: none;
@@ -809,110 +1163,118 @@
     }
 
     .modal-box {
-      background: #0f172a;
-      border-radius: 10px;
-      border: 1px solid #334155;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+      background: var(--bg-modal);
+      border-radius: 12px;
+      border: 1.5px solid var(--border-modal);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
       width: 100%;
       max-width: 600px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      color: #ffffff;
+      color: var(--text-modal-title);
       animation: modalPop 0.2s ease;
     }
 
     .modal-header {
-      padding: 12px 16px;
-      background: #182235;
-      border-bottom: 1px solid #1e293b;
+      padding: 14px 18px;
+      background: var(--bg-modal-header);
+      border-bottom: 1px solid var(--border-modal);
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
     .modal-header h3 {
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      color: var(--text-modal-title);
     }
     .modal-close-btn {
       background: transparent;
       border: none;
-      color: #94a3b8;
-      font-size: 18px;
+      color: var(--text-modal-sub);
+      font-size: 20px;
       cursor: pointer;
+      transition: var(--transition);
+      line-height: 1;
     }
-    .modal-close-btn:hover { color: #ffffff; }
+    .modal-close-btn:hover { color: #dc2626; }
 
     .modal-body {
-      padding: 16px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       max-height: 75vh;
       overflow-y: auto;
+      color: var(--text-modal-body);
     }
 
     .modal-footer {
-      padding: 10px 16px;
-      background: #090e18;
-      border-top: 1px solid #1e293b;
+      padding: 12px 18px;
+      background: var(--bg-modal-header);
+      border-top: 1px solid var(--border-modal);
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 8px;
+      gap: 10px;
     }
 
     .port-selector-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 16px;
     }
     .port-select-col {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
     .col-title {
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 700;
-      color: #94a3b8;
-      border-bottom: 1px solid #1e293b;
-      padding-bottom: 4px;
+      color: var(--text-modal-sub);
+      border-bottom: 1px solid var(--border-modal);
+      padding-bottom: 5px;
     }
     .port-radio-item {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 5px;
-      padding: 6px 8px;
+      background: var(--bg-modal-item);
+      border: 1.5px solid var(--border-modal-item);
+      border-radius: 6px;
+      padding: 8px 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 11.5px;
       transition: var(--transition);
+      color: var(--text-modal-title);
     }
-    .port-radio-item:hover { border-color: #38bdf8; background: #253349; }
+    .port-radio-item:hover { border-color: var(--fpt-blue); background: var(--border-modal); }
     .port-radio-item.selected {
       border-color: #10b981;
-      background: rgba(16, 185, 129, 0.15);
-      color: #a7f3d0;
+      background: rgba(16, 185, 129, 0.12);
+      color: #047857;
+      font-weight: 600;
     }
+    body.dark-theme .port-radio-item.selected { color: #a7f3d0; }
 
     /* Toast */
     .toast-box {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #1e293b;
-      border: 1px solid #334155;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-topbar);
+      border: 1px solid var(--border-topbar);
       color: #ffffff;
-      padding: 10px 16px;
+      padding: 12px 18px;
       border-radius: 8px;
-      font-size: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      font-size: 12.5px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
       z-index: 3000;
       display: none;
       animation: fadeIn 0.2s ease;
@@ -924,96 +1286,111 @@
 <body>
 
   <!-- ════════════════════════════════════════════════════════════════
-       1. TOPBAR
+       1. TOPBAR (Matches FPT Portal Brand Identity)
        ════════════════════════════════════════════════════════════════ -->
   <header class="lab-topbar">
     <div class="brand-wrap">
-      <img class="brand-logo-img" src="/assets/logoFPT.png?v=58a119fe563bd62a" alt="FPT Telecom" onerror="this.style.display='none'">
+      <a href="/portal.html" title="Về Portal FPT">
+        <img class="brand-logo-img" src="/assets/logoFPT.png?v=58a119fe563bd62a" alt="FPT Telecom" onerror="this.style.display='none'">
+      </a>
       <div class="brand-divider"></div>
       <div class="brand-title-group">
         <span class="brand-title">FPT NETLAB STUDIO</span>
-        <span class="brand-badge">Cisco Packet Tracer Style — Ảo Hóa Mạng Kéo Thả</span>
+        <span class="brand-badge">Mesh Topology Lab • Cisco Packet Tracer Style</span>
       </div>
     </div>
 
-    <div class="topbar-actions">
-      <!-- Mẫu bài thực hành Presets -->
-      <div class="preset-selector-wrap" title="Chọn mô hình thực hành mạng có sẵn">
-        <span class="preset-label">Mẫu Sơ Đồ:</span>
-        <select id="preset-select" class="preset-select" onchange="loadPresetTopology(this.value)">
-          <option value="zte_wifi7" selected>⚡ Combo ZTE Wi-Fi 7 (ONT BE12000Z + AP BE15000Z)</option>
-          <option value="wifi6_gpon">📶 Combo Wi-Fi 6 GPON (AX3000GZ + AX3000C)</option>
-          <option value="sme_enterprise">🏢 Mạng Doanh Nghiệp (Vigor 2927 + AC1000F)</option>
-          <option value="blank">📄 Canvas Trống (Tự do kéo thả từ đầu)</option>
-        </select>
-      </div>
+    <!-- Center: Preset Selector -->
+    <div class="preset-selector-wrap" title="Chọn mô hình thực hành mạng có sẵn">
+      <span class="preset-label">Mẫu Sơ Đồ:</span>
+      <select id="preset-select" class="preset-select" onchange="loadPresetTopology(this.value)">
+        <option value="zte_wifi7" selected>⚡ Combo ZTE Wi-Fi 7 (ONT BE12000Z + AP BE15000Z)</option>
+        <option value="wifi6_gpon">📶 Combo Wi-Fi 6 GPON (AX3000GZ + AX3000C)</option>
+        <option value="sme_enterprise">🏢 Mạng Doanh Nghiệp (Vigor 2927 + AC1000F)</option>
+        <option value="blank">📄 Canvas Trống (Tự do thiết kế)</option>
+      </select>
+    </div>
 
-      <!-- Nút Nhiệm vụ KTV -->
+    <div class="topbar-actions">
+      <!-- Theme Switcher Toggle Button -->
+      <button id="btn-theme-toggle" class="btn-top btn-top-theme" onclick="toggleStudioTheme()" title="Chuyển đổi giao diện Sáng / Tối">
+        <span id="theme-toggle-icon">🌙</span>
+        <span id="theme-toggle-text">Chế độ Tối</span>
+      </button>
+
+      <!-- Missions Guide -->
       <button id="btn-open-missions" class="btn-top btn-top-missions" title="Xem 6 nhiệm vụ thực hành từng bước">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         <span>📋 Hướng Dẫn KTV (<span id="topbar-mission-count">6/6</span>)</span>
       </button>
 
+      <!-- Submit & Grade -->
       <button id="btn-grade-lab" class="btn-top btn-top-grade" title="Chấm điểm bài thực hành theo tiêu chuẩn FPT">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
         <span>Nộp Bài & Chấm Điểm</span>
       </button>
 
+      <!-- Reset -->
       <button id="btn-reset-lab" class="btn-top btn-top-reset" title="Khôi phục lại bài Lab chuẩn ban đầu">
         <span>🔄 Reset</span>
       </button>
 
-      <a href="/portal.html" class="btn-top btn-top-portal" title="Quay lại danh mục Portal">
-        <span>Về Portal</span>
+      <!-- Back to Portal -->
+      <a href="/portal.html" class="btn-top btn-top-portal" title="Quay lại trang Portal FPT">
+        <span>‹ Về Portal</span>
       </a>
     </div>
   </header>
 
   <!-- ════════════════════════════════════════════════════════════════
-       2. STUDIO WORKSPACE (VIRTUAL CANVAS + SHELF)
+       2. STUDIO CONTROL RIBBON (42px, Docked & Organized)
        ════════════════════════════════════════════════════════════════ -->
-  <div class="studio-container">
-
-    <!-- Floating Canvas Toolbar -->
-    <div class="studio-toolbar">
+  <div class="studio-ribbon">
+    <div class="ribbon-left">
       <div class="tool-group">
-        <button id="tool-select" class="tool-btn active" onclick="setStudioTool('select')" title="Công cụ Con trỏ / Di chuyển thiết bị (V)">
-          <span>↖</span> Chọn / Kéo Node
+        <span class="ribbon-label">Công cụ:</span>
+        <button id="tool-select" class="tool-btn active" onclick="setStudioTool('select')" title="Công cụ Con trỏ / Di chuyển thiết bị (Phím V)">
+          <span>↖</span> Di Chuyển
         </button>
-        <button id="tool-wire" class="tool-btn" onclick="setStudioTool('wire')" title="Công cụ Kéo Dây Cáp Vật Lý (C)">
-          <span>🔌</span> Kéo Nối Cáp
+        <button id="tool-wire" class="tool-btn" onclick="setStudioTool('wire')" title="Công cụ Kéo Cáp Vật Lý (Phím C)">
+          <span>🔌</span> Nối Cáp
         </button>
-        <button id="tool-delete" class="tool-btn" onclick="setStudioTool('delete')" title="Công cụ Xóa Node / Cáp (D)">
-          <span>✂️</span> Xóa
+        <button id="tool-delete" class="tool-btn" onclick="setStudioTool('delete')" title="Công cụ Cắt / Xóa Cáp hoặc Node (Phím D)">
+          <span>✂️</span> Cắt / Xóa
         </button>
       </div>
 
-      <div class="tool-sep"></div>
+      <div class="ribbon-sep"></div>
 
-      <!-- Loại dây cáp chọn trước -->
       <div class="tool-group">
-        <span style="font-size:10px;color:var(--text-muted);margin-right:2px;">Loại Cáp:</span>
-        <button id="cable-type-eth" class="tool-btn active" onclick="setCableType('ETH_CAT6A')" title="Cáp mạng RJ-45 CAT.6A (Hỗ trợ 10GE/2.5GE/1GE)">
-          <span>⚡</span> CAT.6A (RJ-45)
+        <span class="ribbon-label">Loại Cáp:</span>
+        <button id="cable-type-eth" class="tool-btn active" onclick="setCableType('ETH_CAT6A')" title="Cáp mạng RJ-45 CAT.6A (10GE / 2.5GE / 1GE)">
+          <span class="cable-dot eth"></span> CAT.6A (RJ-45)
         </button>
-        <button id="cable-type-fiber" class="tool-btn" onclick="setCableType('FIBER_SC')" title="Dây nhảy quang Singlemode SC/UPC (XGS-PON 10G / GPON)">
-          <span>💡</span> Quang (SC/UPC)
+        <button id="cable-type-fiber" class="tool-btn" onclick="setCableType('FIBER_SC')" title="Dây nhảy quang Singlemode SC/UPC (10G XGS-PON / GPON)">
+          <span class="cable-dot fiber"></span> Quang (SC/UPC)
         </button>
         <button id="cable-type-wifi" class="tool-btn" onclick="setCableType('WIFI_MESH')" title="Liên kết không dây EasyMesh Wi-Fi 7 MLO">
-          <span>📶</span> Wi-Fi Mesh
+          <span class="cable-dot wifi"></span> Wi-Fi Mesh MLO
         </button>
       </div>
     </div>
 
     <!-- Live Telemetry HUD -->
-    <div class="studio-hud">
-      <span class="hud-chip good" id="hud-link">Backhaul: ETH 2.5 Gbps (Tối ưu)</span>
-      <span class="hud-chip good" id="hud-ping">Ping: 1 ms</span>
-      <span class="hud-chip good" id="hud-speed">Speed: 2.35 Gbps</span>
-      <span class="hud-chip good" id="hud-traffic">Internet: Thông tuyến</span>
+    <div class="ribbon-right">
+      <span class="hud-chip good" id="hud-link"><span class="hud-dot"></span> Backhaul: ETH 2.5 Gbps (Tối ưu)</span>
+      <span class="hud-chip good" id="hud-ping"><span class="hud-dot"></span> Ping: 1 ms</span>
+      <span class="hud-chip good" id="hud-speed"><span class="hud-dot"></span> Tốc Độ: 2.35 Gbps</span>
+      <span class="hud-chip good" id="hud-traffic"><span class="hud-dot"></span> Internet: Thông Tuyến</span>
     </div>
+  </div>
 
-    <!-- 3. INTERACTIVE NETWORK CANVAS -->
+  <!-- ════════════════════════════════════════════════════════════════
+       3. STUDIO WORKSPACE (VIRTUAL CANVAS + SHELF)
+       ════════════════════════════════════════════════════════════════ -->
+  <div class="studio-container">
+
+    <!-- Interactive Technical Network Canvas -->
     <div id="net-canvas" class="net-canvas" ondragover="handleCanvasDragOver(event)" ondrop="handleCanvasDrop(event)">
       <!-- SVG Layer for Dynamic Bézier Cables -->
       <svg id="canvas-svg" class="canvas-svg">
@@ -1032,15 +1409,19 @@
       </div>
     </div>
 
-    <!-- 4. BOTTOM DEVICE PALETTE SHELF (CISCO PACKET TRACER STYLE) -->
+    <!-- 4. BOTTOM DEVICE PALETTE DRAWER (CISCO PACKET TRACER STYLE) -->
     <div class="device-palette">
-      <!-- Category Tabs -->
-      <div class="palette-tabs-bar">
-        <button class="palette-tab-btn active" onclick="filterPalette('all')">Tất Cả Thiết Bị (8)</button>
-        <button class="palette-tab-btn" onclick="filterPalette('gateway')">ONT / Gateway (4)</button>
-        <button class="palette-tab-btn" onclick="filterPalette('ap')">Mesh AP (2)</button>
-        <button class="palette-tab-btn" onclick="filterPalette('client')">Đầu Cuối / Client (2)</button>
-        <button class="palette-tab-btn" onclick="filterPalette('infra')">Hạ Tầng FPT (1)</button>
+      <!-- Category Tabs & Hint -->
+      <div class="palette-header">
+        <div class="palette-tabs-bar">
+          <span class="palette-title">📦 KỆ THIẾT BỊ:</span>
+          <button class="palette-tab-btn active" onclick="filterPalette('all')">Tất Cả (8)</button>
+          <button class="palette-tab-btn" onclick="filterPalette('gateway')">ONT / Gateway (4)</button>
+          <button class="palette-tab-btn" onclick="filterPalette('ap')">Mesh AP (2)</button>
+          <button class="palette-tab-btn" onclick="filterPalette('client')">Đầu Cuối (2)</button>
+          <button class="palette-tab-btn" onclick="filterPalette('infra')">Hạ Tầng FPT (1)</button>
+        </div>
+        <div class="palette-hint">💡 Kéo thả thiết bị lên sơ đồ mạng hoặc click để thêm vào giữa canvas</div>
       </div>
 
       <!-- Shelf Items (Draggable) -->
@@ -1116,10 +1497,18 @@
     <div id="view-tab-webgui" class="cisco-tab-content">
       <div class="cisco-browser-bar">
         <button class="cisco-win-btn" onclick="reloadDeviceIframe()" title="Tải lại trang">🔄</button>
-        <span style="font-size:11px;color:#94a3b8;">URL:</span>
+        <span style="font-size:11px;color:var(--text-modal-sub);font-weight:600;">URL:</span>
         <input id="browser-url-bar" class="browser-url-input" type="text" readonly value="http://192.168.1.1">
+        <button class="cisco-win-btn" style="width:auto;padding:0 10px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;" onclick="openSimInNewTab()" title="Mở trang quản trị thiết bị ở tab trình duyệt mới để xem toàn màn hình">
+          <span>↗</span> Toàn Màn Hình
+        </button>
       </div>
-      <iframe id="device-sim-iframe" class="cisco-iframe-frame" src="about:blank" title="Giao diện Web Admin Thiết Bị"></iframe>
+      <div id="device-subpages-bar" class="device-subpages-bar">
+        <!-- Rendered dynamically by JS -->
+      </div>
+      <div class="cisco-iframe-wrap">
+        <iframe id="device-sim-iframe" class="cisco-iframe-frame" src="about:blank" title="Giao diện Web Admin Thiết Bị"></iframe>
+      </div>
     </div>
 
     <!-- TAB 3: CLI TERMINAL -->
@@ -1271,6 +1660,7 @@ Type 'help' or click the buttons above to test connectivity.
     const FPT_CATALOG = {
       'be12000': {
         key: 'be12000',
+        folder: 'sim_be12000',
         name: 'ONT ZXHN BE12000Z',
         model: 'BE12000Z',
         category: 'gateway',
@@ -1278,9 +1668,22 @@ Type 'help' or click the buttons above to test connectivity.
         roleLabel: 'CONTROLLER',
         icon: '🖥️',
         defaultIp: '192.168.1.1',
-        simUrl: '/sim_be12000/?autologin=1&view=mmTopology',
+        loginUrl: '/sim_be12000/login',
+        simUrl: '/sim_be12000/login',
         hasPower: true,
         hasWps: true,
+        subPages: [
+          { label: '🔐 Đăng Nhập (Login)', url: '/sim_be12000/login', displayUrl: 'http://192.168.1.1/login' },
+          { label: '🏠 Toàn Bộ Router (Dashboard)', url: '/sim_be12000/?autologin=1', displayUrl: 'http://192.168.1.1/' },
+          { label: '🕸️ Sơ Đồ EasyMesh Topo', url: '/sim_be12000/?autologin=1&view=mmTopology', displayUrl: 'http://192.168.1.1/admin/mmTopology' },
+          { label: '📶 Wi-Fi 7 & MLO', url: '/sim_be12000/?autologin=1&view=WLANMLO', displayUrl: 'http://192.168.1.1/admin/WLANMLO' },
+          { label: '📡 Cài Đặt SSID Wi-Fi', url: '/sim_be12000/?autologin=1&view=wlanBasic', displayUrl: 'http://192.168.1.1/admin/wlanBasic' },
+          { label: '🌐 Cấu Hình WAN/LAN', url: '/sim_be12000/?autologin=1&view=ethWanConfig', displayUrl: 'http://192.168.1.1/admin/ethWanConfig' },
+          { label: '💡 Công Suất Quang PON', url: '/sim_be12000/?autologin=1&view=ponopticalinfo', displayUrl: 'http://192.168.1.1/admin/ponopticalinfo' },
+          { label: '🔍 Chẩn Đoán Ping/Tracert', url: '/sim_be12000/?autologin=1&view=networkDiag', displayUrl: 'http://192.168.1.1/admin/networkDiag' },
+          { label: '⚙️ Quản Trị Hệ Thống', url: '/sim_be12000/?autologin=1&view=rebootAndReset', displayUrl: 'http://192.168.1.1/admin/rebootAndReset' },
+          { label: '🚪 Đăng Xuất (Logout)', url: '/sim_be12000/?logout=1', displayUrl: 'http://192.168.1.1/login' }
+        ],
         ports: [
           { id: 'PON_10G', name: 'PON (10G)', type: 'fiber', speed: 10000, color: '#f97316' },
           { id: 'LAN1_10GE', name: 'LAN 1 (10GE)', type: 'eth', speed: 10000, color: '#f59e0b', tag: '⚡ Tối ưu Backhaul' },
@@ -1292,6 +1695,7 @@ Type 'help' or click the buttons above to test connectivity.
       },
       'be15000': {
         key: 'be15000',
+        folder: 'sim_be15000',
         name: 'AP ZXHN BE15000Z',
         model: 'BE15000Z',
         category: 'ap',
@@ -1299,9 +1703,21 @@ Type 'help' or click the buttons above to test connectivity.
         roleLabel: 'AGENT',
         icon: '📡',
         defaultIp: '192.168.1.100',
-        simUrl: '/sim_be15000/pages/localNetStatus.html',
+        loginUrl: '/sim_be15000/login',
+        simUrl: '/sim_be15000/login',
         hasPower: true,
         hasWps: true,
+        subPages: [
+          { label: '🔐 Đăng Nhập AP (Login)', url: '/sim_be15000/login', displayUrl: 'http://192.168.1.100/login' },
+          { label: '📊 Toàn Bộ Trang AP (Trạng Thái)', url: '/sim_be15000/pages/localNetStatus.html', displayUrl: 'http://192.168.1.100/status' },
+          { label: '📶 Wi-Fi 7 MLO Mesh', url: '/sim_be15000/pages/wlanmlo.html', displayUrl: 'http://192.168.1.100/wlan_mlo' },
+          { label: '📡 Wi-Fi Nâng Cao', url: '/sim_be15000/pages/wlanAdvanced.html', displayUrl: 'http://192.168.1.100/wlan_advanced' },
+          { label: '🌐 Mạng LAN (IPv4)', url: '/sim_be15000/pages/lanMgrIpv4.html', displayUrl: 'http://192.168.1.100/lan' },
+          { label: '🔘 Ghép Cặp WPS', url: '/sim_be15000/pages/wps.html', displayUrl: 'http://192.168.1.100/wps' },
+          { label: '🔍 Chẩn Đoán Mạng', url: '/sim_be15000/pages/networkDiag.html', displayUrl: 'http://192.168.1.100/diag' },
+          { label: '🔧 Khởi Động & Cài Lại', url: '/sim_be15000/pages/rebootAndReset.html', displayUrl: 'http://192.168.1.100/reboot' },
+          { label: '🚪 Đăng Xuất (Logout)', url: '/sim_be15000/login.html', displayUrl: 'http://192.168.1.100/login' }
+        ],
         ports: [
           { id: 'WAN_25GE', name: 'WAN (2.5GE)', type: 'eth', speed: 2500, color: '#0284c7', tag: '⚡ Cổng nhận chính' },
           { id: 'LAN1_1GE', name: 'LAN (1GE)', type: 'eth', speed: 1000, color: '#64748b' },
@@ -1310,6 +1726,7 @@ Type 'help' or click the buttons above to test connectivity.
       },
       'ax3000gz': {
         key: 'ax3000gz',
+        folder: 'sim_ax3000gz',
         name: 'ONT ZXHN AX3000GZ',
         model: 'AX3000GZ',
         category: 'gateway',
@@ -1317,9 +1734,14 @@ Type 'help' or click the buttons above to test connectivity.
         roleLabel: 'GATEWAY',
         icon: '🖥️',
         defaultIp: '192.168.1.1',
-        simUrl: '/sim_ax3000gz/',
+        loginUrl: '/sim_ax3000gz/cgi-bin/luci/login',
+        simUrl: '/sim_ax3000gz/cgi-bin/luci/login',
         hasPower: true,
         hasWps: true,
+        subPages: [
+          { label: '🔐 Đăng Nhập (Login)', url: '/sim_ax3000gz/cgi-bin/luci/login', displayUrl: 'http://192.168.1.1/login' },
+          { label: '🏠 Toàn Bộ Trang Quản Trị', url: '/sim_ax3000gz/', displayUrl: 'http://192.168.1.1/' }
+        ],
         ports: [
           { id: 'PON_GPON', name: 'PON (GPON)', type: 'fiber', speed: 2500, color: '#f97316' },
           { id: 'LAN1_1GE', name: 'LAN 1 (1GE)', type: 'eth', speed: 1000, color: '#64748b' },
@@ -1331,6 +1753,7 @@ Type 'help' or click the buttons above to test connectivity.
       },
       'ax3000c': {
         key: 'ax3000c',
+        folder: 'sim_ax3000c',
         name: 'AP ZXHN AX3000C',
         model: 'AX3000C',
         category: 'ap',
@@ -1338,9 +1761,14 @@ Type 'help' or click the buttons above to test connectivity.
         roleLabel: 'EXTENDER',
         icon: '📡',
         defaultIp: '192.168.1.200',
-        simUrl: '/sim_ax3000c/',
+        loginUrl: '/sim_ax3000c/#/login',
+        simUrl: '/sim_ax3000c/#/login',
         hasPower: true,
         hasWps: true,
+        subPages: [
+          { label: '🔐 Đăng Nhập (Login)', url: '/sim_ax3000c/#/login', displayUrl: 'http://192.168.1.200/login' },
+          { label: '🏠 Toàn Bộ Trang AP', url: '/sim_ax3000c/', displayUrl: 'http://192.168.1.200/' }
+        ],
         ports: [
           { id: 'WAN_1GE', name: 'WAN (1GE)', type: 'eth', speed: 1000, color: '#0284c7' },
           { id: 'LAN1_1GE', name: 'LAN (1GE)', type: 'eth', speed: 1000, color: '#64748b' },
@@ -1349,6 +1777,7 @@ Type 'help' or click the buttons above to test connectivity.
       },
       'vigor2927': {
         key: 'vigor2927',
+        folder: 'sim_vigor2927',
         name: 'DrayTek Vigor 2927',
         model: 'Vigor 2927',
         category: 'gateway',
@@ -1356,9 +1785,14 @@ Type 'help' or click the buttons above to test connectivity.
         roleLabel: 'ROUTER',
         icon: '🏢',
         defaultIp: '192.168.1.1',
-        simUrl: '/sim_vigor2927/',
+        loginUrl: '/sim_vigor2927/weblogin.htm',
+        simUrl: '/sim_vigor2927/weblogin.htm',
         hasPower: true,
         hasWps: false,
+        subPages: [
+          { label: '🔐 Đăng Nhập (Login)', url: '/sim_vigor2927/weblogin.htm', displayUrl: 'http://192.168.1.1/weblogin.htm' },
+          { label: '🏠 Toàn Bộ Dashboard Vigor', url: '/sim_vigor2927/', displayUrl: 'http://192.168.1.1/' }
+        ],
         ports: [
           { id: 'WAN1', name: 'WAN 1 (GbE)', type: 'eth', speed: 1000, color: '#0284c7' },
           { id: 'WAN2', name: 'WAN 2 (GbE)', type: 'eth', speed: 1000, color: '#0284c7' },
@@ -1368,6 +1802,7 @@ Type 'help' or click the buttons above to test connectivity.
       },
       'ac1000f': {
         key: 'ac1000f',
+        folder: 'sim_ac1000f',
         name: 'ONT AC1000F',
         model: 'AC1000F',
         category: 'gateway',
@@ -1375,9 +1810,14 @@ Type 'help' or click the buttons above to test connectivity.
         roleLabel: 'ONT',
         icon: '🖥️',
         defaultIp: '192.168.1.1',
-        simUrl: '/sim_ac1000f/',
+        loginUrl: '/sim_ac1000f/cgi-bin/login.asp',
+        simUrl: '/sim_ac1000f/cgi-bin/login.asp',
         hasPower: true,
         hasWps: true,
+        subPages: [
+          { label: '🔐 Đăng Nhập (Login)', url: '/sim_ac1000f/cgi-bin/login.asp', displayUrl: 'http://192.168.1.1/login.asp' },
+          { label: '🏠 Toàn Bộ Giao Diện AC1000F', url: '/sim_ac1000f/', displayUrl: 'http://192.168.1.1/' }
+        ],
         ports: [
           { id: 'PON', name: 'PON (GPON)', type: 'fiber', speed: 2500, color: '#f97316' },
           { id: 'LAN1', name: 'LAN 1 (1GE)', type: 'eth', speed: 1000, color: '#64748b' },
@@ -1458,17 +1898,39 @@ Type 'help' or click the buttons above to test connectivity.
       setTimeout(() => { t.style.display = 'none'; }, duration);
     }
 
+    // Studio Theme Switching (Light Default / Dark Tech)
+    function initTheme() {
+      const saved = localStorage.getItem('fpt_studio_theme') || 'light';
+      applyTheme(saved);
+    }
+
+    function toggleStudioTheme() {
+      const isDark = document.body.classList.contains('dark-theme');
+      applyTheme(isDark ? 'light' : 'dark');
+    }
+
+    function applyTheme(theme) {
+      const isDark = (theme === 'dark');
+      document.body.classList.toggle('dark-theme', isDark);
+      try { localStorage.setItem('fpt_studio_theme', theme); } catch (e) {}
+      const icon = document.getElementById('theme-toggle-icon');
+      const text = document.getElementById('theme-toggle-text');
+      if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+      if (text) text.textContent = isDark ? 'Chế độ Sáng' : 'Chế độ Tối';
+      renderCanvas();
+    }
+
     // 3. PRESETS INITIALIZER
     function loadPresetTopology(presetKey) {
       studioState.nodes = [];
       studioState.links = [];
 
       if (presetKey === 'zte_wifi7') {
-        // Standard FPT ZTE Combo
-        spawnNode('olt_cloud', 60, 150, 'FPT_OLT_Core');
-        spawnNode('be12000', 300, 130, 'ONT_BE12000Z');
-        spawnNode('be15000', 660, 130, 'AP_BE15000Z');
-        spawnNode('phone_ktv', 980, 150, 'Smartphone_KTV');
+        // Standard FPT ZTE Combo (Spaced out for clear cabling & labels)
+        spawnNode('olt_cloud', 60, 140, 'FPT_OLT_Core');
+        spawnNode('be12000', 400, 120, 'ONT_BE12000Z');
+        spawnNode('be15000', 800, 120, 'AP_BE15000Z');
+        spawnNode('phone_ktv', 1180, 140, 'Smartphone_KTV');
 
         // Initial links
         createLink('node-1', 'OPT_XGSPON', 'node-2', 'PON_10G', 'FIBER_SC', 10000);
@@ -1477,10 +1939,10 @@ Type 'help' or click the buttons above to test connectivity.
 
         showToast('⚡ Đã nạp mẫu: Combo ZTE Wi-Fi 7 (ONT BE12000Z + AP BE15000Z)');
       } else if (presetKey === 'wifi6_gpon') {
-        spawnNode('olt_cloud', 60, 150, 'FPT_OLT_GPON');
-        spawnNode('ax3000gz', 300, 130, 'ONT_AX3000GZ');
-        spawnNode('ax3000c', 660, 130, 'AP_AX3000C');
-        spawnNode('laptop_pc', 980, 150, 'Laptop_KTV');
+        spawnNode('olt_cloud', 60, 140, 'FPT_OLT_GPON');
+        spawnNode('ax3000gz', 400, 120, 'ONT_AX3000GZ');
+        spawnNode('ax3000c', 800, 120, 'AP_AX3000C');
+        spawnNode('laptop_pc', 1180, 140, 'Laptop_KTV');
 
         createLink('node-1', 'OPT_GPON', 'node-2', 'PON_GPON', 'FIBER_SC', 2500);
         createLink('node-2', 'LAN1_1GE', 'node-3', 'WAN_1GE', 'ETH_CAT6A', 1000);
@@ -1488,10 +1950,10 @@ Type 'help' or click the buttons above to test connectivity.
 
         showToast('📶 Đã nạp mẫu: Wi-Fi 6 GPON (AX3000GZ + AX3000C)');
       } else if (presetKey === 'sme_enterprise') {
-        spawnNode('olt_cloud', 60, 150, 'FPT_OLT_Core');
-        spawnNode('ac1000f', 280, 150, 'Bridge_AC1000F');
-        spawnNode('vigor2927', 580, 130, 'Router_Vigor2927');
-        spawnNode('laptop_pc', 900, 150, 'Admin_PC');
+        spawnNode('olt_cloud', 60, 140, 'FPT_OLT_Core');
+        spawnNode('ac1000f', 380, 140, 'Bridge_AC1000F');
+        spawnNode('vigor2927', 740, 120, 'Router_Vigor2927');
+        spawnNode('laptop_pc', 1120, 140, 'Admin_PC');
 
         createLink('node-1', 'OPT_GPON', 'node-2', 'PON', 'FIBER_SC', 2500);
         createLink('node-2', 'LAN1', 'node-3', 'WAN1', 'ETH_CAT6A', 1000);
@@ -1574,13 +2036,13 @@ Type 'help' or click the buttons above to test connectivity.
         const tgtNode = studioState.nodes.find(n => n.id === l.tgtId);
         if (!srcNode || !tgtNode) return;
 
-        // Calculate connector points
-        const x1 = srcNode.x + 190;
-        const y1 = srcNode.y + 50;
+        // Calculate connector points (Card width is 215px, center height is 60px)
+        const x1 = srcNode.x + 215;
+        const y1 = srcNode.y + 60;
         const x2 = tgtNode.x;
-        const y2 = tgtNode.y + 50;
+        const y2 = tgtNode.y + 60;
 
-        const dx = Math.abs(x2 - x1) * 0.45;
+        const dx = Math.max(35, Math.abs(x2 - x1) * 0.45);
         const pathData = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
 
         // Path class
@@ -1622,7 +2084,7 @@ Type 'help' or click the buttons above to test connectivity.
         // Animated flow packet dot
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.setAttribute('r', '3.5');
-        circle.setAttribute('fill', l.cableType === 'FIBER_SC' ? '#fb923c' : (l.cableType === 'WIFI_MESH' ? '#c084fc' : '#38bdf8'));
+        circle.setAttribute('fill', l.cableType === 'FIBER_SC' ? '#ea580c' : (l.cableType === 'WIFI_MESH' ? '#7c3aed' : '#2563eb'));
         const anim = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
         anim.setAttribute('path', pathData);
         anim.setAttribute('dur', l.speed >= 2500 ? '1.2s' : '2.0s');
@@ -1630,7 +2092,7 @@ Type 'help' or click the buttons above to test connectivity.
         circle.appendChild(anim);
         svg.appendChild(circle);
 
-        // Floating speed badge in middle of curve
+        // Floating speed badge in middle of curve (dynamically sized to fit text)
         const mx = (x1 + x2) / 2;
         const my = (y1 + y2) / 2;
 
@@ -1646,22 +2108,24 @@ Type 'help' or click the buttons above to test connectivity.
           }
         };
 
+        const pillWidth = Math.max(115, speedText.length * 7.4 + 20);
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x', mx - 60);
+        rect.setAttribute('x', mx - (pillWidth / 2));
         rect.setAttribute('y', my - 11);
-        rect.setAttribute('width', '120');
-        rect.setAttribute('height', '20');
-        rect.setAttribute('rx', '10');
-        rect.setAttribute('fill', '#0f172a');
-        rect.setAttribute('stroke', l.cableType === 'FIBER_SC' ? '#ea580c' : (l.speed < 2500 ? '#f59e0b' : '#0284c7'));
-        rect.setAttribute('stroke-width', '1.2');
+        rect.setAttribute('width', pillWidth);
+        rect.setAttribute('height', '22');
+        rect.setAttribute('rx', '11');
+        rect.setAttribute('fill', 'var(--bg-node)');
+        rect.setAttribute('stroke', l.cableType === 'FIBER_SC' ? '#ea580c' : (l.speed < 2500 ? '#f59e0b' : (l.cableType === 'WIFI_MESH' ? '#7c3aed' : '#2563eb')));
+        rect.setAttribute('stroke-width', '1.4');
+        rect.setAttribute('filter', 'drop-shadow(0 2px 5px rgba(0,0,0,0.12))');
 
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('x', mx);
-        text.setAttribute('y', my + 3);
-        text.setAttribute('fill', l.cableType === 'FIBER_SC' ? '#fdba74' : (l.speed < 2500 ? '#fbbf24' : '#38bdf8'));
-        text.setAttribute('font-size', '9');
-        text.setAttribute('font-family', 'JetBrains Mono');
+        text.setAttribute('y', my + 4);
+        text.setAttribute('fill', l.cableType === 'FIBER_SC' ? '#ea580c' : (l.speed < 2500 ? '#d97706' : (l.cableType === 'WIFI_MESH' ? '#7c3aed' : '#2563eb')));
+        text.setAttribute('font-size', '9.5');
+        text.setAttribute('font-family', 'JetBrains Mono, monospace');
         text.setAttribute('font-weight', '700');
         text.setAttribute('text-anchor', 'middle');
         text.textContent = speedText;
@@ -1675,8 +2139,8 @@ Type 'help' or click the buttons above to test connectivity.
       if (studioState.wireStartNodeId && studioState.wireTempEnd) {
         const s = studioState.nodes.find(n => n.id === studioState.wireStartNodeId);
         if (s) {
-          const x1 = s.x + 95;
-          const y1 = s.y + 45;
+          const x1 = s.x + 107;
+          const y1 = s.y + 60;
           const x2 = studioState.wireTempEnd.x;
           const y2 = studioState.wireTempEnd.y;
           const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -1684,7 +2148,7 @@ Type 'help' or click the buttons above to test connectivity.
           tempPath.setAttribute('y1', y1);
           tempPath.setAttribute('x2', x2);
           tempPath.setAttribute('y2', y2);
-          tempPath.setAttribute('stroke', '#38bdf8');
+          tempPath.setAttribute('stroke', '#2563eb');
           tempPath.setAttribute('stroke-width', '2.5');
           tempPath.setAttribute('stroke-dasharray', '5, 4');
           svg.appendChild(tempPath);
@@ -1722,34 +2186,44 @@ Type 'help' or click the buttons above to test connectivity.
           openDeviceWindow(node.id);
         };
 
+        const devCatalog = FPT_CATALOG[node.catalogKey] || {};
+        const miniPorts = (devCatalog.ports || []).slice(0, 4).map(p => {
+          const shortName = p.name.split(' ')[0];
+          return `<span class="port-chip" title="${p.name} (${p.speed}M)">${shortName}</span>`;
+        }).join('');
+
         el.innerHTML = `
+          <div class="node-role-bar ${node.role}"></div>
           <div class="node-header">
             <div class="node-title-group">
               <span class="node-icon">${node.icon}</span>
-              <span class="node-name" title="${node.name}">${node.name}</span>
+              <div class="node-name-wrap">
+                <span class="node-name" title="${node.name}">${node.name}</span>
+                <span class="node-model-sub">${devCatalog.model || node.model}</span>
+              </div>
             </div>
             <span class="node-role-tag ${node.role}">${node.roleLabel}</span>
           </div>
 
           <div class="node-body">
-            <div class="node-info-row">
-              <span>IP:</span>
-              <span style="color:#38bdf8;">${node.ip}</span>
-            </div>
-            <div class="node-info-row">
-              <span>Status:</span>
+            <div class="node-meta-row">
+              <span class="node-ip-badge">${node.ip}</span>
               <div class="node-leds">
-                <span class="led-dot ${node.power ? 'on-green' : 'on-red'}" title="Power"></span>
+                <span class="led-dot ${node.power ? 'on-green' : 'on-red'}" title="Nguồn"></span>
                 <span class="led-dot on-blue" title="Data link"></span>
-                <span class="led-dot ${node.wpsActive ? 'on-blue' : ''}" title="WPS/Wi-Fi"></span>
+                <span class="led-dot ${node.wpsActive ? 'on-blue' : ''}" title="Wi-Fi / WPS"></span>
               </div>
+            </div>
+
+            <div class="node-ports-rack" title="Các cổng cắm phần cứng trên mặt máy">
+              ${miniPorts}
             </div>
 
             <div class="node-actions">
               <button class="node-btn" onclick="event.stopPropagation(); startWiringFromNode('${node.id}')" title="Kéo nối dây từ thiết bị này">
                 🔌 Nối Cáp
               </button>
-              <button class="node-btn config" onclick="event.stopPropagation(); openDeviceWindow('${node.id}')" title="Mở cửa sổ cấu hình thiết bị (Cisco-style)">
+              <button class="node-btn config" onclick="event.stopPropagation(); openDeviceWindow('${node.id}')" title="Mở cửa sổ cấu hình thiết bị (Cisco Packet Tracer style)">
                 ⚙️ Cấu Hình
               </button>
               <button class="node-btn" onclick="event.stopPropagation(); deleteNode('${node.id}')" title="Xóa thiết bị này">
@@ -1795,17 +2269,18 @@ Type 'help' or click the buttons above to test connectivity.
     // 6. CABLE WIRING INTERACTIONS
     function setStudioTool(tool) {
       studioState.currentTool = tool;
-      document.querySelectorAll('.studio-toolbar .tool-btn').forEach(b => b.classList.remove('active'));
-      const btn = document.getElementById('tool-' + tool);
-      if (btn) btn.classList.add('active');
+      ['tool-select', 'tool-wire', 'tool-delete'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.toggle('active', id === 'tool-' + tool);
+      });
 
       const canvas = document.getElementById('net-canvas');
       if (tool === 'wire') {
         canvas.style.cursor = 'crosshair';
-        showToast('🔌 Chế độ kéo dây: Click thiết bị nguồn rồi click thiết bị đích để nối');
+        showToast('🔌 Chế độ nối cáp: Click thiết bị nguồn rồi click thiết bị đích để cắm dây');
       } else if (tool === 'delete') {
         canvas.style.cursor = 'not-allowed';
-        showToast('✂️ Chế độ xóa: Click vào node hoặc cáp để xóa');
+        showToast('✂️ Chế độ cắt/xóa: Click vào node hoặc cáp để gỡ bỏ');
       } else {
         canvas.style.cursor = 'default';
       }
@@ -1899,9 +2374,9 @@ Type 'help' or click the buttons above to test connectivity.
         item.innerHTML = `
           <div>
             <div style="font-weight:700;">${p.name}</div>
-            <div style="font-size:9px;color:#94a3b8;">${p.type.toUpperCase()} • ${p.speed >= 1000 ? (p.speed/1000) + ' Gbps' : p.speed + 'M'}</div>
+            <div style="font-size:9px;color:var(--text-modal-sub);">${p.type.toUpperCase()} • ${p.speed >= 1000 ? (p.speed/1000) + ' Gbps' : p.speed + 'M'}</div>
           </div>
-          ${p.tag ? `<span style="font-size:8.5px;color:#38bdf8;background:rgba(56,189,248,0.15);padding:1px 4px;border-radius:3px;">${p.tag}</span>` : ''}
+          ${p.tag ? `<span style="font-size:8.5px;color:var(--fpt-blue);background:rgba(37,99,235,0.12);padding:1px 5px;border-radius:3px;font-weight:600;">${p.tag}</span>` : ''}
         `;
         item.onclick = () => {
           container.querySelectorAll('.port-radio-item').forEach(el => el.classList.remove('selected'));
@@ -2016,9 +2491,11 @@ Type 'help' or click the buttons above to test connectivity.
         };
 
         item.innerHTML = `
-          <span class="palette-item-icon">${dev.icon}</span>
-          <span class="palette-item-name">${dev.model}</span>
-          <span class="palette-item-sub">${dev.category.toUpperCase()}</span>
+          <div class="palette-item-icon-box">${dev.icon}</div>
+          <div class="palette-item-text">
+            <span class="palette-item-name">${dev.model}</span>
+            <span class="palette-item-sub">${dev.roleLabel || dev.category.toUpperCase()}</span>
+          </div>
         `;
         shelf.appendChild(item);
       });
@@ -2084,18 +2561,68 @@ Type 'help' or click the buttons above to test connectivity.
       // Update web GUI tab
       const iframe = document.getElementById('device-sim-iframe');
       const urlBar = document.getElementById('browser-url-bar');
-      if (dev.simUrl) {
+      const subpagesBar = document.getElementById('device-subpages-bar');
+      subpagesBar.innerHTML = '';
+
+      // Thiết lập cookie current_sim cho Master Dispatcher (giống hệt portal.html/app.js)
+      const simFolder = dev.folder || ('sim_' + dev.key);
+      document.cookie = 'current_sim=' + simFolder + ';path=/;SameSite=Lax';
+
+      if (dev.subPages && dev.subPages.length > 0) {
+        subpagesBar.style.display = 'flex';
+        dev.subPages.forEach((sp, idx) => {
+          const chip = document.createElement('button');
+          chip.className = 'subpage-chip-btn ' + (idx === 0 ? 'active' : '');
+          chip.textContent = sp.label;
+          chip.title = `Chuyển tới ${sp.label}`;
+          chip.onclick = () => {
+            subpagesBar.querySelectorAll('.subpage-chip-btn').forEach(b => b.classList.remove('active'));
+            chip.classList.add('active');
+            document.cookie = 'current_sim=' + simFolder + ';path=/;SameSite=Lax';
+            iframe.src = sp.url;
+            urlBar.value = sp.displayUrl || `http://${node.ip}${sp.url}`;
+          };
+          subpagesBar.appendChild(chip);
+        });
+
+        // Tự động đồng bộ thanh URL khi người dùng đăng nhập hoặc đổi trang bên trong thiết bị
+        iframe.onload = () => {
+          try {
+            const loc = iframe.contentWindow.location;
+            const pathname = loc.pathname || '';
+            const search = loc.search || '';
+            if (pathname.includes('login') || pathname.includes('weblogin')) {
+              urlBar.value = `http://${node.ip}/login`;
+            } else if (pathname === '/' || pathname.endsWith('/index.html') || pathname.includes('/pages/')) {
+              if (search.includes('view=mmTopology')) {
+                urlBar.value = `http://${node.ip}/admin/mmTopology`;
+              } else if (search.includes('view=WLANMLO')) {
+                urlBar.value = `http://${node.ip}/admin/WLANMLO`;
+              } else {
+                urlBar.value = `http://${node.ip}/admin/`;
+              }
+            }
+          } catch (_) {}
+        };
+
+        const initialPage = dev.subPages[0];
+        iframe.src = initialPage.url;
+        urlBar.value = initialPage.displayUrl || `http://${node.ip}/login`;
+        document.getElementById('tab-btn-webgui').style.display = 'inline-flex';
+      } else if (dev.simUrl) {
+        subpagesBar.style.display = 'none';
         iframe.src = dev.simUrl;
-        urlBar.value = `http://${node.ip}/admin/`;
+        urlBar.value = `http://${node.ip}/login`;
         document.getElementById('tab-btn-webgui').style.display = 'inline-flex';
       } else {
+        subpagesBar.style.display = 'none';
         iframe.src = 'about:blank';
         urlBar.value = `http://${node.ip} [Client Device - Không có Web Admin]`;
         document.getElementById('tab-btn-webgui').style.display = 'none';
       }
 
       // Default to Web GUI if has simulator, otherwise Physical
-      switchDeviceWindowTab(dev.simUrl ? 'webgui' : 'physical');
+      switchDeviceWindowTab(dev.simUrl || (dev.subPages && dev.subPages.length > 0) ? 'webgui' : 'physical');
 
       const win = document.getElementById('cisco-device-window');
       if (!win.dataset.dragged) {
@@ -2180,6 +2707,13 @@ Type 'help' or click the buttons above to test connectivity.
     function reloadDeviceIframe() {
       const iframe = document.getElementById('device-sim-iframe');
       if (iframe) iframe.src = iframe.src;
+    }
+
+    function openSimInNewTab() {
+      const iframe = document.getElementById('device-sim-iframe');
+      if (iframe && iframe.src && iframe.src !== 'about:blank') {
+        window.open(iframe.src, '_blank');
+      }
     }
 
     function toggleMaximizeWindow() {
@@ -2511,6 +3045,7 @@ Type 'help' or click the buttons above to test connectivity.
     document.getElementById('btn-open-missions').addEventListener('click', openMissionsModal);
 
     // Initial load
+    initTheme();
     populatePalette();
     loadPresetTopology('zte_wifi7');
     setInterval(syncZteBackend, 4000);
