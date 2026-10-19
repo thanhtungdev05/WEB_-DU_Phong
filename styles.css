@@ -403,6 +403,18 @@ html, body {
   box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
 }
 
+.mesh-lab-btn {
+  background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+}
+.mesh-lab-btn:hover {
+  background: linear-gradient(135deg, #0369a1, #075985) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.35);
+}
+
 .action-dropdown-menu {
   display: none;
   position: absolute;
