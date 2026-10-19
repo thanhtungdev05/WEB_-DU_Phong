@@ -159,8 +159,8 @@
     }),
     // Khi chưa có rule, trang Port Forwarding tự mở form New Item.
     step('[id^="Alias"]', 'Bước 4: Nhập Name: FPT Telecom', 'right', visibleAndUnsaved('[id^="Alias"]')),
-    step('[id^="S_Interface"]', 'Bước 5: Chọn WAN Connection: internet_tr069', 'right', visibleAndUnsaved('[id^="S_Interface"]')),
-    step('[id^="Protocol"]', 'Bước 6: Chọn TCP And UDP', 'right', visibleAndUnsaved('[id^="Protocol"]')),
+    step('[id^="Protocol"]', 'Bước 5: Chọn Protocol: TCP And UDP', 'right', visibleAndUnsaved('[id^="Protocol"]')),
+    step('[id^="S_Interface"]', 'Bước 6: Chọn WAN Connection: internet_tr069', 'right', visibleAndUnsaved('[id^="S_Interface"]')),
     step('[id^="InternalClient"]', 'Bước 7: Nhập LAN Host: 192.168.1.254', 'right', visibleAndUnsaved('[id^="InternalClient"]')),
     step('[id^="ExternalPort"]:not([id*="EndRange"])', 'Bước 8: Nhập WAN Port bắt đầu: 8080', 'right', visibleAndUnsaved('[id^="ExternalPort"]:not([id*="EndRange"])')),
     step('[id^="ExternalPortEndRange"]', 'Bước 9: Nhập WAN Port kết thúc: 8080', 'right', visibleAndUnsaved('[id^="ExternalPortEndRange"]')),

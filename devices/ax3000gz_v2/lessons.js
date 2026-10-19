@@ -139,8 +139,8 @@
     instructions: [
       '<b>Yêu cầu:</b>',
       '- Name: <span class="val">FPT Telecom</span>',
-      '- WAN Connection: <span class="val">internet_tr069</span>',
       '- Protocol: <span class="val">TCP And UDP</span>',
+      '- WAN Connection: <span class="val">internet_tr069</span>',
       '- LAN Host: <span class="val">192.168.1.254</span>',
       '- WAN Port (Start / End): <span class="val">8080 / 8080</span>',
       '- LAN Host Port (Start / End): <span class="val">8080 / 8080</span>'

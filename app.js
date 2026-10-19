@@ -5042,21 +5042,25 @@
       const bubble = item.bubble;
       let targetRect = item.target.getBoundingClientRect();
 
-      // Nếu ô nhập thuộc nhóm địa chỉ IP (gồm 4 ô sub_...0..3, class="ip")
-      // hoặc nhóm ô nhập cùng dòng, mở rộng targetRect bao trùm cả nhóm
-      // để vị trí 'right' đặt sát bên phải ô cuối cùng thay vì đè lên ô thứ hai.
+      // Kiểm tra xem ô nhập có các ô kề trên cùng một dòng trong container không
+      // (ví dụ: 4 ô IP, hoặc cặp ô cổng bắt đầu / kết thúc).
       const parentEl = item.target.parentElement;
-      if (parentEl && (item.target.classList.contains('ip') || /^sub_/i.test(item.target.id || item.target.name || ''))) {
-        const siblingInputs = Array.from(parentEl.querySelectorAll('input:not([type="hidden"])'));
+      let rowMaxRight = targetRect.right;
+      if (parentEl) {
+        const siblingInputs = Array.from(parentEl.querySelectorAll(
+          'input:not([type="hidden"]), select, textarea'
+        ));
         if (siblingInputs.length > 1) {
           let minLeft = targetRect.left;
           let minTop = targetRect.top;
           let maxRight = targetRect.right;
           let maxBottom = targetRect.bottom;
+          const isIpGroup = item.target.classList.contains('ip') || /^sub_/i.test(item.target.id || item.target.name || '');
           siblingInputs.forEach(input => {
-            if (input === item.target || (!otherGuideTargets.has(input) && (input.classList.contains('ip') || /^sub_/i.test(input.id || input.name || '')))) {
-              const r = input.getBoundingClientRect();
-              if (r && r.width > 0 && r.height > 0 && Math.abs(r.top - targetRect.top) <= Math.max(targetRect.height, 20)) {
+            const r = input.getBoundingClientRect();
+            if (r && r.width > 0 && r.height > 0 && Math.abs(r.top - targetRect.top) <= Math.max(targetRect.height, 20)) {
+              rowMaxRight = Math.max(rowMaxRight, r.right);
+              if (isIpGroup && (input === item.target || (!otherGuideTargets.has(input) && (input.classList.contains('ip') || /^sub_/i.test(input.id || input.name || ''))))) {
                 minLeft = Math.min(minLeft, r.left);
                 minTop = Math.min(minTop, r.top);
                 maxRight = Math.max(maxRight, r.right);
@@ -5064,7 +5068,9 @@
               }
             }
           });
-          targetRect = makeRect(minLeft, minTop, maxRight - minLeft, maxBottom - minTop);
+          if (isIpGroup) {
+            targetRect = makeRect(minLeft, minTop, maxRight - minLeft, maxBottom - minTop);
+          }
         }
       }
 
@@ -5078,10 +5084,14 @@
       const positions = [preferred, 'right', 'left', 'top', 'bottom']
         .filter((value, index, all) => all.indexOf(value) === index);
 
+      // Với vị trí 'right', nếu cùng hàng có các ô nhập phía sau (như ô Port kết thúc),
+      // vị trí 'right' đặt sát bên phải của cả hàng input thay vì đè lên ô kề bên.
+      const rightX = Math.max(targetRect.right, rowMaxRight) + gap;
+
       const directCandidates = [];
       positions.forEach(position => {
         if (position === 'right') {
-          directCandidates.push({ position, rect: clampCandidate(targetRect.right + gap, centerY - height / 2, width, height) });
+          directCandidates.push({ position, rect: clampCandidate(rightX, centerY - height / 2, width, height) });
         } else if (position === 'left') {
           directCandidates.push({ position, rect: clampCandidate(targetRect.left - width - gap, centerY - height / 2, width, height) });
         } else if (position === 'top') {
@@ -5091,24 +5101,28 @@
         }
       });
 
-      // Ưu tiên vị trí trực tiếp sát target
-      let selected = directCandidates.find(candidate => isFree(candidate.rect));
+      // 1. Ưu tiên vị trí trực tiếp khớp preferred position nếu còn trống
+      let selected = null;
+      const directPreferred = directCandidates.find(c => c.position === preferred && isFree(c.rect));
+      if (directPreferred) {
+        selected = directPreferred;
+      }
 
-      // Nếu các vị trí sát target đều bận (ví dụ hai hàng cạnh nhau hoặc hai cổng cùng dòng),
-      // tìm vị trí trống gần nhất xung quanh target, ưu tiên dải sát phải/trái của target
-      // trước khi phải xem xét các vị trí xa hơn ở biên màn hình.
+      // 2. Nếu preferred position bị chiếm (ví dụ ô cổng thứ 2 cùng hàng hoặc 2 dòng sát nhau),
+      // tìm vị trí trống gần nhất, ưu tiên giữ trên cùng dòng ngang (cột 2 bên phải)
+      // trước khi phải dịch dọc sang dòng khác hoặc dạt ra mép màn hình.
       if (!selected) {
         const fallbackCandidates = [];
         const railXs = [
-          targetRect.right + gap,
+          rightX,
+          rightX + width + gap,
           targetRect.left - width - gap,
-          targetRect.right + gap + 24,
+          rightX + 24,
           targetRect.left - width - gap - 24,
-          targetRect.right + width + gap * 2,
           winW - width - margin,
           margin
         ];
-        for (let distance = 0; distance <= winH; distance += Math.max(8, Math.min(16, height / 2))) {
+        for (let distance = 0; distance <= winH; distance += Math.max(6, Math.min(14, height / 2))) {
           const ys = distance === 0
             ? [centerY - height / 2]
             : [centerY - height / 2 - distance, centerY - height / 2 + distance];
@@ -5123,11 +5137,18 @@
           });
         }
 
+        directCandidates.forEach(c => fallbackCandidates.push(c));
+
         const freeFallbacks = fallbackCandidates.filter(candidate => isFree(candidate.rect));
         if (freeFallbacks.length > 0) {
           freeFallbacks.sort((a, b) => {
-            const distA = Math.hypot((a.rect.left + width / 2) - centerX, (a.rect.top + height / 2) - centerY);
-            const distB = Math.hypot((b.rect.left + width / 2) - centerX, (b.rect.top + height / 2) - centerY);
+            const dyA = Math.abs((a.rect.top + height / 2) - centerY);
+            const dyB = Math.abs((b.rect.top + height / 2) - centerY);
+            const dxA = Math.abs((a.rect.left + width / 2) - centerX);
+            const dxB = Math.abs((b.rect.left + width / 2) - centerX);
+            // Phạt nặng việc nhảy lệch dòng (dy * 25) để ưu tiên xếp cạnh nhau trên cùng một hàng ngang
+            const distA = Math.hypot(dxA, dyA * 25);
+            const distB = Math.hypot(dxB, dyB * 25);
             return distA - distB;
           });
           selected = freeFallbacks[0];
