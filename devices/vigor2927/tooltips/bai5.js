@@ -27,6 +27,20 @@ function hookVigor2927Bai5Scroll(doc) {
   if (doc._ftcBai5ScrollHooked) return;
   doc._ftcBai5ScrollHooked = true;
 
+  // Đảm bảo khi mới vào trang cấu hình LAN 1 (chưa bấm OK), cờ lưu cấu hình phải là false
+  var hasSaveSuccessUrl = Boolean(doc.location && doc.location.search && doc.location.search.includes('save_success=1'));
+  if (!doc._ftcIsSaved && !hasSaveSuccessUrl) {
+    doc._ftcIsSaved = false;
+    try {
+      var win = doc.defaultView || doc.parentWindow;
+      if (win) win._ftcIsSaved = false;
+      var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+      if (topWin) topWin._hasClickedSaveInGuide = false;
+      if (typeof window !== 'undefined') window._hasClickedSaveInGuide = false;
+      if (typeof parent !== 'undefined' && parent) parent._hasClickedSaveInGuide = false;
+    } catch (e) { }
+  }
+
   var triggerPortalPopups = function () {
     try {
       var topWin = doc.defaultView ? (doc.defaultView.top || doc.defaultView.parent) : null;
@@ -59,6 +73,33 @@ function hookVigor2927Bai5Scroll(doc) {
     snd.addEventListener(ev, checkAndScroll);
   });
 
+  ['input', 'change'].forEach(function (ev) {
+    pri.addEventListener(ev, function () {
+      if (doc._ftcIsSaved && !isVigor2927Bai5PriDone(doc)) {
+        doc._ftcIsSaved = false;
+        try {
+          var win = doc.defaultView || doc.parentWindow;
+          if (win) win._ftcIsSaved = false;
+          var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+          if (topWin) topWin._hasClickedSaveInGuide = false;
+          if (typeof window !== 'undefined') window._hasClickedSaveInGuide = false;
+        } catch (e) { }
+      }
+    });
+    snd.addEventListener(ev, function () {
+      if (doc._ftcIsSaved && !isVigor2927Bai5SndDone(doc)) {
+        doc._ftcIsSaved = false;
+        try {
+          var win = doc.defaultView || doc.parentWindow;
+          if (win) win._ftcIsSaved = false;
+          var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+          if (topWin) topWin._hasClickedSaveInGuide = false;
+          if (typeof window !== 'undefined') window._hasClickedSaveInGuide = false;
+        } catch (e) { }
+      }
+    });
+  });
+
   btn.addEventListener('click', function () {
     doc._ftcIsSaved = true;
     try {
@@ -67,6 +108,13 @@ function hookVigor2927Bai5Scroll(doc) {
       if (typeof window !== 'undefined') window._hasClickedSaveInGuide = true;
       if (typeof parent !== 'undefined' && parent) parent._hasClickedSaveInGuide = true;
       if (typeof top !== 'undefined' && top) top._hasClickedSaveInGuide = true;
+      var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+      if (topWin) {
+        topWin._hasClickedSaveInGuide = true;
+        if (typeof topWin.applyGuidePopups === 'function') {
+          topWin.applyGuidePopups();
+        }
+      }
     } catch (e) { }
   });
 }

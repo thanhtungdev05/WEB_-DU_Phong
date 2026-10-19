@@ -1,5 +1,5 @@
 /**
- * devices/vigor2927/tooltips/bai6.js — Tooltip Hướng dẫn cho Bài 6: Cấu hình định tuyến Failover và Load Balancing
+ * devices/vigor2927/tooltips/bai6.js — Tooltip Hướng dẫn cho Bài 6: Cấu hình Load Balancing
  */
 
 if (!window.TOOLTIPS_VIGOR2927) window.TOOLTIPS_VIGOR2927 = {};

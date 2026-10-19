@@ -465,6 +465,20 @@ function hookVigor2927Bai5Scroll(doc) {
   if (doc._ftcBai5ScrollHooked) return;
   doc._ftcBai5ScrollHooked = true;
 
+  // Đảm bảo khi mới vào trang cấu hình LAN 1 (chưa bấm OK), cờ lưu cấu hình phải là false
+  var hasSaveSuccessUrl = Boolean(doc.location && doc.location.search && doc.location.search.includes('save_success=1'));
+  if (!doc._ftcIsSaved && !hasSaveSuccessUrl) {
+    doc._ftcIsSaved = false;
+    try {
+      var win = doc.defaultView || doc.parentWindow;
+      if (win) win._ftcIsSaved = false;
+      var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+      if (topWin) topWin._hasClickedSaveInGuide = false;
+      if (typeof window !== 'undefined') window._hasClickedSaveInGuide = false;
+      if (typeof parent !== 'undefined' && parent) parent._hasClickedSaveInGuide = false;
+    } catch (e) { }
+  }
+
   var triggerPortalPopups = function () {
     try {
       var topWin = doc.defaultView ? (doc.defaultView.top || doc.defaultView.parent) : null;
@@ -499,6 +513,35 @@ function hookVigor2927Bai5Scroll(doc) {
     snd.addEventListener(ev, checkAndScroll);
   });
 
+  ['input', 'change'].forEach(function (ev) {
+    pri.addEventListener(ev, function () {
+      var priDone = (typeof isVigor2927Bai5PriDone === 'function') ? isVigor2927Bai5PriDone(doc) : (pri && (pri.value || '').trim() === '210.245.31.220');
+      if (doc._ftcIsSaved && !priDone) {
+        doc._ftcIsSaved = false;
+        try {
+          var win = doc.defaultView || doc.parentWindow;
+          if (win) win._ftcIsSaved = false;
+          var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+          if (topWin) topWin._hasClickedSaveInGuide = false;
+          if (typeof window !== 'undefined') window._hasClickedSaveInGuide = false;
+        } catch (e) { }
+      }
+    });
+    snd.addEventListener(ev, function () {
+      var sndDone = (typeof isVigor2927Bai5SndDone === 'function') ? isVigor2927Bai5SndDone(doc) : (snd && (snd.value || '').trim() === '8.8.8.8');
+      if (doc._ftcIsSaved && !sndDone) {
+        doc._ftcIsSaved = false;
+        try {
+          var win = doc.defaultView || doc.parentWindow;
+          if (win) win._ftcIsSaved = false;
+          var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+          if (topWin) topWin._hasClickedSaveInGuide = false;
+          if (typeof window !== 'undefined') window._hasClickedSaveInGuide = false;
+        } catch (e) { }
+      }
+    });
+  });
+
   btn.addEventListener('click', function () {
     doc._ftcIsSaved = true;
     try {
@@ -507,6 +550,13 @@ function hookVigor2927Bai5Scroll(doc) {
       if (typeof window !== 'undefined') window._hasClickedSaveInGuide = true;
       if (typeof parent !== 'undefined' && parent) parent._hasClickedSaveInGuide = true;
       if (typeof top !== 'undefined' && top) top._hasClickedSaveInGuide = true;
+      var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+      if (topWin) {
+        topWin._hasClickedSaveInGuide = true;
+        if (typeof topWin.applyGuidePopups === 'function') {
+          topWin.applyGuidePopups();
+        }
+      }
     } catch (e) { }
   });
 }
@@ -852,6 +902,7 @@ function isVigor2927Bai7SrcRangeDone(doc) {
 
 function isVigor2927Bai7SrcStartDone(doc) {
   if (!doc) return false;
+  hookVigor2927Bai7Interactions(doc);
   if (isVigor2927Bai7SrcEndDone(doc)) return true;
   var el = doc.querySelector('input[name="sPRSIpStart"]');
   return el ? (el.value || '').trim() === '192.168.1.100' : false;
@@ -859,29 +910,84 @@ function isVigor2927Bai7SrcStartDone(doc) {
 
 function isVigor2927Bai7SrcEndDone(doc) {
   if (!doc) return false;
+  hookVigor2927Bai7Interactions(doc);
   if (isVigor2927Bai7WanIfConfirmed(doc)) return true;
   var el = doc.querySelector('input[name="iPRSIpCount"]');
   return el ? (el.value || '').trim() === '192.168.1.110' : false;
 }
 
 function hookVigor2927Bai7Interactions(doc) {
-  if (!doc || doc._ftcBai7Hooked) return;
+  if (!doc) return;
+  var srcStartEl = doc.querySelector ? doc.querySelector('input[name="sPRSIpStart"]') : null;
+  var srcEndEl = doc.querySelector ? doc.querySelector('input[name="iPRSIpCount"]') : null;
+  var wanIfEl = doc.querySelector ? doc.querySelector('select[name="multiwanWanIf"]') : null;
+  var failoverEl = doc.querySelector ? doc.querySelector('input[name="iPRFailover"]') : null;
+
+  if (doc._ftcBai7Hooked) return;
+  if (!srcEndEl && !wanIfEl) return;
   doc._ftcBai7Hooked = true;
 
-  var wanIfEl = doc.querySelector('select[name="multiwanWanIf"]');
+  var triggerPortalPopups = function () {
+    try {
+      var topWin = doc.defaultView ? (doc.defaultView.top || doc.defaultView.parent) : null;
+      if (topWin) {
+        topWin.postMessage({ type: 'REQUEST_GUIDE_POPUPS' }, '*');
+        if (typeof topWin.applyGuidePopups === 'function') {
+          topWin.applyGuidePopups();
+        }
+      }
+    } catch (e) { }
+  };
+
+  var checkStep8AndScroll = function () {
+    if (isVigor2927Bai7SrcStartDone(doc) && isVigor2927Bai7SrcEndDone(doc) && !isVigor2927Bai7WanIfConfirmed(doc)) {
+      if (wanIfEl && typeof wanIfEl.scrollIntoView === 'function') {
+        try {
+          wanIfEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) {
+          wanIfEl.scrollIntoView();
+        }
+      }
+      triggerPortalPopups();
+      setTimeout(triggerPortalPopups, 80);
+      setTimeout(triggerPortalPopups, 250);
+      setTimeout(triggerPortalPopups, 500);
+    }
+  };
+
+  ['input', 'change', 'blur', 'keyup'].forEach(function (ev) {
+    if (srcEndEl && typeof srcEndEl.addEventListener === 'function') {
+      srcEndEl.addEventListener(ev, function () {
+        checkStep8AndScroll();
+      });
+    }
+    if (srcStartEl && typeof srcStartEl.addEventListener === 'function') {
+      srcStartEl.addEventListener(ev, function () {
+        triggerPortalPopups();
+      });
+    }
+  });
+
   if (wanIfEl && typeof wanIfEl.addEventListener === 'function') {
-    wanIfEl.addEventListener('click', function () { doc._ftcWanIfConfirmed = true; });
-    wanIfEl.addEventListener('change', function () { doc._ftcWanIfConfirmed = true; });
-    wanIfEl.addEventListener('focus', function () { doc._ftcWanIfConfirmed = true; });
+    var confirmWanIf = function () {
+      doc._ftcWanIfConfirmed = true;
+      triggerPortalPopups();
+      setTimeout(triggerPortalPopups, 80);
+      setTimeout(triggerPortalPopups, 250);
+    };
+    wanIfEl.addEventListener('click', confirmWanIf);
+    wanIfEl.addEventListener('change', confirmWanIf);
+    wanIfEl.addEventListener('focus', confirmWanIf);
   }
 
-  var failoverEl = doc.querySelector('input[name="iPRFailover"]');
   if (failoverEl && typeof failoverEl.addEventListener === 'function') {
     failoverEl.addEventListener('click', function () {
       doc._ftcWanIfConfirmed = true;
+      triggerPortalPopups();
     });
     failoverEl.addEventListener('change', function () {
       doc._ftcWanIfConfirmed = true;
+      triggerPortalPopups();
     });
   }
 
@@ -890,6 +996,7 @@ function hookVigor2927Bai7Interactions(doc) {
       var t = e.target;
       if (t && (t.id === 'image_option' || (t.closest && t.closest('td[onclick*="onClkMoreoption"], [onclick*="onClkMoreoption"]')))) {
         doc._ftcPriorityOpened = true;
+        triggerPortalPopups();
       }
     }, true);
   }

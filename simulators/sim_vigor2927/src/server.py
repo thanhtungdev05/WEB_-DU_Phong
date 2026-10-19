@@ -606,7 +606,7 @@ class H(BaseHTTPRequestHandler):
             # POST co GHI cau hinh khi mang co `webchange` (DrayTek dung co nay
             # de danh dau form Apply/Save, xem spec/cgi-map.json).
             is_ipbmac = (goc == "doc/ipbmac.htm" or params.get("fid") == "126")
-            is_enet = (p == "/cgi-bin/enet.cgi" or goc == "doc/ENET.SHT")
+            is_enet = (p == "/cgi-bin/enet.cgi" or (goc == "doc/ENET.SHT" and str(params.get("webchange")) == "1"))
             is_ipbandw = (goc == "doc/ipbandw.htm" or str(params.get("fid")) == "302")
             if (params.get("webchange") or is_ipbmac or is_enet or is_ipbandw) and (goc or is_enet or is_ipbandw):
                 if is_enet and not goc:

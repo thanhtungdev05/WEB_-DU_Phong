@@ -75,7 +75,7 @@ const vigor2927Titles = [
   'Cấu hình Bind IP to MAC',
   'Cấu hình DHCP',
   'Cấu hình DNS',
-  'Cấu hình định tuyến Failover và Load Balancing',
+  'Cấu hình Load Balancing',
   'Cấu hình Policy Routing'
 ];
 
@@ -121,7 +121,8 @@ const migrations = [
   '053_activate_ac1000cv2_catalog.sql',
   '055_activate_ax3000gz_v2_catalog.sql',
   '055_deactivate_be6500c_dns_lab.sql',
-  '056_standardize_lab_display_titles.sql'
+  '056_standardize_lab_display_titles.sql',
+  '060_standardize_vigor2927_bai6_title.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
