@@ -5034,9 +5034,40 @@
       !occupied.some(rect => intersects(candidate, rect, collisionPadding))
     );
 
+    const otherGuideTargets = new Set(
+      ordered.map(item => item && item.target).filter(Boolean)
+    );
+
     ordered.forEach(item => {
       const bubble = item.bubble;
-      const targetRect = item.target.getBoundingClientRect();
+      let targetRect = item.target.getBoundingClientRect();
+
+      // Nếu ô nhập thuộc nhóm địa chỉ IP (gồm 4 ô sub_...0..3, class="ip")
+      // hoặc nhóm ô nhập cùng dòng, mở rộng targetRect bao trùm cả nhóm
+      // để vị trí 'right' đặt sát bên phải ô cuối cùng thay vì đè lên ô thứ hai.
+      const parentEl = item.target.parentElement;
+      if (parentEl && (item.target.classList.contains('ip') || /^sub_/i.test(item.target.id || item.target.name || ''))) {
+        const siblingInputs = Array.from(parentEl.querySelectorAll('input:not([type="hidden"])'));
+        if (siblingInputs.length > 1) {
+          let minLeft = targetRect.left;
+          let minTop = targetRect.top;
+          let maxRight = targetRect.right;
+          let maxBottom = targetRect.bottom;
+          siblingInputs.forEach(input => {
+            if (input === item.target || (!otherGuideTargets.has(input) && (input.classList.contains('ip') || /^sub_/i.test(input.id || input.name || '')))) {
+              const r = input.getBoundingClientRect();
+              if (r && r.width > 0 && r.height > 0 && Math.abs(r.top - targetRect.top) <= Math.max(targetRect.height, 20)) {
+                minLeft = Math.min(minLeft, r.left);
+                minTop = Math.min(minTop, r.top);
+                maxRight = Math.max(maxRight, r.right);
+                maxBottom = Math.max(maxBottom, r.bottom);
+              }
+            }
+          });
+          targetRect = makeRect(minLeft, minTop, maxRight - minLeft, maxBottom - minTop);
+        }
+      }
+
       bubble.classList.add('ftc-guide-avoid-overlap');
 
       const width = bubble.offsetWidth || 180;
@@ -5047,44 +5078,62 @@
       const positions = [preferred, 'right', 'left', 'top', 'bottom']
         .filter((value, index, all) => all.indexOf(value) === index);
 
-      const candidates = [];
+      const directCandidates = [];
       positions.forEach(position => {
         if (position === 'right') {
-          candidates.push({ position, rect: clampCandidate(targetRect.right + gap, centerY - height / 2, width, height) });
+          directCandidates.push({ position, rect: clampCandidate(targetRect.right + gap, centerY - height / 2, width, height) });
         } else if (position === 'left') {
-          candidates.push({ position, rect: clampCandidate(targetRect.left - width - gap, centerY - height / 2, width, height) });
+          directCandidates.push({ position, rect: clampCandidate(targetRect.left - width - gap, centerY - height / 2, width, height) });
         } else if (position === 'top') {
-          candidates.push({ position, rect: clampCandidate(centerX - width / 2, targetRect.top - height - gap, width, height) });
+          directCandidates.push({ position, rect: clampCandidate(centerX - width / 2, targetRect.top - height - gap, width, height) });
         } else if (position === 'bottom') {
-          candidates.push({ position, rect: clampCandidate(centerX - width / 2, targetRect.bottom + gap, width, height) });
+          directCandidates.push({ position, rect: clampCandidate(centerX - width / 2, targetRect.bottom + gap, width, height) });
         }
       });
 
-      // Nếu bốn vị trí sát target đều bận, tìm khe trống gần nhất theo
-      // các dải trái/phải. Cách này xử lý cả hai tooltip cùng một hàng
-      // (cổng bắt đầu/kết thúc) mà không đẩy chúng lên ô nhập khác.
-      const railXs = [
-        winW - width - margin,
-        margin,
-        targetRect.right + gap,
-        targetRect.left - width - gap
-      ];
-      for (let distance = 0; distance <= winH; distance += Math.max(8, height + 6)) {
-        const ys = distance === 0
-          ? [centerY - height / 2]
-          : [centerY - height / 2 - distance, centerY - height / 2 + distance];
-        railXs.forEach(left => {
-          ys.forEach(top => {
-            const rect = clampCandidate(left, top, width, height);
-            const position = rect.right <= targetRect.left ? 'left'
-              : (rect.left >= targetRect.right ? 'right'
-                : (rect.bottom <= targetRect.top ? 'top' : 'bottom'));
-            candidates.push({ position, rect });
+      // Ưu tiên vị trí trực tiếp sát target
+      let selected = directCandidates.find(candidate => isFree(candidate.rect));
+
+      // Nếu các vị trí sát target đều bận (ví dụ hai hàng cạnh nhau hoặc hai cổng cùng dòng),
+      // tìm vị trí trống gần nhất xung quanh target, ưu tiên dải sát phải/trái của target
+      // trước khi phải xem xét các vị trí xa hơn ở biên màn hình.
+      if (!selected) {
+        const fallbackCandidates = [];
+        const railXs = [
+          targetRect.right + gap,
+          targetRect.left - width - gap,
+          targetRect.right + gap + 24,
+          targetRect.left - width - gap - 24,
+          targetRect.right + width + gap * 2,
+          winW - width - margin,
+          margin
+        ];
+        for (let distance = 0; distance <= winH; distance += Math.max(8, Math.min(16, height / 2))) {
+          const ys = distance === 0
+            ? [centerY - height / 2]
+            : [centerY - height / 2 - distance, centerY - height / 2 + distance];
+          railXs.forEach(left => {
+            ys.forEach(top => {
+              const rect = clampCandidate(left, top, width, height);
+              const position = rect.right <= targetRect.left ? 'left'
+                : (rect.left >= targetRect.right ? 'right'
+                  : (rect.bottom <= targetRect.top ? 'top' : 'bottom'));
+              fallbackCandidates.push({ position, rect });
+            });
           });
-        });
+        }
+
+        const freeFallbacks = fallbackCandidates.filter(candidate => isFree(candidate.rect));
+        if (freeFallbacks.length > 0) {
+          freeFallbacks.sort((a, b) => {
+            const distA = Math.hypot((a.rect.left + width / 2) - centerX, (a.rect.top + height / 2) - centerY);
+            const distB = Math.hypot((b.rect.left + width / 2) - centerX, (b.rect.top + height / 2) - centerY);
+            return distA - distB;
+          });
+          selected = freeFallbacks[0];
+        }
       }
 
-      let selected = candidates.find(candidate => isFree(candidate.rect));
       if (!selected) {
         // Không hạ tiêu chuẩn khi viewport quá chật: tạm ẩn thay vì che
         // chữ, control hoặc tooltip khác. Lần sync sau sẽ thử bố trí lại.
