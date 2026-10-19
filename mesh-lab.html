@@ -1034,9 +1034,9 @@
         </div>
       </div>
 
-      <!-- Canvas SVG tinh gọn (Height: 96px) -->
+      <!-- Canvas SVG tinh gọn (Height: 96px, ViewBox chuẩn 1150px không đè chữ) -->
       <div class="topo-canvas-wrap">
-        <svg class="topo-svg" viewBox="0 0 1000 96" preserveAspectRatio="xMidYMid meet">
+        <svg class="topo-svg" viewBox="0 0 1150 96" preserveAspectRatio="xMidYMid meet">
           <defs>
             <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
               <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94a3b8" />
@@ -1044,66 +1044,75 @@
           </defs>
 
           <!-- 1. DÂY NỐI WAN (XGS-PON Fiber: Cloud -> ONT) -->
-          <line x1="175" y1="48" x2="310" y2="48" stroke="#f97316" stroke-width="2.5" stroke-dasharray="4,3" />
-          <text x="242" y="40" fill="#ea580c" font-size="9" font-family="JetBrains Mono" font-weight="600" text-anchor="middle">XGS-PON (10G)</text>
+          <line x1="150" y1="48" x2="270" y2="48" stroke="#f97316" stroke-width="2.5" stroke-dasharray="4,3" />
+          <text x="210" y="38" fill="#ea580c" font-size="9" font-family="JetBrains Mono" font-weight="600" text-anchor="middle">XGS-PON (10G)</text>
 
-          <!-- 2. DÂY NỐI BACKHAUL (ONT -> AP BE15000Z) -->
-          <line id="cable-backhaul" class="link-cable active-eth" x1="490" y1="48" x2="630" y2="48" />
-          <text id="cable-label" x="560" y="40" fill="#0284c7" font-size="9.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">LAN 10GE ↔ WAN 2.5GE</text>
+          <!-- 2. DÂY NỐI BACKHAUL (ONT -> AP BE15000Z - Gap rộng 260px) -->
+          <line id="cable-backhaul" class="link-cable active-eth" x1="470" y1="48" x2="730" y2="48" />
+          
+          <!-- Hộp nền nhãn cáp Backhaul tránh bị đè lên khung máy -->
+          <rect id="cable-pill-bg" x="495" y="27" width="210" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2" />
+          <text id="cable-label" x="600" y="41" fill="#0284c7" font-size="9" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">LAN 10GE ↔ WAN 2.5GE</text>
 
           <!-- Xung dữ liệu chạy trên dây cáp -->
           <circle id="packet-flow" r="3.5" fill="#0284c7" opacity="0.9">
-            <animateMotion id="packet-anim" path="M 490 48 L 630 48" dur="1.4s" repeatCount="indefinite" />
+            <animateMotion id="packet-anim" path="M 470 48 L 730 48" dur="1.5s" repeatCount="indefinite" />
           </circle>
 
           <!-- 3. DÂY NỐI CLIENT (AP -> Phone) -->
-          <line x1="810" y1="48" x2="885" y2="48" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="4,4" />
-          <text x="847" y="40" fill="#7c3aed" font-size="9" font-family="JetBrains Mono" font-weight="600" text-anchor="middle">Wi-Fi 7</text>
+          <line x1="930" y1="48" x2="1010" y2="48" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="4,4" />
+          <text x="970" y="38" fill="#7c3aed" font-size="9" font-family="JetBrains Mono" font-weight="600" text-anchor="middle">Wi-Fi 7</text>
 
           <!-- ════════ NODE 1: FPT INTERNET ════════ -->
-          <g transform="translate(35, 12)">
-            <rect class="svg-node-rect" width="140" height="72" rx="8" />
-            <text x="70" y="28" font-size="16" text-anchor="middle">🌐</text>
-            <text x="70" y="45" fill="#0f172a" font-size="11" font-weight="700" text-anchor="middle">FPT INTERNET</text>
-            <text x="70" y="58" fill="#64748b" font-size="9" font-family="JetBrains Mono" text-anchor="middle">OLT Optical Hub</text>
-            <rect x="42" y="62" width="56" height="12" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
-            <text x="70" y="71" fill="#065f46" font-size="8" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">ONLINE</text>
+          <g transform="translate(20, 8)">
+            <rect class="svg-node-rect" width="130" height="80" rx="8" />
+            <text x="65" y="25" font-size="16" text-anchor="middle">🌐</text>
+            <text x="65" y="42" fill="#0f172a" font-size="11" font-weight="700" text-anchor="middle">FPT INTERNET</text>
+            <text x="65" y="55" fill="#64748b" font-size="8.5" font-family="JetBrains Mono" text-anchor="middle">OLT Optical Core</text>
+            <rect x="38" y="61" width="54" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
+            <text x="65" y="71" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">ONLINE</text>
           </g>
 
           <!-- ════════ NODE 2: ONT BE12000Z (Controller) ════════ -->
-          <g id="node-be12000" transform="translate(310, 8)" onclick="selectDeviceTab('be12000')" style="cursor:pointer;">
-            <rect id="rect-be12000" class="svg-node-rect selected" width="180" height="80" rx="8" />
-            <rect x="8" y="7" width="164" height="16" rx="3" fill="#eff6ff" />
-            <text x="90" y="19" fill="#1d4ed8" font-size="9.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">CONTROLLER (GATEWAY)</text>
-            <text x="32" y="48" font-size="20" text-anchor="middle">🖥️</text>
-            <text x="95" y="42" fill="#0f172a" font-size="12" font-weight="700">ONT BE12000Z</text>
-            <text x="95" y="56" fill="#64748b" font-size="9.5" font-family="JetBrains Mono">IP: 192.168.1.1</text>
-            <text id="node-be12000-ssid" x="95" y="68" fill="#0284c7" font-size="9" font-family="JetBrains Mono">SSID: FPT_BE12000_WIFI7</text>
-            <rect x="135" y="30" width="36" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
-            <text x="153" y="39" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">MASTER</text>
+          <g id="node-be12000" transform="translate(270, 8)" onclick="selectDeviceTab('be12000')" style="cursor:pointer;">
+            <rect id="rect-be12000" class="svg-node-rect selected" width="200" height="80" rx="8" />
+            <!-- Header bar tách biệt huy hiệu MASTER -->
+            <rect x="6" y="6" width="188" height="17" rx="3" fill="#eff6ff" />
+            <text x="14" y="18" fill="#1d4ed8" font-size="8.5" font-family="JetBrains Mono" font-weight="700">CONTROLLER (GATEWAY)</text>
+            <rect x="146" y="7" width="44" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
+            <text x="168" y="17" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">MASTER</text>
+
+            <!-- Thân node không bị huy hiệu che -->
+            <text x="26" y="52" font-size="20" text-anchor="middle">🖥️</text>
+            <text x="52" y="42" fill="#0f172a" font-size="12" font-weight="700">ONT BE12000Z</text>
+            <text x="52" y="56" fill="#64748b" font-size="9" font-family="JetBrains Mono">IP: 192.168.1.1</text>
+            <text id="node-be12000-ssid" x="52" y="69" fill="#0284c7" font-size="8.5" font-family="JetBrains Mono">SSID: FPT_BE12000_WIFI7</text>
           </g>
 
           <!-- ════════ NODE 3: AP BE15000Z (Agent) ════════ -->
-          <g id="node-be15000" transform="translate(630, 8)" onclick="selectDeviceTab('be15000')" style="cursor:pointer;">
-            <rect id="rect-be15000" class="svg-node-rect" width="180" height="80" rx="8" />
-            <rect x="8" y="7" width="164" height="16" rx="3" fill="#f5f3ff" />
-            <text x="90" y="19" fill="#6d28d9" font-size="9.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">AGENT (REPEATER)</text>
-            <text id="icon-be15000" x="32" y="48" font-size="20" text-anchor="middle">📡</text>
-            <text x="95" y="42" fill="#0f172a" font-size="12" font-weight="700">AP BE15000Z</text>
-            <text id="node-be15000-ip" x="95" y="56" fill="#64748b" font-size="9.5" font-family="JetBrains Mono">IP: 192.168.1.100</text>
-            <text id="node-be15000-ssid" x="95" y="68" fill="#7c3aed" font-size="9" font-family="JetBrains Mono">SSID: Đồng bộ</text>
-            <rect id="badge-be15000" x="135" y="30" width="36" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
-            <text id="text-be15000-status" x="153" y="39" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">SLAVE</text>
+          <g id="node-be15000" transform="translate(730, 8)" onclick="selectDeviceTab('be15000')" style="cursor:pointer;">
+            <rect id="rect-be15000" class="svg-node-rect" width="200" height="80" rx="8" />
+            <!-- Header bar tách biệt huy hiệu SLAVE -->
+            <rect x="6" y="6" width="188" height="17" rx="3" fill="#f5f3ff" />
+            <text x="14" y="18" fill="#6d28d9" font-size="8.5" font-family="JetBrains Mono" font-weight="700">AGENT (REPEATER)</text>
+            <rect id="badge-be15000" x="150" y="7" width="40" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
+            <text id="text-be15000-status" x="170" y="17" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">SLAVE</text>
+
+            <!-- Thân node không bị huy hiệu che -->
+            <text id="icon-be15000" x="26" y="52" font-size="20" text-anchor="middle">📡</text>
+            <text x="52" y="42" fill="#0f172a" font-size="12" font-weight="700">AP BE15000Z</text>
+            <text id="node-be15000-ip" x="52" y="56" fill="#64748b" font-size="9" font-family="JetBrains Mono">IP: 192.168.1.100</text>
+            <text id="node-be15000-ssid" x="52" y="69" fill="#7c3aed" font-size="8.5" font-family="JetBrains Mono">SSID: Đồng bộ</text>
           </g>
 
           <!-- ════════ NODE 4: CLIENT PHONE ════════ -->
-          <g transform="translate(885, 12)">
-            <rect class="svg-node-rect" width="85" height="72" rx="8" />
-            <text x="42" y="28" font-size="16" text-anchor="middle">📱</text>
-            <text x="42" y="45" fill="#0f172a" font-size="10.5" font-weight="700" text-anchor="middle">CLIENT</text>
-            <text id="node-client-ip" x="42" y="58" fill="#64748b" font-size="8.5" font-family="JetBrains Mono" text-anchor="middle">192.168.1.150</text>
-            <rect id="badge-client" x="18" y="62" width="48" height="12" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
-            <text id="text-client-status" x="42" y="71" fill="#065f46" font-size="8" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">PING: 1ms</text>
+          <g transform="translate(1010, 8)">
+            <rect class="svg-node-rect" width="95" height="80" rx="8" />
+            <text x="47" y="24" font-size="16" text-anchor="middle">📱</text>
+            <text x="47" y="40" fill="#0f172a" font-size="10.5" font-weight="700" text-anchor="middle">CLIENT</text>
+            <text id="node-client-ip" x="47" y="54" fill="#64748b" font-size="8" font-family="JetBrains Mono" text-anchor="middle">192.168.1.150</text>
+            <rect id="badge-client" x="18" y="61" width="58" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
+            <text id="text-client-status" x="47" y="71" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">PING: 1ms</text>
           </g>
         </svg>
       </div>
@@ -1128,16 +1137,16 @@
         <div class="tab-shortcuts-group">
           <span style="font-size:11px;color:var(--text-muted);margin-right:2px;">Chuyển nhanh:</span>
           <button class="shortcut-btn" title="Mở trang Sơ đồ Topology Mesh ZTE" onclick="jumpToView('mmTopology')">
-            🌐 Sơ đồ Mesh (mmTopology)
+            🌐 Sơ đồ Mesh
           </button>
           <button class="shortcut-btn" title="Mở trang Cấu hình Wi-Fi trên ONT" onclick="jumpToView('wlanBasic')">
-            📶 Cấu hình Wi-Fi
+            📶 Wi-Fi
           </button>
           <button class="shortcut-btn" title="Mở trang Trạng thái mạng AP BE15000" onclick="jumpToView('apStatus')">
             📊 Trạng thái AP
           </button>
           <button class="shortcut-btn" title="Tải lại khung hiển thị" onclick="reloadActiveFrame()">
-            🔄 Tải lại Frame
+            🔄 Tải lại
           </button>
         </div>
       </div>
@@ -1467,18 +1476,21 @@ Type 'help' or click the buttons above to test network connectivity.
       document.getElementById('node-client-ip').textContent = st.client_ip_current;
 
       // Cập nhật đường cáp Backhaul
+      const cablePill = document.getElementById('cable-pill-bg');
       cable.className.baseVal = 'link-cable';
       if (!st.ap_power || st.link_type === 'NONE') {
         cable.classList.add('broken');
         cableLabel.textContent = 'MẤT KẾT NỐI (Link Down)';
         cableLabel.setAttribute('fill', '#ef4444');
+        if (cablePill) { cablePill.setAttribute('stroke', '#fecaca'); cablePill.setAttribute('fill', '#fef2f2'); }
         packetFlow.style.display = 'none';
         chipLink.textContent = 'Backhaul: Mất kết nối';
         chipLink.className = 'chip bad';
       } else if (st.link_type === 'WIFI') {
         cable.classList.add('active-wifi');
-        cableLabel.textContent = 'Wi-Fi 7 MLO (Wireless 1.2G)';
-        cableLabel.setAttribute('fill', '#8b5cf6');
+        cableLabel.textContent = 'Wi-Fi 7 MLO (1200 Mbps)';
+        cableLabel.setAttribute('fill', '#7c3aed');
+        if (cablePill) { cablePill.setAttribute('stroke', '#ddd6fe'); cablePill.setAttribute('fill', '#f5f3ff'); }
         packetFlow.style.display = 'block';
         packetFlow.setAttribute('fill', '#8b5cf6');
         chipLink.textContent = 'Backhaul: Wi-Fi MLO (1200M)';
@@ -1487,16 +1499,18 @@ Type 'help' or click the buttons above to test network connectivity.
         // Cáp Ethernet: kiểm tra tối ưu hay nghẽn 1Gbps
         if (st.is_optimal_wiring) {
           cable.classList.add('active-eth');
-          cableLabel.textContent = 'LAN 10GE ↔ WAN 2.5GE (2.5 Gbps)';
+          cableLabel.textContent = 'LAN 1 (10GE) ↔ WAN (2.5GE)';
           cableLabel.setAttribute('fill', '#0284c7');
+          if (cablePill) { cablePill.setAttribute('stroke', '#bfdbfe'); cablePill.setAttribute('fill', '#eff6ff'); }
           packetFlow.style.display = 'block';
           packetFlow.setAttribute('fill', '#0284c7');
           chipLink.textContent = 'Backhaul: ETH 2.5 Gbps (Tối ưu)';
           chipLink.className = 'chip good';
         } else {
           cable.classList.add('active-eth-bottleneck');
-          cableLabel.textContent = `${st.ont_port_info.name} ↔ ${st.ap_port_info.name} (Nghẽn 1 Gbps)`;
-          cableLabel.setAttribute('fill', '#f59e0b');
+          cableLabel.textContent = `${st.ont_port_info.name} ↔ ${st.ap_port_info.name} [Nghẽn 1G]`;
+          cableLabel.setAttribute('fill', '#d97706');
+          if (cablePill) { cablePill.setAttribute('stroke', '#fde68a'); cablePill.setAttribute('fill', '#fffbeb'); }
           packetFlow.style.display = 'block';
           packetFlow.setAttribute('fill', '#f59e0b');
           chipLink.textContent = 'Backhaul: ETH 1.0 Gbps (Nghẽn cổng)';
