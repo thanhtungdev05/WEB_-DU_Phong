@@ -126,7 +126,7 @@ SIM_HANDLERS = {
 
 # File/thư mục Portal luôn do Portal phục vụ (chống bị 'cướp' bởi Referer/Cookie)
 PORTAL_PATHS = {'/', '/index.html', '/styles.css', '/app.js', '/data.js', '/portal.html',
-                '/personal-dashboard.html',
+                '/personal-dashboard.html', '/mesh-lab.html',
                 '/favicon.ico', '/login', '/login/index.html', '/api',
                 '/dashboard', '/dashboard/', '/dashboard-authen', '/dashboard-authen/',
                 '/admin', '/admin/', '/templates/Mau_Import_KTV.xlsx'}
@@ -134,7 +134,7 @@ PORTAL_PREFIXES = ('/devices/', '/assets/', '/login/', '/api/',
                    '/dashboard/', '/dashboard-authen/', '/admin/', '/admin-static/')
 
 PUBLIC_ROOT_FILES = {
-    '/index.html', '/portal.html', '/personal-dashboard.html', '/styles.css', '/app.js', '/data.js', '/favicon.ico',
+    '/index.html', '/portal.html', '/personal-dashboard.html', '/mesh-lab.html', '/styles.css', '/app.js', '/data.js', '/favicon.ico',
     '/templates/Mau_Import_KTV.xlsx'
 }
 DOWNLOADABLE_ROOT_FILES = {
@@ -146,7 +146,7 @@ DASHBOARD_PUBLIC_PATHS = {
     '/js/app.js', '/js/system_monitor.js'
 }
 HTML_DOCUMENT_PATHS = {
-    '/', '/index.html', '/portal.html', '/personal-dashboard.html',
+    '/', '/index.html', '/portal.html', '/personal-dashboard.html', '/mesh-lab.html',
     '/login/index.html', '/dashboard/', '/dashboard/index.html',
 }
 SENSITIVE_EXTENSIONS = {
@@ -544,6 +544,66 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError):
                 pass
 
+    def _handle_mesh_lab_api(self, method):
+        import json
+        import mesh_zte_engine
+
+        path_only = self.path.split('?')[0]
+        action = path_only.replace('/api/mesh-lab/', '').replace('/api/mesh-lab', '').strip('/')
+
+        if method in ('GET', 'HEAD'):
+            if action in ('status', ''):
+                st = mesh_zte_engine.get_state()
+            elif action == 'grade':
+                st = mesh_zte_engine.evaluate_grading()
+            else:
+                st = mesh_zte_engine.get_state()
+            payload = json.dumps(st, ensure_ascii=False).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('Content-Length', str(len(payload)))
+            self.end_headers()
+            if method != 'HEAD':
+                self.wfile.write(payload)
+            return
+
+        if method == 'POST':
+            length = int(self.headers.get('Content-Length', 0) or 0)
+            body = self.rfile.read(length).decode('utf-8', errors='replace') if length else '{}'
+            try:
+                data = json.loads(body)
+            except Exception:
+                data = {}
+
+            if action == 'link':
+                link_type = data.get('link_type', 'ETH')
+                st = mesh_zte_engine.set_link_type(link_type)
+            elif action == 'power':
+                pwr = data.get('power', True)
+                st = mesh_zte_engine.set_ap_power(pwr)
+            elif action == 'wps':
+                st = mesh_zte_engine.trigger_wps()
+            elif action == 'wifi':
+                st = mesh_zte_engine.update_ont_wifi(data.get('ssid'), data.get('key'))
+            elif action == 'reset':
+                st = mesh_zte_engine.reset_lab()
+            elif action == 'grade':
+                st = mesh_zte_engine.evaluate_grading()
+            else:
+                st = mesh_zte_engine.get_state()
+
+            payload = json.dumps(st, ensure_ascii=False).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('Content-Length', str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
+
+        self.send_error(405, 'Method Not Allowed')
+
     def _get_or_create_ktv_id(self):
         ktv_id = (self.headers.get('X-KTV-Session-ID') or '').strip()
         if ktv_id:
@@ -609,6 +669,9 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             self.send_header('Content-Length', '0')
             self.end_headers()
             return
+        if path_only == '/api/mesh-lab' or path_only.startswith('/api/mesh-lab/'):
+            return self._handle_mesh_lab_api(method)
+
         if (path_only == '/api' or path_only.startswith('/api/')) and not path_only.startswith('/api/v1/data/'):
             return self._proxy_api(method)
 

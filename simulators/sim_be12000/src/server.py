@@ -45,6 +45,31 @@ GLOBAL_SIM = {"store": _store, "session": _session, "disp": _disp, "chi_tiet": F
 _USER_SIMS = {}
 
 
+def _cap_nhat_store_topo(store, slave_list, client_list):
+    if not hasattr(store, "_state") or not isinstance(store._state, dict):
+        return
+    jt = store._state.setdefault("jsonThoDataTags", {})
+    tl = jt.setdefault("topo_lua.lua", {})
+    raw = tl.setdefault("raw", {})
+    raw["slave"] = list(slave_list) if slave_list is not None else []
+    ad = raw.setdefault("ad", {})
+    if client_list:
+        ad["MGET_INST_NUM"] = len(client_list)
+        for idx, cl in enumerate(client_list, 1):
+            ad[str(idx)] = cl
+    else:
+        ad["MGET_INST_NUM"] = 0
+
+
+def cap_nhat_topology_mesh(slave_list=None, client_list=None):
+    with _SIM_LOCK:
+        if "store" in GLOBAL_SIM:
+            _cap_nhat_store_topo(GLOBAL_SIM["store"], slave_list, client_list)
+        for s in _USER_SIMS.values():
+            if isinstance(s, dict) and "store" in s:
+                _cap_nhat_store_topo(s["store"], slave_list, client_list)
+
+
 class Handler(BaseHTTPRequestHandler):
 
     protocol_version = "HTTP/1.1"
@@ -183,6 +208,12 @@ class Handler(BaseHTTPRequestHandler):
 
         if loai == "menuData":
             sim["session"].cham()
+            if tag == "topo_lua.lua":
+                try:
+                    import mesh_zte_engine
+                    mesh_zte_engine._sync_to_be12000()
+                except Exception:
+                    pass
             noi_dung, kieu, ma = sim["disp"].menu_data_doc(tag, ts)
             return self._gui(noi_dung, kieu, ma)
 
@@ -242,6 +273,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self._gui(sim["store"].xml_cho(tag or "", ma_loi="SessionTimeout"),
                                  "text/xml; charset=utf-8")
             noi_dung, kieu, ma, ghi_chu = sim["disp"].menu_data_ghi(tag, than)
+            if than:
+                ssid = than.get("ESSID") or than.get("SSID")
+                key = than.get("HiddenKeyPass") or than.get("KeyPass") or than.get("WPAKey")
+                if ssid or key:
+                    try:
+                        import mesh_zte_engine
+                        mesh_zte_engine.update_ont_wifi(ssid, key)
+                    except Exception:
+                        pass
             if sim["chi_tiet"]:
                 print("  [GHI] %-32s %s" % (tag, ghi_chu))
             return self._gui(noi_dung, kieu, ma)
