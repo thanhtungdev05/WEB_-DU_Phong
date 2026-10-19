@@ -87,19 +87,104 @@ def bat_tab_ipv6(s):
 
 
 def sua_ipbandw_add(s):
-    """Trong doc/ipbandw.htm: dam bao khi click nut Add, neu o TX/RX bi trong
-    thi tu dong bu gia tri DefTx/DefRx de checkInput khong bi loi NaN va them thanh cong vao bang.
+    """Trong doc/ipbandw.htm:
+    1. Khai bao webcfg fallback an toan de tranh ReferenceError lam crash toan bo initParameter va bang Limitation List.
+    2. Khi click nut Add, neu o TX/RX bi trong thi tu dong bu gia tri DefTx/DefRx.
+    3. Khi click nut Add, danh dau co _ftcHasClickedAdd.
+    4. Khi click nut OK (Luu cau hinh), neu nguoi dung da nhap dai IP Each ma chua bam Add,
+       tu dong goi onClkBtnAdd(0) de xuat 1 dong vao bang Limitation List va luu vao form.
+    5. Dong bo co _ftcIsSaved khi bam OK va khi load lai trang da co dong cau hinh.
+    6. Bo tro cleardatatable tranh crash khi table chua duoc khoi tao.
     """
-    old = "var bw_tx=parseInt(f.sIpBandwTx.value)+parseInt((bg.getVleFromElmt(f.iProfTx,0)==0)?0:0x8000);"
-    new = (
+    target_head = "var bg=parent;var f=document.frm1;"
+    replace_head = (
+        "var bg=parent;var f=document.frm1;"
+        "var webcfg=(typeof parent!=='undefined'&&parent.webcfg)?parent.webcfg:{adminauth:1,privilege:15,isBT498:0};"
+        "window.webcfg=webcfg;"
+    )
+    if target_head in s:
+        s = s.replace(target_head, replace_head, 1)
+
+    old_clear = "function cleardatatable(typeCode){if(typeCode==1){custlstTable1.destroy();"
+    new_clear = (
+        "function cleardatatable(typeCode){"
+        "if(typeCode==1){if(custlstTable1&&custlstTable1.destroy){try{custlstTable1.destroy();}catch(e){}}custlstTable1=initCustlstTable(1,custlstTable1);}"
+        "else if(typeCode==0){if(custlstTable0&&custlstTable0.destroy){try{custlstTable0.destroy();}catch(e){}}custlstTable0=initCustlstTable(0,custlstTable0);}"
+        "else if(typeCode==2){if(custlstTable2&&custlstTable2.destroy){try{custlstTable2.destroy();}catch(e){}}custlstTable2=initCustlstTable(2,custlstTable2);}"
+        "}"
+        "function _unused_old_cleardatatable(typeCode){if(typeCode==1){custlstTable1.destroy();"
+    )
+    if old_clear in s:
+        s = s.replace(old_clear, new_clear, 1)
+
+    old_txrx = "var bw_tx=parseInt(f.sIpBandwTx.value)+parseInt((bg.getVleFromElmt(f.iProfTx,0)==0)?0:0x8000);"
+    new_txrx = (
         "if(typeCode==0){"
         "if(!f.sIpBandwTx.value||isNaN(parseInt(f.sIpBandwTx.value))){f.sIpBandwTx.value=(f.sIpBandwDefTx&&f.sIpBandwDefTx.value)?f.sIpBandwDefTx.value:'20';}"
         "if(!f.sIpBandwRx.value||isNaN(parseInt(f.sIpBandwRx.value))){f.sIpBandwRx.value=(f.sIpBandwDefRx&&f.sIpBandwDefRx.value)?f.sIpBandwDefRx.value:'25';}"
         "}"
         "var bw_tx=parseInt(f.sIpBandwTx.value)+parseInt((bg.getVleFromElmt(f.iProfTx,0)==0)?0:0x8000);"
     )
-    if old in s:
-        s = s.replace(old, new, 1)
+    if old_txrx in s:
+        s = s.replace(old_txrx, new_txrx, 1)
+
+    old_add = "clrTempInput(typeCode);sortTableList(typeCode);showOnSltIpBandwList(typeCode);"
+    new_add = (
+        "clrTempInput(typeCode);sortTableList(typeCode);showOnSltIpBandwList(typeCode);"
+        "document._ftcHasClickedAdd=true;window._ftcHasClickedAdd=true;"
+        "try{if(parent){parent._ftcHasClickedAdd=true;parent._ftcHasClickedAdd_vg2927=true;}if(top){top._ftcHasClickedAdd=true;top._ftcHasClickedAdd_vg2927=true;}}catch(e){}"
+    )
+    if old_add in s:
+        s = s.replace(old_add, new_add)
+
+    old_start_ok = "function onClkBtnOk(){var enable=bg.getVleFromElmt(f.sIpBandwEnable[0]);"
+    new_start_ok = (
+        "function onClkBtnOk(){"
+        "try{"
+        "var _hasEntry=false;"
+        "if(typeof aryIpBandw!=='undefined'&&aryIpBandw&&aryIpBandw.length){"
+        "for(var _k=0;_k<aryIpBandw.length;_k++){"
+        "if(aryIpBandw[_k]&&(aryIpBandw[_k][0]||aryIpBandw[_k][1])){_hasEntry=true;break;}"
+        "}"
+        "}"
+        "if(!_hasEntry&&f.sIpBandwFrom&&f.sIpBandwFrom.value&&f.sIpBandwTo&&f.sIpBandwTo.value){"
+        "onClkBtnAdd(0);"
+        "}"
+        "}catch(e){}"
+        "var enable=bg.getVleFromElmt(f.sIpBandwEnable[0]);"
+    )
+    if old_start_ok in s:
+        s = s.replace(old_start_ok, new_start_ok, 1)
+
+    old_submit = "if(checkWebChange()){f.webchange.value='1';}f.submit();}"
+    new_submit = (
+        "if(checkWebChange()){f.webchange.value='1';}"
+        "document._ftcIsSaved=true;window._ftcIsSaved=true;"
+        "try{if(parent){parent._hasClickedSaveInGuide=true;parent._ftcIsSaved=true;}if(top){top._hasClickedSaveInGuide=true;top._ftcIsSaved=true;}}catch(e){}"
+        "f.submit();}"
+    )
+    if old_submit in s:
+        s = s.replace(old_submit, new_submit, 1)
+
+    old_init = "{custlstTable2=initCustlstTable(2,custlstTable2);}showOnSltIpBandwList(0);"
+    new_init = (
+        "{custlstTable2=initCustlstTable(2,custlstTable2);}showOnSltIpBandwList(0);"
+        "try{"
+        "if(typeof aryIpBandw!=='undefined'&&aryIpBandw&&aryIpBandw.length){"
+        "for(var _k=0;_k<aryIpBandw.length;_k++){"
+        "if(aryIpBandw[_k]&&(aryIpBandw[_k][0]||aryIpBandw[_k][1])){"
+        "document._ftcHasClickedAdd=true;window._ftcHasClickedAdd=true;"
+        "document._ftcIsSaved=true;window._ftcIsSaved=true;"
+        "try{if(parent){parent._ftcHasClickedAdd=true;parent._hasClickedSaveInGuide=true;parent._ftcIsSaved=true;}if(top){top._ftcHasClickedAdd=true;top._hasClickedSaveInGuide=true;top._ftcIsSaved=true;}}catch(e){}"
+        "break;"
+        "}"
+        "}"
+        "}"
+        "}catch(e){}"
+    )
+    if old_init in s:
+        s = s.replace(old_init, new_init, 1)
+
     return s
 
 
