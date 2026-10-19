@@ -556,6 +556,10 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 st = mesh_zte_engine.get_state()
             elif action == 'grade':
                 st = mesh_zte_engine.evaluate_grading()
+            elif action == 'missions':
+                st = mesh_zte_engine.get_missions()
+            elif action == 'ports':
+                st = {"ont_ports": mesh_zte_engine.ONT_PORTS, "ap_ports": mesh_zte_engine.AP_PORTS}
             else:
                 st = mesh_zte_engine.get_state()
             payload = json.dumps(st, ensure_ascii=False).encode('utf-8')
@@ -579,9 +583,17 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             if action == 'link':
                 link_type = data.get('link_type', 'ETH')
                 st = mesh_zte_engine.set_link_type(link_type)
+            elif action == 'connect-ports':
+                ont_port = data.get('ont_port', 'LAN1_10GE')
+                ap_port = data.get('ap_port', 'WAN_25GE')
+                cable_type = data.get('cable_type', 'CAT6A')
+                st = mesh_zte_engine.connect_ports(ont_port, ap_port, cable_type)
             elif action == 'power':
                 pwr = data.get('power', True)
                 st = mesh_zte_engine.set_ap_power(pwr)
+            elif action == 'ont-power':
+                pwr = data.get('power', True)
+                st = mesh_zte_engine.set_ont_power(pwr)
             elif action == 'wps':
                 st = mesh_zte_engine.trigger_wps()
             elif action == 'wifi':
@@ -590,6 +602,18 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 st = mesh_zte_engine.reset_lab()
             elif action == 'grade':
                 st = mesh_zte_engine.evaluate_grading()
+            elif action == 'missions':
+                st = mesh_zte_engine.get_missions()
+            elif action == 'ping':
+                target = data.get('target', '192.168.1.1')
+                st = mesh_zte_engine.run_ping(target)
+            elif action == 'speedtest':
+                st = mesh_zte_engine.run_speedtest()
+            elif action == 'arp':
+                st = mesh_zte_engine.run_arp()
+            elif action == 'traceroute':
+                target = data.get('target', '8.8.8.8')
+                st = mesh_zte_engine.run_traceroute(target)
             else:
                 st = mesh_zte_engine.get_state()
 

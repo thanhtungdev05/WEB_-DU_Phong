@@ -81,6 +81,56 @@ class TestMeshZteTopology(unittest.TestCase):
         self.assertFalse(res_dis["all_passed"])
 
 
+    def test_packet_tracer_port_wiring(self):
+        # 1. Cắm tối ưu: LAN 1 (10GE) -> WAN (2.5GE)
+        st = mesh_zte_engine.connect_ports("LAN1_10GE", "WAN_25GE", "CAT6A")
+        self.assertEqual(st["link_type"], "ETH")
+        self.assertEqual(st["bandwidth_mbps"], 2500)
+        self.assertTrue(st["is_optimal_wiring"])
+        self.assertIsNone(st["port_warning"])
+
+        # 2. Cắm nghẽn: LAN 2 (1GE) -> WAN (2.5GE)
+        st_bot = mesh_zte_engine.connect_ports("LAN2_1GE", "WAN_25GE", "CAT6A")
+        self.assertEqual(st_bot["link_type"], "ETH")
+        self.assertEqual(st_bot["bandwidth_mbps"], 1000)
+        self.assertFalse(st_bot["is_optimal_wiring"])
+        self.assertIsNotNone(st_bot["port_warning"])
+
+        # 3. Rút dây -> failover sang Wi-Fi 7 MLO (1200 Mbps)
+        st_unplug = mesh_zte_engine.connect_ports("NONE", "NONE", "NONE")
+        self.assertEqual(st_unplug["link_type"], "WIFI")
+        self.assertEqual(st_unplug["bandwidth_mbps"], 1200)
+
+    def test_diagnostic_tools(self):
+        # Ping Gateway
+        p_gw = mesh_zte_engine.run_ping("192.168.1.1")
+        self.assertTrue(p_gw["success"])
+        self.assertEqual(p_gw["loss_pct"], 0)
+        self.assertIn("Reply from 192.168.1.1", p_gw["output"])
+
+        # Ping AP
+        p_ap = mesh_zte_engine.run_ping("192.168.1.100")
+        self.assertTrue(p_ap["success"])
+
+        # Speedtest khi kết nối tối ưu
+        mesh_zte_engine.connect_ports("LAN1_10GE", "WAN_25GE", "CAT6A")
+        sp = mesh_zte_engine.run_speedtest()
+        self.assertTrue(sp["success"])
+        self.assertGreater(sp["download_mbps"], 2000)
+
+        # ARP & Traceroute
+        arp = mesh_zte_engine.run_arp()
+        self.assertIn("192.168.1.1", arp["output"])
+        tr = mesh_zte_engine.run_traceroute("8.8.8.8")
+        self.assertIn("Trace complete", tr["output"])
+
+    def test_missions_evaluation(self):
+        m = mesh_zte_engine.get_missions()
+        self.assertEqual(m["total"], 6)
+        self.assertGreaterEqual(m["completed_count"], 4)
+        self.assertIn("progress_percent", m)
+
+
 class TestMeshZteDispatcherApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -146,16 +196,38 @@ class TestMeshZteDispatcherApi(unittest.TestCase):
         self.assertEqual(data.get("link_type"), "WIFI")
         self.assertEqual(data.get("mesh_status"), "ONLINE_WIFI")
 
-        # 3. POST /api/mesh-lab/power (tắt nguồn AP)
-        body = self.json.dumps({"power": False}).encode('utf-8')
-        conn.request('POST', '/api/mesh-lab/power', body=body, headers={'Content-Type': 'application/json'})
+        # 3. POST /api/mesh-lab/connect-ports
+        body = self.json.dumps({"ont_port": "LAN1_10GE", "ap_port": "WAN_25GE", "cable_type": "CAT6A"}).encode('utf-8')
+        conn.request('POST', '/api/mesh-lab/connect-ports', body=body, headers={'Content-Type': 'application/json'})
         res = conn.getresponse()
         data = self.json.loads(res.read().decode('utf-8'))
         self.assertEqual(res.status, 200)
-        self.assertFalse(data.get("ap_power"))
-        self.assertEqual(data.get("mesh_status"), "POWER_OFF")
+        self.assertEqual(data.get("bandwidth_mbps"), 2500)
+        self.assertTrue(data.get("is_optimal_wiring"))
 
-        # 4. POST /api/mesh-lab/grade
+        # 4. POST /api/mesh-lab/ping
+        body = self.json.dumps({"target": "192.168.1.1"}).encode('utf-8')
+        conn.request('POST', '/api/mesh-lab/ping', body=body, headers={'Content-Type': 'application/json'})
+        res = conn.getresponse()
+        data = self.json.loads(res.read().decode('utf-8'))
+        self.assertEqual(res.status, 200)
+        self.assertTrue(data.get("success"))
+
+        # 5. POST /api/mesh-lab/speedtest
+        conn.request('POST', '/api/mesh-lab/speedtest', body=b'{}', headers={'Content-Type': 'application/json'})
+        res = conn.getresponse()
+        data = self.json.loads(res.read().decode('utf-8'))
+        self.assertEqual(res.status, 200)
+        self.assertTrue(data.get("success"))
+
+        # 6. GET /api/mesh-lab/missions
+        conn.request('GET', '/api/mesh-lab/missions')
+        res = conn.getresponse()
+        data = self.json.loads(res.read().decode('utf-8'))
+        self.assertEqual(res.status, 200)
+        self.assertEqual(data.get("total"), 6)
+
+        # 7. POST /api/mesh-lab/grade
         conn.request('POST', '/api/mesh-lab/grade')
         res = conn.getresponse()
         data = self.json.loads(res.read().decode('utf-8'))
@@ -169,4 +241,5 @@ class TestMeshZteDispatcherApi(unittest.TestCase):
 if __name__ == "__main__":
     import threading
     unittest.main()
+
 
