@@ -296,121 +296,444 @@
       color: #991b1b;
     }
 
-    /* Toolbar buttons */
-    .topo-toolbar {
+    .workbench-guide-badge {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       WORKBENCH DESK (BÀN THIẾT BỊ VẬT LÝ TƯƠNG TÁC TRỰC TIẾP)
+       ════════════════════════════════════════════════════════════════ */
+    .workbench-desk {
+      width: 100%;
+      height: 108px;
+      background: #090e17;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Optical Hub */
+    .optical-hub {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      border: 1.5px solid #334155;
+      border-radius: 8px;
+      padding: 6px 8px;
+      width: 105px;
+      height: 92px;
+      flex-shrink: 0;
+      text-align: center;
+      gap: 4px;
+    }
+    .optical-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .optical-core-tag {
+      font-size: 8.5px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: #ea580c;
+      background: rgba(234, 88, 12, 0.15);
+      border: 1px solid #c2410c;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Fiber cable connection (Orange line) */
+    .fiber-connector-wire {
+      width: 24px;
+      height: 3.5px;
+      background: #f97316;
+      border-radius: 2px;
+      flex-shrink: 0;
+      position: relative;
+      box-shadow: 0 0 6px rgba(249, 115, 22, 0.6);
+    }
+
+    /* Hardware Chassis Boxes */
+    .hw-chassis {
+      background: #0f172a;
+      border: 1.5px solid #334155;
+      border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 92px;
+      width: 250px;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+    .hw-chassis.controller {
+      border-color: #2563eb;
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
+    }
+    .hw-chassis.agent {
+      border-color: #7c3aed;
+      box-shadow: 0 0 10px rgba(124, 58, 237, 0.2);
+    }
+
+    .hw-chassis-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .hw-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .hw-role-badge {
+      font-size: 7.5px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .hw-role-badge.master {
+      background: #064e3b;
+      color: #6ee7b7;
+      border: 1px solid #059669;
+    }
+    .hw-role-badge.slave {
+      background: #3b0764;
+      color: #d8b4fe;
+      border: 1px solid #7c3aed;
+    }
+
+    /* LEDs & Physical Buttons */
+    .hw-actions-bar {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .hw-leds {
       display: flex;
       align-items: center;
       gap: 6px;
+      font-size: 7.5px;
+      font-family: var(--font-mono);
+      color: #94a3b8;
     }
-
-    .tool-btn {
-      display: inline-flex;
+    .led-item {
+      display: flex;
       align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 600;
-      border-radius: 6px;
+      gap: 3px;
+    }
+    .hw-led {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #334155;
+      display: inline-block;
+      transition: all 0.2s ease;
+    }
+    .hw-led.on {
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+    }
+    .halo-led {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #334155;
+      border: 1.5px solid #475569;
+      display: inline-block;
+      transition: all 0.2s ease;
+    }
+    .halo-led.green { background: #10b981; border-color: #34d399; box-shadow: 0 0 8px #10b981; }
+    .halo-led.blue  { background: #38bdf8; border-color: #7dd3fc; box-shadow: 0 0 8px #38bdf8; }
+    .halo-led.red   { background: #ef4444; border-color: #f87171; box-shadow: 0 0 8px #ef4444; }
+    .halo-led.off   { background: #1e293b; border-color: #334155; box-shadow: none; }
+
+    .hw-btn-wps {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #f1f5f9;
+      font-size: 8.5px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
       cursor: pointer;
-      border: 1px solid var(--border-color);
-      background: #ffffff;
-      color: var(--text-secondary);
       transition: var(--transition);
     }
-    .tool-btn:hover {
-      background: var(--bg-card-subtle);
-      border-color: var(--border-dark);
-      color: var(--text-main);
-    }
-    .tool-btn.active {
-      background: var(--primary-soft);
-      border-color: #93c5fd;
-      color: var(--fpt-blue);
-    }
-    .tool-btn.btn-packet-tracer {
-      background: #fff7ed;
-      border-color: #fdba74;
-      color: #c2410c;
-    }
-    .tool-btn.btn-packet-tracer:hover {
-      background: #ffedd5;
-    }
-    .tool-btn.btn-terminal {
-      background: #0f172a;
-      border-color: #334155;
+    .hw-btn-wps:hover {
+      background: #334155;
+      border-color: #38bdf8;
       color: #38bdf8;
     }
-    .tool-btn.btn-terminal:hover {
-      background: #1e293b;
-    }
-    .tool-btn.btn-wps {
-      background: #faf5ff;
-      border-color: #d8b4fe;
-      color: #6b21a8;
-    }
-    .tool-btn.btn-wps:hover {
-      background: #f3e8ff;
+    .hw-btn-wps:active {
+      transform: scale(0.92);
     }
 
-    /* SVG Canvas Diagram */
-    .topo-canvas-wrap {
+    .hw-switch-btn {
+      background: #064e3b;
+      border: 1px solid #10b981;
+      color: #a7f3d0;
+      font-size: 8.5px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .hw-switch-btn.off {
+      background: #7f1d1d;
+      border-color: #ef4444;
+      color: #fecaca;
+    }
+
+    /* Physical Ports Panel inside Chassis */
+    .hw-ports-panel {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #020617;
+      padding: 3px 6px;
+      border-radius: 5px;
+      border: 1px solid #1e293b;
+    }
+    .ports-title {
+      font-size: 8px;
+      font-weight: 700;
+      color: #64748b;
+      font-family: var(--font-mono);
+    }
+
+    .hw-port-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #1e293b;
+      border: 1.5px solid #475569;
+      color: #94a3b8;
+      font-size: 8.5px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .hw-port-btn:hover {
+      border-color: #38bdf8;
+      color: #f1f5f9;
+    }
+    .hw-port-btn.gold {
+      border-color: #b45309;
+      color: #f59e0b;
+    }
+    .hw-port-btn.blue {
+      border-color: #0369a1;
+      color: #38bdf8;
+    }
+    .hw-port-btn.active-connected {
+      border-color: #10b981 !important;
+      background: #064e3b !important;
+      color: #a7f3d0 !important;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+    .hw-port-btn.bottleneck-connected {
+      border-color: #f59e0b !important;
+      background: #78350f !important;
+      color: #fde68a !important;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+    .port-sub-item {
+      font-size: 8px;
+      font-family: var(--font-mono);
+      color: #475569;
+    }
+
+    .port-pin {
+      font-size: 7px;
+      line-height: 1;
+    }
+
+    .hw-sub-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 8.5px;
+      font-family: var(--font-mono);
+      color: #64748b;
+    }
+
+    /* Cable Bridge between ONT and AP */
+    .hw-bridge-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      position: relative;
+      padding: 0 4px;
+      min-width: 140px;
+    }
+    .cable-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       width: 100%;
-      height: 96px;
-      background: #f8fafc;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      overflow: hidden;
       position: relative;
     }
-
-    svg.topo-svg {
+    .cable-wire-svg {
       width: 100%;
-      height: 100%;
+      height: 22px;
       display: block;
     }
-
-    .svg-node-rect {
-      fill: #ffffff;
-      stroke: #cbd5e1;
-      stroke-width: 1.2;
-      transition: all 0.2s ease;
+    .cable-action-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 2px 8px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .cable-speed-badge {
+      font-size: 9px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .hw-unplug-btn {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #f87171;
+      font-size: 8px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
       cursor: pointer;
+      transition: var(--transition);
     }
-    .svg-node-rect:hover {
-      stroke: var(--fpt-blue);
-      filter: drop-shadow(0 2px 6px rgba(26, 86, 219, 0.15));
-    }
-    .svg-node-rect.selected {
-      stroke: var(--fpt-blue);
-      stroke-width: 2;
+    .hw-unplug-btn:hover {
+      background: #dc2626;
+      border-color: #ef4444;
+      color: #ffffff;
     }
 
-    .link-cable {
-      stroke-width: 3;
-      transition: stroke 0.3s ease;
+    .wireless-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
     }
-    .link-cable.active-eth {
-      stroke: #0284c7;
-      stroke-linecap: round;
+    .wireless-waves {
+      font-size: 14px;
+      color: #a78bfa;
+      animation: pulseWave 1.2s infinite ease-in-out;
     }
-    .link-cable.active-eth-bottleneck {
-      stroke: #f59e0b;
-      stroke-linecap: round;
-      stroke-dasharray: 8, 4;
+    @keyframes pulseWave {
+      0% { opacity: 0.4; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 0.4; transform: scale(0.95); }
     }
-    .link-cable.active-wifi {
-      stroke: #8b5cf6;
-      stroke-dasharray: 6, 6;
-      stroke-linecap: round;
-      animation: dashmove 1.5s linear infinite;
+    .wireless-badge {
+      font-size: 9px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: #c084fc;
+      background: rgba(147, 51, 234, 0.2);
+      border: 1px solid #7c3aed;
+      padding: 1px 6px;
+      border-radius: 4px;
     }
-    .link-cable.broken {
-      stroke: #ef4444;
-      stroke-dasharray: 4, 4;
-      stroke-linecap: round;
+    .wireless-hint {
+      font-size: 8px;
+      color: #94a3b8;
     }
-    @keyframes dashmove {
-      to { stroke-dashoffset: -24; }
+
+    /* Smartphone Client */
+    .hw-phone {
+      background: #020617;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      padding: 4px 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 92px;
+      width: 120px;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .hw-phone:hover {
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(56, 189, 248, 0.25);
+    }
+    .phone-screen {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      height: 100%;
+      justify-content: space-between;
+    }
+    .phone-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 8px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .phone-metric {
+      font-size: 8.5px;
+      font-family: var(--font-mono);
+      color: #cbd5e1;
+      text-align: center;
+    }
+    .phone-metric.good {
+      color: #34d399;
+      font-weight: 700;
+    }
+    .phone-metric.bad {
+      color: #f87171;
+      font-weight: 700;
+    }
+    .phone-run-btn {
+      background: #0284c7;
+      border: none;
+      color: #ffffff;
+      font-size: 8px;
+      font-weight: 700;
+      padding: 3px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .phone-run-btn:hover {
+      background: #0369a1;
     }
 
     /* ════════════════════════════════════════════════════════════════
@@ -952,22 +1275,10 @@
     </div>
 
     <div class="topbar-actions">
-      <!-- Nút Đấu nối cổng kiểu Packet Tracer -->
-      <button id="btn-open-wiring" class="btn-top btn-top-wiring" title="Mô phỏng cắm dây cổng vật lý như Cisco Packet Tracer">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v6m0 8v6M2 12h6m8 0h6"/></svg>
-        <span>🔌 Đấu Nối Cổng (Packet Tracer)</span>
-      </button>
-
       <!-- Nút Nhiệm vụ KTV -->
       <button id="btn-open-missions" class="btn-top btn-top-missions" title="Xem 6 nhiệm vụ thực hành từng bước">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         <span>📋 Hướng Dẫn Từng Bước (<span id="topbar-mission-count">6/6</span>)</span>
-      </button>
-
-      <!-- Nút Terminal chẩn đoán KTV -->
-      <button id="btn-open-terminal" class="btn-top btn-top-terminal" title="Mở Terminal đo kiểm Ping / Speedtest">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-        <span>💻 Terminal Chẩn Đoán</span>
       </button>
 
       <button id="btn-reset-lab" class="btn-top btn-top-reset" title="Khôi phục lại trạng thái mặc định của bài Lab">
@@ -992,14 +1303,14 @@
        ════════════════════════════════════════════════════════════════ -->
   <div class="lab-layout">
 
-    <!-- 1. COMPACT TOPOLOGY PANEL -->
+    <!-- 1. COMPACT TOPOLOGY PANEL (BÀN THIẾT BỊ VẬT LÝ TƯƠNG TÁC TRỰC TIẾP) -->
     <section class="topo-panel">
-      <!-- Header hàng 1: Thông tin liên kết + Thanh công cụ -->
+      <!-- Header hàng 1: Thông tin liên kết + Hướng dẫn tương tác -->
       <div class="topo-header">
         <div class="topo-title-box">
           <h2>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            <span>SƠ ĐỒ ĐẤU NỐI & TƯƠNG TÁC (TOPOLOGY CANVAS)</span>
+            <span>BÀN THỰC HÀNH VẬT LÝ — KỸ THUẬT ĐẤU NỐI & GHÉP CẶP MESH</span>
           </h2>
           <div class="tele-chips">
             <span class="chip good" id="chip-link">Backhaul: ETH 2.5 Gbps</span>
@@ -1007,114 +1318,158 @@
             <span class="chip good" id="chip-traffic">Internet: Thông tuyến</span>
           </div>
         </div>
-
-        <!-- Toolbar nút điều khiển -->
-        <div class="topo-toolbar">
-          <button id="tool-open-wiring" class="tool-btn btn-packet-tracer" title="Mở bảng đấu nối cổng mặt sau">
-            <span>🔌</span> Chọn Cổng Cắm (Cisco-style)
-          </button>
-          <button id="tool-cable-eth" class="tool-btn active" title="Cắm cáp tối ưu LAN 1 (10GE) -> WAN (2.5GE)">
-            <span>⚡</span> Cáp 2.5GE (Chuẩn)
-          </button>
-          <button id="tool-cable-bottleneck" class="tool-btn" title="Cắm nhầm cổng LAN 2 (1GE) - Thử nghiệm nghẽn">
-            <span>⚠️</span> Thử Cổng 1GE
-          </button>
-          <button id="tool-cable-wifi" class="tool-btn" title="Chuyển sang Mesh không dây Wi-Fi 7 MLO">
-            <span>📶</span> Mesh Wi-Fi
-          </button>
-          <button id="tool-cable-cut" class="tool-btn" title="Rút cáp liên kết Backhaul">
-            <span>✂️</span> Rút Dây
-          </button>
-          <button id="tool-power-ap" class="tool-btn" title="Bật hoặc ngắt nguồn AP BE15000Z">
-            <span>⚡</span> <span id="power-text">Tắt Nguồn AP</span>
-          </button>
-          <button id="tool-wps-btn" class="tool-btn btn-wps" title="Bấm nút cứng Mesh/WPS trên thiết bị để ghép cặp">
-            <span>🔘</span> Ghép Cặp (WPS)
-          </button>
+        <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+          <span>💡 <b>KTV thao tác thực tế:</b> Click cổng RJ-45 để cắm cáp • Rút chốt cáp để chạy Wi-Fi MLO • Bật/tắt công tắc nguồn AP • Chạm Smartphone để đo kiểm</span>
         </div>
       </div>
 
-      <!-- Canvas SVG tinh gọn (Height: 96px, ViewBox chuẩn 1150px không đè chữ) -->
-      <div class="topo-canvas-wrap">
-        <svg class="topo-svg" viewBox="0 0 1150 96" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94a3b8" />
-            </marker>
-          </defs>
+      <!-- Workbench Desk (Bàn thiết bị vật lý trực tiếp) -->
+      <div class="workbench-desk">
+        <!-- 1. OPTICAL HUB (FPT Internet Optical Core) -->
+        <div class="optical-hub" title="Tủ cáp quang FPT Telecom (XGS-PON 10Gbps OLT Core)">
+          <div class="optical-title">
+            <span>🌐</span>
+            <span>FPT CORE</span>
+          </div>
+          <span class="optical-core-tag">XGS-PON</span>
+          <div class="hw-sub-info" style="justify-content:center;font-size:7.5px;color:#10b981;">
+            <span class="hw-led on" style="width:5px;height:5px;"></span> PON LINK
+          </div>
+        </div>
 
-          <!-- 1. DÂY NỐI WAN (XGS-PON Fiber: Cloud -> ONT) -->
-          <line x1="150" y1="48" x2="270" y2="48" stroke="#f97316" stroke-width="2.5" stroke-dasharray="4,3" />
-          <text x="210" y="38" fill="#ea580c" font-size="9" font-family="JetBrains Mono" font-weight="600" text-anchor="middle">XGS-PON (10G)</text>
+        <!-- Fiber patch cord (Orange 10G) -->
+        <div class="fiber-connector-wire" title="Dây nhảy quang Singlemode SC/UPC - XGS-PON 10Gbps"></div>
 
-          <!-- 2. DÂY NỐI BACKHAUL (ONT -> AP BE15000Z - Gap rộng 260px) -->
-          <line id="cable-backhaul" class="link-cable active-eth" x1="470" y1="48" x2="730" y2="48" />
-          
-          <!-- Hộp nền nhãn cáp Backhaul tránh bị đè lên khung máy -->
-          <rect id="cable-pill-bg" x="495" y="27" width="210" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2" />
-          <text id="cable-label" x="600" y="41" fill="#0284c7" font-size="9" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">LAN 10GE ↔ WAN 2.5GE</text>
+        <!-- 2. ONT BE12000Z CHASSIS (Controller / Gateway) -->
+        <div id="hw-ont-chassis" class="hw-chassis controller" onclick="selectDeviceTab('be12000')" title="Click khung máy để xem màn hình cài đặt ONT BE12000Z">
+          <div class="hw-chassis-top">
+            <div class="hw-title">
+              <span>🖥️</span>
+              <span>ONT BE12000Z</span>
+              <span class="hw-role-badge master">CONTROLLER</span>
+            </div>
+            <div class="hw-actions-bar">
+              <div class="hw-leds">
+                <span class="led-item"><span class="hw-led on"></span>PWR</span>
+                <span class="led-item"><span class="hw-led on"></span>PON</span>
+                <span class="led-item"><span id="led-ont-lan" class="hw-led on"></span>LAN</span>
+              </div>
+              <button id="hw-ont-wps" class="hw-btn-wps" onclick="event.stopPropagation(); triggerWpsAction();" title="Bấm nút cứng WPS trên thân máy ONT để ghép cặp Mesh">
+                🔘 WPS
+              </button>
+            </div>
+          </div>
 
-          <!-- Xung dữ liệu chạy trên dây cáp -->
-          <circle id="packet-flow" r="3.5" fill="#0284c7" opacity="0.9">
-            <animateMotion id="packet-anim" path="M 470 48 L 730 48" dur="1.5s" repeatCount="indefinite" />
-          </circle>
+          <div class="hw-ports-panel">
+            <span class="ports-title">CỔNG VẬT LÝ:</span>
+            <!-- Port LAN 1 (10GE) -->
+            <button id="hw-port-ont-lan1" class="hw-port-btn gold active-connected" onclick="event.stopPropagation(); userSelectOntPort('LAN1_10GE');" title="Cổng RJ-45 LAN 1 (10Gbps) - Click để cắm cáp tối ưu tốc độ Backhaul">
+              <span class="port-pin">⬡</span> LAN 1 (10GE)
+            </button>
+            <!-- Port LAN 2 (1GE) -->
+            <button id="hw-port-ont-lan2" class="hw-port-btn" onclick="event.stopPropagation(); userSelectOntPort('LAN2_1GE');" title="Cổng RJ-45 LAN 2 (1Gbps) - Click để cắm thử nghiệm nghẽn 1Gbps">
+              <span class="port-pin">⬡</span> LAN 2 (1GE)
+            </button>
+            <span class="port-sub-item">LAN 3</span>
+            <span class="port-sub-item">LAN 4</span>
+          </div>
 
-          <!-- 3. DÂY NỐI CLIENT (AP -> Phone) -->
-          <line x1="930" y1="48" x2="1010" y2="48" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="4,4" />
-          <text x="970" y="38" fill="#7c3aed" font-size="9" font-family="JetBrains Mono" font-weight="600" text-anchor="middle">Wi-Fi 7</text>
+          <div class="hw-sub-info">
+            <span>IP: 192.168.1.1</span>
+            <span id="hw-ont-ssid-text" style="color:#38bdf8;">SSID: FPT_BE12000_WIFI7</span>
+          </div>
+        </div>
 
-          <!-- ════════ NODE 1: FPT INTERNET ════════ -->
-          <g transform="translate(20, 8)">
-            <rect class="svg-node-rect" width="130" height="80" rx="8" />
-            <text x="65" y="25" font-size="16" text-anchor="middle">🌐</text>
-            <text x="65" y="42" fill="#0f172a" font-size="11" font-weight="700" text-anchor="middle">FPT INTERNET</text>
-            <text x="65" y="55" fill="#64748b" font-size="8.5" font-family="JetBrains Mono" text-anchor="middle">OLT Optical Core</text>
-            <rect x="38" y="61" width="54" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
-            <text x="65" y="71" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">ONLINE</text>
-          </g>
+        <!-- 3. CABLE / WIRELESS BRIDGE (Giữa ONT và AP) -->
+        <div class="hw-bridge-wrap">
+          <!-- Khi có dây cáp (Ethernet Backhaul) -->
+          <div id="hw-cable-display" class="cable-view">
+            <svg class="cable-wire-svg" viewBox="0 0 160 22" preserveAspectRatio="none">
+              <path id="hw-cable-path" d="M 0 11 L 160 11" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+              <circle id="hw-cable-pulse" cx="80" cy="11" r="3" fill="#38bdf8">
+                <animate attributeName="cx" from="0" to="160" dur="1.2s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+            <div class="cable-action-pill">
+              <span id="hw-cable-speed" class="cable-speed-badge">⚡ 2.5 Gbps (CAT.6A)</span>
+              <button class="hw-unplug-btn" onclick="userSelectWirelessMesh()" title="Rút chốt dây mạng để kích hoạt Wi-Fi 7 MLO không dây">
+                ✂️ Rút Cáp
+              </button>
+            </div>
+          </div>
 
-          <!-- ════════ NODE 2: ONT BE12000Z (Controller) ════════ -->
-          <g id="node-be12000" transform="translate(270, 8)" onclick="selectDeviceTab('be12000')" style="cursor:pointer;">
-            <rect id="rect-be12000" class="svg-node-rect selected" width="200" height="80" rx="8" />
-            <!-- Header bar tách biệt huy hiệu MASTER -->
-            <rect x="6" y="6" width="188" height="17" rx="3" fill="#eff6ff" />
-            <text x="14" y="18" fill="#1d4ed8" font-size="8.5" font-family="JetBrains Mono" font-weight="700">CONTROLLER (GATEWAY)</text>
-            <rect x="146" y="7" width="44" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
-            <text x="168" y="17" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">MASTER</text>
+          <!-- Khi rút cáp không dây (Wi-Fi 7 MLO) -->
+          <div id="hw-wireless-display" class="wireless-view" style="display:none;">
+            <div class="wireless-waves">((( 📶 )))</div>
+            <span class="wireless-badge">Wi-Fi 7 MLO (1200 Mbps)</span>
+            <span class="wireless-hint">(Bấm cổng LAN ONT để cắm lại dây)</span>
+          </div>
+        </div>
 
-            <!-- Thân node không bị huy hiệu che -->
-            <text x="26" y="52" font-size="20" text-anchor="middle">🖥️</text>
-            <text x="52" y="42" fill="#0f172a" font-size="12" font-weight="700">ONT BE12000Z</text>
-            <text x="52" y="56" fill="#64748b" font-size="9" font-family="JetBrains Mono">IP: 192.168.1.1</text>
-            <text id="node-be12000-ssid" x="52" y="69" fill="#0284c7" font-size="8.5" font-family="JetBrains Mono">SSID: FPT_BE12000_WIFI7</text>
-          </g>
+        <!-- 4. AP BE15000Z CHASSIS (Agent / Repeater) -->
+        <div id="hw-ap-chassis" class="hw-chassis agent" onclick="selectDeviceTab('be15000')" title="Click khung máy để xem màn hình cài đặt AP BE15000Z">
+          <div class="hw-chassis-top">
+            <div class="hw-title">
+              <span>📡</span>
+              <span>AP BE15000Z</span>
+              <span id="hw-ap-role-badge" class="hw-role-badge slave">SLAVE</span>
+            </div>
+            <div class="hw-actions-bar">
+              <div class="hw-leds" title="Đèn trạng thái Halo LED đa sắc: Xanh lá (Tối ưu), Lam (Wi-Fi MLO), Đỏ (Lỗi/Nghẽn)">
+                <span class="led-item">HALO:</span>
+                <span id="led-ap-halo" class="halo-led green"></span>
+              </div>
+              <button id="hw-ap-power-switch" class="hw-switch-btn" onclick="event.stopPropagation(); toggleApPower();" title="Bấm công tắc rocker 12V DC phía sau AP để Bật/Tắt nguồn">
+                ⚡ 12V BẬT
+              </button>
+              <button id="hw-ap-wps" class="hw-btn-wps" onclick="event.stopPropagation(); triggerWpsAction();" title="Bấm nút cứng WPS trên AP để ghép cặp">
+                🔘 WPS
+              </button>
+            </div>
+          </div>
 
-          <!-- ════════ NODE 3: AP BE15000Z (Agent) ════════ -->
-          <g id="node-be15000" transform="translate(730, 8)" onclick="selectDeviceTab('be15000')" style="cursor:pointer;">
-            <rect id="rect-be15000" class="svg-node-rect" width="200" height="80" rx="8" />
-            <!-- Header bar tách biệt huy hiệu SLAVE -->
-            <rect x="6" y="6" width="188" height="17" rx="3" fill="#f5f3ff" />
-            <text x="14" y="18" fill="#6d28d9" font-size="8.5" font-family="JetBrains Mono" font-weight="700">AGENT (REPEATER)</text>
-            <rect id="badge-be15000" x="150" y="7" width="40" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
-            <text id="text-be15000-status" x="170" y="17" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">SLAVE</text>
+          <div class="hw-ports-panel">
+            <span class="ports-title">CỔNG AP:</span>
+            <!-- Port WAN (2.5GE) -->
+            <button id="hw-port-ap-wan" class="hw-port-btn blue active-connected" onclick="event.stopPropagation(); userSelectApPort('WAN_25GE');" title="Cổng RJ-45 WAN (2.5Gbps) - Cổng nhận tín hiệu chính">
+              <span class="port-pin">⬡</span> WAN (2.5GE)
+            </button>
+            <!-- Port LAN (1GE) -->
+            <button id="hw-port-ap-lan" class="hw-port-btn" onclick="event.stopPropagation(); userSelectApPort('LAN_1GE');" title="Cổng RJ-45 LAN (1Gbps) - Dành cho PC phụ">
+              <span class="port-pin">⬡</span> LAN (1GE)
+            </button>
+          </div>
 
-            <!-- Thân node không bị huy hiệu che -->
-            <text id="icon-be15000" x="26" y="52" font-size="20" text-anchor="middle">📡</text>
-            <text x="52" y="42" fill="#0f172a" font-size="12" font-weight="700">AP BE15000Z</text>
-            <text id="node-be15000-ip" x="52" y="56" fill="#64748b" font-size="9" font-family="JetBrains Mono">IP: 192.168.1.100</text>
-            <text id="node-be15000-ssid" x="52" y="69" fill="#7c3aed" font-size="8.5" font-family="JetBrains Mono">SSID: Đồng bộ</text>
-          </g>
+          <div class="hw-sub-info">
+            <span id="hw-ap-ip-text">IP: 192.168.1.100</span>
+            <span id="hw-ap-ssid-text" style="color:#c084fc;">SSID: FPT_BE12000_WIFI7</span>
+          </div>
+        </div>
 
-          <!-- ════════ NODE 4: CLIENT PHONE ════════ -->
-          <g transform="translate(1010, 8)">
-            <rect class="svg-node-rect" width="95" height="80" rx="8" />
-            <text x="47" y="24" font-size="16" text-anchor="middle">📱</text>
-            <text x="47" y="40" fill="#0f172a" font-size="10.5" font-weight="700" text-anchor="middle">CLIENT</text>
-            <text id="node-client-ip" x="47" y="54" fill="#64748b" font-size="8" font-family="JetBrains Mono" text-anchor="middle">192.168.1.150</text>
-            <rect id="badge-client" x="18" y="61" width="58" height="13" rx="3" fill="#ecfdf5" stroke="#a7f3d0" />
-            <text id="text-client-status" x="47" y="71" fill="#065f46" font-size="7.5" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">PING: 1ms</text>
-          </g>
-        </svg>
+        <!-- Wireless link to phone -->
+        <div style="font-size:16px;color:#a855f7;animation:pulseWave 1.5s infinite ease-in-out;" title="Kết nối sóng Wi-Fi 7 Client">
+          »»
+        </div>
+
+        <!-- 5. SMARTPHONE CLIENT (KTV Pocket Device) -->
+        <div class="hw-phone" onclick="openTerminalModal()" title="Chạm vào điện thoại để mở ứng dụng đo kiểm Ping / Speedtest">
+          <div class="phone-screen">
+            <div class="phone-header">
+              <span>📱 KTV PHONE</span>
+              <span style="color:#10b981;">Wi-Fi 7</span>
+            </div>
+            <div style="font-size:8px;color:#94a3b8;font-family:var(--font-mono);text-align:center;">
+              192.168.1.150
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:1px 0;">
+              <span id="phone-ping-val" class="phone-metric good">1 ms</span>
+              <span id="phone-speed-val" class="phone-metric good">2.35 Gbps</span>
+            </div>
+            <button class="phone-run-btn" onclick="event.stopPropagation(); openTerminalModal();">
+              ⚡ ĐO KIỂM PING / SPEED
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1455,104 +1810,201 @@ Type 'help' or click the buttons above to test network connectivity.
     }
 
     function updateTopologyVisuals(st) {
-      const cable = document.getElementById('cable-backhaul');
-      const cableLabel = document.getElementById('cable-label');
-      const packetFlow = document.getElementById('packet-flow');
-      const icon15000 = document.getElementById('icon-be15000');
-      const badge15000 = document.getElementById('badge-be15000');
-      const text15000Status = document.getElementById('text-be15000-status');
-      const textPower = document.getElementById('power-text');
-      
       const chipLink = document.getElementById('chip-link');
       const chipLatency = document.getElementById('chip-latency');
       const chipTraffic = document.getElementById('chip-traffic');
 
-      // Cập nhật text nút nguồn AP
-      textPower.textContent = st.ap_power ? 'Tắt Nguồn AP' : 'Bật Nguồn AP';
+      // 1. ONT BE12000Z Chassis
+      const ontSsid = document.getElementById('hw-ont-ssid-text');
+      if (ontSsid) ontSsid.textContent = 'SSID: ' + (st.ont_wifi_ssid || 'FPT_BE12000_WIFI7');
 
-      // Cập nhật SSID hiển thị trên node
-      document.getElementById('node-be12000-ssid').textContent = 'SSID: ' + (st.ont_wifi_ssid || 'FPT_BE12000');
-      document.getElementById('node-be15000-ssid').textContent = 'SSID: ' + (st.ap_synced_ssid || 'FPT_BE12000');
-      document.getElementById('node-client-ip').textContent = st.client_ip_current;
-
-      // Cập nhật đường cáp Backhaul
-      const cablePill = document.getElementById('cable-pill-bg');
-      cable.className.baseVal = 'link-cable';
-      if (!st.ap_power || st.link_type === 'NONE') {
-        cable.classList.add('broken');
-        cableLabel.textContent = 'MẤT KẾT NỐI (Link Down)';
-        cableLabel.setAttribute('fill', '#ef4444');
-        if (cablePill) { cablePill.setAttribute('stroke', '#fecaca'); cablePill.setAttribute('fill', '#fef2f2'); }
-        packetFlow.style.display = 'none';
-        chipLink.textContent = 'Backhaul: Mất kết nối';
-        chipLink.className = 'chip bad';
-      } else if (st.link_type === 'WIFI') {
-        cable.classList.add('active-wifi');
-        cableLabel.textContent = 'Wi-Fi 7 MLO (1200 Mbps)';
-        cableLabel.setAttribute('fill', '#7c3aed');
-        if (cablePill) { cablePill.setAttribute('stroke', '#ddd6fe'); cablePill.setAttribute('fill', '#f5f3ff'); }
-        packetFlow.style.display = 'block';
-        packetFlow.setAttribute('fill', '#8b5cf6');
-        chipLink.textContent = 'Backhaul: Wi-Fi MLO (1200M)';
-        chipLink.className = 'chip warn';
-      } else {
-        // Cáp Ethernet: kiểm tra tối ưu hay nghẽn 1Gbps
-        if (st.is_optimal_wiring) {
-          cable.classList.add('active-eth');
-          cableLabel.textContent = 'LAN 1 (10GE) ↔ WAN (2.5GE)';
-          cableLabel.setAttribute('fill', '#0284c7');
-          if (cablePill) { cablePill.setAttribute('stroke', '#bfdbfe'); cablePill.setAttribute('fill', '#eff6ff'); }
-          packetFlow.style.display = 'block';
-          packetFlow.setAttribute('fill', '#0284c7');
-          chipLink.textContent = 'Backhaul: ETH 2.5 Gbps (Tối ưu)';
-          chipLink.className = 'chip good';
+      const ledOntLan = document.getElementById('led-ont-lan');
+      if (ledOntLan) {
+        if (st.link_type === 'ETH' && st.ap_power) {
+          ledOntLan.className = 'hw-led on';
         } else {
-          cable.classList.add('active-eth-bottleneck');
-          cableLabel.textContent = `${st.ont_port_info.name} ↔ ${st.ap_port_info.name} [Nghẽn 1G]`;
-          cableLabel.setAttribute('fill', '#d97706');
-          if (cablePill) { cablePill.setAttribute('stroke', '#fde68a'); cablePill.setAttribute('fill', '#fffbeb'); }
-          packetFlow.style.display = 'block';
-          packetFlow.setAttribute('fill', '#f59e0b');
-          chipLink.textContent = 'Backhaul: ETH 1.0 Gbps (Nghẽn cổng)';
-          chipLink.className = 'chip warn';
+          ledOntLan.className = 'hw-led';
         }
       }
 
-      // Cập nhật Node AP
-      if (st.is_ap_online) {
-        icon15000.textContent = '📡';
-        badge15000.setAttribute('fill', '#ecfdf5');
-        badge15000.setAttribute('stroke', '#a7f3d0');
-        text15000Status.setAttribute('fill', '#065f46');
-        text15000Status.textContent = 'SLAVE';
-        document.getElementById('rect-be15000').style.stroke = '#10b981';
-      } else {
-        icon15000.textContent = '❌';
-        badge15000.setAttribute('fill', '#fef2f2');
-        badge15000.setAttribute('stroke', '#fecaca');
-        text15000Status.setAttribute('fill', '#991b1b');
-        text15000Status.textContent = st.ap_power ? 'OFFLINE' : '0V (OFF)';
-        document.getElementById('rect-be15000').style.stroke = '#ef4444';
+      const portOnt1 = document.getElementById('hw-port-ont-lan1');
+      const portOnt2 = document.getElementById('hw-port-ont-lan2');
+      if (portOnt1) portOnt1.classList.remove('active-connected', 'bottleneck-connected');
+      if (portOnt2) portOnt2.classList.remove('active-connected', 'bottleneck-connected');
+
+      if (st.link_type === 'ETH' && st.ap_power) {
+        if (st.ont_port === 'LAN1_10GE') {
+          if (portOnt1) portOnt1.classList.add(st.is_optimal_wiring ? 'active-connected' : 'bottleneck-connected');
+        } else if (st.ont_port === 'LAN2_1GE') {
+          if (portOnt2) portOnt2.classList.add('bottleneck-connected');
+        }
       }
 
-      // Cập nhật Telemetry
-      chipLatency.textContent = st.latency_ms < 900 ? `Ping: ${st.latency_ms} ms` : 'Ping: Timeout (∞)';
-      chipLatency.className = st.latency_ms < 5 ? 'chip good' : (st.latency_ms < 20 ? 'chip warn' : 'chip bad');
+      // 2. Cable Bridge / Wireless View
+      const cableDisplay = document.getElementById('hw-cable-display');
+      const wirelessDisplay = document.getElementById('hw-wireless-display');
+      const cablePath = document.getElementById('hw-cable-path');
+      const cablePulse = document.getElementById('hw-cable-pulse');
+      const cableSpeed = document.getElementById('hw-cable-speed');
 
-      if (st.client_internet) {
-        chipTraffic.textContent = 'Internet: Thông tuyến';
-        chipTraffic.className = 'chip good';
-        document.getElementById('badge-client').setAttribute('fill', '#ecfdf5');
-        document.getElementById('badge-client').setAttribute('stroke', '#a7f3d0');
-        document.getElementById('text-client-status').setAttribute('fill', '#065f46');
-        document.getElementById('text-client-status').textContent = 'PING: 1ms';
+      if (st.link_type === 'ETH' && st.ap_power) {
+        if (cableDisplay) cableDisplay.style.display = 'flex';
+        if (wirelessDisplay) wirelessDisplay.style.display = 'none';
+        if (cablePulse) cablePulse.style.display = 'block';
+
+        if (st.is_optimal_wiring) {
+          if (cablePath) cablePath.setAttribute('stroke', '#0284c7');
+          if (cablePulse) cablePulse.setAttribute('fill', '#38bdf8');
+          if (cableSpeed) {
+            cableSpeed.textContent = '⚡ 2.5 Gbps (CAT.6A)';
+            cableSpeed.style.color = '#38bdf8';
+          }
+          if (chipLink) {
+            chipLink.textContent = 'Backhaul: ETH 2.5 Gbps (Tối ưu)';
+            chipLink.className = 'chip good';
+          }
+        } else {
+          if (cablePath) cablePath.setAttribute('stroke', '#f59e0b');
+          if (cablePulse) cablePulse.setAttribute('fill', '#fbbf24');
+          if (cableSpeed) {
+            cableSpeed.textContent = '⚠️ 1.0 Gbps (Nghẽn cổng)';
+            cableSpeed.style.color = '#f59e0b';
+          }
+          if (chipLink) {
+            chipLink.textContent = 'Backhaul: ETH 1.0 Gbps (Nghẽn cổng)';
+            chipLink.className = 'chip warn';
+          }
+        }
+      } else if (st.link_type === 'WIFI' && st.ap_power) {
+        if (cableDisplay) cableDisplay.style.display = 'none';
+        if (wirelessDisplay) wirelessDisplay.style.display = 'flex';
+        if (chipLink) {
+          chipLink.textContent = 'Backhaul: Wi-Fi MLO (1200M)';
+          chipLink.className = 'chip warn';
+        }
       } else {
-        chipTraffic.textContent = 'Internet: Mất mạng';
-        chipTraffic.className = 'chip bad';
-        document.getElementById('badge-client').setAttribute('fill', '#fef2f2');
-        document.getElementById('badge-client').setAttribute('stroke', '#fecaca');
-        document.getElementById('text-client-status').setAttribute('fill', '#991b1b');
-        document.getElementById('text-client-status').textContent = 'NO CARRIER';
+        // Link down or power off
+        if (cableDisplay) cableDisplay.style.display = 'flex';
+        if (wirelessDisplay) wirelessDisplay.style.display = 'none';
+        if (cablePath) cablePath.setAttribute('stroke', '#ef4444');
+        if (cablePulse) cablePulse.style.display = 'none';
+        if (cableSpeed) {
+          cableSpeed.textContent = '❌ Mất kết nối (Link Down)';
+          cableSpeed.style.color = '#ef4444';
+        }
+        if (chipLink) {
+          chipLink.textContent = 'Backhaul: Mất kết nối';
+          chipLink.className = 'chip bad';
+        }
+      }
+
+      // 3. AP BE15000Z Chassis
+      const pwrSwitch = document.getElementById('hw-ap-power-switch');
+      if (pwrSwitch) {
+        if (st.ap_power) {
+          pwrSwitch.className = 'hw-switch-btn';
+          pwrSwitch.textContent = '⚡ 12V BẬT';
+        } else {
+          pwrSwitch.className = 'hw-switch-btn off';
+          pwrSwitch.textContent = '🔌 12V TẮT';
+        }
+      }
+
+      const haloLed = document.getElementById('led-ap-halo');
+      if (haloLed) {
+        if (!st.ap_power) {
+          haloLed.className = 'halo-led off';
+        } else if (st.is_ap_online) {
+          if (st.link_type === 'ETH') {
+            haloLed.className = 'halo-led ' + (st.is_optimal_wiring ? 'green' : 'red');
+          } else if (st.link_type === 'WIFI') {
+            haloLed.className = 'halo-led blue';
+          } else {
+            haloLed.className = 'halo-led red';
+          }
+        } else {
+          haloLed.className = 'halo-led red';
+        }
+      }
+
+      const apRoleBadge = document.getElementById('hw-ap-role-badge');
+      if (apRoleBadge) {
+        if (st.is_ap_online) {
+          apRoleBadge.textContent = 'SLAVE';
+          apRoleBadge.className = 'hw-role-badge slave';
+          apRoleBadge.style.background = '';
+          apRoleBadge.style.color = '';
+        } else {
+          apRoleBadge.textContent = st.ap_power ? 'OFFLINE' : '0V (OFF)';
+          apRoleBadge.className = 'hw-role-badge';
+          apRoleBadge.style.background = '#7f1d1d';
+          apRoleBadge.style.color = '#fecaca';
+        }
+      }
+
+      const portApWan = document.getElementById('hw-port-ap-wan');
+      const portApLan = document.getElementById('hw-port-ap-lan');
+      if (portApWan) portApWan.classList.remove('active-connected', 'bottleneck-connected');
+      if (portApLan) portApLan.classList.remove('active-connected', 'bottleneck-connected');
+
+      if (st.link_type === 'ETH' && st.ap_power) {
+        if (st.ap_port === 'WAN_25GE') {
+          if (portApWan) portApWan.classList.add(st.is_optimal_wiring ? 'active-connected' : 'bottleneck-connected');
+        } else if (st.ap_port === 'LAN_1GE') {
+          if (portApLan) portApLan.classList.add('bottleneck-connected');
+        }
+      }
+
+      const apIpText = document.getElementById('hw-ap-ip-text');
+      if (apIpText) apIpText.textContent = 'IP: ' + st.ap_ip;
+      const apSsidText = document.getElementById('hw-ap-ssid-text');
+      if (apSsidText) apSsidText.textContent = 'SSID: ' + (st.ap_synced_ssid || 'FPT_BE12000_WIFI7');
+
+      // 4. Smartphone Client
+      const phonePing = document.getElementById('phone-ping-val');
+      if (phonePing) {
+        if (st.latency_ms < 900) {
+          phonePing.textContent = st.latency_ms + ' ms';
+          phonePing.className = 'phone-metric good';
+        } else {
+          phonePing.textContent = 'Timeout';
+          phonePing.className = 'phone-metric bad';
+        }
+      }
+
+      const phoneSpeed = document.getElementById('phone-speed-val');
+      if (phoneSpeed) {
+        if (!st.client_internet) {
+          phoneSpeed.textContent = '0 Mbps';
+          phoneSpeed.className = 'phone-metric bad';
+        } else if (st.link_type === 'ETH') {
+          if (st.is_optimal_wiring) {
+            phoneSpeed.textContent = '2.35 Gbps';
+            phoneSpeed.className = 'phone-metric good';
+          } else {
+            phoneSpeed.textContent = '940 Mbps';
+            phoneSpeed.className = 'phone-metric warn';
+          }
+        } else {
+          phoneSpeed.textContent = '1.15 Gbps';
+          phoneSpeed.className = 'phone-metric good';
+        }
+      }
+
+      // Telemetry Chips
+      if (chipLatency) {
+        chipLatency.textContent = st.latency_ms < 900 ? `Ping: ${st.latency_ms} ms` : 'Ping: Timeout (∞)';
+        chipLatency.className = st.latency_ms < 5 ? 'chip good' : (st.latency_ms < 20 ? 'chip warn' : 'chip bad');
+      }
+
+      if (chipTraffic) {
+        if (st.client_internet) {
+          chipTraffic.textContent = 'Internet: Thông tuyến';
+          chipTraffic.className = 'chip good';
+        } else {
+          chipTraffic.textContent = 'Internet: Mất mạng';
+          chipTraffic.className = 'chip bad';
+        }
       }
     }
 
@@ -1648,24 +2100,47 @@ Type 'help' or click the buttons above to test network connectivity.
       const btn15 = document.getElementById('tab-btn-be15000');
       const f12 = document.getElementById('frame-be12000');
       const f15 = document.getElementById('frame-be15000');
-      const r12 = document.getElementById('rect-be12000');
-      const r15 = document.getElementById('rect-be15000');
+      const ontChassis = document.getElementById('hw-ont-chassis');
+      const apChassis = document.getElementById('hw-ap-chassis');
 
       if (tab === 'be12000') {
-        btn12.classList.add('active');
-        btn15.classList.remove('active');
-        f12.style.display = 'block';
-        f15.style.display = 'none';
-        r12.classList.add('selected');
-        r15.classList.remove('selected');
+        if (btn12) btn12.classList.add('active');
+        if (btn15) btn15.classList.remove('active');
+        if (f12) f12.style.display = 'block';
+        if (f15) f15.style.display = 'none';
+        if (ontChassis) {
+          ontChassis.style.borderColor = '#2563eb';
+          ontChassis.style.boxShadow = '0 0 12px rgba(37, 99, 235, 0.4)';
+        }
+        if (apChassis) {
+          apChassis.style.borderColor = '#334155';
+          apChassis.style.boxShadow = 'none';
+        }
       } else {
-        btn15.classList.add('active');
-        btn12.classList.remove('active');
-        f15.style.display = 'block';
-        f12.style.display = 'none';
-        r15.classList.add('selected');
-        r12.classList.remove('selected');
+        if (btn15) btn15.classList.add('active');
+        if (btn12) btn12.classList.remove('active');
+        if (f15) f15.style.display = 'block';
+        if (f12) f12.style.display = 'none';
+        if (apChassis) {
+          apChassis.style.borderColor = '#7c3aed';
+          apChassis.style.boxShadow = '0 0 12px rgba(124, 58, 237, 0.4)';
+        }
+        if (ontChassis) {
+          ontChassis.style.borderColor = '#334155';
+          ontChassis.style.boxShadow = 'none';
+        }
       }
+    }
+
+    function toggleApPower() {
+      const nextPower = !meshState.ap_power;
+      sendAction('power', { power: nextPower });
+      showToast(nextPower ? '⚡ Đã bật công tắc nguồn 12V AP BE15000Z' : '🔌 Đã ngắt công tắc nguồn điện AP BE15000Z');
+    }
+
+    function triggerWpsAction() {
+      sendAction('wps');
+      showToast('🔘 Đã bấm nút cứng WPS trên thiết bị — Bắt đầu ghép cặp EasyMesh...');
     }
 
     function reloadActiveFrame() {
@@ -1871,59 +2346,33 @@ Type 'help' or click the buttons above to test network connectivity.
     }
 
     // BUTTON EVENT LISTENERS
-    document.getElementById('btn-open-wiring').addEventListener('click', openWiringModal);
-    document.getElementById('tool-open-wiring').addEventListener('click', openWiringModal);
-    document.getElementById('btn-open-missions').addEventListener('click', openMissionsModal);
-    document.getElementById('btn-open-terminal').addEventListener('click', openTerminalModal);
+    const btnMissions = document.getElementById('btn-open-missions');
+    if (btnMissions) btnMissions.addEventListener('click', openMissionsModal);
 
-    document.getElementById('tool-cable-eth').addEventListener('click', () => {
-      userSelectOptimalWiring();
-    });
-
-    document.getElementById('tool-cable-bottleneck').addEventListener('click', () => {
-      userSelectBottleneckWiring();
-    });
-
-    document.getElementById('tool-cable-wifi').addEventListener('click', () => {
-      userSelectWirelessMesh();
-    });
-
-    document.getElementById('tool-cable-cut').addEventListener('click', () => {
-      document.querySelectorAll('.topo-toolbar .tool-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('tool-cable-cut').classList.add('active');
-      sendAction('link', { link_type: 'NONE' });
-      showToast('✂️ Đã rút cáp liên kết Backhaul');
-    });
-
-    document.getElementById('tool-power-ap').addEventListener('click', () => {
-      const nextPower = !meshState.ap_power;
-      sendAction('power', { power: nextPower });
-      showToast(nextPower ? '⚡ Đã bật nguồn AP BE15000Z' : '🔌 Đã ngắt nguồn điện AP BE15000Z');
-    });
-
-    document.getElementById('tool-wps-btn').addEventListener('click', () => {
-      sendAction('wps');
-      showToast('🔘 Đã bấm nút Mesh/WPS — Đang ghép cặp tự động');
-    });
-
-    document.getElementById('btn-reset-lab').addEventListener('click', () => {
-      if (confirm('Bạn có chắc chắn muốn Reset toàn bộ mô hình và trạng thái thiết bị?')) {
-        sendAction('reset');
-        showToast('🔄 Đã khôi phục cài đặt gốc toàn bộ bài Lab');
-      }
-    });
+    const btnReset = document.getElementById('btn-reset-lab');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        if (confirm('Bạn có chắc chắn muốn Reset toàn bộ mô hình và trạng thái thiết bị?')) {
+          sendAction('reset');
+          showToast('🔄 Đã khôi phục cài đặt gốc toàn bộ bài Lab');
+        }
+      });
+    }
 
     // GRADING MODAL
-    document.getElementById('btn-grade-lab').addEventListener('click', async () => {
-      try {
-        const res = await fetch('/api/mesh-lab/grade', { method: 'POST' });
-        if (!res.ok) return;
-        const data = await res.json();
-        renderGradingModal(data);
-      } catch (e) {
-        showToast('Lỗi khi chấm điểm bài lab');
-      }
-    });
+    const btnGrade = document.getElementById('btn-grade-lab');
+    if (btnGrade) {
+      btnGrade.addEventListener('click', async () => {
+        try {
+          const res = await fetch('/api/mesh-lab/grade', { method: 'POST' });
+          if (!res.ok) return;
+          const data = await res.json();
+          renderGradingModal(data);
+        } catch (e) {
+          showToast('Lỗi khi chấm điểm bài lab');
+        }
+      });
+    }
 
     function renderGradingModal(data) {
       const modal = document.getElementById('grade-modal');
