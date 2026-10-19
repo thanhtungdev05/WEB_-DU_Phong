@@ -256,7 +256,7 @@ class H(BaseHTTPRequestHandler):
                     txt = render.sua_ipbandw_add(txt)
                 if "ipbmac.htm" in rl:
                     txt = render.sua_ipbmac_add(txt)
-                if "ENET.SHT" in rl or "enet.sht" in rl.lower():
+                if "ENET.SHT" in rl or "enet.sht" in rl.lower() or "lan_dt_1.html" in rl:
                     txt = render.sua_enet_sht(txt)
                 if "p2_188.html" in rl:
                     txt = render.sua_policyrt_detail(txt, params.get("iPRIdx") if params else None)

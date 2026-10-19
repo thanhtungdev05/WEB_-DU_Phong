@@ -104,7 +104,31 @@ vm.runInNewContext(lessonCode, sandboxLesson);
 const lesson = sandboxLesson.window.DEVICE_VIGOR2927_LESSONS.find(l => l.id === 'vg2927-bai5');
 assert.ok(lesson, 'Phải tìm thấy bài học vg2927-bai5');
 assert.strictEqual(lesson.guidePopups.length, 6, 'lesson.guidePopups phải có đúng 6 bước');
-console.log('✔ Đồng bộ 100% với devices/vigor2927/lessons/bai5.js.\n');
+// 4. Kiểm tra logic auto-scroll và click hook nút OK
+console.log('--- 4. Kiểm tra auto-scroll và click hook nút OK ---');
+let scrolled = false;
+let clickHandler = null;
+const mockBtn = {
+  scrollIntoView: function() { scrolled = true; },
+  addEventListener: function(event, handler) {
+    if (event === 'click') clickHandler = handler;
+  }
+};
+const docForScroll = {
+  _ftcIsSaved: false,
+  querySelector: function(sel) {
+    if (sel === 'input[name="sDNSPri"]') return { value: '210.245.31.220', addEventListener: function() {} };
+    if (sel === 'input[name="sDNSSnd"]') return { value: '8.8.8.8', addEventListener: function() {} };
+    if (sel.includes('btnOK')) return mockBtn;
+    return null;
+  }
+};
+assert.strictEqual(tooltips[5].condition(docForScroll), true, 'B6 phải trả về true khi đã điền đúng 2 DNS');
+assert.strictEqual(scrolled, true, 'B6 phải tự động gọi scrollIntoView tới nút OK');
+assert.ok(typeof clickHandler === 'function', 'B6 phải gắn click handler cho nút OK');
+clickHandler();
+assert.strictEqual(docForScroll._ftcIsSaved, true, 'Click nút OK phải đánh dấu _ftcIsSaved');
+console.log('✔ Tự động cuộn tới nút OK và hook lưu cấu hình hoạt động chính xác.\n');
 
 console.log('================================================================');
 console.log('TẤT CẢ KIỂM THỬ TOOLTIP BÀI 5 ĐÃ VƯỢT QUA XUẤT SẮC (PASSED 100%)');
