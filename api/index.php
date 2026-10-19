@@ -1375,11 +1375,22 @@ function roster_batch_id(): string
     return 'ktv-roster-' . (new DateTimeImmutable('now', $timezone))->format('Ymd-His') . '-' . bin2hex(random_bytes(4));
 }
 
+final class RosterUploadException extends RuntimeException
+{
+    public function __construct(
+        public readonly int $httpStatus,
+        public readonly string $failureCode,
+        string $message
+    ) {
+        parent::__construct($message);
+    }
+}
+
 function roster_uploaded_file(): array
 {
     $file = $_FILES['file'] ?? $_FILES['workbook'] ?? null;
     if (!is_array($file)) {
-        fail(400, 'bad-request', 'Missing roster import file.');
+        throw new RosterUploadException(400, 'bad-request', 'Missing roster import file.');
     }
     $error = (int)($file['error'] ?? UPLOAD_ERR_NO_FILE);
     if ($error !== UPLOAD_ERR_OK) {
@@ -1389,19 +1400,19 @@ function roster_uploaded_file(): array
             UPLOAD_ERR_NO_FILE => 'Missing roster import file.',
             default => 'Unable to receive uploaded file.',
         };
-        fail(400, 'upload-error', $message);
+        throw new RosterUploadException(400, 'upload-error', $message);
     }
     $maximumBytes = env_int('ROSTER_IMPORT_MAX_BYTES', 5 * 1024 * 1024, 1024, 20 * 1024 * 1024);
     if ((int)($file['size'] ?? 0) > $maximumBytes) {
-        fail(413, 'payload-too-large', 'Roster import file exceeds the allowed size.');
+        throw new RosterUploadException(413, 'payload-too-large', 'Roster import file exceeds the allowed size.');
     }
     $name = (string)($file['name'] ?? '');
     if (!preg_match('/\.xlsx$/i', $name)) {
-        fail(400, 'bad-request', 'Roster import file must be an .xlsx workbook.');
+        throw new RosterUploadException(400, 'bad-request', 'Roster import file must be an .xlsx workbook.');
     }
     $path = (string)($file['tmp_name'] ?? '');
     if ($path === '' || !is_uploaded_file($path)) {
-        fail(400, 'upload-error', 'Uploaded roster file is not available.');
+        throw new RosterUploadException(400, 'upload-error', 'Uploaded roster file is not available.');
     }
     return [
         'path' => $path,
@@ -1725,9 +1736,53 @@ function roster_filter_facets(PDO $pdo): array
     return $facets;
 }
 
+function roster_failed_import_result(string $batch, int $totalRows, string $stage, array $errors): array
+{
+    $details = [];
+    foreach ($errors as $error) {
+        $detail = is_array($error) ? $error : ['message' => (string)$error];
+        $detail['stage'] = $detail['stage'] ?? $stage;
+        $details[] = $detail;
+    }
+    return [
+        'batch_id' => $batch,
+        'status' => 'failed',
+        'total_rows' => $totalRows,
+        'inserted' => 0,
+        'updated' => 0,
+        'unchanged' => 0,
+        'terminated' => 0,
+        'reactivated' => 0,
+        'error_count' => count($details),
+        'errors' => $details,
+        'changes' => [],
+    ];
+}
+
+function roster_log_failed_import(
+    PDO $pdo,
+    array $actor,
+    string $batch,
+    ?string $fileName,
+    int $totalRows,
+    string $stage,
+    array $errors
+): void {
+    try {
+        $importedBy = ktv_roster_existing_imported_by($pdo, $actor['user_id'] ?? null);
+        ktv_roster_log_import(
+            $pdo,
+            roster_failed_import_result($batch, $totalRows, $stage, $errors),
+            $importedBy,
+            $fileName
+        );
+    } catch (Throwable $exception) {
+        report_exception($exception, 'roster-import-failure-log');
+    }
+}
+
 function handle_roster_import(array $actor): void
 {
-    $file = roster_uploaded_file();
     $dryRun = roster_parse_bool_query('dry_run') || roster_parse_bool_query('dryRun');
     $batch = trim((string)($_POST['batch_id'] ?? $_POST['batchId'] ?? $_GET['batch_id'] ?? ''));
     if ($batch === '') {
@@ -1737,27 +1792,47 @@ function handle_roster_import(array $actor): void
         fail(400, 'bad-request', 'Invalid roster batch id.');
     }
 
+    $pdo = db();
+    try {
+        $file = roster_uploaded_file();
+    } catch (RosterUploadException $exception) {
+        $uploaded = $_FILES['file'] ?? $_FILES['workbook'] ?? null;
+        $fileName = is_array($uploaded) ? trim((string)($uploaded['name'] ?? '')) : null;
+        roster_log_failed_import(
+            $pdo,
+            $actor,
+            $batch,
+            $fileName !== '' ? $fileName : null,
+            0,
+            'upload',
+            [['message' => $exception->getMessage()]]
+        );
+        fail($exception->httpStatus, $exception->failureCode, $exception->getMessage());
+    }
     try {
         $parsed = parse_ktv_roster_xlsx($file['path']);
     } catch (Throwable $exception) {
+        roster_log_failed_import(
+            $pdo,
+            $actor,
+            $batch,
+            $file['name'],
+            0,
+            'parse',
+            [['message' => $exception->getMessage()]]
+        );
         fail(400, 'bad-workbook', $exception->getMessage());
     }
 
-    $pdo = db();
     $parseErrors = $parsed['errors'] ?? [];
     $parsedRows = $parsed['rows'] ?? [];
-    $terminationRows = $parsed['termination_rows'] ?? [];
-    $importMode = ($parsed['import_mode'] ?? 'snapshot') === 'delta' ? 'delta' : 'snapshot';
-    $terminateMissing = $importMode === 'snapshot';
-    $validRowCount = count($parsedRows) + count($terminationRows);
+    $validRowCount = count($parsedRows);
     if ($dryRun) {
         $preview = sync_ktv_roster(
             $pdo,
             $parsedRows,
             $batch,
-            true,
-            $terminationRows,
-            $terminateMissing
+            true
         );
         $preview['errors'] = array_merge($parseErrors, $preview['errors'] ?? []);
         $preview['error_count'] = count($preview['errors']);
@@ -1771,10 +1846,34 @@ function handle_roster_import(array $actor): void
         $preview['sheet_names'] = $parsed['sheet_names'] ?? [];
         $preview['fileName'] = $file['name'];
         $preview['file_name'] = $file['name'];
+        if ($preview['error_count'] > 0 || $validRowCount === 0) {
+            $previewErrors = $preview['errors'];
+            if ($validRowCount === 0 && !$previewErrors) {
+                $previewErrors[] = ['message' => 'Roster workbook does not contain any valid employee rows.'];
+            }
+            roster_log_failed_import(
+                $pdo,
+                $actor,
+                $batch,
+                $file['name'],
+                (int)($parsed['total_rows'] ?? 0),
+                'validation',
+                $previewErrors
+            );
+        }
         respond(['data' => $preview]);
     }
 
     if ($parseErrors) {
+        roster_log_failed_import(
+            $pdo,
+            $actor,
+            $batch,
+            $file['name'],
+            (int)($parsed['total_rows'] ?? 0),
+            'validation',
+            $parseErrors
+        );
         respond([
             'error' => [
                 'code' => 'bad-workbook',
@@ -1786,6 +1885,15 @@ function handle_roster_import(array $actor): void
     }
 
     if ($validRowCount === 0) {
+        roster_log_failed_import(
+            $pdo,
+            $actor,
+            $batch,
+            $file['name'],
+            0,
+            'validation',
+            [['message' => 'Roster workbook does not contain any valid employee rows.']]
+        );
         fail(400, 'empty-roster', 'Roster workbook does not contain any valid employee rows.');
     }
 
@@ -1793,11 +1901,18 @@ function handle_roster_import(array $actor): void
         $pdo,
         $parsedRows,
         $batch,
-        true,
-        $terminationRows,
-        $terminateMissing
+        true
     );
     if (($preflight['error_count'] ?? 0) > 0) {
+        roster_log_failed_import(
+            $pdo,
+            $actor,
+            $batch,
+            $file['name'],
+            $validRowCount,
+            'preflight',
+            $preflight['errors'] ?? []
+        );
         respond([
             'error' => [
                 'code' => 'roster-conflict',
@@ -1808,9 +1923,7 @@ function handle_roster_import(array $actor): void
         ], 409);
     }
     if (($preflight['terminated'] ?? 0) > 0 && !roster_parse_bool_query('confirm_termination')) {
-        $message = $terminateMissing
-            ? 'This import will mark employees missing from the snapshot as terminated. Preview and explicitly confirm this change.'
-            : 'This import will mark employees listed in the Nghỉ việc sheet as terminated. Preview and explicitly confirm this change.';
+        $message = 'This import will mark KTVs missing from the roster as terminated. Preview and explicitly confirm this change.';
         respond([
             'error' => [
                 'code' => 'termination-confirmation-required',
@@ -1827,12 +1940,19 @@ function handle_roster_import(array $actor): void
             $pdo,
             $parsedRows,
             $batch,
-            false,
-            $terminationRows,
-            $terminateMissing
+            false
         );
         if (($result['error_count'] ?? 0) > 0) {
             $pdo->rollBack();
+            roster_log_failed_import(
+                $pdo,
+                $actor,
+                $batch,
+                $file['name'],
+                $validRowCount,
+                'write',
+                $result['errors'] ?? []
+            );
             respond([
                 'error' => [
                     'code' => 'roster-conflict',
@@ -1842,6 +1962,7 @@ function handle_roster_import(array $actor): void
                 ],
             ], 409);
         }
+        $result['status'] = 'success';
         $importedBy = ktv_roster_existing_imported_by($pdo, $actor['user_id'] ?? null);
         ktv_roster_log_import($pdo, $result, $importedBy, $file['name']);
         $pdo->commit();
@@ -1850,6 +1971,15 @@ function handle_roster_import(array $actor): void
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
+        roster_log_failed_import(
+            $pdo,
+            $actor,
+            $batch,
+            $file['name'],
+            $validRowCount,
+            'write',
+            [['message' => $exception->getMessage()]]
+        );
         throw $exception;
     }
 }
@@ -2022,6 +2152,7 @@ function handle_roster_history(): void
         $stmt->execute();
         $items = array_map(static function (array $row): array {
             $errors = json_decode((string)($row['error_details'] ?? '[]'), true);
+            $changes = json_decode((string)($row['change_details'] ?? '{}'), true);
             return [
                 'id' => (int)$row['id'],
                 'batchId' => $row['batch_id'],
@@ -2036,11 +2167,14 @@ function handle_roster_history(): void
                 'total_rows' => (int)$row['total_rows'],
                 'inserted' => (int)$row['inserted'],
                 'updated' => (int)$row['updated'],
+                'unchanged' => (int)($row['unchanged'] ?? 0),
                 'terminated' => (int)$row['terminated'],
                 'reactivated' => (int)$row['reactivated'],
+                'status' => ($row['status'] ?? 'success') === 'failed' ? 'failed' : 'success',
                 'errorCount' => (int)$row['error_count'],
                 'error_count' => (int)$row['error_count'],
                 'errors' => is_array($errors) ? $errors : [],
+                'changes' => is_array($changes) ? $changes : [],
                 'importedAt' => $row['imported_at'],
                 'imported_at' => $row['imported_at'],
             ];

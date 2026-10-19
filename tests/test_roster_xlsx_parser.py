@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 class RosterXlsxParserPhpRegressionTests(unittest.TestCase):
-    def test_snapshot_and_delta_namespace_workbooks(self):
+    def test_snapshot_contract_and_legacy_termination_rejection(self):
         php = shutil.which("php")
         if php is None:
             self.skipTest("PHP CLI is not installed in this test environment")

@@ -76,23 +76,24 @@
   register({
     id: 'LAB_AX3000GZ_V2_04',
     title: 'Bài 4 - Cấu hình DNS',
-    subtitle: 'Cấu hình máy chủ DNS cục bộ cho mạng LAN',
+    subtitle: 'Thiết lập thông số DNS thủ công trên cổng LAN',
     instructions: [
       '<b>Yêu cầu:</b>',
-      '- DNS Server 1: <span class="val">8.8.8.8</span>',
-      '- DNS Server 2: <span class="val">8.8.4.4</span>'
+      'Thiết lập thông số DNS thủ công (Manually) trên cổng LAN:',
+      '- Primary DNS: <span class="val">8.8.8.8</span>',
+      '- Secondary DNS: <span class="val">8.8.4.4</span>'
     ],
-    practiceUrl: '/sim_ax3000gz_v2/?_type=menuView&_tag=dns',
-    clearFields: ['[id^="sub_SerIPAddress1"]', '[id^="sub_SerIPAddress2"]'],
-    grading: { description: 'Kiểm tra hai địa chỉ DNS', rules: [
-      rule('dns1_1', 'DNS Server 1 - ô 1', '#sub_SerIPAddress10', '8', 'text_exact', '[id^="sub_SerIPAddress1"]'),
-      rule('dns1_2', 'DNS Server 1 - ô 2', '#sub_SerIPAddress11', '8', 'text_exact', '[id^="sub_SerIPAddress1"]'),
-      rule('dns1_3', 'DNS Server 1 - ô 3', '#sub_SerIPAddress12', '8', 'text_exact', '[id^="sub_SerIPAddress1"]'),
-      rule('dns1_4', 'DNS Server 1 - ô 4', '#sub_SerIPAddress13', '8', 'text_exact', '[id^="sub_SerIPAddress1"]'),
-      rule('dns2_1', 'DNS Server 2 - ô 1', '#sub_SerIPAddress20', '8', 'text_exact', '[id^="sub_SerIPAddress2"]'),
-      rule('dns2_2', 'DNS Server 2 - ô 2', '#sub_SerIPAddress21', '8', 'text_exact', '[id^="sub_SerIPAddress2"]'),
-      rule('dns2_3', 'DNS Server 2 - ô 3', '#sub_SerIPAddress22', '4', 'text_exact', '[id^="sub_SerIPAddress2"]'),
-      rule('dns2_4', 'DNS Server 2 - ô 4', '#sub_SerIPAddress23', '4', 'text_exact', '[id^="sub_SerIPAddress2"]')
+    practiceUrl: '/sim_ax3000gz_v2/?_type=menuView&_tag=lanMgrIpv4',
+    clearFields: ['[id^="sub_DNSServer1"]', '[id^="sub_DNSServer2"]'],
+    grading: { description: 'Kiểm tra thông số cấu hình DNS trên LAN', rules: [
+      rule('dns1_1', 'Primary DNS - ô 1', '#sub_DNSServer10', '8', 'text_exact', '[id^="sub_DNSServer1"]'),
+      rule('dns1_2', 'Primary DNS - ô 2', '#sub_DNSServer11', '8', 'text_exact', '[id^="sub_DNSServer1"]'),
+      rule('dns1_3', 'Primary DNS - ô 3', '#sub_DNSServer12', '8', 'text_exact', '[id^="sub_DNSServer1"]'),
+      rule('dns1_4', 'Primary DNS - ô 4', '#sub_DNSServer13', '8', 'text_exact', '[id^="sub_DNSServer1"]'),
+      rule('dns2_1', 'Secondary DNS - ô 1', '#sub_DNSServer20', '8', 'text_exact', '[id^="sub_DNSServer2"]'),
+      rule('dns2_2', 'Secondary DNS - ô 2', '#sub_DNSServer21', '8', 'text_exact', '[id^="sub_DNSServer2"]'),
+      rule('dns2_3', 'Secondary DNS - ô 3', '#sub_DNSServer22', '4', 'text_exact', '[id^="sub_DNSServer2"]'),
+      rule('dns2_4', 'Secondary DNS - ô 4', '#sub_DNSServer23', '4', 'text_exact', '[id^="sub_DNSServer2"]')
     ]}
   });
 

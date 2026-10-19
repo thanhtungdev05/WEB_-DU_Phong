@@ -133,7 +133,7 @@ const simultaneousSelectors = {
   LAB_AX3000GZ_V2_01: ['[id="UserName:0"]', '[id="Password:0"]', '[id="Btn_apply_internet:0"]'],
   LAB_AX3000GZ_V2_02: ['[id="ESSID:0"]', '[id="HiddenKeyPass:0"]', '[id="Btn_apply_WLANSSIDConf:0"]'],
   LAB_AX3000GZ_V2_03: ['[id="ESSID:3"]', '[id="EncryptionType:3"]', '[id="HiddenKeyPass:3"]', '[id="Btn_apply_WLANSSIDConf:3"]'],
-  LAB_AX3000GZ_V2_04: ['#sub_SerIPAddress10', '#sub_SerIPAddress20', '#Btn_apply_LocalDnsServer'],
+  LAB_AX3000GZ_V2_04: ['#sub_DNSServer10', '#sub_DNSServer20', '#Btn_apply_DHCPBasicCfg'],
   LAB_AX3000GZ_V2_05: ['[id="sub_IPAddr0:DHCPBasicCfg"]', '#sub_SubMask0', '[id="sub_MinAddress0:DHCPBasicCfg"]', '[id="sub_MaxAddress0:DHCPBasicCfg"]', '#Btn_apply_DHCPBasicCfg'],
   LAB_AX3000GZ_V2_06: ['[id^="Alias"]', '[id^="S_Interface"]', '[id^="Protocol"]', '[id^="InternalClient"]', '[id^="ExternalPort"]:not([id*="EndRange"])', '[id^="ExternalPortEndRange"]', '[id^="InternalPort"]:not([id*="EndRange"])', '[id^="InternalPortEndRange"]', '[id^="Btn_apply_PortForwarding"]']
 };
@@ -150,7 +150,7 @@ const selectorSources = {
   LAB_AX3000GZ_V2_01: 'devices/ax3000gz_v2/src/www/api/ethWanConfig.html',
   LAB_AX3000GZ_V2_02: 'devices/ax3000gz_v2/src/www/api/wlanBasic.html',
   LAB_AX3000GZ_V2_03: 'devices/ax3000gz_v2/src/www/api/wlanBasic.html',
-  LAB_AX3000GZ_V2_04: 'devices/ax3000gz_v2/src/www/api/dns.html',
+  LAB_AX3000GZ_V2_04: 'devices/ax3000gz_v2/src/www/api/lanMgrIpv4.html',
   LAB_AX3000GZ_V2_05: 'devices/ax3000gz_v2/src/www/api/lanMgrIpv4.html',
   LAB_AX3000GZ_V2_06: 'devices/ax3000gz_v2/src/www/api/portForwarding.html'
 };
@@ -158,7 +158,7 @@ const requiredMarkers = {
   LAB_AX3000GZ_V2_01: ['id="UserName"', 'id="Password"'],
   LAB_AX3000GZ_V2_02: ['id="ESSID"', 'id="HiddenKeyPass"'],
   LAB_AX3000GZ_V2_03: ['id="ESSID"', 'id="HiddenKeyPass"'],
-  LAB_AX3000GZ_V2_04: ['id="sub_SerIPAddress10"', 'id="sub_SerIPAddress23"'],
+  LAB_AX3000GZ_V2_04: ['id="sub_DNSServer10"', 'id="sub_DNSServer23"'],
   LAB_AX3000GZ_V2_05: ['id="sub_IPAddr0:DHCPBasicCfg"', 'id="sub_SubMask0"', 'id="sub_MinAddress0:DHCPBasicCfg"', 'id="sub_MaxAddress0:DHCPBasicCfg"'],
   LAB_AX3000GZ_V2_06: ['id="S_Interface"', 'id="InternalClient"', 'id="ExternalPort"']
 };
@@ -196,7 +196,7 @@ walk(path.join(root, 'devices/ax3000gz_v2/src/www')).forEach(file => {
 // Nút Login là <input type="submit"> nên 2 listener bắt Save/Apply trong app.js
 // phải bỏ qua trang đăng nhập, nếu không chế độ Hướng dẫn sẽ bật "Xem lỗi sai"
 // ngay khi học viên bấm Login mà chưa cấu hình gì.
-const appJs = read('app.js');
+const appJs = read('app.js').replace(/\r\n/g, '\n');
 const loginPage = read('devices/ax3000gz_v2/src/www/login_page.html');
 const commonPage = read('devices/ax3000gz_v2/src/www/common_page.html');
 assert.ok(

@@ -9448,6 +9448,43 @@ function rosterGoPage(page) {
 
 /* --- Import --- */
 
+const rosterAuditFieldLabels = {
+    email: 'Email',
+    display_name: 'Họ tên',
+    employee_id: 'Mã NV',
+    job_title: 'Vị trí',
+    class_code: 'Mã lớp',
+    unit_id: 'Đơn vị',
+    unit_code: 'Mã đơn vị',
+    unit_name: 'Tên đơn vị',
+    region_code: 'Mã khu vực',
+    dashboard_region: 'Khu vực dashboard',
+    region_id: 'Vùng',
+    employee_source: 'Nguồn hồ sơ',
+    employee_seed_batch: 'Đợt đồng bộ',
+    is_terminated: 'Trạng thái nghỉ việc',
+    termination_date: 'Ngày nghỉ việc',
+    termination_reason: 'Lý do nghỉ việc'
+};
+
+function rosterAuditValue(value) {
+    if (value === null || value === undefined || value === '') return 'Trống';
+    if (value === true) return 'Có';
+    if (value === false) return 'Không';
+    return String(value);
+}
+
+function renderRosterFieldChanges(fields) {
+    const entries = Object.entries(fields || {});
+    if (!entries.length) return '';
+    return `<ul>${entries.map(([field, values]) => {
+        const label = rosterAuditFieldLabels[field] || field;
+        const from = rosterAuditValue(values?.from);
+        const to = rosterAuditValue(values?.to);
+        return `<li><strong>${escapeHTML(label)}:</strong> ${escapeHTML(from)} → ${escapeHTML(to)}</li>`;
+    }).join('')}</ul>`;
+}
+
 function handleRosterFile(file) {
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
         showToast('Vui lòng chọn đúng file Excel định dạng .xlsx.', 'error');
@@ -9482,6 +9519,7 @@ async function doRosterPreview(file) {
         if (state.rosterImportFile !== file) return;
         const data = json.data || {};
         state.rosterPreviewData = data;
+        if (Number(data.error_count || data.errorCount || 0) > 0) state.rosterHistoryLoaded = false;
         renderRosterPreview(data);
         const importButton = document.getElementById('rosterConfirmImportBtn');
         if (importButton) {
@@ -9495,6 +9533,7 @@ async function doRosterPreview(file) {
     } catch (err) {
         if (state.rosterImportFile !== file) return;
         state.rosterPreviewData = null;
+        state.rosterHistoryLoaded = false;
         console.error('Roster preview error:', err);
         renderRosterPreviewFailure(err.message || String(err));
         const importButton = document.getElementById('rosterConfirmImportBtn');
@@ -9527,16 +9566,13 @@ function renderRosterPreview(data) {
 
     const statsEl = document.getElementById('rosterPreviewStats');
     if (statsEl) {
-        const isDelta = (data.importMode || data.import_mode) === 'delta';
         const activeRows = Number(data.activeRows || data.active_rows || 0);
-        const terminationRows = Number(data.terminationRows || data.termination_rows || 0);
-        const modeLabel = isDelta
-            ? `Theo sheet: ${activeRows} KTV, ${terminationRows} Nghỉ việc`
-            : 'Đồng bộ toàn bộ danh sách';
+        const modeLabel = `Đồng bộ toàn bộ danh sách: ${activeRows} KTV`;
         statsEl.innerHTML = `
             <span class="roster-preview-stat">${escapeHTML(modeLabel)}</span>
             <span class="roster-preview-stat stat-insert">Thêm mới: ${data.inserted || 0}</span>
             <span class="roster-preview-stat stat-update">Cập nhật: ${data.updated || 0}</span>
+            <span class="roster-preview-stat">Không đổi: ${data.unchanged || 0}</span>
             <span class="roster-preview-stat stat-terminate">Nghỉ việc: ${data.terminated || 0}</span>
             <span class="roster-preview-stat stat-reactivate">Khôi phục: ${data.reactivated || 0}</span>
             <span class="roster-preview-stat stat-error">Lỗi: ${data.error_count || data.errorCount || 0}</span>
@@ -9567,7 +9603,7 @@ function renderRosterPreview(data) {
         [['inserted', 'Thêm mới', 'stat-insert'], ['updated', 'Cập nhật', 'stat-update'], ['terminated', 'Nghỉ việc', 'stat-terminate'], ['reactivated', 'Khôi phục', 'stat-reactivate']].forEach(([key, label, cls]) => {
             const items = changes[key] || [];
             if (!items.length) return;
-            html += `<div class="roster-change-group"><h4 class="roster-preview-stat ${cls}">${label} (${items.length})</h4><table><thead><tr><th>Mã NV</th><th>Tên</th><th>Email</th><th>Khu vực</th><th>Chi nhánh</th></tr></thead><tbody>${items.map(i => `<tr><td>${escapeHTML(i.employee_id || '')}</td><td>${escapeHTML(i.display_name || '')}</td><td>${escapeHTML(i.email || '')}</td><td>${escapeHTML(i.region || '')}</td><td>${escapeHTML(i.branch || '')}</td></tr>`).join('')}</tbody></table></div>`;
+            html += `<div class="roster-change-group"><h4 class="roster-preview-stat ${cls}">${label} (${items.length})</h4><table><thead><tr><th>Mã NV</th><th>Tên</th><th>Email</th><th>Khu vực</th><th>Chi nhánh</th><th>Thông tin thay đổi</th></tr></thead><tbody>${items.map(i => `<tr><td>${escapeHTML(i.employee_id || '')}</td><td>${escapeHTML(i.display_name || '')}</td><td>${escapeHTML(i.email || '')}</td><td>${escapeHTML(i.region || '')}</td><td>${escapeHTML(i.branch || '')}</td><td>${renderRosterFieldChanges(i.fields)}</td></tr>`).join('')}</tbody></table></div>`;
         });
         changesEl.innerHTML = html || '<p class="roster-preview-empty">Không có thay đổi nào.</p>';
     }
@@ -9590,10 +9626,7 @@ async function confirmRosterImport() {
     }
     const terminationCount = Number(data.terminated || 0);
     if (terminationCount > 0) {
-        const explicitTermination = (data.terminationMode || data.termination_mode) === 'explicit';
-        const warning = explicitTermination
-            ? `${terminationCount} KTV trong sheet “Nghỉ việc” sẽ được đánh dấu Đã nghỉ.`
-            : `${terminationCount} KTV không còn trong danh sách đầy đủ sẽ được đánh dấu Đã nghỉ.`;
+        const warning = `${terminationCount} KTV không còn trong danh sách đầy đủ sẽ được đánh dấu Đã nghỉ.`;
         const confirmed = window.confirm(
             `Cảnh báo: ${warning} Bạn có chắc muốn tiếp tục?`
         );
@@ -9619,7 +9652,7 @@ async function confirmRosterImport() {
             importSucceeded = true;
             const batchId = result.batch_id || result.batchId || '';
             showRosterResult(
-                `Đã thêm ${result.inserted || 0}, cập nhật ${result.updated || 0}, đánh dấu nghỉ ${result.terminated || 0} và khôi phục ${result.reactivated || 0} KTV.${batchId ? ` Mã đợt: ${batchId}.` : ''}`,
+                `Đã thêm ${result.inserted || 0}, cập nhật ${result.updated || 0}, giữ nguyên ${result.unchanged || 0}, đánh dấu nghỉ ${result.terminated || 0} và khôi phục ${result.reactivated || 0} KTV.${batchId ? ` Mã đợt: ${batchId}.` : ''}`,
                 true
             );
             state.rosterLoaded = false;
@@ -9751,16 +9784,41 @@ function renderRosterHistory() {
     tbody.innerHTML = state.rosterHistoryItems.map(item => {
         const dt = item.importedAt || item.imported_at;
         const dateStr = dt ? new Date(dt).toLocaleString('vi-VN') : '-';
+        const failed = item.status === 'failed';
+        const errors = item.errors || [];
+        const changes = item.changes || {};
+        let detailsHtml = '';
+        if (failed) {
+            detailsHtml = `<ul>${errors.map(error => {
+                const location = error.sheet
+                    ? `Sheet ${error.sheet}, dòng ${error.row || '?'}`
+                    : (error.row ? `Dòng ${error.row}` : (error.stage || 'Import'));
+                return `<li><strong>${escapeHTML(location)}:</strong> ${escapeHTML(error.message || '')}</li>`;
+            }).join('')}</ul>`;
+        } else {
+            const groups = [['inserted', 'Thêm mới'], ['updated', 'Cập nhật'], ['terminated', 'Nghỉ việc'], ['reactivated', 'Khôi phục']];
+            detailsHtml = groups.map(([key, label]) => {
+                const entries = changes[key] || [];
+                if (!entries.length) return '';
+                return `<div><strong>${label} (${entries.length})</strong>${entries.map(entry => `<div><code>${escapeHTML(entry.employee_id || '')}</code> ${escapeHTML(entry.display_name || '')}${renderRosterFieldChanges(entry.fields)}</div>`).join('')}</div>`;
+            }).join('');
+        }
+        const detailCell = detailsHtml
+            ? `<details><summary>Xem chi tiết</summary>${detailsHtml}</details>`
+            : '—';
         return `<tr>
             <td><code>${escapeHTML(item.batchId || item.batch_id || '')}</code></td>
             <td>${escapeHTML(item.fileName || item.file_name || '')}</td>
             <td>${escapeHTML(item.importedByName || item.imported_by_name || item.importedByEmail || '-')}</td>
+            <td><strong>${failed ? 'Thất bại' : 'Thành công'}</strong></td>
             <td>${formatNumber.format(Number(item.totalRows || item.total_rows || 0))}</td>
             <td class="roster-value-success">${formatNumber.format(Number(item.inserted || 0))}</td>
             <td class="roster-value-info">${formatNumber.format(Number(item.updated || 0))}</td>
+            <td>${formatNumber.format(Number(item.unchanged || 0))}</td>
             <td class="roster-value-danger">${formatNumber.format(Number(item.terminated || 0))}</td>
             <td class="roster-value-warning">${formatNumber.format(Number(item.reactivated || 0))}</td>
             <td>${formatNumber.format(Number(item.errorCount || item.error_count || 0))}</td>
+            <td>${detailCell}</td>
             <td>${dateStr}</td>
         </tr>`;
     }).join('');

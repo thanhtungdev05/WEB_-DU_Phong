@@ -15,12 +15,6 @@ const KTV_ROSTER_REQUIRED_HEADERS = [
     'Ghi chú xếp lớp' => 'class_code',
 ];
 
-const KTV_ROSTER_TERMINATION_REQUIRED_HEADERS = [
-    'Empl ID' => 'employee_id',
-    'Name' => 'display_name',
-    'Email' => 'email',
-];
-
 const KTV_ROSTER_SPREADSHEET_NAMESPACE = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 const KTV_ROSTER_RELATIONSHIPS_NAMESPACE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
@@ -325,30 +319,6 @@ function ktv_roster_normalize_row(array $row, int $rowNumber, bool $uses1904Date
     ];
 }
 
-function ktv_roster_normalize_termination_row(
-    array $row,
-    int $rowNumber,
-    bool $uses1904Dates = false
-): array {
-    $employeeId = trim((string)($row['employee_id'] ?? ''));
-    $email = strtolower(trim((string)($row['email'] ?? '')));
-    $displayName = trim((string)($row['display_name'] ?? ''));
-
-    if (!preg_match('/^\d{8}$/', $employeeId)) {
-        throw new RuntimeException("Row $rowNumber has invalid Empl ID; expected exactly 8 digits.");
-    }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        throw new RuntimeException("Row $rowNumber has invalid Email.");
-    }
-
-    return [
-        'employee_id' => $employeeId,
-        'display_name' => $displayName !== '' ? $displayName : null,
-        'email' => $email !== '' ? $email : null,
-        'source_row' => $rowNumber,
-    ];
-}
-
 function ktv_roster_sheet_name_key(string $name): string
 {
     $name = preg_replace('/\s+/u', ' ', trim($name)) ?? trim($name);
@@ -507,19 +477,23 @@ function parse_ktv_roster_xlsx(string $path): array
         $uses1904Dates = ktv_roster_uses_1904_dates($zip);
         $sheets = ktv_roster_workbook_sheets($zip);
         $activeSheet = null;
-        $terminationSheet = null;
+        $legacyActiveSheet = null;
         foreach ($sheets as $sheet) {
             $sheetName = ktv_roster_sheet_name_key((string)($sheet['name'] ?? ''));
-            if ($sheetName === 'tân binh' && $activeSheet === null) {
+            if ($sheetName === 'nghỉ việc') {
+                throw new RuntimeException(
+                    'Sheet "Nghỉ việc" is no longer supported. Use one complete KTV roster sheet; '
+                    . 'employees missing from that sheet will be marked as terminated.'
+                );
+            }
+            if ($sheetName === 'danh sách ktv' && $activeSheet === null) {
                 $activeSheet = $sheet;
             }
-            if ($sheetName === 'nghỉ việc' && $terminationSheet === null) {
-                $terminationSheet = $sheet;
+            if ($sheetName === 'tân binh' && $legacyActiveSheet === null) {
+                $legacyActiveSheet = $sheet;
             }
         }
-        $activeSheet ??= $sheets[0];
-        $isDeltaWorkbook = ktv_roster_sheet_name_key((string)($activeSheet['name'] ?? '')) === 'tân binh'
-            || $terminationSheet !== null;
+        $activeSheet ??= $legacyActiveSheet ?? $sheets[0];
 
         $active = ktv_roster_parse_worksheet(
             $zip,
@@ -529,59 +503,22 @@ function parse_ktv_roster_xlsx(string $path): array
             KTV_ROSTER_REQUIRED_HEADERS,
             'ktv_roster_normalize_row'
         );
-        $termination = [
-            'name' => null,
-            'headers' => [],
-            'rows' => [],
-            'errors' => [],
-            'totalRows' => 0,
-        ];
-        if ($terminationSheet !== null && $terminationSheet !== $activeSheet) {
-            $termination = ktv_roster_parse_worksheet(
-                $zip,
-                $terminationSheet,
-                $sharedStrings,
-                $uses1904Dates,
-                KTV_ROSTER_TERMINATION_REQUIRED_HEADERS,
-                'ktv_roster_normalize_termination_row'
-            );
-        }
-
-        $errors = array_merge($active['errors'], $termination['errors']);
-        $activeEmployeeIds = [];
-        $activeEmails = [];
-        foreach ($active['rows'] as $row) {
-            $activeEmployeeIds[(string)$row['employee_id']] = true;
-            $activeEmails[strtolower((string)$row['email'])] = true;
-        }
-        foreach ($termination['rows'] as $row) {
-            $employeeId = (string)$row['employee_id'];
-            $email = strtolower(trim((string)($row['email'] ?? '')));
-            if (isset($activeEmployeeIds[$employeeId]) || ($email !== '' && isset($activeEmails[$email]))) {
-                $errors[] = [
-                    'sheet' => $termination['name'],
-                    'row' => $row['source_row'] ?? null,
-                    'message' => 'The same employee cannot appear in both active and termination sheets.',
-                ];
-            }
-        }
-
-        $totalRows = (int)$active['totalRows'] + (int)$termination['totalRows'];
+        $totalRows = (int)$active['totalRows'];
 
         return [
             'headers' => $active['headers'],
             'rows' => $active['rows'],
-            'termination_headers' => $termination['headers'],
-            'termination_rows' => $termination['rows'],
-            'errors' => $errors,
+            'termination_headers' => [],
+            'termination_rows' => [],
+            'errors' => $active['errors'],
             'totalRows' => $totalRows,
             'total_rows' => $totalRows,
             'activeRows' => count($active['rows']),
             'active_rows' => count($active['rows']),
-            'terminationRows' => count($termination['rows']),
-            'termination_row_count' => count($termination['rows']),
-            'importMode' => $isDeltaWorkbook ? 'delta' : 'snapshot',
-            'import_mode' => $isDeltaWorkbook ? 'delta' : 'snapshot',
+            'terminationRows' => 0,
+            'termination_row_count' => 0,
+            'importMode' => 'snapshot',
+            'import_mode' => 'snapshot',
             'sheetNames' => array_values(array_map(
                 static fn(array $sheet): string => (string)($sheet['name'] ?? ''),
                 $sheets
@@ -618,6 +555,59 @@ function ktv_roster_compact_change(array $row): array
         'class_code' => $row['class_code'] ?? null,
         'source_row' => $row['source_row'] ?? null,
     ];
+}
+
+function ktv_roster_comparable_value(string $field, mixed $value): mixed
+{
+    if ($field === 'is_terminated') {
+        return ktv_roster_database_boolean($value);
+    }
+    if ($value === null) {
+        return null;
+    }
+    $text = trim((string)$value);
+    if ($text === '') {
+        return null;
+    }
+    return $field === 'email' ? strtolower($text) : $text;
+}
+
+function ktv_roster_field_changes(array $existing, array $row, array $unit): array
+{
+    $desired = [
+        'email' => $row['email'],
+        'display_name' => $row['display_name'],
+        'employee_id' => $row['employee_id'],
+        'job_title' => $row['job_title'],
+        'class_code' => $row['class_code'],
+        'unit_id' => $unit['unit_id'],
+        'unit_code' => $unit['unit_code'],
+        'unit_name' => $unit['unit_name'],
+        'region_code' => $unit['region_code'],
+        'dashboard_region' => (string)($unit['dashboard_group'] ?: $unit['region_name']),
+        'region_id' => $unit['region_id'],
+        'employee_source' => KTV_ROSTER_IMPORT_SOURCE,
+    ];
+    $changes = [];
+    foreach ($desired as $field => $newValue) {
+        $oldComparable = ktv_roster_comparable_value($field, $existing[$field] ?? null);
+        $newComparable = ktv_roster_comparable_value($field, $newValue);
+        if ($oldComparable === $newComparable) {
+            continue;
+        }
+        $changes[$field] = [
+            'from' => $oldComparable,
+            'to' => $newComparable,
+        ];
+    }
+    return $changes;
+}
+
+function ktv_roster_change_with_fields(array $row, array $fields): array
+{
+    $change = ktv_roster_compact_change($row);
+    $change['fields'] = $fields;
+    return $change;
 }
 
 function ktv_roster_load_unit_cache(PDO $pdo): array
@@ -684,11 +674,20 @@ function ktv_roster_load_user_match_cache(PDO $pdo, array $rows, bool $forUpdate
                existing_user.email,
                existing_user.employee_id,
                existing_user.display_name,
+               existing_user.job_title,
                existing_user.is_terminated,
+               existing_user.termination_date,
+               existing_user.termination_reason,
                existing_user.employee_source,
+               existing_user.employee_seed_batch,
                existing_user.role,
                existing_user.dashboard_region,
-               existing_user.class_code
+               existing_user.class_code,
+               existing_user.unit_id,
+               existing_user.unit_code,
+               existing_user.unit_name,
+               existing_user.region_code,
+               existing_user.region_id
           FROM users AS existing_user
          WHERE EXISTS (
                SELECT 1
@@ -755,12 +754,10 @@ function sync_ktv_roster(
     PDO $pdo,
     array $rows,
     string $batch,
-    bool $dryRun = false,
-    array $terminationRows = [],
-    bool $terminateMissing = true
+    bool $dryRun = false
 ): array
 {
-    $totalRows = count($rows) + count($terminationRows);
+    $totalRows = count($rows);
     $result = [
         'batch_id' => $batch,
         'dryRun' => $dryRun,
@@ -769,14 +766,15 @@ function sync_ktv_roster(
         'total_rows' => $totalRows,
         'activeRows' => count($rows),
         'active_rows' => count($rows),
-        'terminationRows' => count($terminationRows),
-        'termination_rows' => count($terminationRows),
-        'importMode' => $terminateMissing ? 'snapshot' : 'delta',
-        'import_mode' => $terminateMissing ? 'snapshot' : 'delta',
-        'terminationMode' => $terminateMissing ? 'missing' : 'explicit',
-        'termination_mode' => $terminateMissing ? 'missing' : 'explicit',
+        'terminationRows' => 0,
+        'termination_rows' => 0,
+        'importMode' => 'snapshot',
+        'import_mode' => 'snapshot',
+        'terminationMode' => 'missing',
+        'termination_mode' => 'missing',
         'inserted' => 0,
         'updated' => 0,
+        'unchanged' => 0,
         'terminated' => 0,
         'reactivated' => 0,
         'errors' => [],
@@ -793,7 +791,7 @@ function sync_ktv_roster(
     $unitCache = ktv_roster_load_unit_cache($pdo);
     $userMatchCache = ktv_roster_load_user_match_cache(
         $pdo,
-        array_merge($rows, $terminationRows),
+        $rows,
         !$dryRun
     );
 
@@ -870,6 +868,15 @@ function sync_ktv_roster(
             }
 
             $existing = $matches[0] ?? null;
+            if ($existing && strtoupper(trim((string)($existing['role'] ?? ''))) !== 'KTV') {
+                $result['errors'][] = [
+                    'row' => $row['source_row'] ?? null,
+                    'employee_id' => $row['employee_id'],
+                    'email' => $row['email'],
+                    'message' => 'Empl ID or Email belongs to a user who is not a KTV.',
+                ];
+                continue;
+            }
             if ($existing && !empty($existing['employee_id']) && (string)$existing['employee_id'] !== (string)$row['employee_id']) {
                 $result['errors'][] = [
                     'row' => $row['source_row'] ?? null,
@@ -906,12 +913,29 @@ function sync_ktv_roster(
             }
 
             $wasTerminated = ktv_roster_database_boolean($existing['is_terminated'] ?? false);
+            $fieldChanges = ktv_roster_field_changes($existing, $row, $unit);
             if ($wasTerminated) {
+                $fieldChanges['is_terminated'] = ['from' => true, 'to' => false];
+                if (($existing['termination_date'] ?? null) !== null) {
+                    $fieldChanges['termination_date'] = [
+                        'from' => $existing['termination_date'],
+                        'to' => null,
+                    ];
+                }
+                if (($existing['termination_reason'] ?? null) !== null) {
+                    $fieldChanges['termination_reason'] = [
+                        'from' => $existing['termination_reason'],
+                        'to' => null,
+                    ];
+                }
                 $result['reactivated']++;
-                $result['changes']['reactivated'][] = ktv_roster_compact_change($row);
-            } else {
+                $result['changes']['reactivated'][] = ktv_roster_change_with_fields($row, $fieldChanges);
+            } elseif ($fieldChanges) {
                 $result['updated']++;
-                $result['changes']['updated'][] = ktv_roster_compact_change($row);
+                $result['changes']['updated'][] = ktv_roster_change_with_fields($row, $fieldChanges);
+            } else {
+                $result['unchanged']++;
+                continue;
             }
             if (!$dryRun && $updateUser) {
                 $parameters['user_id'] = $existing['user_id'];
@@ -929,9 +953,7 @@ function sync_ktv_roster(
 
     $terminateUser = null;
     $terminationDate = (new DateTimeImmutable('now', new DateTimeZone(normalize_app_timezone(env_value('APP_TIMEZONE')))))->format('Y-m-d');
-    $terminationReason = $terminateMissing
-        ? 'Không có trong danh sách import ngày ' . $terminationDate
-        : 'Có trong sheet Nghỉ việc của file import ngày ' . $terminationDate;
+    $terminationReason = 'Không có trong danh sách import ngày ' . $terminationDate;
     if (!$dryRun) {
         $terminateUser = $pdo->prepare(
             'UPDATE users
@@ -946,96 +968,25 @@ function sync_ktv_roster(
     }
 
     $terminationCandidates = [];
-    if ($terminateMissing) {
-        $sql = 'SELECT user_id, employee_id, email, display_name, dashboard_region, class_code,
-                       role, is_terminated, employee_source
-                  FROM users
-                 WHERE employee_source = :employee_source
-                   AND is_terminated = FALSE';
-        if (!$dryRun) {
-            $sql .= ' FOR UPDATE';
+    $sql = 'SELECT user_id, employee_id, email, display_name, dashboard_region, class_code,
+                   role, is_terminated, termination_date, termination_reason,
+                   employee_source, employee_seed_batch
+              FROM users
+             WHERE UPPER(BTRIM(role)) = :role
+               AND is_terminated = FALSE';
+    if (!$dryRun) {
+        $sql .= ' FOR UPDATE';
+    }
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['role' => 'KTV']);
+    foreach ($stmt->fetchAll() as $managed) {
+        $employeeId = (string)($managed['employee_id'] ?? '');
+        $email = strtolower((string)($managed['email'] ?? ''));
+        if (($employeeId !== '' && isset($activeEmployeeIds[$employeeId]))
+            || ($email !== '' && isset($activeEmails[$email]))) {
+            continue;
         }
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute(['employee_source' => KTV_ROSTER_IMPORT_SOURCE]);
-        foreach ($stmt->fetchAll() as $managed) {
-            $employeeId = (string)($managed['employee_id'] ?? '');
-            $email = strtolower((string)($managed['email'] ?? ''));
-            if (($employeeId !== '' && isset($activeEmployeeIds[$employeeId]))
-                || ($email !== '' && isset($activeEmails[$email]))) {
-                continue;
-            }
-            $terminationCandidates[] = $managed;
-        }
-    } else {
-        foreach ($terminationRows as $row) {
-            $matches = ktv_roster_cached_user_matches($userMatchCache, $row);
-            $userIds = array_values(array_unique(array_map(
-                static fn(array $match): string => (string)($match['user_id'] ?? ''),
-                $matches
-            )));
-            $userIds = array_values(array_filter($userIds, static fn(string $userId): bool => $userId !== ''));
-            if (count($userIds) > 1) {
-                $result['errors'][] = [
-                    'sheet' => $row['source_sheet'] ?? 'Nghỉ việc',
-                    'row' => $row['source_row'] ?? null,
-                    'employee_id' => $row['employee_id'] ?? null,
-                    'email' => $row['email'] ?? null,
-                    'message' => 'Empl ID and Email are currently assigned to different users.',
-                ];
-                continue;
-            }
-            $existing = $matches[0] ?? null;
-            if (!$existing) {
-                $result['errors'][] = [
-                    'sheet' => $row['source_sheet'] ?? 'Nghỉ việc',
-                    'row' => $row['source_row'] ?? null,
-                    'employee_id' => $row['employee_id'] ?? null,
-                    'email' => $row['email'] ?? null,
-                    'message' => 'No matching KTV was found for the termination row.',
-                ];
-                continue;
-            }
-            if (strtoupper(trim((string)($existing['role'] ?? ''))) !== 'KTV') {
-                $result['errors'][] = [
-                    'sheet' => $row['source_sheet'] ?? 'Nghỉ việc',
-                    'row' => $row['source_row'] ?? null,
-                    'employee_id' => $row['employee_id'] ?? null,
-                    'email' => $row['email'] ?? null,
-                    'message' => 'The termination row matches a user who is not a KTV.',
-                ];
-                continue;
-            }
-            $providedEmployeeId = trim((string)($row['employee_id'] ?? ''));
-            $existingEmployeeId = trim((string)($existing['employee_id'] ?? ''));
-            if ($existingEmployeeId === '' || $providedEmployeeId !== $existingEmployeeId) {
-                $result['errors'][] = [
-                    'sheet' => $row['source_sheet'] ?? 'Nghỉ việc',
-                    'row' => $row['source_row'] ?? null,
-                    'employee_id' => $row['employee_id'] ?? null,
-                    'email' => $row['email'] ?? null,
-                    'message' => 'Empl ID does not match the KTV identified by Email.',
-                ];
-                continue;
-            }
-            $providedEmail = strtolower(trim((string)($row['email'] ?? '')));
-            $existingEmail = strtolower(trim((string)($existing['email'] ?? '')));
-            if ($providedEmail !== '' && $existingEmail !== '' && $providedEmail !== $existingEmail) {
-                $result['errors'][] = [
-                    'sheet' => $row['source_sheet'] ?? 'Nghỉ việc',
-                    'row' => $row['source_row'] ?? null,
-                    'employee_id' => $row['employee_id'] ?? null,
-                    'email' => $row['email'] ?? null,
-                    'message' => 'Email does not match the KTV identified by Empl ID.',
-                ];
-                continue;
-            }
-            if (ktv_roster_database_boolean($existing['is_terminated'] ?? false)) {
-                continue;
-            }
-            $existing['source_row'] = $row['source_row'] ?? null;
-            $existing['source_sheet'] = $row['source_sheet'] ?? 'Nghỉ việc';
-            $terminationCandidates[] = $existing;
-        }
+        $terminationCandidates[] = $managed;
     }
 
     foreach ($terminationCandidates as $managed) {
@@ -1049,6 +1000,21 @@ function sync_ktv_roster(
             'class_code' => $managed['class_code'] ?? null,
             'source_row' => $managed['source_row'] ?? null,
             'source_sheet' => $managed['source_sheet'] ?? null,
+            'fields' => [
+                'is_terminated' => ['from' => false, 'to' => true],
+                'termination_date' => [
+                    'from' => $managed['termination_date'] ?? null,
+                    'to' => $terminationDate,
+                ],
+                'termination_reason' => [
+                    'from' => $managed['termination_reason'] ?? null,
+                    'to' => $terminationReason,
+                ],
+                'employee_seed_batch' => [
+                    'from' => $managed['employee_seed_batch'] ?? null,
+                    'to' => $batch,
+                ],
+            ],
         ];
         if (!$dryRun && $terminateUser) {
             $terminateUser->execute([
@@ -1102,12 +1068,12 @@ function ktv_roster_log_import(PDO $pdo, array $result, ?string $importedBy, ?st
         <<<'SQL'
         INSERT INTO roster_import_log (
             batch_id, imported_by, file_name, total_rows,
-            inserted, updated, terminated, reactivated,
-            error_count, error_details, imported_at
+            inserted, updated, unchanged, terminated, reactivated,
+            status, error_count, error_details, change_details, imported_at
         ) VALUES (
             :batch_id, :imported_by, :file_name, :total_rows,
-            :inserted, :updated, :terminated, :reactivated,
-            :error_count, CAST(:error_details AS jsonb), NOW()
+            :inserted, :updated, :unchanged, :terminated, :reactivated,
+            :status, :error_count, CAST(:error_details AS jsonb), CAST(:change_details AS jsonb), NOW()
         )
         ON CONFLICT (batch_id) DO UPDATE SET
             imported_by = EXCLUDED.imported_by,
@@ -1115,10 +1081,13 @@ function ktv_roster_log_import(PDO $pdo, array $result, ?string $importedBy, ?st
             total_rows = EXCLUDED.total_rows,
             inserted = EXCLUDED.inserted,
             updated = EXCLUDED.updated,
+            unchanged = EXCLUDED.unchanged,
             terminated = EXCLUDED.terminated,
             reactivated = EXCLUDED.reactivated,
+            status = EXCLUDED.status,
             error_count = EXCLUDED.error_count,
             error_details = EXCLUDED.error_details,
+            change_details = EXCLUDED.change_details,
             imported_at = NOW()
         SQL
     );
@@ -1129,9 +1098,12 @@ function ktv_roster_log_import(PDO $pdo, array $result, ?string $importedBy, ?st
         'total_rows' => $result['total_rows'] ?? $result['totalRows'] ?? 0,
         'inserted' => $result['inserted'] ?? 0,
         'updated' => $result['updated'] ?? 0,
+        'unchanged' => $result['unchanged'] ?? 0,
         'terminated' => $result['terminated'] ?? 0,
         'reactivated' => $result['reactivated'] ?? 0,
+        'status' => ($result['status'] ?? 'success') === 'failed' ? 'failed' : 'success',
         'error_count' => $result['error_count'] ?? 0,
         'error_details' => json_encode($result['errors'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        'change_details' => json_encode($result['changes'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ]);
 }

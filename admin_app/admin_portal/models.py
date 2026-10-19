@@ -602,10 +602,13 @@ class RosterImportLog(models.Model):
     total_rows = models.IntegerField(default=0, verbose_name='Tổng số dòng')
     inserted = models.IntegerField(default=0, verbose_name='Thêm mới')
     updated = models.IntegerField(default=0, verbose_name='Cập nhật')
+    unchanged = models.IntegerField(default=0, verbose_name='Không đổi')
     terminated = models.IntegerField(default=0, verbose_name='Nghỉ việc')
     reactivated = models.IntegerField(default=0, verbose_name='Kích hoạt lại')
+    status = models.CharField(max_length=20, default='success', verbose_name='Trạng thái')
     error_count = models.IntegerField(default=0, verbose_name='Số lỗi')
     error_details = models.JSONField(default=list, verbose_name='Chi tiết lỗi')
+    change_details = models.JSONField(default=dict, verbose_name='Chi tiết thay đổi')
     imported_at = models.DateTimeField(verbose_name='Thời điểm import')
 
     class Meta:

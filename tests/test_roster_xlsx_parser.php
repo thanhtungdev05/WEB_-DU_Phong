@@ -292,10 +292,10 @@ function test_default_namespace_snapshot_workbook(): void
     }
 }
 
-function test_prefixed_namespace_delta_workbook(): void
+function test_prefixed_namespace_legacy_termination_workbook_is_rejected(): void
 {
     $path = test_create_roster_xlsx(true, true);
-    $variant = 'prefixed x: namespace delta workbook';
+    $variant = 'prefixed x: namespace legacy termination workbook';
 
     try {
         $zip = new ZipArchive();
@@ -312,31 +312,66 @@ function test_prefixed_namespace_delta_workbook(): void
         test_expect_same('Nghỉ việc', $sheets[1]['name'] ?? null, "$variant must preserve the termination sheet name.");
         test_expect_same('xl/worksheets/sheet2.xml', $sheets[1]['path'] ?? null, "$variant must resolve a relative worksheet target.");
 
-        $result = parse_ktv_roster_xlsx($path);
-        test_expect_same([], $result['errors'] ?? null, "$variant must parse without validation errors.");
-        test_expect_same('delta', $result['import_mode'] ?? null, "$variant must use explicit delta semantics.");
-        test_expect_same(['Tân binh', 'Nghỉ việc'], $result['sheet_names'] ?? null, "$variant must report both sheet names.");
-        test_expect_same(2, $result['totalRows'] ?? null, "$variant blank template rows must not count as data.");
-        test_expect_same(1, $result['active_rows'] ?? null, "$variant must report one active row.");
-        test_expect_same(1, $result['termination_row_count'] ?? null, "$variant must report one explicit termination row.");
-        test_expect_same(1, count($result['rows'] ?? []), "$variant must return exactly one normalized active row.");
-        test_expect_same(1, count($result['termination_rows'] ?? []), "$variant must return exactly one normalized termination row.");
-        test_active_row($result['rows'][0] ?? [], $variant);
-
-        $termination = $result['termination_rows'][0] ?? [];
-        test_expect_same('00987654', $termination['employee_id'] ?? null, "$variant must preserve the terminated employee ID.");
-        test_expect_same('Nhân viên nghỉ', $termination['display_name'] ?? null, "$variant must preserve a UTF-8 termination name.");
-        test_expect_same('former.fixture@example.test', $termination['email'] ?? null, "$variant must normalize the termination email.");
-        test_expect_same('Nghỉ việc', $termination['source_sheet'] ?? null, "$variant must retain the termination source sheet.");
-        test_expect_same(2, $termination['source_row'] ?? null, "$variant must retain the termination source row.");
+        try {
+            parse_ktv_roster_xlsx($path);
+            throw new RuntimeException("$variant must be rejected.");
+        } catch (RuntimeException $exception) {
+            test_expect_same(
+                true,
+                str_contains($exception->getMessage(), 'Sheet "Nghỉ việc" is no longer supported'),
+                "$variant must explain the one-sheet snapshot contract."
+            );
+        }
     } finally {
         @unlink($path);
     }
 }
 
+function test_field_level_change_detection(): void
+{
+    $existing = [
+        'email' => 'ktv.fixture@example.test',
+        'display_name' => 'Tên cũ',
+        'employee_id' => '00123456',
+        'job_title' => 'Kỹ thuật viên',
+        'class_code' => null,
+        'unit_id' => 'unit-1',
+        'unit_code' => 'HNI001',
+        'unit_name' => 'Hà Nội 1',
+        'region_code' => 'TINHNI',
+        'dashboard_region' => 'HNI',
+        'region_id' => 'region-1',
+        'employee_source' => KTV_ROSTER_IMPORT_SOURCE,
+    ];
+    $row = [
+        'email' => 'KTV.FIXTURE@example.test',
+        'display_name' => 'Tên mới',
+        'employee_id' => '00123456',
+        'job_title' => 'Kỹ thuật viên',
+        'class_code' => null,
+    ];
+    $unit = [
+        'unit_id' => 'unit-1',
+        'unit_code' => 'HNI001',
+        'unit_name' => 'Hà Nội 1',
+        'region_code' => 'TINHNI',
+        'dashboard_group' => 'HNI',
+        'region_name' => 'Hà Nội',
+        'region_id' => 'region-1',
+    ];
+
+    $changes = ktv_roster_field_changes($existing, $row, $unit);
+    test_expect_same(
+        ['display_name' => ['from' => 'Tên cũ', 'to' => 'Tên mới']],
+        $changes,
+        'Field-level audit must include only values that really changed.'
+    );
+}
+
 try {
     test_default_namespace_snapshot_workbook();
-    test_prefixed_namespace_delta_workbook();
+    test_prefixed_namespace_legacy_termination_workbook_is_rejected();
+    test_field_level_change_detection();
     fwrite(STDOUT, "Roster XLSX parser regression fixtures passed.\n");
 } catch (Throwable $exception) {
     fwrite(STDERR, $exception->getMessage() . "\n");

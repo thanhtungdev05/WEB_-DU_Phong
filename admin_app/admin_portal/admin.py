@@ -915,10 +915,10 @@ class LoginLogAdmin(ReadOnlyAuditAdmin):
 @admin.register(RosterImportLog)
 class RosterImportLogAdmin(ReadOnlyAuditAdmin):
     list_display = [
-        'imported_at', 'batch_id', 'file_name', 'imported_by', 'total_rows',
-        'inserted', 'updated', 'terminated', 'reactivated', 'error_count',
+        'imported_at', 'status', 'batch_id', 'file_name', 'imported_by', 'total_rows',
+        'inserted', 'updated', 'unchanged', 'terminated', 'reactivated', 'error_count',
     ]
-    list_filter = ['imported_at']
+    list_filter = ['status', 'imported_at']
     search_fields = [
         'batch_id', 'file_name', 'imported_by__email',
         'imported_by__employee_id',

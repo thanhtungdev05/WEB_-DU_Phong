@@ -114,17 +114,17 @@
   // Bài 4: Cấu hình DNS
   store.LAB_AX3000GZ_V2_04 = [
     step('#localnet', 'Bước 1: Chọn Local Network', 'bottom', function (doc) {
-      return !isVisible(doc, '#dns') && !isVisible(doc, '#LocalDnsServerBar');
+      return !isVisible(doc, '#lanConfig') && !isVisible(doc, '#lanMgrIpv4') && !isVisible(doc, '#DHCPBasicCfgBar');
     }),
-    step('#dns', 'Bước 2: Chọn DNS', 'right', function (doc) {
-      return isVisible(doc, '#dns') && !isVisible(doc, '#LocalDnsServerBar');
+    step('#lanConfig', 'Bước 2: Chọn LAN', 'right', function (doc) {
+      return isVisible(doc, '#lanConfig') && !isVisible(doc, '#lanMgrIpv4') && !isVisible(doc, '#DHCPBasicCfgBar');
     }),
-    step('#LocalDnsServerBar', 'Bước 3: Mở Local DNS Server', 'right', function (doc) {
-      return isVisible(doc, '#LocalDnsServerBar') && !isVisible(doc, '#sub_SerIPAddress10');
+    step('#DHCPBasicCfgBar', 'Bước 3: Mở DHCP Server', 'right', function (doc) {
+      return isVisible(doc, '#DHCPBasicCfgBar') && !isVisible(doc, '#sub_DNSServer10');
     }),
-    step('#sub_SerIPAddress10', 'Bước 4: Nhập DNS Server 1: 8.8.8.8', 'right', visibleAndUnsaved('#sub_SerIPAddress10')),
-    step('#sub_SerIPAddress20', 'Bước 5: Nhập DNS Server 2: 8.8.4.4', 'right', visibleAndUnsaved('#sub_SerIPAddress20')),
-    step('#Btn_apply_LocalDnsServer', 'Bước 6: Chọn Apply', 'top', visibleAndUnsaved('#Btn_apply_LocalDnsServer'))
+    step('#sub_DNSServer10', 'Bước 4: Nhập Primary DNS: 8.8.8.8', 'right', visibleAndUnsaved('#sub_DNSServer10')),
+    step('#sub_DNSServer20', 'Bước 5: Nhập Secondary DNS: 8.8.4.4', 'right', visibleAndUnsaved('#sub_DNSServer20')),
+    step('#Btn_apply_DHCPBasicCfg', 'Bước 6: Chọn Apply để lưu cấu hình', 'top', visibleAndUnsaved('#Btn_apply_DHCPBasicCfg'))
   ];
 
   // Bài 5: Cấu hình DHCP
