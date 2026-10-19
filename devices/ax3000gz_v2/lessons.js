@@ -68,7 +68,7 @@
     clearFields: ['[id="ESSID:3"]', '[id="HiddenKeyPass:3"]'],
     grading: { description: 'Kiểm tra SSID IoT và bảo mật Wi-Fi', rules: [
       rule('iot_ssid', 'SSID Name', '[id="ESSID:3"]', 'FPT IoT'),
-      rule('iot_security', 'Encryption Type', '[id="EncryptionType:3"]', 'WPA2-PSK-AES'),
+      rule('iot_security', 'Encryption Type', '[id="EncryptionType:3"]', 'WPA2-PSK-AES', 'text_exact', '[id="EncryptionType:3"], [id="ESSID:3"], [id="HiddenKeyPass:3"]'),
       rule('iot_password', 'WPA Passphrase', '[id="HiddenKeyPass:3"]', 'Fptiot123')
     ]}
   });
@@ -117,18 +117,18 @@
       rule('lan_ip_2', 'LAN IP - ô 2', '[id="sub_IPAddr1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_IPAddr"]'),
       rule('lan_ip_3', 'LAN IP - ô 3', '[id="sub_IPAddr2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_IPAddr"]'),
       rule('lan_ip_4', 'LAN IP - ô 4', '[id="sub_IPAddr3:DHCPBasicCfg"]', '1', 'text_exact', '[id^="sub_IPAddr"]'),
-      rule('subnet_1', 'Subnet Mask - ô 1', '#sub_SubMask0', '255', 'text_exact', '[id^="sub_SubMask"]'),
-      rule('subnet_2', 'Subnet Mask - ô 2', '#sub_SubMask1', '255', 'text_exact', '[id^="sub_SubMask"]'),
-      rule('subnet_3', 'Subnet Mask - ô 3', '#sub_SubMask2', '255', 'text_exact', '[id^="sub_SubMask"]'),
-      rule('subnet_4', 'Subnet Mask - ô 4', '#sub_SubMask3', '0', 'text_exact', '[id^="sub_SubMask"]'),
-      rule('dhcp_start_1', 'DHCP Start IP - ô 1', '[id="sub_MinAddress0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_MinAddress"]'),
-      rule('dhcp_start_2', 'DHCP Start IP - ô 2', '[id="sub_MinAddress1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_MinAddress"]'),
-      rule('dhcp_start_3', 'DHCP Start IP - ô 3', '[id="sub_MinAddress2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_MinAddress"]'),
-      rule('dhcp_start_4', 'DHCP Start IP - ô 4', '[id="sub_MinAddress3:DHCPBasicCfg"]', '2', 'text_exact', '[id^="sub_MinAddress"]'),
-      rule('dhcp_end_1', 'DHCP End IP - ô 1', '[id="sub_MaxAddress0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_MaxAddress"]'),
-      rule('dhcp_end_2', 'DHCP End IP - ô 2', '[id="sub_MaxAddress1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_MaxAddress"]'),
-      rule('dhcp_end_3', 'DHCP End IP - ô 3', '[id="sub_MaxAddress2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_MaxAddress"]'),
-      rule('dhcp_end_4', 'DHCP End IP - ô 4', '[id="sub_MaxAddress3:DHCPBasicCfg"]', '254', 'text_exact', '[id^="sub_MaxAddress"]')
+      rule('subnet_1', 'Subnet Mask - ô 1', '#sub_SubMask0', '255', 'text_exact', '[id^="sub_SubMask"], [id^="sub_IPAddr"], [id^="sub_MinAddress"], [id^="sub_MaxAddress"]'),
+      rule('subnet_2', 'Subnet Mask - ô 2', '#sub_SubMask1', '255', 'text_exact', '[id^="sub_SubMask"], [id^="sub_IPAddr"], [id^="sub_MinAddress"], [id^="sub_MaxAddress"]'),
+      rule('subnet_3', 'Subnet Mask - ô 3', '#sub_SubMask2', '255', 'text_exact', '[id^="sub_SubMask"], [id^="sub_IPAddr"], [id^="sub_MinAddress"], [id^="sub_MaxAddress"]'),
+      rule('subnet_4', 'Subnet Mask - ô 4', '#sub_SubMask3', '0', 'text_exact', '[id^="sub_SubMask"], [id^="sub_IPAddr"], [id^="sub_MinAddress"], [id^="sub_MaxAddress"]'),
+      rule('dhcp_start_1', 'DHCP Start IP - ô 1', '[id="sub_MinAddress0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_MinAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_start_2', 'DHCP Start IP - ô 2', '[id="sub_MinAddress1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_MinAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_start_3', 'DHCP Start IP - ô 3', '[id="sub_MinAddress2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_MinAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_start_4', 'DHCP Start IP - ô 4', '[id="sub_MinAddress3:DHCPBasicCfg"]', '2', 'text_exact', '[id^="sub_MinAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_end_1', 'DHCP End IP - ô 1', '[id="sub_MaxAddress0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_MaxAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_end_2', 'DHCP End IP - ô 2', '[id="sub_MaxAddress1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_MaxAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_end_3', 'DHCP End IP - ô 3', '[id="sub_MaxAddress2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_MaxAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_end_4', 'DHCP End IP - ô 4', '[id="sub_MaxAddress3:DHCPBasicCfg"]', '254', 'text_exact', '[id^="sub_MaxAddress"], [id^="sub_IPAddr"]')
     ]}
   });
 
@@ -149,13 +149,13 @@
     clearFields: ['[id^="Alias"]', '[id^="InternalClient"]', '[id^="ExternalPort"]', '[id^="InternalPort"]'],
     grading: { description: 'Kiểm tra Port Forwarding', rules: [
       rule('pf_name', 'Name', '[id^="Alias"]', 'FPT Telecom'),
-      rule('pf_wan_connection', 'WAN Connection', '[id^="S_Interface"]', 'DEV.IP.IF3'),
-      rule('pf_protocol', 'Protocol', '[id^="Protocol"]', 'BOTH'),
+      rule('pf_wan_connection', 'WAN Connection', '[id^="S_Interface"]', 'DEV.IP.IF3', 'text_exact', '[id^="S_Interface"], [id^="Alias"], [id^="InternalClient"]'),
+      rule('pf_protocol', 'Protocol', '[id^="Protocol"]', 'BOTH', 'text_exact', '[id^="Protocol"], [id^="Alias"], [id^="InternalClient"]'),
       rule('pf_lan_host', 'LAN Host', '[id^="InternalClient"]', '192.168.1.254'),
-      rule('pf_wan_port', 'WAN Port', '[id^="ExternalPort"]:not([id*="EndRange"])', '8080'),
-      rule('pf_wan_port_end', 'WAN Port End', '[id^="ExternalPortEndRange"]', '8080'),
-      rule('pf_lan_port', 'LAN Host Port', '[id^="InternalPort"]:not([id*="EndRange"])', '8080'),
-      rule('pf_lan_port_end', 'LAN Host Port End', '[id^="InternalPortEndRange"]', '8080')
+      rule('pf_wan_port', 'WAN Port', '[id^="ExternalPort"]:not([id*="EndRange"])', '8080', 'text_exact', '[id^="ExternalPort"]'),
+      rule('pf_wan_port_end', 'WAN Port End', '[id^="ExternalPortEndRange"]', '8080', 'text_exact', '[id^="ExternalPort"]'),
+      rule('pf_lan_port', 'LAN Host Port', '[id^="InternalPort"]:not([id*="EndRange"])', '8080', 'text_exact', '[id^="InternalPort"]'),
+      rule('pf_lan_port_end', 'LAN Host Port End', '[id^="InternalPortEndRange"]', '8080', 'text_exact', '[id^="InternalPort"]')
     ]}
   });
 })();

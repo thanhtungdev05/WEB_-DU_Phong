@@ -1669,8 +1669,9 @@
                 });
                 doc.addEventListener('click', function (e) {
                   if (!isAx3000gzV2 || !e.isTrusted || !e.target) return;
-                  if (e.target.tagName === 'SELECT' || e.target.type === 'radio' || e.target.type === 'checkbox') {
-                    markCurrentAttemptInteraction(doc, e.target);
+                  const targetEl = (e.target.closest && e.target.closest('select')) || e.target;
+                  if (targetEl.tagName === 'SELECT' || targetEl.type === 'radio' || targetEl.type === 'checkbox') {
+                    markCurrentAttemptInteraction(doc, targetEl);
                   }
                 }, true);
                 doc.addEventListener('input', function (e) {
@@ -1702,8 +1703,9 @@
                 doc.addEventListener('change', function (e) {
                   if (e.target) {
                     if (isAx3000gzV2) {
-                      if (e.isTrusted && (e.target.tagName === 'SELECT' || e.target.type === 'radio' || e.target.type === 'checkbox' || hasCurrentAttemptInteraction(e.target))) {
-                        markCurrentAttemptInteraction(doc, e.target);
+                      const targetEl = (e.target.closest && e.target.closest('select')) || e.target;
+                      if (e.isTrusted && (targetEl.tagName === 'SELECT' || targetEl.type === 'radio' || targetEl.type === 'checkbox' || hasCurrentAttemptInteraction(targetEl))) {
+                        markCurrentAttemptInteraction(doc, targetEl);
                       }
                     } else {
                       e.target._ftcUserModified = true;
