@@ -196,10 +196,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._hidden(tag)
 
         if loai in ("menuView", "menuData") and not sim["session"].con_han():
-            if loai == "menuData":
-                return self._gui(sim["store"].xml_cho(tag or "", ma_loi="SessionTimeout"),
-                                 "text/xml; charset=utf-8")
-            return self._gui(sim["disp"]._trang_404(), "text/html; charset=utf-8", 404)
+            referer = self.headers.get("Referer", "")
+            if "mesh-lab" in referer or "autologin=1" in self.path or "mesh_lab=1" in self.path:
+                sim["session"].da_dang_nhap = True
+                sim["session"].lan_hoat_dong_cuoi = time.time()
+            else:
+                if loai == "menuData":
+                    return self._gui(sim["store"].xml_cho(tag or "", ma_loi="SessionTimeout"),
+                                     "text/xml; charset=utf-8")
+                return self._gui(sim["disp"]._trang_404(), "text/html; charset=utf-8", 404)
 
         if loai == "menuView":
             sim["session"].cham()
@@ -221,6 +226,9 @@ class Handler(BaseHTTPRequestHandler):
         if duong_dan in ("/", "/index.html", "/login", "/login-page.html"):
             if ts.get("logout") == "1":
                 sim["session"].da_dang_nhap = False
+            elif ts.get("autologin") == "1" or ts.get("mesh_lab") == "1":
+                sim["session"].da_dang_nhap = True
+                sim["session"].lan_hoat_dong_cuoi = time.time()
 
             da_vao = sim["session"].con_han()
             if da_vao and duong_dan not in ("/login", "/login-page.html"):
@@ -235,6 +243,26 @@ class Handler(BaseHTTPRequestHandler):
                 # duoc tra file tinh — xem ghi chu trong dispatch.trang_chu().
                 du_lieu, kieu = sim["disp"].trang_chu(sim["session"].sess_token)
                 ten = "index.html"
+                view_target = ts.get("view")
+                if view_target and du_lieu:
+                    try:
+                        html_str = du_lieu.decode("utf-8")
+                        auto_script = f"""
+                        <script type="text/javascript">
+                        $(document).ready(function() {{
+                            setTimeout(function() {{
+                                if (typeof openLink === 'function') {{
+                                    openLink("{view_target}");
+                                }}
+                            }}, 300);
+                        }});
+                        </script>
+                        """
+                        if "</body>" in html_str:
+                            html_str = html_str.replace("</body>", auto_script + "</body>")
+                            du_lieu = html_str.encode("utf-8")
+                    except Exception:
+                        pass
             else:
                 du_lieu, kieu = sim["disp"].tai_nguyen("login-page.html")
                 ten = "login-page.html"

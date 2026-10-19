@@ -728,7 +728,7 @@
 
       <div class="iframe-container">
         <!-- FRAME 1: BE12000 (CONTROLLER) -->
-        <iframe id="frame-be12000" class="sim-frame" src="/sim_be12000/?_type=menuView&_tag=mmTopology" title="Giao diện ONT BE12000Z"></iframe>
+        <iframe id="frame-be12000" class="sim-frame" src="/sim_be12000/?autologin=1&view=mmTopology" title="Giao diện ONT BE12000Z"></iframe>
         <!-- FRAME 2: BE15000 (AGENT) -->
         <iframe id="frame-be15000" class="sim-frame" style="display:none;" src="/sim_be15000/pages/localNetStatus.html" title="Giao diện AP BE15000Z"></iframe>
       </div>
@@ -929,12 +929,28 @@
     function jumpToView(view) {
       if (view === 'mmTopology') {
         selectDeviceTab('be12000');
-        document.getElementById('frame-be12000').src = '/sim_be12000/?_type=menuView&_tag=mmTopology';
-        showToast('Đang mở Sơ đồ Mesh mmTopology trên BE12000Z');
+        const f = document.getElementById('frame-be12000');
+        try {
+          if (f.contentWindow && typeof f.contentWindow.openLink === 'function') {
+            f.contentWindow.openLink('mmTopology');
+            showToast('Đang chuyển đến Sơ đồ Mesh (mmTopology)');
+            return;
+          }
+        } catch (e) {}
+        f.src = '/sim_be12000/?autologin=1&view=mmTopology';
+        showToast('Đang tải Sơ đồ Mesh mmTopology trên BE12000Z');
       } else if (view === 'wlanBasic') {
         selectDeviceTab('be12000');
-        document.getElementById('frame-be12000').src = '/sim_be12000/?_type=menuView&_tag=wlanBasic';
-        showToast('Đang mở trang Cấu hình Wi-Fi trên BE12000Z');
+        const f = document.getElementById('frame-be12000');
+        try {
+          if (f.contentWindow && typeof f.contentWindow.openLink === 'function') {
+            f.contentWindow.openLink('wlanBasic');
+            showToast('Đang chuyển đến Cấu hình Wi-Fi');
+            return;
+          }
+        } catch (e) {}
+        f.src = '/sim_be12000/?autologin=1&view=wlanBasic';
+        showToast('Đang tải trang Cấu hình Wi-Fi trên BE12000Z');
       } else if (view === 'apStatus') {
         selectDeviceTab('be15000');
         document.getElementById('frame-be15000').src = '/sim_be15000/pages/localNetStatus.html';
