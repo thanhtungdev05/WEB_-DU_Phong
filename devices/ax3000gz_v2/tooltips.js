@@ -139,10 +139,10 @@
     step('#DHCPBasicCfgBar', 'Bước 3: Mở DHCP Server', 'right', function (doc) {
       return isVisible(doc, '#DHCPBasicCfgBar') && !isVisible(doc, '[id="sub_IPAddr0:DHCPBasicCfg"]');
     }),
-    step('[id="sub_IPAddr0:DHCPBasicCfg"]', 'Bước 4: Nhập LAN IP Address: 192.168.10.1', 'right', visibleAndUnsaved('[id="sub_IPAddr0:DHCPBasicCfg"]')),
+    step('[id="sub_IPAddr0:DHCPBasicCfg"]', 'Bước 4: Nhập LAN IP: 192.168.10.1', 'right', visibleAndUnsaved('[id="sub_IPAddr0:DHCPBasicCfg"]')),
     step('#sub_SubMask0', 'Bước 5: Nhập Subnet Mask: 255.255.255.0', 'right', visibleAndUnsaved('#sub_SubMask0')),
-    step('[id="sub_MinAddress0:DHCPBasicCfg"]', 'Bước 6: Nhập DHCP Start IP Address: 192.168.10.2', 'right', visibleAndUnsaved('[id="sub_MinAddress0:DHCPBasicCfg"]')),
-    step('[id="sub_MaxAddress0:DHCPBasicCfg"]', 'Bước 7: Nhập DHCP End IP Address: 192.168.10.254', 'right', visibleAndUnsaved('[id="sub_MaxAddress0:DHCPBasicCfg"]')),
+    step('[id="sub_MinAddress0:DHCPBasicCfg"]', 'Bước 6: Nhập Start IP: 192.168.10.2', 'right', visibleAndUnsaved('[id="sub_MinAddress0:DHCPBasicCfg"]')),
+    step('[id="sub_MaxAddress0:DHCPBasicCfg"]', 'Bước 7: Nhập End IP: 192.168.10.254', 'right', visibleAndUnsaved('[id="sub_MaxAddress0:DHCPBasicCfg"]')),
     step('#Btn_apply_DHCPBasicCfg', 'Bước 8: Chọn Apply', 'top', visibleAndUnsaved('#Btn_apply_DHCPBasicCfg'))
   ];
 
@@ -160,12 +160,12 @@
     // Khi chưa có rule, trang Port Forwarding tự mở form New Item.
     step('[id^="Alias"]', 'Bước 4: Nhập Name: FPT Telecom', 'right', visibleAndUnsaved('[id^="Alias"]')),
     step('[id^="Protocol"]', 'Bước 5: Chọn Protocol: TCP And UDP', 'right', visibleAndUnsaved('[id^="Protocol"]')),
-    step('[id^="S_Interface"]', 'Bước 6: Chọn WAN Connection: internet_tr069', 'right', visibleAndUnsaved('[id^="S_Interface"]')),
+    step('[id^="S_Interface"]', 'Bước 6: Chọn WAN: internet_tr069', 'right', visibleAndUnsaved('[id^="S_Interface"]')),
     step('[id^="InternalClient"]', 'Bước 7: Nhập LAN Host: 192.168.1.254', 'right', visibleAndUnsaved('[id^="InternalClient"]')),
-    step('[id^="ExternalPort"]:not([id*="EndRange"])', 'Bước 8: Nhập WAN Port bắt đầu: 8080', 'right', visibleAndUnsaved('[id^="ExternalPort"]:not([id*="EndRange"])')),
-    step('[id^="ExternalPortEndRange"]', 'Bước 9: Nhập WAN Port kết thúc: 8080', 'right', visibleAndUnsaved('[id^="ExternalPortEndRange"]')),
-    step('[id^="InternalPort"]:not([id*="EndRange"])', 'Bước 10: Nhập LAN Host Port bắt đầu: 8080', 'right', visibleAndUnsaved('[id^="InternalPort"]:not([id*="EndRange"])')),
-    step('[id^="InternalPortEndRange"]', 'Bước 11: Nhập LAN Host Port kết thúc: 8080', 'right', visibleAndUnsaved('[id^="InternalPortEndRange"]')),
+    step('[id^="ExternalPort"]:not([id*="EndRange"])', 'Bước 8: Port đầu: 8080', 'right', visibleAndUnsaved('[id^="ExternalPort"]:not([id*="EndRange"])')),
+    step('[id^="ExternalPortEndRange"]', 'Bước 9: Port cuối: 8080', 'right', visibleAndUnsaved('[id^="ExternalPortEndRange"]')),
+    step('[id^="InternalPort"]:not([id*="EndRange"])', 'Bước 10: Port đầu: 8080', 'right', visibleAndUnsaved('[id^="InternalPort"]:not([id*="EndRange"])')),
+    step('[id^="InternalPortEndRange"]', 'Bước 11: Port cuối: 8080', 'right', visibleAndUnsaved('[id^="InternalPortEndRange"]')),
     step('[id^="Btn_apply_PortForwarding"]', 'Bước 12: Chọn Apply', 'top', visibleAndUnsaved('[id^="Btn_apply_PortForwarding"]'))
   ];
 })();

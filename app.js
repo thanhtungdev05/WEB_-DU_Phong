@@ -4556,9 +4556,10 @@
           animation: ftcGuidePopIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
         .ftc-guide-bubble.ftc-guide-avoid-overlap {
-          max-width: min(240px, calc(100vw - 20px)) !important;
-          white-space: normal !important;
-          overflow-wrap: anywhere !important;
+          white-space: nowrap !important;
+          font-size: 11px !important;
+          padding: 3px 6px !important;
+          max-width: none !important;
         }
         .ftc-guide-bubble::before {
           content: '' !important;
@@ -4948,7 +4949,7 @@
     const winH = win.innerHeight || doc.documentElement.clientHeight || 768;
     const margin = 6;
     const gap = 10;
-    const collisionPadding = 4;
+    const collisionPadding = 2;
     const bodyStyle = win.getComputedStyle(doc.body);
     const offsetParent = bodyStyle && bodyStyle.position !== 'static' ? doc.body : doc.documentElement;
     const parentRect = offsetParent.getBoundingClientRect();
@@ -5117,12 +5118,10 @@
           rightX,
           rightX + width + gap,
           targetRect.left - width - gap,
-          rightX + 24,
-          targetRect.left - width - gap - 24,
-          winW - width - margin,
-          margin
+          rightX + 20,
+          targetRect.left - width - gap - 20
         ];
-        for (let distance = 0; distance <= winH; distance += Math.max(6, Math.min(14, height / 2))) {
+        for (let distance = 0; distance <= winH; distance += Math.max(4, Math.min(12, height / 2))) {
           const ys = distance === 0
             ? [centerY - height / 2]
             : [centerY - height / 2 - distance, centerY - height / 2 + distance];
@@ -5146,9 +5145,9 @@
             const dyB = Math.abs((b.rect.top + height / 2) - centerY);
             const dxA = Math.abs((a.rect.left + width / 2) - centerX);
             const dxB = Math.abs((b.rect.left + width / 2) - centerX);
-            // Phạt nặng việc nhảy lệch dòng (dy * 25) để ưu tiên xếp cạnh nhau trên cùng một hàng ngang
-            const distA = Math.hypot(dxA, dyA * 25);
-            const distB = Math.hypot(dxB, dyB * 25);
+            // Phạt nặng việc nhảy lệch dòng (dy * 20) để ưu tiên xếp cạnh nhau trên cùng một hàng ngang
+            const distA = Math.hypot(dxA, dyA * 20);
+            const distB = Math.hypot(dxB, dyB * 20);
             return distA - distB;
           });
           selected = freeFallbacks[0];
