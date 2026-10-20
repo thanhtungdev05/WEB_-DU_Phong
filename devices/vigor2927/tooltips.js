@@ -1089,7 +1089,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
     page: 'policyrt1'
   },
   {
-    selector: 'input[name="iPREnable"]',
+    selector: '#lbl-route-enable, text:Enable, input[name="iPREnable"]',
     text: 'Bước 4: check vào Enable',
     position: 'right',
     page: 'v2x00.cgi',
@@ -1143,7 +1143,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
     }
   },
   {
-    selector: 'input[name="iPRFailover"]',
+    selector: '#lbl-route-failover, text:Failover to, input[name="iPRFailover"]',
     text: 'Bước 10: check vào Failover to',
     position: 'right',
     page: 'v2x00.cgi',
@@ -1161,7 +1161,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
     }
   },
   {
-    selector: '#image_option, td[onclick*="onClkMoreoption"]',
+    selector: '#lbl-route-priority, td[onclick*="onClkMoreoption"] b, text:Priority, #image_option',
     text: 'Bước 12: click vào + Priority',
     position: 'right',
     page: 'v2x00.cgi',

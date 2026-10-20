@@ -192,7 +192,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       page: 'policyrt1'
     },
     {
-      selector: 'input[name="iPREnable"]',
+      selector: '#lbl-route-enable, text:Enable, input[name="iPREnable"]',
       text: 'Bước 4: check vào Enable',
       position: 'right',
       page: 'v2x00.cgi'
@@ -228,7 +228,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       page: 'v2x00.cgi'
     },
     {
-      selector: 'input[name="iPRFailover"]',
+      selector: '#lbl-route-failover, text:Failover to, input[name="iPRFailover"]',
       text: 'Bước 10: check vào Failover to',
       position: 'right',
       page: 'v2x00.cgi'
@@ -240,7 +240,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       page: 'v2x00.cgi'
     },
     {
-      selector: '#image_option, td[onclick*="onClkMoreoption"]',
+      selector: '#lbl-route-priority, td[onclick*="onClkMoreoption"] b, text:Priority, #image_option',
       text: 'Bước 12: click vào + Priority',
       position: 'right',
       page: 'v2x00.cgi'
