@@ -29,6 +29,7 @@ function isVigor2927Bai7SrcRangeDone(doc) {
 
 function isVigor2927Bai7SrcStartDone(doc) {
   if (!doc) return false;
+  hookVigor2927Bai7Interactions(doc);
   if (isVigor2927Bai7SrcEndDone(doc)) return true;
   var el = doc.querySelector('input[name="sPRSIpStart"]');
   return el ? (el.value || '').trim() === '192.168.1.100' : false;
@@ -36,29 +37,84 @@ function isVigor2927Bai7SrcStartDone(doc) {
 
 function isVigor2927Bai7SrcEndDone(doc) {
   if (!doc) return false;
+  hookVigor2927Bai7Interactions(doc);
   if (isVigor2927Bai7WanIfConfirmed(doc)) return true;
   var el = doc.querySelector('input[name="iPRSIpCount"]');
   return el ? (el.value || '').trim() === '192.168.1.110' : false;
 }
 
 function hookVigor2927Bai7Interactions(doc) {
-  if (!doc || doc._ftcBai7Hooked) return;
+  if (!doc) return;
+  var srcStartEl = doc.querySelector ? doc.querySelector('input[name="sPRSIpStart"]') : null;
+  var srcEndEl = doc.querySelector ? doc.querySelector('input[name="iPRSIpCount"]') : null;
+  var wanIfEl = doc.querySelector ? doc.querySelector('select[name="multiwanWanIf"]') : null;
+  var failoverEl = doc.querySelector ? doc.querySelector('input[name="iPRFailover"]') : null;
+
+  if (doc._ftcBai7Hooked) return;
+  if (!srcEndEl && !wanIfEl) return;
   doc._ftcBai7Hooked = true;
 
-  var wanIfEl = doc.querySelector('select[name="multiwanWanIf"]');
+  var triggerPortalPopups = function () {
+    try {
+      var topWin = doc.defaultView ? (doc.defaultView.top || doc.defaultView.parent) : null;
+      if (topWin) {
+        topWin.postMessage({ type: 'REQUEST_GUIDE_POPUPS' }, '*');
+        if (typeof topWin.applyGuidePopups === 'function') {
+          topWin.applyGuidePopups();
+        }
+      }
+    } catch (e) { }
+  };
+
+  var checkStep8AndScroll = function () {
+    if (isVigor2927Bai7SrcStartDone(doc) && isVigor2927Bai7SrcEndDone(doc) && !isVigor2927Bai7WanIfConfirmed(doc)) {
+      if (wanIfEl && typeof wanIfEl.scrollIntoView === 'function') {
+        try {
+          wanIfEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) {
+          wanIfEl.scrollIntoView();
+        }
+      }
+      triggerPortalPopups();
+      setTimeout(triggerPortalPopups, 80);
+      setTimeout(triggerPortalPopups, 250);
+      setTimeout(triggerPortalPopups, 500);
+    }
+  };
+
+  ['input', 'change', 'blur', 'keyup'].forEach(function (ev) {
+    if (srcEndEl && typeof srcEndEl.addEventListener === 'function') {
+      srcEndEl.addEventListener(ev, function () {
+        checkStep8AndScroll();
+      });
+    }
+    if (srcStartEl && typeof srcStartEl.addEventListener === 'function') {
+      srcStartEl.addEventListener(ev, function () {
+        triggerPortalPopups();
+      });
+    }
+  });
+
   if (wanIfEl && typeof wanIfEl.addEventListener === 'function') {
-    wanIfEl.addEventListener('click', function () { doc._ftcWanIfConfirmed = true; });
-    wanIfEl.addEventListener('change', function () { doc._ftcWanIfConfirmed = true; });
-    wanIfEl.addEventListener('focus', function () { doc._ftcWanIfConfirmed = true; });
+    var confirmWanIf = function () {
+      doc._ftcWanIfConfirmed = true;
+      triggerPortalPopups();
+      setTimeout(triggerPortalPopups, 80);
+      setTimeout(triggerPortalPopups, 250);
+    };
+    wanIfEl.addEventListener('click', confirmWanIf);
+    wanIfEl.addEventListener('change', confirmWanIf);
+    wanIfEl.addEventListener('focus', confirmWanIf);
   }
 
-  var failoverEl = doc.querySelector('input[name="iPRFailover"]');
   if (failoverEl && typeof failoverEl.addEventListener === 'function') {
     failoverEl.addEventListener('click', function () {
       doc._ftcWanIfConfirmed = true;
+      triggerPortalPopups();
     });
     failoverEl.addEventListener('change', function () {
       doc._ftcWanIfConfirmed = true;
+      triggerPortalPopups();
     });
   }
 
@@ -67,6 +123,7 @@ function hookVigor2927Bai7Interactions(doc) {
       var t = e.target;
       if (t && (t.id === 'image_option' || (t.closest && t.closest('td[onclick*="onClkMoreoption"], [onclick*="onClkMoreoption"]')))) {
         doc._ftcPriorityOpened = true;
+        triggerPortalPopups();
       }
     }, true);
   }
@@ -159,7 +216,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
     page: 'policyrt1'
   },
   {
-    selector: 'input[name="iPREnable"]',
+    selector: '#lbl-route-enable, text:Enable, input[name="iPREnable"]',
     text: 'Bước 4: check vào Enable',
     position: 'right',
     page: 'v2x00.cgi',
@@ -213,7 +270,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
     }
   },
   {
-    selector: 'input[name="iPRFailover"]',
+    selector: '#lbl-route-failover, text:Failover to, input[name="iPRFailover"]',
     text: 'Bước 10: check vào Failover to',
     position: 'right',
     page: 'v2x00.cgi',
@@ -231,7 +288,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
     }
   },
   {
-    selector: '#image_option, td[onclick*="onClkMoreoption"]',
+    selector: '#lbl-route-priority, td[onclick*="onClkMoreoption"] b, text:Priority, #image_option',
     text: 'Bước 12: click vào + Priority',
     position: 'right',
     page: 'v2x00.cgi',

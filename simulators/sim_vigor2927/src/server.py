@@ -256,7 +256,7 @@ class H(BaseHTTPRequestHandler):
                     txt = render.sua_ipbandw_add(txt)
                 if "ipbmac.htm" in rl:
                     txt = render.sua_ipbmac_add(txt)
-                if "ENET.SHT" in rl or "enet.sht" in rl.lower():
+                if "ENET.SHT" in rl or "enet.sht" in rl.lower() or "lan_dt_1.html" in rl:
                     txt = render.sua_enet_sht(txt)
                 if "p2_188.html" in rl:
                     txt = render.sua_policyrt_detail(txt, params.get("iPRIdx") if params else None)
@@ -334,6 +334,73 @@ class H(BaseHTTPRequestHandler):
         config_store.dat("doc/ipbmac.htm", "sIpBindMac", full_str)
         config_store.dat("doc/ipbmac.htm", "sIpBndMacEnable", 1 if enable else 0)
         config_store.dat("doc/ipbmac.htm", "sIpBndMacStrict", 1 if strict else 0)
+
+    def _xu_ly_post_ipbandw(self, params):
+        """Xu ly luu cau hinh Bandwidth Limit (doc/ipbandw.htm, fid=302):
+        Dong bo Enable (sIpBandwFlag), TX/RX mac dinh va mang Limitation List aryIpBandw.
+        """
+        en = str(params.get("sIpBandwEnable", "")).strip()
+        flag = int(config_store.lay("doc/ipbandw.htm", "sIpBandwFlag") or 8192)
+        if en == "1":
+            flag = flag | 1
+        elif en == "0":
+            flag = flag & ~1
+        config_store.dat("doc/ipbandw.htm", "sIpBandwFlag", flag)
+
+        def_tx_str = params.get("sIpBandwDefTx")
+        if def_tx_str and str(def_tx_str).isdigit():
+            tx_val = int(def_tx_str)
+            tx_u = int(params.get("iDefTx", 1) or 1)
+            config_store.dat("doc/ipbandw.htm", "sIpBandwDefTx", tx_val | 0x8000 if tx_u == 1 else tx_val)
+
+        def_rx_str = params.get("sIpBandwDefRx")
+        if def_rx_str and str(def_rx_str).isdigit():
+            rx_val = int(def_rx_str)
+            rx_u = int(params.get("iDefRx", 1) or 1)
+            config_store.dat("doc/ipbandw.htm", "sIpBandwDefRx", rx_val | 0x8000 if rx_u == 1 else rx_val)
+
+        ary = [["", "", 0, 0, "N"] for _ in range(20)]
+        found_idx = 0
+        for i in range(20):
+            val = params.get(f"sIpBandwidth{i}", "").strip()
+            if not val:
+                continue
+            parts = val.split()
+            if len(parts) >= 3 and "-" in parts[0]:
+                ipf, ipt = parts[0].split("-", 1)
+                try:
+                    tx = int(parts[1])
+                except ValueError:
+                    tx = 20 | 0x8000
+                try:
+                    rx = int(parts[2])
+                except ValueError:
+                    rx = 25 | 0x8000
+                shrd = "Y" if (len(parts) >= 4 and parts[3].lower() == "shared") else "N"
+                ary[found_idx] = [ipf, ipt, tx, rx, shrd]
+                found_idx += 1
+
+        if found_idx == 0:
+            ipf = params.get("sIpBandwFrom", "").strip()
+            ipt = params.get("sIpBandwTo", "").strip()
+            if ipf and ipt:
+                try:
+                    tx_v = int(params.get("sIpBandwTx", 20) or 20)
+                except ValueError:
+                    tx_v = 20
+                tx_u = int(params.get("iProfTx", 1) or 1)
+                try:
+                    rx_v = int(params.get("sIpBandwRx", 25) or 25)
+                except ValueError:
+                    rx_v = 25
+                rx_u = int(params.get("iProfRx", 1) or 1)
+                shrd = params.get("sIpBandwShrd", "N").strip().upper()
+                if shrd not in ("Y", "N"):
+                    shrd = "N"
+                ary[0] = [ipf, ipt, tx_v | 0x8000 if tx_u == 1 else tx_v, rx_v | 0x8000 if rx_u == 1 else rx_v, shrd]
+
+        config_store.dat("doc/ipbandw.htm", "aryIpBandw", ary)
+        config_store.dat("doc/ipbandw.htm", "_ftcIsSaved", 1)
 
     def _xu_ly_post_enet(self, params):
         """Xu ly luu cau hinh DHCP / LAN 1 (doc/ENET.SHT, enet.cgi)."""
@@ -539,14 +606,19 @@ class H(BaseHTTPRequestHandler):
             # POST co GHI cau hinh khi mang co `webchange` (DrayTek dung co nay
             # de danh dau form Apply/Save, xem spec/cgi-map.json).
             is_ipbmac = (goc == "doc/ipbmac.htm" or params.get("fid") == "126")
-            is_enet = (p == "/cgi-bin/enet.cgi" or goc == "doc/ENET.SHT")
-            if (params.get("webchange") or is_ipbmac or is_enet) and (goc or is_enet):
+            is_enet = (p == "/cgi-bin/enet.cgi" or (goc == "doc/ENET.SHT" and str(params.get("webchange")) == "1"))
+            is_ipbandw = (goc == "doc/ipbandw.htm" or str(params.get("fid")) == "302")
+            if (params.get("webchange") or is_ipbmac or is_enet or is_ipbandw) and (goc or is_enet or is_ipbandw):
                 if is_enet and not goc:
                     goc = "doc/ENET.SHT"
+                if not goc and is_ipbandw:
+                    goc = "doc/ipbandw.htm"
                 if goc == "doc/ipbmac.htm":
                     self._xu_ly_post_ipbmac(params)
                 elif is_enet:
                     self._xu_ly_post_enet(params)
+                elif is_ipbandw:
+                    self._xu_ly_post_ipbandw(params)
                 n = config_store.ghi_post(p, params, goc)
                 self._log("GHI", p, f"-> config_store: {n} gia tri  (trang {goc})")
                 # Hop dong 2.4: thiet bi that tra 302 kem Location tro sang trang dich

@@ -527,7 +527,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     {
       selector: 'input[name="sIpBandwShrd"][value="N"]',
       text: 'Bước 8: chọn Each (mỗi IP trong dải đều sử dụng tối đa băng thông quy định)',
-      position: 'right',
+      position: 'bottom',
       condition: function (doc) {
         if (!doc) return false;
         var fromEl = doc.querySelector('input[name="sIpBandwFrom"]');

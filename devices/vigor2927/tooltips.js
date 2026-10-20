@@ -190,7 +190,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai2'] = [
   {
     selector: 'input[name="sIpBandwShrd"][value="N"]',
     text: 'Bước 8: chọn Each (mỗi IP trong dải đều sử dụng tối đa băng thông quy định)',
-    position: 'right',
+    position: 'bottom',
     condition: function (doc) {
       if (!isVigor2927Bai2LimitDone(doc) || isVigor2927Bai2Added(doc)) return false;
       if (getVigor2927InputVal(doc, 'sIpBandwFrom') !== '192.168.1.10' || getVigor2927InputVal(doc, 'sIpBandwTo') !== '192.168.1.20') return false;
@@ -454,6 +454,113 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai4'] = [
   }
 ];
 
+function hookVigor2927Bai5Scroll(doc) {
+  if (!doc) return;
+  var pri = doc.querySelector ? doc.querySelector('input[name="sDNSPri"]') : null;
+  var snd = doc.querySelector ? doc.querySelector('input[name="sDNSSnd"]') : null;
+  var btn = doc.querySelector ? doc.querySelector('input[name="btnOK"], input[value="OK"]') : null;
+
+  // Chỉ hook khi đã tìm thấy đầy đủ các trường trên trang lan_dt_1.html
+  if (!pri || !snd || !btn) return;
+  if (doc._ftcBai5ScrollHooked) return;
+  doc._ftcBai5ScrollHooked = true;
+
+  // Đảm bảo khi mới vào trang cấu hình LAN 1 (chưa bấm OK), cờ lưu cấu hình phải là false
+  var hasSaveSuccessUrl = Boolean(doc.location && doc.location.search && doc.location.search.includes('save_success=1'));
+  if (!doc._ftcIsSaved && !hasSaveSuccessUrl) {
+    doc._ftcIsSaved = false;
+    try {
+      var win = doc.defaultView || doc.parentWindow;
+      if (win) win._ftcIsSaved = false;
+      var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+      if (topWin) topWin._hasClickedSaveInGuide = false;
+      if (typeof window !== 'undefined') window._hasClickedSaveInGuide = false;
+      if (typeof parent !== 'undefined' && parent) parent._hasClickedSaveInGuide = false;
+    } catch (e) { }
+  }
+
+  var triggerPortalPopups = function () {
+    try {
+      var topWin = doc.defaultView ? (doc.defaultView.top || doc.defaultView.parent) : null;
+      if (topWin) {
+        topWin.postMessage({ type: 'REQUEST_GUIDE_POPUPS' }, '*');
+        if (typeof topWin.applyGuidePopups === 'function') {
+          topWin.applyGuidePopups();
+        }
+      }
+    } catch (e) { }
+  };
+
+  var checkAndScroll = function () {
+    var priDone = (typeof isVigor2927Bai5PriDone === 'function') ? isVigor2927Bai5PriDone(doc) : (pri && (pri.value || '').trim() === '210.245.31.220');
+    var sndDone = (typeof isVigor2927Bai5SndDone === 'function') ? isVigor2927Bai5SndDone(doc) : (snd && (snd.value || '').trim() === '8.8.8.8');
+    if (priDone && sndDone && !doc._ftcIsSaved) {
+      if (btn && typeof btn.scrollIntoView === 'function') {
+        try {
+          btn.scrollIntoView({ behavior: 'auto', block: 'center' });
+        } catch (e) {
+          btn.scrollIntoView();
+        }
+      }
+      triggerPortalPopups();
+      setTimeout(triggerPortalPopups, 80);
+      setTimeout(triggerPortalPopups, 250);
+    }
+  };
+
+  ['input', 'change', 'blur', 'keyup'].forEach(function (ev) {
+    pri.addEventListener(ev, checkAndScroll);
+    snd.addEventListener(ev, checkAndScroll);
+  });
+
+  ['input', 'change'].forEach(function (ev) {
+    pri.addEventListener(ev, function () {
+      var priDone = (typeof isVigor2927Bai5PriDone === 'function') ? isVigor2927Bai5PriDone(doc) : (pri && (pri.value || '').trim() === '210.245.31.220');
+      if (doc._ftcIsSaved && !priDone) {
+        doc._ftcIsSaved = false;
+        try {
+          var win = doc.defaultView || doc.parentWindow;
+          if (win) win._ftcIsSaved = false;
+          var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+          if (topWin) topWin._hasClickedSaveInGuide = false;
+          if (typeof window !== 'undefined') window._hasClickedSaveInGuide = false;
+        } catch (e) { }
+      }
+    });
+    snd.addEventListener(ev, function () {
+      var sndDone = (typeof isVigor2927Bai5SndDone === 'function') ? isVigor2927Bai5SndDone(doc) : (snd && (snd.value || '').trim() === '8.8.8.8');
+      if (doc._ftcIsSaved && !sndDone) {
+        doc._ftcIsSaved = false;
+        try {
+          var win = doc.defaultView || doc.parentWindow;
+          if (win) win._ftcIsSaved = false;
+          var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+          if (topWin) topWin._hasClickedSaveInGuide = false;
+          if (typeof window !== 'undefined') window._hasClickedSaveInGuide = false;
+        } catch (e) { }
+      }
+    });
+  });
+
+  btn.addEventListener('click', function () {
+    doc._ftcIsSaved = true;
+    try {
+      var win = doc.defaultView || doc.parentWindow;
+      if (win) win._ftcIsSaved = true;
+      if (typeof window !== 'undefined') window._hasClickedSaveInGuide = true;
+      if (typeof parent !== 'undefined' && parent) parent._hasClickedSaveInGuide = true;
+      if (typeof top !== 'undefined' && top) top._hasClickedSaveInGuide = true;
+      var topWin = (typeof window !== 'undefined' && window.top) ? window.top : (doc.defaultView ? doc.defaultView.top : null);
+      if (topWin) {
+        topWin._hasClickedSaveInGuide = true;
+        if (typeof topWin.applyGuidePopups === 'function') {
+          topWin.applyGuidePopups();
+        }
+      }
+    } catch (e) { }
+  });
+}
+
 window.TOOLTIPS_VIGOR2927['vg2927-bai5'] = [
   {
     selector: '#menu-lan:not(.open) .menu-text, #menu-lan:not(.open)',
@@ -478,8 +585,9 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai5'] = [
     text: 'Bước 4: điền Primary IP Address: 210.245.31.220',
     position: 'bottom',
     condition: function (doc) {
+      hookVigor2927Bai5Scroll(doc);
       if (typeof isVigor2927Bai5PriDone === 'function') return !isVigor2927Bai5PriDone(doc);
-      var el = doc.querySelector('input[name="sDNSPri"]');
+      var el = doc.querySelector ? doc.querySelector('input[name="sDNSPri"]') : null;
       return !el || (el.value || '').trim() !== '210.245.31.220';
     }
   },
@@ -488,11 +596,12 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai5'] = [
     text: 'Bước 5: điền Secondary IP Address: 8.8.8.8',
     position: 'bottom',
     condition: function (doc) {
+      hookVigor2927Bai5Scroll(doc);
       if (typeof isVigor2927Bai5PriDone === 'function' && typeof isVigor2927Bai5SndDone === 'function') {
         return isVigor2927Bai5PriDone(doc) && !isVigor2927Bai5SndDone(doc);
       }
-      var pri = doc.querySelector('input[name="sDNSPri"]');
-      var snd = doc.querySelector('input[name="sDNSSnd"]');
+      var pri = doc.querySelector ? doc.querySelector('input[name="sDNSPri"]') : null;
+      var snd = doc.querySelector ? doc.querySelector('input[name="sDNSSnd"]') : null;
       return (pri && (pri.value || '').trim() === '210.245.31.220') && (!snd || (snd.value || '').trim() !== '8.8.8.8');
     }
   },
@@ -501,13 +610,31 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai5'] = [
     text: 'Bước 6: chọn OK để lưu cấu hình',
     position: 'top',
     condition: function (doc) {
+      hookVigor2927Bai5Scroll(doc);
+      var ok = false;
       if (typeof isVigor2927Bai5PriDone === 'function' && typeof isVigor2927Bai5SndDone === 'function') {
-        return isVigor2927Bai5PriDone(doc) && isVigor2927Bai5SndDone(doc) && !doc._ftcIsSaved;
+        ok = isVigor2927Bai5PriDone(doc) && isVigor2927Bai5SndDone(doc) && !doc._ftcIsSaved;
+      } else {
+        var pri = doc.querySelector ? doc.querySelector('input[name="sDNSPri"]') : null;
+        var snd = doc.querySelector ? doc.querySelector('input[name="sDNSSnd"]') : null;
+        ok = (pri && (pri.value || '').trim() === '210.245.31.220') && (snd && (snd.value || '').trim() === '8.8.8.8') && !doc._ftcIsSaved;
       }
-      var pri = doc.querySelector('input[name="sDNSPri"]');
-      var snd = doc.querySelector('input[name="sDNSSnd"]');
-      var ok = (pri && (pri.value || '').trim() === '210.245.31.220') && (snd && (snd.value || '').trim() === '8.8.8.8');
-      return ok && !doc._ftcIsSaved;
+      if (ok && doc) {
+        var btn = doc.querySelector ? doc.querySelector('input[name="btnOK"], input[value="OK"]') : null;
+        if (btn) {
+          try {
+            var win = doc.defaultView || window;
+            var winH = win.innerHeight || (doc.documentElement && doc.documentElement.clientHeight) || 768;
+            var rect = btn.getBoundingClientRect();
+            if (rect.top > winH || rect.bottom < 0) {
+              btn.scrollIntoView({ behavior: 'auto', block: 'center' });
+            }
+          } catch (e) {
+            try { btn.scrollIntoView(); } catch (err) {}
+          }
+        }
+      }
+      return ok;
     }
   }
 ];
@@ -775,6 +902,7 @@ function isVigor2927Bai7SrcRangeDone(doc) {
 
 function isVigor2927Bai7SrcStartDone(doc) {
   if (!doc) return false;
+  hookVigor2927Bai7Interactions(doc);
   if (isVigor2927Bai7SrcEndDone(doc)) return true;
   var el = doc.querySelector('input[name="sPRSIpStart"]');
   return el ? (el.value || '').trim() === '192.168.1.100' : false;
@@ -782,29 +910,84 @@ function isVigor2927Bai7SrcStartDone(doc) {
 
 function isVigor2927Bai7SrcEndDone(doc) {
   if (!doc) return false;
+  hookVigor2927Bai7Interactions(doc);
   if (isVigor2927Bai7WanIfConfirmed(doc)) return true;
   var el = doc.querySelector('input[name="iPRSIpCount"]');
   return el ? (el.value || '').trim() === '192.168.1.110' : false;
 }
 
 function hookVigor2927Bai7Interactions(doc) {
-  if (!doc || doc._ftcBai7Hooked) return;
+  if (!doc) return;
+  var srcStartEl = doc.querySelector ? doc.querySelector('input[name="sPRSIpStart"]') : null;
+  var srcEndEl = doc.querySelector ? doc.querySelector('input[name="iPRSIpCount"]') : null;
+  var wanIfEl = doc.querySelector ? doc.querySelector('select[name="multiwanWanIf"]') : null;
+  var failoverEl = doc.querySelector ? doc.querySelector('input[name="iPRFailover"]') : null;
+
+  if (doc._ftcBai7Hooked) return;
+  if (!srcEndEl && !wanIfEl) return;
   doc._ftcBai7Hooked = true;
 
-  var wanIfEl = doc.querySelector('select[name="multiwanWanIf"]');
+  var triggerPortalPopups = function () {
+    try {
+      var topWin = doc.defaultView ? (doc.defaultView.top || doc.defaultView.parent) : null;
+      if (topWin) {
+        topWin.postMessage({ type: 'REQUEST_GUIDE_POPUPS' }, '*');
+        if (typeof topWin.applyGuidePopups === 'function') {
+          topWin.applyGuidePopups();
+        }
+      }
+    } catch (e) { }
+  };
+
+  var checkStep8AndScroll = function () {
+    if (isVigor2927Bai7SrcStartDone(doc) && isVigor2927Bai7SrcEndDone(doc) && !isVigor2927Bai7WanIfConfirmed(doc)) {
+      if (wanIfEl && typeof wanIfEl.scrollIntoView === 'function') {
+        try {
+          wanIfEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) {
+          wanIfEl.scrollIntoView();
+        }
+      }
+      triggerPortalPopups();
+      setTimeout(triggerPortalPopups, 80);
+      setTimeout(triggerPortalPopups, 250);
+      setTimeout(triggerPortalPopups, 500);
+    }
+  };
+
+  ['input', 'change', 'blur', 'keyup'].forEach(function (ev) {
+    if (srcEndEl && typeof srcEndEl.addEventListener === 'function') {
+      srcEndEl.addEventListener(ev, function () {
+        checkStep8AndScroll();
+      });
+    }
+    if (srcStartEl && typeof srcStartEl.addEventListener === 'function') {
+      srcStartEl.addEventListener(ev, function () {
+        triggerPortalPopups();
+      });
+    }
+  });
+
   if (wanIfEl && typeof wanIfEl.addEventListener === 'function') {
-    wanIfEl.addEventListener('click', function () { doc._ftcWanIfConfirmed = true; });
-    wanIfEl.addEventListener('change', function () { doc._ftcWanIfConfirmed = true; });
-    wanIfEl.addEventListener('focus', function () { doc._ftcWanIfConfirmed = true; });
+    var confirmWanIf = function () {
+      doc._ftcWanIfConfirmed = true;
+      triggerPortalPopups();
+      setTimeout(triggerPortalPopups, 80);
+      setTimeout(triggerPortalPopups, 250);
+    };
+    wanIfEl.addEventListener('click', confirmWanIf);
+    wanIfEl.addEventListener('change', confirmWanIf);
+    wanIfEl.addEventListener('focus', confirmWanIf);
   }
 
-  var failoverEl = doc.querySelector('input[name="iPRFailover"]');
   if (failoverEl && typeof failoverEl.addEventListener === 'function') {
     failoverEl.addEventListener('click', function () {
       doc._ftcWanIfConfirmed = true;
+      triggerPortalPopups();
     });
     failoverEl.addEventListener('change', function () {
       doc._ftcWanIfConfirmed = true;
+      triggerPortalPopups();
     });
   }
 
@@ -813,6 +996,7 @@ function hookVigor2927Bai7Interactions(doc) {
       var t = e.target;
       if (t && (t.id === 'image_option' || (t.closest && t.closest('td[onclick*="onClkMoreoption"], [onclick*="onClkMoreoption"]')))) {
         doc._ftcPriorityOpened = true;
+        triggerPortalPopups();
       }
     }, true);
   }
@@ -905,7 +1089,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
     page: 'policyrt1'
   },
   {
-    selector: 'input[name="iPREnable"]',
+    selector: '#lbl-route-enable, text:Enable, input[name="iPREnable"]',
     text: 'Bước 4: check vào Enable',
     position: 'right',
     page: 'v2x00.cgi',
@@ -959,7 +1143,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
     }
   },
   {
-    selector: 'input[name="iPRFailover"]',
+    selector: '#lbl-route-failover, text:Failover to, input[name="iPRFailover"]',
     text: 'Bước 10: check vào Failover to',
     position: 'right',
     page: 'v2x00.cgi',
@@ -977,7 +1161,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [
     }
   },
   {
-    selector: '#image_option, td[onclick*="onClkMoreoption"]',
+    selector: '#lbl-route-priority, td[onclick*="onClkMoreoption"] b, text:Priority, #image_option',
     text: 'Bước 12: click vào + Priority',
     position: 'right',
     page: 'v2x00.cgi',

@@ -143,15 +143,8 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       }
 
       const win = docEnet.defaultView || docEnet.parentWindow;
-      const topWin = (typeof window !== 'undefined' && window.top) ? window.top : window;
-
-      const isSaved = !!(
-        docEnet._ftcIsSaved ||
-        (win && win._ftcIsSaved) ||
-        window._hasClickedSaveInGuide ||
-        topWin._hasClickedSaveInGuide ||
-        docEnet._ftcLastSaveInteraction
-      );
+      const hasSaveSuccessUrl = Boolean(docEnet.location && docEnet.location.search && docEnet.location.search.includes('save_success=1'));
+      const isSaved = Boolean(docEnet._ftcIsSaved || (win && win._ftcIsSaved) || hasSaveSuccessUrl);
 
       // 1. Primary IP Address (DNS)
       const dnsPriEl = docEnet.querySelector('input[name="sDNSPri"]');

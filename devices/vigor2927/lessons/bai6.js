@@ -1,6 +1,6 @@
 /**
  * devices/vigor2927/lessons/bai6.js
- * Bài 6: Cấu hình định tuyến Failover và Load Balancing trên DrayTek Vigor2927
+ * Bài 6: Cấu hình Load Balancing trên DrayTek Vigor2927
  *
  * ĐẶC THÙ CỦA BÀI NÀY (khác Bài 1-5): cấu hình trải qua 3 TRANG khác nhau
  *   Trang 1: WAN >> General Setup  (doc/mwangen1.htm)  -> bấm OK: ở lại trang (giống thiết bị thật)
@@ -498,14 +498,15 @@ function vg2927Bai6BaoTrangThai(doc, ok, chu) {
    ══════════════════════════════════════════════════════════════════════════ */
 window.DEVICE_VIGOR2927_LESSONS.push({
   id: 'vg2927-bai6',
-  title: 'Cấu hình định tuyến Failover và Load Balancing',
-  subtitle: 'Cấu hình Load Balancing & Route Failover',
+  title: 'Cấu hình Load Balancing',
+  subtitle: 'Cấu hình Load Balancing',
   instructions: [
     '<b>Yêu cầu:</b>',
     'Cấu hình cân bằng tải trên DrayTek Vigor2927:',
     '- Thiết lập cho <span class="val">WAN1</span> và <span class="val">WAN2</span> hoạt động đồng thời (Enable và Load Balance)',
     '- Chế độ cân bằng tải: chọn <span class="val">Session Based</span>',
-    '- <i>(Không cần khai báo đúng băng thông từng WAN để phân tải phù hợp)</i>'
+    '- <i>(Không cần khai báo đúng băng thông từng WAN để phân tải phù hợp)</i>',
+    '- Tốc độ băng thông ISP-1 và ISP-2: <span class="val">DownLink 80Mbps</span> và <span class="val">UpLink 80Mbps</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
 

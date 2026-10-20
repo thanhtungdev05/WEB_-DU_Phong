@@ -126,7 +126,7 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai2'] = [
   {
     selector: 'input[name="sIpBandwShrd"][value="N"]',
     text: 'Bước 8: chọn Each (mỗi IP trong dải đều sử dụng tối đa băng thông quy định)',
-    position: 'right',
+    position: 'bottom',
     condition: function(doc) {
       if (!isVigor2927Bai2LimitDone(doc) || isVigor2927Bai2Added(doc)) return false;
       if (getVigor2927InputVal(doc, 'sIpBandwFrom') !== '192.168.1.10' || getVigor2927InputVal(doc, 'sIpBandwTo') !== '192.168.1.20') return false;

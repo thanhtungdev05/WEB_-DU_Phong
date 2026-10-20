@@ -126,6 +126,14 @@ const sndRule = resWrongSnd.details.find(d => d.id === 'dns_secondary');
 assert.ok(sndRule && !sndRule.passed, 'Tiêu chí dns_secondary phải failed');
 console.log('✔ Báo lỗi chính xác khi sai Secondary IP.');
 
+console.log('\n--- TEST 6: Cách ly cờ toàn cục window._hasClickedSaveInGuide ---');
+sandbox.window._hasClickedSaveInGuide = true;
+const docHasGlobalFlagOnly = createMockDoc({ isSaved: false });
+const resGlobalFlagOnly = customGrading([docHasGlobalFlagOnly]);
+assert.strictEqual(resGlobalFlagOnly.passed, false, 'Cờ toàn cục cũ không được làm bài 5 tự động pass khi chưa bấm OK');
+console.log('✔ Cờ toàn cục cũ bị chặn: Bài 5 bắt buộc phải bấm OK trên trang mới được tính là lưu.');
+
 console.log('\n================================================================');
 console.log('TẤT CẢ KIỂM THỬ CHẤM ĐIỂM BÀI 5 ĐÃ VƯỢT QUA XUẤT SẮC (PASSED 100%)');
 console.log('================================================================');
+

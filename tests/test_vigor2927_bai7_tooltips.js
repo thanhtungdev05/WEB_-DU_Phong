@@ -33,6 +33,7 @@ assert.strictEqual(tooltips[2].page, 'policyrt1');
 assert.strictEqual(tooltips[3].text, 'Bước 4: check vào Enable');
 assert.strictEqual(tooltips[3].page, 'v2x00.cgi');
 assert.strictEqual(typeof tooltips[3].condition, 'function');
+assert.ok(tooltips[3].selector.includes('lbl-route-enable') || tooltips[3].selector.includes('text:Enable'), 'Bước 4 selector phải trỏ vào chữ Enable thay vì chỉ trỏ vào checkbox');
 
 assert.strictEqual(tooltips[4].text, 'Bước 5: nhập Ưu tiên Wan 1');
 assert.strictEqual(tooltips[4].page, 'v2x00.cgi');
@@ -57,6 +58,7 @@ assert.strictEqual(typeof tooltips[8].condition, 'function');
 assert.strictEqual(tooltips[9].text, 'Bước 10: check vào Failover to');
 assert.strictEqual(tooltips[9].page, 'v2x00.cgi');
 assert.strictEqual(typeof tooltips[9].condition, 'function');
+assert.ok(tooltips[9].selector.includes('lbl-route-failover') || tooltips[9].selector.includes('text:Failover to'), 'Bước 10 selector phải trỏ vào chữ Failover to');
 
 assert.strictEqual(tooltips[10].text, 'Bước 11: chọn WAN2');
 assert.strictEqual(tooltips[10].page, 'v2x00.cgi');
@@ -65,6 +67,7 @@ assert.strictEqual(typeof tooltips[10].condition, 'function');
 assert.strictEqual(tooltips[11].text, 'Bước 12: click vào + Priority');
 assert.strictEqual(tooltips[11].page, 'v2x00.cgi');
 assert.strictEqual(typeof tooltips[11].condition, 'function');
+assert.ok(tooltips[11].selector.includes('lbl-route-priority') || tooltips[11].selector.includes('Priority'), 'Bước 12 selector phải trỏ vào chữ Priority');
 
 assert.strictEqual(tooltips[12].text, 'Bước 13: kéo hoặc nhập số 1');
 assert.strictEqual(tooltips[12].page, 'v2x00.cgi');
