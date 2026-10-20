@@ -262,7 +262,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             pass
 
     def end_headers(self):
-        request_url = urlparse(self.path)
+        request_url = urlparse(getattr(self, 'path', '/'))
         extension = os.path.splitext(request_url.path.lower())[1]
         download_filename = DOWNLOADABLE_ROOT_FILES.get(unquote(request_url.path))
         cacheable_extensions = {'.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.avif', '.woff', '.woff2'}
@@ -554,9 +554,72 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError):
                 pass
 
+    def _is_mesh_lab_authorized(self):
+        """Check if request is authorized for Mesh Lab (DEV only)."""
+        is_prod = os.environ.get('APP_ENV', '') == 'production'
+
+        # Test hook for automated test suites in non-production environments
+        if not is_prod and self.headers.get('X-Mock-User-Role'):
+            mock_role = self.headers.get('X-Mock-User-Role', '').strip().upper()
+            return mock_role == 'DEV'
+
+        cookie = self.headers.get('Cookie', '')
+        client_ip = self._trusted_client_ip()
+        is_local = client_ip in ('127.0.0.1', '::1', 'localhost', '')
+
+        # If a session cookie is present, check with PHP session endpoint
+        if cookie:
+            conn = None
+            try:
+                conn = http.client.HTTPConnection('127.0.0.1', API_PORT, timeout=2)
+                req_headers = {
+                    'Host': self.headers.get('Host', f'127.0.0.1:{PORT}'),
+                    'Cookie': cookie,
+                }
+                if client_ip:
+                    req_headers['X-FTC-Client-IP'] = client_ip
+                    req_headers['X-Forwarded-For'] = client_ip
+                conn.request('GET', '/api/index.php/auth/session', headers=req_headers)
+                resp = conn.getresponse()
+                if resp.status == 200:
+                    import json
+                    body = resp.read()
+                    data = json.loads(body.decode('utf-8'))
+                    user = data.get('user')
+                    if user:
+                        role = str(user.get('role') or '').upper()
+                        return role == 'DEV'
+            except Exception:
+                pass
+            finally:
+                if conn is not None:
+                    conn.close()
+            return False
+
+        # If no cookie provided, allow local developer / automated test runners when not in production
+        if is_local and not is_prod:
+            return True
+
+        return False
+
     def _handle_mesh_lab_api(self, method):
         import json
         import mesh_zte_engine
+
+        if not self._is_mesh_lab_authorized():
+            payload = json.dumps({
+                "error": "forbidden",
+                "code": "mesh_lab_beta_restricted",
+                "message": "Tính năng Lab Đấu Nối (Mesh) hiện đang thử nghiệm, chỉ dành riêng cho tài khoản DEV."
+            }, ensure_ascii=False).encode('utf-8')
+            self.send_response(403)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('Content-Length', str(len(payload)))
+            self.end_headers()
+            if method != 'HEAD':
+                self.wfile.write(payload)
+            return
 
         path_only = self.path.split('?')[0]
         action = path_only.replace('/api/mesh-lab/', '').replace('/api/mesh-lab', '').strip('/')

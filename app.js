@@ -2031,6 +2031,12 @@
       job_title: u.job_title || u.jobTitle || ''
     } : null;
     renderUserProfile();
+    const btnMeshLab = document.getElementById('btn-mesh-lab');
+    if (btnMeshLab) {
+      const role = String(_currentUser?.role || '').toUpperCase();
+      const canAccessMeshLab = Boolean(_currentUser && role === 'DEV');
+      btnMeshLab.style.display = canAccessMeshLab ? '' : 'none';
+    }
     return _currentUser;
   }
 
@@ -2090,6 +2096,10 @@
     if (sessionHeartbeatInterval) {
       clearInterval(sessionHeartbeatInterval);
       sessionHeartbeatInterval = null;
+    }
+    const btnMeshLab = document.getElementById('btn-mesh-lab');
+    if (btnMeshLab) {
+      btnMeshLab.style.display = 'none';
     }
     renderUserProfile();
     if (statusText) statusText.textContent = 'Guest Guide Mode · Không lưu tiến độ';
@@ -2227,6 +2237,12 @@
               window.location.href = '/dashboard-authen/';
             };
           }
+        }
+        const btnMeshLab = document.getElementById('btn-mesh-lab');
+        if (btnMeshLab) {
+          const role = String(user.role || '').toUpperCase();
+          const canAccessMeshLab = Boolean(user && role === 'DEV');
+          btnMeshLab.style.display = canAccessMeshLab ? '' : 'none';
         }
         startSessionHeartbeat();
         return loadCatalogWithOfflineFallback().then(function () {

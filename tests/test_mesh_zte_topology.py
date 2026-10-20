@@ -237,6 +237,55 @@ class TestMeshZteDispatcherApi(unittest.TestCase):
 
         conn.close()
 
+    def test_mesh_lab_api_forbidden_for_unauthorized_cookie(self):
+        conn = self.http.HTTPConnection('127.0.0.1', self.port, timeout=5)
+
+        # 1. Tài khoản KTV bị chặn với 403 Forbidden
+        conn.request('GET', '/api/mesh-lab/status', headers={'X-Mock-User-Role': 'KTV'})
+        res = conn.getresponse()
+        data = self.json.loads(res.read().decode('utf-8'))
+        self.assertEqual(res.status, 403)
+        self.assertEqual(data.get("code"), "mesh_lab_beta_restricted")
+        self.assertIn("thử nghiệm", data.get("message", ""))
+
+        # 2. Tài khoản ADMIN cũng bị chặn với 403 Forbidden (chỉ mở cho DEV)
+        conn.request('GET', '/api/mesh-lab/status', headers={'X-Mock-User-Role': 'ADMIN'})
+        res_admin = conn.getresponse()
+        data_admin = self.json.loads(res_admin.read().decode('utf-8'))
+        self.assertEqual(res_admin.status, 403)
+        self.assertEqual(data_admin.get("code"), "mesh_lab_beta_restricted")
+
+        # 3. Chỉ tài khoản DEV được phép truy cập
+        conn.request('GET', '/api/mesh-lab/status', headers={'X-Mock-User-Role': 'DEV'})
+        res_dev = conn.getresponse()
+        data_dev = self.json.loads(res_dev.read().decode('utf-8'))
+        self.assertEqual(res_dev.status, 200)
+        self.assertIn("mesh_status", data_dev)
+
+        conn.close()
+
+    def test_mesh_lab_rbac_frontend_contracts(self):
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[1]
+
+        portal_html = (root / "portal.html").read_text(encoding="utf-8")
+        app_js = (root / "app.js").read_text(encoding="utf-8")
+        mesh_lab_html = (root / "mesh-lab.html").read_text(encoding="utf-8")
+
+        # 1. Nút Lab Đấu Nối trên Portal phải ẩn mặc định (display: none)
+        self.assertIn('id="btn-mesh-lab"', portal_html)
+        self.assertIn('style="display: none;"', portal_html)
+
+        # 2. app.js chỉ mở nút cho DEV
+        self.assertIn("role === 'DEV'", app_js)
+        self.assertIn("btnMeshLab.style.display", app_js)
+
+        # 3. mesh-lab.html có màn hình hạn chế quyền truy cập cho tài khoản không phải DEV
+        self.assertIn('id="access-restricted-screen"', mesh_lab_html)
+        self.assertIn('Giới Hạn Quyền Truy Cập Phòng Lab', mesh_lab_html)
+        self.assertIn('/api/index.php/auth/session', mesh_lab_html)
+        self.assertIn("role === 'DEV'", mesh_lab_html)
+
 
 if __name__ == "__main__":
     import threading
