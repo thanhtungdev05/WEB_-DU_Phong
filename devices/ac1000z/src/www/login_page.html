@@ -3765,6 +3765,7 @@ function decodeParaValue(src,key,iv)
 {
 if(src.length > 0)
 {
+try {
 var bKey = CryptoJS.SHA256(key);
 var bIv = CryptoJS.SHA256(iv);
 var decrypted =CryptoJS.AES.decrypt(src,bKey,
@@ -3777,6 +3778,9 @@ var dst = decrypted.toString(CryptoJS.enc.Utf8);
 if(dst != "" && dst != "failed")
 {
 return dst;
+}
+} catch(e) {
+return src;
 }
 }
 return src;
@@ -3936,6 +3940,7 @@ timeout: 30000,
 async: asyncTemp,
 cache:false,
 error: function(){
+try {
 if ($.isFunction(error_func))
 {
 error_func();
@@ -3952,14 +3957,21 @@ $("span",externErrorHint).text(ajaxTransferFailHint);
 externErrorHint.showIt(true);
 }
 }
+}
+} finally {
 showWaitTip(false);
 }
 },
 success: function(data){
+try {
 success_func(data);
+} catch(e) {
+console.warn("[dataTransfer] error in success_func:", e);
+} finally {
 if ( IfShowWaitTipTmp == true )
 {
 showWaitTip(false);
+}
 }
 }
 });
@@ -5678,6 +5690,7 @@ if ( $("#DataHasBeenGot",Head).val() == 0 )
 {
 showWaitTip(true);
 setTimeout(function(){
+try {
 var ServerAddr = $("address span", Head).text();
 Head.dataTransfer(ServerAddr,
 "GET",
@@ -5686,8 +5699,13 @@ undefined,
 undefined,
 false
 );
+} catch(e) {
+console.warn("[collapBarWithDataTrans] dataTransfer error:", e);
+} finally {
 $("#DataHasBeenGot",Head).val(1);
 collapBarAction(collapBar);
+showWaitTip(false);
+}
 }, 2);
 }
 else

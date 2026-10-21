@@ -1582,7 +1582,7 @@ false);
 </script>
 <script type="text/javascript">
 var cver = "2008";
-var DisableSSID = ssidConf.disableSSID;
+var DisableSSID = (typeof ssidConf !== "undefined" && ssidConf) ? ssidConf.disableSSID : undefined;
 (function () {
 
 var ssidEncryJson = {};
@@ -2214,7 +2214,7 @@ var TypeOBJ = (srcObj);
 var ParentObj = TypeOBJ.closest(".formTbl");
 var KeyPassphrasePassObj = $("[id^="+tObjId+"][type='password']",ParentObj);
 var KeyPassphraseTextObj = $("[id^="+tObjId+"][type='text']",ParentObj);
-if(cver == "96")
+if(typeof cver !== "undefined" && cver == "96")
 {
 if(TypeOBJ.attr("src") == "../img/sleeping.png")
 {
@@ -2288,7 +2288,7 @@ var Alias = $("[id^='Alias']", tempObj).val();
 var band = findBandOfSSID(tempObj, xml);
 $("[id^='TitleName']", tempObj).val(Alias+band);
 tempObj.collapsibleInstTitleChange("TitleName")
-if(cver == "96" && band.indexOf("5G") != -1)
+if(typeof cver !== "undefined" && cver == "96" && band.indexOf("5G") != -1)
 {
 $("[id^='EncryptionType'] option[value='WEP-ShareKey']",tempObj).remove();
 $("[id^='EncryptionType'] option[value='WEP-OpenSystem']",tempObj).remove();
@@ -2353,7 +2353,7 @@ if ( 0 == i )
 {
 $(".collapsibleInst", tempObj).click();
 }
-if( DisableSSID != undefined && DisableSSID.indexOf(SSIDVn) != -1)
+if( typeof DisableSSID !== "undefined" && DisableSSID != undefined && DisableSSID.indexOf(SSIDVn) != -1)
 {
 tempObj.find("*").attr("disabled",true);
 $("[class^='Button']", tempObj).addClass("disableBtn");
@@ -2362,7 +2362,7 @@ $("[id^='Btn_cancel_'],[id^='Btn_apply_']", tempObj).unbind();
 }
 g_GREHide_SSID(WLANSSIDHead, xml);
 g_CtrlSSIDConf(WLANSSIDHead,xml)
-if(cver == "96")
+if(typeof cver !== "undefined" && cver == "96")
 {
 $("#template_WLANSSIDConf_2").hide();
 $("#template_WLANSSIDConf_3").hide();

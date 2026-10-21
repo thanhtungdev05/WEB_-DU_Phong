@@ -31,6 +31,8 @@ try:
 except ImportError:
     from config_store import STORE, bind_user, reset_user_store
 
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8098
 HERE = os.path.dirname(os.path.abspath(__file__))
 WWW = os.path.join(HERE, "www")
@@ -55,6 +57,20 @@ def para(name: str, value) -> str:
 
 def instance(items) -> str:
     return "<Instance>" + "".join(para(k, v) for k, v in items) + "</Instance>"
+
+
+def zte_encrypt(plain: str, sess_token: str) -> str:
+    """AES-256-CBC khớp decodeParaValue của thiết bị thật.
+
+    Key = SHA256(sess_token), iv = 16 byte đầu của SHA256(sess_token đảo).
+    ZeroPadding thêm byte 0 cho đủ bội số 16 (không pad khi đã chia hết).
+    """
+    key = hashlib.sha256(sess_token.encode()).digest()
+    iv = hashlib.sha256(sess_token[::-1].encode()).digest()[:16]
+    raw = plain.encode("utf-8")
+    raw += b"\x00" * ((16 - len(raw) % 16) % 16)
+    enc = Cipher(algorithms.AES(key), modes.CBC(iv)).encryptor()
+    return base64.b64encode(enc.update(raw) + enc.finalize()).decode()
 
 
 XML_OK = ("<ajax_response_xml_root><IF_ERRORPARAM>SUCC</IF_ERRORPARAM>"
@@ -179,6 +195,41 @@ class RouterHandler(BaseHTTPRequestHandler):
         self.set_cookie_headers(sid)
         self.end_headers()
         self.wfile.write(payload)
+
+    def _enc(self, payload: bytes, sess: dict) -> bytes:
+        """Mã hóa theo phiên các trường liệt kê trong thẻ <encode>.
+
+        File mẫu lưu giá trị PLAINTEXT; giống thiết bị thật, server mã hóa
+        bằng sess_token hiện tại trước khi gửi để trang giải mã ra đúng giá trị.
+        """
+        try:
+            text = payload.decode("utf-8")
+        except UnicodeDecodeError:
+            return payload
+        encode_groups = re.findall(r"<encode>([^<]*)</encode>", text)
+        if not encode_groups:
+            return payload
+        names = list(dict.fromkeys(
+            name.strip()
+            for group in encode_groups
+            for name in group.split(",")
+            if name.strip()
+        ))
+        token = sess.get("sess_token")
+        if not names or not token:
+            return payload
+        for name in names:
+            pattern = (r"(<ParaName>%s</ParaName>\s*<ParaValue>)([^<]*)(</ParaValue>)"
+                       % re.escape(name))
+
+            def replace(mm, token=token):
+                value = mm.group(2)
+                if value == "":
+                    return mm.group(0)
+                return mm.group(1) + zte_encrypt(value, token) + mm.group(3)
+
+            text = re.sub(pattern, replace, text)
+        return text.encode("utf-8")
 
     def serve_static(self, rel_path: str):
         rel = rel_path.lstrip("/").replace("/", os.sep)
@@ -348,7 +399,9 @@ class RouterHandler(BaseHTTPRequestHandler):
             candidates = [clean_tag, clean_tag.replace(".lua", "")]
             for c in candidates:
                 if STORE.has_data(c):
-                    self.send_data(STORE.get_data(c), sid)
+                    data = STORE.get_data(c)
+                    data = self._enc(data, sess)
+                    self.send_data(data, sid)
                     return
 
             self.send_xml(XML_SESSION_TIMEOUT.encode("utf-8"), sid)
@@ -419,7 +472,9 @@ class RouterHandler(BaseHTTPRequestHandler):
         for c in candidates:
             if STORE.has_data(c):
                 STORE.update_values(c, flat_fields)
-                self.send_data(STORE.get_data(c), sid)
+                data = STORE.get_data(c)
+                data = self._enc(data, sess)
+                self.send_data(data, sid)
                 return
 
         self.send_xml(XML_OK.encode("utf-8"), sid)
