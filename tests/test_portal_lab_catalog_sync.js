@@ -15,13 +15,14 @@ const expected = {
   ax3000hv2: 'LAB_AX3000HV2_',
   ax3000s: 'LAB_AX3000S_',
   ac1000HI: 'LAB_AC1000HI_',
+  ac1000z: 'LAB_AC1000Z_',
   be6500c: 'be6500c-bai',
   ONT_be6500c: 'ONT_be6500c-bai',
   vigor2927: 'vg2927-bai'
 };
 const supportedPortalDevices = [
   'ac1000f', 'ac1000cv2', 'ax3000c', 'ax3000gz', 'ax3000gz_v2', 'ax3000hv2', 'ax3000s',
-  'ac1000HI', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c',
+  'ac1000HI', 'ac1000z', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c',
   'mikrotik_hexs'
 ];
 const simulatorPrefixes = {
@@ -33,6 +34,7 @@ const simulatorPrefixes = {
   ax3000hv2: '/sim_ax3000hv2/',
   ax3000s: '/sim_ax3000s/',
   ac1000HI: '/sim_ac1000HI/',
+  ac1000z: '/sim_ac1000z/',
   be6500c: '/sim_be6500c/',
   ONT_be6500c: '/sim_ONT_be6500c/',
   vigor2927: '/sim_vigor2927/'
@@ -122,7 +124,8 @@ const migrations = [
   '055_activate_ax3000gz_v2_catalog.sql',
   '055_deactivate_be6500c_dns_lab.sql',
   '056_standardize_lab_display_titles.sql',
-  '060_standardize_vigor2927_bai6_title.sql'
+  '060_standardize_vigor2927_bai6_title.sql',
+  '061_activate_ac1000z_catalog.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
@@ -152,7 +155,7 @@ for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, it
     const expectedId = expected[device.id].startsWith('LAB_')
       ? `${expected[device.id]}${String(index + 1).padStart(2, '0')}`
       : `${expected[device.id]}${index + 1}`;
-    const expectedTitle = device.id === 'ax3000gz_v2'
+    const expectedTitle = (device.id === 'ax3000gz_v2' || device.id === 'ac1000z')
       ? ax3000gzV2Titles[index]
       : device.id === 'vigor2927'
       ? vigor2927Titles[index]
@@ -190,6 +193,7 @@ const expectedLessonCounts = {
   ax3000hv2: 6,
   ax3000s: 6,
   ac1000HI: 6,
+  ac1000z: 6,
   be12000: 6,
   be15000: 1,
   vigor2927: 7,

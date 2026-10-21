@@ -1,0 +1,617 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.showIt(true);
+collapsibleInst.addClass("instNameExp");
+}
+else
+{
+ChangeArea.showIt(false);
+collapsibleInst.removeClass("instNameExp");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = thisObj.next("span").not(".__CheckPwdStrength").text();
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#119;&#112;&#115;</div>
+<div id="_NowSupIdInfo">&#108;&#111;&#99;&#97;&#108;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#119;&#108;&#97;&#110;&#67;&#111;&#110;&#102;&#105;&#103;</div>
+<div id="_NowThdIdInfo">&#119;&#112;&#115;</div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft">
+<div id="class2Menu" class="class2Menu">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span>Page Information</span>
+</div>
+
+<p class="pIntroContent">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#87;&#80;&#83;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+
+(function () {
+function initial_template_WPS(templateID)
+{
+var template = $("#"+templateID);
+$("#WPSChoose", template).change(function(){
+var WPSChooseOBJ = $(this);
+var template = WPSChooseOBJ.parents("[id^='template_']");
+var WPSChooseVal = WPSChooseOBJ.val();
+var PINContentOBJ = $("[id^='div_PINContent']",template);
+if ((WPSChooseVal == "Disabled")
+|| (WPSChooseVal == "PBC"))
+{
+PINContentOBJ.showIt(false);
+}
+else
+{
+PINContentOBJ.showIt(true);
+}
+});
+$("#PINMode", template).change(function(){
+var PINModeOBJ = $(this);
+var template = PINModeOBJ.parents("[id^='template_']");
+var PINModeVal = PINModeOBJ.val();
+var AutoPINOBJ = $("[id^='div_AutoPIN']",template);
+var InputPINOBJ = $("[id^='div_InputPIN']",template);
+if (PINModeVal == "AutoPIN")
+{
+AutoPINOBJ.showIt(true);
+InputPINOBJ.showIt(false);
+}
+else if(PINModeVal == "InputPIN")
+{
+AutoPINOBJ.showIt(false);
+InputPINOBJ.showIt(true);
+}
+else
+{
+consoleLog("PINModeVal is illegal!!");
+}
+});
+template.bind("applyPromptCheckJSON", function(event, template){
+var checkJSONTempObj = {
+"rules": {
+"InputPIN": {
+"required": true,
+"ASCII": true
+}
+},
+"messages": {
+}
+};
+template.setPromptCheckJSON(checkJSONTempObj, template);
+});
+template.bind("fillDataByApplyResult", function(event,xml, template){
+ActionByApplyResult(xml, template);
+template.fillDataByOBJID(xml ,["OBJ_WPS_ID"], template, 0);
+FillPINtoText(template);
+});
+template.bind("fillDataByCustom", function(event, suffix, template){
+template.collapsibleInstTitleChange("Band");
+var EnableV = $("[id^='Enable']",template).val();
+var WPSModeV = $("[id^='WPSMode']",template).val();
+var WPSChooseObj = $("[id^='WPSChoose']",template);
+if (EnableV == "0")
+{
+SetSelectValue(WPSChooseObj, "Disabled");
+}
+else
+{
+if (WPSModeV == "0")
+{
+SetSelectValue(WPSChooseObj, "PBC");
+}
+else
+{
+SetSelectValue(WPSChooseObj, "PIN");
+}
+}
+$("[id^='WPSChoose']", template).change();
+$("[id^='PINMode']", template).change();
+FillPINtoText(template);
+});
+template.bind("hiddenValueChangeByCustom", function(event,template){
+var WPSChooseV = $("[id^='WPSChoose']", template).val();
+var PINMode = $("[id^='PINMode']", template).val();
+var InputPINV = $("[id^='InputPIN']", template).val();
+if (WPSChooseV == "Disabled")
+{
+$("[id^='Enable']", template).val("0");
+$("[id^='WpsPIN']", template).addClass("PostIgnore");
+$("[id^='PINMode']", template).addClass("PostIgnore");
+}
+else if (WPSChooseV == "PBC")
+{
+$("[id^='WPSMode']", template).val("0");
+$("[id^='Enable']",template).val("1");
+$("[id^='WpsPIN']",template).addClass("PostIgnore");
+$("[id^='PINMode']",template).addClass("PostIgnore");
+}
+else if (WPSChooseV == "PIN")
+{
+$("[id^='WPSMode']", template).val("1");
+$("[id^='Enable']",template).val("1");
+$("[id^='PINMode']",template).removeClass("PostIgnore");
+if (PINMode == "AutoPIN")
+{
+$("[id^='WpsPIN']",template).addClass("PostIgnore");
+}
+else
+{
+$("[id^='WpsPIN']",template).removeClass("PostIgnore");
+$("[id^='WpsPIN']",template).val(InputPINV);
+}
+}
+else
+{
+consoleLog("WPSModeVal is illegal!!");
+}
+});
+template.bind("RefreshPINCode", function(event, xml,template){
+if (template.hasError(xml) == 0)
+{
+var ToOperParaArr = {
+"WpsPINShow" : { ValueOrigin: "" }
+};
+xmlParaInInstOperate(xml, "OBJ_WPS_ID", 0, ToOperParaArr);
+var WpsPINVal = ToOperParaArr.WpsPINShow.ValueOrigin;
+$("[id^='AutoPIN']", template).val(WpsPINVal);
+}
+});
+var HeadID = "WPS";
+var Head = $("#"+HeadID);
+$("#Btn_AutoPIN", Head).bind("click", function(event){
+var ServerAddr = $("address span", Head).text();
+var template = $(this).parents("[id^='template']");
+var _InstIDValue = $("[id^='SSID_InstID']", template).val();
+var PostData = "IF_ACTION=Refresh"+"&"
++ "SSID_InstID=" + _InstIDValue;
+dataPost("Refresh", "RefreshPINCode", ServerAddr, template, PostData);
+});
+}
+function FillPINtoText(template)
+{
+var EnableV = $("[id^='Enable']", template).val();
+var WPSModeV = $("[id^='WPSMode']", template).val();
+var WpsPIN = $("[id^='WpsPINShow']", template).val();
+var PINMode = $("[id^='PINMode']", template).val();
+if ((EnableV == "0")
+|| (EnableV == "1" && WPSModeV == "0"))
+{
+$("[id^='AutoPIN']", template).val("");
+$("[id^='InputPIN']", template).val("");
+}
+else if (EnableV == "1" && WPSModeV == "1")
+{
+if (PINMode == "AutoPIN")
+{
+if (WpsPIN == "") {
+$("[id^='AutoPIN']", template).val();
+}
+else{
+$("[id^='AutoPIN']", template).val(WpsPIN);
+}
+$("[id^='InputPIN']", template).val("");
+}
+else
+{
+$("[id^='AutoPIN']", template).val("");
+}
+}
+}
+function g_ChanegeDataByCustom(xml)
+{
+var OBJ = $(xml).find("OBJ_WPS_ID");
+var instances = $("Instance ", OBJ);
+instances.each(function(){
+var inst = $(this);
+inst.find("ParaName").each(function(){
+var ParaName = $(this).text();
+if ( ParaName == "_InstID" )
+{
+$(this).text("SSID_InstID");
+}
+});
+});
+}
+$(document).ready(function(){
+var HeadID = "WPS";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+initial_template_WPS("template_"+HeadID);
+RefreshClickHandle(Head);
+Head.succfunction = function(xml){
+Head.hasError(xml,"externErrorHint");
+var template = $("[id^='template_']",Head);
+g_ChanegeDataByCustom(xml);
+var CARDOBJ = $(xml).find("OBJ_WLANSETTING_ID");
+var RuleNum = $("Instance", CARDOBJ).length;
+var OBJID = ["OBJ_WPS_ID","OBJ_WLANSETTING_ID"];
+Head.createPageDataByClone(RuleNum, OBJID, xml,
+Head.fillDataByCustom);
+$.publish("/some/softVersionModify", [Head]);
+$("[id^='template_']",Head).each(function(){
+if($("[id^='instName_WPS']",this).text().indexOf("6G")>-1)
+{
+$(this).hide();
+}
+})
+var firstTemp = $("#template_WPS_0");
+$(".collapsibleInst", firstTemp).click();
+};
+wlanDisableControl(HeadID);
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div class="instCfgArea">
+<div id="WPS" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wlan_wps_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="WPSBar">WPS</h1>
+<div id="WPS_container">
+<div class="sceneTip">
+<div class="sceneTipLink"><a>What should be noticed when configuring WPS?</a></div>
+<div class="sceneTip_container">
+<p>PBC: Pressing the WPS button of the device to connect other devices.</p>
+
+<p class="sceneTip_close"><a>Close</a></p>
+</div>
+</div>
+<input type="hidden" id="DataHasBeenGot" value="0">
+<input type="hidden" id="_InstNum" value="0">
+<div id="template_WPS" style="display:none;">
+<form class="form_content">
+<div id="topLine_WPS" class="formTblCtrlBar">
+<a id="instName_WPS" class="instName collapsibleInst" hidefocus="true" href="javascript:void(0);"></a>
+</div>
+<div id="changeArea_WPS" class="ChangeArea formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<input type="hidden" id="_InstID" value="-1">
+<input type="hidden" id="SSID_InstID" value="">
+<input type="hidden" id="Band" class="PostIgnore" value="">
+<input type="hidden" id="Enable" value="">
+<input type="hidden" id="WPSMode" value="">
+<input type="hidden" id="WpsPINShow" value="">
+<input type="hidden" id="WpsPIN" value="" class="PostIgnore">
+<div class="row">
+<label for="WPSChoose" class="cfgLabel w150">WPS Mode</label>
+<div class="right">
+<select id="WPSChoose" name="WPSChoose" class="w210">
+<option value="Disabled" title='Disabled'>Disabled</option>
+<option value="PBC" title='PBC'>PBC</option>
+
+</select>
+</div>
+</div>
+
+<div class="buttongroup">
+<input type="button" class="Button Btn_apply" id="Btn_apply_WPS" name="Btn_apply_WPS" value="Apply" />
+</div>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+
+</script><script>
+
+</script>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$(this).find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", this).addClass("disableBtn");
+$("[class^='longBtn']", this).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", this).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x32\x34\x46\x79\x53\x76\x6f\x41\x38\x4e\x61\x45\x39\x57\x59\x5a\x49\x69\x64\x6e\x74\x59\x78\x41";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+});
+</script>

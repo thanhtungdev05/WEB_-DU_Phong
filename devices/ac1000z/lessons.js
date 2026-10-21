@@ -1,0 +1,161 @@
+/** Sáu bài thực hành AC1000Z, tương ứng bộ bài chuẩn của AX3000GZ/AX3000GZ V2. */
+(function () {
+  'use strict';
+
+  const lessons = window.DEVICE_AC1000Z_LESSONS = window.DEVICE_AC1000Z_LESSONS || [];
+  const tooltips = window.TOOLTIPS_AC1000Z || {};
+
+  function rule(id, name, selector, expected, type = 'text_exact', interactionSelector = selector) {
+    return { id, name, selector, expected, type, interactionSelector, trim: true, required: true, requireInteraction: true };
+  }
+
+  function register(definition) {
+    const current = lessons.findIndex(item => item.id === definition.id);
+    if (current !== -1) lessons.splice(current, 1);
+    definition.guidePopups = tooltips[definition.id] || [];
+    lessons.push(definition);
+  }
+
+  register({
+    id: 'LAB_AC1000Z_01',
+    title: 'Bài 1 - Cấu hình WAN PPPoE',
+    subtitle: 'Cấu hình tài khoản Internet trên interface internet_tr069',
+    instructions: [
+      '<b>Yêu cầu:</b>',
+      'Chỉnh sửa thông số tài khoản trên interface <span class="val">internet_tr069</span>:',
+      '- Username: <span class="val">sgfdl-123456-789</span>',
+      '- Password: <span class="val">fpt12345</span>',
+      '- Các thông số còn lại giữ mặc định.'
+    ],
+    practiceUrl: '/sim_ac1000z/?_type=menuView&_tag=ethWanConfig',
+    clearFields: ['[id="UserName:0"]', '[id="Password:0"]'],
+    grading: { description: 'Kiểm tra tài khoản PPPoE', rules: [
+      rule('pppoe_user', 'Username', '[id="UserName:0"]', 'sgfdl-123456-789'),
+      rule('pppoe_password', 'Password', '[id="Password:0"]', 'fpt12345')
+    ]}
+  });
+
+  register({
+    id: 'LAB_AC1000Z_02',
+    title: 'Bài 2 - Cấu hình Wi-Fi',
+    subtitle: 'Đặt SSID và mật khẩu cho SSID chính 2.4 GHz',
+    instructions: [
+      '<b>Yêu cầu:</b>',
+      '- SSID Name: <span class="val">FPT Telecom</span>',
+      '- WPA Passphrase: <span class="val">Fptwifi123</span>',
+      '- Các thông số còn lại giữ mặc định.'
+    ],
+    practiceUrl: '/sim_ac1000z/?_type=menuView&_tag=wlanBasic',
+    clearFields: ['[id="ESSID:0"]', '[id="KeyPassphrase:0"]', '[id="HiddenKeyPass:0"]'],
+    grading: { description: 'Kiểm tra SSID chính và mật khẩu Wi-Fi', rules: [
+      rule('wifi_ssid', 'SSID Name', '[id="ESSID:0"]', 'FPT Telecom'),
+      rule('wifi_password', 'WPA Passphrase', '[id="KeyPassphrase:0"], [id="HiddenKeyPass:0"]', 'Fptwifi123')
+    ]}
+  });
+
+  register({
+    id: 'LAB_AC1000Z_03',
+    title: 'Bài 3 - Cấu hình Wi-Fi IoT',
+    subtitle: 'Cấu hình SSID IoT trên băng tần 2.4 GHz',
+    instructions: [
+      '<b>Yêu cầu:</b>',
+      '- Chọn SSID4 (2.4 GHz - IoT)',
+      '- SSID Name: <span class="val">FPT IoT</span>',
+      '- Encryption Type: <span class="val">WPA2-PSK-AES</span>',
+      '- WPA Passphrase: <span class="val">Fptiot123</span>'
+    ],
+    practiceUrl: '/sim_ac1000z/?_type=menuView&_tag=wlanBasic',
+    clearFields: ['[id="ESSID:3"]', '[id="KeyPassphrase:3"]', '[id="HiddenKeyPass:3"]'],
+    grading: { description: 'Kiểm tra SSID IoT và bảo mật Wi-Fi', rules: [
+      rule('iot_ssid', 'SSID Name', '[id="ESSID:3"]', 'FPT IoT'),
+      rule('iot_security', 'Encryption Type', '[id="EncryptionType:3"]', 'WPA2-PSK-AES', 'text_exact', '[id="EncryptionType:3"], [id="ESSID:3"], [id="KeyPassphrase:3"], [id="HiddenKeyPass:3"]'),
+      rule('iot_password', 'WPA Passphrase', '[id="KeyPassphrase:3"], [id="HiddenKeyPass:3"]', 'Fptiot123')
+    ]}
+  });
+
+  register({
+    id: 'LAB_AC1000Z_04',
+    title: 'Bài 4 - Cấu hình DNS',
+    subtitle: 'Thiết lập thông số DNS thủ công trên cổng LAN',
+    instructions: [
+      '<b>Yêu cầu:</b>',
+      'Thiết lập thông số DNS thủ công (Manually) trên cổng LAN:',
+      '- Primary DNS: <span class="val">8.8.8.8</span>',
+      '- Secondary DNS: <span class="val">8.8.4.4</span>'
+    ],
+    practiceUrl: '/sim_ac1000z/?_type=menuView&_tag=lanMgrIpv4',
+    clearFields: ['[id^="sub_DNSServer1"]', '[id^="sub_DNSServer2"]'],
+    grading: { description: 'Kiểm tra thông số cấu hình DNS trên LAN', rules: [
+      rule('dns1_1', 'Primary DNS - ô 1', '#sub_DNSServer10', '8', 'text_exact', '[id^="sub_DNSServer1"]'),
+      rule('dns1_2', 'Primary DNS - ô 2', '#sub_DNSServer11', '8', 'text_exact', '[id^="sub_DNSServer1"]'),
+      rule('dns1_3', 'Primary DNS - ô 3', '#sub_DNSServer12', '8', 'text_exact', '[id^="sub_DNSServer1"]'),
+      rule('dns1_4', 'Primary DNS - ô 4', '#sub_DNSServer13', '8', 'text_exact', '[id^="sub_DNSServer1"]'),
+      rule('dns2_1', 'Secondary DNS - ô 1', '#sub_DNSServer20', '8', 'text_exact', '[id^="sub_DNSServer2"]'),
+      rule('dns2_2', 'Secondary DNS - ô 2', '#sub_DNSServer21', '8', 'text_exact', '[id^="sub_DNSServer2"]'),
+      rule('dns2_3', 'Secondary DNS - ô 3', '#sub_DNSServer22', '4', 'text_exact', '[id^="sub_DNSServer2"]'),
+      rule('dns2_4', 'Secondary DNS - ô 4', '#sub_DNSServer23', '4', 'text_exact', '[id^="sub_DNSServer2"]')
+    ]}
+  });
+
+  register({
+    id: 'LAB_AC1000Z_05',
+    title: 'Bài 5 - Cấu hình DHCP',
+    subtitle: 'Đổi địa chỉ LAN và dải cấp phát DHCP của ONT',
+    instructions: [
+      '<b>Yêu cầu:</b>',
+      'Thực hiện thay đổi cấu hình địa chỉ IP LAN trên thiết bị theo các thông số được cung cấp dưới đây.',
+      '- Router LAN IPv4 Address: <span class="val">192.168.10.1</span>',
+      '- Subnet mask: <span class="val">255.255.255.0</span>',
+      '- DHCP start address: <span class="val">192.168.10.2</span>',
+      '- DHCP end address: <span class="val">192.168.10.254</span>'
+    ],
+    practiceUrl: '/sim_ac1000z/?_type=menuView&_tag=lanMgrIpv4',
+    // Giữ dữ liệu mặc định của firmware để KTV chỉnh từ 192.168.1.x sang 192.168.10.x.
+    clearFields: [],
+    grading: { description: 'Kiểm tra LAN IP, subnet và dải cấp phát DHCP', rules: [
+      rule('lan_ip_1', 'LAN IP - ô 1', '[id="sub_IPAddr0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_IPAddr"]'),
+      rule('lan_ip_2', 'LAN IP - ô 2', '[id="sub_IPAddr1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_IPAddr"]'),
+      rule('lan_ip_3', 'LAN IP - ô 3', '[id="sub_IPAddr2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_IPAddr"]'),
+      rule('lan_ip_4', 'LAN IP - ô 4', '[id="sub_IPAddr3:DHCPBasicCfg"]', '1', 'text_exact', '[id^="sub_IPAddr"]'),
+      rule('subnet_1', 'Subnet Mask - ô 1', '#sub_SubMask0', '255', 'text_exact', '[id^="sub_SubMask"], [id^="sub_IPAddr"], [id^="sub_MinAddress"], [id^="sub_MaxAddress"]'),
+      rule('subnet_2', 'Subnet Mask - ô 2', '#sub_SubMask1', '255', 'text_exact', '[id^="sub_SubMask"], [id^="sub_IPAddr"], [id^="sub_MinAddress"], [id^="sub_MaxAddress"]'),
+      rule('subnet_3', 'Subnet Mask - ô 3', '#sub_SubMask2', '255', 'text_exact', '[id^="sub_SubMask"], [id^="sub_IPAddr"], [id^="sub_MinAddress"], [id^="sub_MaxAddress"]'),
+      rule('subnet_4', 'Subnet Mask - ô 4', '#sub_SubMask3', '0', 'text_exact', '[id^="sub_SubMask"], [id^="sub_IPAddr"], [id^="sub_MinAddress"], [id^="sub_MaxAddress"]'),
+      rule('dhcp_start_1', 'DHCP Start IP - ô 1', '[id="sub_MinAddress0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_MinAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_start_2', 'DHCP Start IP - ô 2', '[id="sub_MinAddress1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_MinAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_start_3', 'DHCP Start IP - ô 3', '[id="sub_MinAddress2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_MinAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_start_4', 'DHCP Start IP - ô 4', '[id="sub_MinAddress3:DHCPBasicCfg"]', '2', 'text_exact', '[id^="sub_MinAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_end_1', 'DHCP End IP - ô 1', '[id="sub_MaxAddress0:DHCPBasicCfg"]', '192', 'text_exact', '[id^="sub_MaxAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_end_2', 'DHCP End IP - ô 2', '[id="sub_MaxAddress1:DHCPBasicCfg"]', '168', 'text_exact', '[id^="sub_MaxAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_end_3', 'DHCP End IP - ô 3', '[id="sub_MaxAddress2:DHCPBasicCfg"]', '10', 'text_exact', '[id^="sub_MaxAddress"], [id^="sub_IPAddr"]'),
+      rule('dhcp_end_4', 'DHCP End IP - ô 4', '[id="sub_MaxAddress3:DHCPBasicCfg"]', '254', 'text_exact', '[id^="sub_MaxAddress"], [id^="sub_IPAddr"]')
+    ]}
+  });
+
+  register({
+    id: 'LAB_AC1000Z_06',
+    title: 'Bài 6 - Cấu hình Port Forwarding',
+    subtitle: 'Mở cổng mẫu cho thiết bị trong mạng LAN',
+    instructions: [
+      '<b>Yêu cầu:</b>',
+      '- Name: <span class="val">FPT Telecom</span>',
+      '- Protocol: <span class="val">TCP And UDP</span>',
+      '- WAN Connection: <span class="val">internet_tr069</span>',
+      '- LAN Host: <span class="val">192.168.1.254</span>',
+      '- WAN Port (Start / End): <span class="val">8080 / 8080</span>',
+      '- LAN Host Port (Start / End): <span class="val">8080 / 8080</span>'
+    ],
+    practiceUrl: '/sim_ac1000z/?_type=menuView&_tag=portForwarding',
+    clearFields: ['[id^="Alias"]', '[id^="InternalClient"]', '[id^="ExternalPort"]', '[id^="InternalPort"]'],
+    grading: { description: 'Kiểm tra Port Forwarding', rules: [
+      rule('pf_name', 'Name', '[id^="Alias"]', 'FPT Telecom'),
+      rule('pf_wan_connection', 'WAN Connection', '[id^="S_Interface"]', 'DEV.IP.IF3', 'text_exact', '[id^="S_Interface"], [id^="Alias"], [id^="InternalClient"]'),
+      rule('pf_protocol', 'Protocol', '[id^="Protocol"]', 'BOTH', 'text_exact', '[id^="Protocol"], [id^="Alias"], [id^="InternalClient"]'),
+      rule('pf_lan_host', 'LAN Host', '[id^="InternalClient"]', '192.168.1.254'),
+      rule('pf_wan_port', 'WAN Port', '[id^="ExternalPort"]:not([id*="EndRange"])', '8080', 'text_exact', '[id^="ExternalPort"]'),
+      rule('pf_wan_port_end', 'WAN Port End', '[id^="ExternalPortEndRange"]', '8080', 'text_exact', '[id^="ExternalPort"]'),
+      rule('pf_lan_port', 'LAN Host Port', '[id^="InternalPort"]:not([id*="EndRange"])', '8080', 'text_exact', '[id^="InternalPort"]'),
+      rule('pf_lan_port_end', 'LAN Host Port End', '[id^="InternalPortEndRange"]', '8080', 'text_exact', '[id^="InternalPort"]')
+    ]}
+  });
+})();

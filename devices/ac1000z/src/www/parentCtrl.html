@@ -1,0 +1,795 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.showIt(true);
+collapsibleInst.addClass("instNameExp");
+}
+else
+{
+ChangeArea.showIt(false);
+collapsibleInst.removeClass("instNameExp");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = thisObj.next("span").not(".__CheckPwdStrength").text();
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#112;&#97;&#114;&#101;&#110;&#116;&#67;&#116;&#114;&#108;</div>
+<div id="_NowSupIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#112;&#97;&#114;&#101;&#110;&#116;&#67;&#116;&#114;&#108;</div>
+<div id="_NowThdIdInfo"></div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft">
+<div id="class2Menu" class="class2Menu">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span>Page Information</span>
+</div>
+
+<p class="pIntroContent">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#112;&#97;&#114;&#101;&#110;&#116;&#97;&#108;&#32;&#99;&#111;&#110;&#116;&#114;&#111;&#108;&#115;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function(){
+function Customize_MACFilter(paramsOBJ)
+{
+var ContainerOBJ = paramsOBJ["ContainerOBJ"];
+ContainerOBJ.collapsibleInstTitleChange("Name");
+}
+function setWeekToDayEle(template)
+{
+var EveryDay = $("[id^='EveryDay:']", template);
+var Week = $("[id^='Week:']", template);
+var De_WeekVal = Week.val();
+var WeekVal = parseInt(De_WeekVal,10).toString(2);
+while (WeekVal.length < 7)
+{
+WeekVal = "0" + WeekVal;
+}
+if( WeekVal == "1111111" )
+{
+EveryDay.prop("checked", true);
+}
+else
+{
+EveryDay.prop("checked", false);
+var temp = $("[id^='Time_Day']", template);
+for( var i=0; i < WeekVal.length; i++ )
+{
+if(WeekVal.charAt(i) == '1')
+{
+$(temp[i]).prop("checked",true);
+}
+else
+{
+$(temp[i]).prop("checked",false);
+}
+}
+}
+EveryDay.change();
+}
+function setDayEleToWeek(template)
+{
+var EveryDay = $("[id^='EveryDay:']", template);
+var Week = $("[id^='Week:']", template);
+var B_WeekVal = "";
+if( EveryDay.is(":checked") )
+{
+B_WeekVal = "1111111";
+}
+else
+{
+var temp = $("[id^='Time_Day']", template);
+for( var i=0; i< temp.length;i++ )
+{
+if($(temp[i]).is(":checked"))
+{
+B_WeekVal += "1";
+}
+else
+{
+B_WeekVal += "0";
+}
+}
+}
+Week.val(parseInt(B_WeekVal, 2));
+var data = {};
+data.template = template;
+$.callModifier("ParentCtrl/changeTime",data);
+}
+function CtrlURLAreaDispAttr(template)
+{
+var filterModeObj = $("#FilterMode", template);
+filterModeObj.change(function(){
+var filterMode = $(this).val();
+var template = $(this).parents("[id^='template_']");
+if ( "NotAllowed" == filterMode )
+{
+$("[id^='div_URLCfgArea']", template).hide();
+}
+else
+{
+$("[id^='div_URLCfgArea']", template).show();
+}
+});
+}
+function AddEvent2URLOpBtn(template)
+{
+$(".AddIconControl", template).click(function(){
+var template = $(this).parents("[id^='template_']");
+var VisibleURLCtrls = $("[id^='URLCtrlTemplate_']:visible", template);
+var VisibleURLCnt = VisibleURLCtrls.length;
+var iMax = 5;
+if ( VisibleURLCnt >= iMax )
+{
+return false;
+}
+var HiddenURLCtrls = $("[id^='URLCtrlTemplate_']:hidden", template);
+HiddenURLCtrls.eq(0).show();
+if ( 1 == HiddenURLCtrls.length )
+{
+$(this).attr("src", "img/add_disable.png");
+}
+});
+$(".DelIconControl", template).click(function(){
+var template = $(this).parents("[id^='template_']");
+var VisibleURLs = $("[id^='URL_']:visible", template);
+var VisibleURLCnt = VisibleURLs.length;
+var iMax = 5;
+if ( VisibleURLCnt == iMax )
+{
+$(".AddIconControl", template).attr("src", "img/add.png");
+}
+var URLCtrl = $(this).parents("[id^='URLCtrlTemplate_']");
+var URLObj = $("[id^='URL_']", URLCtrl);
+URLObj.val("");
+$(".errorLabelWraper>.error", URLCtrl).hide();
+URLCtrl.hide();
+});
+}
+function MakeDynamicURLCtrl(template)
+{
+var iMax = 5;
+var URLCtrlTemplate = $("#URLCtrlTemplate", template);
+for ( var suffix=1; suffix<iMax; suffix++ )
+{
+var clone = URLCtrlTemplate.cloneWithSuffix(suffix, "_");
+URLCtrlTemplate.before(clone);
+}
+}
+function FillAndDispURLCtrl(template)
+{
+var URLCnt = $("[id^='URLCnt:']", template).val();
+URLCnt = parseInt(URLCnt, 10);
+var iMax = 5;
+for ( var suffix=0; suffix<iMax; suffix++ )
+{
+var URLCtrl = $("[id^='URLCtrlTemplate_"+suffix+":']", template);
+$("[id^='URL_"+suffix+":']", URLCtrl).val("");
+$(".errorLabelWraper>.error", URLCtrl).hide();
+URLCtrl.hide();
+}
+for ( var suffix=0; suffix<URLCnt; suffix++ )
+{
+var urlval = $("[id^='URL"+suffix+":']", template).val();
+$("[id^='URL_"+suffix+":']", template).val(urlval);
+$("[id^='URLCtrlTemplate_"+suffix+":']", template).show();
+}
+if ( URLCnt == iMax )
+{
+$(".AddIconControl", template).attr("src", "img/add_disable.png");
+}
+else
+{
+$(".AddIconControl", template).attr("src", "img/add.png");
+}
+var filterModeObj = $("[id^='FilterMode']", template);
+filterModeObj.change();
+}
+function SetURLHideVal(template)
+{
+var iMax = 5;
+var filterModeObj = $("[id^='FilterMode']", template);
+var filterMode = filterModeObj.val();
+if ( "NotAllowed" == filterMode )
+{
+$("[id^='URLCnt:']", template).addClass("PostIgnore");
+for ( var i=0; i<iMax; i++ )
+{
+$("[id^='URL"+i+":']", template).addClass("PostIgnore");
+}
+return ;
+}
+else
+{
+$("[id^='URLCnt:']", template).removeClass("PostIgnore");
+for ( var i=0; i<iMax; i++ )
+{
+$("[id^='URL"+i+":']", template).removeClass("PostIgnore");
+}
+}
+for ( var i=0; i<iMax; i++ )
+{
+$("[id^='URL"+i+":']", template).val("NULL");
+}
+var URLHidenIdx = 0;
+for ( var i=0; i<iMax; i++ )
+{
+var URLCtrl = $("[id^='URL_"+i+":']", template);
+if ( URLCtrl.is(":visible") )
+{
+var urlval = URLCtrl.val();
+var URLHidenCtrl = $("[id^='URL"+URLHidenIdx+":']", template);
+URLHidenCtrl.val(urlval);
+URLHidenIdx++;
+}
+}
+$("[id^='URLCnt:']", template).val(URLHidenIdx);
+}
+function initial_template_ParentCtrl(templateID)
+{
+var template = $("#"+templateID);
+CtrlURLAreaDispAttr(template);
+AddEvent2URLOpBtn(template);
+MakeDynamicURLCtrl(template);
+$("[id^='a_allday']", template).click(function(event){
+event.preventDefault();
+var TimeCtl = $(this).parents("._LuQUID_TimeCtl");
+var allday = {
+"group_HourStart" : "0",
+"group_MinuteStart" : "0",
+"group_HourEnd" : "23",
+"group_MinuteEnd" : "59"
+}
+for (var i in allday)
+{
+var timeEle = $("."+i,TimeCtl);
+$("option[value='"+ allday[i] + "']",timeEle).prop("selected",
+"selected");
+}
+});
+var MACCheckRules = {
+"required": true,
+"HEX": true,
+"fixedlength": 2
+};
+template.bind("applyPromptCheckJSON", function(event, template){
+var checkJSONTempObj = {
+"groups": {
+ChildIdGroup: "sub_ChildId0 sub_ChildId1 sub_ChildId2 sub_ChildId3 sub_ChildId4 sub_ChildId5"
+},
+"rules": {
+"Name:ParentCtrl": {
+"required": true,
+"utf8": true,
+"utf8LengthRange":[1,32]
+},
+"sub_ChildId0": MACCheckRules,
+"sub_ChildId1": MACCheckRules,
+"sub_ChildId2": MACCheckRules,
+"sub_ChildId3": MACCheckRules,
+"sub_ChildId4": MACCheckRules,
+"sub_ChildId5": MACCheckRules
+},
+"messages": {
+}
+};
+var iMax = 5;
+for ( var suffix=0; suffix<iMax; suffix++ )
+{
+var urlID = "URL_"+suffix;
+checkJSONTempObj.rules[urlID] = {
+"required": true,
+"rangelength":[1,128],
+"url": true
+};
+}
+template.setPromptCheckJSON(checkJSONTempObj, template);
+});
+$("[id^='EveryDay']",template).bind("change", function () {
+var EveryDayOBJ = $(this);
+var subTemplate = EveryDayOBJ.parents("[id^='template_']");
+$("[id^='Time_Day']", subTemplate).each(function () {
+if(EveryDayOBJ.is(":checked"))
+{
+$(this).prop("checked", false);
+$(this).attr("disabled",true);
+}
+else
+{
+$(this).prop("disabled",false);
+}
+});
+});
+template.bind("fillDataByApplyResult", function(event,xml, template){
+ActionByApplyResult(xml, template, "Name");
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var OBJID = ["OBJ_PARENT_CONTROL_ID"];
+ActionByCancelResult(xml, template, OBJID);
+template.trigger("fillDataByCustom",[0, template, xml]);
+});
+template.bind("fillDataByCustom", function(event, suffix, ContainerOBJ, xml){
+var CustomizeParams = {
+"ContainerOBJ":ContainerOBJ
+};
+Customize_MACFilter(CustomizeParams);
+setWeekToDayEle(ContainerOBJ);
+FillAndDispURLCtrl(ContainerOBJ);
+});
+template.bind("hiddenValueChangeByCustom", function(event,template){
+setDayEleToWeek(template);
+SetURLHideVal(template);
+});
+}
+$(document).ready(function(){
+var HeadID = "ParentCtrl";
+var Head = $("#"+HeadID);
+var templateID = "template_"+ HeadID;
+var ServerAddr = $("address span", Head).text();
+initial_template_ParentCtrl(templateID);
+Head.succfunction = function(xml){
+Head.hasError(xml,"externErrorHint");
+var MACFILTEROBJ = $(xml).find("OBJ_PARENT_CONTROL_ID");
+var RuleNum = $("Instance", MACFILTEROBJ).length;
+var OBJID = ["OBJ_PARENT_CONTROL_ID"];
+Head.createPageDataByClone(RuleNum,OBJID,xml);
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div id="ParentCtrl" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=firewall_parentctrl_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="ParentCtrlBar">Parental Controls</h1>
+<div id="ParentCtrl_container">
+<input type="hidden" id="_InstNum" value="0">
+<input id="DataHasBeenGot" type="hidden" value="0">
+<div id="template_ParentCtrl" style="display:none;">
+<form class="form_content">
+<div id="topLine_ParentCtrl" class="formTblCtrlBar">
+<span id="instName_ParentCtrl" class="instName collapsibleInst">New Item</span>
+<span class="instSwitch">
+<div id="Enable:ParentCtrl">
+<input type="radio" id="Enable1:ParentCtrl" name="Enable:ParentCtrl" value="1"/><label for="Enable1:ParentCtrl">On</label>&nbsp;&nbsp;
+<input type="radio" id="Enable0:ParentCtrl" name="Enable:ParentCtrl" value="0" checked="checked"/><label for="Enable0:ParentCtrl" >Off</label>
+</div>
+</span>
+<span id="instDelete_ParentCtrl" class="instDelete Btn_delete"><img src="img/del.png" alt="delete" /></span>
+</div>
+<div id="changeArea_MACFilter" class="ChangeArea formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<input type="hidden" id="_InstID" value="-1">
+<input type="hidden" id="ChildId" _LuQUID_splitMACID="sub_ChildId" value="">
+<input type="hidden" class="PostIgnore" id="IPAddress" _LuQUID_splitIPID="sub_IPAddress" value="">
+<input type="hidden" id="Week" value="">
+<div class="row">
+<label for="Name:ParentCtrl" class="cfgLabel w180">Name</label>
+<div class="right">
+<input type="text" class="inputNorm" id="Name:ParentCtrl" name="Name:ParentCtrl" value=""/>
+<span class="utf8Compatible" style="display: none;">Length: 1 ~ 32</span>
+</div>
+</div>
+<div class="row" id="div_Child">
+<label for="sub_ChildId0" class="cfgLabel w180">User Identity</label>
+<div class="right">
+<input class="mac" name="sub_ChildId0" type="text" maxlength="2" id="sub_ChildId0" value=""/>:
+<input class="mac" name="sub_ChildId1" type="text" maxlength="2" id="sub_ChildId1" value=""/>:
+<input class="mac" name="sub_ChildId2" type="text" maxlength="2" id="sub_ChildId2" value=""/>:
+<input class="mac" name="sub_ChildId3" type="text" maxlength="2" id="sub_ChildId3" value=""/>:
+<input class="mac" name="sub_ChildId4" type="text" maxlength="2" id="sub_ChildId4" value=""/>:
+<input class="mac" name="sub_ChildId5" type="text" maxlength="2" id="sub_ChildId5" value=""/>
+<a class="_LuQUID_SelAccessDevice" _LuQUID_Access_Mode="ALL">Select from the associated devices</a>
+</div>
+</div>
+<div class="bgColorRow" id="TR_TimeCfg">
+<div class="row">
+<label class="left w180"><strong>Time Policy</strong></label>
+</div>
+<div class="row">
+<label class="left w180">Days</label>
+<div class="right">
+<input name="EveryDay" id="EveryDay" class="PostIgnore" type="checkbox" value=""/><label for="EveryDay">Everyday</label>
+</div>
+</div>
+<div class="row">
+<label for="Time_Day_Su" class="left w180">&nbsp;</label>
+<div class="right">
+<input name="Time_Day_Su" id="Time_Day_Su" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Su"><font style="color:rgb(200,0,0)">Sun.</font>&nbsp;&nbsp;</label>
+<input name="Time_Day_M" id="Time_Day_M" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_M">Mon.&nbsp;&nbsp;</label>
+<input name="Time_Day_T" id="Time_Day_T" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_T">Tues.&nbsp;&nbsp;</label>
+<input name="Time_Day_We" id="Time_Day_We" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_We">Wed.&nbsp;&nbsp;</label>
+<input name="Time_Day_Th" id="Time_Day_Th" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Th">Thur.&nbsp;&nbsp;</label>
+<input name="Time_Day_Fri" id="Time_Day_Fri" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Fri">Fri.&nbsp;&nbsp;</label>
+<input name="Time_Day_Sa" id="Time_Day_Sa" class="PostIgnore" type="checkbox" value="" /><label for="Time_Day_Sa"><font style="color:rgb(200,0,0)">Sat.</font></label>
+</div>
+</div>
+<div class="row">
+<label for="StartHour" class="left w180">Duration</label>
+<div class="right _LuQUID_TimeCtl">
+<select name="StartHour" id="StartHour" class="w45 group_HourStart">
+</select>h&nbsp;
+<select name="StartMin" id="StartMin" class="w45 group_MinuteStart">
+</select>min&nbsp;~&nbsp;
+<select name="EndHour" id="EndHour" class="w45 group_HourEnd">
+</select>h&nbsp;
+<select name="EndMin" id="EndMin" class="w45 group_MinuteEnd">
+</select>min&nbsp;
+<a class="emColor ctrlFont" id="a_allday" name="a_allday">All Day</a>
+</div>
+</div>
+</div>
+<div class="segmentRow"></div>
+<div class="row">
+<label for="FilterMode" class="cfgLabel w180">Action</label>
+<div class="right">
+<select class="selectLong" id="FilterMode" name="FilterMode">
+<option value="NotAllowed" title='Ban Internet Access' selected="selected">Ban Internet Access</option>
+<option value="BlackList" title='URL Black List'>URL Black List</option>
+<option value="WhiteList" title='URL White List'>URL White List</option>
+</select>
+</div>
+</div>
+<div id="div_URLCfgArea" style="display:none">
+<input type="hidden" id="URLCnt" value="">
+
+<input type="hidden" id="URL0" value="">
+
+<input type="hidden" id="URL1" value="">
+
+<input type="hidden" id="URL2" value="">
+
+<input type="hidden" id="URL3" value="">
+
+<input type="hidden" id="URL4" value="">
+
+<div class="row">
+<label for="URL_0" class="cfgLabel w180">URL</label>
+<div class="right">
+<input type="text" class="inputLong PostIgnore" id="URL_0" name="URL_0" value=""/>
+<span style="display: none;">Length: 1 ~ 128</span>
+<img src="img/add.png" class="AddIconControl" alt="add" />
+</div>
+</div>
+<div class="row" id="URLCtrlTemplate" style="display:none">
+<label class="cfgLabel w180">&nbsp;</label>
+<div class="right">
+<input type="text" class="inputLong PostIgnore" id="URL" name="URL" value=""/>
+<span style="display:none;">Length: 1 ~ 128</span>
+<img src="img/delete.png" class="DelIconControl" alt="delete" />
+</div>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_ParentCtrl" name="Btn_cancel_ParentCtrl" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_ParentCtrl" name="Btn_apply_ParentCtrl" value="Apply" />
+</div>
+</div>
+</div>
+</form>
+</div>
+<div class="addInstBar AddContentContainer">
+<span id="addInstBar_ParentCtrl" class="instNew addInst">Create New Item</span>
+</div>
+</div>
+</div>
+<script>
+
+</script><script>
+
+</script><script>
+
+</script>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$(this).find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", this).addClass("disableBtn");
+$("[class^='longBtn']", this).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", this).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x74\x36\x59\x44\x4e\x4c\x71\x4d\x49\x4d\x4d\x79\x34\x6f\x6b\x55\x32\x76\x61\x73\x59\x42\x77\x76";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+});
+</script>

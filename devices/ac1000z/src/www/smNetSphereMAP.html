@@ -1,0 +1,519 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.showIt(true);
+collapsibleInst.addClass("instNameExp");
+}
+else
+{
+ChangeArea.showIt(false);
+collapsibleInst.removeClass("instNameExp");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = thisObj.next("span").not(".__CheckPwdStrength").text();
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#115;&#109;&#78;&#101;&#116;&#83;&#112;&#104;&#101;&#114;&#101;&#77;&#65;&#80;</div>
+<div id="_NowSupIdInfo">&#108;&#111;&#99;&#97;&#108;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#119;&#108;&#97;&#110;&#67;&#111;&#110;&#102;&#105;&#103;</div>
+<div id="_NowThdIdInfo">&#115;&#109;&#78;&#101;&#116;&#83;&#112;&#104;&#101;&#114;&#101;&#77;&#65;&#80;</div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft">
+<div id="class2Menu" class="class2Menu">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span>Page Information</span>
+</div>
+
+<p class="pIntroContent">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#77;&#101;&#115;&#104;&#32;&#87;&#105;&#45;&#70;&#105;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function(){
+var enableChanged = false;
+function IfServerLive()
+{
+var HeadID = "NetSphereMAPSwitch";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+Head.succfunction = function(xml){
+Head.hasError(xml);
+showWaitTip(false);
+return;
+};
+Head.failfunction = function(XMLHttpRequest,textStatus){
+setTimeout("IfServerLive()",30000);
+};
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction, Head.failfunction, false);
+}
+function EnableControlMode(template)
+{
+var EnableObj = $("input[name='Enable']:checked",template);
+if ( EnableObj.val() == "1")
+{
+$("#Mode").show();
+}
+else
+{
+$("#Mode").hide();
+}
+}
+function initial_template(templateID)
+{
+var template = $("#"+templateID);
+var instForm = template.find("form");
+var checkJson = {
+"rules": {
+"RoamRssiLmt24G": {
+"integer": true,
+"required": true,
+"range":[-110,-40]
+},
+"RoamRssiLmt5G": {
+"integer": true,
+"required": true,
+"range":[-110,-40]
+}
+},
+"messages": {
+}
+};
+var data = {};
+data.checkJson = checkJson;
+data.template = template;
+$.callModifier("MeshConf/checkData",data);
+instForm.validate(checkJson);
+template.bind("fillDataByApplyResult", function(event, xml, template){
+ActionByApplyResult(xml, template);
+$.publish("/some/refreshPage", [1]);
+if ( enableChanged == true ){
+setTimeout(function(){
+showWaitTip(true, "The device is rebooting, please wait a while. ");
+setTimeout("IfServerLive()", 30000);
+}, 20);
+}
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var OBJID = ["OBJ_NETSPHERE_MAP_ID"
+,"OBJ_MULTIAP_ROAM_ID"
+];
+ActionByCancelResult(xml, template, OBJID);
+var Mode = $("input:radio[name^='Mode']:checked", template).val();
+$("#CurrentMode").val(Mode);
+var Enable = $("input:radio[name^='Enable']:checked", template).val();
+$("#CurrentEnable").val(Enable);
+EnableControlMode(template);
+});
+$("#Btn_apply_Mode_Confirm", template).click(function(){
+$(".Btn_apply", template).click();
+});
+var EnableObj = $("input[name='Enable']",template);
+EnableObj.click(function(event){
+var thisObj = $(this);
+if ( thisObj.is(':checked') && thisObj.val() == "1")
+{
+$("#Mode").show();
+}
+else
+{
+$("#Mode").hide();
+}
+});
+}
+$(document).ready(function(){
+var HeadID = "NetSphereMAPMode";
+var Head = $("#"+HeadID);
+var templateID = "template_"+HeadID;
+var ServerAddr = $("address span", Head).text();
+initial_template(templateID);
+Head.succfunction = function(xml){
+if (Head.hasError(xml) == 0)
+{
+var OBJID = ["OBJ_NETSPHERE_MAP_ID"
+,"OBJ_MULTIAP_ROAM_ID"
+];
+var template = $("[id^='template_']",Head);
+Head.fillDataByOBJID(xml, OBJID, $("#"+templateID), 0);
+var Mode = $("input:radio[name^='Mode']:checked", template).val();
+$("#CurrentMode").val(Mode);
+var Enable = $("input:radio[name^='Enable']:checked", template).val();
+$("#CurrentEnable").val(Enable);
+EnableControlMode(template);
+}
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div id="NetSphereMAPMode" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=Localnet_NetSphere_Mode_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="MAPMode">Mesh Wi-Fi</h1>
+<div id="NetSphereMAPMode_container" class="formTblWrap">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div id="template_NetSphereMAPMode" class="formTbl">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<form class="form_content">
+<input type="hidden" id="_InstID" value="DEV.MULTIAPCFG">
+<input type="hidden" id="CurrentMode" value="">
+<input type="hidden" id="CurrentEnable" value="">
+<div class="row" id="MAP_Enable">
+<label for="Enable" class="left w200">Enable</label>
+<div id="Enable" class="right">
+<input type="radio" id="Enable0" name="Enable" value="1"/>
+<label for="Enable0">On</label>
+&nbsp;&nbsp;
+<input type="radio" id="Enable1" name="Enable" value="0"/>
+<label for="Enable1">Off</label>
+</div>
+</div>
+<div class="row" id="11kv_Enable" style="display:none;">
+<label for="EnLegacyStaRoam" class="left w200">WLAN(802.11kv)</label>
+<div id="EnLegacyStaRoam" class="right">
+<input type="radio" id="EnLegacyStaRoam0" name="EnLegacyStaRoam" value="1"/>
+<label for="EnLegacyStaRoam0">On</label>
+&nbsp;&nbsp;
+<input type="radio" id="EnLegacyStaRoam1" name="EnLegacyStaRoam" value="0"/>
+<label for="EnLegacyStaRoam1">Off</label>
+</div>
+</div>
+<div class="row" id="div_RoamRssiLmt24G">
+<label for="RoamRssiLmt24G" class="left w200">Roaming Limit (2.4G)</label>
+<div class="right">
+<input type="text" id="RoamRssiLmt24G" name="RoamRssiLmt24G" value="" class="inputNorm" />
+<span id="RangeRoamRssiLmt24G" style="display:none;">Range: -110 ~ -40</span>dBm
+</div>
+</div>
+<div class="row" id="div_RoamRssiLmt5G">
+<label for="RoamRssiLmt5G" class="left w200">Roaming Limit (5G)</label>
+<div class="right">
+<input type="text" id="RoamRssiLmt5G" name="RoamRssiLmt5G" value="" class="inputNorm">
+<span id="RangeRoamRssiLmt5G" style="display: none;">Range: -110 ~ -40</span>dBm
+</div>
+</div>
+</form>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_Mode" name="Btn_cancel_Mode" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_Mode" name="Btn_apply_Mode" value="Apply" style="display:none;"/>
+<input type="button" class="Button" id="Btn_apply_Mode_Confirm" name="Btn_apply_Mode_Confirm" value="Apply"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+
+</script>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$(this).find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", this).addClass("disableBtn");
+$("[class^='longBtn']", this).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", this).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x4f\x57\x44\x4c\x63\x68\x30\x30\x53\x35\x67\x35\x39\x39\x6a\x58\x65\x38\x70\x6a\x52\x34\x38\x41";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+});
+</script>

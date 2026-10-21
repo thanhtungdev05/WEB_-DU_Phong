@@ -77,6 +77,7 @@ import simulators.sim_ac1000f.server2 as ac1000f
 import simulators.sim_ax3000c.server_fw053 as ax3000c
 import simulators.sim_ax3000gz.server as ax3000gz
 import devices.ax3000gz_v2.src.server as ax3000gz_v2
+import devices.ac1000z.src.server as ac1000z
 import simulators.sim_ax3000hv2.server2 as ax3000hv2
 import simulators.sim_ax3000s.server as ax3000s
 import simulators.sim_be12000.src.server as be12000
@@ -103,7 +104,8 @@ SIM_MODULES = {
     'sim_be6500c': be6500c,
     'sim_ONT_be6500c': ONT_be6500c,
     'sim_mikrotik_hexs': mikrotik_hexs,
-    'sim_ac1000cv2': ac1000cv2
+    'sim_ac1000cv2': ac1000cv2,
+    'sim_ac1000z': ac1000z
 }
 
 # Các class Handler của từng thiết bị
@@ -121,7 +123,8 @@ SIM_HANDLERS = {
     'sim_be6500c': be6500c.H,
     'sim_ONT_be6500c': ONT_be6500c.H,
     'sim_mikrotik_hexs': mikrotik_hexs.H,
-    'sim_ac1000cv2': ac1000cv2.H
+    'sim_ac1000cv2': ac1000cv2.H,
+    'sim_ac1000z': ac1000z.RouterHandler
 }
 
 # File/thư mục Portal luôn do Portal phục vụ (chống bị 'cướp' bởi Referer/Cookie)

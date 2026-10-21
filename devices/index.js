@@ -15,6 +15,7 @@
     window.DEVICE_AX3000HV2,
     window.DEVICE_AX3000S,
     window.DEVICE_AC1000HI,
+    window.DEVICE_AC1000Z,
     window.DEVICE_BE12000,
     window.DEVICE_BE15000,
     window.DEVICE_VIGOR2927,

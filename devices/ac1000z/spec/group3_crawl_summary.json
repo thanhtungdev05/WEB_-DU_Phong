@@ -1,0 +1,97 @@
+{
+  "localNetStatus": {
+    "html_len": 39185,
+    "endpoints": [
+      "/?_type=menuData&_tag=wlan_client_stat_lua.lua",
+      "/?_type=menuData&_tag=wlan_wlanstatus_lua.lua",
+      "/?_type=menuData&_tag=usb_usbdevs_lua.lua",
+      "/?_type=menuData&_tag=accessdev_landevs_lua.lua",
+      "/?_type=menuData&_tag=status_lan_info_lua.lua"
+    ],
+    "data_files": [
+      "wlan_client_stat_lua.lua.xml",
+      "wlan_wlanstatus_lua.lua.xml",
+      "usb_usbdevs_lua.lua.xml",
+      "accessdev_landevs_lua.lua.xml",
+      "status_lan_info_lua.lua.xml"
+    ]
+  },
+  "wlanBasic": {
+    "html_len": 78253,
+    "endpoints": [
+      "/?_type=menuData&_tag=wlan_wlanbasiconoff_lua.lua",
+      "/?_type=menuData&_tag=wlan_wlanbasicadconf_lua.lua",
+      "/?_type=menuData&_tag=wlan_wlansssidconf_lua.lua"
+    ],
+    "data_files": [
+      "wlan_wlanbasiconoff_lua.lua.xml",
+      "wlan_wlanbasicadconf_lua.lua.xml",
+      "wlan_wlansssidconf_lua.lua.xml"
+    ]
+  },
+  "wlanAdvanced": {
+    "html_len": 20419,
+    "endpoints": [
+      "/?_type=menuData&_tag=wlan_macfilterrule_lua.lua",
+      "/?_type=menuData&_tag=wlan_macfilteraclpolicy_lua.lua"
+    ],
+    "data_files": [
+      "wlan_macfilterrule_lua.lua.xml",
+      "wlan_macfilteraclpolicy_lua.lua.xml"
+    ]
+  },
+  "wps": {
+    "html_len": 16694,
+    "endpoints": [
+      "/?_type=menuData&_tag=wlan_wps_lua.lua"
+    ],
+    "data_files": [
+      "wlan_wps_lua.lua.xml"
+    ]
+  },
+  "wlanStaScanAP": {
+    "html_len": 14543,
+    "endpoints": [
+      "/?_type=menuData&_tag=wlan_sta_wlan_profile_lua.lua"
+    ],
+    "data_files": [
+      "wlan_sta_wlan_profile_lua.lua.xml"
+    ]
+  },
+  "lanMgrIpv4": {
+    "html_len": 39530,
+    "endpoints": [
+      "/?_type=menuData&_tag=Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua",
+      "/?_type=menuData&_tag=Localnet_LanMgrIpv4_DHCPHostInfo_lua.lua",
+      "/?_type=menuData&_tag=Localnet_LanDevDHCPSource_lua.lua",
+      "/?_type=menuData&_tag=Localnet_LanMgrIpv4_DHCPStaticRule_lua.lua"
+    ],
+    "data_files": [
+      "Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua.xml",
+      "Localnet_LanMgrIpv4_DHCPHostInfo_lua.lua.xml",
+      "Localnet_LanDevDHCPSource_lua.lua.xml",
+      "Localnet_LanMgrIpv4_DHCPStaticRule_lua.lua.xml"
+    ]
+  },
+  "lanMgrIpv6": {
+    "html_len": 48738,
+    "endpoints": [
+      "/?_type=menuData&_tag=ra_raservice_lua.lua",
+      "/?_type=menuData&_tag=prefix_prefixpool_lua.lua",
+      "/?_type=menuData&_tag=addr6_lanaddr_lua.lua",
+      "/?_type=menuData&_tag=dhcp6s_dhcpserver_lua.lua",
+      "/?_type=menuData&_tag=radhcp6s_portctrl_lua.lua",
+      "/?_type=menuData&_tag=dhcp6s_hostinfo_lua.lua",
+      "/?_type=menuData&_tag=prefix_staticprefix_lua.lua"
+    ],
+    "data_files": [
+      "ra_raservice_lua.lua.xml",
+      "prefix_prefixpool_lua.lua.xml",
+      "addr6_lanaddr_lua.lua.xml",
+      "dhcp6s_dhcpserver_lua.lua.xml",
+      "radhcp6s_portctrl_lua.lua.xml",
+      "dhcp6s_hostinfo_lua.lua.xml",
+      "prefix_staticprefix_lua.lua.xml"
+    ]
+  }
+}

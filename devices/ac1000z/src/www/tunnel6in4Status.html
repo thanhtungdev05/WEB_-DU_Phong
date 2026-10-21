@@ -1,0 +1,482 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.showIt(true);
+collapsibleInst.addClass("instNameExp");
+}
+else
+{
+ChangeArea.showIt(false);
+collapsibleInst.removeClass("instNameExp");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = thisObj.next("span").not(".__CheckPwdStrength").text();
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#116;&#117;&#110;&#110;&#101;&#108;&#54;&#105;&#110;&#52;&#83;&#116;&#97;&#116;&#117;&#115;</div>
+<div id="_NowSupIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;&#83;&#116;&#97;&#116;&#117;&#115;</div>
+<div id="_NowThdIdInfo">&#116;&#117;&#110;&#110;&#101;&#108;&#54;&#105;&#110;&#52;&#83;&#116;&#97;&#116;&#117;&#115;</div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft">
+<div id="class2Menu" class="class2Menu">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span>Page Information</span>
+</div>
+
+<p class="pIntroContent">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#115;&#104;&#111;&#119;&#115;&#32;&#116;&#104;&#101;&#32;&#115;&#116;&#97;&#116;&#117;&#115;&#32;&#111;&#102;&#32;&#54;&#82;&#68;&#32;&#99;&#111;&#110;&#110;&#101;&#99;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function(){
+function Customize_T64Status(paramsOBJ)
+{
+var ContainerOBJ = paramsOBJ["ContainerOBJ"];
+$("[id^='Item_6rdtype']", ContainerOBJ).show();
+var sixrdTypeObj = $("[id^='6rdtype\\:']", ContainerOBJ);
+var sixrdType = sixrdTypeObj.text();
+if (sixrdType == "Auto")
+{
+$("[id^='Item_6rdprefix']", ContainerOBJ).hide();
+$("[id^='Item_6rdBRIPv4Addr']", ContainerOBJ).hide();
+$("[id^='Item_IPv4MaskLen']", ContainerOBJ).hide();
+$("[id^='Item_CS4Static']", ContainerOBJ).hide();
+$("[id^='Item_ConnStatus']", ContainerOBJ).show();
+}
+else
+{
+$("[id^='Item_6rdprefix']", ContainerOBJ).show();
+$("[id^='Item_6rdBRIPv4Addr']", ContainerOBJ).show();
+$("[id^='Item_IPv4MaskLen']", ContainerOBJ).show();
+$("[id^='Item_CS4Static']", ContainerOBJ).show();
+$("[id^='Item_ConnStatus']", ContainerOBJ).hide();
+}
+var sixrdTypeText = {
+"Auto": "Auto",
+"Static": "Static"
+};
+sixrdTypeObj.text(sixrdTypeText[sixrdType]);
+sixrdTypeObj.attr("title", sixrdTypeText[sixrdType]);
+var TUN64WANName = $("[id^='TUN64WANName']", ContainerOBJ);
+if ("" == TUN64WANName.text())
+{
+TUN64WANName.text("Auto");
+}
+TUN64WANName.attr("title", TUN64WANName.text());
+$("[id^='ConnStatus']", ContainerOBJ).each(function(){
+var statusItem = $(this);
+if (statusItem.text() == "0")
+{
+statusItem.text("Offline");
+}
+else if (statusItem.text() == "1")
+{
+statusItem.text("Online");
+}
+else
+{
+}
+statusItem.attr("title", statusItem.text());
+});
+var sixrdprefixObj = $("[id^='6rdprefix\\:']", ContainerOBJ);
+var sixrdprefixLen = $("[id^='6rdprefixLen']", ContainerOBJ).val();
+sixrdprefixObj.text(sixrdprefixObj.text() + "/" + sixrdprefixLen);
+sixrdprefixObj.attr("title", sixrdprefixObj.text());
+}
+$(document).ready(function(){
+var T64StatusHeadID = "Tnl6in4Status";
+var T64StatusHead = $("#"+T64StatusHeadID);
+var T64StatusServerAddr = $("address span", T64StatusHead).text();
+RefreshClickHandle(T64StatusHead);
+T64StatusHead.fillDataByCustom = function(suffix,ContainerOBJ){
+var CustomizeParams = {
+"ContainerOBJ":ContainerOBJ
+};
+Customize_T64Status(CustomizeParams);
+};
+T64StatusHead.succfunction = function(xml){
+T64StatusHead.hasError(xml,"externErrorHint");
+var OBJ = $(xml).find("OBJ_TUNNEL64_ID");
+var RuleNum = $("Instance", OBJ).length;
+if (RuleNum == 0)
+{
+$(".noDataHint", T64StatusHead).showIt(true);
+}
+else
+{
+$(".noDataHint", T64StatusHead).showIt(false);
+var OBJID = ["OBJ_TUNNEL64_ID"];
+T64StatusHead.createPageDataByClone(RuleNum,OBJID,xml,T64StatusHead.fillDataByCustom);
+colorTblRow(".colorTbl", "even", T64StatusHead);
+}
+};
+if ( $(".collapBarWithDataTrans",T64StatusHead).length <= 0 )
+{
+T64StatusHead.dataTransfer(T64StatusServerAddr, "GET", T64StatusHead.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(T64StatusHead);
+}
+});
+})();
+</script>
+
+<div id="Tnl6in4Status" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=tunnel_6in4_status_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="Tnl6in4StatusBar">6RD Connection Status</h1>
+<div id="Tnl6in4Status_container">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="noDataHint" style="display:none;">
+<span>There are no data now. </span>
+</div>
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div id="template_Tnl6in4Status" style="display:none;">
+<form class="colorTbl form_content">
+<input type="hidden" id="6rdprefixLen" name="6rdprefixLen" value="" />
+<div id="Tnl6in4Status_title" class="colorTblRow emFont titleRow">
+<span class="w250 emFont" title="Connection Name">Connection Name</span>
+<span class="w400" id="Tunl64Aliasname" title=""></span>
+</div>
+<div class="colorTblRow">
+<span class="w250 emFont" title="MTU">MTU</span>
+<span class="w400" id="MTU" title=""></span>
+</div>
+<div class="colorTblRow">
+<span class="w250 emFont" title="WAN Connection">WAN Connection</span>
+<span class="w400" id="TUN64WANName"></span>
+</div>
+<div class="colorTblRow">
+<span id="Item_6rdtype">
+<span class="w250 emFont" title="6RD Configuration">6RD Configuration</span>
+<span class="w400" id="6rdtype" title=""></span>
+</span>
+</div>
+<div class="colorTblRow" id="Item_6rdprefix">
+<span class="w250 emFont" title="6RD Prefix">6RD Prefix</span>
+<span class="w400" id="6rdprefix" title=""></span>
+</div>
+<div class="colorTblRow" id="Item_6rdBRIPv4Addr">
+<span class="w250 emFont" title="6RD Border Relay Address">6RD Border Relay Address</span>
+<span class="w400" id="6rdBRIPv4Addr" title=""></span>
+</div>
+<div class="colorTblRow" id="Item_IPv4MaskLen">
+<span class="w250 emFont" title="IPv4 Mask Length">IPv4 Mask Length</span>
+<span class="w400" id="IPv4MaskLen" title=""></span>
+</div>
+<div class="colorTblRow" id="Item_CS4Static">
+<span class="w250 emFont" title="Connection Status">Connection Status</span>
+<span class="w400" id="ConnStatus" title=""></span>
+</div>
+<div class="colorTblRow" id="Item_ConnStatus">
+<span class="w250 emFont" title="Connection Status">Connection Status</span>
+<span class="w400" id="ConnStatus"></span>
+</div>
+</form>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_refresh" id="Tnl6in4Status_Btn_refresh" name="Tnl6in4Status_Btn_refresh" value="Refresh" />
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$(this).find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", this).addClass("disableBtn");
+$("[class^='longBtn']", this).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", this).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x63\x76\x42\x71\x79\x6a\x36\x37\x4b\x74\x52\x4e\x78\x54\x4c\x38\x6b\x43\x34\x6b\x34\x38\x45\x59";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+});
+</script>

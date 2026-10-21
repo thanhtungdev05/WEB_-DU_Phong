@@ -1,0 +1,148 @@
+{
+  "ethWanConfig": {
+    "html_len": 62477,
+    "endpoints": [
+      "/?_type=menuData&_tag=wan_internet_lua.lua",
+      "/?_type=menuData&_tag=wan_internet_lua.lua&TypeUplink=2&pageType=0"
+    ],
+    "data_files": [
+      "wan_internet_lua.lua.xml",
+      "wan_internet_lua.lua.xml"
+    ]
+  },
+  "Wan3gConfig": {
+    "html_len": 32495,
+    "endpoints": [
+      "/?_type=menuData&_tag=wan_3gLTE_config_lua.lua",
+      "/?_type=menuData&_tag=wwan_pin_lua.lua",
+      "/?_type=menuData&_tag=wwan_backup_lua.lua"
+    ],
+    "data_files": [
+      "wan_3gLTE_config_lua.lua.xml",
+      "wwan_pin_lua.lua.xml",
+      "wwan_backup_lua.lua.xml"
+    ]
+  },
+  "tunnel4in6Config": {
+    "html_len": 17309,
+    "endpoints": [
+      "/?_type=menuData&_tag=tunnel_4in6_config_lua.lua"
+    ],
+    "data_files": [
+      "tunnel_4in6_config_lua.lua.xml"
+    ]
+  },
+  "tunnel6in4Config": {
+    "html_len": 18594,
+    "endpoints": [
+      "/?_type=menuData&_tag=tunnel_6in4_config_lua.lua"
+    ],
+    "data_files": [
+      "tunnel_6in4_config_lua.lua.xml"
+    ]
+  },
+  "l2tpConfig": {
+    "html_len": 15216,
+    "endpoints": [
+      "/?_type=menuData&_tag=l2tp_lua.lua"
+    ],
+    "data_files": [
+      "l2tp_lua.lua.xml"
+    ]
+  },
+  "firewall": {
+    "html_len": 15477,
+    "endpoints": [
+      "/?_type=menuData&_tag=firewall_dos_lua.lua",
+      "/?_type=menuData&_tag=firewall_config_lua.lua"
+    ],
+    "data_files": [
+      "firewall_dos_lua.lua.xml",
+      "firewall_config_lua.lua.xml"
+    ]
+  },
+  "filterCriteria": {
+    "html_len": 42957,
+    "endpoints": [
+      "/?_type=menuData&_tag=firewall_macfilterv3_lua.lua",
+      "/?_type=menuData&_tag=firewall_ipfilter_lua.lua",
+      "/?_type=menuData&_tag=firewall_filterglobal_lua.lua",
+      "/?_type=menuData&_tag=firewall_urlfilter_m.lua"
+    ],
+    "data_files": [
+      "firewall_macfilterv3_lua.lua.xml",
+      "firewall_ipfilter_lua.lua.xml",
+      "firewall_filterglobal_lua.lua.xml",
+      "firewall_urlfilter_m.lua.xml"
+    ]
+  },
+  "localServiceCtrl": {
+    "html_len": 33959,
+    "endpoints": [
+      "/?_type=menuData&_tag=firewall_portservice_lua.lua",
+      "/?_type=menuData&_tag=firewall_ipv4service_lua.lua",
+      "/?_type=menuData&_tag=firewall_ipv6service_lua.lua"
+    ],
+    "data_files": [
+      "firewall_portservice_lua.lua.xml",
+      "firewall_ipv4service_lua.lua.xml",
+      "firewall_ipv6service_lua.lua.xml"
+    ]
+  },
+  "alg": {
+    "html_len": 13605,
+    "endpoints": [
+      "/?_type=menuData&_tag=firewall_alg_lua.lua"
+    ],
+    "data_files": [
+      "firewall_alg_lua.lua.xml"
+    ]
+  },
+  "dmz": {
+    "html_len": 19091,
+    "endpoints": [
+      "/?_type=menuData&_tag=firewall_dmz_lua.lua",
+      "/?_type=hiddenData&_tag=accessdev_data&"
+    ],
+    "data_files": [
+      "firewall_dmz_lua.lua.xml",
+      "accessdev_data.xml"
+    ]
+  },
+  "portForwarding": {
+    "html_len": 20534,
+    "endpoints": [
+      "/?_type=menuData&_tag=firewall_portforwarding_lua.lua"
+    ],
+    "data_files": [
+      "firewall_portforwarding_lua.lua.xml"
+    ]
+  },
+  "portTrigger": {
+    "html_len": 19922,
+    "endpoints": [
+      "/?_type=menuData&_tag=firewall_porttrigger_m.lua"
+    ],
+    "data_files": [
+      "firewall_porttrigger_m.lua.xml"
+    ]
+  },
+  "ddns": {
+    "html_len": 22251,
+    "endpoints": [
+      "/?_type=menuData&_tag=ddns_lua.lua"
+    ],
+    "data_files": [
+      "ddns_lua.lua.xml"
+    ]
+  },
+  "sntp": {
+    "html_len": 27202,
+    "endpoints": [
+      "/?_type=menuData&_tag=sntp_lua.lua"
+    ],
+    "data_files": [
+      "sntp_lua.lua.xml"
+    ]
+  }
+}

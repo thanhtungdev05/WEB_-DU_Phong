@@ -1,0 +1,97 @@
+{
+  "device": {
+    "manufacturer_oui": "504289",
+    "version_date": "2022-11-18 02:08:21",
+    "software_version": "V9.0.11P2N53B",
+    "model_name": "F671Y",
+    "batch_number": "07e6P2N53B045e",
+    "hardware_version": "V9.0",
+    "manufacturer": "ZTE",
+    "serial_number": "5042893931A2",
+    "boot_version": "V9.0.11P10N2",
+    "first_mac": "50:42:89:39:31:A2",
+    "pon_sn": "ZTEG3931A2"
+  },
+  "runtime": {
+    "cpu_usage_1": 7,
+    "cpu_usage_2": 2,
+    "cpu_usage_3": 0,
+    "cpu_usage_4": 0,
+    "memory_usage": 25,
+    "power_on_time_seed": 3622,
+    "flash_total": 134217728,
+    "flash_percent_used": 50,
+    "optical_temperature": "40.492",
+    "cpu_temperature": "58℃"
+  },
+  "home": {
+    "firewall_level": "Middle",
+    "anti_attack": "1",
+    "wlan_radio_switch": "1",
+    "current_local_time_seed": "2026-10-20T12:00:00",
+    "ntp_server_1": "vn.pool.ntp.org",
+    "ntp_server_2": "asia.pool.ntp.org",
+    "zone_index": "24"
+  },
+  "localnet": {
+    "band_steering": {
+      "BsEnable": "1",
+      "BsRssiLmt5G": "-110",
+      "BsBounceDwellTimeLmt": "1200",
+      "BsRssiLmt24G": "-60",
+      "BsTPLimit": "9999999"
+    },
+    "netsphere": {
+      "Enable": "1",
+      "Mode": "Master",
+      "EnLegacyStaRoam": "0",
+      "RoamRssiLmt5G": "-70",
+      "RoamRssiLmt24G": "-58"
+    },
+    "routing_ipv4_default": {
+      "DefRTInterface": "DEV.IP.IF3"
+    },
+    "routing_ipv6_default": {
+      "DefRTInterface": "DEV.IP.IF3"
+    },
+    "ftp": {
+      "FtpEnable": "0",
+      "FtpAnon": "0",
+      "Username": "admin"
+    },
+    "upnp": {
+      "EnableUPnPIGD": "1",
+      "TTL": "4",
+      "ADPeriod": "30"
+    },
+    "bpdu": {
+      "BPDUEnable": "1"
+    },
+    "dms": {
+      "ContentList": "/mnt",
+      "RescanTime": "0",
+      "Enable": "0",
+      "PathRoot": "/mnt",
+      "DmsName": "Media Server"
+    },
+    "samba": {
+      "EnableSmb": "0",
+      "NetbiosName": "smbshare",
+      "AutoRun": "0",
+      "AuthType": "1",
+      "UserName": "samba",
+      "UserRight": "0",
+      "UserEnable": "1"
+    },
+    "dns": {
+      "SerIPAddress1": "0.0.0.0",
+      "SerIPAddress2": "0.0.0.0",
+      "SerIPv6Address1": "::",
+      "SerIPv6Address2": "::",
+      "DomainName": ""
+    },
+    "usb_func": {
+      "PrinterEnable": "1"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+<ajax_response_xml_root><IF_ERRORPARAM>SUCC</IF_ERRORPARAM><IF_ERRORTYPE>SUCC</IF_ERRORTYPE><IF_ERRORSTR>SUCC</IF_ERRORSTR><IF_ERRORID>0</IF_ERRORID><OBJ_PON_LOID_ID><Instance><ParaName>_InstID</ParaName><ParaValue>IGD</ParaValue><ParaName>PonLoid</ParaName><ParaValue>123456789</ParaValue></Instance></OBJ_PON_LOID_ID><encode>LoidPasswd</encode></ajax_response_xml_root>

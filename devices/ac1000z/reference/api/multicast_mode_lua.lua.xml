@@ -1,0 +1,1 @@
+<ajax_response_xml_root><IF_ERRORPARAM>SUCC</IF_ERRORPARAM><IF_ERRORTYPE>SUCC</IF_ERRORTYPE><IF_ERRORSTR>SUCC</IF_ERRORSTR><IF_ERRORID>0</IF_ERRORID><OBJ_IGMPMODE_ID><Instance><ParaName>_InstID</ParaName><ParaValue>IGD</ParaValue><ParaName>multicastmode</ParaName><ParaValue>2</ParaValue></Instance></OBJ_IGMPMODE_ID></ajax_response_xml_root>

@@ -1,0 +1,658 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.showIt(true);
+collapsibleInst.addClass("instNameExp");
+}
+else
+{
+ChangeArea.showIt(false);
+collapsibleInst.removeClass("instNameExp");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = thisObj.next("span").not(".__CheckPwdStrength").text();
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#97;&#99;&#99;&#111;&#117;&#110;&#116;&#77;&#103;&#114;</div>
+<div id="_NowSupIdInfo">&#109;&#103;&#114;&#65;&#110;&#100;&#68;&#105;&#97;&#103;</div>
+<div id="_NowMidIdInfo">&#97;&#99;&#99;&#111;&#117;&#110;&#116;&#77;&#103;&#114;</div>
+<div id="_NowThdIdInfo"></div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft">
+<div id="class2Menu" class="class2Menu">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span>Page Information</span>
+</div>
+
+<p class="pIntroContent">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#112;&#114;&#111;&#118;&#105;&#100;&#101;&#115;&#32;&#116;&#104;&#101;&#32;&#102;&#117;&#110;&#99;&#116;&#105;&#111;&#110;&#32;&#111;&#102;&#32;&#119;&#101;&#98;&#32;&#97;&#99;&#99;&#111;&#117;&#110;&#116;&#32;&#112;&#97;&#114;&#97;&#109;&#101;&#116;&#101;&#114;&#40;&#115;&#41;&#32;&#99;&#111;&#110;&#102;&#105;&#103;&#117;&#114;&#97;&#116;&#105;&#111;&#110;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function(){
+function hidePassLevelNote(template)
+{
+var passLevelOBJ = $("[id^='pwStrth']", template);
+passLevelOBJ.text("");
+passLevelOBJ.attr("class", "");
+passLevelOBJ.css("display","none");
+}
+jQuery.validator.addMethod(
+"chkKeyword",
+function(value, element)
+{
+if (value.match("[^0-9a-zA-Z,.? _-]") != null)
+return false;
+return true;
+},
+$.validator.format("Input is invalid! Please enter: digits, characters, space or ',', '.', '?', '_', '-'. ")
+);
+function checkPasswordString(sz)
+{
+if(/[^0-9]/g.test(sz) == false)
+{
+return -1;
+}
+else if(/[a-z]/.test(sz) && /[A-Z]/.test(sz) && /[0-9]/.test(sz))
+{
+return -2;
+}
+else
+{
+return -3;
+}
+}
+function initial_template(templateID)
+{
+var template = $("#"+templateID);
+template.bind("fillDataByApplyResult", function(event,xml, template){
+if (ActionByApplyResult(xml, template) == 0){
+$("[id^='Password'],[id^='NewPassword'],[id^='NewConfirmPassword']",template).val("");
+}
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+if (ActionByCancelResult(xml, template, ["OBJ_USERINFO_ID"]) == 0){
+$("[id^='Password'],[id^='NewPassword'],[id^='NewConfirmPassword']",template).val("");
+}
+});
+template.bind("hiddenValueChangeByCustom", function(event,template){
+$("[id^='NewConfirmPassword']",template).addClass("PostIgnore");
+});
+template.bind("applyPromptCheckJSON", function(event, template){
+var NewID = "[id^='"+ $("[id^='NewPassword']",template).attr("id")+"']:not(.PostIgnore)";
+var checkJSONTempObj = {
+"rules": {
+"Username": {
+"required": true,
+"ASCII": true,
+"rangelength":[1,256]
+},
+"NewConfirmPassword": {
+"ASCII": true,
+"equalTo": NewID
+},
+"NewPassword": {
+"ASCII": true,
+
+"required": true
+}
+},
+"messages": {
+}
+};
+$.publish("/some/AccountPwdChk", [template]);
+$.publish("/some/ChangeRules", [checkJSONTempObj]);
+var data={};
+data.checkJson = checkJSONTempObj;
+data.template=template;
+$.callModifier("devAccount/ChangePWDRules", data);
+template.setPromptCheckJSON(checkJSONTempObj, template);
+});
+template.bind("fillDataByCustom", function(event, suffix, ContainerOBJ, xml){
+var AccountManagBarOBJ = ContainerOBJ.find("[id^='AccountManagBar']");
+var AccountRight = ContainerOBJ.find("[id^='Right']").val();
+var UsernameOBJ = ContainerOBJ.find("[id^='Username']");
+UsernameOBJ.disableIt(false);
+var DivPasswordOBJ = ContainerOBJ.find("[id^='div_password']");
+DivPasswordOBJ.css("display", "none");
+var PasswordOBJ = ContainerOBJ.find("[id^='Password']");
+if ( AccountRight == "1")
+{
+AccountManagBarOBJ.text("Admin Account Management");
+if(1 == "1")
+{
+UsernameOBJ.attr("disabled","true");
+DivPasswordOBJ.css("display", "");
+}
+}
+else if ( AccountRight == "2" )
+{
+AccountManagBarOBJ.text("User Account Management");
+if(1 == "2"||1 == "3")
+{
+UsernameOBJ.attr("disabled","true");
+DivPasswordOBJ.css("display", "");
+}
+}
+else
+{
+AccountManagBarOBJ.text("Guest Account Management");
+if(1 == "4")
+{
+UsernameOBJ.attr("disabled","true");
+DivPasswordOBJ.css("display", "");
+}
+}
+});
+if(commConf.passCanSee.indexOf("AccountMgr") != -1){
+g_ChangePass2See(template,"Password");
+g_ChangePass2See(template,"NewPassword");
+g_ChangePass2See(template,"NewConfirmPassword");
+}
+}
+$(document).ready(function(){
+var HeadID = "AccountManag";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+initial_template("template_"+HeadID);
+var data={};
+data.relatParam = "Username";
+data.func="";
+data.strTips="A strong password should match these rules: <br/>1. It should have at least {0} characters. <br/>2. It should be composed of digits, alphabet and special symbols. <br/>3. It should not have context relationship with the username, such as the same or inverse. ";
+$.callModifier("devAccount/StrongChangeTips",data)
+new CheckPwdStrengthClass("NewPassword", data.relatParam, "template_"+HeadID, data.func, data.strTips, data.minLongth);
+Head.createAccountPageDataByClone = function(RuleNum,DataOBJID,xml,fillDataByCustom){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var TemplateOBJ = $("#template_"+HeadID);
+$("#_InstNum", Head).val(RuleNum);
+for (var i=0; i<RuleNum; i++)
+{
+if(1==i&& ("2" == 1||"3" == 1))
+{
+return;
+}
+if(0 == getParaValueInXML(xml, "OBJ_USERINFO_ID", i, "Enable"))
+{
+continue;
+}
+var clone = TemplateOBJ.cloneWithSuffix(i);
+TemplateOBJ.before(clone);
+clone.fillDataByOBJID(xml ,DataOBJID, clone, i);
+if ( $.isFunction(fillDataByCustom) )
+{
+fillDataByCustom(i,clone);
+}
+else
+{
+clone.trigger("fillDataByCustom",[i,clone]);
+}
+$("[id^='Password']",Head).val("");
+clone.showIt(true);
+}
+var lastAccObj = $("[id^='template_AccountManag_']:last", Head);
+lastAccObj.find(".fakeHeadDIV").remove();
+}
+Head.chanegeDataByCustom =function(xml){
+;
+};
+Head.succfunction = function(xml){
+if (Head.hasError(xml,"externErrorHint") == 0)
+{
+Head.chanegeDataByCustom(xml);
+var OBJ = $(xml).find("OBJ_USERINFO_ID");
+var RuleNum = $("Instance", OBJ).length;
+var OBJID = ["OBJ_USERINFO_ID"];
+Head.createAccountPageDataByClone(RuleNum,OBJID,xml);
+}
+var templateID = "template_" + Head.attr("id");
+var template = $("[id^='"+templateID+"_']",Head).eq(0);
+$(".collapsibleBar",template).eq(0).click();
+$.publish("/some/ctcHideUser", [Head]);
+};
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+$.publish("/some/showTips4Viettel", [$("[id^='template_AccountManag_']")]);
+});
+})();
+</script>
+
+<div id="AccountManag" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=devauth_accountmgr_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div id="template_AccountManag" style="display:none;">
+<h1 class="collapsibleBar" id="AccountManagBar"></h1>
+<div id="AccountManag_container" class="formTblWrap" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<form class="form_content formTbl">
+<input type="hidden" id="_InstID" value="">
+<input type="hidden" id="Right" value="">
+<input type="hidden" id="Enable" value="">
+<div class="row">
+<label for="Username" class="cfgLabel w150">Username</label>
+<div class="right">
+<input type="text" id="Username" name="Username" value="" class="inputNorm"/>
+<span style="display: none;">Length: 1~256</span>
+</div>
+</div>
+<div class="row" id="div_password">
+<label for="Password" class="cfgLabel w150">Old Password</label>
+<div class="right">
+<input type="password" id="Password" name="Password" value="" class="inputNorm" autocomplete="new-password"/>
+</div>
+</div>
+<div class="row">
+<label for="NewPassword" class="cfgLabel w150">New Password</label>
+<div class="right">
+<input type="password" id="NewPassword" name="NewPassword" value="" class="inputNorm" autocomplete="new-password"/>
+<label id="pwStrth" style="display: none;">Weak</label>
+</div>
+</div>
+<div class="row">
+<label for="NewConfirmPassword" class="cfgLabel w150">Confirmed Password</label>
+<div class="right">
+<input type="password" id="NewConfirmPassword" name="NewConfirmPassword" value="" class="inputNorm PostIgnore" autocomplete="new-password"/>
+</div>
+</div>
+<div class="row" id="div_Keyword" style="display:none;">
+<label for="Keyword" class="cfgLabel w150">Keyword</label>
+<div class="right">
+<input type="text" id="Keyword" name="Keyword" value="" class="inputNorm"/>
+<span style="display: none;">Length: 0~63</span>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_AccountManag" name="Btn_cancel_AccountManag" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_AccountManag" name="Btn_apply_AccountManag" value="Apply" />
+</div>
+</form>
+</div>
+<div class="fakeHeadDIV"></div>
+</div>
+</div>
+<script>
+
+</script><script>
+
+</script>
+<script type="text/javascript">
+(function(){
+function initial_template(templateID)
+{
+var template = $("#"+templateID);
+var instForm = template.find("form");
+instForm.validate({
+"rules": {
+"Timeout": {
+"required":true,
+"integer": true,
+"range": [1,30]
+}
+},
+"messages": {
+}
+});
+template.bind("fillDataByApplyResult", function(event, xml, template){
+ActionByApplyResult(xml, template);
+});
+template.bind("fillDataByCancelResult", function(event,xml, template){
+var OBJID = ["OBJ_USERIF_ID"];
+ActionByCancelResult(xml, template, OBJID);
+});
+}
+$(document).ready(function(){
+var HeadID = "LoginTimeout";
+var Head = $("#"+HeadID);
+var templateID = "template_"+HeadID;
+var ServerAddr = $("address span", Head).text();
+initial_template(templateID);
+Head.succfunction = function(xml){
+if (Head.hasError(xml) == 0)
+{
+var OBJID = ["OBJ_USERIF_ID"];
+Head.fillDataByOBJID(xml, OBJID, $("#"+templateID), 0);
+}
+};
+initial_collapBarWithDataTrans(Head);
+});
+})();
+</script>
+
+<div id="LoginTimeout" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=web_login_timeout_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="LoginTimeoutBar">Idle Timeout</h1>
+<div id="LoginTimeout_container">
+<input id="DataHasBeenGot" type="hidden" value="0">
+<div id="template_LoginTimeout">
+<div id="changeArea_LoginTimeout" class="ChangeArea formTblWrap">
+<div id="errorHint" class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<form class="form_content formTbl">
+<div class="row">
+<label for="Timeout" class="cfgLabel w80">Timeout</label>
+<div class="right">
+<input type="text" id="Timeout" name="Timeout" value="" class="inputNorm"/>min
+<span style="display:none;">Range: 1 ~ 30</span>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_LoginTimeout" name="Btn_cancel_LoginTimeout" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_LoginTimeout" name="Btn_apply_LoginTimeout" value="Apply" />
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$(this).find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", this).addClass("disableBtn");
+$("[class^='longBtn']", this).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", this).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x61\x70\x58\x67\x72\x6f\x32\x4b\x35\x64\x4b\x54\x55\x39\x70\x37\x67\x59\x63\x79\x44\x37\x50\x46";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+});
+</script>

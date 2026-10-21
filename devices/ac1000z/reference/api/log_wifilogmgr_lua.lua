@@ -1,0 +1,1 @@
+<ajax_response_xml_root><IF_ERRORPARAM>SUCC</IF_ERRORPARAM><IF_ERRORTYPE>SUCC</IF_ERRORTYPE><IF_ERRORSTR>SUCC</IF_ERRORSTR><IF_ERRORID>0</IF_ERRORID><OBJ_LOG_ID><Instance><ParaName>logStr</ParaName><ParaValue></ParaValue></Instance></OBJ_LOG_ID></ajax_response_xml_root>

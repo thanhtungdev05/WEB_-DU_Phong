@@ -1,0 +1,1268 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.showIt(true);
+collapsibleInst.addClass("instNameExp");
+}
+else
+{
+ChangeArea.showIt(false);
+collapsibleInst.removeClass("instNameExp");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = thisObj.next("span").not(".__CheckPwdStrength").text();
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#108;&#111;&#99;&#97;&#108;&#78;&#101;&#116;&#83;&#116;&#97;&#116;&#117;&#115;</div>
+<div id="_NowSupIdInfo">&#108;&#111;&#99;&#97;&#108;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#108;&#111;&#99;&#97;&#108;&#78;&#101;&#116;&#83;&#116;&#97;&#116;&#117;&#115;</div>
+<div id="_NowThdIdInfo"></div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft">
+<div id="class2Menu" class="class2Menu">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span>Page Information</span>
+</div>
+
+<p class="pIntroContent">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#115;&#104;&#111;&#119;&#115;&#32;&#116;&#104;&#101;&#32;&#115;&#116;&#97;&#116;&#117;&#115;&#32;&#111;&#102;&#32;&#76;&#65;&#78;&#46;&#32;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function(){
+var getXml = "";
+$(document).ready(function(){
+var HeadID = "lan_info";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+var template = $("#template_"+ HeadID);
+template.bind("fillDataByClearResult",function(event, xml, template){
+$("#Btn_refresh_lan_info").click();
+});
+$("#LANStatus_Btn_clear", Head).bind("click",{templateOBJ:template}, function(event){
+var buttonOBJ = $(this);
+var template = event.data.templateOBJ;
+var action = "LAN_CLEAR";
+dataPost(action, "fillDataByClearResult", ServerAddr, template);
+});
+RefreshClickHandle(Head);
+Head.chanegeDataByCustom =function(xml){
+colorTblRow(".colorTbl", "even", Head);
+};
+Head.fillDataByCustom = function(suffix,ContainerOBJ){
+var AliasNameOBJ = ContainerOBJ.find("[id^='AliasName']");
+var StatusOBJ = ContainerOBJ.find("[id^='Status']");
+var InBytesOBJ = ContainerOBJ.find("[id^='InBytes']");
+var InPktsOBJ = ContainerOBJ.find("[id^='InPkts']");
+var InUnicastOBJ = ContainerOBJ.find("[id^='InUnicast']");
+var InMulticastOBJ = ContainerOBJ.find("[id^='InMulticast']");
+var InErrorOBJ = ContainerOBJ.find("[id^='InError']");
+var InDiscardOBJ = ContainerOBJ.find("[id^='InDiscard']");
+var index = parseInt(suffix) + 1;
+var AliasName = "LAN" + index;
+var Status = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "Status");
+var Speed = parseInt(getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "Speed"));
+var Duplex = parseInt(getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "Duplex"));
+var InBytes =getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "InBytes");
+var InPkts = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "InPkts");
+var InUnicast = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "InUnicast");
+var InMulticast = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "InMulticast");
+var InError = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "InError");
+var InDiscard = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "InDiscard");
+var OutBytes = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "OutBytes");
+var OutPkts = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "OutPkts");
+var OutUnicast = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "OutUnicast");
+var OutMulticast = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "OutMulticast");
+var OutError = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "OutError");
+var OutDiscard = getParaValueInXML(getXml, "OBJ_PON_PORT_BASIC_STATUS_ID", suffix, "OutDiscard");
+var LanStatus;
+var InOutBytes;
+var InOutPkts;
+var InOutUnicast;
+var InOutMulticast;
+var InOutError;
+var InOutDiscard;
+if(Status == 0)
+{
+LanStatus = "Up/";
+switch(Speed)
+{
+case 0:
+LanStatus += "AUTO/";
+break;
+case 1:
+LanStatus += "10Mbps/";
+break;
+case 2:
+LanStatus += "100Mbps/";
+break;
+case 3:
+LanStatus += "1000Mbps/";
+break;
+case 4:
+LanStatus += "2500Mbps/";
+break;
+case 5:
+LanStatus += "5000Mbps/";
+break;
+case 6:
+LanStatus += "10000Mbps/";
+break;
+}
+switch(Duplex)
+{
+case 0:
+LanStatus += "Auto";
+break;
+case 1:
+LanStatus += "Half Duplex";
+break;
+case 2:
+LanStatus += "Full Duplex";
+break;
+}
+}
+else if (Status == 1)
+{
+LanStatus = "NoLink";
+}
+else if (Status == 2)
+{
+LanStatus = "Error";
+}
+else if (Status == 3)
+{
+LanStatus = "Disabled";
+}
+InOutBytes = InBytes + "/" + OutBytes;
+InOutPkts = InPkts + "/" + OutPkts;
+InOutUnicast = InUnicast + "/" + OutUnicast;
+InOutMulticast = InMulticast + "/" + OutMulticast;
+InOutError = InError + "/" + OutError;
+InOutDiscard = InDiscard + "/" + OutDiscard;
+AliasNameOBJ.text(AliasName);
+AliasNameOBJ.attr("title", AliasName);
+StatusOBJ.text(LanStatus);
+StatusOBJ.attr("title", LanStatus);
+InBytesOBJ.text(InOutBytes);
+InBytesOBJ.attr("title", InOutBytes);
+InPktsOBJ.text(InOutPkts);
+InPktsOBJ.attr("title", InOutPkts);
+InUnicastOBJ.text(InOutUnicast);
+InUnicastOBJ.attr("title", InOutUnicast);
+InMulticastOBJ.text(InOutMulticast);
+InMulticastOBJ.attr("title", InOutMulticast);
+InErrorOBJ.text(InOutError);
+InErrorOBJ.attr("title", InOutError);
+InDiscardOBJ.text(InOutDiscard);
+InDiscardOBJ.attr("title", InOutDiscard);
+};
+Head.succfunction = function(xml){
+getXml = xml;
+var cmapiErrorContainer = $(".errorHint",Head);
+if (cmapiErrorContainer.hasError(xml) == 0);
+{
+Head.chanegeDataByCustom(xml);
+var OBJ = $(xml).find("OBJ_PON_PORT_BASIC_STATUS_ID");
+var RuleNum = $("Instance", OBJ).length;
+var OBJID = ["OBJ_PON_PORT_BASIC_STATUS_ID"];
+Head.createPageDataByClone(RuleNum, OBJID, xml,
+Head.fillDataByCustom);
+}
+};
+if ( $(".collapBarWithDataTrans",Head).length <= 0 )
+{
+Head.dataTransfer(ServerAddr, "GET", Head.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div id="lan_info" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=status_lan_info_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="lan_infoBar">LAN Information</h1>
+<div id="lan_info_container">
+<div class="noDataHint" style="display:none;">
+<span>There are no data now. </span>
+</div>
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div class="form_content">
+<div id="template_lan_info" class="colorTbl" style="display:none;">
+<div id="" class="colorTblRow emFont titleRow">
+<span class="w330 emFont" title="Ethernet Port">Ethernet Port</span>
+<span class="w250" id="AliasName" title=""></span>
+</div>
+<div id="" class="colorTblRow">
+<span class="w330 emFont" title="Status">Status</span>
+<span class="w250" id="Status" title=""></span>
+</div>
+<div id="" class="colorTblRow">
+<span class="w330 emFont" title="Bytes Received/Sent">Bytes Received/Sent</span>
+<span class="w250" id="InBytes" title=""></span>
+</div>
+<div id="" class="colorTblRow">
+<span class="w330 emFont" title="Packets Received/Sent">Packets Received/Sent</span>
+<span class="w250" id="InPkts" title=""></span>
+</div>
+<div id="" class="colorTblRow">
+<span class="w330 emFont" title="Unicast Packets Received/Sent">Unicast Packets Received/Sent</span>
+<span class="w250" id="InUnicast" title=""></span>
+</div>
+<div id="" class="colorTblRow">
+<span class="w330 emFont" title="Multicast Packets Received/Sent">Multicast Packets Received/Sent</span>
+<span class="w250" id="InMulticast" title=""></span>
+</div>
+<div id="" class="colorTblRow">
+<span class="w330 emFont" title="Error Packets Received/Sent">Error Packets Received/Sent</span>
+<span class="w250" id="InError" title=""></span>
+</div>
+<div id="" class="colorTblRow">
+<span class="w330 emFont" title="Discard Packets Received/Sent">Discard Packets Received/Sent</span>
+<span class="w250" id="InDiscard" title=""></span>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_refresh" id="Btn_refresh_lan_info" name="Btn_refresh_lan_info" value=Refresh />
+
+</div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+(function () {
+$(document).ready(function(){
+var WLANStatusHeadID = "WLANStatus";
+var WLANStatusHead = $("#"+WLANStatusHeadID);
+var WLANStatusServerAddr = $("address span", WLANStatusHead).text();
+var template = $("#template_"+ WLANStatusHeadID);
+template.bind("fillDataByClearResult",function(event, xml, template){
+$("#WLANStatus_Btn_refresh").click();
+});
+$("#WLANStatus_Btn_clear", WLANStatusHead).bind("click",{templateOBJ:template}, function(event){
+var buttonOBJ = $(this);
+var template = event.data.templateOBJ;
+var action = "WLAN_CLEAR";
+dataPost(action, "fillDataByClearResult", WLANStatusServerAddr, template);
+});
+WLANStatusHead.succfunction = function(xml){
+WLANStatusHead.findBandOfSSID = function(template, xml)
+{
+var CardInstID = $("[id^='WLANViewName:']", template).val();
+var OBJ = "OBJ_WLANSETTING_ID";
+var WLANSettingXML = $(xml).find(OBJ);
+var cardInsts = WLANSettingXML.find("Instance");
+var cardNum = cardInsts.length;
+var band = "";
+for ( var i=0; i<cardNum; i++ )
+{
+var ToOperParaArray = {
+"_InstID" : {
+ValueOrigin: ""
+},
+"Band" : {
+ValueOrigin: ""
+}
+};
+xmlParaInInstOperate(xml, OBJ, i, ToOperParaArray);
+var instid = ToOperParaArray["_InstID"].ValueOrigin;
+if ( instid == CardInstID )
+{
+band = ToOperParaArray["Band"].ValueOrigin;
+break;
+}
+}
+if ( band != "" )
+{
+band = " ("+band+")";
+}
+return band;
+}
+WLANStatusHead.fillDataByCustom = function(suffix,ContainerOBJ){
+var ssidOBJ = ContainerOBJ.find("[id^='_InstID']");
+var Alias = $("[id^='Alias']", ContainerOBJ).val();
+var band = WLANStatusHead.findBandOfSSID(ContainerOBJ, xml);
+ssidOBJ.text(Alias+band);
+ssidOBJ.attr("title", ssidOBJ.text());
+var enabelOBJ = ContainerOBJ.find("[id^='Enable']");
+var enaValue = enabelOBJ.text();
+if (enaValue == 1)
+{
+enabelOBJ.text("On");
+enabelOBJ.attr("title", "On");
+}
+else
+{
+enabelOBJ.text("Off");
+enabelOBJ.attr("title", "Off");
+}
+var beaconTypeOBJ = $("[id^='BeaconType']", ContainerOBJ);
+var WPAAuthMode = $("[id^='WPAAuthMode']",ContainerOBJ);
+var _11iAuthMode = $("[id^='11iAuthMode']",ContainerOBJ);
+var WPAEncryptType = $("[id^='WPAEncryptType']",ContainerOBJ);
+var _11iEncryptType = $("[id^='11iEncryptType']",ContainerOBJ);
+var beaconTypeVal = beaconTypeOBJ.text();
+var WPAAuthModeVal = WPAAuthMode.val();
+var _11iAuthModeVal = _11iAuthMode.val();
+var WPAEncryptTypeVal = WPAEncryptType.val();
+var _11iEncryptTypeVal = _11iEncryptType.val();
+var WEPAuthMode = $("[id^='WEPAuthMode']",ContainerOBJ).val();
+switch (beaconTypeVal)
+{
+case "Basic":
+{
+if(WEPAuthMode == "None")
+{
+beaconTypeVal = "WEP-OpenSystem";
+}
+else if(WEPAuthMode == "SharedAuthentication")
+{
+beaconTypeVal = "WEP-SharedKey";
+}
+break;
+}
+case "WPA":
+{
+if(WPAEncryptTypeVal == "TKIPEncryption")
+{
+beaconTypeVal = "WPA-PSK-TKIP";
+}
+else if(WPAEncryptTypeVal == "AESEncryption")
+{
+beaconTypeVal = "WPA-PSK-AES";
+}
+else if(WPAEncryptTypeVal == "TKIPandAESEncryption")
+{
+beaconTypeVal = "WPA-PSK-TKIP/AES";
+}
+break;
+}
+case "11i":
+{
+if(_11iAuthModeVal == "EAPAuthentication" && _11iEncryptTypeVal == "AESEncryption")
+{
+beaconTypeVal = "WPA2-EAP-AES";
+}
+else if(_11iAuthModeVal == "PSKAuthentication" && _11iEncryptTypeVal == "AESEncryption")
+{
+beaconTypeVal = "WPA2-PSK-AES";
+}
+else if(_11iAuthModeVal == "PSKAuthentication" && _11iEncryptTypeVal == "TKIPEncryption")
+{
+beaconTypeVal = "WPA2-PSK-TKIP";
+}
+else if(_11iAuthModeVal == "PSKAuthentication" && _11iEncryptTypeVal == "TKIPandAESEncryption")
+{
+beaconTypeVal = "WPA2-PSK-TKIP/AES";
+}
+break;
+}
+case "WPAand11i":
+{
+if(WPAAuthModeVal == "EAPAuthentication" &&
+_11iAuthModeVal == "EAPAuthentication" &&
+WPAEncryptTypeVal == "TKIPandAESEncryption" &&
+_11iEncryptTypeVal == "TKIPandAESEncryption")
+{
+beaconTypeVal = "WPA/WPA2-EAP-TKIP/AES";
+}
+else if (WPAAuthModeVal == "PSKAuthentication" && _11iAuthModeVal == "PSKAuthentication")
+{
+if(WPAEncryptTypeVal == "TKIPandAESEncryption" && _11iEncryptTypeVal == "TKIPandAESEncryption")
+{
+beaconTypeVal = "WPA/WPA2-PSK-TKIP/AES";
+}
+else if(WPAEncryptTypeVal == "TKIPEncryption" && _11iEncryptTypeVal == "TKIPEncryption")
+{
+beaconTypeVal = "WPA/WPA2-PSK-TKIP";
+}
+else if(WPAEncryptTypeVal == "AESEncryption" && _11iEncryptTypeVal == "AESEncryption")
+{
+beaconTypeVal = "WPA/WPA2-PSK-AES";
+}
+}
+break;
+}
+case "WPA3":
+{
+if(WPA3AuthModeVal == "OWEAuthentication")
+{
+beaconTypeVal = "WPA3-OWE";
+}
+else if(WPA3AuthModeVal == "SAEAuthentication")
+{
+beaconTypeVal = "WPA3-SAE";
+}
+break;
+}
+case "WPAand11iandWPA3":
+{
+if(WPA3AuthModeVal == "SAEAuthentication")
+{
+beaconTypeVal = "WPA/WPA2/WPA3-PSK/SAE";
+}
+break;
+}
+case "11iandWPA3":
+{
+if(WPA3AuthModeVal == "SAEAuthentication")
+{
+beaconTypeVal = "WPA2/WPA3-SAE";
+}
+break;
+}
+case "None":
+default:
+{
+beaconTypeVal = "No Security";
+break;
+}
+}
+beaconTypeOBJ.text(beaconTypeVal);
+beaconTypeOBJ.attr("title", beaconTypeVal);
+var TotalPacketsReceived = $("[id^='TotalPacketsReceived']", ContainerOBJ).val();
+var TotalPacketsSent = $("[id^='TotalPacketsSent']", ContainerOBJ).val();
+var TotalPacketsCount = TotalPacketsReceived+"/"+TotalPacketsSent;
+var tpcObj = $("[id^='TotalPacketsCount']", ContainerOBJ);
+tpcObj.text(TotalPacketsCount);
+tpcObj.attr("title", TotalPacketsCount);
+var TotalBytesReceived = $("[id^='TotalBytesReceived']", ContainerOBJ).val();
+var TotalBytesSent = $("[id^='TotalBytesSent']", ContainerOBJ).val();
+var TotalBytesCount = TotalBytesReceived+"/"+TotalBytesSent;
+var tbcObj = $("[id^='TotalBytesCount']", ContainerOBJ);
+tbcObj.text(TotalBytesCount);
+tbcObj.attr("title", TotalBytesCount);
+};
+WLANStatusHead.hasError(xml,"externErrorHint");
+var SSIDOBJ = $(xml).find("OBJ_WLANAP_ID");
+var RuleNum = $("Instance", SSIDOBJ).length;
+var OBJID = ["OBJ_WLANAP_ID", "OBJ_WLANCONFIGDRV_ID"];
+WLANStatusHead.createPageDataByClone(RuleNum,OBJID,xml,WLANStatusHead.fillDataByCustom);
+WLANStatusHead.fillDataOfCard = function(clone, xml) {
+var location = $("[id^='"+ name + "']", clone);
+var CardInstID = $("[id^='_InstID_']", clone).val();
+var OBJ = "OBJ_WLANCONFIGDRV_ID";
+var driverInsts = $(xml).find("OBJ_WLANCONFIGDRV_ID").find("Instance");
+var driverInstNum = driverInsts.length;
+var ChannelInUsed;
+var RealRF;
+for ( var i=0; i<driverInstNum; i++ )
+{
+var ToOperParaArray = {
+"WLANViewName" : { ValueOrigin: "" },
+"RealRF" : { ValueOrigin: "" },
+"ChannelInUsed" : { ValueOrigin: "" }
+};
+xmlParaInInstOperate(xml, OBJ, i, ToOperParaArray);
+var instid = ToOperParaArray["WLANViewName"].ValueOrigin;
+if ( instid == CardInstID )
+{
+ChannelInUsed = ToOperParaArray["ChannelInUsed"].ValueOrigin;
+RealRF = ToOperParaArray["RealRF"].ValueOrigin;
+break;
+}
+}
+if (ChannelInUsed == "0")
+{
+ChannelInUsed = "N/A";
+}
+var ciuObj = $("[id^='ChannelInUsed_']", clone);
+ciuObj.text(ChannelInUsed);
+ciuObj.attr("title", ChannelInUsed);
+if ( RealRF == "1" )
+{
+RealRF = "On";
+}
+else
+{
+RealRF = "Off";
+}
+var rfObj = $("[id^='RealRF_']", clone);
+rfObj.text(RealRF);
+rfObj.attr("title", RealRF);
+};
+if (WLANStatusHead.hasError(xml) == 0)
+{
+$("[id^='div_WLANRadioSta_']", WLANStatusHead).each(function(){
+$(this).remove();
+})
+var ruleTemplate = $("#div_WLANRadioSta",WLANStatusHead);
+var OBJ = $(xml).find("OBJ_WLANSETTING_ID");
+var RuleNum = $("Instance", OBJ).length;
+for (var i=0; i<RuleNum; i++)
+{
+var clone = ruleTemplate.cloneWithSuffix(i, "_");
+ruleTemplate.before(clone);
+var DataOBJID = ["OBJ_WLANSETTING_ID"];
+clone.fillDataByOBJID(xml, DataOBJID, clone, i, "_");
+var Band = $("[id^='Band']",clone).val();
+var radioNewName = "WLAN (" + Band +")";
+var titleRealRF = $("[id^='titleRealRF_"+i+"']");
+titleRealRF.text(radioNewName);
+titleRealRF.attr("title", radioNewName);
+var radioNewName = "Channel (" + Band +")";
+var titleChannelInUsed = $("[id^='titleChannelInUsed_"+i+"']");
+titleChannelInUsed.text(radioNewName);
+titleChannelInUsed.attr("title", radioNewName);
+if (i/2 != 0)
+{
+clone.addClass("colorRow");
+}
+WLANStatusHead.fillDataOfCard(clone, xml);
+clone.showIt(true);
+}
+}
+$.publish("/some/softVersionModify", [WLANStatusHead]);
+};
+if ( $(".collapBarWithDataTrans",WLANStatusHead).length <= 0 )
+{
+WLANStatusHead.dataTransfer(WLANStatusServerAddr, "GET", WLANStatusHead.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(WLANStatusHead);
+}
+RefreshClickHandle(WLANStatusHead);
+});
+})();
+</script>
+
+<div id="WLANStatus" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wlan_wlanstatus_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="WLANStatusBar">WLAN Status</h1>
+<div id="WLANStatus_container">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="colorTbl">
+<div class="colorTblRow emFont titleRow">
+<span class="w200 emFont" title="WLAN Basic Status">WLAN Basic Status</span>
+</div>
+<div id="div_WLANRadioSta" class="colorTblRow" style="display:none;">
+<span class="w130 emFont" id="titleRealRF" title="WLAN">WLAN</span>
+<span class="w180" id="RealRF" title=""></span>
+<span class="w200 emFont" id="titleChannelInUsed" title="Channel">Channel</span>
+<input type="hidden" id="Band" class="PostIgnore" value="">
+<input type="hidden" id="_InstID" class="PostIgnore" value="">
+<span class="w150" id="ChannelInUsed" title=""></span>
+</div>
+</div>
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div id="template_WLANStatus" style="display:none;">
+<form class="colorTbl form_content">
+<input type="hidden" id="TotalPacketsReceived" value="">
+<input type="hidden" id="TotalPacketsSent" value="">
+<input type="hidden" id="TotalBytesReceived" value="">
+<input type="hidden" id="TotalBytesSent" value="">
+<input type="hidden" id="Alias" value="" class="PostIgnore">
+<input type="hidden" id="WLANViewName" class="PostIgnore" value="">
+<input type="hidden" id="WPAAuthMode" class="PostIgnore" value="">
+<input type="hidden" id="WPA3AuthMode" class="PostIgnore" value="">
+<input type="hidden" id="11iAuthMode" class="PostIgnore" value="">
+<input type="hidden" id="WPAEncryptType" class="PostIgnore" value="">
+<input type="hidden" id="11iEncryptType" class="PostIgnore" value="">
+<input type="hidden" id="WEPAuthMode" class="PostIgnore" value="">
+<div id="WLANStatus_title" class="colorTblRow emFont titleRow">
+<span class="w100 emFont" id="_InstID" title=""></span>
+</div>
+<div class="colorTblRow">
+<span class="w130 emFont" title="SSID Name">SSID Name</span>
+<span class="w180" id="ESSID" title=""></span>
+<span class="w200 emFont" title="MAC Address">MAC Address</span>
+<span class="w150" id="Bssid" title=""></span>
+</div>
+<div class="colorTblRow colorRow">
+<span class="w130 emFont" title="SSID Switch">SSID Switch</span>
+<span class="w180" id="Enable"></span>
+<span class="w200 emFont" title="Packets Received/Packets Sent">Packets Received/Packets Sent</span>
+<span class="w150" id="TotalPacketsCount" title=""></span>
+</div>
+<div class="colorTblRow">
+<span class="w130 emFont" title="Encryption Type">Encryption Type</span>
+<span class="w180" id="BeaconType" title=""></span>
+<span class="w200 emFont" title="Bytes Received/Bytes Sent">Bytes Received/Bytes Sent</span>
+<span class="w150" id="TotalBytesCount" title=""></span>
+</div>
+</form>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_refresh" id="WLANStatus_Btn_refresh" name="WLANStatus_Btn_refresh" value="Refresh" />
+<input type="button" class="Button" id="WLANStatus_Btn_clear" name="WLANStatus_Btn_clear" value="Clear" style="display:none"/>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+function softModify(e,subTemplate,b,c)
+{
+
+}
+$.subscribe("/some/softVersionModify", softModify);
+</script><script type="text/javascript">
+
+</script><script type="text/javascript">
+function softModify(e,subTemplate,b,c)
+{
+
+}
+$.subscribe("/some/softVersionModify", softModify);
+</script>
+<script type="text/javascript">
+(function () {
+var AParrayObj = new Array();
+$(document).ready(function(){
+var SSIDDevHeadID = "Wlan_ClientStat";
+var SSIDDevHead = $("#"+SSIDDevHeadID);
+var SSIDDevServerAddr = $("address span", SSIDDevHead).text();
+SSIDDevHead.fillDataByCustom = function(suffix,ContainerOBJ){
+var clientIndex = parseInt(suffix, 10) + 1;
+var clientName = "Client-"+clientIndex;
+var cnObj = $("[id^='WClientNum']", ContainerOBJ);
+cnObj.text(clientName);
+cnObj.attr("title", clientName);
+var strView = $("[id^='AliasName']",ContainerOBJ).text();
+var strIndex = strView.split("AP");
+var AliasNameStr = "";
+var indexNum = "";
+if(strIndex.length == 2){
+indexNum = strIndex[1];
+AliasNameStr = "SSID"+indexNum;
+}
+var anObj = $("[id^='AliasName']", ContainerOBJ);
+anObj.text(AliasNameStr);
+anObj.attr("title", AliasNameStr);
+$.publish("/some/ctcWlanssidClientStaSSID", [ContainerOBJ]);
+var ESSIDObj = $("[id^='ESSID']", ContainerOBJ);
+var ESSIDstr = AParrayObj[parseInt(indexNum)-1];
+ESSIDObj.text(ESSIDstr);
+ESSIDObj.attr("title", ESSIDstr);
+var ConTime = $("[id^='LinkTime']", ContainerOBJ);
+
+var ConT="0"
+if(ConT=="1")
+ConTime.text(sec2HrMinSec(ConTime.text()));
+else
+ConTime.text(ConTime.text()+" s");
+};
+SSIDDevHead.succfunction = function(xml){
+if (SSIDDevHead.hasError(xml) == 0)
+{
+var wlanAPOBJ = $(xml).find("OBJ_WLANAP_ID");
+var wlanAPNum = $("Instance", wlanAPOBJ).length;
+for(var i=0; i<wlanAPNum; i++)
+{
+var APIndex = getParaValueInXML(xml, "OBJ_WLANAP_ID", i, "ESSID");
+AParrayObj.push(APIndex);
+}
+var SSIDDevTemplateOBJ = $("#template_"+SSIDDevHeadID, SSIDDevHead);
+var wlanADOBJ = $(xml).find("OBJ_WLAN_AD_ID");
+var wlanADNum = $("Instance", wlanADOBJ).length;
+var OBJID = ["OBJ_WLAN_AD_ID"];
+if (wlanADNum == 0)
+{
+$(".noDataHint", SSIDDevHead).showIt(true);
+SSIDDevTemplateOBJ.parent().showIt(false);
+}
+else
+{
+$(".noDataHint", SSIDDevHead).showIt(false);
+SSIDDevTemplateOBJ.parent().showIt(true);
+SSIDDevHead.createPageDataByClone(wlanADNum,OBJID,xml,
+SSIDDevHead.fillDataByCustom);
+colorTblRow(".colorTbl", "even", SSIDDevHead);
+}
+$.publish("/some/hidePostBackSSID", [SSIDDevHead]);
+$.publish("/some/ctcWlanssidClientStaModify", [xml]);
+}
+};
+if ( $(".collapBarWithDataTrans",SSIDDevHead).length <= 0 )
+{
+SSIDDevHead.dataTransfer(SSIDDevServerAddr, "GET", SSIDDevHead.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(SSIDDevHead);
+}
+RefreshClickHandle(SSIDDevHead);
+});
+})();
+</script>
+
+<div id="Wlan_ClientStat" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=wlan_client_stat_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="Wlan_ClientStatBar">WLAN Client Status</h1>
+<div id="Wlan_ClientStat_container">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="noDataHint" style="display:none;">
+<span>There are no data now. </span>
+</div>
+<input type="hidden" id="DataHasBeenGot" value="0">
+<form class="form_content">
+<div id="template_Wlan_ClientStat" class="colorTbl" style="display:none;">
+<div id="SSIDDev_title" class="colorTblRow emFont titleRow">
+<span class="w100 emFont" id="WClientNum" title="Client">Client</span>
+</div>
+<div class="colorTblRow">
+<span class="w130 emFont" id= ssidAliasName title="SSID">SSID</span>
+<span class="w180" id="AliasName"></span>
+<span class="w130 emFont" title="Name">Name</span>
+<span class="w200" id="HostName" title=""></span>
+</div>
+<div class="colorTblRow">
+<span class="w130 emFont" title="SSID "+"SSID">SSID Name</span>
+<span class="w180" id="ESSID" title=""></span>
+<span class="w130 emFont" title="IPv6 Address">IPv6 Address</span>
+<span class="w200" id="IPV6Address" title=""></span>
+</div>
+<div class="colorTblRow colorRow">
+<span class="w130 emFont" title="IPv4 Address">IPv4 Address</span>
+<span class="w180" id="IPAddress" title=""></span>
+<span class="w130 emFont" title="MAC Address">MAC Address</span>
+<span class="w200" id="MACAddress" title=""></span>
+</div>
+<div class="colorTblRow">
+<span class="w130 emFont" title="MCS">MCS</span>
+<span class="w180" id="MCS" title=""></span>
+<span class="w130 emFont" title="RSSI">RSSI</span>
+<span class="w200" id="RSSI" title=""></span>
+</div>
+<div class="colorTblRow colorRow">
+<span class="w130 emFont" title="TxRate">TxRate</span>
+<span class="w180" id="TxRate" title=""></span>
+<span class="w130 emFont" title="RxRate">RxRate</span>
+<span class="w200" id="RxRate" title=""></span>
+</div>
+<div class="colorTblRow colorRow">
+<span class="w130 emFont" title="STA Mode">STA Mode</span>
+<span class="w180" id="CurrentMode" title=""></span>
+<span class="w130 emFont" title="Band Width">Band Width</span>
+<span class="w200" id="BAND" title=""></span>
+</div>
+<div class="colorTblRow colorRow" id="NoiseSNR" style="display:none;">
+<span class="w130 emFont" title="Noise">Noise</span>
+<span class="w180" id="NOISE" title=""></span>
+<span class="w130 emFont" title="SNR">SNR</span>
+<span class="w200" id="SNR" title=""></span>
+</div>
+<div class="colorTblRow colorRow" id="ConnectionTime" style="display:none;">
+<span class="w130 emFont" title="connection time">connection time</span>
+<span class="w200" id="LinkTime" title=""></span>
+</div>
+
+<div class="colorTblRow colorRow" id="NewConnectTime">
+<span class="w130 emFont" title="Connection Time">Connection Time</span>
+<span class="w200" id="ConnectTime" title=""></span>
+</div>
+
+</div>
+</form>
+<div class="buttongroup">
+<input type="button" class="Button Btn_refresh" id="Btn_refresh_Wlan_ClientStat" name="Btn_refresh_Wlan_ClientStat" value=Refresh />
+</div>
+</div>
+</div>
+<script type="text/javascript">
+
+</script><script type="text/javascript">
+(function(){
+$(document).ready(function(){
+
+});
+})();
+</script><script type="text/javascript">
+
+</script>
+<script type="text/javascript">
+(function () {
+$(document).ready(function(){
+var LANDevsHeadID = "LANDevs";
+var LANDevsHead = $("#"+LANDevsHeadID);
+var LANDevsServerAddr = $("address span", LANDevsHead).text();
+LANDevsHead.fillDataByCustom = function(suffix,ContainerOBJ){
+var clientIndex = parseInt(suffix, 10) + 1;
+var clientName = "Client-"+clientIndex;
+var cnObj = $("[id^='ClientNum']", ContainerOBJ);
+cnObj.text(clientName);
+cnObj.attr("title", clientName);
+};
+LANDevsHead.succfunction = function(xml){
+if (LANDevsHead.hasError(xml) == 0)
+{
+var data = {};
+data.xml = xml;
+$.callModifier("/accessdev/TAHidden",data);
+var LANDevsTemplateOBJ = $("#template_"+LANDevsHeadID,LANDevsHead);
+var LANDevsOBJ = $(xml).find("OBJ_ACCESSDEV_ID");
+var LANDevsRuleNum = $("Instance", LANDevsOBJ).length;
+var OBJID = ["OBJ_ACCESSDEV_ID"];
+if (LANDevsRuleNum == 0)
+{
+$(".noDataHint",LANDevsHead).showIt(true);
+LANDevsTemplateOBJ.parent().showIt(false);
+}
+else
+{
+$(".noDataHint",LANDevsHead).showIt(false);
+LANDevsTemplateOBJ.parent().showIt(true);
+LANDevsHead.createPageDataByClone(LANDevsRuleNum,
+OBJID,
+xml,
+LANDevsHead.fillDataByCustom);
+$.publish("/some/sncTAHidden", [xml]);
+colorTblRow(".colorTbl", "even", LANDevsHead);
+}
+}
+};
+if ( $(".collapBarWithDataTrans",LANDevsHead).length <= 0 )
+{
+LANDevsHead.dataTransfer(LANDevsServerAddr, "GET", LANDevsHead.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(LANDevsHead);
+}
+RefreshClickHandle(LANDevsHead);
+});
+})();
+</script>
+
+<div id="LANDevs" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=accessdev_landevs_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="LANDevsBar">LAN Client Status</h1>
+<div id="LANDevs_container">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="noDataHint" style="display:none;">
+<span>There are no data now. </span>
+</div>
+<input type="hidden" id="DataHasBeenGot" value="0">
+<form class="form_content">
+<div id="template_LANDevs" class="colorTbl" style="display:none;">
+<div id="LANDevs_title" class="colorTblRow emFont titleRow">
+<span class="w100 emFont" id="ClientNum" title="Client">Client</span>
+</div>
+<div class="colorTblRow">
+<span class="w130 emFont" title="Port">Port</span>
+<span class="w180" id="AliasName:LANDevs" title=""></span>
+<span class="w130 emFont" title="Name">Name</span>
+<span class="w200" id="HostName:LANDevs" title=""></span>
+</div>
+<div class="colorTblRow colorRow">
+<span class="w130 emFont" title="IPv4 Address">IPv4 Address</span>
+<span class="w180" id="IPAddress:LANDevs" title=""></span>
+<span class="w130 emFont" title="MAC Address">MAC Address</span>
+<span class="w200" id="MACAddress:LANDevs" title=""></span>
+</div>
+<div class="colorTblRow">
+<span class="w130 emFont" title="IPv6 Address">IPv6 Address</span>
+<span class="w400" id="IPV6Address:LANDevs" title=""></span>
+</div>
+</div>
+</form>
+<div class="buttongroup">
+<input type="button" class="Button Btn_refresh" id="LANDevs_Btn_refresh" name="LANDevs_Btn_refresh" value="Refresh" />
+</div>
+</div>
+</div>
+<script type="text/javascript">
+
+</script>
+<script type="text/javascript">
+(function () {
+$(document).ready(function(){
+var USBDevsHeadID = "USBDevs";
+var USBDevsHead = $("#"+USBDevsHeadID);
+var USBDevsServerAddr = $("address span", USBDevsHead).text();
+USBDevsHead.succfunction = function(xml){
+USBDevsHead.fillDataByCustom = function(suffix,ContainerOBJ){
+var USBOBJ = ContainerOBJ.find("[id^='USBNum']");
+USBOBJ.text("USB"+(parseInt(suffix,10)+1));
+USBOBJ.attr("title", USBOBJ.text());
+};
+if (USBDevsHead.hasError(xml) == 0)
+{
+var USBDevsTemplateOBJ = $("#template_"+USBDevsHeadID,USBDevsHead);
+var USBDevsOBJ = $(xml).find("OBJ_USBSTORAGE_ID");
+var USBDevsRuleNum = $("Instance", USBDevsOBJ).length;
+var OBJID = ["OBJ_USBSTORAGE_ID"];
+if (USBDevsRuleNum == 0)
+{
+$(".noDataHint", USBDevsHead).showIt(true);
+USBDevsTemplateOBJ.parent().showIt(false);
+}
+else
+{
+$(".noDataHint", USBDevsHead).showIt(false);
+USBDevsTemplateOBJ.parent().showIt(true);
+USBDevsHead.createPageDataByClone(USBDevsRuleNum, OBJID,
+xml, USBDevsHead.fillDataByCustom);
+colorTblRow(".colorTbl", "even", USBDevsHead);
+}
+}
+};
+if ( $(".collapBarWithDataTrans",USBDevsHead).length <= 0 )
+{
+USBDevsHead.dataTransfer(USBDevsServerAddr, "GET", USBDevsHead.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(USBDevsHead);
+}
+RefreshClickHandle(USBDevsHead);
+});
+})();
+</script>
+
+<div id="USBDevs" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=usb_usbdevs_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="USBDevsBar">USB Storage Status</h1>
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div id="USBDevs_container">
+<div class="noDataHint" style="display:none;">
+<span>There are no data now. </span>
+</div>
+<input type="hidden" id="DataHasBeenGot" value="0">
+<form class="colorTbl form_content">
+<div id="USBDevs_title" class="colorTblRow emFont titleRow">
+<span class="w150" title="USB Storage">USB Storage</span>
+<span class="w165" title="Name">Name</span>
+<span class="w165" title="Total Capacity(KB)">Total Capacity(KB)</span>
+<span class="w165" title="Available Capacity(KB)">Available Capacity(KB)</span>
+</div>
+<div id="template_USBDevs" class="colorTblRow" style="display:none;">
+<span class="w150" id="USBNum" title=""></span>
+<span class="w165" id="DiskName" title=""></span>
+<span class="w165" id="StorBlockSize" title=""></span>
+<span class="w165" id="StorFreeSize" title=""></span>
+</div>
+</form>
+<div class="buttongroup">
+<input type="button" class="Button Btn_refresh" id="USBDevs_Btn_refresh" name="USBDevs_Btn_refresh" value="Refresh" />
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$(this).find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", this).addClass("disableBtn");
+$("[class^='longBtn']", this).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", this).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x55\x51\x4e\x53\x31\x43\x41\x39\x70\x6d\x43\x68\x5a\x56\x76\x74\x71\x72\x6a\x4f\x63\x4e\x6a\x33";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+});
+</script>

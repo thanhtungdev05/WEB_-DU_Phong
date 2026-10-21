@@ -552,9 +552,10 @@
           try {
             const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
             allDocs.forEach(doc => {
-              // AX3000GZ V2 tải nhiều panel bằng AJAX. Đồng bộ dày ngay sau click để
+              // AX3000GZ V2 / AC1000Z tải nhiều panel bằng AJAX. Đồng bộ dày ngay sau click để
               // tooltip của bước kế tiếp xuất hiện trước khi KTV có thể thao tác tiếp.
-              const isAx3000gzV2 = currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ax3000gz_v2';
+              const isAx3000gzV2 = currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ax3000gz_v2' ||
+                currentDeviceId === 'ac1000z' || currentDeviceId === 'ONT_ac1000z';
               if (isAx3000gzV2 && !doc._ftcGuideBurstSyncBound) {
                 doc._ftcGuideBurstSyncBound = true;
                 doc.addEventListener('click', function () {
@@ -580,7 +581,8 @@
                 const skipAutofillHack = (currentDeviceId === 'ONT_be6500c' || currentDeviceId === 'be6500c' ||
                     currentDeviceId === 'ONT_be12000' || currentDeviceId === 'be12000' ||
                     currentDeviceId === 'ONT_be15000' || currentDeviceId === 'be15000' ||
-                    currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ax3000gz_v2');
+                    currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ax3000gz_v2' ||
+                    currentDeviceId === 'ac1000z' || currentDeviceId === 'ONT_ac1000z');
                 if (!skipAutofillHack) {
                   doc.querySelectorAll('form:not([data-autofill-disabled]), input:not([data-autofill-disabled])').forEach(el => {
                     el.setAttribute('data-autofill-disabled', 'true');
@@ -1856,7 +1858,8 @@
               window._hasClickedSaveInGuide = true;
             }
 
-            if (currentDeviceId === 'ax3000gz_v2' || currentDeviceId === 'ONT_ax3000gz_v2') {
+            if (currentDeviceId === 'ax3000gz_v2' || currentDeviceId === 'ONT_ax3000gz_v2' ||
+                currentDeviceId === 'ac1000z' || currentDeviceId === 'ONT_ac1000z') {
               hasSuccHint = false;
               window._hasSuccHintStored = false;
             }
@@ -2583,7 +2586,7 @@
 
     // Load URL into iframe
     Promise.resolve(resetPromise).then(resetSucceeded => {
-      const requiresVerifiedReset = normalizeDeviceId(currentDeviceId) === 'ax3000gz_v2';
+      const requiresVerifiedReset = normalizeDeviceId(currentDeviceId) === 'ax3000gz_v2' || normalizeDeviceId(currentDeviceId) === 'ac1000z';
       if (requiresVerifiedReset && resetSucceeded !== true) {
         iframeLoading.classList.add('hidden');
         stopPracticeTimer();
@@ -2591,7 +2594,8 @@
         if (serverWarning) {
           const warningText = serverWarning.querySelector('#server-warning-text');
           if (warningText) {
-            warningText.textContent = 'Không thể khởi tạo phiên AX3000GZ V2 mới. Vui lòng quay lại và thử lại.';
+            const devLabel = normalizeDeviceId(currentDeviceId) === 'ac1000z' ? 'AC1000Z' : 'AX3000GZ V2';
+            warningText.textContent = `Không thể khởi tạo phiên ${devLabel} mới. Vui lòng quay lại và thử lại.`;
           }
           serverWarning.style.display = 'flex';
         }
@@ -2635,7 +2639,7 @@
   }
 
   function isAx3000gzV2Active() {
-    return normalizeDeviceId(currentDeviceId) === 'ax3000gz_v2';
+    return normalizeDeviceId(currentDeviceId) === 'ax3000gz_v2' || normalizeDeviceId(currentDeviceId) === 'ac1000z';
   }
 
   function getCurrentAttemptId() {
@@ -3025,7 +3029,7 @@
       }
     });
 
-    const requireSuccessfulReset = normDev === 'ax3000gz_v2';
+    const requireSuccessfulReset = normDev === 'ax3000gz_v2' || normDev === 'ac1000z';
     const resetExecutionPromise = Promise.all(resetPromises).then(function (results) {
       if (!requireSuccessfulReset) return true;
       return results.some(Boolean);
@@ -3096,7 +3100,8 @@
   function clearLessonFields() {
     const activeDevId = typeof currentDeviceId !== 'undefined' ? currentDeviceId : (window.currentDeviceId || '');
     const activeLesId = typeof currentLessonId !== 'undefined' ? currentLessonId : (window.currentLessonId || '');
-    const isAx3000gzV2Attempt = String(activeDevId || '').trim().replace(/^DEV_/i, '').toLowerCase() === 'ax3000gz_v2';
+    const isAx3000gzV2Attempt = String(activeDevId || '').trim().replace(/^DEV_/i, '').toLowerCase() === 'ax3000gz_v2' ||
+      String(activeDevId || '').trim().replace(/^DEV_/i, '').toLowerCase() === 'ac1000z';
     const isAc1000cV2MultiStep = (activeDevId === 'ac1000cv2' || activeDevId === 'sim_ac1000cv2') && (
       activeLesId === 'ac1000cv2-bai2' || activeLesId === 'LAB_AC1000CV2_02' ||
       activeLesId === 'ac1000cv2-bai3' || activeLesId === 'LAB_AC1000CV2_03'
@@ -3518,8 +3523,8 @@
         } catch (e) { }
       }
     }
-    const isAx3000gzV2Eval = (device && (device.id === 'ax3000gz_v2' || device.id === 'ONT_ax3000gz_v2')) ||
-      currentDeviceId === 'ax3000gz_v2' || currentDeviceId === 'ONT_ax3000gz_v2';
+    const isAx3000gzV2Eval = (device && (device.id === 'ax3000gz_v2' || device.id === 'ONT_ax3000gz_v2' || device.id === 'ac1000z' || device.id === 'ONT_ac1000z')) ||
+      currentDeviceId === 'ax3000gz_v2' || currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ac1000z' || currentDeviceId === 'ONT_ac1000z';
     if (isAx3000gzV2Eval) {
       hasStoredNotification = false;
       window._hasSuccHintStored = false;
@@ -3751,7 +3756,8 @@
 
       // AX3000GZ V2 is graded only from actions performed in the current attempt.
       // Autofill, simulator defaults, and previous-attempt values are not user work.
-      const isAx3000gzV2Rule = String(effectiveDeviceId || '').trim().replace(/^DEV_/i, '').toLowerCase() === 'ax3000gz_v2';
+      const isAx3000gzV2Rule = String(effectiveDeviceId || '').trim().replace(/^DEV_/i, '').toLowerCase() === 'ax3000gz_v2' ||
+        String(effectiveDeviceId || '').trim().replace(/^DEV_/i, '').toLowerCase() === 'ac1000z';
       if (isMatch && isAx3000gzV2Rule && rule.requireInteraction !== false) {
         const currentAttemptId = getCurrentAttemptId();
         const attemptEvidence = getAttemptRuleEvidence(rule.id, currentAttemptId, _trackingSession);
@@ -4968,6 +4974,8 @@
 
     if (currentDeviceId === 'ax3000gz_v2') {
       layoutGuidePopupsWithoutOverlap(doc, renderedGuides);
+    } else if (currentDeviceId === 'ac1000z') {
+      layoutGuidePopupsWithoutOverlap(doc, renderedGuides);
     }
 
     // Dọn dẹp các bubble thừa khi danh sách popups ngắn hơn
@@ -5311,7 +5319,8 @@
     const device = DEVICES.find(d => d.id === currentDeviceId);
     const lesson = getCurrentLesson();
     if (device && lesson) {
-      if (currentDeviceId === 'ax3000gz_v2' || currentDeviceId === 'ONT_ax3000gz_v2') {
+      if (currentDeviceId === 'ax3000gz_v2' || currentDeviceId === 'ONT_ax3000gz_v2' ||
+          currentDeviceId === 'ac1000z' || currentDeviceId === 'ONT_ac1000z') {
         window._hasSuccHintStored = false;
       }
       const evalResult = evaluateLesson(device, lesson);

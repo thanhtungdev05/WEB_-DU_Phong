@@ -1,0 +1,461 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.showIt(true);
+collapsibleInst.addClass("instNameExp");
+}
+else
+{
+ChangeArea.showIt(false);
+collapsibleInst.removeClass("instNameExp");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = thisObj.next("span").not(".__CheckPwdStrength").text();
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#109;&#97;&#99;&#84;&#97;&#98;&#108;&#101;</div>
+<div id="_NowSupIdInfo">&#109;&#103;&#114;&#65;&#110;&#100;&#68;&#105;&#97;&#103;</div>
+<div id="_NowMidIdInfo">&#100;&#105;&#97;&#103;&#110;&#111;&#115;&#105;&#115;</div>
+<div id="_NowThdIdInfo">&#109;&#97;&#99;&#84;&#97;&#98;&#108;&#101;</div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft">
+<div id="class2Menu" class="class2Menu">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span>Page Information</span>
+</div>
+
+<p class="pIntroContent">&#84;&#104;&#105;&#115;&#32;&#112;&#97;&#103;&#101;&#32;&#115;&#104;&#111;&#119;&#115;&#32;&#116;&#104;&#101;&#32;&#115;&#116;&#97;&#116;&#117;&#115;&#32;&#111;&#102;&#32;&#77;&#65;&#67;&#32;&#116;&#97;&#98;&#108;&#101;&#46;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function() {
+function RefreshClickHandle(Head)
+{
+$(".Btn_refresh", Head).each(function(){
+$(this).unbind("click");
+$(this).bind("click", function(){
+showWaitTip(true);
+var HeadID = Head.attr("id");
+Head.find("[id^='template_"+HeadID+"_']").each(function(){
+$(this).remove();
+});
+var ServerAddr = $("address span", Head).text();
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction,
+Head.failfunction,
+false,
+true);
+});
+})
+}
+function ChanegeDataByCustom(xml)
+{
+var ToOperParaArr = {
+"VlanID" : {
+ValueOrigin: "",
+setAction: function(ParaNameSel, ParaValSel, SelfVal){
+if (SelfVal == "65534")
+{
+ParaValSel.text("None");
+}
+}
+}
+};
+var InstNum = $("Instance", $("OBJ_GETMACINST_ID", $(xml))).length;
+for(var i=0; i<InstNum; i++)
+{
+xmlParaInInstOperate(xml, "OBJ_GETMACINST_ID", i, ToOperParaArr);
+}
+}
+$(document).ready(function(){
+var HeadID = "MacTable";
+var Head = $("#"+HeadID);
+var ServerAddr = $("address span", Head).text();
+RefreshClickHandle(Head, false);
+var template = $("#template_MacTable");
+template.bind("fillData", function(event, xml, template){
+var Head = template.parents(".HeadDIV");
+if (Head.hasError(xml) == 0)
+{
+var OBJ = $(xml).find("OBJ_GETMACINST_ID");
+var RuleNum = $("Instance", OBJ).length;
+var OBJID = ["OBJ_GETMACINST_ID"];
+ChanegeDataByCustom(xml);
+Head.createPageDataByClone(RuleNum, OBJID, xml);
+$.publish("/some/sncTAHidden", [xml]);
+colorTblRow(".colorTbl", "even", Head);
+}
+});
+Head.succfunction = function(xml){
+if (Head.hasError(xml) == 0)
+{
+var showInst = $("showInst", $(xml)).text();
+if(1 == showInst)
+{
+var OBJ = $(xml).find("OBJ_GETMACINST_ID");
+var RuleNum = $("Instance", OBJ).length;
+var OBJID = ["OBJ_GETMACINST_ID"];
+ChanegeDataByCustom(xml);
+Head.createPageDataByClone(RuleNum, OBJID, xml);
+$.publish("/some/sncTAHidden", [xml]);
+colorTblRow(".colorTbl", "even", Head);
+showWaitTip(false);
+}
+else if(0 == showInst)
+{
+var msg = "It may take some time to display all entries. Click \"OK\" to display all entries, or click \"Cancel\" to display the first 30 entries.";
+var confirmLayerOBJ = IniConfirm(msg);
+$("#confirmOK",confirmLayerOBJ).bind("click", function(event){
+var PostData = "IF_ACTION=DISPALL";
+dataPost(undefined, "fillData", ServerAddr, template, PostData);
+});
+$("#confirmCancel",confirmLayerOBJ).unbind("click");
+$("#confirmCancel",confirmLayerOBJ).bind("click", function(event){
+var PostData = "IF_ACTION=DISPPART";
+dataPost(undefined, "fillData", ServerAddr, template, PostData);
+});
+}
+}
+else
+{
+showWaitTip(false);
+}
+};
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction,undefined,false);
+$(".collapsibleBar", Head).click();
+});
+})();
+</script>
+
+<div class="instCfgArea">
+<div id="MacTable" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=macinfo_mactable_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapsibleBar" id="macTableBar">MAC Table</h1>
+<div id="MacTable_container" style="display:none;">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="noDataHint" style="display:none;">
+<div>There are no data now. </div>
+</div>
+<div class="colorTbl form_content">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div id="MacTable_title" class="colorTblRow emFont titleRow">
+<span class="w100" title="Interface">Interface</span>
+<span class="w200" title="MAC Address">MAC Address</span>
+<span class="w120" title="Active Time(s)">Active Time(s)</span>
+</div>
+<div id="template_MacTable" class="colorTblRow" style="display:none;" >
+<span class="w100" id="LanName" title=""></span>
+<span class="w200" id="MACAddr" title=""></span>
+<span class="w120" id="AgingTm" title=""></span>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_refresh" id="Btn_refresh_MacTable" name="Btn_refresh_MacTable" value="Refresh" />
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$(this).find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", this).addClass("disableBtn");
+$("[class^='longBtn']", this).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", this).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x47\x53\x41\x74\x35\x74\x47\x4d\x62\x47\x46\x58\x6b\x42\x4c\x4b\x39\x31\x6d\x55\x75\x64\x7a\x6e";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+});
+</script>
