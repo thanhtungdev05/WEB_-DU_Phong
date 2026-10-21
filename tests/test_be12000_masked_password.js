@@ -94,6 +94,10 @@ assert.ok(bai1, 'Must find LAB_BE12000_01');
 function createMockDoc(pwdElProps, isSaved) {
   const cnameEl = { id: 'WANCName', value: 'FPT' };
   const userEl = { id: 'UserName', value: 'hnfdl-123456-789' };
+  const isNat1 = { id: 'IsNAT1', name: 'IsNAT', type: 'radio', value: '1', checked: true };
+  const isNat0 = { id: 'IsNAT0', name: 'IsNAT', type: 'radio', value: '0', checked: false };
+  const vlan1 = { id: 'VlanEnable1', name: 'VlanEnable', type: 'radio', value: '1', checked: false };
+  const vlan0 = { id: 'VlanEnable0', name: 'VlanEnable', type: 'radio', value: '0', checked: true };
   const pwdEl = Object.assign({
     id: 'Password',
     type: 'password',
@@ -107,6 +111,8 @@ function createMockDoc(pwdElProps, isSaved) {
       if (selector.includes('WANCName')) return [cnameEl];
       if (selector.includes('UserName')) return [userEl];
       if (selector.includes('Password')) return [pwdEl];
+      if (selector.includes('IsNAT')) return [isNat1, isNat0];
+      if (selector.includes('VlanEnable')) return [vlan1, vlan0];
       return [];
     },
     querySelector: function (selector) {

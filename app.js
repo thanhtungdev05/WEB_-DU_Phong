@@ -1888,8 +1888,9 @@
                   ? evalResult.trangHienTaiDat : evalResult.passed)
                 : false;
 
-              // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT:
-              if (noConfig || (window._hasClickedSaveInGuide && (hasSuccHint || (evalResult && evalResult.passed)))) {
+              const isSaveDone = Boolean(window._hasClickedSaveInGuide || hasSuccHint || window._hasSuccHintStored);
+              // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT 100%:
+              if (noConfig || (isSaveDone && evalResult && evalResult.passed)) {
                 // Nút Nộp bài SÁNG LÊN
                 if (btnSubmitLab) {
                   btnSubmitLab.disabled = false;
@@ -1905,8 +1906,8 @@
                 // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
                 if (btnGuideErrors) {
                   const isMultiStepIncomplete = Boolean(evalResult && evalResult.daVaoTrangCuoi === false);
-                  const hasMissingSteps = (!trangDangLamSach) || (!evalResult.passed && !isMultiStepIncomplete);
-                  if (window._hasClickedSaveInGuide && evalResult && hasMissingSteps) {
+                  const hasMissingSteps = (!trangDangLamSach) || (evalResult && !evalResult.passed && !isMultiStepIncomplete);
+                  if (isSaveDone && evalResult && hasMissingSteps) {
                     // Đã bấm Save/Apply mà cấu hình SAI: Nút lỗi sai SÁNG LÊN để trợ giúp học tập
                     btnGuideErrors.style.display = 'flex';
                     btnGuideErrors.disabled = false;
@@ -3205,10 +3206,21 @@
 
     function getLabelForElement(el, doc) {
     if (el.name === 'rdGWIp' || (el.id && el.id.includes('rdGWIp'))) return 'Gateway (Cổng kết nối)';
-    if (el.labels && el.labels.length > 0) return el.labels[0].textContent.trim().replace(/:$/, '');
+    const isGenericOptionText = (txt) => {
+      if (!txt) return true;
+      const low = txt.trim().toLowerCase();
+      return low === 'off' || low === 'on' || low === 'enable' || low === 'disable' || low === 'bật' || low === 'tắt';
+    };
+    if (el.labels && el.labels.length > 0) {
+      const ltxt = el.labels[0].textContent.trim().replace(/:$/, '');
+      if (!isGenericOptionText(ltxt)) return ltxt;
+    }
     if (el.id) {
       const label = doc.querySelector(`label[for="${el.id}"]`);
-      if (label) return label.textContent.trim().replace(/:$/, '');
+      if (label) {
+        const ltxt = label.textContent.trim().replace(/:$/, '');
+        if (!isGenericOptionText(ltxt)) return ltxt;
+      }
     }
     const tr = el.closest ? el.closest('tr') : null;
     if (tr) {
@@ -3282,10 +3294,12 @@
             });
             if (isAllowedByLesson) return;
 
-            // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, DHCP, Wi-Fi IoT / WiFi5 enable, SSID broadcast
+            // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, DHCP, Wi-Fi IoT / WiFi5 enable, SSID broadcast, NAT/VLAN toggles
             const isAuxToggle = (el.name && (
-              el.name.toLowerCase() === 'dnstyperadio' ||
-              el.name.toLowerCase() === 'dhcptyperadio' ||
+              el.name.toLowerCase().startsWith('dnstyperadio') ||
+              el.name.toLowerCase().startsWith('dhcptyperadio') ||
+              el.name.toLowerCase().startsWith('isnat') ||
+              el.name.toLowerCase().startsWith('vlanenable') ||
               el.name.toLowerCase().includes('enable_wifi') ||
               el.name.toLowerCase().includes('wifi5') ||
               el.name.toLowerCase().includes('essid_hide')
@@ -3293,6 +3307,8 @@
             (el.id && (
               el.id.toLowerCase().includes('dnsrelay') ||
               el.id.toLowerCase().includes('dhcp') ||
+              el.id.toLowerCase().includes('isnat') ||
+              el.id.toLowerCase().includes('vlanenable') ||
               el.id.toLowerCase().includes('wifi5_enable') ||
               el.id.toLowerCase().includes('enable_wifi')
             ));
@@ -3325,8 +3341,16 @@
                 let formattedCurrent = '';
 
                 if (el.type === 'checkbox' || el.type === 'radio') {
-                  formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
-                  formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
+                  const lbl0 = doc.querySelector(`label[for="${el.id}"]`);
+                  const lblText = lbl0 ? lbl0.textContent.trim().toLowerCase() : '';
+                  const isOnOf = (lblText === 'on' || lblText === 'off' || (el.name && (el.name.toLowerCase().includes('nat') || el.name.toLowerCase().includes('vlan'))));
+                  if (isOnOf) {
+                    formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'On' : 'Off';
+                    formattedCurrent = currentValue ? 'On' : 'Off';
+                  } else {
+                    formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
+                    formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
+                  }
                 } else if (el.tagName === 'SELECT') {
                   try {
                     let optOrig = el.querySelector(`option[value="${originalValue}"]`);
@@ -3598,6 +3622,57 @@
             const isSessionSaved = (window._hasClickedSaveInGuide === true && doc._ftcIsSaved !== false);
             const isAx3000s2gSaved = evaluatedLessonId === 'LAB_AX3000S_02' && Boolean(doc._ftc2gSaved || window._ftc2gSaved);
             if (isDocSaved || isSessionSaved || isAx3000s2gSaved) isSaved = true;
+
+            // Thiết bị ZTE (BE12000...) dùng template ẩn (#template_Internet) + các bản clone có hậu tố
+            // (#template_Internet_0, _1...). Bản _0 thường là kết nối có sẵn của nhà máy (internet_tr069,
+            // NAT=On, VLAN=Off), còn bản học viên vừa "Create New Item" là bản có hậu tố lớn nhất.
+            // Nếu không giới hạn phạm vi, rule sẽ khớp nhầm vào template ẩn hoặc kết nối có sẵn
+            // => NAT/VLAN luôn "Đúng" dù học viên cố tình chọn sai.
+            const getTplContainer = (el) => {
+              try { return (el.closest && el.closest('[id^="template_"]')) || null; } catch (e) { return null; }
+            };
+            const isInlineHidden = (node) => {
+              try {
+                if (node.style && node.style.display === 'none') return true;
+                const view = node.ownerDocument && node.ownerDocument.defaultView;
+                if (view && view.getComputedStyle) return view.getComputedStyle(node).display === 'none';
+              } catch (e) { }
+              return false;
+            };
+            const isCloneId = (id) => /_\d+$/.test(String(id || ''));
+
+            // (1) Loại phần tử nằm trong template gốc ẩn (không có hậu tố số)
+            const nonTemplateEls = els.filter(el => {
+              const tpl = getTplContainer(el);
+              if (tpl && !isCloneId(tpl.id) && (tpl.id === 'template_Internet' || isInlineHidden(tpl))) return false;
+              return true;
+            });
+            if (nonTemplateEls.length > 0) els = nonTemplateEls;
+
+            // (2) Nếu phần tử trải trên nhiều bản clone, chỉ chấm bản học viên đang thao tác:
+            //     ưu tiên bản đang mở rộng (.ChangeArea hiển thị), sau đó bản có hậu tố lớn nhất (mới tạo nhất).
+            const instMap = new Map();
+            els.forEach(el => {
+              const c = getTplContainer(el);
+              if (c && isCloneId(c.id)) {
+                if (!instMap.has(c)) instMap.set(c, []);
+                instMap.get(c).push(el);
+              }
+            });
+            if (instMap.size > 1) {
+              const suffixOf = (c) => parseInt((String(c.id).match(/_(\d+)$/) || [])[1] || '-1', 10);
+              const isExpanded = (c) => {
+                try {
+                  const ca = c.querySelector && c.querySelector('.ChangeArea');
+                  return Boolean(ca) && !isInlineHidden(ca);
+                } catch (e) { return false; }
+              };
+              const conts = Array.from(instMap.keys()).filter(c => !isInlineHidden(c));
+              const candidates = conts.length > 0 ? conts : Array.from(instMap.keys());
+              const expanded = candidates.filter(isExpanded);
+              const pool = (expanded.length > 0 ? expanded : candidates).sort((a, b) => suffixOf(b) - suffixOf(a));
+              els = instMap.get(pool[0]);
+            }
 
             // Tìm xem có phần tử nào khớp với expectedVal không
             let chosenEl = els[0];
@@ -5355,7 +5430,7 @@
             ? evalResult.trangHienTaiDat : evalResult.passed)
           : false;
 
-        if (noConfigSaved || window._hasSuccHintStored || (evalResult && evalResult.passed)) {
+        if (noConfigSaved || (evalResult && evalResult.passed)) {
           // Cấu hình ĐÚNG hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
           if (btnSubmitLab) {
             btnSubmitLab.disabled = false;

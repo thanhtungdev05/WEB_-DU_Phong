@@ -364,12 +364,16 @@ const LESSON_TEST_SPECS = [
     correctElements: {
       '#WANCName, input[id^="WANCName"], input[name="WANCName"]': [{ value: 'FPT' }],
       '#UserName, input[id^="UserName"], input[name="UserName"]': [{ value: 'hnfdl-123456-789' }],
-      '#Password, input[id^="Password"], input[name="Password"]': [{ value: 'd123456' }]
+      '#Password, input[id^="Password"], input[name="Password"]': [{ value: 'd123456' }],
+      'input[name^="IsNAT"], input[id^="IsNAT"], #IsNAT1, #IsNAT0': [{ id: 'IsNAT1', value: '1', checked: true, type: 'radio' }, { id: 'IsNAT0', value: '0', checked: false, type: 'radio' }],
+      'input[name^="VlanEnable"], input[id^="VlanEnable"], #VlanEnable1, #VlanEnable0': [{ id: 'VlanEnable1', value: '1', checked: false, type: 'radio' }, { id: 'VlanEnable0', value: '0', checked: true, type: 'radio' }]
     },
     wrongElements: {
       '#WANCName, input[id^="WANCName"], input[name="WANCName"]': [{ value: 'SAI_NAME' }],
       '#UserName, input[id^="UserName"], input[name="UserName"]': [{ value: 'sai_user' }],
-      '#Password, input[id^="Password"], input[name="Password"]': [{ value: 'sai_pwd' }]
+      '#Password, input[id^="Password"], input[name="Password"]': [{ value: 'sai_pwd' }],
+      'input[name^="IsNAT"], input[id^="IsNAT"], #IsNAT1, #IsNAT0': [{ id: 'IsNAT1', value: '1', checked: false, type: 'radio' }, { id: 'IsNAT0', value: '0', checked: true, type: 'radio' }],
+      'input[name^="VlanEnable"], input[id^="VlanEnable"], #VlanEnable1, #VlanEnable0': [{ id: 'VlanEnable1', value: '1', checked: true, type: 'radio' }, { id: 'VlanEnable0', value: '0', checked: false, type: 'radio' }]
     }
   },
   {
