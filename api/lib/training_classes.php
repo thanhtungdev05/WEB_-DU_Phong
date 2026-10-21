@@ -366,6 +366,39 @@ function training_class_add_devices(
             'device_id' => $device['device_id'],
         ]);
         if ($insertClassAssignments->rowCount() === 0) {
+            $syncMissing = $pdo->prepare(
+                <<<'SQL'
+                INSERT INTO curriculum_labs (
+                    curriculum_id, lab_id, required_mode, is_required, sort_order, passing_score, created_at, updated_at
+                )
+                SELECT CAST(:curriculum_id AS uuid), lab.lab_id, 'practice', TRUE,
+                       (device.sort_order * 100) + lab.sort_order, NULL, NOW(), NOW()
+                  FROM lab_catalog lab
+                  JOIN device_catalog device ON device.device_id = lab.device_id
+                 WHERE lab.device_id = :device_id
+                   AND lab.is_active = TRUE
+                   AND device.is_active = TRUE
+                ON CONFLICT (curriculum_id, lab_id, required_mode) DO UPDATE
+                SET is_required = TRUE,
+                    sort_order = EXCLUDED.sort_order,
+                    updated_at = NOW()
+                SQL
+            );
+            $syncMissing->execute([
+                'curriculum_id' => $curriculumId,
+                'device_id' => $device['device_id'],
+            ]);
+            if ($syncMissing->rowCount() > 0) {
+                $insertClassAssignments->execute([
+                    'class_id' => $classId,
+                    'curriculum_id' => $curriculumId,
+                    'start_date' => $startDate,
+                    'source' => $source,
+                    'device_id' => $device['device_id'],
+                ]);
+            }
+        }
+        if ($insertClassAssignments->rowCount() === 0) {
             fail(422, 'device-without-labs', 'Device ' . $device['device_id'] . ' has no practice labs in the class curriculum.');
         }
         $createIndividualAssignments->execute([

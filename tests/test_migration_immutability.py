@@ -35,8 +35,15 @@ class MigrationImmutabilityTests(unittest.TestCase):
         self.assertIn("device_name = 'AP BE1500Z'", sql)
         self.assertIn("lab_name = 'Xem thiết bị AP BE1500Z'", sql)
         self.assertNotIn("schema_migrations", sql.lower())
+    def test_sync_curriculum_labs_is_forward_only(self):
+        correction = MIGRATIONS / "062_sync_curriculum_labs_all_active_devices.sql"
+        sql = correction.read_text(encoding="utf-8")
+        self.assertIn("curriculum_labs", sql)
+        self.assertIn("curriculum.status = 'active'", sql)
+        self.assertNotIn("schema_migrations", sql.lower())
         self.assertNotRegex(sql, r"(?i)\b(delete|drop|truncate)\b")
 
 
 if __name__ == "__main__":
     unittest.main()
+
