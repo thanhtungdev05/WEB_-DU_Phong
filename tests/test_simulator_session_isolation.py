@@ -239,7 +239,7 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         vg_dir = str(ROOT / "simulators/sim_vigor2927/src")
         if vg_dir not in sys.path:
             sys.path.insert(0, vg_dir)
-        import vg_config_store as vg_store
+        vg_store = load_server("simulators/sim_vigor2927/src/vg_config_store.py", "test_vg_config_store")
 
         ktv_a = "ktv_vg_user_A"
         ktv_b = "ktv_vg_user_B"
