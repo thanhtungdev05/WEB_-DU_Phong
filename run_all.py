@@ -80,8 +80,8 @@ try:
     # AX3000CV2 firmware 0.5.3 (fw_053/)
     import simulators.sim_ax3000c.server_fw053 as ax3000c
     import simulators.sim_ax3000gz.server as ax3000gz
-    import devices.ax3000gz_v2.src.server as ax3000gz_v2
-    import devices.ac1000z.src.server as ac1000z
+    import simulators.ax3000gz_v2.src.server as ax3000gz_v2
+    import simulators.ac1000z.src.server as ac1000z
     import simulators.sim_ax3000hv2.server2 as ax3000hv2
     import simulators.sim_ax3000s.server as ax3000s
     import simulators.sim_be12000.src.server as be12000

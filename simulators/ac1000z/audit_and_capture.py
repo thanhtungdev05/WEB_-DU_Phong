@@ -28,14 +28,14 @@ async def audit():
             print("Already on dashboard (session active).")
 
         # Snapshot Dashboard
-        await page.screenshot(path="devices/ac1000z/audit_dashboard.png")
+        await page.screenshot(path="simulators/ac1000z/audit_dashboard.png")
         print("Captured audit_dashboard.png")
 
         menus_to_test = [
-            ("Topology", "#mmTopology", "devices/ac1000z/audit_topology.png"),
-            ("Internet", "#internet", "devices/ac1000z/audit_internet.png"),
-            ("Local Network", "#localnet", "devices/ac1000z/audit_localnet.png"),
-            ("Management & Diagnosis", "#mgrAndDiag", "devices/ac1000z/audit_mgr.png"),
+            ("Topology", "#mmTopology", "simulators/ac1000z/audit_topology.png"),
+            ("Internet", "#internet", "simulators/ac1000z/audit_internet.png"),
+            ("Local Network", "#localnet", "simulators/ac1000z/audit_localnet.png"),
+            ("Management & Diagnosis", "#mgrAndDiag", "simulators/ac1000z/audit_mgr.png"),
         ]
 
         for name, sel, shot_path in menus_to_test:
@@ -71,7 +71,7 @@ async def audit():
             print("Found #ethWanConfig, clicking...")
             await page.click("#ethWanConfig")
             await page.wait_for_timeout(2000)
-            await page.screenshot(path="devices/ac1000z/audit_wan_config.png")
+            await page.screenshot(path="simulators/ac1000z/audit_wan_config.png")
             print("Saved audit_wan_config.png")
 
         # Try clicking Firewall inside Internet
@@ -80,7 +80,7 @@ async def audit():
             print("Found #firewall, clicking...")
             await page.click("#firewall")
             await page.wait_for_timeout(2000)
-            await page.screenshot(path="devices/ac1000z/audit_firewall.png")
+            await page.screenshot(path="simulators/ac1000z/audit_firewall.png")
             print("Saved audit_firewall.png")
 
         await browser.close()

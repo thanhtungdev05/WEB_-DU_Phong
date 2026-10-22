@@ -92,7 +92,7 @@ async def run_full_navigation_test():
             print("KẾT QUẢ TỔNG THỂ: CÓ LỖI XẢY RA!")
             print("============================================================")
 
-        await page.screenshot(path="devices/ac1000z/full_nav_test_verified.png")
+        await page.screenshot(path="simulators/ac1000z/full_nav_test_verified.png")
         await browser.close()
 
 if __name__ == "__main__":

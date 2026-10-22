@@ -262,7 +262,7 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         self.assertEqual(vg_store.USER_CONFIGS[ktv_b]["pages"]["doc/enet1.htm"]["vars"]["aryLanDhcp"], "192.168.2.200")
 
     def test_ax3000gz_v2_multi_ktv_isolation_and_reset(self):
-        gz_store = load_server("devices/ax3000gz_v2/src/config_store.py", "test_ax3000gz_v2_store")
+        gz_store = load_server("simulators/ax3000gz_v2/src/config_store.py", "test_ax3000gz_v2_store")
 
         ktv_a = "ktv_gz_A"
         ktv_b = "ktv_gz_B"

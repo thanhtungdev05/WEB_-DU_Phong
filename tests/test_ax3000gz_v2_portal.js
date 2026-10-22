@@ -147,12 +147,12 @@ Object.entries(simultaneousSelectors).forEach(([labId, selectors]) => {
 });
 
 const selectorSources = {
-  LAB_AX3000GZ_V2_01: 'devices/ax3000gz_v2/src/www/api/ethWanConfig.html',
-  LAB_AX3000GZ_V2_02: 'devices/ax3000gz_v2/src/www/api/wlanBasic.html',
-  LAB_AX3000GZ_V2_03: 'devices/ax3000gz_v2/src/www/api/wlanBasic.html',
-  LAB_AX3000GZ_V2_04: 'devices/ax3000gz_v2/src/www/api/lanMgrIpv4.html',
-  LAB_AX3000GZ_V2_05: 'devices/ax3000gz_v2/src/www/api/lanMgrIpv4.html',
-  LAB_AX3000GZ_V2_06: 'devices/ax3000gz_v2/src/www/api/portForwarding.html'
+  LAB_AX3000GZ_V2_01: 'simulators/ax3000gz_v2/src/www/api/ethWanConfig.html',
+  LAB_AX3000GZ_V2_02: 'simulators/ax3000gz_v2/src/www/api/wlanBasic.html',
+  LAB_AX3000GZ_V2_03: 'simulators/ax3000gz_v2/src/www/api/wlanBasic.html',
+  LAB_AX3000GZ_V2_04: 'simulators/ax3000gz_v2/src/www/api/lanMgrIpv4.html',
+  LAB_AX3000GZ_V2_05: 'simulators/ax3000gz_v2/src/www/api/lanMgrIpv4.html',
+  LAB_AX3000GZ_V2_06: 'simulators/ax3000gz_v2/src/www/api/portForwarding.html'
 };
 const requiredMarkers = {
   LAB_AX3000GZ_V2_01: ['id="UserName"', 'id="Password"'],
@@ -174,8 +174,8 @@ assert.ok(!migration.includes("'LAB_AX3000GZ_V2_07'"), 'catalog must contain onl
 assert.ok(!/\bDELETE\s+FROM\b/i.test(migration), 'catalog migration must not delete persisted data');
 
 const shellPages = [
-  'devices/ax3000gz_v2/src/www/login_page.html',
-  'devices/ax3000gz_v2/src/www/common_page.html'
+  'simulators/ax3000gz_v2/src/www/login_page.html',
+  'simulators/ax3000gz_v2/src/www/common_page.html'
 ];
 shellPages.forEach(relative => {
   const html = read(relative);
@@ -187,7 +187,7 @@ const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry =
   const full = path.join(dir, entry.name);
   return entry.isDirectory() ? walk(full) : [full];
 });
-walk(path.join(root, 'devices/ax3000gz_v2/src/www')).forEach(file => {
+walk(path.join(root, 'simulators/ax3000gz_v2/src/www')).forEach(file => {
   if (!/\.(html|js)$/.test(file)) return;
   const source = fs.readFileSync(file, 'utf8');
   assert.ok(!/top\.location\.href\s*=/.test(source), `${path.relative(root, file)} must reload inside the portal iframe instead of the top window`);
@@ -197,8 +197,8 @@ walk(path.join(root, 'devices/ax3000gz_v2/src/www')).forEach(file => {
 // phải bỏ qua trang đăng nhập, nếu không chế độ Hướng dẫn sẽ bật "Xem lỗi sai"
 // ngay khi học viên bấm Login mà chưa cấu hình gì.
 const appJs = read('app.js').replace(/\r\n/g, '\n');
-const loginPage = read('devices/ax3000gz_v2/src/www/login_page.html');
-const commonPage = read('devices/ax3000gz_v2/src/www/common_page.html');
+const loginPage = read('simulators/ax3000gz_v2/src/www/login_page.html');
+const commonPage = read('simulators/ax3000gz_v2/src/www/common_page.html');
 assert.ok(
   (appJs.match(/^\s*if \(isLogin\) return;$/gm) || []).length >= 2,
   'both Save/Apply listeners in app.js must ignore login pages'
@@ -255,8 +255,8 @@ assert.ok(
 
 // Đổi bài: portal gọi /sim_ax3000gz_v2/api/reset (POST trước, GET dự phòng)
 // nên server của thiết bị phải xử lý cả hai verb và xóa SID + ConfigStore.
-const serverSource = read('devices/ax3000gz_v2/src/server.py');
-const storeSource = read('devices/ax3000gz_v2/src/config_store.py');
+const serverSource = read('simulators/ax3000gz_v2/src/server.py');
+const storeSource = read('simulators/ax3000gz_v2/src/config_store.py');
 assert.ok(serverSource.includes('"/api/reset"'), 'simulator must expose /api/reset');
 const handlerBody = (source, name) => {
   const start = source.indexOf(`def ${name}(self):`);
