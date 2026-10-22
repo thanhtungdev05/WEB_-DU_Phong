@@ -239,7 +239,7 @@ def dat_lai_factory():
     global _cache
     user_key = lay_nguoi_dung_hien_tai()
     with _lock:
-        if user_key and user_key in _USER_CACHES:
+        if user_key:
             _USER_CACHES[user_key] = copy.deepcopy(_seed())
             return _USER_CACHES[user_key]
         _cache = _seed()

@@ -51,80 +51,87 @@ def _load_xml_template(path: str) -> tuple[str, list[dict]] | None:
     return text, pairs
 
 
-class ConfigStore:
-    def __init__(self, path: str = STATE_FILE):
-        self.path = path
-        self._lock = threading.RLock()
-        with open(path, encoding="utf-8") as fh:
-            self._data = json.load(fh)
+_RAW_STATE_DATA: dict | None = None
+_RAW_TEMPLATES: dict[str, str] = {}
+_RAW_STATIC_LEGACY: set[str] = set()
+_RAW_INTERNET_STATUS: dict[str, list[dict]] = {}
+_RAW_GENERIC_TEMPLATES: dict[str, str] = {}
+_RAW_GENERIC_VALUES: dict[str, list[dict]] = {}
+_RAW_CACHE_LOCK = threading.Lock()
 
-        # ── Legacy: Internet Status templates (giữ nguyên cho tương thích) ──
-        self._templates: dict[str, str] = {}
-        self._static_legacy: set[str] = set()
-        # ── Generic: tất cả file *.xml trong www/api/ ──
-        self._generic_templates: dict[str, str] = {}    # tag → XML text
-        self._generic_values: dict[str, list[dict]] = {}  # tag → [{name, value}]
-        self._load_templates()
 
-    def _load_templates(self) -> None:
-        """Nạp template XML từ www/api/ (dùng lúc khởi động và khi reset)."""
-        self._data["internet_status"] = {}
+def _ensure_raw_cache():
+    global _RAW_STATE_DATA, _RAW_TEMPLATES, _RAW_STATIC_LEGACY
+    global _RAW_INTERNET_STATUS, _RAW_GENERIC_TEMPLATES, _RAW_GENERIC_VALUES
+    if _RAW_STATE_DATA is not None:
+        return
+    with _RAW_CACHE_LOCK:
+        if _RAW_STATE_DATA is not None:
+            return
+        with open(STATE_FILE, encoding="utf-8") as fh:
+            _RAW_STATE_DATA = json.load(fh)
+
         for endpoint, filename in INTERNET_STATUS_FILES.items():
             file_path = os.path.join(API_DIR, filename)
             res = _load_xml_template(file_path)
             if res is None:
-                # Endpoint chỉ gồm IF_ERROR* (không có ParaName/ParaValue):
-                # trả nguyên văn XML tĩnh.
                 try:
-                    with open(file_path, encoding="utf-8",
-                              errors="replace") as fh:
-                        self._templates[endpoint] = fh.read()
-                    self._static_legacy.add(endpoint)
+                    with open(file_path, encoding="utf-8", errors="replace") as fh:
+                        _RAW_TEMPLATES[endpoint] = fh.read()
+                    _RAW_STATIC_LEGACY.add(endpoint)
                 except OSError:
                     pass
                 continue
             template_text, pairs = res
-            self._templates[endpoint] = template_text
-            self._data["internet_status"][endpoint] = pairs
+            _RAW_TEMPLATES[endpoint] = template_text
+            _RAW_INTERNET_STATUS[endpoint] = pairs
 
-        for fname in os.listdir(API_DIR):
-            if not fname.endswith(".xml"):
-                continue
-            tag = fname[:-4]   # bỏ ".xml"
-            # Nếu đã nạp trong INTERNET_STATUS_FILES → dùng legacy, không nạp lại
-            if tag in INTERNET_STATUS_FILES:
-                continue
-            # Tránh nạp các file tên cũ không có .lua
-            fpath = os.path.join(API_DIR, fname)
-            res = _load_xml_template(fpath)
-            if res is None:
-                # File XML không có ParaName/ParaValue: nạp dạng static
-                try:
-                    with open(fpath, encoding="utf-8", errors="replace") as fh:
-                        raw = fh.read()
-                    self._generic_templates[tag] = raw
-                except OSError:
-                    pass
-                continue
-            template_text, pairs = res
-            self._generic_templates[tag] = template_text
-            self._generic_values[tag] = pairs
+        if os.path.isdir(API_DIR):
+            for fname in os.listdir(API_DIR):
+                if not fname.endswith(".xml"):
+                    continue
+                tag = fname[:-4]
+                if tag in INTERNET_STATUS_FILES:
+                    continue
+                fpath = os.path.join(API_DIR, fname)
+                res = _load_xml_template(fpath)
+                if res is None:
+                    try:
+                        with open(fpath, encoding="utf-8", errors="replace") as fh:
+                            _RAW_GENERIC_TEMPLATES[tag] = fh.read()
+                    except OSError:
+                        pass
+                    continue
+                template_text, pairs = res
+                _RAW_GENERIC_TEMPLATES[tag] = template_text
+                _RAW_GENERIC_VALUES[tag] = pairs
+
+
+class ConfigStore:
+    def __init__(self, path: str = STATE_FILE):
+        self.path = path
+        self._lock = threading.RLock()
+        _ensure_raw_cache()
+        self._templates: dict[str, str] = {}
+        self._static_legacy: set[str] = set()
+        self._generic_templates: dict[str, str] = {}
+        self._generic_values: dict[str, list[dict]] = {}
+        self.reset()
 
     def reset(self) -> None:
         """Trả store về đúng trạng thái như khi khởi động server.
 
-        Dùng cho endpoint /api/reset khi đổi bài học: nạp lại state.json
-        (bộ nhớ trạng thái chỉ mutate RAM nên file trên đĩa luôn là mặc định)
-        và nạp lại toàn bộ template XML từ www/api/.
+        Dùng cho endpoint /api/reset khi đổi bài học: sao chép nhanh từ RAM cache
+        để không gây nghẽn đĩa khi nhiều KTV đồng thời reset.
         """
+        _ensure_raw_cache()
         with self._lock:
-            with open(self.path, encoding="utf-8") as fh:
-                self._data = json.load(fh)
-            self._templates.clear()
-            self._static_legacy.clear()
-            self._generic_templates.clear()
-            self._generic_values.clear()
-            self._load_templates()
+            self._data = copy.deepcopy(_RAW_STATE_DATA)
+            self._templates = dict(_RAW_TEMPLATES)
+            self._static_legacy = set(_RAW_STATIC_LEGACY)
+            self._generic_templates = dict(_RAW_GENERIC_TEMPLATES)
+            self._generic_values = {k: copy.deepcopy(v) for k, v in _RAW_GENERIC_VALUES.items()}
+            self._data["internet_status"] = {k: copy.deepcopy(v) for k, v in _RAW_INTERNET_STATUS.items()}
 
     # ─────────────────────────────────────────
     # Public helpers
@@ -279,10 +286,10 @@ def get_user_store(user_key: str | None = None) -> ConfigStore:
 def reset_user_store(user_key: str | None = None) -> None:
     key = user_key or current_user_key()
     with _STORE_LOCK:
-        if key in _USER_STORES:
-            _USER_STORES[key].reset()
-        else:
+        if key not in _USER_STORES:
             _USER_STORES[key] = ConfigStore()
+        store = _USER_STORES[key]
+    store.reset()
 
 
 class _StoreProxy:

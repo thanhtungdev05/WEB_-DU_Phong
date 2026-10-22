@@ -35,8 +35,9 @@
     return { selector, text, position, condition };
   }
 
-  function visibleAndUnsaved(selector) {
+  function visibleAndUnsaved(selector, containerSel = null) {
     return function (doc) {
+      if (containerSel && !isVisible(doc, containerSel)) return false;
       return isVisible(doc, selector) && !doc._ftcIsSaved;
     };
   }
@@ -149,23 +150,23 @@
   // Bài 6: Cấu hình Port Forwarding
   store.LAB_AX3000GZ_V2_06 = [
     step('#internet', 'Bước 1: Chọn Internet', 'bottom', function (doc) {
-      return !isVisible(doc, '#security') && !isVisible(doc, '#portForwarding') && !isVisible(doc, '#addInstBar_PortForwarding');
+      return !isVisible(doc, '#security') && !isVisible(doc, '#portForwarding') && !isVisible(doc, '#addInstBar_PortForwarding') && !isVisible(doc, '#PortForwarding');
     }),
     step('#security', 'Bước 2: Chọn Security', 'right', function (doc) {
-      return isVisible(doc, '#security') && !isVisible(doc, '#portForwarding') && !isVisible(doc, '#addInstBar_PortForwarding');
+      return isVisible(doc, '#security') && !isVisible(doc, '#portForwarding') && !isVisible(doc, '#addInstBar_PortForwarding') && !isVisible(doc, '#PortForwarding');
     }),
     step('#portForwarding', 'Bước 3: Chọn Port Forwarding', 'right', function (doc) {
-      return isVisible(doc, '#portForwarding') && !isVisible(doc, '#addInstBar_PortForwarding');
+      return isVisible(doc, '#portForwarding') && !isVisible(doc, '#addInstBar_PortForwarding') && !isVisible(doc, '#PortForwarding');
     }),
     // Khi chưa có rule, trang Port Forwarding tự mở form New Item.
-    step('[id^="Alias"]', 'Bước 4: Nhập Name: FPT Telecom', 'right', visibleAndUnsaved('[id^="Alias"]')),
-    step('[id^="Protocol"]', 'Bước 5: Chọn Protocol: TCP And UDP', 'right', visibleAndUnsaved('[id^="Protocol"]')),
-    step('[id^="S_Interface"]', 'Bước 6: Chọn WAN: internet_tr069', 'right', visibleAndUnsaved('[id^="S_Interface"]')),
-    step('[id^="InternalClient"]', 'Bước 7: Nhập LAN Host: 192.168.1.254', 'right', visibleAndUnsaved('[id^="InternalClient"]')),
-    step('[id^="ExternalPort"]:not([id*="EndRange"])', 'Bước 8: Port đầu: 8080', 'right', visibleAndUnsaved('[id^="ExternalPort"]:not([id*="EndRange"])')),
-    step('[id^="ExternalPortEndRange"]', 'Bước 9: Port cuối: 8080', 'right', visibleAndUnsaved('[id^="ExternalPortEndRange"]')),
-    step('[id^="InternalPort"]:not([id*="EndRange"])', 'Bước 10: Port đầu: 8080', 'right', visibleAndUnsaved('[id^="InternalPort"]:not([id*="EndRange"])')),
-    step('[id^="InternalPortEndRange"]', 'Bước 11: Port cuối: 8080', 'right', visibleAndUnsaved('[id^="InternalPortEndRange"]')),
-    step('[id^="Btn_apply_PortForwarding"]', 'Bước 12: Chọn Apply', 'top', visibleAndUnsaved('[id^="Btn_apply_PortForwarding"]'))
+    step('[id^="Alias"]', 'Bước 4: Nhập Name: FPT Telecom', 'right', visibleAndUnsaved('[id^="Alias"]', '#PortForwarding')),
+    step('[id^="Protocol"]', 'Bước 5: Chọn Protocol: TCP And UDP', 'right', visibleAndUnsaved('[id^="Protocol"]', '#PortForwarding')),
+    step('[id^="S_Interface"]', 'Bước 6: Chọn WAN: internet_tr069', 'right', visibleAndUnsaved('[id^="S_Interface"]', '#PortForwarding')),
+    step('[id^="InternalClient"]', 'Bước 7: Nhập LAN Host: 192.168.1.254', 'right', visibleAndUnsaved('[id^="InternalClient"]', '#PortForwarding')),
+    step('[id^="ExternalPort"]:not([id*="EndRange"])', 'Bước 8: Port đầu: 8080', 'right', visibleAndUnsaved('[id^="ExternalPort"]:not([id*="EndRange"])', '#PortForwarding')),
+    step('[id^="ExternalPortEndRange"]', 'Bước 9: Port cuối: 8080', 'right', visibleAndUnsaved('[id^="ExternalPortEndRange"]', '#PortForwarding')),
+    step('[id^="InternalPort"]:not([id*="EndRange"])', 'Bước 10: Port đầu: 8080', 'right', visibleAndUnsaved('[id^="InternalPort"]:not([id*="EndRange"])', '#PortForwarding')),
+    step('[id^="InternalPortEndRange"]', 'Bước 11: Port cuối: 8080', 'right', visibleAndUnsaved('[id^="InternalPortEndRange"]', '#PortForwarding')),
+    step('[id^="Btn_apply_PortForwarding"]', 'Bước 12: Chọn Apply', 'top', visibleAndUnsaved('[id^="Btn_apply_PortForwarding"]', '#PortForwarding'))
   ];
 })();

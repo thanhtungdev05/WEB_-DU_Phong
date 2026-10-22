@@ -142,6 +142,22 @@
   const sessionHeartbeatOwner = globalThis.crypto?.randomUUID?.()
     || `portal-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+  function fetchWithTimeout(url, options, timeoutMs) {
+    const timeout = typeof timeoutMs === 'number' ? timeoutMs : 3000;
+    if (typeof AbortController === 'undefined') {
+      return fetch(url, options);
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(function () {
+      controller.abort();
+    }, timeout);
+    const mergedOptions = Object.assign({}, options || {}, { signal: controller.signal });
+    return fetch(url, mergedOptions).finally(function () {
+      clearTimeout(timer);
+    });
+  }
+  window.fetchWithTimeout = fetchWithTimeout;
+
   function normalizeDeviceId(id) {
     if (!id) return '';
     const clean = String(id).trim().replace(/^DEV_/i, '').toLowerCase();
@@ -463,6 +479,10 @@
 
     // When iframe loads, trigger popups if in guide mode + clear fields
     deviceIframe.addEventListener('load', () => {
+      if (window._iframeLoadingTimeout) {
+        clearTimeout(window._iframeLoadingTimeout);
+        window._iframeLoadingTimeout = null;
+      }
       iframeLoading.classList.add('hidden');
       if (currentMode === 'guide') {
         setTimeout(applyGuidePopups, 100);
@@ -2529,7 +2549,8 @@
       lastSavedAt: 0,
       savedAttemptId: null,
       ruleCache: {},
-      cachedUnexpectedErrors: []
+      cachedUnexpectedErrors: [],
+      activeUnexpectedErrors: {}
     };
     const sessionToReserve = _trackingSession;
     _trackingSession.startSettled = sessionToReserve.mode !== 'Thực hành';
@@ -2545,6 +2566,10 @@
     // Reset iframe loading state
     iframeLoading.classList.remove('hidden');
     deviceIframe.src = 'about:blank';
+    if (window._iframeLoadingTimeout) {
+      clearTimeout(window._iframeLoadingTimeout);
+      window._iframeLoadingTimeout = null;
+    }
 
     // Thiết lập trạng thái ban đầu cho nút Nộp bài và nút Lỗi sai
     const noConfigInit = isNoConfigDevice();
@@ -2601,9 +2626,36 @@
         }
         return;
       }
+
+      if (window._iframeLoadingTimeout) {
+        clearTimeout(window._iframeLoadingTimeout);
+      }
+      window._iframeLoadingTimeout = setTimeout(function () {
+        if (iframeLoading && !iframeLoading.classList.contains('hidden')) {
+          iframeLoading.classList.add('hidden');
+          console.warn('[Iframe] Failsafe timeout 8s: tự động ẩn loading spinner để tránh chặn KTV.');
+        }
+      }, 8000);
+
       setTimeout(() => {
         // Force reload even if only hash changes, after the current user's
         // simulator state has been reset.
+        const urlObj = new URL(url, window.location.origin);
+        urlObj.searchParams.set('_t', Date.now());
+        urlObj.searchParams.set('_ktv', getKtvClientId());
+        deviceIframe.src = urlObj.toString();
+      }, 80);
+    }).catch(function (error) {
+      console.warn('[Iframe] Lỗi khi reset phiên trước khi nạp iframe:', error);
+      if (window._iframeLoadingTimeout) {
+        clearTimeout(window._iframeLoadingTimeout);
+      }
+      window._iframeLoadingTimeout = setTimeout(function () {
+        if (iframeLoading && !iframeLoading.classList.contains('hidden')) {
+          iframeLoading.classList.add('hidden');
+        }
+      }, 8000);
+      setTimeout(() => {
         const urlObj = new URL(url, window.location.origin);
         urlObj.searchParams.set('_t', Date.now());
         urlObj.searchParams.set('_ktv', getKtvClientId());
@@ -2969,6 +3021,17 @@
       sessionStorage.removeItem('vg2927_sid');
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPUsername');
       sessionStorage.removeItem('ftc_ac1000f_wan_PPPPassword');
+      const dynamicPrefixes = [normDev, String(targetDev || '').toLowerCase(), String(targetDev || '').toUpperCase(), simFolder.replace(/^sim_/i, '')];
+      for (let i = 0; i < dynamicPrefixes.length; i++) {
+        const p = dynamicPrefixes[i];
+        if (!p) continue;
+        localStorage.removeItem(p + '_state');
+        localStorage.removeItem(p + '_config');
+        sessionStorage.removeItem(p + '_session');
+        sessionStorage.removeItem(p + '_sid');
+        sessionStorage.removeItem(p + '_loginToken');
+        sessionStorage.removeItem(p + '_token');
+      }
     } catch (e) { }
 
     window._inFlightResets = window._inFlightResets || {};
@@ -2998,11 +3061,17 @@
       resetEndpoints.add(devResetUrl);
     }
 
+    const doFetch = (typeof fetchWithTimeout === 'function')
+      ? fetchWithTimeout
+      : ((typeof window !== 'undefined' && typeof window.fetchWithTimeout === 'function')
+          ? window.fetchWithTimeout
+          : function (u, o) { return fetch(u, o); });
+
     const ktvId = (typeof getKtvClientId === 'function' ? getKtvClientId() : '') || 'ktv_default';
     const resetPromises = Array.from(resetEndpoints).map(function (endpoint) {
       const resetUrl = endpoint + '?_t=' + Date.now() + '&_ktv=' + encodeURIComponent(ktvId);
       try {
-        return fetch(resetUrl, {
+        return doFetch(resetUrl, {
           method: 'POST',
           credentials: 'same-origin',
           cache: 'no-store',
@@ -3010,18 +3079,18 @@
             'X-FTC-Simulator-Reset': 'current-session',
             'X-KTV-Session-ID': ktvId
           }
-        }).then(function (response) {
+        }, 3000).then(function (response) {
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           return true;
         }).catch(function () {
-          return fetch(resetUrl, {
+          return doFetch(resetUrl, {
             method: 'GET',
             credentials: 'same-origin',
             cache: 'no-store',
             headers: {
               'X-KTV-Session-ID': ktvId
             }
-          }).then(function (response) { return response.ok; }).catch(function () { return false; });
+          }, 2500).then(function (response) { return response.ok; }).catch(function () { return false; });
         });
       } catch (error) {
         console.warn(`[Simulator] Không thể gửi yêu cầu đặt lại phiên ${endpoint}:`, error);
@@ -3057,6 +3126,10 @@
 
   function backToLesson() {
     if (trackingSaveInFlight) return;
+    if (window._iframeLoadingTimeout) {
+      clearTimeout(window._iframeLoadingTimeout);
+      window._iframeLoadingTimeout = null;
+    }
     resetDeviceSession(currentDeviceId);
     // Reset đồng hồ và session tracking
     const sessionToClose = _trackingSession;
@@ -3316,11 +3389,28 @@
             // Nếu KHÔNG nằm trong rule, nhưng lại bị sửa giá trị khác gốc
             if (!isExpected) {
               const currentValue = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
-              if (String(currentValue) !== String(originalValue)) {
+              const strCurr = String(currentValue === null || currentValue === undefined ? '' : currentValue).trim();
+              const strOrig = String(originalValue === null || originalValue === undefined ? '' : originalValue).trim();
+              let labelText = getLabelForElement(el, doc);
+              const loc = (doc.location && doc.location.pathname) ? (doc.location.pathname + doc.location.search) : '';
+              const fieldKey = `${loc}::${el.id || el.name || uid || labelText}`;
+
+              if (strCurr === strOrig) {
+                // KTV đã chỉnh lại về đúng giá trị gốc ban đầu: xóa lỗi khỏi activeUnexpectedErrors
+                if (_trackingSession && _trackingSession.activeUnexpectedErrors) {
+                  delete _trackingSession.activeUnexpectedErrors[fieldKey];
+                  delete _trackingSession.activeUnexpectedErrors[labelText];
+                  delete _trackingSession.activeUnexpectedErrors[uid];
+                  Object.keys(_trackingSession.activeUnexpectedErrors).forEach(k => {
+                    if ((el.id && k.endsWith('::' + el.id)) || (el.name && k.endsWith('::' + el.name)) || k.endsWith('::' + uid)) {
+                      delete _trackingSession.activeUnexpectedErrors[k];
+                    }
+                  });
+                }
+              } else {
                 // Bỏ qua đánh giá radio bị tắt để tránh 1 lần click sinh 2 lỗi trùng lặp
                 if (el.type === 'radio' && !el.checked) return;
 
-                let labelText = getLabelForElement(el, doc);
                 let formattedOriginal = '';
                 let formattedCurrent = '';
 
@@ -3342,11 +3432,18 @@
                   formattedCurrent = currentValue || 'Trống';
                 }
 
-                unexpectedErrors.push({
+                const errObj = {
                   label: labelText,
                   expected: formattedOriginal,
-                  actual: formattedCurrent
-                });
+                  actual: formattedCurrent,
+                  key: fieldKey
+                };
+
+                unexpectedErrors.push(errObj);
+                if (_trackingSession) {
+                  if (!_trackingSession.activeUnexpectedErrors) _trackingSession.activeUnexpectedErrors = {};
+                  _trackingSession.activeUnexpectedErrors[fieldKey] = errObj;
+                }
               }
             }
           }
@@ -3354,23 +3451,21 @@
       }
     });
 
-    // Đồng bộ lỗi thao tác thừa theo phiên nếu có (giữ nguyên lỗi nếu học viên chuyển sang trang khác)
+    // Đồng bộ lỗi thao tác thừa theo phiên (giữ nguyên lỗi nếu KTV chuyển trang mà chưa sửa lại)
     if (_trackingSession) {
-      if (unexpectedErrors.length > 0) {
-        _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
-      } else {
-        const hasFormFields = allDocs.some(d => {
-          try {
-            return (rules || []).some(r => d.querySelector(r.selector) !== null);
-          } catch(e) { return false; }
-        });
-        if (hasFormFields) {
-          _trackingSession.cachedUnexpectedErrors = [];
+      if (!_trackingSession.activeUnexpectedErrors) _trackingSession.activeUnexpectedErrors = {};
+      const activeList = Object.values(_trackingSession.activeUnexpectedErrors);
+      activeList.forEach(err => {
+        if (!unexpectedErrors.some(e => e.label === err.label || (e.key && e.key === err.key))) {
+          unexpectedErrors.push(err);
         }
+      });
+      if (activeList.length === 0) {
+        unexpectedErrors = [];
+        _trackingSession.cachedUnexpectedErrors = [];
+      } else {
+        _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
       }
-    }
-    if (unexpectedErrors.length === 0 && _trackingSession && Array.isArray(_trackingSession.cachedUnexpectedErrors) && _trackingSession.cachedUnexpectedErrors.length > 0) {
-      unexpectedErrors = _trackingSession.cachedUnexpectedErrors;
     }
 
     // Lọc triệt để loại bỏ các trường đăng nhập admin/admin, dnsTypeRadio, dhcpTypeRadio, wifi5/IoT toggle khỏi danh sách lỗi thao tác thừa
@@ -3394,6 +3489,16 @@
       }
       return true;
     });
+
+    if (_trackingSession && _trackingSession.activeUnexpectedErrors) {
+      Object.keys(_trackingSession.activeUnexpectedErrors).forEach(k => {
+        const err = _trackingSession.activeUnexpectedErrors[k];
+        if (!unexpectedErrors.includes(err)) {
+          delete _trackingSession.activeUnexpectedErrors[k];
+        }
+      });
+      _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
+    }
 
     return unexpectedErrors;
   }
@@ -3972,6 +4077,7 @@
 
     if (res.passed) {
       if (gmIcon) gmIcon.textContent = '🎉';
+      if (gmTitle) gmTitle.textContent = isNoConfigDevice() ? 'KẾT QUẢ: HOÀN THÀNH' : 'KẾT QUẢ: ĐẠT';
       if (isNoConfigDevice()) {
         if (gmSubtitle) gmSubtitle.textContent = 'Đã ghi nhận khảo sát thiết bị ONT BE15000 thành công!';
         if (gmStatusBox) gmStatusBox.className = 'gm-status-box';
@@ -4234,7 +4340,10 @@
     setTrackingActionsDisabled(true);
     setTrackingSaveStatus('saving', 'Đang lưu kết quả và cập nhật tiến độ...');
 
-    const finishedAt = new Date();
+    // Đồng bộ thời gian hoàn thành khớp chính xác với started_at + durationSec, chống lệch do độ trễ mạng/kiểm tra phiên
+    const safeDuration = Number.isFinite(Number(durationSec)) ? Math.max(0, Math.round(Number(durationSec))) : 0;
+    const startedMs = session.startedAt ? new Date(session.startedAt).getTime() : Date.now();
+    const finishedAt = new Date(startedMs + (safeDuration * 1000));
 
     // Lấy tên thiết bị từ device object (ưu tiên device.name, fallback device.id)
     const deviceName = (session.device && session.device.name) ? session.device.name : (session.device && session.device.id ? session.device.id : 'Unknown');
@@ -4245,7 +4354,12 @@
     // Thông tin KTV từ phiên đăng nhập; server đối chiếu lại danh tính này.
     const user = _currentUser;
 
-    const payload = retryPayload ? { ...retryPayload } : {
+    const payload = retryPayload ? {
+      ...retryPayload,
+      started_at: session.startedAt,
+      finished_at: finishedAt.toISOString(),
+      duration_sec: safeDuration
+    } : {
       submission_id: session.submissionId,
       technician_id: user.technician_id,
       name: user.name,
@@ -4255,7 +4369,7 @@
       device: deviceName,
       started_at: session.startedAt,
       finished_at: finishedAt.toISOString(),
-      duration_sec: durationSec || 0
+      duration_sec: safeDuration
     };
 
     if (!retryPayload && evalResult) {
@@ -4268,7 +4382,7 @@
     Object.keys(payload).forEach(function (k) {
       if (payload[k] === undefined) delete payload[k];
     });
-    if (!retryPayload) _lastTrackingPayload = payload;
+    _lastTrackingPayload = payload;
 
     return fetch('/api/index.php/tracking/timer', {
       method: 'POST',

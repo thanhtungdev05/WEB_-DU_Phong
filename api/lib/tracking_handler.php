@@ -482,7 +482,7 @@ function handle_tracking(array $segments, string $method): void
             if ($timestampDuration > $maximumDuration) {
                 fail(400, 'bad-request', 'The session duration exceeds the allowed maximum.');
             }
-            if ($durationWasProvided && abs($timestampDuration - (int)$durationSec) > 5) {
+            if ($durationWasProvided && abs($timestampDuration - (int)$durationSec) > 120) {
                 fail(400, 'bad-request', 'duration_sec does not match started_at and finished_at.');
             }
         }

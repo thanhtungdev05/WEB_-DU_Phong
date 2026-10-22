@@ -71,23 +71,29 @@ except ValueError:
     API_PROXY_TIMEOUT_SECONDS = 90
 API_PROXY_TIMEOUT_SECONDS = max(10, min(API_PROXY_TIMEOUT_SECONDS, 300))
 
-# Import các Handler của từng thiết bị
-import simulators.sim_ac1000f.server2 as ac1000f
-# AX3000CV2 firmware 0.5.3 (fw_053/)
-import simulators.sim_ax3000c.server_fw053 as ax3000c
-import simulators.sim_ax3000gz.server as ax3000gz
-import devices.ax3000gz_v2.src.server as ax3000gz_v2
-import devices.ac1000z.src.server as ac1000z
-import simulators.sim_ax3000hv2.server2 as ax3000hv2
-import simulators.sim_ax3000s.server as ax3000s
-import simulators.sim_be12000.src.server as be12000
-import simulators.sim_be15000.server as be15000
-import simulators.sim_ac1000HI.src.server as ac1000HI
-import simulators.sim_vigor2927.src.server as vigor2927
-import simulators.sim_ONT_be6500c.src.server as be6500c
-import simulators.ont_be6500c.src.server as ONT_be6500c
-import simulators.mikrotik_hexs.src.server as mikrotik_hexs
-import simulators.ac1000cv2.src.server as ac1000cv2
+# Import các Handler của từng thiết bị (bảo vệ sys.argv khi nạp từ pytest/test runner)
+_orig_argv = sys.argv[:]
+try:
+    if len(sys.argv) > 1 and not sys.argv[1].isdigit():
+        sys.argv = [sys.argv[0]]
+    import simulators.sim_ac1000f.server2 as ac1000f
+    # AX3000CV2 firmware 0.5.3 (fw_053/)
+    import simulators.sim_ax3000c.server_fw053 as ax3000c
+    import simulators.sim_ax3000gz.server as ax3000gz
+    import devices.ax3000gz_v2.src.server as ax3000gz_v2
+    import devices.ac1000z.src.server as ac1000z
+    import simulators.sim_ax3000hv2.server2 as ax3000hv2
+    import simulators.sim_ax3000s.server as ax3000s
+    import simulators.sim_be12000.src.server as be12000
+    import simulators.sim_be15000.server as be15000
+    import simulators.sim_ac1000HI.src.server as ac1000HI
+    import simulators.sim_vigor2927.src.server as vigor2927
+    import simulators.sim_ONT_be6500c.src.server as be6500c
+    import simulators.ont_be6500c.src.server as ONT_be6500c
+    import simulators.mikrotik_hexs.src.server as mikrotik_hexs
+    import simulators.ac1000cv2.src.server as ac1000cv2
+finally:
+    sys.argv = _orig_argv
 
 # Mapping từ device id sang module
 SIM_MODULES = {
