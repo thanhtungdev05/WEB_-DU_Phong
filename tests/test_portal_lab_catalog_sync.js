@@ -128,7 +128,7 @@ const migrations = [
   '056_standardize_lab_display_titles.sql',
   '060_standardize_vigor2927_bai6_title.sql',
   '061_activate_ac1000z_catalog.sql',
-  '062_activate_ax1800gz_catalog.sql'
+  '063_activate_ax1800gz_catalog.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
