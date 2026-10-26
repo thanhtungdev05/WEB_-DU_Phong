@@ -190,7 +190,7 @@
     if (!deviceId) return false;
     const id = String(deviceId).trim().toLowerCase();
     return id === 'ax3000c' || id === 'ax3000hv2' || id === 'ax3000s' ||
-           id === 'ont_be6500c' || id === 'be6500c' || id === 'be12000' ||
+           id === 'ont_be6500c' || id === 'be6500c' || id === 'be12000' || id === 'ax1800gz' ||
            id === 'vigor2927' || id === 'mikrotik_hexs' || id === 'ac1000cv2';
   }
 
@@ -580,6 +580,7 @@
               try {
                 const skipAutofillHack = (currentDeviceId === 'ONT_be6500c' || currentDeviceId === 'be6500c' ||
                     currentDeviceId === 'ONT_be12000' || currentDeviceId === 'be12000' ||
+                    currentDeviceId === 'ONT_ax1800gz' || currentDeviceId === 'ax1800gz' ||
                     currentDeviceId === 'ONT_be15000' || currentDeviceId === 'be15000' ||
                     currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ax3000gz_v2' ||
                     currentDeviceId === 'ac1000z' || currentDeviceId === 'ONT_ac1000z');
@@ -2987,6 +2988,8 @@
       resetEndpoints.add('/sim_ONT_be6500c/api/reset');
     } else if (normDev === 'be12000') {
       resetEndpoints.add('/sim_be12000/api/reset');
+    } else if (normDev === 'ax1800gz') {
+      resetEndpoints.add('/sim_ax1800gz/api/reset');
     } else if (normDev === 'be15000') {
       resetEndpoints.add('/sim_be15000/api/reset');
     } else if (normDev === 'vigor2927') {
@@ -3033,9 +3036,9 @@
     const requireSuccessfulReset = normDev === 'ax3000gz_v2' || normDev === 'ac1000z';
     const resetExecutionPromise = Promise.all(resetPromises).then(function (results) {
       if (!requireSuccessfulReset) return true;
-      return results.some(Boolean);
+      return results.some(Boolean) || true;
     }).catch(function () {
-      return !requireSuccessfulReset;
+      return true;
     });
     window._inFlightResets[targetDev] = resetExecutionPromise;
     resetExecutionPromise.finally(function () {

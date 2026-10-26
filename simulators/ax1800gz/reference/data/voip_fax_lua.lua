@@ -1,0 +1,1 @@
+<ajax_response_xml_root><IF_ERRORPARAM>SUCC</IF_ERRORPARAM><IF_ERRORTYPE>SUCC</IF_ERRORTYPE><IF_ERRORSTR>SUCC</IF_ERRORSTR><IF_ERRORID>0</IF_ERRORID><OBJ_VOIPFAXT38_ID><Instance><ParaName>_InstID</ParaName><ParaValue>IGD.SV.VS1.VP1.VF</ParaValue><ParaName>Enable</ParaName><ParaValue>1</ParaValue></Instance></OBJ_VOIPFAXT38_ID></ajax_response_xml_root>

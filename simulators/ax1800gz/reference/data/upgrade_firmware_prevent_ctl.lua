@@ -1,0 +1,1 @@
+<ajax_response_xml_root><IF_ERRORPARAM>SUCC</IF_ERRORPARAM><IF_ERRORTYPE>SUCC</IF_ERRORTYPE><IF_ERRORSTR>SUCC</IF_ERRORSTR><IF_ERRORID>0</IF_ERRORID><OBJ_MANAGESERVER_ID><Instance><ParaName>_InstID</ParaName><ParaValue>DEV</ParaValue><ParaName>UpgradesManaged</ParaName><ParaValue>0</ParaValue></Instance></OBJ_MANAGESERVER_ID></ajax_response_xml_root>

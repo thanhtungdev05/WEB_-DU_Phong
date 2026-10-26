@@ -1,0 +1,946 @@
+{
+  "accountMgr": {
+    "view_file": "accountMgr.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=devauth_accountmgr_lua.lua",
+      "/?_type=menuData&_tag=web_login_timeout_lua.lua"
+    ],
+    "menu_data_calls": [
+      "devauth_accountmgr_lua.lua",
+      "web_login_timeout_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "alg": {
+    "view_file": "alg.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=firewall_alg_lua.lua"
+    ],
+    "menu_data_calls": [
+      "firewall_alg_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "arpTable": {
+    "view_file": "arpTable.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=arp_arptable_lua.lua"
+    ],
+    "menu_data_calls": [
+      "arp_arptable_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "bpdu": {
+    "view_file": "bpdu.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=bpdu_lua.lua"
+    ],
+    "menu_data_calls": [
+      "bpdu_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "conntracks": {
+    "view_file": "conntracks.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=firewall_conntrack_lua.lua"
+    ],
+    "menu_data_calls": [
+      "firewall_conntrack_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "ddns": {
+    "view_file": "ddns.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=ddns_lua.lua"
+    ],
+    "menu_data_calls": [
+      "ddns_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "dms": {
+    "view_file": "dms.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=dms_dms_lua.lua"
+    ],
+    "menu_data_calls": [
+      "dms_querydir_lua.lua",
+      "dms_dms_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "dmz": {
+    "view_file": "dmz.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=firewall_dmz_lua.lua"
+    ],
+    "menu_data_calls": [
+      "firewall_dmz_lua.lua"
+    ],
+    "hidden_data_calls": [
+      "accessdev_data"
+    ],
+    "inputs": []
+  },
+  "dns": {
+    "view_file": "dns.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=dns_localdns_lua.lua",
+      "/?_type=menuData&_tag=dns_hostname_lua.lua"
+    ],
+    "menu_data_calls": [
+      "dns_localdns_lua.lua",
+      "dns_hostname_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "ethWanConfig": {
+    "view_file": "ethWanConfig.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=wan_internet_lua.lua&TypeUplink=2&pageType=0"
+    ],
+    "menu_data_calls": [
+      "wan_internet_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "ethWanStatus": {
+    "view_file": "ethWanStatus.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=wan_internetstatus_lua.lua&TypeUplink=2&pageType=1"
+    ],
+    "menu_data_calls": [
+      "wan_internetstatus_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "fax": {
+    "view_file": "fax.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=voip_fax_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voip_fax_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "filterCriteria": {
+    "view_file": "filterCriteria.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=firewall_filterglobal_lua.lua",
+      "/?_type=menuData&_tag=firewall_ipfilter_lua.lua",
+      "/?_type=menuData&_tag=firewall_macfilterv3_lua.lua",
+      "/?_type=menuData&_tag=firewall_urlfilter_m.lua"
+    ],
+    "menu_data_calls": [
+      "firewall_filterglobal_lua.lua",
+      "firewall_ipfilter_lua.lua",
+      "firewall_macfilterv3_lua.lua",
+      "firewall_urlfilter_m.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "firewall": {
+    "view_file": "firewall.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=firewall_config_lua.lua",
+      "/?_type=menuData&_tag=firewall_dos_lua.lua"
+    ],
+    "menu_data_calls": [
+      "firewall_config_lua.lua",
+      "firewall_dos_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "firmwareUpgr": {
+    "view_file": "firmwareUpgr.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=upgrade_firmware_query_lua.lua"
+    ],
+    "menu_data_calls": [
+      "updownload_prevent_ctl.lua",
+      "do_firmware_upgrade.lua",
+      "upgrade_firmware_prevent_ctl.lua",
+      "upgrade_firmware_query_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "ftp": {
+    "view_file": "ftp.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=Localnet_ftp_lua.lua"
+    ],
+    "menu_data_calls": [
+      "Localnet_ftp_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "HardwareDiag": {
+    "view_file": "HardwareDiag.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=hardware_diag_lua.lua"
+    ],
+    "menu_data_calls": [
+      "hardware_diag_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "homePage": {
+    "view_file": "homePage.html",
+    "form_actions": [],
+    "menu_data_calls": [
+      "firewall_homepage_lua.lua",
+      "wlan_homepage_lua.lua",
+      "accessdev_homepage_lua.lua",
+      "usb_homepage_lua.lua",
+      "voip_homepage_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "igmp": {
+    "view_file": "igmp.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=multicast_igmpwan_lua.lua"
+    ],
+    "menu_data_calls": [
+      "multicast_igmpwan_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "iplimit": {
+    "view_file": "iplimit.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=fpt_iplimitSw_model.lua",
+      "/?_type=menuData&_tag=fpt_iplimit_lua.lua"
+    ],
+    "menu_data_calls": [
+      "fpt_iplimitSw_model.lua",
+      "fpt_iplimit_lua.lua"
+    ],
+    "hidden_data_calls": [
+      "accessdev_data"
+    ],
+    "inputs": []
+  },
+  "IPv6SwitchMgr": {
+    "view_file": "IPv6SwitchMgr.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=ipv6_enable_lua.lua"
+    ],
+    "menu_data_calls": [
+      "ipv6_enable_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "l2tpConfig": {
+    "view_file": "l2tpConfig.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=l2tp_lua.lua"
+    ],
+    "menu_data_calls": [
+      "l2tp_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "l2tpStatus": {
+    "view_file": "l2tpStatus.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=l2tp_lua.lua"
+    ],
+    "menu_data_calls": [
+      "l2tp_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "lanMgrIpv4": {
+    "view_file": "lanMgrIpv4.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=Localnet_LanMgrIpv4_DHCPHostInfo_lua.lua",
+      "/?_type=menuData&_tag=Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua",
+      "/?_type=menuData&_tag=Localnet_LanMgrIpv4_DHCPStaticRule_lua.lua",
+      "/?_type=menuData&_tag=Localnet_LanDevDHCPSource_lua.lua"
+    ],
+    "menu_data_calls": [
+      "Localnet_LanMgrIpv4_DHCPHostInfo_lua.lua",
+      "Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua",
+      "Localnet_LanMgrIpv4_DHCPStaticRule_lua.lua",
+      "Localnet_LanDevDHCPSource_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "lanMgrIpv6": {
+    "view_file": "lanMgrIpv6.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=dhcp6s_hostinfo_lua.lua",
+      "/?_type=menuData&_tag=addr6_lanaddr_lua.lua",
+      "/?_type=menuData&_tag=prefix_staticprefix_lua.lua",
+      "/?_type=menuData&_tag=dhcp6s_dhcpserver_lua.lua",
+      "/?_type=menuData&_tag=ra_raservice_lua.lua",
+      "/?_type=menuData&_tag=prefix_prefixpool_lua.lua",
+      "/?_type=menuData&_tag=radhcp6s_portctrl_lua.lua"
+    ],
+    "menu_data_calls": [
+      "dhcp6s_hostinfo_lua.lua",
+      "addr6_lanaddr_lua.lua",
+      "prefix_staticprefix_lua.lua",
+      "dhcp6s_dhcpserver_lua.lua",
+      "ra_raservice_lua.lua",
+      "prefix_prefixpool_lua.lua",
+      "radhcp6s_portctrl_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "localNetStatus": {
+    "view_file": "localNetStatus.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=status_lan_info_lua.lua",
+      "/?_type=menuData&_tag=wlan_wlanstatus_lua.lua",
+      "/?_type=menuData&_tag=wlan_client_stat_lua.lua",
+      "/?_type=menuData&_tag=accessdev_landevs_lua.lua",
+      "/?_type=menuData&_tag=usb_usbdevs_lua.lua"
+    ],
+    "menu_data_calls": [
+      "status_lan_info_lua.lua",
+      "wlan_wlanstatus_lua.lua",
+      "wlan_client_stat_lua.lua",
+      "accessdev_landevs_lua.lua",
+      "usb_usbdevs_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "localServiceCtrl": {
+    "view_file": "localServiceCtrl.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=firewall_ipv4service_lua.lua",
+      "/?_type=menuData&_tag=firewall_ipv6service_lua.lua",
+      "/?_type=menuData&_tag=firewall_portservice_lua.lua"
+    ],
+    "menu_data_calls": [
+      "firewall_ipv4service_lua.lua",
+      "firewall_ipv6service_lua.lua",
+      "firewall_portservice_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "logMgr": {
+    "view_file": "logMgr.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=log_syslogmgr_lua.lua",
+      "/?_type=menuData&_tag=log_seclogmgr_lua.lua",
+      "/?_type=menuData&_tag=log_wifilogmgr_lua.lua"
+    ],
+    "menu_data_calls": [
+      "updownload_prevent_ctl.lua",
+      "do_download_syslog.lua",
+      "log_syslogmgr_lua.lua",
+      "do_download_seclog.lua",
+      "log_seclogmgr_lua.lua",
+      "do_download_wifilog.lua",
+      "log_wifilogmgr_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "loopbackDetect": {
+    "view_file": "loopbackDetect.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=loopback_basic_lua.lua",
+      "/?_type=menuData&_tag=loopback_enable_lua.lua",
+      "/?_type=menuData&_tag=loopback_vlan_lua.lua"
+    ],
+    "menu_data_calls": [
+      "loopback_basic_lua.lua",
+      "loopback_enable_lua.lua",
+      "loopback_vlan_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "macTable": {
+    "view_file": "macTable.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=macinfo_mactable_lua.lua"
+    ],
+    "menu_data_calls": [
+      "macinfo_mactable_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "mirror": {
+    "view_file": "mirror.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=mirror_mirrormgr_lua.lua"
+    ],
+    "menu_data_calls": [
+      "mirror_mirrormgr_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "mld": {
+    "view_file": "mld.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=multicast_mldwan_lua.lua"
+    ],
+    "menu_data_calls": [
+      "multicast_mldwan_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "mmTopology": {
+    "view_file": "mmTopology.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=topo_lua.lua"
+    ],
+    "menu_data_calls": [
+      "topo_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "multicastbasic": {
+    "view_file": "multicastbasic.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=igmp_lua.lua"
+    ],
+    "menu_data_calls": [
+      "igmp_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "multicastmode": {
+    "view_file": "multicastmode.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=multicast_mode_lua.lua"
+    ],
+    "menu_data_calls": [
+      "multicast_mode_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "networkDiag": {
+    "view_file": "networkDiag.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=networkdiag_ping_lua.lua",
+      "/?_type=menuData&_tag=networkdiag_traceroute_lua.lua",
+      "/?_type=menuData&_tag=networkdiag_svcsimulation_lua.lua"
+    ],
+    "menu_data_calls": [
+      "networkdiag_ping_lua.lua",
+      "networkdiag_traceroute_lua.lua",
+      "networkdiag_svcsimulation_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "parentCtrl": {
+    "view_file": "parentCtrl.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=firewall_parentctrl_lua.lua"
+    ],
+    "menu_data_calls": [
+      "firewall_parentctrl_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "ponLoid": {
+    "view_file": "ponLoid.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=poninfo_loid_lua.lua"
+    ],
+    "menu_data_calls": [
+      "poninfo_loid_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "ponopticalinfo": {
+    "view_file": "ponopticalinfo.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=optical_info_lua.lua"
+    ],
+    "menu_data_calls": [
+      "optical_info_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "ponSn": {
+    "view_file": "ponSn.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=poninfo_sn_lua.lua"
+    ],
+    "menu_data_calls": [
+      "poninfo_sn_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "portBinding": {
+    "view_file": "portBinding.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=portbinding_lua.lua"
+    ],
+    "menu_data_calls": [
+      "portbinding_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "portForwarding": {
+    "view_file": "portForwarding.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=firewall_portforwarding_lua.lua"
+    ],
+    "menu_data_calls": [
+      "firewall_portforwarding_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "portlocate": {
+    "view_file": "portlocate.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=Internet_PortLocate_lua.lua"
+    ],
+    "menu_data_calls": [
+      "Internet_PortLocate_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "portTrigger": {
+    "view_file": "portTrigger.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=firewall_porttrigger_m.lua"
+    ],
+    "menu_data_calls": [
+      "firewall_porttrigger_m.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "rebootAndReset": {
+    "view_file": "rebootAndReset.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=devmgr_restartmgr_lua.lua",
+      "/?_type=menuData&_tag=devmgr_ScheReboot_lua.lua",
+      "/?_type=menuData&_tag=db_resetmgr_lua.lua"
+    ],
+    "menu_data_calls": [
+      "devmgr_restartmgr_lua.lua",
+      "devmgr_ScheReboot_lua.lua",
+      "db_resetmgr_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "rip": {
+    "view_file": "rip.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=rip_lua.lua",
+      "/?_type=menuData&_tag=route_ripng_m.lua"
+    ],
+    "menu_data_calls": [
+      "rip_lua.lua",
+      "route_ripng_m.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "routeIpv4": {
+    "view_file": "routeIpv4.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=route_routedefault_lua.lua",
+      "/?_type=menuData&_tag=route_routetableipv4_lua.lua",
+      "/?_type=menuData&_tag=route_routestaticipv4_lua.lua",
+      "/?_type=menuData&_tag=route_routepolicyipv4_lua.lua"
+    ],
+    "menu_data_calls": [
+      "route_routedefault_lua.lua",
+      "route_routetableipv4_lua.lua",
+      "route_routestaticipv4_lua.lua",
+      "route_routepolicyipv4_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "routeIpv6": {
+    "view_file": "routeIpv6.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=route_routedefaultipv6_lua.lua",
+      "/?_type=menuData&_tag=route_routetableipv6_lua.lua",
+      "/?_type=menuData&_tag=route_routestaticipv6_lua.lua",
+      "/?_type=menuData&_tag=route_routepolicyipv6_lua.lua"
+    ],
+    "menu_data_calls": [
+      "route_routedefaultipv6_lua.lua",
+      "route_routetableipv6_lua.lua",
+      "route_routestaticipv6_lua.lua",
+      "route_routepolicyipv6_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "samba": {
+    "view_file": "samba.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=Samba_lua.lua"
+    ],
+    "menu_data_calls": [
+      "Samba_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "sip": {
+    "view_file": "sip.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=voip_voipsip_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voip_voipsip_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "sipAdvanced": {
+    "view_file": "sipAdvanced.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=voip_sipadvanced_lua.lua",
+      "/?_type=menuData&_tag=voip_voiceproc_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voip_sipadvanced_lua.lua",
+      "voip_voiceproc_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "sipCallerID": {
+    "view_file": "sipCallerID.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=voip_cid_sip_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voip_cid_sip_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "sipDigitmap": {
+    "view_file": "sipDigitmap.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=Voip_sipdigitmap_lua.lua"
+    ],
+    "menu_data_calls": [
+      "Voip_sipdigitmap_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "sipIf": {
+    "view_file": "sipIf.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=Voip_SipIf_lua.lua"
+    ],
+    "menu_data_calls": [
+      "Voip_SipIf_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "sipMedia": {
+    "view_file": "sipMedia.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=voip_sipmedia_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voip_sipmedia_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "sipslc": {
+    "view_file": "sipslc.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=voip_sipslc_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voip_sipslc_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "smNetSphereMAP": {
+    "view_file": "smNetSphereMAP.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=Localnet_NetSphere_Mode_lua.lua"
+    ],
+    "menu_data_calls": [
+      "Localnet_NetSphere_Mode_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "sntp": {
+    "view_file": "sntp.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=sntp_lua.lua"
+    ],
+    "menu_data_calls": [
+      "sntp_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "statusMgr": {
+    "view_file": "statusMgr.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=devmgr_statusmgr_lua.lua"
+    ],
+    "menu_data_calls": [
+      "devmgr_statusmgr_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "tunnel4in6Config": {
+    "view_file": "tunnel4in6Config.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=tunnel_4in6_config_lua.lua"
+    ],
+    "menu_data_calls": [
+      "tunnel_4in6_config_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "tunnel4in6Status": {
+    "view_file": "tunnel4in6Status.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=tunnel_4in6_status_lua.lua"
+    ],
+    "menu_data_calls": [
+      "tunnel_4in6_status_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "upnp": {
+    "view_file": "upnp.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=upnp_upnp_lua.lua",
+      "/?_type=menuData&_tag=upnp_portmap_lua.lua"
+    ],
+    "menu_data_calls": [
+      "upnp_upnp_lua.lua",
+      "upnp_portmap_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "usbfunccfg": {
+    "view_file": "usbfunccfg.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=usb_usbfunccfg_lua.lua"
+    ],
+    "menu_data_calls": [
+      "usb_usbfunccfg_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "UserGuideLoad": {
+    "view_file": "UserGuideLoad.html",
+    "form_actions": [],
+    "menu_data_calls": [
+      "updownload_prevent_ctl.lua",
+      "do_download_userManual.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "voipBasic": {
+    "view_file": "voipBasic.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=voip_voipbasic_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voip_voipbasic_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "voipqos": {
+    "view_file": "voipqos.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=Voip_Voip_QoS_lua.lua",
+      "/?_type=menuData&_tag=Voip_Voip_QoS_Media_lua.lua"
+    ],
+    "menu_data_calls": [
+      "Voip_Voip_QoS_lua.lua",
+      "Voip_Voip_QoS_Media_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "voipServices": {
+    "view_file": "voipServices.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=Voip_SipService_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voipDmtTimer_lua.lua",
+      "Voip_SipService_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "voipStatus": {
+    "view_file": "voipStatus.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=voipRegStatus_lua.lua",
+      "/?_type=menuData&_tag=voipVpPhyinterface_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voipRegStatus_lua.lua",
+      "voipVpPhyinterface_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "voipSwithPtcl": {
+    "view_file": "voipSwithPtcl.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=voip_protocolswitch_lua.lua"
+    ],
+    "menu_data_calls": [
+      "voip_protocolswitch_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "Wan3gConfig": {
+    "view_file": "Wan3gConfig.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=wwan_pin_lua.lua",
+      "/?_type=menuData&_tag=wan_3gLTE_config_lua.lua",
+      "/?_type=menuData&_tag=wwan_backup_lua.lua"
+    ],
+    "menu_data_calls": [
+      "wwan_pin_lua.lua",
+      "wan_3gLTE_config_lua.lua",
+      "wwan_backup_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "Wan3gStatus": {
+    "view_file": "Wan3gStatus.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=wwan_mobile_status_lua.lua",
+      "/?_type=menuData&_tag=wan_3g_status_lua.lua"
+    ],
+    "menu_data_calls": [
+      "wwan_mobile_status_lua.lua",
+      "wan_3g_status_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "wifibandsteer": {
+    "view_file": "wifibandsteer.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=wlan_BandSteering_lua.lua"
+    ],
+    "menu_data_calls": [
+      "wlan_BandSteering_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "wlanAdvanced": {
+    "view_file": "wlanAdvanced.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=wlan_macfilteraclpolicy_lua.lua",
+      "/?_type=menuData&_tag=wlan_macfilterrule_lua.lua"
+    ],
+    "menu_data_calls": [
+      "wlan_macfilteraclpolicy_lua.lua",
+      "wlan_macfilterrule_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "wlanBasic": {
+    "view_file": "wlanBasic.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=wlan_wlanbasiconoff_lua.lua",
+      "/?_type=menuData&_tag=wlan_wlanbasicadconf_lua.lua",
+      "/?_type=menuData&_tag=wlan_wlansssidconf_lua.lua"
+    ],
+    "menu_data_calls": [
+      "wlan_wlanbasiconoff_lua.lua",
+      "wlan_wlanbasicadconf_lua.lua",
+      "wlan_wlansssidconf_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "wlanStaScanAP": {
+    "view_file": "wlanStaScanAP.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=wlan_sta_wlan_profile_lua.lua"
+    ],
+    "menu_data_calls": [
+      "wlan_sta_wlan_profile_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  },
+  "wps": {
+    "view_file": "wps.html",
+    "form_actions": [
+      "/?_type=menuData&_tag=wlan_wps_lua.lua"
+    ],
+    "menu_data_calls": [
+      "wlan_wps_lua.lua"
+    ],
+    "hidden_data_calls": [],
+    "inputs": []
+  }
+}

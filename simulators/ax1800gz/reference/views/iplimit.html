@@ -1,0 +1,820 @@
+<script type="text/javascript">
+$(document).ready(function(){
+initial_sceneTip();
+initial_CollapsibleBar();
+initial_addInstLink();
+initial_QueryAccessDeviceLink();
+initial_TimeCtl();
+$(".HeadDIV").each(function(){
+var Head = $(this);
+var HeadID = Head.attr("id");
+var template = $("#template_"+HeadID,Head);
+var formOBJ = $("form",Head);
+if ( ! formOBJ.attr("onsubmit") )
+{
+formOBJ.attr("onsubmit", "return false;");
+}
+var stopFormAutoSubmitStr = "<input type='text' id='_stopFormAutoSubmit'"
++" value='' class='PostIgnore'"
++" style='display:none;'>";
+formOBJ.prepend(stopFormAutoSubmitStr);
+initial_button("Apply", Head);
+initial_button("Cancel", Head);
+initial_button("Delete", Head);
+initialCtrlAllLink(Head);
+initial_special_password(Head);
+var collapsibleInstObj = $(".collapsibleInst",template);
+collapsibleInstObj.unbind("click");
+collapsibleInstObj.click(function(event){
+var collapsibleInst = $(this);
+var template = collapsibleInst.parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+if ( ChangeArea.is(":hidden") )
+{
+ChangeArea.showIt(true);
+collapsibleInst.addClass("instNameExp");
+}
+else
+{
+ChangeArea.showIt(false);
+collapsibleInst.removeClass("instNameExp");
+$(".Btn_cancel",ChangeArea).click();
+}
+});
+$(".utf8Compatible", template).each(function(){
+var thisObj = $(this);
+var dTip = thisObj.text();
+var dTipArr = dTip.split("");
+var firstNum = "";
+var secNum = "";
+var firstNumStart = "";
+var firstNumEnd = "";
+var secNumStart = "";
+var secNumEnd = "";
+var Nums = 0;
+var newTip = "";
+dTipArr = $.grep(dTipArr, function(n,i){
+return n != " ";
+});
+dTip = dTipArr.join("");
+for(var i=0; i<dTipArr.length; i++)
+{
+if (Nums > 2)
+{
+thisObj.remove();
+break;
+}
+if (isNaN(dTipArr[i]) == false)
+{
+if (firstNumStart == "")
+{
+firstNumStart = i;
+firstNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+else
+{
+if (secNumStart == "")
+{
+if (firstNumEnd == i)
+{
+firstNumEnd = parseInt(i)+1;
+}
+else
+{
+secNumStart = i;
+secNumEnd = parseInt(i)+1;
+Nums += 1;
+}
+}
+else
+{
+if (secNumEnd == i)
+{
+secNumEnd = parseInt(i)+1;
+}
+else
+{
+Nums = 3;
+}
+}
+}
+}
+}
+if (firstNumStart != "" && secNumStart != "")
+{
+firstNum = dTip.slice(firstNumStart, firstNumEnd);
+secNum = dTip.slice(secNumStart, secNumEnd);
+newTip = dTip.slice(0, firstNumStart)+" ";
+if (parseInt(secNum) < 3)
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+ firstNum+","+secNum+"] will be invalid after utf-8 transforming!");
+}
+else
+{
+firstNum = Math.ceil(parseInt(firstNum) / 3);
+secNum = Math.floor(parseInt(secNum) / 3);
+if (firstNum < secNum)
+{
+firstNum=reformString(firstNum.toString(), 3);
+secNum=reformString(secNum.toString(), 3);
+newTip += firstNum + " ~ " + secNum;;
+}
+else if (firstNum == secNum)
+{
+secNum=reformString(secNum.toString(), 3);
+newTip += secNum;
+}
+else
+{
+var prevObjId = thisObj.prev().attr("id");
+alert("Element[id='"+prevObjId+"']'s length range ["+firstNum+","+secNum+"] is invalid after utf-8 transforming!");
+}
+}
+}
+else
+{
+thisObj.remove();
+}
+if (newTip != "")
+{
+thisObj.text(newTip);
+}
+});
+template.on("focus.dTip","input[type='text'],input[type='password']", function(){
+var thisObj = $(this);
+if (thisObj.attr("readonly")) {
+return;
+}
+var msg = "";
+var firstTag = thisObj.next("span")
+if(firstTag.length != 0 ){
+msg = firstTag.not(".__CheckPwdStrength").text();
+}else{
+msg = thisObj.nextAll("span").not(".__CheckPwdStrength").text();
+}
+if (msg != "")
+{
+var pos = thisObj.offset();
+var objWidth = thisObj.width();
+var dhtml = "<div id='dynamicTip'><div id='dTip_l'></div>"
++ "<div id='dTip_m'>"
++ msg
++ "</div><div id='dTip_r'></div></div>";
+var dtObj = $(dhtml).css({top:(pos.top-33)+'px',left:(pos.left+objWidth+8)+'px'});
+dtObj.appendTo('body').fadeIn(400);
+thisObj.bind("blur.dTip",function(){
+dtObj.remove();
+});
+}
+var fObj = $(":focus");
+var tObj = $("#dynamicTip");
+if ( (tObj.length > 0) && (fObj.attr("id") != thisObj.attr("id")) )
+{
+tObj.remove();
+}
+});
+$("input.ip,input.mac", template).each(function(){
+var InputOBJ = $(this);
+InputOBJ.unbind("keydown");
+InputOBJ.unbind("keyup");
+InputOBJ.keydown(function(event){
+autoJumpBack(this,this.value,event);
+});
+InputOBJ.keyup(function(event){
+FocusAutoJump(this,this.value,event);
+});
+});
+$(".instSwitch input",template).each(function(){
+var InputOBJ = $(this);
+if (InputOBJ.attr("type") == "radio")
+{
+InputOBJ.unbind("change");
+InputOBJ.change(function(event){
+var template = $(this).parents("[id^='template_']");
+var ChangeArea = $(".ChangeArea",template);
+var _InstIDName = "_InstID";
+var _InstIDValue = template.find("[id^='_InstID']").val();
+var luquidObjUl = $("._LuQUID_CONFIG_OBJID", Head);
+var objId = $("li", luquidObjUl).eq(0).text();
+if ( _InstIDValue == undefined )
+{
+var instId = objId + "\\._OBJ_InstID";
+_InstIDValue = $("[id^='"+ instId +"']",template).val();
+_InstIDName = objId + "._OBJ_InstID";
+}
+if ( ChangeArea.is(":hidden")
+&& _InstIDValue != "-1" )
+{
+var ServerAddr = template.parents(".HeadDIV").find("address span").text();
+var instSwitchName = colonStripping(InputOBJ.attr("name"));
+var instSwitchValue = InputOBJ.val();
+var PostData = "IF_ACTION=Apply"+"&"
++ instSwitchName+"="+instSwitchValue+"&"
++ _InstIDName+"=" + _InstIDValue;
+var actionType = "InstSwitch";
+var PostSuccHandler = "fillDataByInstSwitchResult";
+dataPost(actionType, PostSuccHandler, ServerAddr, template, PostData);
+}
+});
+}
+});
+template.unbind("fillDataByInstSwitchResult");
+template.bind("fillDataByInstSwitchResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+return;
+}
+$(".ChangeArea",template).showIt(true);
+$(".collapsibleInst",template).addClass("instNameExp");
+});
+template.unbind("fillDataByDeleteResult");
+template.bind("fillDataByDeleteResult", function(event,xml, template){
+if ( template.hasError(xml) == 0 )
+{
+template.remove();
+}
+else
+{
+$(".ChangeArea",template).showIt(true);
+}
+});
+initialStatusArea(Head);
+initialConfigArea(Head);
+});
+$("[id^='AreaHideAttr']").each(function(){
+var HideAttr = $(this);
+var HeadID = $(this).next().next().attr("id") || $(this).next().attr("id");
+var template = $("#template_"+HeadID);
+if (HideAttr.html() == 1){
+template.find("*").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']", template).addClass("disableBtn");
+$("[class^='longBtn']", template).addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']", template).unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+});
+});
+</script>
+
+<div id="_MenuInfo" style="display:none;">
+<div id="_NextPageInfo">&#105;&#112;&#108;&#105;&#109;&#105;&#116;</div>
+<div id="_NowSupIdInfo">&#105;&#110;&#116;&#101;&#114;&#110;&#101;&#116;</div>
+<div id="_NowMidIdInfo">&#105;&#112;&#108;&#105;&#109;&#105;&#116;</div>
+<div id="_NowThdIdInfo"></div>
+<div id="_Menu3Location">&#48;</div>
+</div>
+
+<div id="commLeft">
+<div id="class2Menu" class="class2Menu">
+<ul id="class2MenuItem" class="">
+</ul>
+</div>
+</div>
+<div id="commRight">
+<input id='_totalTabWidth' type='hidden' value=''>
+<div id="class3Menu">
+<div id="scrollLeftBtn" class="scrollLeftBtn"><p ></p></div>
+<div id="class3MenuMainContent">
+<ul></ul>
+</div>
+<div id="scrollRightBtn" class="scrollRightBtn"><p></p></div>
+</div>
+<div class="tabContent">
+<div id="pageIntroduce" class="pageIntroduce">
+<span>Page Information</span>
+</div>
+
+<p class="pIntroContent">&#69;&#110;&#97;&#98;&#108;&#101;&#32;&#116;&#104;&#105;&#115;&#32;&#102;&#101;&#97;&#116;&#117;&#114;&#101;&#32;&#119;&#105;&#108;&#108;&#32;&#100;&#101;&#103;&#114;&#97;&#100;&#101;&#32;&#116;&#104;&#101;&#32;&#79;&#78;&#84;&#32;&#80;&#101;&#114;&#102;&#111;&#114;&#109;&#97;&#110;&#99;&#101;&#33;</p>
+
+<div id="childPage">
+<div class="instCfgArea">
+<script type="text/javascript">
+(function(){
+function creatCheckRules(rules,template){
+var RulesAll = {};
+var RulesItem = {};
+for(let item in rules)
+{
+let rule = rules[item]
+RulesItem = {};
+if(rule["check"] != undefined)
+{
+rule["check"].forEach(
+function(val){
+RulesItem[val] = true;
+}
+)
+}
+if(rule["other"] != undefined)
+{
+for(let ruleName in rule["other"])
+{
+RulesItem[ruleName] = rule["other"][ruleName];
+}
+}
+if(rule["range"] != undefined)
+{
+var min = rule["range"][0];
+var max = rule["range"][1];
+if(rule["type"] == "number")
+{
+RulesItem["range"] = rule["range"];
+}
+else
+{
+if(RulesItem["utf8"] == true)
+{
+RulesItem["utf8LengthRange"] = rule["range"];
+min = Math.ceil(parseInt(min) / 3);
+max = Math.floor(parseInt(max) / 3);
+}
+else
+{
+RulesItem["rangelength"] = rule["range"];
+}
+}
+var noteSpan = $("#"+item,template).next("span");
+var noteStr = noteSpan.html() + min + " ~ " + max;
+noteSpan.html(noteStr);
+}
+RulesAll[item] = RulesItem;
+}
+return RulesAll;
+}
+
+var pageConf = JSON.parse("\x7b\x22\x6f\x62\x6a\x4c\x69\x73\x74\x22\x3a\x5b\x22\x4f\x42\x4a\x5f\x49\x70\x6c\x69\x6d\x69\x74\x53\x57\x5f\x49\x44\x22\x5d\x2c\x22\x72\x75\x6c\x65\x73\x22\x3a\x7b\x22\x49\x70\x45\x6e\x61\x62\x6c\x65\x22\x3a\x7b\x22\x74\x79\x70\x65\x22\x3a\x22\x72\x61\x64\x69\x6f\x22\x7d\x7d\x2c\x22\x69\x64\x22\x3a\x22\x49\x70\x4c\x69\x6d\x69\x74\x53\x77\x22\x2c\x22\x70\x61\x67\x65\x43\x74\x72\x6c\x22\x3a\x22\x22\x2c\x22\x6d\x6f\x64\x65\x22\x3a\x22\x73\x69\x6e\x67\x6c\x65\x22\x7d");
+var pageObj = pageConf.objList;
+var pageId = pageConf.id;
+var controlList = pageConf.pageCtrl.split("+");
+var rules = pageConf.rules;
+function initial_template_singleConf(templateID)
+{
+var template = $("#" + templateID);
+var RulesAll = creatCheckRules(rules,template);
+var instForm = template.find("form");
+instForm.validate({
+"rules": RulesAll,
+"messages": {
+}
+});
+template.bind("fillDataByApplyResult", function(event, xml, template){
+ActionByApplyResult(xml, template);
+if(controlList.indexOf("refresh") != -1)
+{
+top.location.href = top.location.href;
+}
+});
+template.bind("fillDataByCancelResult", function(event, xml, template){
+ActionByCancelResult(xml, template, pageObj);
+});
+$.publish("/some/softVersionModify", [template]);
+}
+$(document).ready(function(){
+var commSingleHeadID = pageId;
+var commSingleHead = $("#" + commSingleHeadID);
+var commSingleContainer = $("#" + commSingleHeadID + "_container");
+var commSingleTemplateID = "template_" + commSingleHeadID;
+var ServerAddr = $("address span", commSingleHead).text();
+initial_template_singleConf(commSingleTemplateID);
+commSingleHead.succfunction = function(xml){
+var cmapiErrorContainer = $(".errorHint", commSingleHead);
+if (cmapiErrorContainer.hasError(xml) == 0)
+{
+commSingleHead.fillDataByOBJID(xml, pageObj, commSingleContainer, 0);
+}
+};
+if(controlList.indexOf("disabled") != -1)
+{
+disable_all_templte(commSingleTemplateID);
+}
+if ($(".collapBarWithDataTrans", commSingleHead).length <= 0)
+{
+commSingleHead.dataTransfer(ServerAddr, "GET", commSingleHead.succfunction);
+}
+else
+{
+initial_collapBarWithDataTrans(commSingleHead);
+}
+});
+})();
+</script>
+
+<div id="IpLimitSw" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=fpt_iplimitSw_model.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+
+<h1 class="collapBarWithDataTrans" id="IpLimitSwBar">RateLimit</h1>
+
+<div id="IpLimitSw_container">
+
+<input id="DataHasBeenGot" type="hidden" value="0">
+<div id="template_IpLimitSw">
+<div id="changeArea_IpLimitSw" class="ChangeArea formTblWrap">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<form class="form_content formTbl">
+<input type="hidden" id="_InstID" value="">
+<div class='row' style=''>
+<label for='IpEnable' class='cfgLabel w150 ' style=''>RateLimit</label>
+<div class='right' id='IpEnable'>
+<input type='radio' id='IpEnable1' name='IpEnable' value='1' 
+<input type='radio' id='IpEnable1' name='IpEnable' value='1'/><label for='IpEnable1'>On</label>&nbsp;&nbsp;
+<input type='radio' id='IpEnable0' name='IpEnable' value='0' 
+<input type='radio' id='IpEnable0' name='IpEnable' value='0'/><label for='IpEnable0'>Off</label>&nbsp;&nbsp;
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_cancel" id="Btn_cancel_IpLimitSw" name="Btn_cancel_IpLimitSw" value="Cancel" />
+<input type="button" class="Button Btn_apply" id="Btn_apply_IpLimitSw" name="Btn_apply_IpLimitSw" value="Apply" />
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+(function () {
+var g_CfgGlobalXMLLocalCache;
+var IPLHead = $("#IpLimit");
+var standerTable = {
+"0": "Unkown",
+"1": "Ethernet",
+"2": "USB",
+"3": "802.11",
+"4": "HomePNA",
+"5": "HomePlug",
+"6": "Bluetooth",
+"7": "FXS",
+"8": "Other",
+};
+IPLHead.regetdata = function (xml) {
+g_CfgGlobalXMLLocalCache = xml;
+$("[id^='template_ipf_devlist_table_']").remove();
+var item_obj = $("#ipf_devlist_table");
+var FWIPOBJ = $(xml).find("OBJ_IpLimit_ID");
+var RuleNum = $("Instance", FWIPOBJ).length;
+var cmapiErrorContainer = $(".errorHint", IPLHead);
+if (cmapiErrorContainer.hasError(xml) == 0) {
+var OBJID = ["OBJ_IpLimit_ID"];
+item_obj.fillDataByCustom = function (suffix, ContainerOBJ) {
+var StandardObj = $("[id^='InterfaceType']", ContainerOBJ);
+var MacObj = $("[id^='MACAddress']", ContainerOBJ);
+StandardObj.text(standerTable[StandardObj.text()]);
+if(MacObj.text() == "00:00:00:00:00:00")
+MacObj.text("");
+}
+item_obj.createPageDataByClone(RuleNum, OBJID, xml, item_obj.fillDataByCustom);
+}
+}
+function initial_template_IpLimit(templateID,ServerAddr) {
+var template = $("#" + templateID);
+template.bind("applyPromptCheckJSON", function (event, template) {
+var checkJSONTempObj = {
+"groups": {
+},
+"rules": {
+"IpAddress": {
+"required": true,
+"IPv4Addr": true
+},
+"UpBW": {
+"required": true,
+"range": [100, 100000]
+}
+},
+"messages": {
+}
+};
+template.setPromptCheckJSON(checkJSONTempObj, template);
+});
+template.bind("fillDataByApplyResult", function (event, xml, template) {
+ActionByApplyResult(xml, template);
+$("#IpAddress", template).val("");
+$("#UpBW", template).val("");
+$("#_InstID", template).val("");
+$("#Btn_apply_Mode").val("Add");
+IPLHead.dataTransfer(ServerAddr,
+"GET",
+IPLHead.regetdata);
+});
+template.bind("fillDataByCancelResult", function (event, xml, template) {
+var OBJID = ["OBJ_IpLimit_ID"];
+ActionByCancelResult(xml, template, OBJID);
+});
+var tempDel = $("[id^='instDelete_IPFilter']").parents("[id^='template']");
+tempDel.bind("fillDataByDeleteResult", function (event, xml, tempDel) {
+IPLHead.dataTransfer(ServerAddr,
+"GET",
+IPLHead.regetdata);
+});
+$("[id^='modify']", $("#ipf_devlist_table")).click(function (event) {
+var tempShow = $("#template_IpLimit");
+$("#Btn_apply_Mode").val("Modify");
+var index = $(this).attr("id").split(":")[1];
+tempShow.fillDataByOBJID(g_CfgGlobalXMLLocalCache, ["OBJ_IpLimit_ID"], tempShow, index);
+return false;
+});
+}
+function initial_QueryAccessDeviceLinkIp() {
+var linkSelector = "._LuQUID_SelAccessDeviceIP";
+var selDevLinks = $(linkSelector);
+if (selDevLinks.length == 0) {
+return;
+}
+selDevLinks.each(function () {
+var selDevLink = $(this);
+selDevLink.css("display", "block");
+var rowObj = selDevLink.parents(".row").eq(0);
+rowObj.append("<div class='clear'></div>");
+var macID = rowObj.find(".mac").eq(0).attr("id");
+var macIDStriped = macID;
+var paraID = macIDStriped.match(/^sub_(.+)\d$/)[1];
+var headID = selDevLink.parents(".HeadDIV").attr("id");
+var suffix = ":" + paraID + ":" + headID;
+var devListHTML = ''
++ '<div class="_LuQUID_AccessDeviceList" name="_LuQUID_AccessDeviceInfo' + suffix + '" style="display:none;">'
++ '<input type="hidden" class="PostIgnore" id="_LuQUID_InstNum' + suffix + '" value="0">'
++ '<p id="_LuQUID_NoAccessDev' + suffix + '">Currently no associated devices.</p>'
++ '<p id="_LuQUID_template_AccessDeviceInfo' + suffix + '" style="display:none">'
++ '<label class="cfgLabel">&nbsp;</label>'
++ '<input type="hidden" class="PostIgnore" id="_LuQUID_HostName' + suffix + '" value="">'
++ '<input type="hidden" class="PostIgnore" id="_LuQUID_MACAddress' + suffix + '" value="">'
++ '<input type="hidden" class="PostIgnore" id="_LuQUID_IPAddress' + suffix + '" value="">'
++ '<input type="radio" class="PostIgnore" id="_LuQUID_AccessDeviceRadio' + suffix + '" name="_LuQUID_AccessDeviceRadio' + suffix + '" value="" />'
++ '<label for="_LuQUID_AccessDeviceRadio' + suffix + '">'
++ 'Host Name: [<span id="_LuQUID_StrHostName' + suffix + '">Unknown</span>]'
++ '-MAC Address: [<span id="_LuQUID_StrMACAddress' + suffix + '"></span>]'
++ '-IP: [<span id="_LuQUID_StrIPAddress' + suffix + '"></span>]'
++ '</label>'
++ '</p>'
++ '<a class="_LuQUID_HideAccessDevice">Hide</a>'
++ '</div>';
+var macObj = rowObj.find(".right");
+var devListObj = $(devListHTML).insertAfter(macObj);
+var labelObj = selDevLink.parent().prev();
+var labelWidth = labelObj.css("width");
+devListObj.css("margin-left", labelWidth);
+});
+var devRadios = $("input[name^='_LuQUID_AccessDeviceRadio']");
+devRadios.click(function (event) {
+var devRadio = $(this);
+var templateSelector = "[id^='_LuQUID_template_AccessDeviceInfo']";
+var templateDev = devRadio.parents(templateSelector);
+var devListObj = devRadio.parents("[name^='_LuQUID_AccessDeviceInfo']");
+var rowObj = devRadio.parents(".row").eq(0);
+var deviceRadioSelector = "input[name^='_LuQUID_AccessDeviceRadio']";
+$(deviceRadioSelector, devListObj).prop("checked", false);
+devRadio.prop("checked", true);
+var devMACObj = $("[id^='_LuQUID_IPAddress']", templateDev);
+var macID = rowObj.find(".mac").eq(0).attr("id");
+var macIDStriped = colonStrippingLast(macID);
+var subID = macIDStriped.match(/^(sub_.+)\d$/)[1];
+devMACObj.FillIPorMacDataBySplit(subID, ".", 4);
+if (devListObj.parents("[id^='IpLimit_container']").length > 0) {
+var mac = devMACObj.val();
+var template = devListObj.parents("[id^='IpLimit_container']");
+$("[id^='IpAddress']", template).val(mac);
+}
+var lastSubMAC = rowObj.find(".mac").last();
+lastSubMAC.focus().blur();
+});
+var hideDevLinks = $("._LuQUID_HideAccessDevice");
+hideDevLinks.unbind("click");
+hideDevLinks.click(function (event) {
+event.preventDefault();
+var devListObj = $(this).parents("[name^='_LuQUID_AccessDeviceInfo']");
+devListObj.hide();
+});
+selDevLinks.unbind("click");
+selDevLinks.click(function (event) {
+event.preventDefault();
+var selDevLink = $(this);
+var rowObj = selDevLink.parents(".row");
+var devListObj = rowObj.find("[name^='_LuQUID_AccessDeviceInfo']");
+if (devListObj.is(":visible")) {
+devListObj.hide();
+return;
+}
+var InstNumBefore = $("[id^='_LuQUID_InstNum']", devListObj).val();
+for (var i = 0; i < InstNumBefore; i++) {
+var selector = "[id$='_" + i + "']"
++ "[id^='_LuQUID_template_AccessDeviceInfo']";
+$(selector, devListObj).remove();
+}
+devListObj.AccessDeviceXMLDealWith = function (xml) {
+devListObj.hasError(xml, "externErrorHint");
+var ACCESSDEVRuleOBJ = $(xml).find("OBJ_ACCESSDEV_ID");
+var RuleNum = $("Instance", ACCESSDEVRuleOBJ).length;
+var OBJID = ["OBJ_ACCESSDEV_ID"];
+var templateSelector = "[id^='_LuQUID_template_AccessDeviceInfo']";
+var TemplateOBJ = $(templateSelector, devListObj);
+$("[id^='_LuQUID_InstNum']", devListObj).val(RuleNum);
+var NoAccessDevObj = $("[id^='_LuQUID_NoAccessDev']", devListObj);
+if (RuleNum == 0) {
+NoAccessDevObj.show();
+}
+else {
+NoAccessDevObj.hide();
+}
+for (var i = 0; i < RuleNum; i++) {
+var clone = TemplateOBJ.cloneWithSuffix(i);
+TemplateOBJ.before(clone);
+clone.fillDataByOBJID(xml, OBJID, clone, i);
+var HostNameStr = $("[id^='_LuQUID_HostName']", clone).val();
+if (HostNameStr == "") {
+HostNameStr = "PC" + $("[id^='_LuQUID_IPAddress']", clone).val();
+}
+$("[id^='_LuQUID_StrHostName']", clone).text(HostNameStr);
+var MACAddress = $("[id^='_LuQUID_MACAddress']", clone).val();
+$("[id^='_LuQUID_StrMACAddress']", clone).text(MACAddress);
+var IPAddress = $("[id^='_LuQUID_IPAddress']", clone).val();
+$("[id^='_LuQUID_StrIPAddress']", clone).text(IPAddress);
+clone.show();
+}
+devListObj.show();
+};
+var accessMode = selDevLink.attr("_LuQUID_Access_Mode")
+var AccessModeSet =
+[
+"ETH",
+"WLAN",
+"ALL"
+];
+if (-1 == $.inArray(accessMode, AccessModeSet)) {
+var devTypeList = AccessModeSet.join("/")
+consoleLog("_LuQUID_Access_Mode must be set as one of " + devTypeList);
+return;
+}
+var ServerAddr = "/?_type=hiddenData&_tag=accessdev_data&";
+ServerAddr += "DeveiceType=" + accessMode;
+showWaitTip(true);
+devListObj.dataTransfer(ServerAddr, "GET", devListObj.AccessDeviceXMLDealWith, undefined, undefined, false);
+});
+}
+$(document).ready(function () {
+initial_QueryAccessDeviceLinkIp();
+var HeadID = "IpLimit";
+var Head = $("#" + HeadID);
+var templateID = "template_" + HeadID;
+var ServerAddr = $("address span", Head).text();
+var item_obj = $("#ipf_devlist_table");
+initial_template_IpLimit(templateID,ServerAddr);
+$("#" + templateID).trigger("applyPromptCheckJSON", [$("#" + templateID)]);
+item_obj.fillDataByCustom = function (suffix, ContainerOBJ) {
+var StandardObj = $("[id^='InterfaceType']", ContainerOBJ);
+var MacObj = $("[id^='MACAddress']", ContainerOBJ);
+StandardObj.text(standerTable[StandardObj.text()]);
+if(MacObj.text() == "00:00:00:00:00:00")
+MacObj.text("");
+}
+Head.succfunction = function (xml) {
+g_CfgGlobalXMLLocalCache = xml;
+var FWIPOBJ = $(xml).find("OBJ_IpLimit_ID");
+var RuleNum = $("Instance", FWIPOBJ).length;
+var cmapiErrorContainer = $(".errorHint", Head);
+if (cmapiErrorContainer.hasError(xml) == 0) {
+var OBJID = ["OBJ_IpLimit_ID"];
+item_obj.createPageDataByClone(RuleNum, OBJID, xml, item_obj.fillDataByCustom);
+}
+};
+if ($(".collapBarWithDataTrans", Head).length <= 0) {
+Head.dataTransfer(ServerAddr,
+"GET",
+Head.succfunction);
+}
+else {
+initial_collapBarWithDataTrans(Head);
+}
+});
+})();
+</script>
+
+<div id="IpLimit" class="HeadDIV">
+<address style="display:none">
+<span class="form-action">/?_type=menuData&_tag=fpt_iplimit_lua.lua</span>
+</address>
+<div class="externErrorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<h1 class="collapBarWithDataTrans" id="IpLimitBar">IP Rate Limit</h1>
+<div id="IpLimit_container">
+<input type="hidden" id="DataHasBeenGot" value="0">
+<div id="template_IpLimit">
+<form class="form_content">
+<div id="changeArea_IpLimit" class="ChangeArea formTblWrap">
+<div class="errorHint" style="display:none;">
+<span class="caption1"></span>
+</div>
+<div class="succHint" style="display:none;">
+<span class="caption1">Your data have been stored!</span>
+</div>
+<div class="formTbl">
+<input type="hidden" id="_InstID" value="">
+<div class="row">
+<label for="TempMacAddr" class="cfgLabel w150">IP Address</label>
+<div class="right">
+<input type="text" class="inputNorm" id="IpAddress" name="IpAddress" value="" />
+<input class="mac" name="sub_TempMacAddr0" type="text" maxlength="2"
+id="sub_TempMacAddr0" style="display: none;" value="" />
+<input class="mac" name="sub_TempMacAddr1" type="text" maxlength="2"
+id="sub_TempMacAddr1" style="display: none;" value="" />
+<input class="mac" name="sub_TempMacAddr2" type="text" maxlength="2"
+id="sub_TempMacAddr2" style="display: none;" value="" />
+<input class="mac" name="sub_TempMacAddr3" type="text" maxlength="2"
+id="sub_TempMacAddr3" style="display: none;" value="" />
+<a class="_LuQUID_SelAccessDeviceIP" _LuQUID_Access_Mode="ALL"
+style="color:#0099cc;cursor:pointer;">Select from the associated devices</a>
+</div>
+</div>
+<div class="row" id="Prefix_UpBW">
+<label for="UpBW" class="cfgLabel w150">UpBandWidth</label>
+<div class="right">
+<input class="inputNorm" type="text" id="UpBW" name="UpBW" value="" />Kbps
+<span style="display:none;">100 ~ 100000</span>
+</div>
+</div>
+<div class="buttongroup">
+<input type="button" class="Button Btn_apply" id="Btn_apply_Mode" name="Btn_apply_Mode"
+value="Add" />
+</div>
+</div>
+</div>
+</form>
+</div>
+<div id="ipf_devlist" class="colorTbl form_content"
+style="white-space: nowrap;overflow-x:hidden;text-align: center;">
+<table id="ipf_devlist_table">
+<tr class="colorTblRow emFont titleRow">
+<td> <span title=""></span> </td>
+<td> <span class="w120" title="Device Name">Device Name</span> </td>
+<td> <span class="w120" title="IP Address">IP Address</span> </td>
+<td> <span class="w120" title="MAC Address">MAC Address</span> </td>
+<td> <span class="w130" title="Connection Type">Connection Type</span> </td>
+<td> <span class="w130" title="US BW">US BW</span> </td>
+<td> <span class="w30" title="Edit">Edit</span> </td>
+<td> <span class="w50"></span></td>
+<td> <span class="w50" title=""></span> </td>
+</tr>
+<tr id="template_ipf_devlist_table" class="colorTblRow" style="display:none;">
+<input type="hidden" id="_InstID" value="-1">
+<td id="Enable" title=""></td>
+<td class="w100" id="HostName" title=""></td>
+<td class="w100" id="IpAddress" title=""></td>
+<td class="w100" id="MACAddress" title=""></td>
+<td class="w120" id="InterfaceType" title=""></td>
+<td class="w60" id="UpBW" title=""></td>
+<td id="modify" title="modify"><a href=""><img src="img/modify.gif" alt="modify" /></a></td>
+<td id="instDelete_IPFilter" class="Btn_delete" title="delete"><a href=""><img src="img/del.png"
+alt="delete" /></a></td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+if(0)
+{
+if(1 == 0)
+{
+$("input,texteare,select").attr("disabled",true).attr("hideattr",true);
+$("[class^='Button']").addClass("disableBtn");
+$("[class^='longBtn']").addClass("disableBtn");
+$("[class^='instDelete Btn_delete']").remove();
+$("[class^='addInstBar AddContentContainer']").remove();
+$("[id^='Btn_cancel_'],[id^='Btn_apply_']").unbind();
+$("[class^='Button Btn_refresh']").removeClass("disableBtn").attr("disabled",false);
+}
+}
+_sessionTmpToken = "\x41\x58\x46\x79\x42\x79\x6d\x34\x58\x38\x47\x64\x35\x30\x46\x33\x42\x74\x4f\x55\x71\x64\x52\x45";
+var childPage = $("#childPage");
+var HeadDIVList = $(".HeadDIV", childPage);
+var FstHeadDIV = HeadDIVList.eq(0);
+var collapBarToUnfold = $(".collapBarWithDataTrans",FstHeadDIV).eq(0);
+var containerMainID = FstHeadDIV.attr("id") + "_container";
+var UnderControlContainer = $("#"+containerMainID, FstHeadDIV);
+g_runElementControl(HeadDIVList);
+if ( UnderControlContainer.is(":hidden") )
+{
+$(".collapBarWithDataTrans",FstHeadDIV).eq(0).click();
+}
+});
+</script>

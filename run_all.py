@@ -88,6 +88,7 @@ import simulators.sim_ONT_be6500c.src.server as be6500c
 import simulators.ont_be6500c.src.server as ONT_be6500c
 import simulators.mikrotik_hexs.src.server as mikrotik_hexs
 import simulators.ac1000cv2.src.server as ac1000cv2
+import simulators.ax1800gz.src.server as ax1800gz
 
 # Mapping từ device id sang module
 SIM_MODULES = {
@@ -105,7 +106,8 @@ SIM_MODULES = {
     'sim_ONT_be6500c': ONT_be6500c,
     'sim_mikrotik_hexs': mikrotik_hexs,
     'sim_ac1000cv2': ac1000cv2,
-    'sim_ac1000z': ac1000z
+    'sim_ac1000z': ac1000z,
+    'sim_ax1800gz': ax1800gz
 }
 
 # Các class Handler của từng thiết bị
@@ -124,7 +126,8 @@ SIM_HANDLERS = {
     'sim_ONT_be6500c': ONT_be6500c.H,
     'sim_mikrotik_hexs': mikrotik_hexs.H,
     'sim_ac1000cv2': ac1000cv2.H,
-    'sim_ac1000z': ac1000z.RouterHandler
+    'sim_ac1000z': ac1000z.RouterHandler,
+    'sim_ax1800gz': ax1800gz.ZteF6600Handler
 }
 
 # File/thư mục Portal luôn do Portal phục vụ (chống bị 'cướp' bởi Referer/Cookie)
@@ -349,24 +352,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         if path.startswith('/GponForm/'):
             return 'sim_ac1000cv2'
 
-        # Ngoại lệ cho AX3000CV2 (fw 0.5.3):
-        # 1. Các asset tĩnh Vue Webpack (/js/, /css/, /fonts/, /img/, /views/, /icons/, /i18n/, /logo-fpt.ico)
-        # 2. Các endpoint đặc thù (/ubus, /ftc-ax3000c.js, /cgi-bin/cgi-backup, /cgi-bin/cgi-upload)
-        # luôn route vào sim_ax3000c để chống 404 trắng màn hình khi tải qua iframe.
-        if (
-            path.startswith((
-                '/js/chunk-', '/css/chunk-', '/js/app.', '/css/app.',
-                '/views/', '/icons/', '/i18n/'
-            ))
-            or path in ('/ubus', '/ftc-ax3000c.js', '/logo-fpt.ico', '/cgi-bin/cgi-backup', '/cgi-bin/cgi-upload')
-            or (path.startswith('/js/') and ('9b4ab5b7' in path or 'chunk-' in path))
-            or (path.startswith('/css/') and ('06c49f94' in path or '7705225a' in path or 'chunk-' in path))
-            or (path.startswith('/fonts/') and ('element-icons' in path or 'NotoSans' in path))
-            or (path.startswith('/img/') and ('element-icons' in path or 'logo' in path or 'Up-side' in path or 'product_' in path))
-        ):
-            return 'sim_ax3000c'
-
-        # 1. Kiểm tra prefix trong URL path
+        # 1. Kiểm tra prefix trong URL path (Độ ưu tiên cao nhất, tuyệt đối chính xác)
         for sim_id in SIM_MODULES.keys():
             prefix = '/' + sim_id
             if path == prefix or path.startswith(prefix + '/'):
@@ -379,7 +365,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 self.path = new_path
                 return sim_id
 
-        # 2. Kiểm tra header Referer
+        # 2. Kiểm tra header Referer (Bảo vệ tài nguyên riêng của từng thiết bị, tránh bị AX3000C cướp tài nguyên)
         referer = self.headers.get('Referer', '')
         if referer:
             ref_path = urlparse(referer).path
@@ -390,6 +376,22 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 # Ho tro khi referer chua ten simulator trong query hoac duong dan long nhau
                 if ('/' + sim_id + '/') in referer or ('/' + sim_id + '?') in referer or referer.endswith('/' + sim_id):
                     return sim_id
+
+        # 3. Ngoại lệ cho AX3000CV2 (fw 0.5.3) khi không có Referer hoặc Referer trỏ tới sim_ax3000c:
+        # 1. Các asset tĩnh Vue Webpack (/js/, /css/, /fonts/, /img/, /views/, /icons/, /i18n/, /logo-fpt.ico)
+        # 2. Các endpoint đặc thù (/ubus, /ftc-ax3000c.js, /cgi-bin/cgi-backup, /cgi-bin/cgi-upload)
+        if (
+            path.startswith((
+                '/js/chunk-', '/css/chunk-', '/js/app.', '/css/app.',
+                '/views/', '/icons/', '/i18n/'
+            ))
+            or path in ('/ubus', '/ftc-ax3000c.js', '/logo-fpt.ico', '/cgi-bin/cgi-backup', '/cgi-bin/cgi-upload')
+            or (path.startswith('/js/') and ('9b4ab5b7' in path or 'chunk-' in path))
+            or (path.startswith('/css/') and ('06c49f94' in path or '7705225a' in path or 'chunk-' in path))
+            or (path.startswith('/fonts/') and ('element-icons' in path or 'NotoSans' in path))
+            or (path.startswith('/img/') and ('element-icons' in path or 'logo' in path or 'Up-side' in path or 'product_' in path))
+        ):
+            return 'sim_ax3000c' 
 
         # 3. Kiểm tra Cookie (Fallback an toàn nhất)
         cookie = self.headers.get('Cookie', '')

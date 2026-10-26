@@ -1,0 +1,233 @@
+/**
+ * devices/ax1800gz/lessons/bai6.js
+ * Bài 6 - Cấu hình Port Forwarding trên AX1800GZ
+ */
+
+window.DEVICE_AX1800GZ_LESSONS = window.DEVICE_AX1800GZ_LESSONS || [];
+
+var lessonId = 'LAB_AX1800GZ_06';
+var lessonData = {
+  id: lessonId,
+  title: 'Cấu hình Port Forwarding',
+  subtitle: 'Cấu hình mở cổng (NAT / Port Forwarding) trên AX1800GZ',
+  instructions: [
+    '<b>Yêu cầu:</b>',
+    '- Name: <span class="val">NAT FPT</span>',
+    '- LAN Host: <span class="val">192.168.1.100</span>',
+    '- WAN Port: <span class="val">8080</span>',
+    '- LAN Host Port: <span class="val">8080</span>'
+  ],
+  practiceUrl: '/sim_ax1800gz/login',
+  onSimLoad: function (simWin) {
+    try {
+      if (simWin && simWin.top) {
+        simWin.top._hasSuccHintStored = false;
+        simWin.top._hasClickedSaveInGuide = false;
+      }
+    } catch (e) { }
+  },
+  clearFields: [
+    '[id^="Alias"]:not(#Alias)',
+    '[id^="InternalClient"]:not(#InternalClient)',
+    '[id^="ExternalPort"]:not(#ExternalPort)',
+    '[id^="ExternalPortEndRange"]:not(#ExternalPortEndRange)',
+    '[id^="InternalPort"]:not(#InternalPort)',
+    '[id^="InternalPortEndRange"]:not(#InternalPortEndRange)',
+    'input[name="Alias"]',
+    'input[name="InternalClient"]',
+    'input[name="ExternalPort"]',
+    'input[name="ExternalPortEndRange"]',
+    'input[name="InternalPort"]',
+    'input[name="InternalPortEndRange"]'
+  ],
+  grading: {
+    description: 'Kiểm tra 5 tiêu chí mở cổng Port Forwarding trên AX1800GZ',
+    rules: [
+      {
+        id: 'rule_name',
+        name: '1. Rule Name',
+        selector: 'div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="Alias"], [id="Alias:0"]',
+        expected: ['NAT FPT', 'Camera', 'Web', 'NAT', 'Web Server'],
+        type: 'any_of',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'protocol',
+        name: '2. Protocol',
+        selector: 'div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="Protocol"], [id="Protocol:0"]',
+        expected: ['TCP', 'UDP', 'BOTH', 'TCP&UDP', 'TCP+UDP'],
+        type: 'any_of',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'lan_host',
+        name: '3. LAN Host IP',
+        selector: 'div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="InternalClient"], [id="InternalClient:0"]',
+        expected: '192.168.1.100',
+        type: 'text_exact',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'wan_port',
+        name: '4. WAN Port',
+        selector: 'div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="ExternalPort"], [id="ExternalPort:0"], [id="ExternalPortEndRange:0"]',
+        expected: '8080',
+        type: 'text_exact',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'lan_port',
+        name: '5. LAN Host Port',
+        selector: 'div[id^="template_PortForwarding"]:not(#template_PortForwarding) [id^="InternalPort"], [id="InternalPort:0"], [id="InternalPortEndRange:0"]',
+        expected: '8080',
+        type: 'text_exact',
+        trim: true,
+        required: true
+      }
+    ],
+    customGrading: function (allDocs) {
+      var doc = null;
+      for (var i = 0; i < allDocs.length; i++) {
+        if (allDocs[i].querySelector('#PortForwardingBar') || allDocs[i].querySelector('#addInstBar_PortForwarding') || allDocs[i].querySelector('[id^="Btn_apply_PortForwarding"]')) {
+          doc = allDocs[i];
+          break;
+        }
+      }
+
+      if (!doc) {
+        return {
+          passed: false,
+          score: 0,
+          passedCount: 0,
+          totalRules: 5,
+          details: [
+            {
+              id: 'portforwarding_page',
+              name: 'Mở trang cấu hình Port Forwarding',
+              expected: 'Vào Internet > Security > Port Forwarding',
+              actual: 'Chưa mở trang Port Forwarding',
+              passed: false,
+              message: 'Hãy chọn menu Internet > Security > Port Forwarding để cấu hình'
+            }
+          ]
+        };
+      }
+
+      // Tìm container item đã tạo (không phải template ẩn)
+      var itemContainer = doc.querySelector("div[id^='template_PortForwarding']:not(#template_PortForwarding)") || doc.querySelector("#template_PortForwarding_0");
+
+      if (!itemContainer) {
+        return {
+          passed: false,
+          score: 0,
+          passedCount: 0,
+          totalRules: 5,
+          details: [
+            {
+              id: 'create_item',
+              name: 'Tạo rule mới',
+              expected: 'Nhấn Create New Item để tạo rule',
+              actual: 'Chưa tạo rule nào',
+              passed: false,
+              message: 'Hãy nhấn vào "Create New Item" để bắt đầu thêm cấu hình mở port'
+            }
+          ]
+        };
+      }
+
+      var getVal = function (idName) {
+        var el = itemContainer.querySelector("[id^='" + idName + "']") || itemContainer.querySelector("[name='" + idName + "']");
+        return el ? el.value.trim() : '';
+      };
+
+      var name = getVal('Alias');
+      var protocol = getVal('Protocol');
+      var lanHost = getVal('InternalClient');
+      var wanPort = getVal('ExternalPort') || getVal('ExternalPortEndRange');
+      var lanPort = getVal('InternalPort') || getVal('InternalPortEndRange');
+
+      var isSaved = Boolean(
+        doc._ftcIsSaved ||
+        (doc.location && doc.location.search && doc.location.search.includes('save_success=1')) ||
+        (window.top && window.top._hasSuccHintStored) ||
+        window._hasSuccHintStored
+      );
+
+      // 1. Name
+      var namePassed = name.length > 0 && (name === 'NAT FPT' || name.toLowerCase().indexOf('nat') !== -1 || name.toLowerCase().indexOf('camera') !== -1 || name.toLowerCase().indexOf('web') !== -1);
+
+      // 2. Protocol
+      var validProtocols = ['TCP', 'UDP', 'BOTH', 'TCP&UDP', 'TCP+UDP', 'TCP AND UDP'];
+      var protocolPassed = validProtocols.indexOf(protocol.toUpperCase()) !== -1;
+
+      // 3. LAN Host: siết chặt chỉ chấp nhận đúng IP máy chủ LAN 192.168.1.100
+      var lanHostPassed = (lanHost === '192.168.1.100');
+
+      // 4. WAN Port: siết chặt chỉ chấp nhận đúng cổng 8080 theo yêu cầu bài thực hành
+      var wanPortPassed = (wanPort === '8080');
+
+      // 5. LAN Host Port: siết chặt chỉ chấp nhận đúng cổng 8080 theo yêu cầu bài thực hành
+      var lanPortPassed = (lanPort === '8080');
+
+      var passedCount = (namePassed ? 1 : 0) + (protocolPassed ? 1 : 0) + (lanHostPassed ? 1 : 0) + (wanPortPassed ? 1 : 0) + (lanPortPassed ? 1 : 0);
+      var passed = (passedCount === 5) && isSaved;
+      var score = passed ? 100 : (isSaved ? passedCount * 20 : 0);
+
+      return {
+        passed: passed,
+        score: score,
+        passedCount: isSaved ? passedCount : 0,
+        totalRules: 5,
+        details: [
+          {
+            id: 'rule_name',
+            name: '1. Name (Tên rule)',
+            expected: 'NAT FPT (hoặc Camera, Web Server)',
+            actual: (name || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: namePassed && isSaved,
+            message: namePassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : 'Cần nhập tên rule (ví dụ: NAT FPT)'
+          },
+          {
+            id: 'protocol',
+            name: '2. Protocol (Giao thức)',
+            expected: 'TCP (hoặc UDP, TCP And UDP)',
+            actual: (protocol || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: protocolPassed && isSaved,
+            message: protocolPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : 'Cần chọn giao thức TCP, UDP hoặc TCP And UDP'
+          },
+          {
+            id: 'lan_host',
+            name: '3. LAN Host (Địa chỉ IP máy trong)',
+            expected: '192.168.1.100',
+            actual: (lanHost || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: lanHostPassed && isSaved,
+            message: lanHostPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : ('Mong muốn: "192.168.1.100", Thực tế: "' + (lanHost || 'Trống') + '"')
+          },
+          {
+            id: 'wan_port',
+            name: '4. WAN Port (Cổng ngoài)',
+            expected: '8080',
+            actual: (wanPort || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: wanPortPassed && isSaved,
+            message: wanPortPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : ('Mong muốn: "8080", Thực tế: "' + (wanPort || 'Trống') + '"')
+          },
+          {
+            id: 'lan_port',
+            name: '5. LAN Host Port (Cổng trong)',
+            expected: '8080',
+            actual: (lanPort || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            passed: lanPortPassed && isSaved,
+            message: lanPortPassed ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình Port Forwarding') : ('Mong muốn: "8080", Thực tế: "' + (lanPort || 'Trống') + '"')
+          }
+        ]
+      };
+    }
+  },
+  guidePopups: (window.TOOLTIPS_AX1800GZ && window.TOOLTIPS_AX1800GZ[lessonId]) || []
+};
+
+window.DEVICE_AX1800GZ_LESSONS.push(lessonData);

@@ -135,10 +135,19 @@ class Handler(BaseHTTPRequestHandler):
                     return sid
             except Exception:
                 pass
-        addr = getattr(self, "client_address", None)
-        ip = str(addr[0]) if addr else "127.0.0.1"
+        forwarded = self.headers.get("X-Forwarded-For", "")
+        if forwarded:
+            ip = forwarded.split(",")[0].strip()
+        else:
+            real_ip = self.headers.get("X-Real-IP", "")
+            if real_ip:
+                ip = real_ip.strip()
+            else:
+                addr = getattr(self, "client_address", None)
+                ip = str(addr[0]) if addr else "127.0.0.1"
         self._has_be_cookie = False
-        self._current_be_sid = f"{ip}_{os.urandom(6).hex()}"
+        safe_ip = ip.replace(":", "_").replace(".", "_")
+        self._current_be_sid = f"be_{safe_ip}"
         return self._current_be_sid
 
     def _get_or_create_user_sim(self):
@@ -196,15 +205,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._hidden(tag)
 
         if loai in ("menuView", "menuData") and not sim["session"].con_han():
-            referer = self.headers.get("Referer", "")
-            if "mesh-lab" in referer or "autologin=1" in self.path or "mesh_lab=1" in self.path:
-                sim["session"].da_dang_nhap = True
-                sim["session"].lan_hoat_dong_cuoi = time.time()
-            else:
-                if loai == "menuData":
-                    return self._gui(sim["store"].xml_cho(tag or "", ma_loi="SessionTimeout"),
-                                     "text/xml; charset=utf-8")
-                return self._gui(sim["disp"]._trang_404(), "text/html; charset=utf-8", 404)
+            # Tu dong duy tri phien phong lab de KTV khong bi vang 404 gay trang man hinh
+            sim["session"].da_dang_nhap = True
+            sim["session"].lan_hoat_dong_cuoi = time.time()
 
         if loai == "menuView":
             sim["session"].cham()

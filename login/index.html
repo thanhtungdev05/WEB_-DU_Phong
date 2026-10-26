@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Đăng nhập hệ thống FTC - Giả lập Thiết bị bằng tài khoản IAM.">
+  <meta name="description" content="Đăng nhập hệ thống FTC - Giả lập Thiết bị bằng Email FPT.">
   <meta name="theme-color" content="#071632">
   <title>Đăng nhập | FTC - Giả lập Thiết bị</title>
   <link rel="icon" type="image/png" href="/assets/logoFPT.png?v=58a119fe563bd62a">
-  <link rel="stylesheet" href="styles.css?v=d2bf0138557cd252">
+  <link rel="stylesheet" href="styles.css?v=d49d07dda5c0161d">
 </head>
 <body>
   <main class="login-shell">
@@ -24,24 +24,62 @@
 
       <div class="login-heading">
         <h1 id="login-title">FTC - Giả lập Thiết bị</h1>
-        <p class="login-description">Đăng nhập để tiếp tục vào hệ thống đào tạo và thực hành thiết bị.</p>
+        <p class="login-description">Đăng nhập bằng Email FPT để tiếp tục vào hệ thống luyện tập.</p>
       </div>
 
-      <a class="iam-button" id="iam-login" href="/api/index.php/iam/login">
-        <span class="iam-icon" aria-hidden="true">
-          <i></i><i></i><i></i><i></i>
-        </span>
-        <span class="button-label">Đăng nhập bằng IAM</span>
-        <span class="button-arrow" aria-hidden="true">→</span>
-      </a>
+      <form id="fpt-login-form" class="login-form" novalidate>
+        <div id="login-error" class="login-error-msg" role="alert" style="display: none;"></div>
+
+        <div class="form-group">
+          <label for="fpt-email" class="form-label">Email FPT của bạn <span class="required">*</span></label>
+          <div class="input-wrap">
+            <input
+              type="email"
+              id="fpt-email"
+              name="email"
+              class="form-input"
+              placeholder="ví dụ: namnv@fpt.net hoặc anhtv@fpt.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+          <span class="field-hint">Chấp nhận định dạng @fpt.net hoặc @fpt.com</span>
+        </div>
+
+        <div class="form-group">
+          <label for="fpt-name" class="form-label">Họ và tên KTV (tuỳ chọn)</label>
+          <div class="input-wrap">
+            <input
+              type="text"
+              id="fpt-name"
+              name="displayName"
+              class="form-input"
+              placeholder="ví dụ: Nguyễn Văn Nam"
+              autocomplete="name"
+            >
+          </div>
+        </div>
+
+        <button type="submit" class="submit-button" id="login-submit">
+          <span class="button-label">Vào phòng luyện tập</span>
+          <span class="button-arrow" aria-hidden="true">→</span>
+        </button>
+      </form>
+
+      <div class="iam-fallback-wrap">
+        <a class="iam-secondary-link" id="iam-login" href="/api/index.php/iam/login">
+          <span class="iam-secondary-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="button-label">Hoặc đăng nhập bằng FPT IAM</span>
+        </a>
+      </div>
 
       <p class="security-note">
         <span aria-hidden="true">●</span>
-        Sử dụng tài khoản IAM nội bộ của bạn
+        Hệ thống tự động lưu kết quả bài thi theo Email của bạn
       </p>
     </section>
   </main>
 
-  <script src="app.js?v=9ff362ccc903ae2a"></script>
+  <script src="app.js?v=1a63f280bb4bb7ed"></script>
 </body>
 </html>

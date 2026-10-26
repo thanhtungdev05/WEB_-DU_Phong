@@ -1,0 +1,97 @@
+{
+  "auth": {
+    "admin": "admin"
+  },
+  "system": {
+    "model": "F6600",
+    "software_ver": "V9.0.11P2N15B",
+    "hardware_ver": "V1.0",
+    "serial": "ZTEGD1E1C72A",
+    "oui": "C42728",
+    "ver_date": "2024-03-20 09:50:01"
+  },
+  "wan_instances": [
+    {
+      "_InstID": "IGD.WD1.WCD1.WCPPP1",
+      "WANCName": "internet_tr069",
+      "Enable": "1",
+      "mode": "route",
+      "ServList": "3",
+      "StrServList": "INTERNET_TR069",
+      "linkMode": "PPP",
+      "TransType": "PPPoE",
+      "wantype": "pppoe",
+      "uplink": "2",
+      "pageType": "0",
+      "MTU": "1492",
+      "UserName": "sgfdl-000000-000",
+      "Password": "123456",
+      "AuthType": "PAP,CHAP,MS-CHAP",
+      "ConnTrigger": "AlwaysOn",
+      "IpMode": "Both",
+      "IsNAT": "1",
+      "VlanEnable": "0",
+      "VLANID": "0",
+      "Priority": "0",
+      "IsDefGW": "1",
+      "IsPD": "1",
+      "IsSLAAC": "1",
+      "IsGUA": "0",
+      "IsPdAddr": "1",
+      "IPv6AcquireMode": "Auto",
+      "Unnumbered": "0",
+      "EchoTime": "30",
+      "EchoRetry": "3"
+    }
+  ],
+  "lan": {
+    "ip": "192.168.1.1",
+    "mask": "255.255.255.0",
+    "dhcp_enable": "1",
+    "dhcp_start": "192.168.1.2",
+    "dhcp_end": "192.168.1.254",
+    "lease_time": "86400",
+    "dns_source": "0",
+    "dns1": "192.168.1.1",
+    "dns2": "0.0.0.0"
+  },
+  "wlan24": {
+    "enable": "1",
+    "ssid": "FPT_AX1800GZ_2.4G",
+    "hide": "0",
+    "security": "WPA2-PSK-AES",
+    "password": "fpttelecom@2026",
+    "beacon_type": "11i",
+    "encrypt_11i": "AESEncryption",
+    "encrypt_wpa": "AESEncryption"
+  },
+  "wlan24_ssid2": {
+    "enable": "0",
+    "ssid": "SSID2",
+    "hide": "0",
+    "security": "WPA2-PSK-AES",
+    "password": "fpttelecom@2026",
+    "beacon_type": "11i",
+    "encrypt_11i": "AESEncryption",
+    "encrypt_wpa": "TKIPandAESEncryption"
+  },
+  "wlan5": {
+    "enable": "1",
+    "ssid": "FPT_AX1800GZ_5G",
+    "hide": "0",
+    "security": "WPA2-PSK",
+    "password": "fpttelecom@2026",
+    "beacon_type": "WPAand11i",
+    "encrypt_11i": "TKIPandAESEncryption",
+    "encrypt_wpa": "TKIPandAESEncryption"
+  },
+  "dmz": {
+    "enable": "0",
+    "ip": "192.168.1.100"
+  },
+  "port_forwarding": [],
+  "firewall": {
+    "level": "High",
+    "anti_attack": "1"
+  }
+}

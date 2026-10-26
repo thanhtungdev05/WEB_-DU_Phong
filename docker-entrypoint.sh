@@ -143,7 +143,7 @@ DJANGO_PID=$!
 echo "Django Admin running on ${DJANGO_BIND_HOST}:${DJANGO_PORT} (proxied as /admin/)"
 
 # 4. Master Dispatcher: portal + all device simulators + proxy /api/* + /admin/*
-START_PHP=0 API_PORT=${API_PORT} DJANGO_PORT=${DJANGO_PORT} python3 run_all.py &
+START_PHP=0 START_DJANGO=0 API_PORT=${API_PORT} DJANGO_PORT=${DJANGO_PORT} python3 run_all.py &
 MASTER_PID=$!
 
 echo "============================================================="

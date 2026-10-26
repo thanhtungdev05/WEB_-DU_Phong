@@ -861,9 +861,82 @@ function record_login_log(array $user, string $eventType = 'iam_callback_success
     ]);
 }
 
+function login_or_register_fpt_user(string $email, ?string $displayName = null): array
+{
+    $email = normalize_email($email);
+    if (!preg_match('/^[a-zA-Z0-9._%+-]+@(fpt\.net|fpt\.com)$/i', $email)) {
+        fail(400, 'auth/invalid-email', 'Chỉ chấp nhận email FPT có đuôi @fpt.net hoặc @fpt.com.');
+    }
+
+    $existing = find_user($email);
+    if ($existing) {
+        if (database_boolean($existing['is_terminated'] ?? false)) {
+            fail(403, 'auth/account-inactive', 'Tài khoản nhân viên này đã bị ngừng kích hoạt.');
+        }
+
+        $stmt = db()->prepare(
+            'UPDATE users
+             SET last_login_at = NOW(),
+                 updated_at = NOW(),
+                 display_name = COALESCE(NULLIF(:display_name, \'\'), display_name)
+             WHERE user_id = :user_id
+             RETURNING ' . USER_COLUMNS
+        );
+        $stmt->execute([
+            'user_id' => $existing['user_id'],
+            'display_name' => $displayName ? trim($displayName) : null,
+        ]);
+        return $stmt->fetch() ?: $existing;
+    }
+
+    if (empty($displayName)) {
+        $displayName = explode('@', $email)[0];
+    }
+
+    $stmt = db()->prepare(
+        'INSERT INTO users
+         (email, role, display_name, iam_profile, last_login_at, created_at, updated_at)
+         VALUES
+         (:email, \'KTV\', :display_name, \'{}\'::jsonb, NOW(), NOW(), NOW())
+         RETURNING ' . USER_COLUMNS
+    );
+    $stmt->execute([
+        'email' => $email,
+        'display_name' => trim($displayName),
+    ]);
+    $user = $stmt->fetch();
+    if (!$user) {
+        fail(500, 'auth/insert-failed', 'Không thể tạo tài khoản người dùng.');
+    }
+    return $user;
+}
+
 function handle_auth(array $segments, string $method): void
 {
     $action = $segments[1] ?? '';
+
+    if ($action === 'login' && $method === 'POST') {
+        $body = json_body();
+        $email = (string)($body['email'] ?? '');
+        $displayName = (string)($body['display_name'] ?? '');
+
+        if (trim($email) === '') {
+            fail(400, 'auth/missing-email', 'Vui lòng nhập email @fpt.net hoặc @fpt.com.');
+        }
+
+        $user = login_or_register_fpt_user($email, $displayName);
+
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $user['user_id'];
+        $_SESSION['user_email'] = $user['email'];
+        record_login_log($user, 'fpt_direct_login');
+
+        respond([
+            'ok' => true,
+            'redirect' => '/portal.html',
+            'user' => user_response($user),
+        ]);
+    }
 
     if ($action === 'session' && $method === 'GET') {
         $user = null;
@@ -905,7 +978,7 @@ function handle_auth(array $segments, string $method): void
         respond(['ok' => true]);
     }
 
-    if (in_array($action, ['register', 'login', 'send-verification', 'verify', 'password-reset', 'reset-password'], true)) {
+    if (in_array($action, ['register', 'send-verification', 'verify', 'password-reset', 'reset-password'], true)) {
         fail(410, 'auth/iam-only', 'Password registration/login is disabled. Use IAM/Azure login.');
     }
 

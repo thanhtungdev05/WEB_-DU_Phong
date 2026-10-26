@@ -16,13 +16,14 @@ const expected = {
   ax3000s: 'LAB_AX3000S_',
   ac1000HI: 'LAB_AC1000HI_',
   ac1000z: 'LAB_AC1000Z_',
+  ax1800gz: 'LAB_AX1800GZ_',
   be6500c: 'be6500c-bai',
   ONT_be6500c: 'ONT_be6500c-bai',
   vigor2927: 'vg2927-bai'
 };
 const supportedPortalDevices = [
   'ac1000f', 'ac1000cv2', 'ax3000c', 'ax3000gz', 'ax3000gz_v2', 'ax3000hv2', 'ax3000s',
-  'ac1000HI', 'ac1000z', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c',
+  'ac1000HI', 'ac1000z', 'ax1800gz', 'be12000', 'be15000', 'vigor2927', 'be6500c', 'ONT_be6500c',
   'mikrotik_hexs'
 ];
 const simulatorPrefixes = {
@@ -35,6 +36,7 @@ const simulatorPrefixes = {
   ax3000s: '/sim_ax3000s/',
   ac1000HI: '/sim_ac1000HI/',
   ac1000z: '/sim_ac1000z/',
+  ax1800gz: '/sim_ax1800gz/',
   be6500c: '/sim_be6500c/',
   ONT_be6500c: '/sim_ONT_be6500c/',
   vigor2927: '/sim_vigor2927/'
@@ -125,7 +127,8 @@ const migrations = [
   '055_deactivate_be6500c_dns_lab.sql',
   '056_standardize_lab_display_titles.sql',
   '060_standardize_vigor2927_bai6_title.sql',
-  '061_activate_ac1000z_catalog.sql'
+  '061_activate_ac1000z_catalog.sql',
+  '062_activate_ax1800gz_catalog.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
@@ -194,6 +197,7 @@ const expectedLessonCounts = {
   ax3000s: 6,
   ac1000HI: 6,
   ac1000z: 6,
+  ax1800gz: 6,
   be12000: 6,
   be15000: 1,
   vigor2927: 7,
@@ -277,4 +281,4 @@ const ax3000cServer = fs.readFileSync(
 );
 assert.match(ax3000cServer, /AX3000CV2 firmware 0\.5\.3/);
 
-console.log('Portal/catalog audit passed: 14 registered devices, 81 active catalog labs.');
+console.log('Portal/catalog audit passed: 15 registered devices, 87 active catalog labs.');
