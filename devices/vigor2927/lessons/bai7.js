@@ -74,7 +74,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
 
       const win = docRule.defaultView || docRule.parentWindow;
       const topWin = (win && win.top) ? win.top : ((typeof window !== 'undefined' && window.top) ? window.top : window);
-      const isSaved = Boolean(docRule._ftcIsSaved || (win && win._ftcIsSaved) || (topWin && topWin._ftcIsSaved));
+      const isSaved = Boolean(docRule._ftcIsSaved || (win && win._ftcIsSaved) || (topWin && topWin._ftcIsSaved) || (topWin && topWin._hasClickedSaveInGuide));
 
       // 1. Enable
       const enableEl = docRule.querySelector('input[name="iPREnable"]');

@@ -141,24 +141,27 @@ return false;
 
 function checkSubmit()
 {
-	if (wpapskCheck(document.wifi5_form.wifi5Pwd_2G)){
+	var is2G = (document.wifi5_form.Enable_Wifi5_2G.value == 1 || (document.wifi5_form.Enable_Wifi5_2G[0] && document.wifi5_form.Enable_Wifi5_2G[0].checked));
+	var is5G = (document.wifi5_form.Enable_Wifi5_5G.value == 1 || (document.wifi5_form.Enable_Wifi5_5G[0] && document.wifi5_form.Enable_Wifi5_5G[0].checked));
+
+	if (is2G && wpapskCheck(document.wifi5_form.wifi5Pwd_2G)){
 		return false;
 	}
-	if (wpapskCheck(document.wifi5_form.wifi5Pwd_5G)){
+	if (is5G && wpapskCheck(document.wifi5_form.wifi5Pwd_5G)){
 		return false;
 	}
-	if((document.wifi5_form.Enable_Wifi5_2G.value == 1 && document.wifi5_form.wifi5SSid_2G.value.length <= 0)
-		|| (document.wifi5_form.Enable_Wifi5_5G.value == 1 && document.wifi5_form.wifi5SSid_5G.value.length <= 0 )){
+	if((is2G && document.wifi5_form.wifi5SSid_2G.value.length <= 0)
+		|| (is5G && document.wifi5_form.wifi5SSid_5G.value.length <= 0 )){
 		alert("SSID is empty");
 		return false;
 	}
 	
-	if((document.wifi5_form.Enable_Wifi5_2G.value == 1) && (strESSIDCheck(document.wifi5_form.wifi5SSid_2G)))
+	if(is2G && (strESSIDCheck(document.wifi5_form.wifi5SSid_2G)))
 	{
 	    return false;
 	}
 	
-	if((document.wifi5_form.Enable_Wifi5_5G.value == 1) && (strESSIDCheck(document.wifi5_form.wifi5SSid_5G)))
+	if(is5G && (strESSIDCheck(document.wifi5_form.wifi5SSid_5G)))
 	{
 	    return false;
 	}

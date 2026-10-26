@@ -244,6 +244,11 @@ class H(BaseHTTPRequestHandler):
             rl = rel.lstrip("/").replace("\\", "/")
             if rl.startswith("doc/") or rl.startswith("_pages/"):
                 try:
+                    import importlib
+                    importlib.reload(render)
+                except Exception:
+                    pass
+                try:
                     txt = data.decode("utf-8")
                     enc = "utf-8"
                 except UnicodeDecodeError:
@@ -260,6 +265,10 @@ class H(BaseHTTPRequestHandler):
                     txt = render.sua_enet_sht(txt)
                 if "p2_188.html" in rl:
                     txt = render.sua_policyrt_detail(txt, params.get("iPRIdx") if params else None)
+                if "ipnatp.htm" in rl or "p2_130.html" in rl:
+                    txt = render.sua_ipnatp_detail(txt)
+                if "ipnatp1.htm" in rl or "page_042.html" in rl or "deep_032.html" in rl:
+                    txt = render.sua_ipnatp_list(txt)
                 data = txt.encode(enc, "replace")
             self._send(data, CT.get(ext, "application/octet-stream"))
             return True
@@ -510,6 +519,11 @@ class H(BaseHTTPRequestHandler):
                 if self._phuc_vu_moi(rel, p):
                     return
             return self._file(rel)
+        if p == "/cgi-bin/ipnat.cgi":
+            params = self._flat(u.query)
+            if str(params.get("fid")) == "1":
+                return self._file("doc/ipnatp.htm", params)
+            return self._file("doc/ipnatp1.htm", params)
         if p.endswith(".cgi"):
             params = self._flat(u.query)
             kq = self._ghi_qua_ajax_get(p, params)
@@ -601,6 +615,9 @@ class H(BaseHTTPRequestHandler):
             if p.lower() == "/cgi-bin/v2x00.cgi" and str(params.get("fid")) in ("4042", "4044"):
                 self._log("302", p, "-> Policy Routing (fid=4042/4044)")
                 return self._redirect("/cgi-bin/v2x00.cgi?fid=4041&iAct=1&iModeWizAdv=1")
+            if p == "/cgi-bin/ipnat.cgi" and str(params.get("fid")) == "2":
+                self._log("302", p, "-> Port Redirection (fid=2)")
+                return self._redirect("/cgi-bin/ipnat.cgi?fid=0&iPageIdx=1&save_success=1")
 
             goc, _st, _ct = tim_trang_goc("POST", p, params)
             # POST co GHI cau hinh khi mang co `webchange` (DrayTek dung co nay

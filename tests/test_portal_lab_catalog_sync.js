@@ -80,7 +80,8 @@ const vigor2927Titles = [
   'Cấu hình DHCP',
   'Cấu hình DNS',
   'Cấu hình Load Balancing',
-  'Cấu hình Policy Routing'
+  'Cấu hình Policy Routing',
+  'Cấu hình NAT Port'
 ];
 
 function normalizeTitle(value) {
@@ -96,7 +97,7 @@ assert.match(portal, /devices\/mikrotik_hexs\/lessons\/bai1\.js/);
 assert.match(portal, /devices\/mikrotik_hexs\/data\.js/);
 // BE12000 vẫn có module bài 7 trong registry để giữ mã nguồn mô phỏng,
 // nhưng catalog production chỉ quyết định các bài active được hiển thị.
-assert.doesNotMatch(portal, /\/lessons\/bai(?:[8-9]|10)\.js/);
+assert.doesNotMatch(portal, /\/lessons\/bai(?:9|10)\.js/);
 
 const context = { console };
 context.window = context;
@@ -128,11 +129,14 @@ const migrations = [
   '056_standardize_lab_display_titles.sql',
   '060_standardize_vigor2927_bai6_title.sql',
   '061_activate_ac1000z_catalog.sql',
-  '063_activate_ax1800gz_catalog.sql'
+  '063_activate_ax1800gz_catalog.sql',
+  '064_activate_vigor2927_bai8_catalog.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
-  const expectedLessonCount = (device.id === 'vigor2927' || device.id === 'ax3000c')
+  const expectedLessonCount = device.id === 'vigor2927'
+    ? 8
+    : device.id === 'ax3000c'
     ? 7
     : device.id === 'be6500c'
       ? 5
@@ -200,7 +204,7 @@ const expectedLessonCounts = {
   ax1800gz: 6,
   be12000: 6,
   be15000: 1,
-  vigor2927: 7,
+  vigor2927: 8,
   be6500c: 5,
   ONT_be6500c: 6,
   mikrotik_hexs: 7

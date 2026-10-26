@@ -19,7 +19,7 @@ const bai3 = lessons.find(l => l.id === 'LAB_AX3000HV2_03');
 assert.ok(bai3, 'LAB_AX3000HV2_03 must exist');
 
 const rules = bai3.grading.rules;
-assert.equal(rules.length, 4, 'Must have exactly 4 rules: 2.4G SSID, 2.4G Key, 5G SSID, 5G Key');
+assert.equal(rules.length, 2, 'Must have exactly 2 rules: 2.4G SSID and 2.4G Key (5G is not required for IoT)');
 
 const rule2GSSID = rules.find(r => r.id === 'iot_ssid_2g');
 const rule2GKey = rules.find(r => r.id === 'iot_key_2g');
@@ -34,13 +34,11 @@ assert.ok(rule2GKey, 'iot_key_2g must exist');
 assert.equal(rule2GKey.selector, 'input[name="wifi5Pwd_2G"]');
 assert.equal(rule2GKey.expected, 'fptiot123');
 
-assert.ok(rule5GSSID, 'iot_ssid_5g must exist');
-assert.equal(rule5GSSID.selector, 'input[name="wifi5SSid_5G"]');
-assert.equal(rule5GSSID.expected, 'FPT IoT');
+assert.ok(!rule5GSSID, 'iot_ssid_5g must NOT be in grading rules');
+assert.ok(!rule5GKey, 'iot_key_5g must NOT be in grading rules');
 
-assert.ok(rule5GKey, 'iot_key_5g must exist');
-assert.equal(rule5GKey.selector, 'input[name="wifi5Pwd_5G"]');
-assert.equal(rule5GKey.expected, 'fptiot123');
+// Verify clearFields only clears 2.4G
+assert.deepEqual(Array.from(bai3.clearFields), ['input[name="wifi5SSid_2G"]', 'input[name="wifi5Pwd_2G"]']);
 
 // Verify allowedSelectors in lessonObj and grading
 assert.ok(Array.isArray(bai3.allowedSelectors), 'bai3 must have allowedSelectors array');
@@ -59,8 +57,14 @@ vm.runInContext(tooltipsCode, tooltipsContext);
 
 const tooltips = tooltipsContext.window.TOOLTIPS_AX3000HV2['LAB_AX3000HV2_03'];
 assert.ok(Array.isArray(tooltips), 'Tooltips for LAB_AX3000HV2_03 must exist');
+assert.equal(tooltips.length, 6, 'Tooltips must have exactly 6 steps');
 assert.ok(tooltips.some(t => t.text.includes('FPT IoT')), 'Tooltips must mention FPT IoT');
 assert.ok(tooltips.some(t => t.text.includes('fptiot123')), 'Tooltips must mention fptiot123');
+assert.ok(!tooltips.some(t => t.text.includes('5G:')), 'Tooltips must not require entering 5G fields');
+
+// 2b. Verify wifi5.asp simulator checkSubmit validation
+const wifi5AspContent = fs.readFileSync(path.join(root, 'simulators/sim_ax3000hv2/www2/cgi-bin/wifi5.asp'), 'utf8');
+assert.ok(wifi5AspContent.includes('is5G && wpapskCheck'), 'wifi5.asp must only validate 5G password when 5G is enabled');
 
 // 3. Verify app.js logic
 const appContent = fs.readFileSync(path.join(root, 'app.js'), 'utf8');

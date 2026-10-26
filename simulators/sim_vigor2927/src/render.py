@@ -353,6 +353,137 @@ def sua_policyrt_detail(s, iPRIdx):
     return s
 
 
+def sua_ipnatp_detail(s):
+    """Trong doc/ipnatp.htm va _pages/p2_130.html:
+    1. Bo sung id cho Enable (#lbl-nat-enable, #chk-nat-enable), Mode, Public/Private Port/IP, nút OK (#btn-nat-ok).
+    2. Khi bam OK, luu snapshot va chuyen ve bang danh sach Port Redirection Table giong router DrayTek that va Bai 2.
+    3. Tu dong khoi phuc (Auto-Restore) gia tri KTV da nhap khi quay lai trang Index 1.
+    4. Xoa sach gia tri cu rac nhu value=","Peer ID"]" trong p2_130.html.
+    """
+    save_handler = (
+        "f.fid.value=2;"
+        "var snap={"
+        "enable:f.sPSrvEnable?!!f.sPSrvEnable.checked:false,"
+        "mode:(f.sPSrvMode&&f.sPSrvMode.options[f.sPSrvMode.selectedIndex])?f.sPSrvMode.options[f.sPSrvMode.selectedIndex].text:'Single',"
+        "svcName:f.sPSrvSvcName?f.sPSrvSvcName.value.trim():'Camera',"
+        "proto:(f.sPSrvProto&&f.sPSrvProto.options[f.sPSrvProto.selectedIndex])?f.sPSrvProto.options[f.sPSrvProto.selectedIndex].text:'TCP',"
+        "wanIf:(f.sltWanIfIdx&&(f.sltWanIfIdx.options[f.sltWanIfIdx.selectedIndex]?f.sltWanIfIdx.options[f.sltWanIfIdx.selectedIndex].text:f.sltWanIfIdx.value))||'WAN1',"
+        "pubPort:f.sPSrvPubPort?f.sPSrvPubPort.value.trim():'8080',"
+        "srcIp:'Any',"
+        "prvIp:f.sPSrvPrvIp?f.sPSrvPrvIp.value.trim():'192.168.1.10',"
+        "prvPort:f.sPSrvPrvPort?f.sPSrvPrvPort.value.trim():'8080',"
+        "isSaved:true,"
+        "savedAt:Date.now()"
+        "};"
+        "document._ftcIsSaved=true;window._ftcIsSaved=true;window._FTC_VG2927_BAI8=snap;"
+        "try{if(parent){parent._FTC_VG2927_BAI8=snap;parent._ftcIsSaved=true;parent._hasClickedSaveInGuide=true;}}catch(e){}"
+        "try{if(top){top._FTC_VG2927_BAI8=snap;top._ftcIsSaved=true;top._hasClickedSaveInGuide=true;}}catch(e){}"
+        "try{if(top&&top.applyGuidePopups){top.applyGuidePopups();}}catch(e){}"
+        "document.location='/cgi-bin/ipnat.cgi?fid=0&iPageIdx=1&save_success=1';"
+        "return true;}}"
+    )
+    old_tail = "f.fid.value=2;f.submit();}}"
+    if old_tail in s:
+        s = s.replace(old_tail, save_handler, 1)
+
+    s = s.replace('name=sPSrvEnable type=checkbox value=1>&nbsp;Enable',
+                  'id="chk-nat-enable" name=sPSrvEnable type=checkbox value=1>&nbsp;<span id="lbl-nat-enable">Enable</span>', 1)
+    if 'id="btn-nat-ok"' not in s:
+        s = s.replace('name=btnOk onclick=onClkBtnOk()', 'id="btn-nat-ok" name=btnOk onclick=onClkBtnOk()', 1)
+
+    # Don dep du lieu rac neu la p2_130.html
+    s = s.replace('value=","Peer ID"]"', 'value=""', 1)
+    s = s.replace('value="8265"', 'value="0"', 1)
+    s = s.replace('<b>Index No.&nbsp;0</b>', '<b>Index No.&nbsp;1</b>', 1)
+    s = s.replace('name=iProfileIdx type=hidden value="0"', 'name=iProfileIdx type=hidden value="1"', 1)
+
+    # Co che Auto-Restore gia tri da nhap khi quay lai trang
+    auto_restore_script = (
+        "<script>"
+        "function _ftcRestoreBai8(){"
+        "try{"
+        "var topWin=(typeof window!=='undefined'&&window.top)?window.top:window;"
+        "var snap=(topWin&&topWin._FTC_VG2927_BAI8)||(typeof window!=='undefined'&&window._FTC_VG2927_BAI8)||(parent&&parent._FTC_VG2927_BAI8);"
+        "if(snap&&snap.isSaved){"
+        "var f=document.frm1;"
+        "if(f){"
+        "if(f.sPSrvEnable&&snap.enable)f.sPSrvEnable.checked=true;"
+        "if(f.sPSrvSvcName&&snap.svcName)f.sPSrvSvcName.value=snap.svcName;"
+        "if(f.sltWanIfIdx&&snap.wanIf){if(snap.wanIf==='WAN1')f.sltWanIfIdx.value='0';else if(snap.wanIf==='ALL')f.sltWanIfIdx.value='6';}"
+        "if(f.sPSrvPubPort&&snap.pubPort)f.sPSrvPubPort.value=snap.pubPort;"
+        "if(f.sPSrvPrvIp&&snap.prvIp)f.sPSrvPrvIp.value=snap.prvIp;"
+        "if(f.sPSrvPrvPort&&snap.prvPort)f.sPSrvPrvPort.value=snap.prvPort;"
+        "document._ftcIsSaved=true;window._ftcIsSaved=true;"
+        "}"
+        "}"
+        "}catch(e){}"
+        "}"
+        "if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',_ftcRestoreBai8);}"
+        "else{_ftcRestoreBai8();}"
+        "setTimeout(_ftcRestoreBai8,100);"
+        "setTimeout(_ftcRestoreBai8,500);"
+        "</script>"
+    )
+    if "</body>" in s:
+        s = s.replace("</body>", auto_restore_script + "</body>", 1)
+    return s
+
+
+def sua_ipnatp_list(s):
+    """Trong doc/ipnatp1.htm, _pages/page_042.html va _pages/deep_032.html:
+    Dong bo du lieu KTV da luu tu snapshot top._FTC_VG2927_BAI8 vao aryPtRedirect[0],
+    giup dong so 1 hien thi day du Camera, ALL, TCP, 8080, Any, 192.168.1.10.
+    """
+    s = re.sub(r"var\s+aryPtRedirect\s*=\s*;", 'var aryPtRedirect = [["","",0,0,0,-2,0,"Any"]];', s)
+    sync_code = (
+        "try {"
+        "var topWin = (typeof window !== 'undefined' && window.top) ? window.top : window;"
+        "var snap = (topWin && topWin._FTC_VG2927_BAI8) || (parent && parent._FTC_VG2927_BAI8) || window._FTC_VG2927_BAI8;"
+        "if (snap && snap.isSaved) {"
+        "document._ftcIsSaved = true; window._ftcIsSaved = true;"
+        "try{if(parent){parent._hasClickedSaveInGuide=true;parent._ftcIsSaved=true;}if(top){top._hasClickedSaveInGuide=true;top._ftcIsSaved=true;}}catch(e){}"
+        "var svc = snap.svcName || 'Camera';"
+        "var pub = snap.pubPort || '8080';"
+        "var prv = snap.prvIp || '192.168.1.10';"
+        "var proto = snap.proto || 'TCP';"
+        "var wanIf = snap.wanIf || 'WAN1';"
+        "var src = snap.srcIp || 'Any';"
+        "if (typeof aryPtRedirect !== 'undefined' && Array.isArray(aryPtRedirect) && aryPtRedirect.length > 0) {"
+        "aryPtRedirect[0] = [svc, prv, 0, snap.enable ? 1 : 0, parseInt(pub || 8080), (wanIf === 'ALL' ? -2 : 0), proto === 'UDP' ? 17 : 6, src];"
+        "}"
+        "function _ftcSyncTableCells() {"
+        "var r0 = document.querySelector('tr.row0');"
+        "if (r0) {"
+        "var tds = r0.querySelectorAll('td');"
+        "if (tds && tds.length >= 9) {"
+        "var chk = tds[1].querySelector('input[type=\"checkbox\"]');"
+        "if (chk) chk.checked = true;"
+        "tds[2].innerHTML = '&nbsp;' + svc;"
+        "tds[3].innerHTML = '&nbsp;' + wanIf;"
+        "tds[4].innerHTML = '&nbsp;' + proto;"
+        "tds[5].innerHTML = '&nbsp;' + pub;"
+        "tds[6].innerHTML = '&nbsp;' + src;"
+        "tds[7].innerHTML = '&nbsp;' + prv;"
+        "var chkSel = tds[8].querySelector('input[type=\"checkbox\"]');"
+        "if (chkSel) chkSel.checked = false;"
+        "}"
+        "}"
+        "}"
+        "if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _ftcSyncTableCells); }"
+        "else { _ftcSyncTableCells(); }"
+        "setTimeout(_ftcSyncTableCells, 50);"
+        "setTimeout(_ftcSyncTableCells, 200);"
+        "setTimeout(_ftcSyncTableCells, 600);"
+        "}"
+        "} catch(e) {};"
+    )
+    if 'var str="";' in s:
+        s = s.replace('var str="";', sync_code + 'var str="";', 1)
+    elif "</head>" in s:
+        s = s.replace("</head>", "<script>" + sync_code + "</script></head>", 1)
+    return s
+
+
 
 
 # ------------------------------------------------------------ tien ich

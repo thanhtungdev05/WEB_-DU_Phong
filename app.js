@@ -2929,9 +2929,15 @@
     if (typeof window.vg2927Bai6Reset === 'function') {
       try { window.vg2927Bai6Reset(); } catch (error) { }
     }
+    if (typeof window.vg2927Bai8Reset === 'function') {
+      try { window.vg2927Bai8Reset(); } catch (error) { }
+    }
     window._FTC_VG2927_BAI6 = null;
     window._FTC_VG2927_BAI6_LASTPAGE = null;
     window._FTC_VG2927_BAI6_SCOPE = null;
+    window._FTC_VG2927_BAI7 = null;
+    window._FTC_VG2927_BAI8 = null;
+    window._ftcIsSaved = false;
     window._ftcHasClickedAdd = false;
     window._ftcLastAddFrom = null;
     window._ftcLastAddTo = null;
@@ -3078,6 +3084,12 @@
     window._ftcAc1000cv2FinalApplyClicked = false;
     window._sessionRuleCache = null;
     window._sessionRuleCacheScope = null;
+    window._FTC_VG2927_BAI8 = null;
+    window._FTC_VG2927_BAI7 = null;
+    window._ftcIsSaved = false;
+    if (typeof window.vg2927Bai8Reset === 'function') {
+      try { window.vg2927Bai8Reset(); } catch (e) { }
+    }
 
     deviceIframe.src = '';
     currentIframeUrl = '';

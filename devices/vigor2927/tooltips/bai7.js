@@ -127,6 +127,23 @@ function hookVigor2927Bai7Interactions(doc) {
       }
     }, true);
   }
+
+  var btnOk = doc.querySelector ? doc.querySelector('input[name="btnOk"], #upgradeforOK, input[value="OK"]') : null;
+  if (btnOk && typeof btnOk.addEventListener === 'function') {
+    btnOk.addEventListener('click', function () {
+      doc._ftcIsSaved = true;
+      try {
+        var win = doc.defaultView || doc.parentWindow;
+        if (win) win._ftcIsSaved = true;
+        var topWin = (win && win.top) ? win.top : ((typeof window !== 'undefined' && window.top) ? window.top : window);
+        if (topWin) {
+          topWin._ftcIsSaved = true;
+          topWin._hasClickedSaveInGuide = true;
+        }
+      } catch (e) { }
+      triggerPortalPopups();
+    });
+  }
 }
 
 function isVigor2927Bai7WanIfConfirmed(doc) {
@@ -193,7 +210,7 @@ function isVigor2927Bai7Saved(doc) {
   if (!doc) return false;
   var win = doc.defaultView || doc.parentWindow;
   var topWin = (win && win.top) ? win.top : ((typeof window !== 'undefined' && window.top) ? window.top : window);
-  return Boolean(doc._ftcIsSaved || (win && win._ftcIsSaved) || (topWin && topWin._ftcIsSaved));
+  return Boolean(doc._ftcIsSaved || (win && win._ftcIsSaved) || (topWin && topWin._ftcIsSaved) || (topWin && topWin._hasClickedSaveInGuide));
 }
 
 window.TOOLTIPS_VIGOR2927['vg2927-bai7'] = [

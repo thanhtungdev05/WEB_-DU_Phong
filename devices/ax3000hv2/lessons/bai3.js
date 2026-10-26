@@ -11,19 +11,17 @@ var lessonObj = {
   subtitle: 'Cấu hình wifi IoT',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Thực hiện cấu hình mạng Wi-Fi IoT theo các thông số dưới đây:',
+    'Thực hiện cấu hình mạng Wi-Fi IoT trên băng tần 2.4GHz theo các thông số dưới đây:',
     '- SSID Name: <span class="val">FPT IoT</span>',
     '- WPA Key: <span class="val">fptiot123</span>',
   ],
   practiceUrl: '/sim_ax3000hv2/cgi-bin/index.asp?page=wifi5.asp',
   clearFields: [
     'input[name="wifi5SSid_2G"]',
-    'input[name="wifi5Pwd_2G"]',
-    'input[name="wifi5SSid_5G"]',
-    'input[name="wifi5Pwd_5G"]'
+    'input[name="wifi5Pwd_2G"]'
   ],
   grading: {
-    description: 'Kiểm tra SSID IoT và WPA Key trên AX3000Hv2',
+    description: 'Kiểm tra SSID IoT và WPA Key trên AX3000Hv2 (băng tần 2.4GHz)',
     rules: [
       {
         id: 'iot_ssid_2g',
@@ -38,24 +36,6 @@ var lessonObj = {
         id: 'iot_key_2g',
         name: 'Mật khẩu Wi-Fi IoT 2.4G',
         selector: 'input[name="wifi5Pwd_2G"]',
-        expected: 'fptiot123',
-        type: 'text_exact',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'iot_ssid_5g',
-        name: 'Tên Wi-Fi IoT 5G (SSID)',
-        selector: 'input[name="wifi5SSid_5G"]',
-        expected: 'FPT IoT',
-        type: 'text_exact',
-        trim: true,
-        required: true
-      },
-      {
-        id: 'iot_key_5g',
-        name: 'Mật khẩu Wi-Fi IoT 5G',
-        selector: 'input[name="wifi5Pwd_5G"]',
         expected: 'fptiot123',
         type: 'text_exact',
         trim: true,
@@ -77,52 +57,41 @@ var lessonObj = {
   ],
   guidePopups: [
     {
-      selector: 'a[onclick="change_basic(this);"]',
+      selector: 'a[onclick="change_basic(this);"], #MainMenu a:contains("Network")',
       text: 'Bước 1: Chọn Network',
+      hideOnPage: 'wifi5.asp',
       position: 'top'
     },
     {
-      selector: 'a[href*="wifi5.asp"]',
+      selector: 'a[href*="wifi5.asp"], a:contains("IOT SSID")',
       text: 'Bước 2: Chọn IOT SSID',
+      hideOnPage: 'wifi5.asp',
       position: 'top'
     },
     {
       selector: 'input[name="Enable_Wifi5_2G"][value="1" i]',
-      text: 'Bước 3: Chọn Enable',
+      page: 'wifi5.asp',
+      text: 'Bước 3: Ở mục 2.4G WiFi5, chọn Enable',
       position: 'top'
     },
     {
-      selector: 'input[name="wifi5SSid_2G" i]',
+      selector: 'input[name="wifi5SSid_2G" i], #wifi5SSid_2G',
+      page: 'wifi5.asp',
       text: 'Bước 4: Nhập tên Wifi: FPT IoT',
       position: 'right',
       forcePosition: true
     },
     {
-      selector: 'input[name="wifi5Pwd_2G" i]',
+      selector: 'input[name="wifi5Pwd_2G" i], #wifi5Pwd_2G',
+      page: 'wifi5.asp',
       text: 'Bước 5: Nhập mật khẩu Wifi: fptiot123',
       position: 'right',
       forcePosition: true
     },
     {
-      selector: 'input[name="Enable_Wifi5_5G"][value="1" i]',
-      text: 'Bước 6: Chọn Enable 5G',
-      position: 'top'
-    },
-    {
-      selector: 'input[name="wifi5SSid_5G" i]',
-      text: 'Bước 7: Nhập tên Wifi 5G: FPT IoT',
-      position: 'right',
-      forcePosition: true
-    },
-    {
-      selector: 'input[name="wifi5Pwd_5G" i]',
-      text: 'Bước 8: Nhập mật khẩu Wifi 5G: fptiot123',
-      position: 'right',
-      forcePosition: true
-    },
-    {
       selector: 'input[value="Save" i], input[name="SaveBtn" i]',
-      text: 'Bước 9: Chọn Save',
+      page: 'wifi5.asp',
+      text: 'Bước 6: Chọn Save',
       position: 'top'
     }
   ]
