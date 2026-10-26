@@ -56,7 +56,7 @@
         window.location.replace('/portal.html?guest=database-unavailable');
       })
       .catch(function () {
-        // Continue normally
+        // IAM remains the only entry path for generic API/network failures.
       });
   }
 

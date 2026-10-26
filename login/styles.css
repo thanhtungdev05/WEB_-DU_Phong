@@ -379,6 +379,7 @@ h1 {
 }
 
 .iam-fallback-wrap {
+  display: none !important;
   margin-top: 18px;
   text-align: center;
 }
