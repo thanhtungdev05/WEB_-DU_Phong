@@ -24,7 +24,7 @@ $GLOBALS['database_query_count'] = 0;
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 header('X-Request-ID: ' . $GLOBALS['request_id']);
-$corsOrigin = app_origin(env_value('APP_BASE_URL', '')) ?? request_origin();
+$corsOrigin = app_origin(env_value('APP_BASE_URL', '')) ?? app_origin(env_value('RENDER_EXTERNAL_URL', '')) ?? request_origin();
 header('Access-Control-Allow-Origin: ' . $corsOrigin);
 header('Vary: Origin');
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -268,7 +268,8 @@ function enforce_write_origin(string $resource, string $method): void
     }
     $allowedOrigins = array_values(array_filter([
         app_origin(env_value('APP_BASE_URL', '')),
-        is_local_request() ? app_origin(request_origin()) : null,
+        app_origin(env_value('RENDER_EXTERNAL_URL', '')),
+        app_origin(request_origin()),
     ]));
     if (!$suppliedOrigin || !in_array($suppliedOrigin, $allowedOrigins, true)) {
         fail(403, 'security/origin-rejected', 'This write request did not originate from the application.');
