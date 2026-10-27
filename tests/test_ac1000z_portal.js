@@ -88,6 +88,13 @@ const wifiLesson = lessons.find(lesson => lesson.id === 'LAB_AC1000Z_02');
 assert.ok(!wifiLesson.grading.rules.some(rule => rule.id === 'wifi_security'), 'lab 2 must keep Encryption Type at its default');
 assert.ok(!wifiLesson.guidePopups.some(item => item.selector === '[id="EncryptionType:0"]'), 'lab 2 must not guide a needless Encryption Type change');
 assert.ok(wifiLesson.guidePopups.some(item => item.selector === '[id="instName_WLANSSIDConf:0"]'), 'lab 2 must visibly guide opening SSID1 before editing it');
+const openSsid1 = wifiLesson.guidePopups.find(item => item.selector === '[id="instName_WLANSSIDConf:0"]');
+assert.strictEqual(openSsid1.position, 'left', 'lab 2 must position SSID1 tooltip on the left to avoid covering adjacent controls');
+
+const wifiIotLesson = lessons.find(lesson => lesson.id === 'LAB_AC1000Z_03');
+const openSsid4 = wifiIotLesson.guidePopups.find(item => item.selector === '[id="instName_WLANSSIDConf:3"]');
+assert.ok(openSsid4, 'lab 3 must guide opening SSID4');
+assert.strictEqual(openSsid4.position, 'left', 'lab 3 must position SSID4 tooltip on the left to avoid covering adjacent controls');
 
 const dhcpLesson = lessons.find(lesson => lesson.id === 'LAB_AC1000Z_05');
 assert.strictEqual(dhcpLesson.grading.rules.length, 16, 'lab 5 must grade LAN IP, subnet, DHCP start and DHCP end');

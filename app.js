@@ -3315,224 +3315,13 @@
   }
 
   function evaluateAutoBaseline(allDocs, rules, lesson) {
-    let unexpectedErrors = [];
-
-    allDocs.forEach(doc => {
-      if (doc._ftcOriginalValues) {
-        Object.keys(doc._ftcOriginalValues).forEach(uid => {
-          const originalValue = doc._ftcOriginalValues[uid];
-          const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
-          if (el) {
-            // Bỏ qua các trường thuộc trang hoặc form đăng nhập router
-            const isLoginField = (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
-              el.id === 'username' || el.id === 'password' ||
-              (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
-              (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password'))) ||
-              (el.value === 'admin' && (originalValue === '' || originalValue === null || originalValue === undefined));
-            if (isLoginField) return;
-
-            // Bỏ qua các trường được cho phép hoặc nằm trong guidePopups (hướng dẫn từng bước của bài học)
-            const effectiveLesson = lesson || (typeof _currentLesson !== 'undefined' ? _currentLesson : null);
-            const guideList = (effectiveLesson && Array.isArray(effectiveLesson.guidePopups)) ? effectiveLesson.guidePopups : [];
-            const allowedSelectors = [
-              ...(effectiveLesson && Array.isArray(effectiveLesson.allowedSelectors) ? effectiveLesson.allowedSelectors : []),
-              ...(effectiveLesson && effectiveLesson.grading && Array.isArray(effectiveLesson.grading.allowedSelectors) ? effectiveLesson.grading.allowedSelectors : []),
-              ...guideList.map(g => g.selector).filter(Boolean)
-            ];
-            const isAllowedByLesson = allowedSelectors.some(sel => {
-              try {
-                const matchedList = Array.from(doc.querySelectorAll(sel));
-                if (matchedList.includes(el)) return true;
-                // Tự động cho phép input đi kèm với component dropdown/select (ví dụ MUI Select)
-                return matchedList.some(m => {
-                  if (m.contains && m.contains(el)) return true;
-                  if (el.name && m.id && m.id.includes(el.name)) return true;
-                  if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
-                  const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
-                  return mParent && mParent.contains(el);
-                });
-              } catch (e) { return false; }
-            });
-            if (isAllowedByLesson) return;
-
-            // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, DHCP, Wi-Fi IoT / WiFi5 enable, SSID broadcast
-            const isAuxToggle = (el.name && (
-              el.name.toLowerCase() === 'dnstyperadio' ||
-              el.name.toLowerCase() === 'dhcptyperadio' ||
-              el.name.toLowerCase().includes('enable_wifi') ||
-              el.name.toLowerCase().includes('wifi5') ||
-              el.name.toLowerCase().includes('essid_hide')
-            )) ||
-            (el.id && (
-              el.id.toLowerCase().includes('dnsrelay') ||
-              el.id.toLowerCase().includes('dhcp') ||
-              el.id.toLowerCase().includes('wifi5_enable') ||
-              el.id.toLowerCase().includes('enable_wifi')
-            ));
-            if (isAuxToggle) return;
-
-            // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
-            const isExpected = (rules || []).some(r => {
-              try {
-                const matchedList = Array.from(doc.querySelectorAll(r.selector));
-                if (matchedList.includes(el)) return true;
-                return matchedList.some(m => {
-                  if (m.contains && m.contains(el)) return true;
-                  if (el.name && m.id && m.id.includes(el.name)) return true;
-                  if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
-                  const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
-                  return mParent && mParent.contains(el);
-                });
-              } catch (e) { return false; }
-            });
-
-            // Nếu KHÔNG nằm trong rule, nhưng lại bị sửa giá trị khác gốc
-            if (!isExpected) {
-              const currentValue = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
-              const strCurr = String(currentValue === null || currentValue === undefined ? '' : currentValue).trim();
-              const strOrig = String(originalValue === null || originalValue === undefined ? '' : originalValue).trim();
-              let labelText = getLabelForElement(el, doc);
-              const loc = (doc.location && doc.location.pathname) ? (doc.location.pathname + doc.location.search) : '';
-              const fieldKey = `${loc}::${el.id || el.name || uid || labelText}`;
-
-              if (strCurr === strOrig) {
-                // KTV đã chỉnh lại về đúng giá trị gốc ban đầu: xóa lỗi khỏi activeUnexpectedErrors
-                if (_trackingSession && _trackingSession.activeUnexpectedErrors) {
-                  delete _trackingSession.activeUnexpectedErrors[fieldKey];
-                  delete _trackingSession.activeUnexpectedErrors[labelText];
-                  delete _trackingSession.activeUnexpectedErrors[uid];
-                  Object.keys(_trackingSession.activeUnexpectedErrors).forEach(k => {
-                    if ((el.id && k.endsWith('::' + el.id)) || (el.name && k.endsWith('::' + el.name)) || k.endsWith('::' + uid)) {
-                      delete _trackingSession.activeUnexpectedErrors[k];
-                    }
-                  });
-                }
-              } else {
-                // Bỏ qua đánh giá radio bị tắt để tránh 1 lần click sinh 2 lỗi trùng lặp
-                if (el.type === 'radio' && !el.checked) return;
-
-                let formattedOriginal = '';
-                let formattedCurrent = '';
-
-                if (el.type === 'checkbox' || el.type === 'radio') {
-                  formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
-                  formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
-                } else if (el.tagName === 'SELECT') {
-                  try {
-                    let optOrig = el.querySelector(`option[value="${originalValue}"]`);
-                    let optCurr = el.querySelector(`option[value="${currentValue}"]`);
-                    formattedOriginal = optOrig ? optOrig.textContent.trim() : originalValue;
-                    formattedCurrent = optCurr ? optCurr.textContent.trim() : currentValue;
-                  } catch (e) {
-                    formattedOriginal = originalValue;
-                    formattedCurrent = currentValue;
-                  }
-                } else {
-                  formattedOriginal = originalValue || 'Trống';
-                  formattedCurrent = currentValue || 'Trống';
-                }
-
-                const errObj = {
-                  label: labelText,
-                  expected: formattedOriginal,
-                  actual: formattedCurrent,
-                  key: fieldKey
-                };
-
-                unexpectedErrors.push(errObj);
-                if (_trackingSession) {
-                  if (!_trackingSession.activeUnexpectedErrors) _trackingSession.activeUnexpectedErrors = {};
-                  _trackingSession.activeUnexpectedErrors[fieldKey] = errObj;
-                }
-              }
-            }
-          }
-        });
-      }
-    });
-
-    // Đồng bộ lỗi thao tác thừa theo phiên (giữ nguyên lỗi nếu KTV chuyển trang mà chưa sửa lại)
-    if (_trackingSession) {
-      if (!_trackingSession.activeUnexpectedErrors) _trackingSession.activeUnexpectedErrors = {};
-      const activeList = Object.values(_trackingSession.activeUnexpectedErrors);
-      activeList.forEach(err => {
-        if (!unexpectedErrors.some(e => e.label === err.label || (e.key && e.key === err.key))) {
-          unexpectedErrors.push(err);
-        }
-      });
-      if (activeList.length === 0) {
-        unexpectedErrors = [];
-        _trackingSession.cachedUnexpectedErrors = [];
-      } else {
-        _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
-      }
-    }
-
-    // Lọc triệt để loại bỏ các trường đăng nhập admin/admin, dnsTypeRadio, dhcpTypeRadio, wifi5/IoT toggle khỏi danh sách lỗi thao tác thừa
-    unexpectedErrors = unexpectedErrors.filter(err => {
-      const lbl = (err.label || '').toLowerCase();
-      const act = (err.actual || '').toLowerCase();
-      if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) && (act === 'admin' || act === '')) {
-        return false;
-      }
-      if (lbl.includes('dns relay') || lbl.includes('dnstyperadio') || lbl.includes('chế độ dns') || lbl.includes('dns mode')) {
-        return false;
-      }
-      if (lbl.includes('dns') && (act === 'manual' || act === 'auto' || act === 'bật/enable' || act === 'tắt/disable')) {
-        return false;
-      }
-      if (lbl === 'dhcp' || lbl === 'dhcp server' || lbl.includes('dhcptyperadio')) {
-        return false;
-      }
-      if (lbl.includes('2.4g wifi') || lbl.includes('5g wifi') || lbl.includes('wifi5') || lbl.includes('wifi 5') || lbl.includes('enable_wifi') || lbl.includes('ssid broadcast')) {
-        return false;
-      }
-      return true;
-    });
-
-    if (_trackingSession && _trackingSession.activeUnexpectedErrors) {
-      Object.keys(_trackingSession.activeUnexpectedErrors).forEach(k => {
-        const err = _trackingSession.activeUnexpectedErrors[k];
-        if (!unexpectedErrors.includes(err)) {
-          delete _trackingSession.activeUnexpectedErrors[k];
-        }
-      });
-      _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
-    }
-
-    return unexpectedErrors;
+    // Theo yêu cầu: Các thao tác không liên quan đến hướng dẫn trong bài học thì không cần chấm sai.
+    return [];
   }
 
   if (lesson.grading && typeof lesson.grading.customGrading === 'function') {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       const customResult = lesson.grading.customGrading(allDocs);
-      if (customResult && Array.isArray(customResult.details)) {
-        const effectiveRules = (lesson.grading && Array.isArray(lesson.grading.rules)) ? lesson.grading.rules : [];
-        // Chỉ áp dụng bộ lọc "thao tác ngoài phạm vi" khi bài có khai báo grading.rules.
-        // Bài dùng customGrading mà không có rules (AC1000F/AC1000HI bài 2-6) sẽ coi mọi
-        // ô học viên nhập là ngoài phạm vi và bị ép passed = false.
-        const unexpErrors = effectiveRules.length > 0
-          ? evaluateAutoBaseline(allDocs, effectiveRules, lesson)
-          : [];
-        if (unexpErrors && unexpErrors.length > 0) {
-          unexpErrors.forEach(err => {
-            const alreadyHas = customResult.details.some(d => d.name && (d.name.includes(err.label) || d.name === err.label));
-            if (!alreadyHas) {
-              customResult.details.push({
-                id: 'err_unexp_' + (err.label || '').replace(/\s+/g, '_').toLowerCase(),
-                name: 'Thao tác ngoài phạm vi: ' + (err.label || 'Trường không xác định'),
-                expected: err.expected || 'Giữ nguyên',
-                actual: err.actual || 'Đã bị sửa',
-                passed: false,
-                message: 'Cố tình thay đổi thông số "' + (err.label || '') + '" ngoài yêu cầu bài học'
-              });
-              customResult.passed = false;
-              customResult.totalRules = (customResult.totalRules || customResult.details.length) + 1;
-              customResult.score = Math.max(0, Math.round(((customResult.passedCount || 0) / customResult.totalRules) * 100));
-            }
-          });
-        }
-      }
       return customResult;
     }
 
@@ -3986,28 +3775,12 @@
       });
     });
 
-    // === BỘ LỌC AUTO-BASELINE (TÌM THAO TÁC THỪA) ===
-    let unexpectedErrors = evaluateAutoBaseline(allDocs, rules, lesson);
-
-    // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác thừa
+    // === KẾT QUẢ ĐÁNH GIÁ TIÊU CHÍ BÀI HỌC ===
+    // Theo yêu cầu: Chỉ chấm đúng các tiêu chí yêu cầu trong bài học,
+    // các thao tác không liên quan đến hướng dẫn thì không chấm sai.
     const criteria = rules;
-    const hasUnexpected = unexpectedErrors.length > 0;
-    const passed = (passedCount === criteria.length) && !hasUnexpected;
-
-    let finalTotalRules = rules.length + unexpectedErrors.length;
-
-    // Đẩy TẤT CẢ lỗi thao tác thừa vào danh sách details
-    unexpectedErrors.forEach(err => {
-      details.push({
-        id: 'unexpected_change_' + Math.random(),
-        name: err.label,
-        expected: err.expected,
-        actual: err.actual,
-        passed: false,
-        message: 'Thao tác thừa ngoài yêu cầu'
-      });
-    });
-    // ===============================================
+    const passed = (passedCount === criteria.length);
+    let finalTotalRules = rules.length;
 
     return {
       passed: passed,
