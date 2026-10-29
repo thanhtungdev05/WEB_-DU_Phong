@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API kết quả Challenge FTEL 30 ↔ Web cấu hình thiết bị (bản rút gọn)</title>
+<meta name="description" content="Bản rút gọn: Challenge gửi khoảng thời gian A→B, web cấu hình thiết bị trả về người tham gia đã làm bài lab nào và điểm cao nhất.">
+<style>
+:root{--bg:#0b1020;--panel:#121a33;--panel2:#18224a;--line:#26335f;--text:#e8ecff;--muted:#9aa6d4;
+--accent:#ff7a1a;--accent2:#4cc9f0;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;
+--mono:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Inter,system-ui,sans-serif;line-height:1.6;color:var(--text);
+background:radial-gradient(1000px 500px at 85% -10%,#2a1a55 0%,transparent 60%),radial-gradient(800px 400px at -10% 10%,#0f3a5c 0%,transparent 55%),var(--bg)}
+header{max-width:980px;margin:auto;padding:56px 24px 16px}
+.badge{display:inline-block;padding:4px 12px;border:1px solid var(--accent);color:var(--accent);border-radius:999px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(26px,4vw,40px);line-height:1.2;margin:14px 0 10px;background:linear-gradient(90deg,#fff,var(--accent2) 60%,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--muted);font-size:17px;max-width:720px}
+main{max-width:980px;margin:auto;padding:0 24px 70px}
+section{margin-top:44px}
+h2{font-size:24px;margin:0 0 8px}h2 .n{color:var(--accent);margin-right:8px}
+p.sub{color:var(--muted);margin:0 0 16px}
+.card{background:linear-gradient(180deg,var(--panel),#0f1630);border:1px solid var(--line);border-radius:16px;padding:20px}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.flow{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch}
+.node{flex:1;min-width:230px;border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--panel)}
+.node.a{border-color:var(--accent)}.node.b{border-color:var(--accent2)}
+.node h4{margin:0 0 6px}.node small{color:var(--muted)}
+.arrow{align-self:center;color:var(--accent);font-size:24px;font-weight:700;text-align:center;min-width:90px}
+.arrow span{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th,td{padding:10px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:var(--panel2);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+tr:last-child td{border-bottom:0}
+code{font-family:var(--mono);font-size:13px;background:#0a0f23;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#ffd7b0}
+.codewrap{position:relative}
+pre{margin:0;background:#070b1a;border:1px solid var(--line);border-radius:14px;padding:18px;overflow:auto;font:13px/1.55 var(--mono);color:#cfd8ff}
+.k1{color:#4cc9f0}.s{color:#a7f3d0}.nu{color:#fbbf24}.c{color:#7f8bb8}
+.copy{position:absolute;top:10px;right:10px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.method{display:inline-block;background:var(--accent);color:#1a0d00;font-weight:800;padding:3px 10px;border-radius:6px;font-family:var(--mono);margin-right:8px}
+.endpoint{font-family:var(--mono);font-size:15px;background:#070b1a;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:14px;overflow:auto}
+.tag{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600}
+.req{background:rgba(248,113,113,.15);color:var(--bad)}.opt{background:rgba(154,166,212,.15);color:var(--muted)}
+.callout{border-left:4px solid var(--warn);background:rgba(251,191,36,.07);padding:12px 16px;border-radius:0 12px 12px 0;margin:14px 0;color:#f6e7b4}
+.callout.green{border-color:var(--ok);background:rgba(52,211,153,.07);color:#c9f7e3}
+.bar{height:12px;background:#0a0f23;border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.crit{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.crit:last-child{border:0}.crit input{accent-color:var(--accent);width:18px;height:18px}
+.big{font-size:40px;font-weight:800;color:var(--accent2)}
+ol.q{padding:0;list-style:none;counter-reset:q;display:grid;gap:10px;margin:0}
+ol.q li{counter-increment:q;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px 12px 52px;position:relative}
+ol.q li::before{content:counter(q);position:absolute;left:14px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#1a0d00;font-weight:800;display:grid;place-items:center;font-size:13px}
+h3.grp{margin:26px 0 10px;font-size:17px;color:var(--accent2)}
+ol.q .tag{margin-right:6px}
+td[contenteditable="true"]{min-height:36px;cursor:text;transition:background .2s,outline .2s}
+td[contenteditable="true"]:hover{background:rgba(76,201,240,.08)}
+td[contenteditable="true"]:focus{background:rgba(76,201,240,.12);outline:1px solid var(--accent2);border-radius:4px}
+td[contenteditable="true"]:empty::before{content:"—";color:var(--muted);opacity:.4}
+footer{text-align:center;color:var(--muted);padding:26px;border-top:1px solid var(--line);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <span class="badge">Bản đề xuất rút gọn — chưa triển khai</span>
+  <h1>API kết quả Challenge FTEL 30<br>↔ Web cấu hình thiết bị</h1>
+  <p class="lead">Mục tiêu: biết <b>người tham gia đã làm gì trong khoảng thời gian A → B</b>.
+  Với mỗi người và mỗi bài lab, trả về lượt có <b>điểm cao nhất</b> trong khoảng đó.</p>
+</header>
+
+<main>
+
+<section>
+  <h2><span class="n">1</span>Luồng và phân vai</h2>
+  <div class="flow">
+    <div class="node a"><h4>Web Challenge</h4><small>Gửi khoảng thời gian A→B kèm <code>secret_key</code>. Nhận kết quả, tự xếp hạng và hiển thị bảng xếp hạng.</small></div>
+    <div class="arrow">POST →<span>A → B</span></div>
+    <div class="node b"><h4>Web cấu hình thiết bị</h4><small>Xác thực, tìm các lượt làm bài trong A→B, chọn điểm cao nhất mỗi bài, trả JSON. Không xếp hạng.</small></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>Request (Challenge gọi sang)</h2>
+  <div class="endpoint"><span class="method">POST</span>/api/index.php/challenge/results</div>
+  <div class="codewrap"><button class="copy" data-copy="req">Copy</button>
+<pre id="req">{
+  <span class="k1">"secret_key"</span>: <span class="s">"&lt;khóa bí mật hai bên thống nhất&gt;"</span>,
+  <span class="k1">"system"</span>: <span class="s">"fc_construction"</span>,
+  <span class="k1">"week"</span>: <span class="nu">2</span>,
+  <span class="k1">"week_label"</span>: <span class="s">"W2"</span>,
+  <span class="k1">"time_range"</span>: {
+    <span class="k1">"start_date"</span>: <span class="s">"2026-11-07T17:00:00.000Z"</span>,
+    <span class="k1">"end_date"</span>:   <span class="s">"2026-11-13T16:59:00.000Z"</span>
+  }
+}</pre></div>
+  <div class="tw" style="margin-top:14px"><table>
+    <tr><th>Trường</th><th></th><th>Ý nghĩa</th></tr>
+    <tr><td><code>secret_key</code></td><td><span class="tag req">Có</span></td><td>Khóa xác thực bên gọi.</td></tr>
+    <tr><td><code>system</code></td><td><span class="tag req">Có</span></td><td>Mã hệ thống/cuộc thi.</td></tr>
+    <tr><td><code>week</code>, <code>week_label</code></td><td><span class="tag opt">Nhãn</span></td><td>Tuần, chỉ dùng để ghi nhãn (server không lọc theo tuần).</td></tr>
+    <tr><td><code>time_range.start_date</code> / <code>end_date</code></td><td><span class="tag req">Có</span></td><td>Khoảng A → B (ISO 8601, UTC). Lọc theo thời điểm nộp bài (<code>finished_at</code>).</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>Response (Web cấu hình thiết bị trả về)</h2>
+  <p class="sub">Mỗi người tham gia một phần tử; mỗi bài lab đã làm một dòng, là lượt có điểm cao nhất trong A → B.</p>
+  <div class="codewrap"><button class="copy" data-copy="resp">Copy</button>
+<pre id="resp">[
+  {
+    <span class="k1">"employee_code"</span>: <span class="s">"FPT123456"</span>,
+    <span class="k1">"full_name"</span>: <span class="s">"Nguyễn Văn Hùng"</span>,
+    <span class="k1">"email"</span>: <span class="s">"hung.nv@fpt.net"</span>,
+    <span class="k1">"labs"</span>: [
+      {
+        <span class="k1">"submission_id"</span>: <span class="s">"9a1f3c52-88de-4f0b-a6b1-0e4d7d2c11aa"</span>,
+        <span class="k1">"lab_id"</span>: <span class="s">"LAB_AX3000S_01"</span>,
+        <span class="k1">"lab_name"</span>: <span class="s">"Bài 1: Cấu hình WAN PPPoE"</span>,
+        <span class="k1">"device"</span>: <span class="s">"ZTE AX3000S"</span>,
+        <span class="k1">"score"</span>: <span class="nu">100.0</span>,
+        <span class="k1">"duration_sec"</span>: <span class="nu">612</span>,
+        <span class="k1">"finished_at"</span>: <span class="s">"2026-11-10T07:45:12+00:00"</span>
+      },
+      {
+        <span class="k1">"submission_id"</span>: <span class="s">"c3d8e4a1-52bb-4f77-9e10-77a9b1f0e2d4"</span>,
+        <span class="k1">"lab_id"</span>: <span class="s">"LAB_AX3000S_02"</span>,
+        <span class="k1">"lab_name"</span>: <span class="s">"Bài 2: Cấu hình WiFi"</span>,
+        <span class="k1">"device"</span>: <span class="s">"ZTE AX3000S"</span>,
+        <span class="k1">"score"</span>: <span class="nu">66.67</span>,
+        <span class="k1">"duration_sec"</span>: <span class="nu">840</span>,
+        <span class="k1">"finished_at"</span>: <span class="s">"2026-11-11T02:30:00+00:00"</span>
+      }
+    ]
+  },
+  {
+    <span class="k1">"employee_code"</span>: <span class="s">"FPT654321"</span>,
+    <span class="k1">"full_name"</span>: <span class="s">"Trần Minh Bảo"</span>,
+    <span class="k1">"email"</span>: <span class="s">"bao.tm@fpt.net"</span>,
+    <span class="k1">"labs"</span>: [ <span class="c">{ ... }</span> ]
+  }
+]</pre></div>
+  <p class="sub" style="margin-top:8px">Dữ liệu trong ví dụ là giả lập.</p>
+
+  <div class="tw" style="margin-top:14px"><table>
+    <tr><th>Trường</th><th>Ý nghĩa</th></tr>
+    <tr><td><code>employee_code</code>, <code>full_name</code>, <code>email</code></td><td>Danh tính người tham gia (từ roster), dùng để Challenge khớp tài khoản.</td></tr>
+    <tr><td><code>labs[]</code></td><td>Các bài lab người đó đã làm trong A → B. Mỗi bài một dòng.</td></tr>
+    <tr><td><code>submission_id</code></td><td>Mã của lượt nộp có điểm cao nhất, dùng để đối soát.</td></tr>
+    <tr><td><code>lab_id</code>, <code>lab_name</code></td><td>Bài lab.</td></tr>
+    <tr><td><code>device</code></td><td>Thiết bị dùng cho bài lab.</td></tr>
+    <tr><td><code>score</code></td><td>Điểm cao nhất của bài đó trong A → B (0–100, hoặc <code>null</code> nếu không chấm được).</td></tr>
+    <tr><td><code>duration_sec</code></td><td>Thời gian làm bài (giây) của lượt được chọn. Challenge dùng để cộng <b>tổng thời gian cấu hình</b>.</td></tr>
+    <tr><td><code>finished_at</code></td><td>Thời điểm nộp của lượt được chọn. Challenge dùng để xác định <b>ai hoàn thành hết trước</b>.</td></tr>
+  </table></div>
+  <div class="callout green">Người không làm bài nào trong A → B sẽ không có trong danh sách. Chọn lượt: điểm cao nhất; nếu bằng điểm, lấy lượt có <code>duration_sec</code> ngắn hơn (đề xuất, cần chốt). Response không trả các lượt khác.</div>
+  <div class="callout">Web cấu hình chỉ cung cấp dữ liệu. Việc cộng thời gian, xếp hạng và phá đồng điểm do Challenge làm.</div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>Cách tính <code>score</code></h2>
+  <p class="sub">Cột <code>score</code> trong DB hầu như rỗng vì frontend chỉ gửi <code>is_passed</code> và <code>grading_details</code>. Điểm một lượt được suy ra như sau:</p>
+  <div class="card">
+    <div class="grid g2">
+      <div>
+        <p style="margin-top:0">① Dùng <code>score</code> nếu DB đã có.<br>
+        ② Nếu không: <code>số tiêu chí đúng ÷ tổng tiêu chí × 100</code>.<br>
+        ③ Không có dữ liệu chấm: <code>null</code>.</p>
+        <div class="crit"><input type="checkbox" checked id="c1"><label for="c1">Chế độ WAN đúng</label></div>
+        <div class="crit"><input type="checkbox" checked id="c2"><label for="c2">PPPoE username đúng</label></div>
+        <div class="crit"><input type="checkbox" id="c3"><label for="c3">VLAN ID đúng</label></div>
+      </div>
+      <div>
+        <div class="sub" style="margin:0">Điểm = <span id="calc"></span></div>
+        <div class="big" id="scoreVal"></div>
+        <div class="bar"><i id="scoreBar"></i></div>
+      </div>
+    </div>
+  </div>
+  <p class="sub" style="margin-top:12px">Ví dụ chọn điểm cao nhất: một bài làm 3 lượt với điểm 66,67 / 100 / 80 thì trả về lượt 100 và <code>submission_id</code> của lượt đó.</p>
+</section>
+
+<section>
+  <h2><span class="n">5</span>Phạm vi và lỗi</h2>
+  <div class="grid g2">
+    <div class="card"><b>Dữ liệu được tính (Áp dụng cho TẤT CẢ KTV)</b>
+      <ul>
+        <li><b>Mở cho tất cả KTV:</b> Quét trực tiếp mọi phiên thực hành trong <code>timer_sessions</code>, <b>không bắt buộc KTV phải thuộc lớp học cụ thể</b>. Bất kỳ KTV nào vào web thực hành đều được tính.</li>
+        <li>Chỉ lấy lượt thực hành đã nộp (<code>completed</code>/<code>failed</code>) có <code>finished_at</code> trong khoảng A → B.</li>
+        <li>Bỏ chế độ hướng dẫn, phiên chưa xong (<code>in_progress</code>/<code>abandoned</code>), phiên giả lập (<code>is_mock</code>).</li>
+        <li>KTV không làm bài nào trong khoảng A → B sẽ không có trong response (Challenge tự hiểu là chưa thi / 0 điểm).</li>
+      </ul>
+    </div>
+    <div class="card"><b>Mã lỗi</b>
+      <ul>
+        <li><code>401</code> Sai / thiếu <code>secret_key</code></li>
+        <li><code>400</code> JSON lỗi hoặc khoảng thời gian sai (A &gt; B)</li>
+        <li><code>422</code> <code>system</code> không hợp lệ</li>
+        <li><code>503</code> Server chưa cấu hình secret</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">Bảo mật: <code>secret_key</code> lấy từ biến môi trường riêng <code>CHALLENGE_API_SECRET</code>, so khớp bằng <code>hash_equals</code> (thời gian hằng), không ghi ra log. Cần đặt khóa ngẫu nhiên dài (ít nhất 32 ký tự).</div>
+</section>
+
+<section>
+  <h2><span class="n">6</span>Các điểm cần chốt & Đề xuất cụ thể</h2>
+  <p class="sub">Bảng tổng hợp chi tiết toàn bộ các quyết định kỹ thuật, phương án đề xuất và ghi chú lưu ý giữa 2 hệ thống:</p>
+
+  <h3 class="grp">A. Phạm vi thử thách & Đối tượng</h3>
+  <div class="tw"><table>
+    <tr><th style="width:50px">STT</th><th style="width:220px">Nội dung cần chốt</th><th>Phương án đề xuất (Recommended)</th><th style="width:280px">Ghi chú</th></tr>
+    <tr>
+      <td><b>1</b></td>
+      <td><b>Thiết bị & bài lab thi</b><br><span class="tag req">Cần danh sách</span></td>
+      <td>Cần danh sách mã bài lab (<code>lab_id</code>) cụ thể cho hệ thống <code>fc_construction</code>. Cấu hình cố định trong file <code>.env</code> của server.</td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>2</b></td>
+      <td><b>Bài thi theo tuần (W1, W2...)</b></td>
+      <td>Tất cả các tuần dùng chung danh mục bài thi chuẩn. Khoảng thời gian A → B sẽ quyết định kết quả tuần đó.</td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>3</b></td>
+      <td><b>Đối tượng KTV tham gia</b></td>
+      <td><span class="tag ok">Đã chốt</span> <b>Áp dụng cho TẤT CẢ KTV toàn quốc</b>. Không giới hạn theo lớp đào tạo hay phân công.</td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>4</b></td>
+      <td><b>Thế nào là "hoàn thành"</b><br><span class="tag req">Cần thống nhất</span></td>
+      <td>
+        Thống nhất 1 trong 2 hướng với Challenge:<br>
+        • <b>Hướng 1 (Bắt buộc 100 điểm):</b> Mỗi bài bắt buộc phải đạt 100% tiêu chí (<code>is_passed = true</code>, tức 100 điểm) mới tính là hoàn thành. KTV làm lại nhiều lần cho đến khi đạt 100. <i>Khi đó tất cả KTV làm xong đều có điểm tối đa, BXH sẽ cạnh tranh bằng <b>Thời gian làm bài</b> và <b>Thời điểm nộp bài</b>.</i><br>
+        • <b>Hướng 2 (Chấp nhận điểm thành phần):</b> Nộp bài được bao nhiêu điểm tính bấy nhiêu (vd: 70, 80...). KTV được xếp hạng theo <b>Tổng điểm</b> trước, sau đó mới xét thời gian.
+      </td>
+      <td contenteditable="true"></td>
+    </tr>
+  </table></div>
+
+  <h3 class="grp">B. Cách tính điểm</h3>
+  <div class="tw"><table>
+    <tr><th style="width:50px">STT</th><th style="width:220px">Nội dung cần chốt</th><th>Phương án đề xuất (Recommended)</th><th style="width:280px">Ghi chú</th></tr>
+    <tr>
+      <td><b>5</b></td>
+      <td><b>Công thức tính <code>score</code></b><br><span class="tag ok">Đề xuất tối ưu</span></td>
+      <td>Tính theo tỷ lệ tiêu chí đúng:<br><code>score = (số tiêu chí đúng ÷ tổng tiêu chí) × 100</code></td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>6</b></td>
+      <td><b>Bài KTV chưa làm trong tuần</b></td>
+      <td>Challenge tự gán 0 điểm cho các bài chưa làm và đánh dấu chưa hoàn thành đủ bộ bài.</td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>7</b></td>
+      <td><b>Chọn lượt tốt nhất khi bằng điểm</b></td>
+      <td>Lấy lượt có <code>score</code> cao nhất. Nếu cùng điểm cao nhất, <b>ưu tiên lượt có <code>duration_sec</code> ngắn hơn</b>. Bằng cả thời gian thì lấy lượt nộp sớm hơn.</td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>8</b></td>
+      <td><b>Điểm tổng hợp của KTV</b></td>
+      <td>Challenge tính bằng tổng điểm các bài thi trong tuần.</td>
+      <td contenteditable="true"></td>
+    </tr>
+  </table></div>
+
+  <h3 class="grp">C. Luật xếp hạng (Xử lý tại web Challenge)</h3>
+  <div class="tw"><table>
+    <tr><th style="width:50px">STT</th><th style="width:220px">Nội dung cần chốt</th><th>Phương án đề xuất (Recommended)</th><th style="width:280px">Ghi chú</th></tr>
+    <tr>
+      <td><b>9</b></td>
+      <td><b>Thứ tự ưu tiên xếp hạng</b></td>
+      <td>
+        • <b>Nếu theo Hướng 1 (Bắt buộc 100 điểm):</b><br>
+        &nbsp;&nbsp;① Số bài Đạt 100% nhiều hơn xếp trên.<br>
+        &nbsp;&nbsp;② <b>Tổng thời gian cấu hình</b> ngắn hơn xếp trên.<br>
+        &nbsp;&nbsp;③ <b>Thời điểm nộp bài cuối</b> (<code>finished_at</code>) sớm hơn xếp trên.<br>
+        • <b>Nếu theo Hướng 2 (Chấp nhận điểm thành phần):</b><br>
+        &nbsp;&nbsp;① Số bài đã làm nhiều hơn xếp trên.<br>
+        &nbsp;&nbsp;② <b>Tổng điểm</b> cao hơn xếp trên.<br>
+        &nbsp;&nbsp;③ <b>Tổng thời gian cấu hình</b> ngắn hơn xếp trên.<br>
+        &nbsp;&nbsp;④ <b>Thời điểm nộp bài cuối</b> sớm hơn xếp trên.
+      </td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>10</b></td>
+      <td><b>Tổng thời gian cấu hình</b></td>
+      <td>Cộng tổng <code>duration_sec</code> của các bài thi đã chọn của KTV đó.</td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>11</b></td>
+      <td><b>Xếp hạng tuần hay cộng dồn</b></td>
+      <td>Xếp hạng độc lập theo từng tuần dựa trên mốc A → B.</td>
+      <td contenteditable="true"></td>
+    </tr>
+  </table></div>
+
+  <h3 class="grp">D. Vận hành & Bảo mật</h3>
+  <div class="tw"><table>
+    <tr><th style="width:50px">STT</th><th style="width:220px">Nội dung cần chốt</th><th>Phương án đề xuất (Recommended)</th><th style="width:280px">Ghi chú</th></tr>
+    <tr>
+      <td><b>12</b></td>
+      <td><b>Xử lý biên thời gian</b></td>
+      <td>Lọc theo <code>finished_at</code> trong khoảng [start_date, end_date]. Mốc <code>16:59:00.000Z</code> được làm tròn đến hết phút: <code>16:59:59.999Z</code>.</td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>13</b></td>
+      <td><b>Khóa định danh KTV</b></td>
+      <td>Khớp tài khoản bằng <b>Mã nhân viên (<code>employee_code</code>)</b> làm khóa chính, <code>email</code> làm khóa phụ.</td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>14</b></td>
+      <td><b>Vị trí Bảng xếp hạng</b></td>
+      <td><span class="tag ok">Đã chốt</span> <b>Hiển thị tại web Challenge FTEL 30</b>.</td>
+      <td contenteditable="true"></td>
+    </tr>
+    <tr>
+      <td><b>15</b></td>
+      <td><b>Khóa bí mật (<code>secret_key</code>)</b></td>
+      <td>Chuỗi ngẫu nhiên dài $\ge 32$ ký tự, lưu trong biến môi trường <code>CHALLENGE_API_SECRET</code>.</td>
+      <td contenteditable="true"></td>
+    </tr>
+  </table></div>
+</section>
+
+</main>
+<footer>Tài liệu đề xuất · FTC-VirtualDevices · chưa triển khai</footer>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    navigator.clipboard.writeText(document.getElementById(btn.dataset.copy).innerText).then(function(){
+      var old=btn.textContent;btn.textContent='Đã copy';setTimeout(function(){btn.textContent=old},1200);
+    });
+  });
+});
+(function(){
+  var boxes=document.querySelectorAll('.crit input');
+  function update(){
+    var ok=0;boxes.forEach(function(b){if(b.checked)ok++});
+    var score=Math.round(ok/boxes.length*10000)/100;
+    document.getElementById('calc').textContent=ok+' ÷ '+boxes.length+' × 100';
+    document.getElementById('scoreVal').textContent=score.toFixed(2);
+    document.getElementById('scoreBar').style.width=score+'%';
+  }
+  boxes.forEach(function(b){b.addEventListener('change',update)});
+  update();
+})();
+</script>
+</body>
+</html>

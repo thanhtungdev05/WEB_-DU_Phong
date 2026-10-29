@@ -16,7 +16,7 @@ import os, sys, json, socket, re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, unquote, parse_qs
 
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8080
 BASE = os.path.dirname(os.path.abspath(__file__))
 WWW = os.path.join(BASE, "www")
 ROUTES_FILE = os.path.join(WWW, "_routes.json")

@@ -564,7 +564,7 @@ def dat_lai_factory(sid=None):
     global _state
     with _khoa:
         s = sid or lay_phien_hien_tai()
-        if s and s in USER_STATES:
+        if s:
             USER_STATES[s] = copy.deepcopy(SEED)
             USER_STATES[s].setdefault("session", {})["id_hien_tai"] = s
             return USER_STATES[s]

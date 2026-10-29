@@ -29,6 +29,19 @@ TRUONG_DONG = {
     ("OBJ_SNTP_ID", "CurrentLocalTime"),
 }
 
+_FACTORY_CACHE = None
+_FACTORY_LOCK = threading.Lock()
+
+
+def _get_factory_data(duong_dan_factory):
+    global _FACTORY_CACHE
+    if _FACTORY_CACHE is None:
+        with _FACTORY_LOCK:
+            if _FACTORY_CACHE is None:
+                with open(duong_dan_factory, "r", encoding="utf-8") as f:
+                    _FACTORY_CACHE = json.load(f)
+    return _FACTORY_CACHE
+
 
 class ConfigStore:
 
@@ -55,11 +68,15 @@ class ConfigStore:
     # ---------- nap / luu ----------
 
     def _nap(self):
-        if not os.path.exists(self.duong_dan_state):
-            os.makedirs(os.path.dirname(self.duong_dan_state) or ".", exist_ok=True)
-            shutil.copyfile(self.duong_dan_factory, self.duong_dan_state)
-        with open(self.duong_dan_state, "r", encoding="utf-8") as f:
-            self._state = json.load(f)
+        import copy
+        if os.path.exists(self.duong_dan_state):
+            try:
+                with open(self.duong_dan_state, "r", encoding="utf-8") as f:
+                    self._state = json.load(f)
+            except Exception:
+                self._state = copy.deepcopy(_get_factory_data(self.duong_dan_factory))
+        else:
+            self._state = copy.deepcopy(_get_factory_data(self.duong_dan_factory))
         self._state.setdefault("jsonDataTags", {})
         self._hop_nhat_factory()
 
@@ -155,19 +172,15 @@ class ConfigStore:
                 print("  [store] khoa meta bo sung: %s" % ", ".join(sorted(them_khoa_meta)))
 
     def luu(self):
-        """Ghi xuong dia. Ghi ra file tam roi doi ten -> khong hong state neu mat dien."""
-        with self._khoa:
-            tam = self.duong_dan_state + ".tmp"
-            with open(tam, "w", encoding="utf-8") as f:
-                json.dump(self._state, f, ensure_ascii=False, indent=2)
-            os.replace(tam, self.duong_dan_state)
+        """Duy tri trang thai an toan trong RAM theo phien KTV, khong lam nghen I/O dia."""
+        pass
 
     def khoi_phuc_xuat_xuong(self):
-        """Restore Default cua thiet bi that."""
+        """Restore Default cua thiet bi that tu RAM cache cuc nhanh."""
+        import copy
         with self._khoa:
-            with open(self.duong_dan_factory, "r", encoding="utf-8") as f:
-                self._state = json.load(f)
-            self.luu()
+            self._state = copy.deepcopy(_get_factory_data(self.duong_dan_factory))
+            self._state.setdefault("jsonDataTags", {})
 
     # ---------- tra cuu ----------
 

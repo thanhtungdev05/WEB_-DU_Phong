@@ -5,7 +5,7 @@ import sys
 from playwright.async_api import async_playwright
 
 async def run_audit():
-    with open('devices/ac1000z/src/www/index.html', 'r', encoding='utf-8') as f:
+    with open('simulators/ac1000z/src/www/index.html', 'r', encoding='utf-8') as f:
         c = f.read()
 
     m = re.search(r'var menuTreeJSON = (\[.*?\]);', c, re.DOTALL)

@@ -6,6 +6,10 @@ let technicianCatalog = [];
 let trainingAssignments = [];
 let classMemberships = [];
 let dashboardReport = null;
+const dashboardReportsByView = {
+    overview: null,
+    analytics: null
+};
 let technicianByIdentity = new Map();
 let technicianCatalogAuthoritative = false;
 let instructorSearchTimer = null;
@@ -655,16 +659,16 @@ function mapReportMetrics(metric) {
     };
 }
 
-function dashboardReportMatchesSelectedPeriod() {
-    if (activeDashboardView === 'analytics') {
+function dashboardReportMatchesSelectedPeriod(report = dashboardReport, viewName = activeDashboardView) {
+    if (viewName === 'analytics') {
         const periods = getBranchReportPeriods();
-        const reportPeriod = dashboardReport?.meta?.period;
-        return dashboardReport?.meta?.scope === 'period'
+        const reportPeriod = report?.meta?.period;
+        return (report?.meta?.scope === 'period' || dashboardReport?.meta?.scope === 'period')
             && reportPeriod?.from === periods.currentStart
             && reportPeriod?.to === periods.currentEnd;
     }
     const periods = getKpiComparisonPeriods();
-    const reportPeriod = dashboardReport?.meta?.period;
+    const reportPeriod = report?.meta?.period;
     return reportPeriod?.from === periods.currentStart && reportPeriod?.to === periods.currentEnd;
 }
 
@@ -2959,8 +2963,8 @@ let dashboardReportRequestSequence = 0;
 // does not keep serverless compute awake. Manual refresh and tab focus remain
 // available when fresher data is needed.
 
-function dashboardReportQuery(section = 'summary') {
-    if (activeDashboardView === 'analytics') {
+function dashboardReportQuery(section = 'summary', viewName = activeDashboardView) {
+    if (viewName === 'analytics') {
         const periods = getBranchReportPeriods();
         return new URLSearchParams({
             scope: 'period',
@@ -3421,47 +3425,57 @@ function reloadDashboardSelectedRange() {
     void Promise.allSettled(requests);
 }
 
-async function reloadDashboardReportDetails(requestSequence = dashboardReportRequestSequence) {
-    const viewName = activeDashboardView;
+async function reloadDashboardReportDetails(requestSequence = dashboardReportRequestSequence, targetView = activeDashboardView) {
+    const viewName = targetView;
     const results = await Promise.allSettled(
-        dashboardReportDetailSections(viewName).map(section => fetchDashboardReport(dashboardReportQuery(section)))
+        dashboardReportDetailSections(viewName).map(section => fetchDashboardReport(dashboardReportQuery(section, viewName)))
     );
-    if (requestSequence !== dashboardReportRequestSequence || viewName !== activeDashboardView) return false;
+    if (requestSequence !== dashboardReportRequestSequence) return false;
     let loaded = 0;
     results.forEach(result => {
         if (result.status !== 'fulfilled' || !result.value) return;
-        const currentVersion = String(dashboardReport?.meta?.data_version || '');
+        const currentVersion = String(dashboardReportsByView[viewName]?.meta?.data_version || dashboardReport?.meta?.data_version || '');
         const incomingVersion = String(result.value?.meta?.data_version || '');
         if (currentVersion && incomingVersion && currentVersion !== incomingVersion) return;
-        dashboardReport = mergeDashboardReportSection(dashboardReport, result.value);
+        dashboardReportsByView[viewName] = mergeDashboardReportSection(dashboardReportsByView[viewName] || null, result.value);
         loaded++;
     });
-    if (loaded) renderAll();
+    if (activeDashboardView === viewName) {
+        dashboardReport = dashboardReportsByView[viewName] || dashboardReport;
+        if (loaded) renderAll();
+    }
     results.filter(result => result.status === 'rejected').forEach(result => {
         console.warn('KhÃ´ng táº£i Ä‘Æ°á»£c má»™t pháº§n bÃ¡o cÃ¡o dashboard.', result.reason);
     });
     return loaded === results.length;
 }
 
-async function reloadDashboardReport() {
+async function reloadDashboardReport(targetView = activeDashboardView) {
     const requestSequence = ++dashboardReportRequestSequence;
     state.dashboardReportStatus = 'loading';
     renderAll();
     try {
-        const report = await fetchDashboardReport(dashboardReportQuery('summary'));
+        const report = await fetchDashboardReport(dashboardReportQuery('summary', targetView));
         if (requestSequence !== dashboardReportRequestSequence) return;
-        dashboardReport = mergeDashboardReportSection(dashboardReport, report);
-        state.dashboardReportStatus = 'ready';
-        renderAll();
-        const detailsReady = await reloadDashboardReportDetails(requestSequence);
+        dashboardReportsByView[targetView] = mergeDashboardReportSection(dashboardReportsByView[targetView] || null, report);
+        if (activeDashboardView === targetView) {
+            dashboardReport = dashboardReportsByView[targetView];
+            state.dashboardReportStatus = 'ready';
+        }
+        if (activeDashboardView === targetView) renderAll();
+        const detailsReady = await reloadDashboardReportDetails(requestSequence, targetView);
         if (requestSequence !== dashboardReportRequestSequence) return;
-        state.dashboardReportStatus = detailsReady ? 'ready' : 'stale';
-        renderAll();
+        if (activeDashboardView === targetView) {
+            state.dashboardReportStatus = detailsReady ? 'ready' : 'stale';
+        }
+        if (activeDashboardView === targetView) renderAll();
     } catch (error) {
         console.warn('Không tải được báo cáo dashboard theo kỳ.', error);
         if (requestSequence !== dashboardReportRequestSequence) return;
-        state.dashboardReportStatus = dashboardReport ? 'stale' : 'unavailable';
-        renderAll();
+        if (activeDashboardView === targetView) {
+            state.dashboardReportStatus = dashboardReport ? 'stale' : 'unavailable';
+        }
+        if (activeDashboardView === targetView) renderAll();
     }
 }
 
@@ -3597,7 +3611,14 @@ function applyDashboardData(data) {
         classMemberships = data.classMemberships || [];
         state.assignmentsLoaded = true;
     }
-    if (data.report !== undefined) dashboardReport = mergeDashboardReportSection(dashboardReport, data.report);
+    if (data.report !== undefined) {
+        dashboardReport = mergeDashboardReportSection(dashboardReport, data.report);
+        if (activeDashboardView === 'overview' || !dashboardReportsByView.overview) {
+            dashboardReportsByView.overview = dashboardReport;
+        } else if (activeDashboardView === 'analytics') {
+            dashboardReportsByView.analytics = dashboardReport;
+        }
+    }
     state.dashboardReportStatus = data.reportStatus || (dashboardReport ? 'ready' : 'unavailable');
     state.sessionHistoryDays = data.sessionHistoryDays;
     state.sessionHistoryFrom = data.sessionHistoryFrom;
@@ -3786,6 +3807,8 @@ async function refreshDashboardData({ force = false, announce = false } = {}) {
         }
         if (force || (version !== '' && version !== lastDashboardVersion)) {
             dashboardReportCache.clear();
+            dashboardReportsByView.overview = null;
+            dashboardReportsByView.analytics = null;
         }
         if (version !== '' && version !== lastDashboardVersion) {
             technicianFilterCatalog = [];
@@ -5292,7 +5315,7 @@ function startDashboardColumnResize(event, table, header, columnIndex) {
 }
 
 function syncDashboardTableColumnResizers(table) {
-    if (!table.tHead) return;
+    if (!table.tHead || (table.offsetParent === null && table.getClientRects().length === 0)) return;
     const resizeMode = getDashboardColumnResizeMode(table);
     if (!resizeMode) return;
     const placements = getTableCellPlacements(table);
@@ -5628,7 +5651,15 @@ function initUnifiedDashboardControls() {
 
     const observer = new MutationObserver(mutations => {
         mutations.forEach(mutation => mutation.addedNodes.forEach(node => {
-            if (node.nodeType === Node.ELEMENT_NODE) enhanceDashboardTables(node);
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.matches?.('.column-resize-handle, thead, tbody, tr, td, th')
+                    || node.closest?.('.column-resize-handle, thead, tbody, tr, td, th')) {
+                    return;
+                }
+                if (node.matches?.('table') || node.querySelector?.('table')) {
+                    enhanceDashboardTables(node);
+                }
+            }
         }));
     });
     observer.observe(document.body, { childList: true, subtree: true });
@@ -8112,8 +8143,11 @@ function getReportExportPreview(type) {
     return buildActivityReportDescriptor();
 }
 
+let trainingAssignmentsRequest = null;
 async function ensureTrainingAssignmentsLoaded({ force = false } = {}) {
     if (state.assignmentsLoaded && !force) return trainingAssignments;
+    if (trainingAssignmentsRequest) return trainingAssignmentsRequest;
+    trainingAssignmentsRequest = (async () => {
     // The shared endpoint still requires a valid range, but assignment progress
     // and compact counters are cumulative and intentionally ignore overview dates.
     const requestDate = toDateKey(new Date());
@@ -8136,7 +8170,9 @@ async function ensureTrainingAssignmentsLoaded({ force = false } = {}) {
     state.assignmentsLoaded = true;
     initializeInstructorClasses();
     if (['instructors', 'class_matrix', 'analytics', 'technicians'].includes(activeDashboardView)) renderAll();
-    return trainingAssignments;
+        return trainingAssignments;
+    })().finally(() => { trainingAssignmentsRequest = null; });
+    return trainingAssignmentsRequest;
 }
 
 async function refreshAssignmentsForClassExport() {
@@ -9964,9 +10000,12 @@ function sortedTrainingClasses(items) {
     });
 }
 
+let trainingClassesRequest = null;
 async function loadTrainingClasses() {
+    if (trainingClassesRequest) return trainingClassesRequest;
     const body = document.getElementById('classTableBody');
-    if (body) body.innerHTML = '<tr><td colspan="7">Đang tải danh sách lớp...</td></tr>';
+    if (body && !state.classLoaded) body.innerHTML = '<tr><td colspan="7">Đang tải danh sách lớp...</td></tr>';
+    trainingClassesRequest = (async () => {
     try {
         const response = await fetch(`${API_BASE_URL}/classes`, { credentials: 'include' });
         const json = await response.json().catch(() => ({}));
@@ -9979,7 +10018,11 @@ async function loadTrainingClasses() {
         console.error('Class list error:', error);
         if (body) body.innerHTML = `<tr><td colspan="7">${escapeHTML(error.message || 'Không thể tải danh sách lớp.')}</td></tr>`;
         return false;
+    } finally {
+        trainingClassesRequest = null;
     }
+    })();
+    return trainingClassesRequest;
 }
 
 function renderTrainingClasses() {

@@ -239,7 +239,7 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         vg_dir = str(ROOT / "simulators/sim_vigor2927/src")
         if vg_dir not in sys.path:
             sys.path.insert(0, vg_dir)
-        import vg_config_store as vg_store
+        vg_store = load_server("simulators/sim_vigor2927/src/vg_config_store.py", "test_vg_config_store")
 
         ktv_a = "ktv_vg_user_A"
         ktv_b = "ktv_vg_user_B"
@@ -262,7 +262,7 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         self.assertEqual(vg_store.USER_CONFIGS[ktv_b]["pages"]["doc/enet1.htm"]["vars"]["aryLanDhcp"], "192.168.2.200")
 
     def test_ax3000gz_v2_multi_ktv_isolation_and_reset(self):
-        gz_store = load_server("devices/ax3000gz_v2/src/config_store.py", "test_ax3000gz_v2_store")
+        gz_store = load_server("simulators/ax3000gz_v2/src/config_store.py", "test_ax3000gz_v2_store")
 
         ktv_a = "ktv_gz_A"
         ktv_b = "ktv_gz_B"

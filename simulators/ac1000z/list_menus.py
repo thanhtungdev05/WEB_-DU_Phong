@@ -1,7 +1,7 @@
 import re
 import json
 
-with open('devices/ac1000z/src/www/index.html', 'r', encoding='utf-8') as f:
+with open('simulators/ac1000z/src/www/index.html', 'r', encoding='utf-8') as f:
     c = f.read()
 
 m = re.search(r'var menuTreeJSON = (\[.*?\]);', c, re.DOTALL)

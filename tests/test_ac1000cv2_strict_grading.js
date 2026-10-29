@@ -494,10 +494,10 @@ sandbox.getAllAccessibleDocuments = () => mockDocWithBaseline;
 sandbox.deviceIframe = { contentWindow: {} };
 
 const evalResult = sandbox.evaluateLesson({ id: 'ac1000cv2' }, bai1);
-assert.strictEqual(evalResult.passed, false, 'Khi có trường ngoài phạm vi bị sửa, evaluateLesson PHẢI ĐÁNH TRƯỢT');
-const unexpItem = evalResult.details.find(d => d.name && d.name.includes('Thao tác ngoài phạm vi'));
-assert.ok(unexpItem, 'Phải có mục Thao tác ngoài phạm vi trong details');
-console.log('✔ Test 7: Auto-Baseline tự động bắt và đánh trượt trường ngoài phạm vi bài học!');
+assert.strictEqual(evalResult.passed, true, 'Khi có trường không liên quan hướng dẫn bị sửa, evaluateLesson KHÔNG được chấm sai');
+const unexpItem = evalResult.details.find(d => d.name && d.name.includes('Thao tác ngoài phạm vi') && d.passed === false);
+assert.strictEqual(unexpItem, undefined, 'Không được sinh lỗi chấm sai cho trường ngoài hướng dẫn');
+console.log('✔ Test 7: Thao tác không liên quan đến hướng dẫn trong bài không bị chấm sai đạt chuẩn!');
 
 console.log('--- TEST 8: BÀI KHÔNG CÓ grading.rules KHÔNG BỊ ÉP TRƯỢT ---');
 // Regression: evaluateAutoBaseline dùng (rules || []).some(...) nên với rules rỗng,

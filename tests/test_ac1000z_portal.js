@@ -88,6 +88,13 @@ const wifiLesson = lessons.find(lesson => lesson.id === 'LAB_AC1000Z_02');
 assert.ok(!wifiLesson.grading.rules.some(rule => rule.id === 'wifi_security'), 'lab 2 must keep Encryption Type at its default');
 assert.ok(!wifiLesson.guidePopups.some(item => item.selector === '[id="EncryptionType:0"]'), 'lab 2 must not guide a needless Encryption Type change');
 assert.ok(wifiLesson.guidePopups.some(item => item.selector === '[id="instName_WLANSSIDConf:0"]'), 'lab 2 must visibly guide opening SSID1 before editing it');
+const openSsid1 = wifiLesson.guidePopups.find(item => item.selector === '[id="instName_WLANSSIDConf:0"]');
+assert.strictEqual(openSsid1.position, 'left', 'lab 2 must position SSID1 tooltip on the left to avoid covering adjacent controls');
+
+const wifiIotLesson = lessons.find(lesson => lesson.id === 'LAB_AC1000Z_03');
+const openSsid4 = wifiIotLesson.guidePopups.find(item => item.selector === '[id="instName_WLANSSIDConf:3"]');
+assert.ok(openSsid4, 'lab 3 must guide opening SSID4');
+assert.strictEqual(openSsid4.position, 'left', 'lab 3 must position SSID4 tooltip on the left to avoid covering adjacent controls');
 
 const dhcpLesson = lessons.find(lesson => lesson.id === 'LAB_AC1000Z_05');
 assert.strictEqual(dhcpLesson.grading.rules.length, 16, 'lab 5 must grade LAN IP, subnet, DHCP start and DHCP end');
@@ -153,8 +160,8 @@ assert.ok(!migration.includes("'LAB_AC1000Z_07'"), 'catalog must contain only si
 assert.ok(!/\bDELETE\s+FROM\b/i.test(migration), 'catalog migration must not delete persisted data');
 
 const shellPages = [
-  'devices/ac1000z/src/www/login_page.html',
-  'devices/ac1000z/src/www/index.html'
+  'simulators/ac1000z/src/www/login_page.html',
+  'simulators/ac1000z/src/www/index.html'
 ];
 shellPages.forEach(relative => {
   const html = read(relative);
@@ -166,15 +173,15 @@ const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry =
   const full = path.join(dir, entry.name);
   return entry.isDirectory() ? walk(full) : [full];
 });
-walk(path.join(root, 'devices/ac1000z/src/www')).forEach(file => {
+walk(path.join(root, 'simulators/ac1000z/src/www')).forEach(file => {
   if (!/\.(html|js)$/.test(file)) return;
   const source = fs.readFileSync(file, 'utf8');
   assert.ok(!/top\.location\.href\s*=/.test(source), `${path.relative(root, file)} must reload inside the portal iframe instead of the top window`);
 });
 
 const appJs = read('app.js').replace(/\r\n/g, '\n');
-const loginPage = read('devices/ac1000z/src/www/login_page.html');
-const indexPage = read('devices/ac1000z/src/www/index.html');
+const loginPage = read('simulators/ac1000z/src/www/login_page.html');
+const indexPage = read('simulators/ac1000z/src/www/index.html');
 assert.ok(loginPage.includes('id="Frm_Username"'), 'login page must be detected as a login page');
 assert.ok(loginPage.includes('id="LoginId"'), 'AC1000Z login button is the input the listeners must skip');
 assert.ok(!indexPage.includes('Frm_Username'), 'index page must not be treated as a login page');
@@ -202,8 +209,8 @@ assert.ok(
 );
 
 // Session reset
-const serverSource = read('devices/ac1000z/src/server.py');
-const storeSource = read('devices/ac1000z/src/config_store.py');
+const serverSource = read('simulators/ac1000z/src/server.py');
+const storeSource = read('simulators/ac1000z/src/config_store.py');
 assert.ok(serverSource.includes('"/api/reset"'), 'simulator must expose /api/reset');
 const handlerBody = (source, name) => {
   const start = source.indexOf(`def ${name}(self):`);

@@ -58,8 +58,8 @@ async def verify_back_to_home():
         print(f"  Widget Firewall trên Home: {has_fw_widget}")
         print(f"  Widget WLAN trên Home: {has_wlan_widget}")
 
-        await page.screenshot(path="devices/ac1000z/back_to_home_verified.png")
-        print("\nĐã chụp ảnh minh chứng: devices/ac1000z/back_to_home_verified.png")
+        await page.screenshot(path="simulators/ac1000z/back_to_home_verified.png")
+        print("\nĐã chụp ảnh minh chứng: simulators/ac1000z/back_to_home_verified.png")
 
         await browser.close()
 

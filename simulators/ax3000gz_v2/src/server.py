@@ -818,8 +818,9 @@ class Handler(BaseHTTPRequestHandler):
             "dns_localdns_lua.lua",
             "Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua",
             "firewall_portforwarding_lua.lua",
+            "firewall_dmz_lua.lua",
         }
-        if typ == "menuData" and tag in lab_tags:
+        if typ == "menuData" and (tag in lab_tags or tag.endswith("_lua.lua")):
             action = form.get("IF_ACTION", [""])[0]
             if (not sess["logged_in"] or
                     form.get("_sessionTOKEN", [""])[0] != sess.get("sess_token") or

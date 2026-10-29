@@ -18,7 +18,7 @@ from urllib.parse import urlencode
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SIM_SRC = ROOT / "devices" / "ax3000gz_v2" / "src"
+SIM_SRC = ROOT / "simulators" / "ax3000gz_v2" / "src"
 
 
 def load_server(module_name: str):

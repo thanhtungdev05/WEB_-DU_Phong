@@ -26,55 +26,55 @@ async def audit_submenus():
                 "name": "Internet > WAN > WAN Config",
                 "top": "#internet",
                 "target_link": "ethWanConfig",
-                "shot": "devices/ac1000z/audit_sub_wan_config.png"
+                "shot": "simulators/ac1000z/audit_sub_wan_config.png"
             },
             {
                 "name": "Internet > Security > Firewall",
                 "top": "#internet",
                 "target_link": "firewall",
-                "shot": "devices/ac1000z/audit_sub_firewall.png"
+                "shot": "simulators/ac1000z/audit_sub_firewall.png"
             },
             {
                 "name": "Internet > Security > Port Forwarding",
                 "top": "#internet",
                 "target_link": "portForwarding",
-                "shot": "devices/ac1000z/audit_sub_port_forward.png"
+                "shot": "simulators/ac1000z/audit_sub_port_forward.png"
             },
             {
                 "name": "Local Network > WLAN > WLAN Basic",
                 "top": "#localnet",
                 "target_link": "wlanBasic",
-                "shot": "devices/ac1000z/audit_sub_wlan_basic.png"
+                "shot": "simulators/ac1000z/audit_sub_wlan_basic.png"
             },
             {
                 "name": "Local Network > WLAN > Mesh Wi-Fi (NetSphere)",
                 "top": "#localnet",
                 "target_link": "smNetSphereMAP",
-                "shot": "devices/ac1000z/audit_sub_mesh.png"
+                "shot": "simulators/ac1000z/audit_sub_mesh.png"
             },
             {
                 "name": "Local Network > LAN > IPv4",
                 "top": "#localnet",
                 "target_link": "lanMgrIpv4",
-                "shot": "devices/ac1000z/audit_sub_lan_ipv4.png"
+                "shot": "simulators/ac1000z/audit_sub_lan_ipv4.png"
             },
             {
                 "name": "Management > System Mgmt > Device Mgmt (Reboot)",
                 "top": "#mgrAndDiag",
                 "target_link": "rebootAndReset",
-                "shot": "devices/ac1000z/audit_sub_reboot.png"
+                "shot": "simulators/ac1000z/audit_sub_reboot.png"
             },
             {
                 "name": "Management > Diagnosis > Network Diag (Ping/Trace)",
                 "top": "#mgrAndDiag",
                 "target_link": "networkDiag",
-                "shot": "devices/ac1000z/audit_sub_diag.png"
+                "shot": "simulators/ac1000z/audit_sub_diag.png"
             },
             {
                 "name": "Management > IPv6 Switch",
                 "top": "#mgrAndDiag",
                 "target_link": "IPv6SwitchMgr",
-                "shot": "devices/ac1000z/audit_sub_ipv6_switch.png"
+                "shot": "simulators/ac1000z/audit_sub_ipv6_switch.png"
             },
         ]
 

@@ -134,12 +134,6 @@ class RouterHandler(BaseHTTPRequestHandler):
             if sid and sid in SESSIONS:
                 return sid, SESSIONS[sid]
 
-            # If a session is already logged in on localhost simulator, attach to it
-            logged_in_sids = [s for s, data in SESSIONS.items() if data.get("logged_in")]
-            if logged_in_sids:
-                active_sid = logged_in_sids[-1]
-                return active_sid, SESSIONS[active_sid]
-
             new_sid = hashlib.sha256(token(32).encode()).hexdigest()
             SESSIONS[new_sid] = {
                 "logged_in": False,
@@ -332,6 +326,7 @@ class RouterHandler(BaseHTTPRequestHandler):
                     "loginErrMsg": "",
                     "promptMsg": "",
                     "sess_token": sess["sess_token"],
+                    "salt": sess["salt"],
                 }, sid)
                 return
             elif q_tag == "login_token":

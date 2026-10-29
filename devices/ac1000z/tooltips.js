@@ -81,7 +81,7 @@
     step('#WLANSSIDConfBar', 'Bước 3: Mở WLAN SSID Configuration', 'right', function (doc) {
       return isVisible(doc, '#WLANSSIDConfBar') && !isVisible(doc, '[id="instName_WLANSSIDConf:0"]');
     }),
-    step('[id="instName_WLANSSIDConf:0"]', 'Bước 4: Mở SSID1 băng tần 2.4 GHz', 'right', function (doc) {
+    step('[id="instName_WLANSSIDConf:0"]', 'Bước 4: Mở SSID1 băng tần 2.4 GHz', 'left', function (doc) {
       return isVisible(doc, '[id="instName_WLANSSIDConf:0"]') && !isVisible(doc, '[id="ESSID:0"]');
     }),
     step('[id="ESSID:0"]', 'Bước 5: Nhập SSID Name: FPT Telecom', 'right', visibleAndUnsaved('[id="ESSID:0"]')),
@@ -102,7 +102,7 @@
     step('#WLANSSIDConfBar', 'Bước 3: Mở WLAN SSID Configuration', 'right', function (doc) {
       return isVisible(doc, '#WLANSSIDConfBar') && !isVisible(doc, '[id="instName_WLANSSIDConf:3"]');
     }),
-    step('[id="instName_WLANSSIDConf:3"]', 'Bước 4: Mở SSID4 băng tần 2.4 GHz (IoT)', 'right', function (doc) {
+    step('[id="instName_WLANSSIDConf:3"]', 'Bước 4: Mở SSID4 băng tần 2.4 GHz (IoT)', 'left', function (doc) {
       return isVisible(doc, '[id="instName_WLANSSIDConf:3"]') && !isVisible(doc, '[id="ESSID:3"]');
     }),
     step('[id="ESSID:3"]', 'Bước 5: Nhập SSID Name: FPT IoT', 'right', visibleAndUnsaved('[id="ESSID:3"]')),

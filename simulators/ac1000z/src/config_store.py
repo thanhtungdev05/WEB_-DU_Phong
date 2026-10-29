@@ -37,16 +37,21 @@ def _load_xml_template(path: str) -> tuple[str, list[dict]] | None:
     return text, pairs
 
 
-class ConfigStore:
-    def __init__(self, path: str = STATE_FILE):
-        self.path = path
-        self._lock = threading.RLock()
-        self._raw_templates: dict[str, str] = {}
-        self._raw_values: dict[str, list[dict]] = {}
-        self._init_templates()
-        self.reset()
+_RAW_STATE_DATA: dict | None = None
+_RAW_TEMPLATES: dict[str, str] = {}
+_RAW_VALUES: dict[str, list[dict]] = {}
+_RAW_CACHE_LOCK = threading.Lock()
 
-    def _init_templates(self) -> None:
+
+def _ensure_raw_cache():
+    global _RAW_STATE_DATA, _RAW_TEMPLATES, _RAW_VALUES
+    if _RAW_STATE_DATA is not None:
+        return
+    with _RAW_CACHE_LOCK:
+        if _RAW_STATE_DATA is not None:
+            return
+        with open(STATE_FILE, encoding="utf-8") as fh:
+            _RAW_STATE_DATA = json.load(fh)
         if os.path.exists(API_DIR):
             for fname in os.listdir(API_DIR):
                 if fname.endswith(".xml"):
@@ -60,22 +65,31 @@ class ConfigStore:
                 if res is None:
                     try:
                         with open(fpath, encoding="utf-8", errors="replace") as fh:
-                            raw = fh.read()
-                        self._raw_templates[tag] = raw
+                            _RAW_TEMPLATES[tag] = fh.read()
                     except OSError:
                         pass
                     continue
                 template_text, pairs = res
-                self._raw_templates[tag] = template_text
-                self._raw_values[tag] = pairs
+                _RAW_TEMPLATES[tag] = template_text
+                _RAW_VALUES[tag] = pairs
+
+
+class ConfigStore:
+    def __init__(self, path: str = STATE_FILE):
+        self.path = path
+        self._lock = threading.RLock()
+        _ensure_raw_cache()
+        self._templates: dict[str, str] = {}
+        self._values: dict[str, list[dict]] = {}
+        self.reset()
 
     def reset(self) -> None:
-        """Đưa trạng thái về giá trị mặc định của firmware."""
+        """Đưa trạng thái về giá trị mặc định của firmware từ bộ nhớ RAM."""
+        _ensure_raw_cache()
         with self._lock:
-            with open(self.path, encoding="utf-8") as fh:
-                self._data = json.load(fh)
-            self._templates = dict(self._raw_templates)
-            self._values = {k: copy.deepcopy(v) for k, v in self._raw_values.items()}
+            self._data = copy.deepcopy(_RAW_STATE_DATA)
+            self._templates = dict(_RAW_TEMPLATES)
+            self._values = {k: copy.deepcopy(v) for k, v in _RAW_VALUES.items()}
 
     def snapshot(self) -> dict:
         with self._lock:
@@ -89,8 +103,6 @@ class ConfigStore:
         with self._lock:
             section = self._data.setdefault(key, {})
             section.update(fields)
-            with open(self.path, "w", encoding="utf-8") as fh:
-                json.dump(self._data, fh, indent=2, ensure_ascii=False)
 
     def _resolve_tag(self, tag: str) -> str | None:
         clean = tag.split("&")[0]
@@ -167,10 +179,10 @@ def get_user_store(user_key: str | None = None) -> ConfigStore:
 def reset_user_store(user_key: str | None = None) -> None:
     key = user_key or current_user_key()
     with _STORE_LOCK:
-        if key in _USER_STORES:
-            _USER_STORES[key].reset()
-        else:
+        if key not in _USER_STORES:
             _USER_STORES[key] = ConfigStore()
+        store = _USER_STORES[key]
+    store.reset()
 
 
 class _StoreProxy:
