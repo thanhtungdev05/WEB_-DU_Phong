@@ -130,7 +130,8 @@ const migrations = [
   '060_standardize_vigor2927_bai6_title.sql',
   '061_activate_ac1000z_catalog.sql',
   '063_activate_ax1800gz_catalog.sql',
-  '064_activate_vigor2927_bai8_catalog.sql'
+  '064_activate_vigor2927_bai8_catalog.sql',
+  '065_update_mikrotik_hexs_labs.sql'
 ].map((file) => fs.readFileSync(path.join(root, 'api/migrations', file), 'utf8')).join('\n');
 for (const device of context.DEVICES.filter((item) => Object.hasOwn(expected, item.id))) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);
@@ -207,7 +208,7 @@ const expectedLessonCounts = {
   vigor2927: 8,
   be6500c: 5,
   ONT_be6500c: 6,
-  mikrotik_hexs: 7
+  mikrotik_hexs: 6
 };
 for (const device of context.DEVICES) {
   const lessons = device.categories.flatMap((category) => category.lessons || []);

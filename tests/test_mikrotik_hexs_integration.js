@@ -12,7 +12,7 @@ const migration049 = fs.readFileSync(path.join(root, 'api/migrations/049_activat
 
 console.log('--- Kiểm thử tích hợp Thiết bị MikroTik hEX S (18 files từ huynn13) ---');
 
-// 1. Kiểm tra portal.html đã nhúng đủ 14 files tooltips & lessons
+// 1. Kiểm tra portal.html đã nhúng đủ 12 files tooltips & lessons
 const expectedScripts = [
   'devices/mikrotik_hexs/tooltips/bai1.js',
   'devices/mikrotik_hexs/tooltips/bai2.js',
@@ -20,14 +20,12 @@ const expectedScripts = [
   'devices/mikrotik_hexs/tooltips/bai4.js',
   'devices/mikrotik_hexs/tooltips/bai5.js',
   'devices/mikrotik_hexs/tooltips/bai6.js',
-  'devices/mikrotik_hexs/tooltips/bai7.js',
   'devices/mikrotik_hexs/lessons/bai1.js',
   'devices/mikrotik_hexs/lessons/bai2.js',
   'devices/mikrotik_hexs/lessons/bai3.js',
   'devices/mikrotik_hexs/lessons/bai4.js',
   'devices/mikrotik_hexs/lessons/bai5.js',
   'devices/mikrotik_hexs/lessons/bai6.js',
-  'devices/mikrotik_hexs/lessons/bai7.js',
   'devices/mikrotik_hexs/data.js'
 ];
 
@@ -37,7 +35,7 @@ for (const scriptPath of expectedScripts) {
     `portal.html phải chứa thẻ script nạp ${scriptPath}`
   );
 }
-console.log('✔ Test 1: portal.html đã nhúng đủ 15 files script MikroTik hEX S theo đúng thứ tự.');
+console.log('✔ Test 1: portal.html đã nhúng đủ 13 files script MikroTik hEX S theo đúng thứ tự.');
 
 // 2. Kiểm tra load các file vào VM context
 const context = { window: {}, console };
@@ -56,9 +54,9 @@ assert.equal(device.id, 'mikrotik_hexs');
 assert.equal(device.folder, 'sim_mikrotik_hexs');
 
 const lessons = device.categories[0].lessons;
-assert.equal(lessons.length, 7, 'MikroTik hEX S phải có đủ 7 bài học');
+assert.equal(lessons.length, 6, 'MikroTik hEX S phải có đủ 6 bài học');
 
-for (let i = 1; i <= 7; i++) {
+for (let i = 1; i <= 6; i++) {
   const expectedId = `mikrotik_hexs-bai${i}`;
   const lesson = lessons[i - 1];
   assert.equal(lesson.id, expectedId, `Bài học ${i} phải có ID là ${expectedId}`);
@@ -77,7 +75,7 @@ for (let i = 1; i <= 7; i++) {
     `Bài học ${expectedId} phải có danh sách tooltips hướng dẫn`
   );
 }
-console.log('✔ Test 2: Nạp thành công 7 bài học và 7 bộ tooltips của MikroTik hEX S với đầy đủ metadata.');
+console.log('✔ Test 2: Nạp thành công 6 bài học và 6 bộ tooltips của MikroTik hEX S với đầy đủ metadata.');
 
 // 3. Kiểm tra các cơ chế đặc thù cho MikroTik trong app.js
 assert.match(

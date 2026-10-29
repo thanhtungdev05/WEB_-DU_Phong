@@ -114,8 +114,20 @@ def _kho_cua_ktv(key):
         if key not in _KHO_THEO_KTV:
             # Never load the legacy shared cau_hinh.json: every KTV starts clean.
             _KHO_THEO_KTV[key] = kho_cau_hinh.KhoCauHinh(tu_dia=False)
+            _KHO_THEO_KTV[key].sua_dong((20, 0), 9, {6: (33, b"fpt"), 5: (33, b"123")})
         _KHO_LAST_SEEN[key] = now
         return _KHO_THEO_KTV[key]
+
+
+def dat_lai_factory_ktv(key):
+    """Đặt lại hoàn toàn cấu hình KTV về trạng thái xuất xưởng sạch 100%."""
+    with _KHO_LOCK:
+        moi = kho_cau_hinh.KhoCauHinh(tu_dia=False)
+        # Khởi tạo mặc định: PPPoE User/Pass
+        moi.sua_dong((20, 0), 9, {6: (33, b"fpt"), 5: (33, b"123")})
+        _KHO_THEO_KTV[key] = moi
+        _KHO_LAST_SEEN[key] = time.time()
+        return moi
 
 
 class _KhoTheoKTV:
@@ -1428,28 +1440,7 @@ class H(BaseHTTPRequestHandler):
             from urllib.parse import urlparse, parse_qs
             bai = (parse_qs(urlparse(self.path).query).get("bai") or [""])[0]
             if bai in ("", "all"):
-                with KHO.khoa:
-                    if (20, 0) in KHO.bang:
-                        KHO.bang[(20, 0)].pop(9, None)
-                        KHO.bang[(20, 0)].pop(8, None)
-                    KHO.sua_dong((20, 0), 9, {6: (33, b"fpt"), 5: (33, b"123")})
-                    KHO.bang.pop((20, 9), None)
-                    KHO.thu_tu.pop((20, 9), None)
-                    KHO.da_xoa.pop((20, 9), None)
-                    for dd in (DD_LEASE, DD_ARP):
-                        KHO.bang.pop(dd, None)
-                        KHO.thu_tu.pop(dd, None)
-                        KHO.da_xoa.pop(dd, None)
-                    if (23, 2) in KHO.bang:
-                        KHO.bang[(23, 2)].pop(1, None)
-                    if (20, 1) in KHO.bang:
-                        KHO.bang[(20, 1)].pop(2, None)
-                    KHO.scalar.pop((14, 2), None)
-                    for dd in (DD_BANG_DT, (44, 21), (44, 18), (20, 7)):
-                        KHO.bang.pop(dd, None)
-                        KHO.thu_tu.pop(dd, None)
-                        KHO.da_xoa.pop(dd, None)
-                KHO.luu()
+                dat_lai_factory_ktv(getattr(_KHO_CONTEXT, "key", "anonymous"))
                 return self._tra(200, b'{"ok":true,"reset":"all"}', "application/json")
             if bai == "1":
                 # [20,0] = bang interface PPP; dong 9 = pppoe-out1;
@@ -1505,84 +1496,34 @@ class H(BaseHTTPRequestHandler):
                 KHO.luu()
                 return self._tra(200, b'{"ok":true,"bai":3}', "application/json")
             if bai == "4":
-                # [23,2] dong 1 = rule Networks cua DHCP Server (Address/Gateway
-                # mac dinh 192.168.1.0/24 / 192.168.1.1);
-                # [20,1] dong 2 = item IP Addresses tren bridge-LAN (Address/Network
-                # mac dinh 192.168.1.1/24 / 192.168.1.0).
-                # Chi can XOA lop phu — khong can biet nghia tung truong ma hoa so
-                # nguyen (giong cach lam voi Bai 1): xoa xong se tra ve dung gia tri
-                # GOC doc tu du_lieu_goc/*.bin (bang chung thiet bi that).
+                # [23,2] = DHCP Server Networks (192.168.1.0/24 / 192.168.1.1);
+                # [20,1] = IP Addresses (bridge-LAN: 192.168.1.1/24 / 192.168.1.0);
+                # [84,2] = IP Pool (dhcp-pool-lan: 192.168.1.10-192.168.1.254).
+                # XOA SACH toan bo lop phu cua 3 bang nay de tro ve gia tri GOC xuat xuong.
                 with KHO.khoa:
-                    if (23, 2) in KHO.bang:
-                        KHO.bang[(23, 2)].pop(1, None)
-                    if (20, 1) in KHO.bang:
-                        KHO.bang[(20, 1)].pop(2, None)
+                    for dd in ((20, 1), (84, 2), (23, 2)):
+                        KHO.bang.pop(dd, None)
+                        KHO.thu_tu.pop(dd, None)
+                        KHO.da_xoa.pop(dd, None)
                 KHO.luu()
                 return self._tra(200, b'{"ok":true,"bai":4}', "application/json")
-            if bai == "5":
-                # [14,2] = trang IP > DNS. Day la trang MUC DON (scalar), khong
-                # phai bang — hoc vien xoa bot may chu trong danh sach "Servers"
-                # roi Apply, tuc ghi de truong 10 (danh sach long nhau).
-                # Dat lai = xoa sach lop phu scalar cua duong dan nay -> tra ve
-                # dung 8 may chu goc doc tu du_lieu_goc/14-2.bin (4 IPv4 +
-                # 4 IPv6), va Cache Size ve dung 2048 that cua thiet bi.
-                # Neu khong xoa: hoc vien sau vao da thay 4 may chu bi xoa san,
-                # khong con gi de lam (kho cau hinh LUU BEN — da vap o Bai 3).
+            if bai in ("5", "7"):
+                # Bai 5 Policy Routing (truoc day la Bai 7): hoc vien THEM bang vao
+                # Routing > Tables [44,20], them tuyen vao IP > Routes [44,21], va them luat
+                # danh dau o IP > Firewall > Mangle [20,7].
                 with KHO.khoa:
-                    KHO.scalar.pop((14, 2), None)
+                    for dd in (DD_BANG_DT, (44, 21), (44, 18), (20, 7)):
+                        KHO.bang.pop(dd, None)
+                        KHO.thu_tu.pop(dd, None)
+                        KHO.da_xoa.pop(dd, None)
                 KHO.luu()
                 return self._tra(200, b'{"ok":true,"bai":5}', "application/json")
-            if bai == "7":
-                # Bai 7 Policy Routing: hoc vien THEM bang vao Routing > Tables
-                # [44,20], them tuyen vao IP > Routes [44,21], va them luat
-                # danh dau o IP > Firewall > Mangle [20,7] (doc tu roteros-*.jg:
-                # {title:'Mangle',type:'map',path:[20,7]}).
-                # Cung xoa luon Routing > Rules [44,18] cho sach — doc tu
-                # roteros-*.jg: {name:'Policy Routing Rule',title:'Rules',
-                # path:[44,18]}; KHONG phai [3,2], do la Log > Rules (trung ten).
-                #
-                # LOI DA VAP (2026-09-20, luc tu kiem thu): ban dau QUEN [20,7]
-                # nen moi lan chay lai kich ban lai chong them mot luat Mangle
-                # trung y het -> bang phinh dan (29 -> 30 -> 31 ...). Bang Mangle
-                # goc cua thiet bi co san 29 luat nam trong du_lieu_goc/20-7.bin,
-                # xoa lop phu KHONG dung toi chung.
-                # Dat lai = XOA SACH lop phu cua ca ba bang -> tra ve dung danh
-                # sach goc cua thiet bi (bang [44,20] co lai du 3 dong:
-                # `main`, `to_WAN1`, `to_WAN2`).
-                #
-                # QUAN TRONG: viec xoa `da_xoa` o day cung la cach SUA dong
-                # `main` da bi xoa nham truoc do — chinh no lam cot "Routing
-                # Table" cua IP > Routes hien "unknown" (xem DD_BANG_DT).
-                with KHO.khoa:
-                    for dd in (DD_BANG_DT, (44, 21), (44, 18), (20, 7)):
-                        KHO.bang.pop(dd, None)
-                        KHO.thu_tu.pop(dd, None)
-                        KHO.da_xoa.pop(dd, None)
-                KHO.luu()
-                return self._tra(200, b'{"ok":true,"bai":7}', "application/json")
             if bai == "6":
-                # Bai 6 Load Balancing (PCC). Thiet bi THAT da co san tron bo
-                # cau hinh PCC trong bang Mangle [20,7] (do that 2026-09-20,
-                # xem memory.md muc 2.77):
-                #   id 8  : LAN, PCC both-addresses:2/0, dst-type !local
-                #           -> mark connection WAN1_conn
-                #   id 9  : LAN, PCC both-addresses:2/1, dst-type !local
-                #           -> mark connection WAN2_conn
-                #   id 10 : LAN, connection-mark WAN1_conn -> mark routing to_WAN1
-                #   id 11 : LAN, connection-mark WAN2_conn -> mark routing to_WAN2
-                #   id 12/13: nhu 10/11 nhung chain output
-                # Anh Huynn chot: hoc vien TU TAO LAI 2 luat PCC (id 8, 9) —
-                # "trai tim" cua load balancing; phan con lai giu nguyen de
-                # hoc vien thay toan canh. Vay dat lai = XOA 2 dong goc do
-                # (qua `da_xoa`, khong dung toi du_lieu_goc/20-7.bin) + xoa
-                # moi dong hoc vien them + xoa thu tu keo tha.
-                # Cung xoa lop phu bang/tuyen cua Bai 7 cho thiet bi ve sach.
+                # Bai 6 NAT Port (IP > Firewall > NAT [20, 5]):
                 with KHO.khoa:
-                    for dd in (DD_BANG_DT, (44, 21), (44, 18), (20, 7)):
-                        KHO.bang.pop(dd, None)
-                        KHO.thu_tu.pop(dd, None)
-                        KHO.da_xoa.pop(dd, None)
-                    KHO.da_xoa[(20, 7)] = {8, 9}
+                    KHO.bang.pop((20, 5), None)
+                    KHO.thu_tu.pop((20, 5), None)
+                    KHO.da_xoa.pop((20, 5), None)
                 KHO.luu()
                 return self._tra(200, b'{"ok":true,"bai":6}', "application/json")
             return self._tra(400, b'{"ok":false}', "application/json")

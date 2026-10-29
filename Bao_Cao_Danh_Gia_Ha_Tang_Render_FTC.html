@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Đánh Giá Hạ Tầng Cloud Render - FTC FPT</title>
+  <style>
+    :root {
+      --fpt-orange: #f26f21;
+      --fpt-blue: #005ea6;
+      --fpt-green: #008a3b;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --bg-light: #f8fafc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-dark);
+      background-color: #f1f5f9;
+      line-height: 1.6;
+      padding: 30px 15px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+    .header {
+      border-bottom: 3px solid var(--fpt-orange);
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .header-title h1 {
+      font-size: 24px;
+      color: var(--fpt-blue);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .header-title p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .badge {
+      background: #e0f2fe;
+      color: var(--fpt-blue);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .meta-box {
+      background: var(--bg-light);
+      border-left: 4px solid var(--fpt-blue);
+      padding: 14px 18px;
+      margin-bottom: 25px;
+      border-radius: 0 8px 8px 0;
+      font-size: 14.5px;
+    }
+    .meta-box p { margin: 4px 0; }
+    h2 {
+      font-size: 18px;
+      color: var(--fpt-blue);
+      margin: 30px 0 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+    p, li {
+      font-size: 15px;
+      color: #334155;
+      margin-bottom: 10px;
+    }
+    ul, ol {
+      padding-left: 20px;
+      margin-bottom: 15px;
+    }
+    li { margin-bottom: 6px; }
+    .alert-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-left: 5px solid var(--fpt-green);
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin: 20px 0;
+      font-size: 14.5px;
+    }
+    .alert-box strong { color: var(--fpt-green); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 10px 12px;
+      text-align: left;
+    }
+    th {
+      background: #f8fafc;
+      color: var(--fpt-blue);
+      font-weight: 600;
+    }
+    tr:nth-child(even) td { background: #fafbfc; }
+    .table-highlight {
+      background: #fef3c7 !important;
+      font-weight: 600;
+      color: #92400e;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .card {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      background: #ffffff;
+      border-top: 4px solid var(--fpt-blue);
+    }
+    .card.p1 { border-top-color: var(--text-muted); }
+    .card.p2 { border-top-color: #eab308; }
+    .card.p3 { border-top-color: var(--fpt-green); }
+    .card h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    .card .price {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--fpt-orange);
+      margin-bottom: 10px;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px dashed var(--border-color);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .container { box-shadow: none; padding: 20px 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-title">
+        <h1>Báo Cáo Đánh Giá Hạ Tầng Cloud Render</h1>
+        <p>Hệ thống FTC Virtual Devices — Giả lập Thiết bị & Sát hạch KTV FPT</p>
+      </div>
+      <div class="badge">Nâng Cấp Hạ Tầng 2026</div>
+    </div>
+
+    <div class="meta-box">
+      <p><strong>Kính gửi:</strong> Anh Khoa, Anh Xanh</p>
+      <p><strong>Đơn vị thực hiện:</strong> Team Kỹ thuật FTC — Dự án Giả lập Thiết bị Mạng</p>
+      <p><strong>Ngày lập báo cáo:</strong> 27/10/2026</p>
+    </div>
+
+    <h2>1. Tổng quan & Sự cố vừa qua</h2>
+    <p>Hệ thống thi giả lập thiết bị mạng của KTV vừa qua gặp sự cố bị Render tạm ngưng (<code>Workspace Suspended by owner</code>) do chạm trần <strong>5 GB băng thông miễn phí/tháng</strong>.</p>
+    <p>Team kỹ thuật đã rà soát và xử lý dứt điểm:</p>
+    <ul>
+      <li><strong>Tối ưu hóa mã nguồn:</strong> Bật nén Gzip 75% và Cache vĩnh viễn trên trình duyệt, giảm dung lượng tải mỗi lượt KTV từ 25 MB xuống <strong>dưới 0.5 MB</strong> (tiết kiệm 98% băng thông).</li>
+      <li><strong>Sửa lỗi 502 Bad Gateway:</strong> Khắc phục xung đột tiến trình Gunicorn & Django trong container Docker.</li>
+      <li><strong>Đăng nhập trực tiếp Email FPT:</strong> Chuyển sang form đăng nhập Email FPT (<code>@fpt.net</code>, <code>@fpt.com</code>), tự động ghi nhận điểm thi vào Neon DB mà không còn phụ thuộc vào IAM bị lỗi redirect_uri.</li>
+      <li><strong>Đo kiểm chịu tải:</strong> Mô phỏng <strong>1.000 KTV làm bài đồng thời đạt tỷ lệ thành công 100%</strong>, thời gian phản hồi trung bình chỉ <strong>188.6 ms</strong>.</li>
+    </ul>
+
+    <h2>2. Bản chất gói 25$/tháng trên Render & Làm rõ về Database</h2>
+    <p><strong>Gói 25$/tháng thực chất là gì?</strong> Đây là <em>Phí Nền Tảng Doanh Nghiệp (Pro Workspace)</em> cho toàn bộ tài khoản. Cung cấp sẵn <strong>25 GB băng thông/tháng</strong>. Điểm cốt lõi: <strong>Web KHÔNG BAO GIỜ BỊ KHÓA ĐỘT NGỘT</strong>. Nếu có tháng thi cao điểm vượt 25 GB, Render chỉ tính thêm 0.15$/GB (~3.500đ/GB) vào hóa đơn cuối tháng.</p>
+    
+    <div class="alert-box">
+      <strong>LÀM RÕ VẤN ĐỀ DATABASE: HOÀN TOÀN KHÔNG CẦN MUA TRÊN RENDER!</strong><br>
+      Gói 25$ không gồm Database. Nhưng hệ thống FTC đang dùng <strong>Neon Serverless PostgreSQL hoàn toàn độc lập và miễn phí</strong>.<br>
+      Database hiện đang lưu an toàn <strong>6.533 KTV</strong> và <strong>20.300 lịch sử bài thi</strong>. Mới dùng 150 MB / 512 MB, còn trống đủ lưu thêm <strong>hơn 500.000 bài thi</strong>. Render chỉ làm nhiệm vụ duy nhất là chạy máy chủ web, không tốn thêm đồng nào cho database.
+    </div>
+
+    <h2>3. Bảng so sánh các gói dịch vụ trên Render</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Tiêu chí</th>
+          <th>Gói Free ($0)</th>
+          <th>Gói Starter ($7/tháng)</th>
+          <th class="table-highlight">Gói Pro Workspace ($25/tháng)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Chi phí hàng tháng</strong></td>
+          <td>0 VNĐ</td>
+          <td>~170.000 VNĐ / tháng</td>
+          <td class="table-highlight">~600.000 VNĐ / tháng</td>
+        </tr>
+        <tr>
+          <td><strong>Cấu hình phần cứng</strong></td>
+          <td>0.1 CPU, 512 MB RAM</td>
+          <td>0.5 CPU, 512 MB RAM</td>
+          <td class="table-highlight">1.0 CPU, 2.0 GB RAM</td>
+        </tr>
+        <tr>
+          <td><strong>Chịu tải đồng thời (CCU)</strong></td>
+          <td>30 – 50 CCU</td>
+          <td>100 – 150 CCU</td>
+          <td class="table-highlight">300 – 500 CCU</td>
+        </tr>
+        <tr>
+          <td><strong>Số lượt thi trong ngày</strong></td>
+          <td>~500 lượt thi</td>
+          <td>1.200 – 2.000 lượt thi</td>
+          <td class="table-highlight">> 5.000 lượt thi</td>
+        </tr>
+        <tr>
+          <td><strong>Hiện tượng ngủ đông</strong></td>
+          <td>Ngủ sau 15p (mở lại chờ 30s)</td>
+          <td>Chạy 24/7, mở tức thì 0.1s</td>
+          <td class="table-highlight">Chạy 24/7, mở tức thì 0.1s</td>
+        </tr>
+        <tr>
+          <td><strong>Nguy cơ bị khóa web</strong></td>
+          <td>Có (nếu vượt 5 GB)</td>
+          <td>Rất thấp</td>
+          <td class="table-highlight"><strong>0% (Không bao giờ bị khóa)</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Hóa đơn PDF hoàn ứng</strong></td>
+          <td>Không có</td>
+          <td>Có hóa đơn điện tử</td>
+          <td class="table-highlight"><strong>Có hóa đơn PDF Tên Cty + MST</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Số dự án chạy được</strong></td>
+          <td>1 – 2 web (giới hạn 750h)</td>
+          <td>Theo từng máy chủ</td>
+          <td class="table-highlight"><strong>5 – 20+ web không giới hạn</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>4. Đánh giá tải thực tế: Bài toán 14 user giám sát rải rác</h2>
+    <p>Với nhu cầu hiện tại gồm 14 user (Giám sát, Giảng viên, KTV thi rải rác):</p>
+    <ul>
+      <li>Không thao tác đồng thời. Lúc cao điểm nhất chỉ có <strong>2 – 4 người online cùng lúc (CCU = 2 - 4)</strong>.</li>
+      <li>Toàn bộ 14 người chỉ sinh ra khoảng <strong>0.05 – 0.1 request/giây</strong> (dưới 3% công suất máy chủ).</li>
+      <li>Cả tháng tiêu tốn chưa tới 800 MB băng thông. Gói Free hay Starter đều dư sức đáp ứng.</li>
+      <li>Điểm khác biệt duy nhất: Gói Starter ($7) sẽ không bị độ trễ 30s ngủ đông khi có người bấm mở web.</li>
+    </ul>
+
+    <h2>5. Khả năng mở rộng dự án mới trong tương lai</h2>
+    <p>Hạ tầng hiện tại đã sẵn sàng để tích hợp và mở rộng thêm các phân hệ đào tạo:</p>
+    <ol>
+      <li><strong>Giả lập thiết bị mạng FTC (Hiện tại):</strong> 15 dòng router/modem, 87 bài lab thực hành.</li>
+      <li><strong>Giả lập FPT Camera & FPT Play Box (Mở rộng):</strong> Cấu hình Cloud, bắt Wi-Fi, xử lý suy hao.</li>
+      <li><strong>Cổng thi trắc nghiệm lý thuyết KTV (Mở rộng):</strong> Tận dụng sẵn danh bạ 6.500+ KTV trên Neon DB.</li>
+      <li><strong>Dashboard Xếp hạng Kỹ thuật Toàn quốc (Mở rộng):</strong> Thống kê điểm thi 7 Vùng.</li>
+    </ol>
+
+    <h2>6. Đề xuất 3 phương án xin ý kiến chỉ đạo</h2>
+    <div class="card-grid">
+      <div class="card p1">
+        <h3>Phương án 1: Gói Free</h3>
+        <div class="price">0 VNĐ</div>
+        <p><strong>Ưu điểm:</strong> Tiết kiệm 100% chi phí. Đủ sức cho 14 user rải rác.</p>
+        <p><strong>Nhược điểm:</strong> Chờ 30s khi server ngủ dậy. Vẫn có rủi ro nếu thi đột xuất > 50 người.</p>
+      </div>
+
+      <div class="card p2">
+        <h3>Phương án 2: Gói Starter</h3>
+        <div class="price">~170.000 VNĐ / tháng ($7)</div>
+        <p><strong>Ưu điểm:</strong> Chạy 24/7 mở tức thì 0.1s. Gánh mượt mà 100 – 150 KTV thi cùng lúc. Rất rẻ.</p>
+        <p><strong>Phù hợp:</strong> Sát hạch thường xuyên nội bộ chi nhánh / trung tâm.</p>
+      </div>
+
+      <div class="card p3">
+        <h3>Phương án 3: Gói Pro Workspace</h3>
+        <div class="price">~600.000 VNĐ / tháng ($25)</div>
+        <p><strong>Ưu điểm:</strong> An toàn tuyệt đối 100%, không bao giờ bị khóa web. Cấp 25 GB băng thông (> 50.000 lượt thi). <strong>Có hóa đơn PDF Tên Cty FPT + MST để phòng Kế toán hoàn ứng 100% ngân sách.</strong></p>
+        <p><strong>Phù hợp:</strong> Chuẩn hóa dài hạn cho toàn bộ hệ sinh thái đào tạo FPT.</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Kính nhờ Anh Khoa và Anh Xanh xem xét và cho team em xin ý kiến định hướng để triển khai phương án phù hợp nhất ạ!</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,431 +1,620 @@
 /**
- * devices/mikrotik_hexs/tooltips/bai6.js — Tooltip Hướng dẫn Bài 6: Cân bằng tải (Load Balancing) bằng PCC
+ * devices/mikrotik_hexs/tooltips/bai6.js — Tooltip Hướng dẫn Bài 6: Cấu hình NAT Port & Hairpin NAT
  *
- * ĐỀ BÀI (anh Huynn chốt 2026-09-20): dùng CẢ HAI đường WAN CÙNG LÚC. Thiết bị
- * thật (router FPT) đang chạy PCC — Per Connection Classifier: mỗi kết nối mới
- * được băm theo cặp (IP nguồn, IP đích) rồi chia 2, dư 0 đi WAN1, dư 1 đi WAN2.
- * Trên máy đã có sẵn bảng to_WAN1/to_WAN2 + tuyến + 4 luật mark routing; hàm đặt
- * lại XOÁ 2 luật PCC gốc (id 8, 9) để học viên TỰ TẠO LẠI đúng y bản gốc:
+ * Chuỗi 23 bước tuần tự chuẩn thực tế theo tài liệu kỹ thuật Việt Tuấn:
+ *   Phần 1: Cấu hình NAT Port Camera (Bước 1 ➔ 14):
+ *       • Mở cổng 8080 cho Camera nội bộ 192.168.1.10 đi qua cổng WAN (pppoe-out1).
+ *       • Chain: dstnat, Protocol: 6 (tcp), Dst. Port: 8080, In. Interface: pppoe-out1.
+ *       • Action: dst-nat, To Addresses: 192.168.1.10, To Ports: 8080.
+ *   Phần 2: Cấu hình Hairpin NAT (Bước 15 ➔ 23):
+ *       • Cho phép client LAN 192.168.1.0/24 truy cập Camera nội bộ bằng IP WAN / DDNS.
+ *       • Chain: srcnat, Src. Address: 192.168.1.0/24, Dst. Address: 192.168.1.10.
+ *       • Protocol: 6 (tcp), Dst. Port: 8080.
+ *       • Action: masquerade.
  *
- *   Luật 1: chain prerouting, In. Interface bridge-LAN, Connection Mark no-mark,
- *           PCC both addresses : 2/0, Dst. Address Type !local,
- *           Action mark connection, New Connection Mark WAN1_conn
- *   Luật 2: y hệt, PCC 2/1, New Connection Mark WAN2_conn
- *   Rồi KÉO cả hai lên TRÊN luật "mark routing" đầu tiên (luật phân loại phải
- *   chạy trước luật gắn bảng định tuyến — thứ tự firewall là nghĩa của cấu hình).
- *
- * 26 BƯỚC — SỐ BƯỚC TĂNG LIÊN TỤC, KHÔNG LẶP (anh Huynn chốt 2026-09-20: lặp số
- * làm học viên nhầm với bước đã làm):
- *   B1  chọn IP            B2  chọn Firewall        B3  chọn thẻ Mangle
- *   Luật 1 (nhóm WAN1) — B4…B14:
- *     B4  Add New              B5  In. Interface → bridge-LAN
- *     B6  Connection Mark (sẵn no-mark)              B7  mở khối Advanced
- *     B8  PCC → both addresses, 2, 0                B9  mở khối Extra
- *     B10 Dst. Address Type → mở khoá, phủ định, thêm mục, local
- *     B11 mở khối Action       B12 Action: mark connection
- *     B13 New Connection Mark: WAN1_conn             B14 OK
- *   Luật 2 (nhóm WAN2) — B15…B25: y hệt, PCC 2/1, WAN2_conn
- *   B26 kéo cả 2 luật PCC lên trên luật mark routing đầu tiên
- *
- * ═══ BỐN CẠM BẪY GIAO DIỆN — ĐO THẬT, tooltip bắt buộc phải dạy ═══
- *  1. Ô TUỲ CHỌN BỊ KHOÁ (nút ▼ bên trái) — giống Bài 7.
- *  2. KHỐI GẬP: General / Advanced / Extra / Action / Statistics. Tiêu đề khối
- *     nằm trong `<thead class="folded">` (KHÔNG phải tbody). PCC ở khối
- *     **Advanced**, Dst. Address Type ở khối **Extra**, Action ở khối **Action**.
- *  3. NÚT PHỦ ĐỊNH `<a class="not">` (ảnh not.svg ↔ not-checked.svg) đứng giữa
- *     nút mở khoá và ô giá trị. Dst. Address Type cần `!local`.
- *  4. DANH SÁCH NHIỀU GIÁ TRỊ: Dst. Address Type sau khi mở khoá vẫn CHƯA có ô
- *     chọn — phải bấm nút ▼ THỨ HAI (thêm mục) thì ô chọn mới xuất hiện.
- *
- * ═══ BẢN ĐỒ HASH ═══  #IP:Firewall → #IP:Firewall.Mangle → #IP:Firewall.Mangle.new
- * Mở menu bên trái KHÔNG đổi hash.
- *
- * `text` PHẢI là chuỗi (app.js: bubble.innerHTML = pop.text) → bước có 2 biến thể
- * tách làm 2 mục. CHỈ gắn id vào phần tử CHƯA có id (memory.md 2.74).
+ * NGUYÊN TẮC:
+ * 1. Chuyển bước nghiêm ngặt: bước trước hoàn tất mới hiển thị bước sau.
+ * 2. An toàn DOM tuyệt đối: không dùng text:Add New / text:OK để chống giật lag và reflow.
+ * 3. Gán ID tĩnh độc nhất cho nút Add New và các ô nhập liệu.
  */
 
 if (!window.TOOLTIPS_MIKROTIK_HEXS) window.TOOLTIPS_MIKROTIK_HEXS = {};
 
-/* ───────────────────────── Nhận diện trạng thái ───────────────────────── */
+/* ───────────────────────── Nhận diện trạng thái DOM ───────────────────────── */
 
 function mkBai6ManDangNhap(doc) {
   try {
     return !!(doc.querySelector('input#name') && doc.querySelector('input#password'));
   } catch (e) { return false; }
 }
+
 function mkBai6Hash(doc) {
-  try { const w = doc.defaultView || window; return (w.location && w.location.hash) || ''; }
-  catch (e) { return ''; }
+  try {
+    const w = (doc && doc.defaultView) || window;
+    return (w.location && w.location.hash) || (doc && doc.location && doc.location.hash) || '';
+  } catch (e) { return ''; }
 }
+
 function mkBai6Hang(doc, nhan) {
   try {
+    const nhanLower = nhan.toLowerCase();
     for (const tr of doc.querySelectorAll('tr')) {
-      const lb = tr.querySelector('td.label');
-      if (lb && lb.textContent.trim() === nhan) return tr;
+      const lb = tr.querySelector('td.label, th, td:first-child');
+      if (lb && lb.textContent.trim().toLowerCase() === nhanLower) return tr;
     }
   } catch (e) {}
   return null;
 }
+
 function mkBai6MenuConHien(doc, ten) {
   try {
+    const tenLower = ten.toLowerCase();
     for (const a of doc.querySelectorAll('#menu a, li a')) {
       if (a.closest('.ftc-guide-bubble')) continue;
-      if ((a.textContent || '').trim() === ten && a.offsetParent !== null) return true;
+      if ((a.textContent || '').trim().toLowerCase() === tenLower && a.offsetParent !== null) return true;
     }
   } catch (e) {}
   return false;
 }
-function mkBai6OFirewall(doc) { return mkBai6Hash(doc) === '#IP:Firewall'; }
-function mkBai6OMangle(doc) { return mkBai6Hash(doc) === '#IP:Firewall.Mangle'; }
-function mkBai6OHopThoai(doc) { return mkBai6Hash(doc).indexOf('#IP:Firewall.Mangle.') === 0; }
 
-/** Ô đã mở khoá chưa (ô đầu tiên trong hàng không còn disabled)? */
+function mkBai6OQuickSet(doc) {
+  try {
+    if (mkBai6ManDangNhap(doc)) return false;
+    const h = mkBai6Hash(doc);
+    if (h.indexOf('Quick') !== -1 || h === '' || h === '#') return true;
+    const qsItem = doc.getElementById('id_Quick_Set');
+    if (qsItem && (qsItem.classList.contains('opened') || qsItem.classList.contains('active'))) return true;
+    const btnWebFig = doc.getElementById('id_WebFig');
+    if (btnWebFig && !btnWebFig.classList.contains('opened')) return true;
+    const aIP = doc.querySelector('#menu a#id_IP, a#id_IP, #menu a[href*="IP"]');
+    if (!aIP || aIP.offsetParent === null) return true;
+  } catch (e) {}
+  return false;
+}
+
+function mkBai6OFirewall(doc) { return mkBai6Hash(doc).indexOf('#IP:Firewall') === 0; }
+
+function mkBai6ONAT(doc) {
+  const h = mkBai6Hash(doc);
+  if (h.indexOf('#IP:Firewall.NAT') === 0 && !mkBai6OHopThoaiNAT(doc)) return true;
+  try {
+    const activeTab = doc.querySelector('#tabs a.active[href*="NAT"], #tabs a.active');
+    if (activeTab && (activeTab.textContent || '').trim().toLowerCase() === 'nat') {
+      return !mkBai6OHopThoaiNAT(doc);
+    }
+  } catch (e) {}
+  return false;
+}
+
+function mkBai6OHopThoaiNAT(doc) { return mkBai6Hash(doc).indexOf('#IP:Firewall.NAT.') === 0; }
+
 function mkBai6DaMoKhoa(doc, nhan) {
   const tr = mkBai6Hang(doc, nhan);
   if (!tr) return false;
   try {
-    const o = tr.querySelector('input, select, textarea');
-    // Hàng danh sách nhiều giá trị (Dst. Address Type) khi chưa thêm mục thì
-    // không có ô nào — nhận diện qua ảnh nút mở khoá (up.svg = đã mở).
-    if (!o) {
-      const img = tr.querySelector('a.sbtn img');
-      return !!(img && /up\.svg/.test(img.getAttribute('src') || ''));
+    const img = tr.querySelector('td.extra a.sbtn img, a.sbtn img, td.extra img');
+    if (img && img.src) {
+      if (img.src.indexOf('up.svg') !== -1) return true;
+      if (img.src.indexOf('down.svg') !== -1) return false;
     }
-    return !o.disabled;
+    const os = tr.querySelectorAll('input, select, textarea');
+    for (const o of os) {
+      if (!o.disabled && o.style.visibility !== 'hidden' && o.offsetParent !== null) return true;
+    }
+    const o = tr.querySelector('input, select, textarea');
+    return !!(o && !o.disabled && o.style.visibility !== 'hidden');
   } catch (e) {}
   return false;
 }
-/** Nút phủ định của hàng đã bật chưa? (ảnh not-checked.svg) */
-function mkBai6PhuDinhBat(doc, nhan) {
+
+function mkBai6GiaTri(doc, nhan) {
   const tr = mkBai6Hang(doc, nhan);
+  if (!tr) return '';
+  try {
+    const chk = tr.querySelector('input[type="checkbox"]');
+    if (chk) return chk.checked ? 'yes' : 'no';
+
+    // 1. Nếu có Combobox của WebFig (span.cbox input)
+    const cboxInp = tr.querySelector('span.cbox input, .cbox input');
+    if (cboxInp && (cboxInp.value || '').trim() !== '') {
+      return cboxInp.value.trim();
+    }
+
+    // 2. Tìm input text/number có giá trị
+    for (const inp of tr.querySelectorAll('input:not([type="checkbox"]):not([type="button"]):not([type="submit"])')) {
+      const v = (inp.value || '').trim();
+      if (v !== '') return v;
+    }
+
+    // 3. Tìm select có option được chọn
+    for (const sel of tr.querySelectorAll('select')) {
+      if (sel.selectedIndex >= 0 && sel.options && sel.options[sel.selectedIndex]) {
+        const txt = (sel.options[sel.selectedIndex].text || '').trim();
+        if (txt !== '') return txt;
+        const val = (sel.options[sel.selectedIndex].value || '').trim();
+        if (val !== '') return val;
+      }
+      if ((sel.value || '').trim() !== '') return sel.value.trim();
+    }
+
+    // 4. Nếu có input nhưng rỗng
+    const firstInp = tr.querySelector('input:not([type="checkbox"]):not([type="button"]):not([type="submit"])');
+    if (firstInp) return (firstInp.value || '').trim();
+
+    // 5. Textarea
+    const ta = tr.querySelector('textarea');
+    if (ta) return (ta.value || '').trim();
+  } catch (e) {}
+  return '';
+}
+
+function mkBai6KhoiActionDaMo(doc) {
+  const tr = mkBai6Hang(doc, 'Action');
   if (!tr) return false;
   try {
-    const a = tr.querySelector('a.not, a.not_disabled');
-    const img = a && a.querySelector('img');
-    return !!(img && /not-checked\.svg/.test(img.getAttribute('src') || ''));
+    const sel = tr.querySelector('select, input');
+    return !!(sel && sel.offsetParent !== null);
   } catch (e) {}
   return false;
 }
-/** Giá trị ô thứ `thu` của hàng. */
-function mkBai6GiaTri(doc, nhan, thu) {
-  const tr = mkBai6Hang(doc, nhan);
-  if (!tr) return null;
-  try {
-    const o = tr.querySelectorAll('input, select, textarea')[thu || 0];
-    if (!o) return null;
-    if (o.tagName === 'SELECT') { const op = o.options[o.selectedIndex]; return op ? op.text.trim() : ''; }
-    return (o.value || '').trim();
-  } catch (e) {}
-  return null;
-}
-/**
- * Ô COMBO (select + ô nhập cạnh nhau: Connection Mark, New Connection Mark).
- * ĐO THẬT 2026-09-20: chọn một mục trong select thì WebFig CHÉP chữ sang ô
- * nhập rồi XOÁ chọn của select (selectedIndex = -1). Ở hộp thoại mở lần đầu
- * select có sẵn 'no-mark', nhưng từ hộp thoại thứ hai select trống. Vậy giá
- * trị THẬT = ô nhập nếu có chữ, không thì lấy select.
- */
-function mkBai6Combo(doc, nhan) {
-  const t = mkBai6GiaTri(doc, nhan, 1);
-  if (t) return t;
-  const s = mkBai6GiaTri(doc, nhan, 0);
-  return s || '';
-}
-/** Khối (thead) mang tên `ten` đang gập không? */
-function mkBai6KhoiGap(doc, ten) {
-  try {
-    for (const td of doc.querySelectorAll('td.sep')) {
-      if (td.textContent.trim() !== ten) continue;
-      const kh = td.closest('thead');
-      return !!(kh && kh.classList.contains('folded'));
-    }
-  } catch (e) {}
-  return false;
-}
-/** Hàng mang nhãn đang nhìn thấy không? */
-function mkBai6HangHien(doc, nhan) {
-  const tr = mkBai6Hang(doc, nhan);
-  try { return !!(tr && tr.offsetParent !== null); } catch (e) { return false; }
+
+function mkBai6Part1Xong(doc) {
+  if (window._FTC_MK6_RULE_PORT_SAVED) return true;
+  const ds = window._FTC_MK6_DS_NAT || [];
+  return ds.some(function (r) {
+    return (r.chain === 'dstnat' || r.action === 'dst-nat') && (r.raw.includes('192.168.1.10') || r.raw.includes('8080'));
+  });
 }
 
-/* ───────── Đọc danh sách Mangle (trang danh sách) ───────── */
-
-/** Các dòng luật: {vt, action, chain, inIf}. Cột đo thật: [2]=#, [4]=Action, [5]=Chain, [14]=In. Interface */
-function mkBai6CacLuat(doc) {
-  const ds = [];
-  try {
-    for (const tr of doc.querySelectorAll('tr')) {
-      if (tr.querySelector('th')) continue;
-      const tds = tr.querySelectorAll('td');
-      if (tds.length < 20) continue;
-      ds.push({ vt: parseInt(tds[2].textContent.trim(), 10),
-                action: tds[4].textContent.trim(), chain: tds[5].textContent.trim(),
-                inIf: tds[14].textContent.trim(), tr: tr });
-    }
-  } catch (e) {}
-  return ds;
-}
-/** Luật PCC của học viên = mark connection trên bridge-LAN (2 luật gốc đã bị xoá lúc đặt lại). */
-function mkBai6LuatPCC(ds) {
-  return ds.filter(function (l) { return l.action === 'mark connection' && l.inIf === 'bridge-LAN'; });
-}
-/** Luật mark routing trên bridge-LAN (có sẵn) — luật PCC phải nằm TRÊN luật này. */
-function mkBai6LuatMarkRouting(ds) {
-  return ds.filter(function (l) { return l.action === 'mark routing' && l.inIf === 'bridge-LAN'; });
+function mkBai6Part2Xong(doc) {
+  if (window._FTC_MK6_RULE_HAIRPIN_SAVED) return true;
+  const ds = window._FTC_MK6_DS_NAT || [];
+  return ds.some(function (r) {
+    return (r.chain === 'srcnat' || r.action === 'masquerade') && (r.src.includes('192.168.1.0') || r.dst.includes('192.168.1.10') || r.raw.includes('masquerade'));
+  });
 }
 
-/* ─────────── Gắn ID + ghi nhớ tiến độ (chạy mỗi 500ms) ─────────── */
+/* ───────────────────────── Gắn ID động ổn định ───────────────────────── */
 
-function mkBai6DatId(el, id) { try { if (el && !el.id) el.id = id; } catch (e) {} }
+function mkBai6DatId(el, id) {
+  try { if (el && !el.id) el.id = id; } catch (e) {}
+}
 
-function mkBai6GanTheoNhan(doc, nhan, tienTo) {
+function mkBai6GanIdTheoNhan(doc, nhan, idO, idNut) {
   const tr = mkBai6Hang(doc, nhan);
   if (!tr) return;
   try {
-    mkBai6DatId(tr.querySelector('a.sbtn'), tienTo + '-nut');            // nút mở khoá (▼ đầu tiên)
-    mkBai6DatId(tr.querySelector('a.not, a.not_disabled'), tienTo + '-not');
-    const os = tr.querySelectorAll('input, select, textarea');
-    if (os[0]) mkBai6DatId(os[0], tienTo);
-    if (os[1]) mkBai6DatId(os[1], tienTo + '-2');
-    if (os[2]) mkBai6DatId(os[2], tienTo + '-3');
-    const nuts = tr.querySelectorAll('a.sbtn');
-    if (nuts.length >= 2) mkBai6DatId(nuts[nuts.length - 1], tienTo + '-them'); // ▼ thêm mục (danh sách)
+    if (idNut) {
+      const btn = tr.querySelector('td.extra a.sbtn, a.sbtn, td.extra a');
+      if (btn) mkBai6DatId(btn, idNut);
+    }
+    if (idO) {
+      const cboxInp = tr.querySelector('span.cbox input, .cbox input');
+      if (cboxInp) {
+        mkBai6DatId(cboxInp, idO);
+      } else {
+        const o = tr.querySelector('input:not([type="checkbox"]):not([type="button"]):not([type="submit"]), select');
+        if (o) mkBai6DatId(o, idO);
+      }
+    }
   } catch (e) {}
 }
 
 function mkBai6CaiTheoDoi(doc) {
   try {
-    mkBai6GanTheoNhan(doc, 'In. Interface', 'ftc-mk6-inif');
-    mkBai6GanTheoNhan(doc, 'Connection Mark', 'ftc-mk6-cm');
-    mkBai6GanTheoNhan(doc, 'Per Connection Classifier', 'ftc-mk6-pcc');
-    mkBai6GanTheoNhan(doc, 'Dst. Address Type', 'ftc-mk6-dat');
-    mkBai6GanTheoNhan(doc, 'Action', 'ftc-mk6-action');
-    mkBai6GanTheoNhan(doc, 'New Connection Mark', 'ftc-mk6-ncm');
-    // Tiêu đề các khối — mượn <span> có sẵn trong td.sep (không bọc lại: ô còn <img>)
+    if (!doc) return;
+
+    mkBai6GanIdTheoNhan(doc, 'Chain', 'ftc-mk6-chain', null);
+    mkBai6GanIdTheoNhan(doc, 'Src. Address', 'ftc-mk6-src', 'ftc-mk6-src-nut');
+    mkBai6GanIdTheoNhan(doc, 'Dst. Address', 'ftc-mk6-dst', 'ftc-mk6-dst-nut');
+    mkBai6GanIdTheoNhan(doc, 'Protocol', 'ftc-mk6-proto', 'ftc-mk6-proto-nut');
+    mkBai6GanIdTheoNhan(doc, 'Dst. Port', 'ftc-mk6-dstport', 'ftc-mk6-dstport-nut');
+    mkBai6GanIdTheoNhan(doc, 'In. Interface', 'ftc-mk6-inif', 'ftc-mk6-inif-nut');
+    mkBai6GanIdTheoNhan(doc, 'Action', 'ftc-mk6-action', null);
+    mkBai6GanIdTheoNhan(doc, 'To Addresses', 'ftc-mk6-toaddr', 'ftc-mk6-toaddr-nut');
+    mkBai6GanIdTheoNhan(doc, 'To Ports', 'ftc-mk6-toports', 'ftc-mk6-toports-nut');
+
     for (const td of doc.querySelectorAll('td.sep')) {
-      const t = td.textContent.trim();
-      if (t === 'Advanced') mkBai6DatId(td.querySelector('span'), 'ftc-mk6-sep-advanced');
-      else if (t === 'Extra') mkBai6DatId(td.querySelector('span'), 'ftc-mk6-sep-extra');
-      else if (t === 'Action') mkBai6DatId(td.querySelector('span'), 'ftc-mk6-sep-action');
-    }
-    // Thẻ Mangle trên trang Firewall — dò chặt, không đụng nút "WebFig" (memory.md 2.74)
-    for (const a of doc.querySelectorAll('a[href]')) {
-      if (a.id) continue;
-      if (a.getAttribute('href') === '#IP:Firewall.Mangle' && (a.textContent || '').trim() === 'Mangle') {
-        a.id = 'ftc-mk6-the-mangle'; break;
+      if ((td.textContent || '').trim().toLowerCase() === 'action') {
+        mkBai6DatId(td.querySelector('span') || td, 'ftc-mk6-sep-action');
+        break;
       }
     }
-    // Trang danh sách: đánh dấu luật PCC của học viên đang nằm SAI CHỖ (dưới luật mark routing)
-    if (mkBai6OMangle(doc)) {
-      const ds = mkBai6CacLuat(doc);
-      const pcc = mkBai6LuatPCC(ds), mr = mkBai6LuatMarkRouting(ds);
-      window._FTC_MK6_SO_PCC = pcc.length;
-      const mocMR = mr.length ? Math.min.apply(null, mr.map(function (l) { return l.vt; })) : -1;
-      window._FTC_MK6_SAI_CHO = (mocMR >= 0) ? pcc.filter(function (l) { return l.vt > mocMR; }).length : 0;
-      const cu = doc.getElementById('ftc-mk6-luat-sai-cho');
-      let dich = null;
-      for (const l of pcc) { if (mocMR >= 0 && l.vt > mocMR) { dich = l.tr.querySelectorAll('td')[4]; break; } }
-      if (cu && cu !== dich) cu.id = '';
-      if (dich && !dich.id) dich.id = 'ftc-mk6-luat-sai-cho';
+
+    for (const a of doc.querySelectorAll('a[href]')) {
+      if (a.getAttribute('href') === '#IP:Firewall.NAT' && (a.textContent || '').trim().toLowerCase() === 'nat') {
+        mkBai6DatId(a, 'ftc-mk6-the-nat');
+        break;
+      }
+    }
+
+    // Nút Add New trên trang NAT
+    if (mkBai6ONAT(doc)) {
+      const addBtns = doc.querySelectorAll('#toolbar a.button, ul.toolbar a.button, a.button');
+      for (const btn of addBtns) {
+        if ((btn.textContent || '').trim().toLowerCase() === 'add new') {
+          if (!btn.id) btn.id = 'ftc-mk6-btn-add-nat';
+          break;
+        }
+      }
     }
   } catch (e) {}
 }
-function mkBai6Nhip(doc) { mkBai6CaiTheoDoi(doc); }
 
-/** Đang làm luật thứ mấy (0 hoặc 1)? Nhớ từ lần cuối ở trang danh sách. */
-function mkBai6ChiSoLuat() { return Math.min(window._FTC_MK6_SO_PCC || 0, 1); }
-function mkBai6XongHaiLuat() { return (window._FTC_MK6_SO_PCC || 0) >= 2; }
-function mkBai6XongSapXep() { return mkBai6XongHaiLuat() && (window._FTC_MK6_SAI_CHO || 0) === 0; }
-
-/* ───────── Dựng tooltip cho TỪNG LUẬT với SỐ BƯỚC TĂNG LIÊN TỤC ───────── */
-
-/**
- * Anh Huynn chốt (2026-09-20): số bước KHÔNG lặp lại. Luật 1 = Bước 4–14,
- * luật 2 = Bước 15–25, kéo thả = Bước 26. Lặp lại số (như "Bước 4" xuất hiện
- * hai lần) làm học viên nhầm với bước đã làm.
- *
- * Mỗi luật có 11 bước gốc (0..10); số bước thật = 4 + i*11 + gốc.
- * `text` PHẢI là chuỗi nên mỗi luật sinh ra một bộ tooltip riêng.
- */
-var MK_BAI6_BUOC_MOI_LUAT = 11;
-function mkBai6SoBuoc(i, goc) { return 4 + i * MK_BAI6_BUOC_MOI_LUAT + goc; }
-var MK_BAI6_BUOC_KEO = mkBai6SoBuoc(2, 0);   // = 26
-
-function mkBai6TooltipChoLuat(i) {
-  const du = String(i), mark = i === 0 ? 'WAN1_conn' : 'WAN2_conn';
-  const B = function (goc) { return 'Bước ' + mkBai6SoBuoc(i, goc) + ': '; };
-  const dangLuatNay = function () { return mkBai6ChiSoLuat() === i; };
-  const pccDung = function (doc) {
-    return mkBai6GiaTri(doc, 'Per Connection Classifier', 0) === 'both addresses'
-      && mkBai6GiaTri(doc, 'Per Connection Classifier', 1) === '2'
-      && mkBai6GiaTri(doc, 'Per Connection Classifier', 2) === du;
-  };
-  return [
-    // ── Add New (trang danh sách) ──
-    { selector: 'text:Add New',
-      text: B(0) + 'chọn Add New<br>(tạo luật PCC thứ ' + (i + 1) + '/2 — nhóm WAN' + (i + 1) + ')',
-      position: 'bottom',
-      condition: function (doc) { mkBai6Nhip(doc); return mkBai6OMangle(doc) && (window._FTC_MK6_SO_PCC || 0) === i; } },
-
-    // ── In. Interface ──
-    { selector: '#ftc-mk6-inif-nut', text: B(1) + 'bấm nút này để mở ô In. Interface', position: 'right',
-      condition: function (doc) { mkBai6Nhip(doc); return dangLuatNay() && mkBai6OHopThoai(doc) && !mkBai6DaMoKhoa(doc, 'In. Interface'); } },
-    { selector: '#ftc-mk6-inif', text: B(1) + 'chọn bridge-LAN<br>(lưu lượng đi từ mạng LAN ra)', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6DaMoKhoa(doc, 'In. Interface')
-          && mkBai6GiaTri(doc, 'In. Interface', 0) !== 'bridge-LAN';
-      } },
-
-    // ── Connection Mark (sẵn no-mark) ──
-    { selector: '#ftc-mk6-cm-nut',
-      text: B(2) + 'bấm nút này để mở ô Connection Mark<br>(giá trị sẵn có đã là no-mark —<br>chỉ phân loại kết nối CHƯA được gắn nhãn)',
-      position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6GiaTri(doc, 'In. Interface', 0) === 'bridge-LAN'
-          && !mkBai6DaMoKhoa(doc, 'Connection Mark');
-      } },
-    { selector: '#ftc-mk6-cm', text: B(2) + 'chọn lại no-mark', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6DaMoKhoa(doc, 'Connection Mark')
-          && mkBai6Combo(doc, 'Connection Mark') !== 'no-mark';
-      } },
-
-    // ── mở khối Advanced ──
-    { selector: '#ftc-mk6-sep-advanced', text: B(3) + 'bấm vào dòng Advanced<br>để mở khối này ra', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6DaMoKhoa(doc, 'Connection Mark')
-          && mkBai6Combo(doc, 'Connection Mark') === 'no-mark' && mkBai6KhoiGap(doc, 'Advanced');
-      } },
-
-    // ── PCC ──
-    { selector: '#ftc-mk6-pcc-nut', text: B(4) + 'bấm nút này để mở ô<br>Per Connection Classifier', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6HangHien(doc, 'Per Connection Classifier')
-          && mkBai6Combo(doc, 'Connection Mark') === 'no-mark' && !mkBai6DaMoKhoa(doc, 'Per Connection Classifier');
-      } },
-    // Đặt 'top' — 'right' sẽ che ô nhập mẫu số ("2") ngay bên phải ô chọn (anh Huynn góp ý).
-    { selector: '#ftc-mk6-pcc',
-      text: B(4) + 'chọn both addresses, nhập 2 và ' + du + '<br>('
-        + (i === 0 ? 'băm theo IP nguồn + IP đích, chia 2, lấy phần DƯ 0' : 'chia 2, lấy phần DƯ 1 — nửa kết nối còn lại') + ')',
-      position: 'top',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6DaMoKhoa(doc, 'Per Connection Classifier') && !pccDung(doc);
-      } },
-
-    // ── mở khối Extra ──
-    { selector: '#ftc-mk6-sep-extra', text: B(5) + 'bấm vào dòng Extra<br>để mở khối này ra', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6DaMoKhoa(doc, 'Per Connection Classifier')
-          && pccDung(doc) && mkBai6KhoiGap(doc, 'Extra');
-      } },
-
-    // ── Dst. Address Type = !local (4 tooltip nối tiếp, cùng số bước) ──
-    { selector: '#ftc-mk6-dat-nut', text: B(6) + 'bấm nút này để mở ô Dst. Address Type', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6HangHien(doc, 'Dst. Address Type')
-          && mkBai6DaMoKhoa(doc, 'Per Connection Classifier') && !mkBai6DaMoKhoa(doc, 'Dst. Address Type');
-      } },
-    { selector: '#ftc-mk6-dat-not',
-      text: B(6) + 'bấm nút phủ định này<br>(để thành "KHÔNG phải local" —<br>không cân bằng tải lưu lượng gửi tới chính router)',
-      position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6DaMoKhoa(doc, 'Dst. Address Type')
-          && !mkBai6PhuDinhBat(doc, 'Dst. Address Type');
-      } },
-    { selector: '#ftc-mk6-dat-them', text: B(6) + 'bấm nút này để thêm một mục', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6DaMoKhoa(doc, 'Dst. Address Type')
-          && mkBai6PhuDinhBat(doc, 'Dst. Address Type') && mkBai6GiaTri(doc, 'Dst. Address Type', 0) === null;
-      } },
-    { selector: '#ftc-mk6-dat', text: B(6) + 'chọn local', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6PhuDinhBat(doc, 'Dst. Address Type')
-          && mkBai6GiaTri(doc, 'Dst. Address Type', 0) !== null
-          && mkBai6GiaTri(doc, 'Dst. Address Type', 0) !== 'local';
-      } },
-
-    // ── mở khối Action ──
-    { selector: '#ftc-mk6-sep-action', text: B(7) + 'bấm vào dòng Action<br>để mở khối này ra', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6PhuDinhBat(doc, 'Dst. Address Type')
-          && mkBai6GiaTri(doc, 'Dst. Address Type', 0) === 'local' && mkBai6KhoiGap(doc, 'Action');
-      } },
-    // ── Action ──
-    { selector: '#ftc-mk6-action', text: B(8) + 'chọn Action: mark connection', position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc) && mkBai6HangHien(doc, 'Action')
-          && mkBai6GiaTri(doc, 'Dst. Address Type', 0) === 'local'
-          && mkBai6GiaTri(doc, 'Action', 0) !== 'mark connection';
-      } },
-    // ── New Connection Mark ──
-    { selector: '#ftc-mk6-ncm', text: B(9) + 'chọn New Connection Mark: ' + mark, position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc)
-          && mkBai6GiaTri(doc, 'Action', 0) === 'mark connection'
-          && mkBai6Combo(doc, 'New Connection Mark') !== mark;
-      } },
-    // ── OK ──
-    { selector: 'text:OK', text: B(10) + 'chọn OK để lưu', position: 'left',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return dangLuatNay() && mkBai6OHopThoai(doc)
-          && mkBai6GiaTri(doc, 'Action', 0) === 'mark connection'
-          && mkBai6Combo(doc, 'New Connection Mark') === mark;
-      } }
-  ];
-}
-
-/* ──────────────────────────── Danh sách tooltip ──────────────────────── */
+/* ───────────────────────── Danh sách 23 Tooltip ───────────────────────── */
 
 window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
-  { selector: 'input#name', text: 'Nhập admin', position: 'right',
-    condition: function (doc) { return mkBai6ManDangNhap(doc); } },
-  { selector: 'input[value="Login"], input[type="button"][value="Login"]', text: 'Nhập admin', position: 'right',
-    condition: function (doc) { return mkBai6ManDangNhap(doc); } },
+  // ── Màn hình đăng nhập RouterOS ─────────────────────────────────────
+  {
+    selector: 'input#name',
+    text: 'Nhập admin',
+    position: 'right',
+    condition: function (doc) { return mkBai6ManDangNhap(doc); }
+  },
+  {
+    selector: 'input[value="Login"], input[type="button"][value="Login"]',
+    text: 'Nhấn Login',
+    position: 'right',
+    condition: function (doc) { return mkBai6ManDangNhap(doc); }
+  },
 
-  // ── Điều hướng ──
-  { selector: 'li#IP span, text:IP', text: 'Bước 1: chọn IP', position: 'right',
+  // ══════════════ PHẦN 1: CẤU HÌNH NAT PORT CAMERA (Bước 1 ➔ 14) ════════
+  {
+    selector: '#id_WebFig, a#id_WebFig',
+    text: 'Bước 1: Chọn menu WebFig',
+    position: 'bottom',
     condition: function (doc) {
-      mkBai6Nhip(doc);
-      return !mkBai6ManDangNhap(doc) && !mkBai6XongSapXep()
-        && !mkBai6MenuConHien(doc, 'Firewall')
-        && !mkBai6OFirewall(doc) && !mkBai6OMangle(doc) && !mkBai6OHopThoai(doc);
-    } },
-  { selector: '#id_IP\\:Firewall, text:Firewall', text: 'Bước 2: chọn Firewall', position: 'right',
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6ManDangNhap(doc) && mkBai6OQuickSet(doc);
+    }
+  },
+  {
+    selector: 'li#IP span, #menu a[href="#IP"], #id_IP',
+    text: 'Bước 2: Chọn menu IP',
+    position: 'right',
     condition: function (doc) {
-      mkBai6Nhip(doc);
-      return !mkBai6ManDangNhap(doc) && !mkBai6XongSapXep() && mkBai6MenuConHien(doc, 'Firewall')
-        && !mkBai6OFirewall(doc) && !mkBai6OMangle(doc) && !mkBai6OHopThoai(doc);
-    } },
-  { selector: '#ftc-mk6-the-mangle', text: 'Bước 3: chọn thẻ Mangle', position: 'bottom',
-    condition: function (doc) { mkBai6Nhip(doc); return mkBai6OFirewall(doc); } }
-]
-  .concat(mkBai6TooltipChoLuat(0))     // Bước 4–14
-  .concat(mkBai6TooltipChoLuat(1))     // Bước 15–25
-  .concat([
-    // ── Bước 26: kéo luật lên trên luật mark routing ──
-    // ĐO THẬT: WebFig chèn luật NGAY DƯỚI hàng mà ta thả vào (moveObjectAfter).
-    // Thả vào chính luật mark routing thì luật vẫn nằm DƯỚI -> phải thả vào
-    // hàng ngay phía trên. Tooltip nói rõ cơ chế đó để học viên không kéo mãi.
-    { selector: '#ftc-mk6-luat-sai-cho',
-      text: 'Bước ' + MK_BAI6_BUOC_KEO + ': giữ chuột kéo luật này lên, thả vào<br>hàng NGAY TRÊN luật "mark routing" đầu tiên<br>(luật sẽ được chèn ngay dưới hàng bạn thả vào;<br>luật phân loại phải chạy trước luật chọn đường)',
-      position: 'right',
-      condition: function (doc) {
-        mkBai6Nhip(doc);
-        return mkBai6OMangle(doc) && mkBai6XongHaiLuat() && (window._FTC_MK6_SAI_CHO || 0) > 0;
-      } }
-  ]);
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6ManDangNhap(doc) && !mkBai6OQuickSet(doc) && !mkBai6Part1Xong(doc)
+        && !mkBai6OFirewall(doc) && !mkBai6ONAT(doc) && !mkBai6OHopThoaiNAT(doc)
+        && !mkBai6MenuConHien(doc, 'Firewall');
+    }
+  },
+  {
+    selector: 'a[href="#IP:Firewall"], #menu li:has-text("Firewall")',
+    text: 'Bước 3: Chọn mục Firewall',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6ManDangNhap(doc) && !mkBai6OQuickSet(doc) && !mkBai6Part1Xong(doc)
+        && !mkBai6OFirewall(doc) && !mkBai6ONAT(doc) && !mkBai6OHopThoaiNAT(doc)
+        && mkBai6MenuConHien(doc, 'Firewall');
+    }
+  },
+  {
+    selector: '#ftc-mk6-the-nat, a[href="#IP:Firewall.NAT"]',
+    text: 'Bước 4: Chọn tab NAT',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6ManDangNhap(doc) && !mkBai6Part1Xong(doc)
+        && mkBai6OFirewall(doc) && !mkBai6ONAT(doc) && !mkBai6OHopThoaiNAT(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk6-btn-add-nat, #toolbar a.button:has-text("Add New"), a.button:has-text("Add New")',
+    text: 'Bước 5: Chọn Add New để tạo rule NAT mở cổng Camera',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6ManDangNhap(doc) && !mkBai6Part1Xong(doc) && mkBai6ONAT(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk6-chain, tr:has-text("Chain") select, tr:has-text("Chain") input',
+    text: 'Bước 6: Chọn Chain: dstnat',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Chain').toLowerCase() !== 'dstnat';
+    }
+  },
+  {
+    selector: '#ftc-mk6-proto-nut, tr:has-text("Protocol") a.sbtn',
+    text: 'Bước 7: Mở khóa ô Protocol',
+    position: 'left',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Chain').toLowerCase() === 'dstnat'
+        && !mkBai6DaMoKhoa(doc, 'Protocol');
+    }
+  },
+  {
+    selector: '#ftc-mk6-proto, tr:has-text("Protocol") select',
+    text: 'Bước 7: Chọn Protocol: 6 (tcp)',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Chain').toLowerCase() === 'dstnat'
+        && mkBai6DaMoKhoa(doc, 'Protocol') && mkBai6GiaTri(doc, 'Protocol').indexOf('tcp') === -1;
+    }
+  },
+  {
+    selector: '#ftc-mk6-dstport-nut, tr:has-text("Dst. Port") a.sbtn',
+    text: 'Bước 8: Mở khóa ô Dst. Port',
+    position: 'left',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6DaMoKhoa(doc, 'Protocol')
+        && !mkBai6DaMoKhoa(doc, 'Dst. Port');
+    }
+  },
+  {
+    selector: '#ftc-mk6-dstport, tr:has-text("Dst. Port") input',
+    text: 'Bước 8: Nhập Dst. Port: 8080',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6DaMoKhoa(doc, 'Dst. Port') && mkBai6GiaTri(doc, 'Dst. Port') !== '8080';
+    }
+  },
+  {
+    selector: '#ftc-mk6-inif-nut, tr:has-text("In. Interface") a.sbtn',
+    text: 'Bước 9: Mở khóa ô In. Interface',
+    position: 'left',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Dst. Port') === '8080'
+        && !mkBai6DaMoKhoa(doc, 'In. Interface');
+    }
+  },
+  {
+    selector: '#ftc-mk6-inif, tr:has-text("In. Interface") select',
+    text: 'Bước 9: Chọn In. Interface: pppoe-out1',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      const val = mkBai6GiaTri(doc, 'In. Interface');
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Dst. Port') === '8080'
+        && mkBai6DaMoKhoa(doc, 'In. Interface')
+        && val !== 'pppoe-out1' && val !== 'ether1';
+    }
+  },
+  {
+    selector: '#ftc-mk6-sep-action, td.sep:has-text("Action")',
+    text: 'Bước 10: Nhấn khối Action để mở rộng tùy chọn Action',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      const inIf = mkBai6GiaTri(doc, 'In. Interface');
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && (inIf === 'pppoe-out1' || inIf === 'ether1')
+        && !mkBai6KhoiActionDaMo(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk6-action, tr:has-text("Action") select',
+    text: 'Bước 11: Chọn Action: dst-nat',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      const inIf = mkBai6GiaTri(doc, 'In. Interface');
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && (inIf === 'pppoe-out1' || inIf === 'ether1')
+        && mkBai6KhoiActionDaMo(doc)
+        && mkBai6GiaTri(doc, 'Action').toLowerCase() !== 'dst-nat';
+    }
+  },
+  {
+    selector: '#ftc-mk6-toaddr-nut, tr:has-text("To Addresses") a.sbtn',
+    text: 'Bước 12: Mở khóa ô To Addresses',
+    position: 'left',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6KhoiActionDaMo(doc)
+        && mkBai6GiaTri(doc, 'Action').toLowerCase() === 'dst-nat'
+        && !mkBai6DaMoKhoa(doc, 'To Addresses');
+    }
+  },
+  {
+    selector: '#ftc-mk6-toaddr, tr:has-text("To Addresses") input',
+    text: 'Bước 12: Nhập To Addresses: 192.168.1.10',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6KhoiActionDaMo(doc)
+        && mkBai6GiaTri(doc, 'Action').toLowerCase() === 'dst-nat'
+        && mkBai6DaMoKhoa(doc, 'To Addresses')
+        && mkBai6GiaTri(doc, 'To Addresses') !== '192.168.1.10';
+    }
+  },
+  {
+    selector: '#ftc-mk6-toports-nut, tr:has-text("To Ports") a.sbtn',
+    text: 'Bước 13: Mở khóa ô To Ports',
+    position: 'left',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'To Addresses') === '192.168.1.10'
+        && !mkBai6DaMoKhoa(doc, 'To Ports');
+    }
+  },
+  {
+    selector: '#ftc-mk6-toports, tr:has-text("To Ports") input',
+    text: 'Bước 13: Nhập To Ports: 8080',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'To Addresses') === '192.168.1.10'
+        && mkBai6DaMoKhoa(doc, 'To Ports')
+        && mkBai6GiaTri(doc, 'To Ports') !== '8080';
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK")',
+    text: 'Bước 14: Nhấn OK để lưu rule NAT Port',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'To Addresses') === '192.168.1.10'
+        && mkBai6GiaTri(doc, 'To Ports') === '8080';
+    }
+  },
+
+  // ══════════════ PHẦN 2: CẤU HÌNH HAIRPIN NAT (Bước 15 ➔ 23) ═══════════
+  {
+    selector: '#ftc-mk6-btn-add-nat, #toolbar a.button:has-text("Add New"), a.button:has-text("Add New")',
+    text: 'Bước 15: Chọn Add New để tạo rule Hairpin NAT',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6ONAT(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk6-chain, tr:has-text("Chain") select, tr:has-text("Chain") input',
+    text: 'Bước 16: Chọn Chain: srcnat',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Chain').toLowerCase() !== 'srcnat';
+    }
+  },
+  {
+    selector: '#ftc-mk6-src-nut, tr:has-text("Src. Address") a.sbtn',
+    text: 'Bước 17: Mở khóa ô Src. Address',
+    position: 'left',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Chain').toLowerCase() === 'srcnat'
+        && !mkBai6DaMoKhoa(doc, 'Src. Address');
+    }
+  },
+  {
+    selector: '#ftc-mk6-src, tr:has-text("Src. Address") input',
+    text: 'Bước 17: Nhập Src. Address: 192.168.1.0/24',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Chain').toLowerCase() === 'srcnat'
+        && mkBai6DaMoKhoa(doc, 'Src. Address')
+        && mkBai6GiaTri(doc, 'Src. Address') !== '192.168.1.0/24';
+    }
+  },
+  {
+    selector: '#ftc-mk6-dst-nut, tr:has-text("Dst. Address") a.sbtn',
+    text: 'Bước 18: Mở khóa ô Dst. Address',
+    position: 'left',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Src. Address') === '192.168.1.0/24'
+        && !mkBai6DaMoKhoa(doc, 'Dst. Address');
+    }
+  },
+  {
+    selector: '#ftc-mk6-dst, tr:has-text("Dst. Address") input',
+    text: 'Bước 18: Nhập Dst. Address: 192.168.1.10',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Src. Address') === '192.168.1.0/24'
+        && mkBai6DaMoKhoa(doc, 'Dst. Address')
+        && mkBai6GiaTri(doc, 'Dst. Address') !== '192.168.1.10';
+    }
+  },
+  {
+    selector: '#ftc-mk6-proto-nut, tr:has-text("Protocol") a.sbtn',
+    text: 'Bước 19: Mở khóa ô Protocol',
+    position: 'left',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Dst. Address') === '192.168.1.10'
+        && !mkBai6DaMoKhoa(doc, 'Protocol');
+    }
+  },
+  {
+    selector: '#ftc-mk6-proto, tr:has-text("Protocol") select',
+    text: 'Bước 19: Chọn Protocol: 6 (tcp)',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Dst. Address') === '192.168.1.10'
+        && mkBai6DaMoKhoa(doc, 'Protocol')
+        && mkBai6GiaTri(doc, 'Protocol').indexOf('tcp') === -1;
+    }
+  },
+  {
+    selector: '#ftc-mk6-dstport-nut, tr:has-text("Dst. Port") a.sbtn',
+    text: 'Bước 20: Mở khóa ô Dst. Port',
+    position: 'left',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6DaMoKhoa(doc, 'Protocol')
+        && !mkBai6DaMoKhoa(doc, 'Dst. Port');
+    }
+  },
+  {
+    selector: '#ftc-mk6-dstport, tr:has-text("Dst. Port") input',
+    text: 'Bước 20: Nhập Dst. Port: 8080',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6DaMoKhoa(doc, 'Dst. Port')
+        && mkBai6GiaTri(doc, 'Dst. Port') !== '8080';
+    }
+  },
+  {
+    selector: '#ftc-mk6-sep-action, td.sep:has-text("Action")',
+    text: 'Bước 21: Nhấn khối Action để mở rộng tùy chọn',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6GiaTri(doc, 'Dst. Port') === '8080'
+        && !mkBai6KhoiActionDaMo(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk6-action, tr:has-text("Action") select',
+    text: 'Bước 22: Chọn Action: masquerade',
+    position: 'right',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6KhoiActionDaMo(doc)
+        && mkBai6GiaTri(doc, 'Dst. Port') === '8080'
+        && mkBai6GiaTri(doc, 'Action').toLowerCase() !== 'masquerade';
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK")',
+    text: 'Bước 23: Nhấn OK để lưu rule Hairpin NAT và hoàn thành bài tập',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      return mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6KhoiActionDaMo(doc)
+        && mkBai6GiaTri(doc, 'Dst. Port') === '8080'
+        && mkBai6GiaTri(doc, 'Action').toLowerCase() === 'masquerade';
+    }
+  }
+];

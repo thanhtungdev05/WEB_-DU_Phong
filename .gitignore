@@ -38,6 +38,7 @@ simulators/mikrotik_hexs/src/cau_hinh.json
 *.log
 *.tmp
 *.bak
+*_bak.*
 *.swp
 *~
 php_api.log

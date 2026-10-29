@@ -2922,9 +2922,41 @@
     window._hasClickedSaveInGuide = false;
     window._ftcMkChanTooltip = false;
     window._FTC_MK_BAI1 = null;
+    window._FTC_MK_BAI4 = null;
+    window._FTC_MK_BAI4_ADDRESSES_SAVED = false;
+    window._FTC_MK_BAI4_POOL_SAVED = false;
+    window._FTC_MK_BAI4_NETWORKS_SAVED = false;
+    if (typeof window.mkBai4Reset === 'function') {
+      try { window.mkBai4Reset(); } catch (error) { }
+    }
+    window._FTC_MK5_BANG_SAVED = false;
+    window._FTC_MK5_ROUTE_SAVED = false;
+    window._FTC_MK5_MANGLE_SAVED = false;
+    window._FTC_MK5_DS_BANG = null;
+    window._FTC_MK5_DS_TUYEN = null;
+    window._FTC_MK5_DS_MANGLE = null;
+    if (typeof window.mkBai5Reset === 'function') {
+      try { window.mkBai5Reset(); } catch (error) { }
+    }
+    window._FTC_MK6_NAT_SAVED = false;
+    window._FTC_MK6_RULE_PORT_SAVED = false;
+    window._FTC_MK6_RULE_HAIRPIN_SAVED = false;
+    window._FTC_MK6_CHUP_PORT = null;
+    window._FTC_MK6_CHUP_HAIRPIN = null;
+    window._FTC_MK6_NAT_LIVE = null;
+    window._FTC_MK6_DS_NAT = null;
+    if (typeof window.mkBai6Reset === 'function') {
+      try { window.mkBai6Reset(); } catch (error) { }
+    }
     window._sessionRuleCache = {};
     window._sessionRuleCacheScope = null;
     window._ftc2gSaved = false;
+
+    try {
+      if (deviceIframe && deviceIframe.contentWindow && deviceIframe.contentWindow.sessionStorage) {
+        deviceIframe.contentWindow.sessionStorage.clear();
+      }
+    } catch (_) { }
 
     if (typeof window.vg2927Bai6Reset === 'function') {
       try { window.vg2927Bai6Reset(); } catch (error) { }
@@ -3089,6 +3121,15 @@
     window._ftcIsSaved = false;
     if (typeof window.vg2927Bai8Reset === 'function') {
       try { window.vg2927Bai8Reset(); } catch (e) { }
+    }
+    if (typeof window.mkBai4Reset === 'function') {
+      try { window.mkBai4Reset(); } catch (e) { }
+    }
+    if (typeof window.mkBai5Reset === 'function') {
+      try { window.mkBai5Reset(); } catch (e) { }
+    }
+    if (typeof window.mkBai6Reset === 'function') {
+      try { window.mkBai6Reset(); } catch (e) { }
     }
 
     deviceIframe.src = '';

@@ -1,313 +1,271 @@
 /**
  * devices/mikrotik_hexs/lessons/bai5.js
- * Bài 5: Cấu hình DNS — MikroTik hEX S
+ * Bài 5: Cấu hình Policy Routing — MikroTik hEX S
  *
- * Đề bài (4 bước tooltip do anh Huynn tự làm — xem tooltips/bai5.js): vào
- * IP > DNS, XOÁ BỚT 4 máy chủ DNS của Cloudflare khỏi danh sách "Servers"
- * (1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001), chỉ giữ lại
- * 4 máy chủ của Google, rồi bấm Apply để lưu.
- *
- * ĐÁP ÁN — đo THẬT trên giả lập 2026-09-19 (đúng ảnh anh Huynn gửi): danh sách
- * Servers gốc của thiết bị có ĐỦ 8 mục (4 IPv4 + 4 IPv6); sau bài học chỉ còn
- * 4 mục Google. Mọi ô còn lại trên trang là mặc định của thiết bị, đổi khác đi
- * là SAI.
- *
- * KIẾN TRÚC — khác Bài 3/4 ở một điểm quan trọng:
- *   - Đây là trang MỤC ĐƠN (scalar `[14,2]`), KHÔNG phải bảng. Trang chỉ có
- *     nút **Apply** (không có OK/Cancel) và **KHÔNG tự đóng** sau khi lưu, nên
- *     `customGrading` đọc thẳng DOM đang mở được. Vẫn giữ bản chụp trong
- *     `onSimSave` làm phương án dự phòng, y như Bài 2/3, phòng khi học viên
- *     chuyển sang trang khác trước lúc nộp bài.
- *   - Cách XOÁ một mục trong danh sách nhiều giá trị của WebFig: bấm nút tam
- *     giác `▲` (`img src="up.svg"`) ở BÊN PHẢI dòng đó — ĐO THẬT: bấm nút thứ
- *     3 thì đúng dòng thứ 3 biến mất, danh sách còn 7. (Nút `▼` `down.svg` bên
- *     trái là menu chọn, không xoá.)
- *   - Kho cấu hình MikroTik LƯU BỀN nên bắt buộc có `/ftc_dat_lai?bai=5` (xoá
- *     lớp phủ scalar `[14,2]`), nếu không học viên sau vào đã thấy 4 máy chủ
- *     bị xoá sẵn, không còn gì để làm — đúng vết xe đã đổ ở Bài 3.
+ * Cấu hình Policy Based Routing (PBR) chuẩn thực tế theo 3 phần:
+ *   Phần 1: Routing > Tables: Tạo bảng định tuyến ISP1, tích chọn FIB.
+ *   Phần 2: IP > Routes: Tạo Default Route (Dst. Address 0.0.0.0/0, Gateway 1.1.1.1, Routing Table ISP1).
+ *   Phần 3: IP > Firewall > Mangle: Tạo luật prerouting đánh dấu lưu lượng LAN 192.168.1.0/24 (Action mark routing, New Routing Mark ISP1).
  */
 
 window.DEVICE_MIKROTIK_HEXS_LESSONS = window.DEVICE_MIKROTIK_HEXS_LESSONS || [];
 
-/** Tìm hàng <tr> theo nhãn chữ ở cột trái (khớp CHÍNH XÁC để không nhầm
- *  "Servers" với "Dynamic Servers" hay "Use DoH Server"). */
-function mkBai5HangTheoNhan(doc, nhan) {
+var MK_BAI5_MANGLE_SRC = '192.168.1.0/24';
+var MK_BAI5_MANGLE_CHAIN = 'prerouting';
+var MK_BAI5_MANGLE_ACTION = 'mark routing';
+var MK_BAI5_MANGLE_MARK = 'ISP1';
+
+function mkBai5DocHash(doc) {
+  try {
+    const w = doc.defaultView || window;
+    return (w.location && w.location.hash) || '';
+  } catch (e) { return ''; }
+}
+
+function mkBai5CacDong(doc, soOToiThieu) {
+  const ds = [];
+  try {
+    for (const tr of doc.querySelectorAll('tr')) {
+      if (tr.querySelector('th')) continue;
+      const tds = tr.querySelectorAll('td');
+      if (tds.length >= soOToiThieu) {
+        ds.push(Array.from(tds).map(function (t) { return (t.textContent || '').trim(); }));
+      }
+    }
+  } catch (e) {}
+  return ds;
+}
+
+function mkBai5ChupBang(doc) {
+  return mkBai5CacDong(doc, 5).map(function (o) {
+    return { comment: o[2] || '', ten: o[3] || '', fib: (o[4] || '').toLowerCase() };
+  }).filter(function (x) { return x.ten; });
+}
+
+function mkBai5ChupTuyen(doc) {
+  return mkBai5CacDong(doc, 7).map(function (o) {
+    return { dst: o[3] || '', gateway: o[4] || '', distance: o[5] || '', bang: o[6] || '' };
+  }).filter(function (x) { return x.gateway; });
+}
+
+function mkBai5ChupMangle(doc) {
+  return mkBai5CacDong(doc, 15).map(function (o) {
+    return { action: o[4] || '', chain: o[5] || '', src: o[6] || '' };
+  }).filter(function (x) { return x.action; });
+}
+
+function mkBai5ChupTheoTrang(doc) {
+  try {
+    const h = mkBai5DocHash(doc);
+    if (h === '#Routing:Tables') {
+      const d = mkBai5ChupBang(doc);
+      if (d.length) window._FTC_MK5_DS_BANG = d;
+      if (d.some(function (b) { return b.ten === 'ISP1'; })) {
+        window._FTC_MK5_BANG_SAVED = true;
+      }
+    } else if (h === '#IP:Routes') {
+      const d = mkBai5ChupTuyen(doc);
+      if (d.length) window._FTC_MK5_DS_TUYEN = d;
+      if (d.some(function (t) { return t.gateway === '1.1.1.1' && (t.bang === 'ISP1' || !t.bang || t.bang === 'main'); })) {
+        window._FTC_MK5_ROUTE_SAVED = true;
+      }
+    } else if (h.indexOf('#IP:Firewall.Mangle') === 0 && h.indexOf('#IP:Firewall.Mangle.') !== 0) {
+      const d = mkBai5ChupMangle(doc);
+      if (d.length) window._FTC_MK5_DS_MANGLE = d;
+      if (d.some(function (m) { return m.src === MK_BAI5_MANGLE_SRC && m.action === 'mark routing'; })) {
+        window._FTC_MK5_MANGLE_SAVED = true;
+      }
+    }
+  } catch (e) {}
+}
+
+function mkBai5DocTruongForm(doc, nhan) {
   try {
     for (const tr of doc.querySelectorAll('tr')) {
       const lb = tr.querySelector('td.label');
-      if (lb && lb.textContent.trim() === nhan) return tr;
+      if (lb && lb.textContent.trim().toLowerCase() === nhan.toLowerCase()) {
+        const o = tr.querySelector('input, select, textarea');
+        if (!o) return null;
+        let gt;
+        if (o.type === 'checkbox') gt = o.checked ? 'yes' : 'no';
+        else if (o.tagName === 'SELECT') {
+          const op = o.options[o.selectedIndex];
+          gt = op ? op.text.trim() : (o.value || '').trim();
+        } else {
+          gt = (o.value || '').trim();
+        }
+        return { gt: gt, batLen: !o.disabled };
+      }
     }
   } catch (e) {}
   return null;
-}
-
-/** Đọc danh sách máy chủ DNS đang có trong hàng "Servers". */
-function mkBai5DocDanhSachServers(doc) {
-  const tr = mkBai5HangTheoNhan(doc, 'Servers');
-  if (!tr) return null;
-  try {
-    return Array.from(tr.querySelectorAll('input'))
-      .map(function (o) { return (o.value || '').trim(); })
-      .filter(function (v) { return v !== ''; });
-  } catch (e) {}
-  return null;
-}
-
-/** 4 máy chủ Cloudflare phải XOÁ (đề bài). */
-var MK_BAI5_PHAI_XOA = [
-  '1.1.1.1',
-  '1.0.0.1',
-  '2606:4700:4700::1111',
-  '2606:4700:4700::1001'
-];
-
-/** 4 máy chủ Google phải GIỮ LẠI (đề bài). */
-var MK_BAI5_PHAI_GIU = [
-  '8.8.8.8',
-  '8.8.4.4',
-  '2001:4860:4860::8888',
-  '2001:4860:4860::8844'
-];
-
-/**
- * Các ô còn lại trên trang IP > DNS — ĐO THẬT 2026-09-19, khớp đúng ảnh anh
- * Huynn gửi. Tất cả đều là "giữ nguyên mặc định", đổi khác đi là SAI.
- *
- * CHỈ lấy các ô ĐANG HIỂN THỊ. Nhóm DoH (Verify DoH Certificate, DoH Max
- * Server Connections, DoH Max Concurrent Queries, DoH Timeout) bị WebFig ẩn
- * khi ô "Use DoH Server" còn trống — học viên không nhìn thấy thì không chấm.
- */
-var MK_BAI5_CHUAN = [
-  { nhan: 'Use DoH Server', kieu: 'chu', dung: '', ten: 'Use DoH Server: giữ nguyên (để trống)' },
-  { nhan: 'Allow Remote Requests', kieu: 'tich', dung: true, ten: 'Allow Remote Requests: giữ nguyên (có tích)' },
-  { nhan: 'Max UDP Packet Size', kieu: 'chu', dung: '4096', ten: 'Max UDP Packet Size: giữ nguyên 4096' },
-  { nhan: 'Query Server Timeout', kieu: 'chu', dung: '2.000', ten: 'Query Server Timeout: giữ nguyên 2.000' },
-  { nhan: 'Query Total Timeout', kieu: 'chu', dung: '10.000', ten: 'Query Total Timeout: giữ nguyên 10.000' },
-  { nhan: 'Max. Concurrent Queries', kieu: 'chu', dung: '100', ten: 'Max. Concurrent Queries: giữ nguyên 100' },
-  { nhan: 'Max. Concurrent TCP Sessions', kieu: 'chu', dung: '20', ten: 'Max. Concurrent TCP Sessions: giữ nguyên 20' },
-  { nhan: 'Cache Size', kieu: 'chu', dung: '2048', ten: 'Cache Size: giữ nguyên 2048 KiB' },
-  { nhan: 'Cache Max TTL', kieu: 'chu', dung: '7d 00:00:00', ten: 'Cache Max TTL: giữ nguyên 7d 00:00:00' }
-];
-
-function mkBai5DocTruong(doc, muc) {
-  const tr = mkBai5HangTheoNhan(doc, muc.nhan);
-  if (!tr) return null;
-  try {
-    if (muc.kieu === 'tich') {
-      const o = tr.querySelector('input[type=checkbox]');
-      return o ? !!o.checked : null;
-    }
-    const o = tr.querySelectorAll('input, select, textarea')[muc.idx || 0];
-    if (!o) return null;
-    return (o.value || '').trim();
-  } catch (e) {}
-  return null;
-}
-
-function mkBai5ChuHoaGiaTri(muc, gt) {
-  if (gt === null || gt === undefined) return '(chưa mở trang này)';
-  if (muc.kieu === 'tich') return gt ? 'có tích' : 'không tích';
-  return gt === '' ? '(để trống)' : String(gt);
-}
-
-/** Chụp toàn bộ giá trị của trang DNS ngay lúc bấm Apply. */
-function mkBai5ChupTatCa(doc) {
-  const ban = { servers: mkBai5DocDanhSachServers(doc), o: {} };
-  let coGiaTri = (ban.servers !== null);
-  MK_BAI5_CHUAN.forEach(function (muc) {
-    const gt = mkBai5DocTruong(doc, muc);
-    ban.o[muc.nhan] = gt;
-    if (gt !== null) coGiaTri = true;
-  });
-  return coGiaTri ? ban : null;
 }
 
 window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   id: 'mikrotik_hexs-bai5',
-  title: 'Cấu hình DNS',
-  subtitle: 'Cấu hình máy chủ phân giải tên miền',
+  title: 'Cấu hình Policy Routing',
+  subtitle: 'Định tuyến địa chỉ IP theo chính sách (Policy Based Routing)',
   instructions: [
-    '<b>Yêu cầu:</b>',
-    'Rút gọn danh sách máy chủ DNS của router, chỉ dùng DNS của Google',
-    '- Xoá 4 máy chủ Cloudflare: <span class="val">1.1.1.1</span>, <span class="val">1.0.0.1</span>, <span class="val">2606:4700:4700::1111</span>, <span class="val">2606:4700:4700::1001</span>',
-    '- Giữ lại 4 máy chủ Google: <span class="val">8.8.8.8</span>, <span class="val">8.8.4.4</span>, <span class="val">2001:4860:4860::8888</span>, <span class="val">2001:4860:4860::8844</span>'
+    '<b>Mục tiêu bài học:</b>',
+    'Cấu hình định tuyến địa chỉ IP theo chính sách (Policy Based Routing - PBR) để ép toàn bộ lưu lượng của dải mạng LAN <span class="val">192.168.1.0/24</span> đi ra ngoài Internet qua hướng Gateway <span class="val">1.1.1.1</span>.',
+    '<b>Yêu cầu thực hiện theo 3 phần:</b>',
+    '- Đăng nhập router với Username: <span class="val">admin</span>, Mật khẩu: (để trống).',
+    '<b>Phần 1: Tạo bảng định tuyến (Routing Table)</b>',
+    '&nbsp;&nbsp;• Vào <b>Routing > Tables</b>, nhấp <b>Add New</b>.',
+    '&nbsp;&nbsp;• Nhập Name: <span class="val">ISP1</span> và tích chọn ô <span class="val">FIB</span>.',
+    '&nbsp;&nbsp;• Nhấn <b>OK</b> để lưu bảng.',
+    '<b>Phần 2: Tạo tuyến đường mặc định (Default Route)</b>',
+    '&nbsp;&nbsp;• Vào <b>IP > Routes</b>, nhấp <b>Add New</b>.',
+    '&nbsp;&nbsp;• Nhập Gateway: <span class="val">1.1.1.1</span>.',
+    '&nbsp;&nbsp;• Tại mục Routing Table: chọn <span class="val">ISP1</span>.',
+    '&nbsp;&nbsp;• Nhấn <b>OK</b> để lưu tuyến.',
+    '<b>Phần 3: Đánh dấu gói tin theo IP nguồn (Firewall Mangle)</b>',
+    '&nbsp;&nbsp;• Vào <b>IP > Firewall</b>, nhấp chọn tab <b>Mangle</b>, nhấp <b>Add New</b>.',
+    '&nbsp;&nbsp;• Tab General: Chain <span class="val">prerouting</span>, mở khóa ô Src. Address nhập <span class="val">192.168.1.0/24</span>.',
+    '&nbsp;&nbsp;• Tab Action: Mở khối Action, chọn Action <span class="val">mark routing</span>, New Routing Mark: <span class="val">ISP1</span>.',
+    '&nbsp;&nbsp;• Nhấn <b>OK</b> để hoàn tất.'
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
+
   grading: {
-    description: 'Kiểm tra cấu hình DNS (danh sách Servers) trên MikroTik hEX S',
+    description: 'Kiểm tra Policy Routing (Routing Table + Route + Firewall Mangle) trên MikroTik hEX S',
     rules: [
-      { id: 'dns_servers', name: 'Danh sách máy chủ DNS', selector: 'tr', expected: '8.8.8.8', type: 'text_contains', required: true }
+      { id: 'mk5_bang', name: 'Tạo bảng định tuyến ISP1 có tích FIB', selector: 'tr', expected: 'ISP1', type: 'text_contains', required: true },
+      { id: 'mk5_route', name: 'Tạo Default Route Gateway 1.1.1.1 qua bảng ISP1', selector: 'tr', expected: '1.1.1.1', type: 'text_contains', required: true },
+      { id: 'mk5_mangle', name: 'Tạo luật Mangle đánh dấu gói tin LAN 192.168.1.0/24', selector: 'tr', expected: MK_BAI5_MANGLE_SRC, type: 'text_contains', required: true }
     ],
     customGrading: function (allDocs) {
       let doc = null;
       for (const d of allDocs) {
         try {
-          if (typeof mkBai5OTrangDNS === 'function' && mkBai5OTrangDNS(d)) { doc = d; break; }
+          if (mkBai5DocHash(d)) { doc = d; break; }
         } catch (e) {}
       }
+      if (doc) mkBai5ChupTheoTrang(doc);
 
-      const banChup = window._FTC_MK_BAI5 || window._FTC_MK_BAI5_LIVE || null;
-      const daLuu = !!(window._FTC_MK_BAI5_SAVED || banChup || (doc && doc._ftcIsSaved) || window._hasClickedSaveInGuide);
-
-      if (!doc && !banChup) {
-        const tong = MK_BAI5_CHUAN.length + MK_BAI5_PHAI_XOA.length + 1;
-        return {
-          passed: false, score: 0, passedCount: 0, totalRules: tong,
-          details: [{
-            id: 'chua_mo_trang',
-            name: 'Trang cấu hình DNS',
-            expected: 'Đã mở IP > DNS',
-            actual: 'Chưa mở',
-            passed: false,
-            message: 'Vui lòng vào IP > DNS để bắt đầu làm bài'
-          }]
-        };
-      }
-
-      let dsServers = doc ? mkBai5DocDanhSachServers(doc) : null;
-      if (dsServers === null && banChup) dsServers = banChup.servers;
+      const dsBang = window._FTC_MK5_DS_BANG || [];
+      const dsTuyen = window._FTC_MK5_DS_TUYEN || [];
+      const dsMangle = window._FTC_MK5_DS_MANGLE || [];
+      const bangSaved = !!window._FTC_MK5_BANG_SAVED;
+      const routeSaved = !!window._FTC_MK5_ROUTE_SAVED;
+      const mangleSaved = !!window._FTC_MK5_MANGLE_SAVED;
 
       const details = [];
-      let soDung = 0;
 
-      // ── Tiêu chí đề bài 1–4: đã xoá đủ 4 máy chủ Cloudflare ──────────
-      MK_BAI5_PHAI_XOA.forEach(function (ip, i) {
-        const conSot = !!(dsServers && dsServers.indexOf(ip) !== -1);
-        const dat = (dsServers !== null) && !conSot && daLuu;
-        if (dat) soDung++;
-        details.push({
-          id: 'mk5_xoa_' + i,
-          name: 'Đã xoá máy chủ DNS ' + ip,
-          expected: 'Không còn trong danh sách Servers',
-          actual: dsServers === null ? '(chưa mở trang này)' : (conSot ? 'Vẫn còn trong danh sách' : 'Đã xoá'),
-          passed: dat,
-          message: dat ? 'Chính xác'
-            : (dsServers === null ? 'Chưa mở trang IP > DNS nên không đọc được danh sách'
-              : (!daLuu ? 'Chưa nhấn Apply để lưu cấu hình'
-                : 'Máy chủ này phải được xoá khỏi danh sách Servers'))
-        });
-      });
-
-      // ── Tiêu chí đề bài 5: giữ lại đủ 4 máy chủ Google ──────────────
-      const thieu = MK_BAI5_PHAI_GIU.filter(function (ip) {
-        return !(dsServers && dsServers.indexOf(ip) !== -1);
-      });
-      const duGoogle = (dsServers !== null) && thieu.length === 0 && daLuu;
-      if (duGoogle) soDung++;
+      // Tiêu chí 1: Tạo bảng định tuyến ISP1 (có tích FIB)
+      const timBang = dsBang.find(function (b) { return b.ten === 'ISP1'; });
+      const bangDat = bangSaved || (!!timBang && (timBang.fib === 'yes' || timBang.fib === 'true' || timBang.fib === ''));
       details.push({
-        id: 'mk5_giu_google',
-        name: 'Giữ lại đủ 4 máy chủ DNS của Google',
-        expected: MK_BAI5_PHAI_GIU.join(', '),
-        actual: dsServers === null ? '(chưa mở trang này)'
-          : (dsServers.length ? dsServers.join(', ') : '(danh sách trống)'),
-        passed: duGoogle,
-        message: duGoogle ? 'Chính xác'
-          : (dsServers === null ? 'Chưa mở trang IP > DNS nên không đọc được danh sách'
-            : (!daLuu ? 'Chưa nhấn Apply để lưu cấu hình'
-              : 'Thiếu/đã xoá nhầm máy chủ phải giữ lại: ' + thieu.join(', ')))
+        id: 'mk5_rule_bang',
+        name: 'Phần 1: Bảng định tuyến ISP1 (FIB đã bật)',
+        expected: 'Tên bảng ISP1, cờ FIB bật',
+        actual: bangDat ? 'Đã tạo bảng ISP1' : (timBang ? 'Tên: ' + timBang.ten + ', FIB: ' + timBang.fib : 'Chưa tạo bảng ISP1'),
+        passed: bangDat,
+        message: bangDat ? 'Chính xác' : 'Cần vào Routing > Tables tạo bảng tên ISP1 và tích chọn FIB'
       });
 
-      // ── Các ô còn lại: giữ nguyên mặc định ──────────────────────────
-      MK_BAI5_CHUAN.forEach(function (muc, idx) {
-        let gt = doc ? mkBai5DocTruong(doc, muc) : null;
-        if ((gt === null || gt === undefined) && banChup) gt = banChup.o[muc.nhan];
-        const dat = (gt !== null && gt !== undefined) && gt === muc.dung && daLuu;
-        if (dat) soDung++;
-
-        let loi;
-        if (dat) loi = 'Chính xác';
-        else if (gt === null || gt === undefined) loi = 'Chưa mở trang này nên không đọc được giá trị';
-        else if (!daLuu) loi = 'Chưa nhấn Apply để lưu cấu hình';
-        else loi = 'Đây là giá trị mặc định, không được thay đổi';
-
-        details.push({
-          id: 'mk5_' + idx,
-          name: muc.ten,
-          expected: mkBai5ChuHoaGiaTri(muc, muc.dung),
-          actual: mkBai5ChuHoaGiaTri(muc, gt),
-          passed: dat,
-          message: loi
-        });
+      // Tiêu chí 2: Tuyến Route Gateway 1.1.1.1 trỏ vào bảng ISP1
+      const timRoute = dsTuyen.find(function (t) { return t.gateway === '1.1.1.1'; });
+      const routeDat = routeSaved || (!!timRoute && (timRoute.bang === 'ISP1' || !timRoute.bang || timRoute.bang === 'main'));
+      details.push({
+        id: 'mk5_rule_route',
+        name: 'Phần 2: Tuyến Route Gateway 1.1.1.1 (Routing Table ISP1)',
+        expected: 'Gateway 1.1.1.1 trỏ vào bảng ISP1',
+        actual: routeDat ? 'Đã tạo tuyến Gateway 1.1.1.1' : (timRoute ? 'Gateway: ' + timRoute.gateway + ', Table: ' + timRoute.bang : 'Chưa tạo tuyến Route 1.1.1.1'),
+        passed: routeDat,
+        message: routeDat ? 'Chính xác' : 'Cần vào IP > Routes tạo Default Route Gateway 1.1.1.1 gán vào bảng ISP1'
       });
 
-      const tong = details.length;
+      // Tiêu chí 3: Mangle Rule prerouting cho 192.168.1.0/24 mark routing ISP1
+      const timMangle = dsMangle.find(function (m) {
+        return m.src === MK_BAI5_MANGLE_SRC || m.action === 'mark routing';
+      });
+      const mangleDat = mangleSaved || (!!timMangle && (timMangle.src === MK_BAI5_MANGLE_SRC || timMangle.action === 'mark routing'));
+      details.push({
+        id: 'mk5_rule_mangle',
+        name: 'Phần 3: Mangle Rule đánh dấu định tuyến LAN 192.168.1.0/24',
+        expected: 'Src. Address 192.168.1.0/24, Action mark routing, Mark ISP1',
+        actual: mangleDat ? 'Đã tạo luật Mangle đánh dấu ISP1' : (timMangle ? 'Src: ' + timMangle.src + ', Action: ' + timMangle.action : 'Chưa tạo luật Mangle'),
+        passed: mangleDat,
+        message: mangleDat ? 'Chính xác' : 'Cần vào IP > Firewall > Mangle tạo luật prerouting cho 192.168.1.0/24 với Action mark routing'
+      });
+
+      const soDung = details.filter(function (d) { return d.passed; }).length;
+      const datCaBai = soDung === details.length;
+
       return {
-        passed: soDung === tong && daLuu,
-        score: Math.round((soDung / tong) * 100),
+        passed: datCaBai,
+        score: Math.round((soDung / details.length) * 100),
         passedCount: soDung,
-        totalRules: tong,
+        totalRules: details.length,
         details: details
       };
     }
   },
 
-  /**
-   * Đặt lại danh sách DNS Servers mỗi lượt mở bài — BẮT BUỘC, vì kho cấu hình
-   * MikroTik lưu bền: học viên trước xoá 4 máy chủ rồi thì học viên sau vào
-   * đã thấy danh sách rút gọn sẵn, không còn gì để làm (đã vấp thật ở Bài 3).
-   */
   onSimLoad: function (simWin) {
     try {
       const doc = simWin.document;
-      if (doc && doc.querySelector('input#name') && doc.querySelector('input#password')) {
-        window._FTC_MK_BAI5 = null;
-        window._FTC_MK_BAI5_LIVE = null;
-        window._FTC_MK_BAI5_SAVED = false;
-        try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=5'); } catch (e) {}
+      const laTrangLogin = doc && doc.querySelector('input#name') && doc.querySelector('input#password');
+      const chuaKhoiTao = !window._FTC_MK5_BANG_SAVED && !window._FTC_MK5_ROUTE_SAVED && !window._FTC_MK5_MANGLE_SAVED;
+
+      if (laTrangLogin || chuaKhoiTao) {
+        window._FTC_MK5_BANG_SAVED = false;
+        window._FTC_MK5_ROUTE_SAVED = false;
+        window._FTC_MK5_MANGLE_SAVED = false;
+        window._FTC_MK5_DS_BANG = null;
+        window._FTC_MK5_DS_TUYEN = null;
+        window._FTC_MK5_DS_MANGLE = null;
+        try {
+          const ktvId = (typeof window.getKtvClientId === 'function' ? window.getKtvClientId() : '') || 'ktv_default';
+          simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=5&_ktv=' + encodeURIComponent(ktvId) + '&_t=' + Date.now());
+        } catch (e) {}
       }
-      if (!simWin._ftcMkBai5DangTheoDoi) {
-        simWin._ftcMkBai5DangTheoDoi = true;
+
+      if (!simWin._ftcMkBai5TheoDoiLuu) {
+        simWin._ftcMkBai5TheoDoiLuu = true;
+
         simWin.setInterval(function () {
           try {
-            if (typeof mkBai5CaiTheoDoi === 'function') {
-              mkBai5CaiTheoDoi(simWin.document);
-            }
             const d = simWin.document;
-            if (d && typeof mkBai5OTrangDNS === 'function' && mkBai5OTrangDNS(d)) {
-              const live = mkBai5ChupTatCa(d);
-              if (live) window._FTC_MK_BAI5_LIVE = live;
-            }
+            if (d) mkBai5ChupTheoTrang(d);
           } catch (e) {}
-        }, 400);
+        }, 300);
 
         const batNutLuu = function (e) {
           try {
-            let el = e.target;
-            while (el && el !== simWin.document) {
-              const txt = (el.textContent || el.value || '').trim().toLowerCase();
-              if (el.tagName === 'A' && txt.match(/^(ok|apply)$/)) {
-                const d = simWin.document;
-                if (d) {
-                  d._ftcIsSaved = true;
-                  window._hasClickedSaveInGuide = true;
-                  const snapshot = mkBai5ChupTatCa(d);
-                  if (snapshot) {
-                    window._FTC_MK_BAI5 = snapshot;
-                    window._FTC_MK_BAI5_SAVED = true;
-                  }
-                }
-                break;
-              }
-              el = el.parentNode;
-            }
-          } catch (ex) {}
-        };
-        simWin.document.addEventListener('pointerdown', batNutLuu, true);
-        simWin.document.addEventListener('click', batNutLuu, true);
-      }
-    } catch (e) {}
-  },
+            const btn = e.target && e.target.closest && e.target.closest('a, button, input');
+            if (!btn) return;
+            const txt = (btn.textContent || btn.value || '').trim().toLowerCase();
+            if (!/^(ok|apply)$/.test(txt)) return;
 
-  /** Chụp giá trị NGAY LÚC bấm Apply/OK. */
-  onSimSave: function (simWin) {
-    try {
-      const doc = simWin.document;
-      const ban = (doc && typeof mkBai5OTrangDNS === 'function' && mkBai5OTrangDNS(doc))
-        ? mkBai5ChupTatCa(doc)
-        : (window._FTC_MK_BAI5_LIVE || null);
-      if (ban) {
-        window._FTC_MK_BAI5 = ban;
-        window._FTC_MK_BAI5_SAVED = true;
+            const d = simWin.document;
+            const h = mkBai5DocHash(d);
+            if (h.indexOf('#Routing:Tables') === 0) {
+              const nameField = mkBai5DocTruongForm(d, 'Name');
+              const fibField = mkBai5DocTruongForm(d, 'FIB');
+              if (nameField && nameField.gt === 'ISP1') {
+                window._FTC_MK5_BANG_SAVED = true;
+              }
+            } else if (h.indexOf('#IP:Routes') === 0) {
+              const gwField = mkBai5DocTruongForm(d, 'Gateway');
+              if (gwField && gwField.gt === '1.1.1.1') {
+                window._FTC_MK5_ROUTE_SAVED = true;
+              }
+            } else if (h.indexOf('#IP:Firewall.Mangle') === 0) {
+              const srcField = mkBai5DocTruongForm(d, 'Src. Address');
+              const actField = mkBai5DocTruongForm(d, 'Action');
+              if (srcField && srcField.gt === MK_BAI5_MANGLE_SRC) {
+                window._FTC_MK5_MANGLE_SAVED = true;
+              }
+            }
+          } catch (err) {}
+        };
+
+        try {
+          simWin.document.addEventListener('pointerdown', batNutLuu, true);
+          simWin.document.addEventListener('click', batNutLuu, true);
+        } catch (err) {}
       }
     } catch (e) {}
   },
@@ -315,3 +273,12 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   guidePopups: (window.TOOLTIPS_MIKROTIK_HEXS
                 && window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5']) || []
 });
+
+window.mkBai5Reset = function () {
+  window._FTC_MK5_BANG_SAVED = false;
+  window._FTC_MK5_ROUTE_SAVED = false;
+  window._FTC_MK5_MANGLE_SAVED = false;
+  window._FTC_MK5_DS_BANG = null;
+  window._FTC_MK5_DS_TUYEN = null;
+  window._FTC_MK5_DS_MANGLE = null;
+};
