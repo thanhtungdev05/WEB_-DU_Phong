@@ -16,8 +16,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     '- Dải IP áp dụng (Source): từ <span class="val">192.168.1.100</span> đến <span class="val">192.168.1.110</span>',
     '- Interface chính: ưu tiên sử dụng <span class="val">WAN1</span>',
     '- Dự phòng (Failover): chỉ chuyển sang <span class="val">WAN2</span> khi WAN1 gặp sự cố (chọn Failover to: WAN2)',
-    '- Mức độ ưu tiên (Priority): đặt mức ưu tiên là <span class="val">1</span>',
-    '- Khôi phục (Failback): tự động chuyển về ưu tiên WAN1 khi đường truyền khôi phục (tích chọn Failback)'
+    '- Khôi phục (Failback): tự động chuyển về ưu tiên WAN1 khi đường truyền khôi phục'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
   allowedSelectors: [
@@ -42,7 +41,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       { id: 'pr_priority', name: 'Priority: 1', selector: 'input[name="sPriority"]', expected: '1', type: 'text_exact', required: true },
       { id: 'pr_failback', name: 'Failback: có tích chọn', selector: 'input[name="iPRFailback"]', expected: 'Checked', type: 'text_exact', required: true }
     ],
-    customGrading: function(allDocs) {
+    customGrading: function (allDocs) {
       let docRule = null;
       for (const d of allDocs) {
         try {
@@ -50,7 +49,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
             docRule = d;
             break;
           }
-        } catch(e) {}
+        } catch (e) { }
       }
 
       if (!docRule) {

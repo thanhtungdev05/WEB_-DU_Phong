@@ -37,10 +37,12 @@ console.log('--- TEST 1: NẠP VÀ KIỂM TRA METADATA BÀI 4 ---');
 const lesson = sandbox.window.DEVICE_MIKROTIK_HEXS_LESSONS.find(l => l.id === 'mikrotik_hexs-bai4');
 assert.ok(lesson, 'Bài mikrotik_hexs-bai4 phải được đăng ký vào DEVICE_MIKROTIK_HEXS_LESSONS');
 assert.equal(lesson.title, 'Cấu hình DHCP');
-assert.ok(lesson.instructions.some(txt => txt.includes('Pool')), 'Hướng dẫn bài học phải có phần cấu hình IP > Pool');
-assert.ok(lesson.instructions.some(txt => txt.includes('Addresses')), 'Hướng dẫn bài học phải có phần cấu hình IP > Addresses');
-assert.ok(lesson.instructions.some(txt => txt.includes('Networks')), 'Hướng dẫn bài học phải có phần cấu hình IP > DHCP Server > Networks');
-console.log('✔ Metadata và hướng dẫn bài 4 đầy đủ 3 phần.');
+assert.ok(lesson.instructions.some(txt => txt.includes('192.168.10.0/24')), 'Hướng dẫn bài học phải có yêu cầu đổi lớp mạng 192.168.10.0/24');
+assert.ok(lesson.instructions.some(txt => txt.includes('192.168.10.10 - 192.168.10.254')), 'Hướng dẫn bài học phải có Range ip khả dụng 192.168.10.10 - 192.168.10.254');
+assert.ok(lesson.grading.rules.some(r => r.name.includes('[Addresses]')), 'Grading phải có tiêu chí Addresses');
+assert.ok(lesson.grading.rules.some(r => r.name.includes('[Pool]')), 'Grading phải có tiêu chí Pool');
+assert.ok(lesson.grading.rules.some(r => r.name.includes('[Networks]')), 'Grading phải có tiêu chí Networks');
+console.log('✔ Metadata và đề bài Bài 4 chuẩn yêu cầu nghiệp vụ.');
 
 console.log('\n--- TEST 2: KIỂM TRA 17 BƯỚC TOOLTIPS ---');
 const tooltips = sandbox.window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'];

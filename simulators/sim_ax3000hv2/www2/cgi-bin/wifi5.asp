@@ -65,12 +65,21 @@ var target = document.getElementById('firstDiv');
 var spinner = new Spinner(opts).spin(target);
 }
 
+function notifyGuidePopups() {
+	try {
+		if (window.top && window.top !== window) {
+			window.top.postMessage({ type: 'REQUEST_GUIDE_POPUPS' }, '*');
+		}
+	} catch (e) {}
+}
+
 function wifi5Switch_2g(on_off)
 {      
 	if(on_off)
 		document.getElementById("wifi5_2G_active").style.display="block";
 	else
 		document.getElementById("wifi5_2G_active").style.display="none";
+	notifyGuidePopups();
 }
 function wifi5Switch_5g(on_off)
 {      
@@ -207,6 +216,14 @@ function checkSubmit()
 	
 	document.wifi5_form.submit();
 }
+
+
+document.addEventListener('input', function() {
+	notifyGuidePopups();
+});
+document.addEventListener('change', function() {
+	notifyGuidePopups();
+});
 
 function doLoad()
 {

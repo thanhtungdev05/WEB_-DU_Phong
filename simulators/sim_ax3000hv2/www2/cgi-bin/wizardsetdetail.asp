@@ -258,7 +258,7 @@ var wan_pvc0_entry0_pwd="fpt";
 		<table border="0" width="500" align="center" cellspacing="0" cellpadding="0">
 			<tr>
 				<td width="200" height="50" align="center" valign="middle" bgcolor="#FFFFFF">
-					<div align="left"><img src="/logo.png" width="160" height="100"></div>
+					<div align="left"><img src="/logo.png" width="160" height="59" style="object-fit:contain;height:auto;max-height:60px;max-width:160px;display:block;"></div>
 				</td>
 				<td width="300" height="50" align="right" valign="bottom" bgcolor="#FFFFFF" class="model">
 					

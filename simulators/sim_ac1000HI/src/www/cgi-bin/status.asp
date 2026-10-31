@@ -307,7 +307,7 @@
 					                                  
 							<div align=left>
 								
-									<img src="/logo.png" tppabs="logo.png" width="160" height="100">
+									<img src="/logo.png" tppabs="logo.png" width="160" height="59" style="object-fit:contain;height:auto;max-height:80px;max-width:160px;display:block;">
 								
 							</div>
 						</td>

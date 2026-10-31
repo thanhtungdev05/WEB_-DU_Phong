@@ -32,7 +32,7 @@ function mkBai5CacDong(doc, soOToiThieu) {
         ds.push(Array.from(tds).map(function (t) { return (t.textContent || '').trim(); }));
       }
     }
-  } catch (e) {}
+  } catch (e) { }
   return ds;
 }
 
@@ -76,7 +76,7 @@ function mkBai5ChupTheoTrang(doc) {
         window._FTC_MK5_MANGLE_SAVED = true;
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function mkBai5DocTruongForm(doc, nhan) {
@@ -97,7 +97,7 @@ function mkBai5DocTruongForm(doc, nhan) {
         return { gt: gt, batLen: !o.disabled };
       }
     }
-  } catch (e) {}
+  } catch (e) { }
   return null;
 }
 
@@ -108,22 +108,6 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   instructions: [
     '<b>Mục tiêu bài học:</b>',
     'Cấu hình định tuyến địa chỉ IP theo chính sách (Policy Based Routing - PBR) để ép toàn bộ lưu lượng của dải mạng LAN <span class="val">192.168.1.0/24</span> đi ra ngoài Internet qua hướng Gateway <span class="val">1.1.1.1</span>.',
-    '<b>Yêu cầu thực hiện theo 3 phần:</b>',
-    '- Đăng nhập router với Username: <span class="val">admin</span>, Mật khẩu: (để trống).',
-    '<b>Phần 1: Tạo bảng định tuyến (Routing Table)</b>',
-    '&nbsp;&nbsp;• Vào <b>Routing > Tables</b>, nhấp <b>Add New</b>.',
-    '&nbsp;&nbsp;• Nhập Name: <span class="val">ISP1</span> và tích chọn ô <span class="val">FIB</span>.',
-    '&nbsp;&nbsp;• Nhấn <b>OK</b> để lưu bảng.',
-    '<b>Phần 2: Tạo tuyến đường mặc định (Default Route)</b>',
-    '&nbsp;&nbsp;• Vào <b>IP > Routes</b>, nhấp <b>Add New</b>.',
-    '&nbsp;&nbsp;• Nhập Gateway: <span class="val">1.1.1.1</span>.',
-    '&nbsp;&nbsp;• Tại mục Routing Table: chọn <span class="val">ISP1</span>.',
-    '&nbsp;&nbsp;• Nhấn <b>OK</b> để lưu tuyến.',
-    '<b>Phần 3: Đánh dấu gói tin theo IP nguồn (Firewall Mangle)</b>',
-    '&nbsp;&nbsp;• Vào <b>IP > Firewall</b>, nhấp chọn tab <b>Mangle</b>, nhấp <b>Add New</b>.',
-    '&nbsp;&nbsp;• Tab General: Chain <span class="val">prerouting</span>, mở khóa ô Src. Address nhập <span class="val">192.168.1.0/24</span>.',
-    '&nbsp;&nbsp;• Tab Action: Mở khối Action, chọn Action <span class="val">mark routing</span>, New Routing Mark: <span class="val">ISP1</span>.',
-    '&nbsp;&nbsp;• Nhấn <b>OK</b> để hoàn tất.'
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
 
@@ -139,7 +123,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       for (const d of allDocs) {
         try {
           if (mkBai5DocHash(d)) { doc = d; break; }
-        } catch (e) {}
+        } catch (e) { }
       }
       if (doc) mkBai5ChupTheoTrang(doc);
 
@@ -219,7 +203,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         try {
           const ktvId = (typeof window.getKtvClientId === 'function' ? window.getKtvClientId() : '') || 'ktv_default';
           simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=5&_ktv=' + encodeURIComponent(ktvId) + '&_t=' + Date.now());
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (!simWin._ftcMkBai5TheoDoiLuu) {
@@ -229,7 +213,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
           try {
             const d = simWin.document;
             if (d) mkBai5ChupTheoTrang(d);
-          } catch (e) {}
+          } catch (e) { }
         }, 300);
 
         const batNutLuu = function (e) {
@@ -259,19 +243,19 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
                 window._FTC_MK5_MANGLE_SAVED = true;
               }
             }
-          } catch (err) {}
+          } catch (err) { }
         };
 
         try {
           simWin.document.addEventListener('pointerdown', batNutLuu, true);
           simWin.document.addEventListener('click', batNutLuu, true);
-        } catch (err) {}
+        } catch (err) { }
       }
-    } catch (e) {}
+    } catch (e) { }
   },
 
   guidePopups: (window.TOOLTIPS_MIKROTIK_HEXS
-                && window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5']) || []
+    && window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5']) || []
 });
 
 window.mkBai5Reset = function () {

@@ -72,27 +72,61 @@ var lessonObj = {
       selector: 'input[name="Enable_Wifi5_2G"][value="1" i]',
       page: 'wifi5.asp',
       text: 'Bước 3: Ở mục 2.4G WiFi5, chọn Enable',
-      position: 'top'
+      position: 'top',
+      condition: function (doc) {
+        var en = doc.querySelector('input[name="Enable_Wifi5_2G"][value="1" i]');
+        return !en || !en.checked;
+      }
     },
     {
       selector: 'input[name="wifi5SSid_2G" i], #wifi5SSid_2G',
       page: 'wifi5.asp',
       text: 'Bước 4: Nhập tên Wifi: FPT IoT',
       position: 'right',
-      forcePosition: true
+      forcePosition: true,
+      condition: function (doc) {
+        var en = doc.querySelector('input[name="Enable_Wifi5_2G"][value="1" i]');
+        if (!en || !en.checked) return false;
+        var el = doc.querySelector('input[name="wifi5SSid_2G" i], #wifi5SSid_2G');
+        var val = el ? String(el.value || '').trim() : '';
+        return val.toLowerCase() !== 'fpt iot';
+      }
     },
     {
       selector: 'input[name="wifi5Pwd_2G" i], #wifi5Pwd_2G',
       page: 'wifi5.asp',
       text: 'Bước 5: Nhập mật khẩu Wifi: fptiot123',
       position: 'right',
-      forcePosition: true
+      forcePosition: true,
+      condition: function (doc) {
+        var en = doc.querySelector('input[name="Enable_Wifi5_2G"][value="1" i]');
+        if (!en || !en.checked) return false;
+        var ssidEl = doc.querySelector('input[name="wifi5SSid_2G" i], #wifi5SSid_2G');
+        var ssidVal = ssidEl ? String(ssidEl.value || '').trim() : '';
+        if (ssidVal.toLowerCase() !== 'fpt iot') return false;
+        var pwdEl = doc.querySelector('input[name="wifi5Pwd_2G" i], #wifi5Pwd_2G');
+        var pwdVal = pwdEl ? String(pwdEl.value || '').trim() : '';
+        return pwdVal !== 'fptiot123';
+      }
     },
     {
       selector: 'input[value="Save" i], input[name="SaveBtn" i]',
       page: 'wifi5.asp',
       text: 'Bước 6: Chọn Save',
-      position: 'top'
+      position: 'top',
+      hideWhenSaved: true,
+      condition: function (doc) {
+        var en = doc.querySelector('input[name="Enable_Wifi5_2G"][value="1" i]');
+        if (!en || !en.checked) return false;
+        var ssidEl = doc.querySelector('input[name="wifi5SSid_2G" i], #wifi5SSid_2G');
+        var ssidVal = ssidEl ? String(ssidEl.value || '').trim() : '';
+        if (ssidVal.toLowerCase() !== 'fpt iot') return false;
+        var pwdEl = doc.querySelector('input[name="wifi5Pwd_2G" i], #wifi5Pwd_2G');
+        var pwdVal = pwdEl ? String(pwdEl.value || '').trim() : '';
+        if (pwdVal !== 'fptiot123') return false;
+        var isSaved = Boolean(doc._ftcIsSaved || (doc.location && doc.location.search && doc.location.search.includes('save_success=1')));
+        return !isSaved;
+      }
     }
   ]
 };

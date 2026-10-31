@@ -203,10 +203,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   subtitle: 'Cấu hình lớp mạng LAN và DHCP Server',
   instructions: [
     '<b>Yêu cầu:</b>',
-    'Đổi lớp mạng LAN của router MikroTik hEX S sang 192.168.10.0/24:',
-    '- IP > Addresses (bridge-LAN): Address <span class="val">192.168.10.1/24</span>, Network <span class="val">192.168.10.0</span>',
-    '- IP > Pool (dhcp-pool-lan): Addresses <span class="val">192.168.10.10-192.168.10.254</span>',
-    '- IP > DHCP Server > Networks: Address <span class="val">192.168.10.0/24</span>, Gateway <span class="val">192.168.10.1</span>'
+    'Đổi lớp mạng LAN của router MikroTik hEX S sang 192.168.10.0/24',
+    '- Range ip khả dụng từ: <span class="val">192.168.10.10 - 192.168.10.254</span>'
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
   grading: {

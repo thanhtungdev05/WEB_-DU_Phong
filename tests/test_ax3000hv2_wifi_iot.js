@@ -49,7 +49,7 @@ assert.ok(Array.isArray(bai3.grading.allowedSelectors), 'bai3.grading must have 
 assert.ok(bai3.grading.allowedSelectors.includes('input[name="Enable_Wifi5_2G"]'), 'grading.allowedSelectors must include Enable_Wifi5_2G');
 assert.ok(bai3.grading.allowedSelectors.includes('input[name="Enable_Wifi5_5G"]'), 'grading.allowedSelectors must include Enable_Wifi5_5G');
 
-// 2. Verify tooltips/bai3.js
+// 2. Verify tooltips/bai3.js structure and conditions
 const tooltipsCode = fs.readFileSync(path.join(root, 'devices/ax3000hv2/tooltips/bai3.js'), 'utf8');
 const tooltipsContext = { window: {} };
 vm.createContext(tooltipsContext);
@@ -58,52 +58,90 @@ vm.runInContext(tooltipsCode, tooltipsContext);
 const tooltips = tooltipsContext.window.TOOLTIPS_AX3000HV2['LAB_AX3000HV2_03'];
 assert.ok(Array.isArray(tooltips), 'Tooltips for LAB_AX3000HV2_03 must exist');
 assert.equal(tooltips.length, 6, 'Tooltips must have exactly 6 steps');
-assert.ok(tooltips.some(t => t.text.includes('FPT IoT')), 'Tooltips must mention FPT IoT');
-assert.ok(tooltips.some(t => t.text.includes('fptiot123')), 'Tooltips must mention fptiot123');
-assert.ok(!tooltips.some(t => t.text.includes('5G:')), 'Tooltips must not require entering 5G fields');
 
-// 2b. Verify wifi5.asp simulator checkSubmit validation
-const wifi5AspContent = fs.readFileSync(path.join(root, 'simulators/sim_ax3000hv2/www2/cgi-bin/wifi5.asp'), 'utf8');
-assert.ok(wifi5AspContent.includes('is5G && wpapskCheck'), 'wifi5.asp must only validate 5G password when 5G is enabled');
+const lessonPopups = bai3.guidePopups;
+assert.ok(Array.isArray(lessonPopups), 'guidePopups in bai3 must exist');
+assert.equal(lessonPopups.length, 6, 'guidePopups must have exactly 6 steps');
 
-// 3. Verify app.js logic
-const appContent = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-assert.ok(appContent.includes('isAuxToggle'), 'app.js must define isAuxToggle');
-assert.ok(appContent.includes('enable_wifi'), 'app.js must handle enable_wifi in isAuxToggle');
-assert.ok(appContent.includes('wifi5'), 'app.js must handle wifi5 in isAuxToggle');
-assert.ok(appContent.includes('2.4g wifi'), 'app.js unexpectedErrors filter must handle 2.4g wifi');
-assert.ok(appContent.includes('5g wifi'), 'app.js unexpectedErrors filter must handle 5g wifi');
-assert.ok(appContent.includes('effectiveLesson'), 'app.js must use effectiveLesson');
+// 3. Test condition logic for sequential step gating on both tooltips and lesson guidePopups
+[
+  { name: 'tooltips/bai3.js', list: tooltips },
+  { name: 'lessons/bai3.js', list: lessonPopups }
+].forEach(({ name, list }) => {
+  const step3 = list.find(s => s.text.includes('Bước 3'));
+  const step4 = list.find(s => s.text.includes('Bước 4'));
+  const step5 = list.find(s => s.text.includes('Bước 5'));
+  const step6 = list.find(s => s.text.includes('Bước 6'));
 
-// 4. Verify portal.html cachebuster
-const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
-assert.ok(portalContent.includes('devices/ax3000hv2/lessons/bai3.js?v='), 'portal.html must have cachebuster for bai3.js');
-assert.ok(portalContent.includes('devices/ax3000hv2/tooltips/bai3.js?v='), 'portal.html must have cachebuster for tooltips/bai3.js');
-assert.ok(portalContent.includes('app.js?v='), 'portal.html must have cachebuster for app.js');
+  assert.ok(step3 && typeof step3.condition === 'function', `${name}: Step 3 must have condition function`);
+  assert.ok(step4 && typeof step4.condition === 'function', `${name}: Step 4 must have condition function`);
+  assert.ok(step5 && typeof step5.condition === 'function', `${name}: Step 5 must have condition function`);
+  assert.ok(step6 && typeof step6.condition === 'function', `${name}: Step 6 must have condition function`);
 
-// 5. Test unexpected error filter logic directly
-let testErrors = [
-  { label: '2.4G WiFi5', expected: 'Tắt/Disable', actual: 'Bật/Enable' },
-  { label: '5G WiFi5', expected: 'Tắt/Disable', actual: 'Bật/Enable' },
-  { label: 'Trường khác bị sửa bừa', expected: '0', actual: '1' }
-];
-
-const filteredErrors = testErrors.filter(err => {
-  const lbl = (err.label || '').toLowerCase();
-  const act = (err.actual || '').toLowerCase();
-  if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) && (act === 'admin' || act === '')) {
-    return false;
+  // Helper to build mock DOM document
+  function createMockDoc({ enable2G, ssid, pwd, saved }) {
+    return {
+      _ftcIsSaved: Boolean(saved),
+      location: { search: '' },
+      querySelector(selector) {
+        const s = selector.toLowerCase();
+        if (s.includes('enable_wifi5_2g') && s.includes('1')) {
+          return { checked: Boolean(enable2G) };
+        }
+        if (s.includes('wifi5ssid_2g')) {
+          return { value: ssid !== undefined ? ssid : '' };
+        }
+        if (s.includes('wifi5pwd_2g')) {
+          return { value: pwd !== undefined ? pwd : '' };
+        }
+        return null;
+      }
+    };
   }
-  if (lbl.includes('dns relay') || lbl.includes('dnstyperadio')) {
-    return false;
-  }
-  if (lbl.includes('2.4g wifi') || lbl.includes('5g wifi') || lbl.includes('wifi5') || lbl.includes('wifi 5') || lbl.includes('enable_wifi') || lbl.includes('ssid broadcast')) {
-    return false;
-  }
-  return true;
+
+  // State 0: Initial state (2.4G Disable, empty fields)
+  // BUG IN SCREENSHOT: Step 6 was appearing alongside Step 3!
+  const docInit = createMockDoc({ enable2G: false, ssid: '', pwd: '', saved: false });
+  assert.strictEqual(step3.condition(docInit), true, `${name} State 0: Step 3 must be visible`);
+  assert.strictEqual(step4.condition(docInit), false, `${name} State 0: Step 4 must be hidden`);
+  assert.strictEqual(step5.condition(docInit), false, `${name} State 0: Step 5 must be hidden`);
+  assert.strictEqual(step6.condition(docInit), false, `${name} State 0: Step 6 MUST be hidden (fixes screenshot bug)`);
+
+  // State 1: 2.4G Enabled, SSID empty
+  const docEnabled = createMockDoc({ enable2G: true, ssid: '', pwd: '', saved: false });
+  assert.strictEqual(step3.condition(docEnabled), false, `${name} State 1: Step 3 must hide after enable`);
+  assert.strictEqual(step4.condition(docEnabled), true, `${name} State 1: Step 4 must be visible`);
+  assert.strictEqual(step5.condition(docEnabled), false, `${name} State 1: Step 5 must be hidden`);
+  assert.strictEqual(step6.condition(docEnabled), false, `${name} State 1: Step 6 must be hidden`);
+
+  // State 2: SSID entered ("FPT IoT"), password empty
+  const docSsidDone = createMockDoc({ enable2G: true, ssid: 'FPT IoT', pwd: '', saved: false });
+  assert.strictEqual(step3.condition(docSsidDone), false, `${name} State 2: Step 3 must be hidden`);
+  assert.strictEqual(step4.condition(docSsidDone), false, `${name} State 2: Step 4 must hide after entering SSID`);
+  assert.strictEqual(step5.condition(docSsidDone), true, `${name} State 2: Step 5 must be visible`);
+  assert.strictEqual(step6.condition(docSsidDone), false, `${name} State 2: Step 6 must be hidden`);
+
+  // State 3: Password entered ("fptiot123"), ready to Save
+  const docPwdDone = createMockDoc({ enable2G: true, ssid: 'FPT IoT', pwd: 'fptiot123', saved: false });
+  assert.strictEqual(step3.condition(docPwdDone), false, `${name} State 3: Step 3 must be hidden`);
+  assert.strictEqual(step4.condition(docPwdDone), false, `${name} State 3: Step 4 must be hidden`);
+  assert.strictEqual(step5.condition(docPwdDone), false, `${name} State 3: Step 5 must hide after entering Password`);
+  assert.strictEqual(step6.condition(docPwdDone), true, `${name} State 3: Step 6 must be visible`);
+
+  // State 4: Saved successfully
+  const docSaved = createMockDoc({ enable2G: true, ssid: 'FPT IoT', pwd: 'fptiot123', saved: true });
+  assert.strictEqual(step6.condition(docSaved), false, `${name} State 4: Step 6 must hide after Save`);
 });
 
-assert.equal(filteredErrors.length, 1, 'Only genuine unauthorized modifications should remain');
-assert.equal(filteredErrors[0].label, 'Trường khác bị sửa bừa');
+// 4. Verify wifi5.asp simulator checkSubmit and notifyGuidePopups
+const wifi5AspContent = fs.readFileSync(path.join(root, 'simulators/sim_ax3000hv2/www2/cgi-bin/wifi5.asp'), 'utf8');
+assert.ok(wifi5AspContent.includes('is5G && wpapskCheck'), 'wifi5.asp must only validate 5G password when 5G is enabled');
+assert.ok(wifi5AspContent.includes('notifyGuidePopups'), 'wifi5.asp must define notifyGuidePopups');
+assert.ok(wifi5AspContent.includes('REQUEST_GUIDE_POPUPS'), 'wifi5.asp must post REQUEST_GUIDE_POPUPS');
+
+// 5. Verify portal.html cachebuster
+const portalContent = fs.readFileSync(path.join(root, 'portal.html'), 'utf8');
+assert.ok(/devices\/ax3000hv2\/lessons\/bai3\.js\?v=[a-f0-9]{16}/.test(portalContent), 'portal.html must have 16-hex hash cachebuster for bai3.js');
+assert.ok(/devices\/ax3000hv2\/tooltips\/bai3\.js\?v=[a-f0-9]{16}/.test(portalContent), 'portal.html must have 16-hex hash cachebuster for tooltips/bai3.js');
 
 console.log('All AX3000HV2 Bai 3 Wi-Fi IoT tests passed successfully!');

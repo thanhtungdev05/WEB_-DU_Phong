@@ -211,7 +211,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
 
   // ── Phần 1: IP > Addresses (Ảnh 1 & 2 — Bước 1 ➔ 6) ────────────────
   {
-    selector: 'text:IP',
+    selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
     text: 'Bước 1: chọn IP',
     position: 'right',
     condition: function (doc) {
@@ -222,7 +222,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'text:Addresses',
+    selector: 'a[href="#IP:Addresses"], text:Addresses',
     text: 'Bước 2: chọn Addresses',
     position: 'right',
     condition: function (doc) {
@@ -260,7 +260,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'text:OK',
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
     text: 'Bước 6: nhấn Apply và OK để lưu',
     position: 'left',
     offsetX: -120,
@@ -272,7 +272,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
 
   // ── Phần 2: IP > Pool (Ảnh 3 & 4 — Bước 7 ➔ 11) ───────────────────
   {
-    selector: 'text:IP',
+    selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
     text: 'Bước 7: chọn IP',
     position: 'right',
     condition: function (doc) {
@@ -283,7 +283,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'text:Pool',
+    selector: 'a[href="#IP:Pool"], text:Pool',
     text: 'Bước 8: chọn Pool',
     position: 'right',
     condition: function (doc) {
@@ -312,7 +312,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'text:OK',
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
     text: 'Bước 11: nhấn Apply và OK để lưu',
     position: 'left',
     offsetX: -120,
@@ -324,7 +324,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
 
   // ── Phần 3: IP > DHCP Server > Networks (Ảnh 5 — Bước 12 ➔ 17) ─────
   {
-    selector: 'text:IP',
+    selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
     text: 'Bước 12: chọn IP',
     position: 'right',
     condition: function (doc) {
@@ -335,7 +335,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'text:DHCP Server',
+    selector: 'a[href="#IP:DHCP_Server"], text:DHCP Server',
     text: 'Bước 13: chọn DHCP Server',
     position: 'right',
     condition: function (doc) {
@@ -346,7 +346,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'text:Networks',
+    selector: 'a[href="#IP:DHCP_Server.Networks"], text:Networks',
     text: 'Bước 14: chọn tab Networks',
     position: 'bottom',
     condition: function (doc) {
@@ -386,7 +386,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'text:OK',
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
     text: 'Bước 17: nhấn Apply và OK để lưu',
     position: 'left',
     offsetX: -120,
