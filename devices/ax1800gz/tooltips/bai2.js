@@ -1,3 +1,5 @@
+
+
 /**
  * devices/ax1800gz/tooltips/bai2.js
  * Tooltips cho Bài 2: Cấu hình Wi-Fi (WLAN Basic) trên ONT AX1800GZ
@@ -22,7 +24,7 @@ window.TOOLTIPS_AX1800GZ['LAB_AX1800GZ_02'] = [
     position: 'right'
   },
   {
-    selector: '#WLANSSIDConfBar[aria-expanded="false"], #WLANSSIDConf:not(:has(#WLANSSIDConf_container:visible)) #WLANSSIDConfBar',
+    selector: '#WLANSSIDConfBar:not(.collapsibleBarExp), #WLANSSIDConfBar[aria-expanded="false"]',
     text: 'Bước 4: Mở WLAN SSID Configuration',
     position: 'top'
   },

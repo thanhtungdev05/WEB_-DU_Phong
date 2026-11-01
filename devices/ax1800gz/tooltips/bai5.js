@@ -22,7 +22,7 @@ window.TOOLTIPS_AX1800GZ['LAB_AX1800GZ_05'] = [
     position: 'bottom'
   },
   {
-    selector: '#DHCPBasicCfgBar[aria-expanded="false"], #DHCPBasicCfg:not(:has(#DHCPBasicCfg_container:visible)) #DHCPBasicCfgBar',
+    selector: '#DHCPBasicCfgBar:not(.collapsibleBarExp), #DHCPBasicCfgBar[aria-expanded="false"]',
     text: 'Bước 4: Mở mục DHCP Server',
     position: 'right',
     targetWidth: 160

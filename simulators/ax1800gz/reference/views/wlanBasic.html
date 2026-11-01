@@ -1888,6 +1888,39 @@ if(GuestWIFIArr.indexOf($("[id^='_InstID:']", HeadObj).val())>-1){
 $("[id^='div_guestAccessTime']", HeadObj).show();
 }
 }
+function g_syncMLO24To5G(srcTemplate) {
+try {
+var tId = $(srcTemplate).attr("id") || "";
+var aliasVal = $("[id^='Alias']", srcTemplate).val() || "";
+if (tId === "template_WLANSSIDConf_0" || aliasVal === "SSID1" || tId.indexOf("WLANSSIDConf_0") !== -1) {
+var curSsid = $("[id^='ESSID']", srcTemplate).not(".PostIgnore").val();
+var curEnc = $("[id^='EncryptionType']", srcTemplate).val();
+var curPass = $("[id^='KeyPassphrase']", srcTemplate).not(".PostIgnore").val();
+var target5G = $("#template_WLANSSIDConf_4");
+if (target5G.length > 0) {
+if (curSsid !== undefined && curSsid !== null) {
+$("[id^='ESSID']", target5G).not(".PostIgnore").val(curSsid);
+var elSsid5 = document.getElementById("ESSID:4");
+if (elSsid5) elSsid5.value = curSsid;
+$(".instTitle", target5G).text(curSsid);
+}
+if (curEnc !== undefined && curEnc !== null) {
+$("[id^='EncryptionType']", target5G).val(curEnc);
+var elEnc5 = document.getElementById("EncryptionType:4");
+if (elEnc5) elEnc5.value = curEnc;
+if (typeof g_EncryptionTypeAuxCtrlsDisp === "function") {
+g_EncryptionTypeAuxCtrlsDisp(target5G);
+}
+}
+if (curPass !== undefined && curPass !== null) {
+$("[id^='KeyPassphrase']", target5G).val(curPass);
+var elPass5 = document.getElementById("KeyPassphrase:4");
+if (elPass5) elPass5.value = curPass;
+}
+}
+}
+} catch(e) {}
+}
 function g_WlanEncryptionTypeOptionCtrl(template)
 {
 var EncryptionTypeOBJ = $("#EncryptionType", template);
@@ -2214,6 +2247,7 @@ template.bind("fillDataByApplyResult", function(event,xml, template){
 if (template.hasError(xml) == 0)
 {
 succHintShow(template);
+g_syncMLO24To5G(template);
 }
 });
 template.bind("fillDataByCancelResult", function(event,xml, template){

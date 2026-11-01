@@ -84,8 +84,12 @@ def render_wlan_ssid_data(xml):
         "ESSID": KHO.doc("wlan24.ssid", "FPT_AX1800GZ_2.4G"),
         "ESSIDHideEnable": KHO.doc("wlan24.hide", "0"),
         "BeaconType": KHO.doc("wlan24.beacon_type", "11i"),
+        "11iAuthMode": KHO.doc("wlan24.auth_11i", "PSKAuthentication"),
         "11iEncryptType": KHO.doc("wlan24.encrypt_11i", "AESEncryption"),
+        "WPAAuthMode": KHO.doc("wlan24.auth_wpa", "PSKAuthentication"),
         "WPAEncryptType": KHO.doc("wlan24.encrypt_wpa", "AESEncryption"),
+        "WPA3AuthMode": KHO.doc("wlan24.auth_wpa3", "SAEAuthentication"),
+        "WPA3EncryptType": KHO.doc("wlan24.encrypt_wpa3", "AESEncryption"),
     })
     xml = _update_instance_by_inst_id(xml, "OBJ_WLANPSK_ID", "DEV.WIFI.AP1.PSK1", {
         "KeyPassphrase": KHO.doc("wlan24.password", "fpttelecom@2026"),
@@ -96,8 +100,12 @@ def render_wlan_ssid_data(xml):
         "ESSID": KHO.doc("wlan24_ssid2.ssid", "SSID2"),
         "ESSIDHideEnable": KHO.doc("wlan24_ssid2.hide", "0"),
         "BeaconType": KHO.doc("wlan24_ssid2.beacon_type", "11i"),
+        "11iAuthMode": KHO.doc("wlan24_ssid2.auth_11i", "PSKAuthentication"),
         "11iEncryptType": KHO.doc("wlan24_ssid2.encrypt_11i", "AESEncryption"),
+        "WPAAuthMode": KHO.doc("wlan24_ssid2.auth_wpa", "PSKAuthentication"),
         "WPAEncryptType": KHO.doc("wlan24_ssid2.encrypt_wpa", "TKIPandAESEncryption"),
+        "WPA3AuthMode": KHO.doc("wlan24_ssid2.auth_wpa3", "SAEAuthentication"),
+        "WPA3EncryptType": KHO.doc("wlan24_ssid2.encrypt_wpa3", "AESEncryption"),
     })
     xml = _update_instance_by_inst_id(xml, "OBJ_WLANPSK_ID", "DEV.WIFI.AP2.PSK1", {
         "KeyPassphrase": KHO.doc("wlan24_ssid2.password", "fpttelecom@2026"),
@@ -107,9 +115,13 @@ def render_wlan_ssid_data(xml):
         "Enable": KHO.doc("wlan5.enable", "1"),
         "ESSID": KHO.doc("wlan5.ssid", "FPT_AX1800GZ_5G"),
         "ESSIDHideEnable": KHO.doc("wlan5.hide", "0"),
-        "BeaconType": KHO.doc("wlan5.beacon_type", "WPAand11i"),
-        "11iEncryptType": KHO.doc("wlan5.encrypt_11i", "TKIPandAESEncryption"),
-        "WPAEncryptType": KHO.doc("wlan5.encrypt_wpa", "TKIPandAESEncryption"),
+        "BeaconType": KHO.doc("wlan5.beacon_type", "11i"),
+        "11iAuthMode": KHO.doc("wlan5.auth_11i", "PSKAuthentication"),
+        "11iEncryptType": KHO.doc("wlan5.encrypt_11i", "AESEncryption"),
+        "WPAAuthMode": KHO.doc("wlan5.auth_wpa", "PSKAuthentication"),
+        "WPAEncryptType": KHO.doc("wlan5.encrypt_wpa", "AESEncryption"),
+        "WPA3AuthMode": KHO.doc("wlan5.auth_wpa3", "SAEAuthentication"),
+        "WPA3EncryptType": KHO.doc("wlan5.encrypt_wpa3", "AESEncryption"),
     })
     xml = _update_instance_by_inst_id(xml, "OBJ_WLANPSK_ID", "DEV.WIFI.AP5.PSK1", {
         "KeyPassphrase": KHO.doc("wlan5.password", "fpttelecom@2026"),

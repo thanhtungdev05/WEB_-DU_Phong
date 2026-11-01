@@ -3578,6 +3578,16 @@ function succHintShow(template)
 {
 var PostFeedbackOBJ = $(".succHint",template);
 PostFeedbackOBJ.fadeIn(1000);
+try {
+document._ftcIsSaved = true;
+if (window.top && window.top !== window) {
+window.top._hasSuccHintStored = true;
+window.top._hasClickedSaveInGuide = true;
+if (typeof window.top.onSimulatorSave === 'function') {
+window.top.onSimulatorSave(window);
+}
+}
+} catch (e) {}
 window.setTimeout(
 function() {
 PostFeedbackOBJ.fadeOut(1000);
@@ -5359,11 +5369,13 @@ if ( UnderControlContainer.is(":visible") )
 {
 UnderControlContainer.showIt(false);
 collapBar.removeClass("collapsibleBarExp");
+collapBar.attr("aria-expanded", "false");
 }
 else
 {
 UnderControlContainer.showIt(true);
 collapBar.addClass("collapsibleBarExp");
+collapBar.attr("aria-expanded", "true");
 }
 var InstNumOBJ = $("#_InstNum",Head);
 var AddInstLink = Head.find(".addInst");
@@ -5376,6 +5388,7 @@ function initial_collapBarWithDataTrans(Head)
 {
 var UnderControlContainer = $("#"+ Head.attr("id") +"_container");
 UnderControlContainer.hide();
+$(".collapBarWithDataTrans",Head).attr("aria-expanded", "false");
 $(".collapBarWithDataTrans",Head).click(function(event){
 event.preventDefault();
 var collapBar = $(this);
@@ -5407,6 +5420,7 @@ $(".collapsibleBar").each(function(){
 var HeadID = $(this).parents(".HeadDIV").attr("id");
 var UnderControlContainer = $("#"+ HeadID +"_container");
 UnderControlContainer.hide();
+$(this).attr("aria-expanded", "false");
 });
 $(".collapsibleBar").each(function(){
 var collapsibleBar = $(this);

@@ -441,24 +441,40 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
                 else:
                     prefix = "wlan24"
 
-                if "Enable" in params:
-                    KHO.ghi(f"{prefix}.enable", pval("Enable", "1"))
-                if "ESSID" in params:
-                    KHO.ghi(f"{prefix}.ssid", pval("ESSID", ""))
-                if "ESSIDHideEnable" in params:
-                    KHO.ghi(f"{prefix}.hide", pval("ESSIDHideEnable", "0"))
-                if "BeaconType" in params:
-                    KHO.ghi(f"{prefix}.beacon_type", pval("BeaconType", "WPAand11i"))
-                if "11iEncryptType" in params:
-                    KHO.ghi(f"{prefix}.encrypt_11i", pval("11iEncryptType", "TKIPandAESEncryption"))
-                if "WPAEncryptType" in params:
-                    KHO.ghi(f"{prefix}.encrypt_wpa", pval("WPAEncryptType", "TKIPandAESEncryption"))
-                if "KeyPassphrase" in params and pval("KeyPassphrase", "").strip() != "":
-                    KHO.ghi(f"{prefix}.password", pval("KeyPassphrase", ""))
+                def _save_wlan(pfx):
+                    if "Enable" in params:
+                        KHO.ghi(f"{pfx}.enable", pval("Enable", "1"))
+                    if "ESSID" in params:
+                        KHO.ghi(f"{pfx}.ssid", pval("ESSID", ""))
+                    if "ESSIDHideEnable" in params:
+                        KHO.ghi(f"{pfx}.hide", pval("ESSIDHideEnable", "0"))
+                    if "BeaconType" in params:
+                        KHO.ghi(f"{pfx}.beacon_type", pval("BeaconType", "11i"))
+                    if "11iAuthMode" in params:
+                        KHO.ghi(f"{pfx}.auth_11i", pval("11iAuthMode", "PSKAuthentication"))
+                    if "11iEncryptType" in params:
+                        KHO.ghi(f"{pfx}.encrypt_11i", pval("11iEncryptType", "AESEncryption"))
+                    if "WPAAuthMode" in params:
+                        KHO.ghi(f"{pfx}.auth_wpa", pval("WPAAuthMode", "PSKAuthentication"))
+                    if "WPAEncryptType" in params:
+                        KHO.ghi(f"{pfx}.encrypt_wpa", pval("WPAEncryptType", "AESEncryption"))
+                    if "WPA3AuthMode" in params:
+                        KHO.ghi(f"{pfx}.auth_wpa3", pval("WPA3AuthMode", "SAEAuthentication"))
+                    if "WPA3EncryptType" in params:
+                        KHO.ghi(f"{pfx}.encrypt_wpa3", pval("WPA3EncryptType", "AESEncryption"))
+                    if "KeyPassphrase" in params and pval("KeyPassphrase", "").strip() != "":
+                        KHO.ghi(f"{pfx}.password", pval("KeyPassphrase", ""))
+
+                _save_wlan(prefix)
+
+                # Band Steering / Dual-band sync: dong bo tu AP1 (2.4GHz) sang AP5 (5GHz)
+                if inst_id in ("DEV.WIFI.AP1", "DEV.WIFI.AP1.PSK1", "") or prefix == "wlan24":
+                    _save_wlan("wlan5")
 
             elif _tag == "Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua":
+                lan_ip = pval("IPAddr", "192.168.1.1")
                 if "IPAddr" in params:
-                    KHO.ghi("lan.ip", pval("IPAddr", "192.168.1.1"))
+                    KHO.ghi("lan.ip", lan_ip)
                 if "SubMask" in params:
                     KHO.ghi("lan.mask", pval("SubMask", "255.255.255.0"))
                 if "ServerEnable" in params:
@@ -467,14 +483,27 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
                     KHO.ghi("lan.dhcp_start", pval("MinAddress", "192.168.1.2"))
                 if "MaxAddress" in params:
                     KHO.ghi("lan.dhcp_end", pval("MaxAddress", "192.168.1.254"))
+
+                # Tu dong dong bo dai MinAddress & MaxAddress theo subnet LAN IP
+                if lan_ip and "." in lan_ip:
+                    parts = lan_ip.split(".")
+                    if len(parts) == 4:
+                        sub_prefix = f"{parts[0]}.{parts[1]}.{parts[2]}"
+                        cur_min = KHO.doc("lan.dhcp_start", "")
+                        cur_max = KHO.doc("lan.dhcp_end", "")
+                        if not cur_min or not cur_min.startswith(sub_prefix):
+                            KHO.ghi("lan.dhcp_start", f"{sub_prefix}.2")
+                        if not cur_max or not cur_max.startswith(sub_prefix):
+                            KHO.ghi("lan.dhcp_end", f"{sub_prefix}.254")
+
                 if "LeaseTime" in params:
                     KHO.ghi("lan.lease_time", pval("LeaseTime", "86400"))
                 if "DnsServerSource" in params:
                     KHO.ghi("lan.dns_source", pval("DnsServerSource", "0"))
                 if "DNSServer1" in params:
-                    KHO.ghi("lan.dns1", pval("DNSServer1", "8.8.8.8"))
+                    KHO.ghi("lan.dns1", pval("DNSServer1", "192.168.1.1"))
                 if "DNSServer2" in params:
-                    KHO.ghi("lan.dns2", pval("DNSServer2", "8.8.4.4"))
+                    KHO.ghi("lan.dns2", pval("DNSServer2", "0.0.0.0"))
 
             elif _tag == "devauth_accountmgr_lua.lua":
                 if "Password" in params:

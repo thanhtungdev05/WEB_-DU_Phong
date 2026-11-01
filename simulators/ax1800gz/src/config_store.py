@@ -77,8 +77,12 @@ CAU_HINH_GOC = {
         "security": "WPA2-PSK-AES",
         "password": "fpttelecom@2026",
         "beacon_type": "11i",
+        "auth_11i": "PSKAuthentication",
         "encrypt_11i": "AESEncryption",
-        "encrypt_wpa": "AESEncryption"
+        "auth_wpa": "PSKAuthentication",
+        "encrypt_wpa": "AESEncryption",
+        "auth_wpa3": "SAEAuthentication",
+        "encrypt_wpa3": "AESEncryption"
     },
     "wlan24_ssid2": {
         "enable": "0",
@@ -87,18 +91,26 @@ CAU_HINH_GOC = {
         "security": "WPA2-PSK-AES",
         "password": "fpttelecom@2026",
         "beacon_type": "11i",
+        "auth_11i": "PSKAuthentication",
         "encrypt_11i": "AESEncryption",
-        "encrypt_wpa": "TKIPandAESEncryption"
+        "auth_wpa": "PSKAuthentication",
+        "encrypt_wpa": "TKIPandAESEncryption",
+        "auth_wpa3": "SAEAuthentication",
+        "encrypt_wpa3": "AESEncryption"
     },
     "wlan5": {
         "enable": "1",
         "ssid": "FPT_AX1800GZ_5G",
         "hide": "0",
-        "security": "WPA2-PSK",
+        "security": "WPA2-PSK-AES",
         "password": "fpttelecom@2026",
-        "beacon_type": "WPAand11i",
-        "encrypt_11i": "TKIPandAESEncryption",
-        "encrypt_wpa": "TKIPandAESEncryption"
+        "beacon_type": "11i",
+        "auth_11i": "PSKAuthentication",
+        "encrypt_11i": "AESEncryption",
+        "auth_wpa": "PSKAuthentication",
+        "encrypt_wpa": "AESEncryption",
+        "auth_wpa3": "SAEAuthentication",
+        "encrypt_wpa3": "AESEncryption"
     },
     "dmz": {
         "enable": "0",
