@@ -59,16 +59,8 @@ async function executeLoginPage(databasePayload, rejectHealthRequest = false) {
   const sandbox = {
     document: {
       getElementById(id) {
-        if (id === 'iam-login' || id === 'login-submit') return loginButton;
-        return {
-          addEventListener() {},
-          querySelector() { return label; },
-          classList: { add() {}, remove() {} },
-          setAttribute() {},
-          removeAttribute() {},
-          value: '',
-          focus() {},
-        };
+        assert.equal(id, 'iam-login');
+        return loginButton;
       },
     },
     fetch() {
