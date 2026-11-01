@@ -215,6 +215,38 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
             self.javascript,
         )
 
+    def test_overview_supports_relative_week_presets_and_custom_week_picker(self):
+        for element_id in (
+            "overviewPeriodTabs",
+            "overviewPeriodTabMonth",
+            "overviewPeriodTabWeek",
+            "overviewMonthModePane",
+            "overviewWeekModePane",
+            "overviewWeekPresets",
+            "overviewWeekCustomPanel",
+            "overviewWeekCalPrev",
+            "overviewWeekCalTitle",
+            "overviewWeekCalNext",
+            "overviewWeekCalDays",
+            "overviewWeekSummary",
+        ):
+            self.assertIn(f'id="{element_id}"', self.html)
+        for label in (
+            "Tuần này",
+            "Tuần trước",
+            "2 tuần trước",
+            "Chọn tuần khác...",
+        ):
+            self.assertIn(label, self.javascript)
+        self.assertIn("function getWeekBounds(dateValue)", self.javascript)
+        self.assertIn("function isFullCalendarWeek(startValue, endValue)", self.javascript)
+        self.assertIn("function getRelativeWeekDisplayLabel(", self.javascript)
+        self.assertIn("function syncOverviewPeriodCopy()", self.javascript)
+        self.assertIn("const applySelectedWeek", self.javascript)
+        self.assertIn(".overview-week-preset-option", self.css)
+        self.assertIn(".overview-week-day.in-selected-week", self.css)
+        self.assertIn(':root[data-theme="dark"] .overview-week-preset-option', self.professional_css)
+
     def test_class_report_uses_compact_master_detail_overview(self):
         overview = self.html.index('id="classOverviewCard"')
         detail = self.html.index('id="classDetailCard"')

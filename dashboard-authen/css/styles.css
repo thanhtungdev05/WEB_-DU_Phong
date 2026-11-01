@@ -6237,7 +6237,9 @@ thead th .popover-trigger-btn:hover::after {
     align-items: center;
     justify-content: space-between;
     gap: 18px;
-    width: 224px;
+    min-width: 224px;
+    width: auto;
+    max-width: 100%;
     min-height: 50px;
     padding: 0 17px;
     border: 1px solid rgba(255, 255, 255, 0.86);
@@ -6248,6 +6250,7 @@ thead th .popover-trigger-btn:hover::after {
     font: inherit;
     font-size: 15px;
     font-weight: 650;
+    white-space: nowrap;
     cursor: pointer;
     transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
@@ -6410,6 +6413,191 @@ thead th .popover-trigger-btn:hover::after {
 .overview-month-actions .button {
     min-height: 36px;
     padding: 0 13px;
+}
+
+.overview-period-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    background: #f2f4f7;
+    border: 1px solid #e4e7ec;
+}
+
+.overview-period-tab {
+    min-height: 32px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 9px;
+    color: #475467;
+    background: transparent;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.overview-period-tab:hover {
+    color: #1d2939;
+}
+
+.overview-period-tab.active {
+    color: #175cd3;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1);
+}
+
+.overview-period-pane {
+    display: grid;
+    gap: 11px;
+}
+
+.overview-period-pane[hidden] {
+    display: none !important;
+}
+
+.overview-week-presets {
+    display: grid;
+    gap: 7px;
+}
+
+.overview-week-preset-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 12px;
+    border: 1px solid #dce2eb;
+    border-radius: 11px;
+    color: #172033;
+    background: #fbfcfe;
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.overview-week-preset-option:hover {
+    border-color: #9bb9ff;
+    background: #f2f6ff;
+    color: #2458ca;
+}
+
+.overview-week-preset-option.selected {
+    border-color: #2f6fed;
+    background: #edf3ff;
+    color: #175cd3;
+    box-shadow: inset 0 0 0 1px rgba(47, 111, 237, 0.14);
+}
+
+.overview-week-preset-name {
+    font-weight: 750;
+}
+
+.overview-week-preset-dates {
+    color: #52657c;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.overview-week-preset-option.selected .overview-week-preset-dates {
+    color: #175cd3;
+}
+
+.overview-week-custom {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #e4e7ec;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.overview-week-custom[hidden] {
+    display: none !important;
+}
+
+.overview-week-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.overview-week-cal-title {
+    color: #1d2939;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.overview-week-cal-weekdays,
+.overview-week-cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+}
+
+.overview-week-cal-weekdays {
+    gap: 2px;
+    color: #667085;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.overview-week-cal-days {
+    row-gap: 3px;
+    column-gap: 0;
+}
+
+.overview-week-day {
+    min-height: 30px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    color: #1d2939;
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+}
+
+.overview-week-day.outside {
+    color: #98a2b3;
+}
+
+.overview-week-day:disabled {
+    color: #d0d5dd;
+    cursor: not-allowed;
+}
+
+.overview-week-day.is-week-hover {
+    background: #e0eaff;
+    color: #175cd3;
+}
+
+.overview-week-day.in-selected-week {
+    background: #2f6fed;
+    color: #ffffff;
+    font-weight: 750;
+}
+
+.overview-week-day.week-start,
+.overview-week-day:nth-child(7n + 1).is-week-hover {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.overview-week-day.week-end,
+.overview-week-day:nth-child(7n).is-week-hover {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
 }
 
 #overview .overview-monthly-card .ktv-monthly-trend {

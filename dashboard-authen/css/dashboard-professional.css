@@ -2321,6 +2321,74 @@ body.report-export-open {
     color: #ffffff !important;
 }
 
+:root[data-theme="dark"] .overview-period-tabs {
+    background: #111a2e !important;
+    border-color: #24334a !important;
+}
+
+:root[data-theme="dark"] .overview-period-tab {
+    color: #94a3b8 !important;
+}
+
+:root[data-theme="dark"] .overview-period-tab.active {
+    background: #1e2d4a !important;
+    color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .overview-week-preset-option {
+    background: #162238 !important;
+    border-color: #24334a !important;
+    color: #f1f5f9 !important;
+}
+
+:root[data-theme="dark"] .overview-week-preset-option:hover {
+    background: #1e2d4a !important;
+    border-color: #3b5278 !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .overview-week-preset-option.selected {
+    background: rgba(47, 111, 237, 0.22) !important;
+    border-color: #3b82f6 !important;
+    color: #93c5fd !important;
+}
+
+:root[data-theme="dark"] .overview-week-preset-dates {
+    color: #94a3b8 !important;
+}
+
+:root[data-theme="dark"] .overview-week-preset-option.selected .overview-week-preset-dates {
+    color: #bfdbfe !important;
+}
+
+:root[data-theme="dark"] .overview-week-custom {
+    background: #111a2e !important;
+    border-color: #24334a !important;
+}
+
+:root[data-theme="dark"] .overview-week-cal-title,
+:root[data-theme="dark"] .overview-week-day {
+    color: #e2e8f0 !important;
+}
+
+:root[data-theme="dark"] .overview-week-day.outside {
+    color: #64748b !important;
+}
+
+:root[data-theme="dark"] .overview-week-day:disabled {
+    color: #334155 !important;
+}
+
+:root[data-theme="dark"] .overview-week-day.is-week-hover {
+    background: rgba(59, 130, 246, 0.24) !important;
+    color: #bfdbfe !important;
+}
+
+:root[data-theme="dark"] .overview-week-day.in-selected-week {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
 /* Drawers & Modals in Dark Mode */
 :root[data-theme="dark"] .ktv-detail-drawer {
     background: #111a2e !important;

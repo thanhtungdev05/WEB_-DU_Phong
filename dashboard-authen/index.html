@@ -26,8 +26,8 @@
             document.documentElement.style.colorScheme = resolved;
         })();
     </script>
-    <link rel="stylesheet" href="css/styles.css?v=078153095d94e5be">
-    <link rel="stylesheet" href="css/dashboard-professional.css?v=d2dd5904b123ab7c">
+    <link rel="stylesheet" href="css/styles.css?v=fd60c03c41351c54">
+    <link rel="stylesheet" href="css/dashboard-professional.css?v=2dd39da2dd16b5df">
 </head>
 
 <body>
@@ -261,7 +261,7 @@
                         <div class="section-title">
                             <div>
                                 <h2>Tổng quan thực hành KTV</h2>
-                                <span>Hoạt động và kết quả trong tháng báo cáo đang chọn.</span>
+                                <span id="overviewSectionSubtitle">Hoạt động và kết quả trong tháng báo cáo đang chọn.</span>
                             </div>
                             <div class="date-range-picker overview-month-picker" id="dateRangePicker">
                                 <div class="overview-month-field">
@@ -277,16 +277,49 @@
                                     </button>
                                     <div class="overview-month-panel" id="overviewMonthPanel" role="dialog"
                                         aria-label="Bộ lọc chọn nhiều tháng báo cáo" tabindex="-1">
-                                        <select class="overview-year-select" id="overviewYearSelect"
-                                            aria-label="Chọn năm báo cáo"></select>
-                                        <div class="overview-month-grid" id="overviewMonthGrid" role="group"
-                                            aria-label="Chọn một hoặc nhiều tháng liên tiếp"></div>
-                                        <p class="overview-month-summary" id="overviewMonthSummary" aria-live="polite"></p>
-                                        <div class="overview-month-actions">
-                                            <button type="button" class="overview-current-month"
-                                                id="overviewMonthToday">Tháng này</button>
-                                            <button type="button" class="button secondary" id="overviewMonthCancel">Hủy</button>
-                                            <button type="button" class="button" id="overviewMonthApply">Áp dụng</button>
+                                        <div class="overview-period-tabs" id="overviewPeriodTabs" role="tablist"
+                                            aria-label="Chế độ xem kỳ báo cáo">
+                                            <button type="button" class="overview-period-tab active" id="overviewPeriodTabMonth"
+                                                data-period-mode="month" role="tab" aria-selected="true"
+                                                aria-controls="overviewMonthModePane">Theo tháng</button>
+                                            <button type="button" class="overview-period-tab" id="overviewPeriodTabWeek"
+                                                data-period-mode="week" role="tab" aria-selected="false"
+                                                aria-controls="overviewWeekModePane">Theo tuần</button>
+                                        </div>
+                                        <div class="overview-period-pane" id="overviewMonthModePane" role="tabpanel"
+                                            aria-labelledby="overviewPeriodTabMonth">
+                                            <select class="overview-year-select" id="overviewYearSelect"
+                                                aria-label="Chọn năm báo cáo"></select>
+                                            <div class="overview-month-grid" id="overviewMonthGrid" role="group"
+                                                aria-label="Chọn một hoặc nhiều tháng liên tiếp"></div>
+                                            <p class="overview-month-summary" id="overviewMonthSummary" aria-live="polite"></p>
+                                            <div class="overview-month-actions">
+                                                <button type="button" class="overview-current-month"
+                                                    id="overviewMonthToday">Tháng này</button>
+                                                <button type="button" class="button secondary" id="overviewMonthCancel">Hủy</button>
+                                                <button type="button" class="button" id="overviewMonthApply">Áp dụng</button>
+                                            </div>
+                                        </div>
+                                        <div class="overview-period-pane overview-week-pane" id="overviewWeekModePane"
+                                            role="tabpanel" aria-labelledby="overviewPeriodTabWeek" hidden>
+                                            <div class="overview-week-presets" id="overviewWeekPresets" role="group"
+                                                aria-label="Chọn nhanh tuần báo cáo"></div>
+                                            <div class="overview-week-custom" id="overviewWeekCustomPanel" hidden>
+                                                <div class="overview-week-cal-header">
+                                                    <button type="button" class="calendar-nav" id="overviewWeekCalPrev"
+                                                        aria-label="Tháng trước">‹</button>
+                                                    <strong class="overview-week-cal-title" id="overviewWeekCalTitle">Tháng —</strong>
+                                                    <button type="button" class="calendar-nav" id="overviewWeekCalNext"
+                                                        aria-label="Tháng sau">›</button>
+                                                </div>
+                                                <div class="overview-week-cal-weekdays" aria-hidden="true">
+                                                    <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
+                                                </div>
+                                                <div class="overview-week-cal-days" id="overviewWeekCalDays" role="grid"
+                                                    aria-label="Chọn tuần trên lịch"></div>
+                                            </div>
+                                            <p class="overview-month-summary overview-week-summary" id="overviewWeekSummary"
+                                                aria-live="polite"></p>
                                         </div>
                                     </div>
                                 </div>
@@ -352,13 +385,13 @@
                                 <span class="kpi-action-hint">Xem theo tháng <span aria-hidden="true">→</span></span>
                             </button>
                             <div class="kpi-card" title="Tổng số phiên KTV mở chế độ hướng dẫn từng bước để làm quen thao tác cấu hình">
-                                <div class="kpi-label">Lượt hướng dẫn trong tháng</div>
+                                <div class="kpi-label" id="kpiGuideSessionsLabel">Lượt hướng dẫn trong tháng</div>
                                 <div class="kpi-value violet" id="kpiGuideSessions">0</div>
                                 <div class="kpi-comparison" id="kpiGuideSessionsComparison"></div>
                                 <div class="kpi-note" id="kpiGuideSessionsContext">Đang tính dữ liệu so sánh</div>
                             </div>
                             <div class="kpi-card" title="Số lượng KTV có phát sinh ít nhất 1 phiên học tập hoặc thực hành trong tháng">
-                                <div class="kpi-label">KTV tham gia trong tháng</div>
+                                <div class="kpi-label" id="kpiLearnersLabel">KTV tham gia trong tháng</div>
                                 <div class="kpi-value green" id="kpiLearners">0</div>
                                 <div class="kpi-comparison" id="kpiLearnersComparison"></div>
                                 <div class="kpi-note" id="kpiLearnersContext">Đang tính dữ liệu so sánh</div>
@@ -1702,7 +1735,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=8b8f08112bc946cf"></script>
+    <script src="js/app.js?v=404b5dd9bb2a0927"></script>
     <script src="js/system_monitor.js?v=33a329e800f1874c"></script>
 </body>
 

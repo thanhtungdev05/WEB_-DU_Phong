@@ -55,6 +55,7 @@ const state = {
     canExportReports: false,
     startDate: fmtDate(currentMonthFirst),
     endDate: fmtDate(now),
+    overviewPeriodMode: 'month',
     tempStartDate: '',
     tempEndDate: '',
     calendarMonth: new Date(now.getFullYear(), now.getMonth(), 1),
@@ -330,6 +331,83 @@ function isFullCalendarMonthRange(startValue, endValue) {
         && end.getDate() === new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
 }
 
+function getWeekBounds(dateValue) {
+    const date = parseDate(dateValue);
+    if (Number.isNaN(date.getTime()) || date.getTime() === 0) return null;
+    const mondayOffset = (date.getDay() + 6) % 7;
+    const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - mondayOffset);
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+    return {
+        start: toDateKey(monday),
+        end: toDateKey(sunday),
+        monday,
+        sunday,
+        year: monday.getFullYear()
+    };
+}
+
+function isFullCalendarWeek(startValue, endValue) {
+    if (!startValue || !endValue) return false;
+    const bounds = getWeekBounds(startValue);
+    if (!bounds) return false;
+    return bounds.start === startValue && bounds.end === endValue;
+}
+
+function formatDayMonthShort(dateValue) {
+    const date = parseDate(dateValue);
+    if (Number.isNaN(date.getTime()) || date.getTime() === 0) return '—';
+    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatWeekRangeLabel(startValue, endValue, referenceYear = new Date().getFullYear()) {
+    const start = parseDate(startValue);
+    const end = parseDate(endValue);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return '—';
+    const range = `${formatDayMonthShort(start)} - ${formatDayMonthShort(end)}`;
+    if (start.getFullYear() !== referenceYear && end.getFullYear() !== referenceYear) {
+        return `${range}/${end.getFullYear()}`;
+    }
+    return range;
+}
+
+function getRelativeWeekOffset(startValue, endValue, referenceDate = new Date()) {
+    if (!isFullCalendarWeek(startValue, endValue)) return null;
+    const currentWeek = getWeekBounds(referenceDate);
+    const selectedWeek = getWeekBounds(startValue);
+    if (!currentWeek || !selectedWeek) return null;
+    const diffDays = Math.round((currentWeek.monday.getTime() - selectedWeek.monday.getTime()) / 86400000);
+    if (diffDays % 7 !== 0) return null;
+    return diffDays / 7;
+}
+
+function getRelativeWeekDisplayLabel(startValue, endValue, { lowercase = false, referenceDate = new Date() } = {}) {
+    const offset = getRelativeWeekOffset(startValue, endValue, referenceDate);
+    const range = formatWeekRangeLabel(startValue, endValue, referenceDate.getFullYear());
+    if (offset === 0) return `${lowercase ? 'tuần này' : 'Tuần này'} (${range})`;
+    if (offset === 1) return `${lowercase ? 'tuần trước' : 'Tuần trước'} (${range})`;
+    if (offset === 2) return `2 tuần trước (${range})`;
+    return `${lowercase ? 'tuần' : 'Tuần'} (${range})`;
+}
+
+function syncOverviewPeriodCopy() {
+    const isWeekMode = state.overviewPeriodMode === 'week' && isFullCalendarWeek(state.startDate, state.endDate);
+    const unitWord = isWeekMode ? 'tuần' : 'tháng';
+    const activityTitle = document.getElementById('activityKpiGroupTitle');
+    if (activityTitle) activityTitle.textContent = `Hoạt động trong ${unitWord}`;
+    const guideLabel = document.getElementById('kpiGuideSessionsLabel');
+    if (guideLabel) guideLabel.textContent = `Lượt hướng dẫn trong ${unitWord}`;
+    const learnersLabel = document.getElementById('kpiLearnersLabel');
+    if (learnersLabel) learnersLabel.textContent = `KTV tham gia trong ${unitWord}`;
+    const sectionSubtitle = document.getElementById('overviewSectionSubtitle');
+    if (sectionSubtitle) {
+        sectionSubtitle.textContent = `Hoạt động và kết quả trong ${unitWord} báo cáo đang chọn.`;
+    }
+    if (typeof activeDashboardView !== 'undefined' && activeDashboardView === 'overview') {
+        const pageSubtitle = document.getElementById('pageSubtitle');
+        if (pageSubtitle) pageSubtitle.textContent = `Trong ${unitWord} báo cáo đã chọn`;
+    }
+}
+
 function formatDate(value) {
     if (!value) return 'Chưa chọn';
     return parseDate(value).toLocaleDateString('vi-VN');
@@ -558,6 +636,28 @@ function getKpiComparisonPeriods() {
             };
         }
 
+        if (isFullCalendarWeek(state.startDate, state.endDate)) {
+            const currentWeek = getWeekBounds(state.startDate);
+            const prevDay = new Date(currentWeek.monday.getFullYear(), currentWeek.monday.getMonth(), currentWeek.monday.getDate() - 7);
+            const previousWeek = getWeekBounds(prevDay);
+            const offset = getRelativeWeekOffset(state.startDate, state.endDate);
+            const currentLabel = getRelativeWeekDisplayLabel(state.startDate, state.endDate);
+            let previousLabel;
+            if (offset === 0 || offset === 1) {
+                previousLabel = getRelativeWeekDisplayLabel(previousWeek.start, previousWeek.end, { lowercase: true });
+            } else {
+                previousLabel = `tuần liền trước (${formatWeekRangeLabel(previousWeek.start, previousWeek.end)})`;
+            }
+            return {
+                currentStart: currentWeek.start,
+                currentEnd: currentWeek.end,
+                previousStart: previousWeek.start,
+                previousEnd: previousWeek.end,
+                currentLabel,
+                previousLabel
+            };
+        }
+
         const periodLengthMs = Math.max(0, currentEnd.getTime() - currentStart.getTime());
         const previousEnd = new Date(currentStart);
         previousEnd.setDate(previousEnd.getDate() - 1);
@@ -673,6 +773,7 @@ function dashboardReportMatchesSelectedPeriod(report = dashboardReport, viewName
 }
 
 function renderKpis() {
+    syncOverviewPeriodCopy();
     const periods = getKpiComparisonPeriods();
     const definitions = [
         { key: 'totalSessions', valueId: 'kpiSessions', comparisonId: 'kpiSessionsComparison', contextId: 'kpiSessionsContext', type: 'count', unit: 'phiên' },
@@ -2672,6 +2773,9 @@ function getRangeLabel() {
     if (isFullCalendarMonth(state.startDate, state.endDate)) {
         const date = parseDate(state.startDate);
         return `Tháng ${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+    }
+    if (isFullCalendarWeek(state.startDate, state.endDate)) {
+        return getRelativeWeekDisplayLabel(state.startDate, state.endDate);
     }
     if (state.startDate && state.endDate) return `${formatDate(state.startDate)} - ${formatDate(state.endDate)}`;
     if (state.startDate) return `Từ ${formatDate(state.startDate)}`;
@@ -7389,6 +7493,17 @@ function initDateRangePicker() {
         const trigger = document.getElementById('overviewMonthTrigger');
         const label = document.getElementById('overviewMonthLabel');
         const panel = document.getElementById('overviewMonthPanel');
+        const periodTabMonth = document.getElementById('overviewPeriodTabMonth');
+        const periodTabWeek = document.getElementById('overviewPeriodTabWeek');
+        const monthModePane = document.getElementById('overviewMonthModePane');
+        const weekModePane = document.getElementById('overviewWeekModePane');
+        const weekPresetsContainer = document.getElementById('overviewWeekPresets');
+        const weekCustomPanel = document.getElementById('overviewWeekCustomPanel');
+        const weekCalPrev = document.getElementById('overviewWeekCalPrev');
+        const weekCalNext = document.getElementById('overviewWeekCalNext');
+        const weekCalTitle = document.getElementById('overviewWeekCalTitle');
+        const weekCalDays = document.getElementById('overviewWeekCalDays');
+        const weekSummary = document.getElementById('overviewWeekSummary');
         const yearSelect = document.getElementById('overviewYearSelect');
         const monthGrid = document.getElementById('overviewMonthGrid');
         const summary = document.getElementById('overviewMonthSummary');
@@ -7398,6 +7513,9 @@ function initDateRangePicker() {
         let draftStartMonth = String(state.startDate || '').slice(0, 7);
         let draftEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
         let draftSelectionStarted = false;
+        let draftPeriodMode = state.overviewPeriodMode === 'week' ? 'week' : 'month';
+        let weekCustomExpanded = false;
+        let weekCalendarCursor = new Date(today.getFullYear(), today.getMonth(), 1);
 
         if (panel) {
             panel.classList.add('portal');
@@ -7425,6 +7543,12 @@ function initDateRangePicker() {
             return ((end.year - start.year) * 12) + end.monthIndex - start.monthIndex + 1;
         };
         const updateCommittedLabel = () => {
+            if (state.overviewPeriodMode === 'week' && isFullCalendarWeek(state.startDate, state.endDate)) {
+                const weekLabel = getRelativeWeekDisplayLabel(state.startDate, state.endDate, { referenceDate: today });
+                if (label) label.textContent = weekLabel;
+                monthInput.value = `week:${state.startDate}:${state.endDate}`;
+                return;
+            }
             const start = String(state.startDate || '').slice(0, 7);
             const end = String(state.endDate || state.startDate || '').slice(0, 7);
             if (label) label.textContent = start === end
@@ -7443,10 +7567,27 @@ function initDateRangePicker() {
         const positionMonthPanel = () => {
             if (!trigger || !panel) return;
             const rect = trigger.getBoundingClientRect();
-            const panelWidth = 288;
+            const panelWidth = panel.offsetWidth || 308;
             const left = Math.max(12, Math.min(window.innerWidth - panelWidth - 12, rect.right - panelWidth));
             panel.style.top = `${rect.bottom + 12}px`;
             panel.style.left = `${left}px`;
+        };
+
+        const setPeriodTabMode = (mode) => {
+            draftPeriodMode = mode === 'week' ? 'week' : 'month';
+            const isMonth = draftPeriodMode === 'month';
+            periodTabMonth?.classList.toggle('active', isMonth);
+            periodTabMonth?.setAttribute('aria-selected', String(isMonth));
+            periodTabWeek?.classList.toggle('active', !isMonth);
+            periodTabWeek?.setAttribute('aria-selected', String(!isMonth));
+            if (monthModePane) monthModePane.hidden = !isMonth;
+            if (weekModePane) weekModePane.hidden = isMonth;
+            if (!isMonth) {
+                renderWeekModePane();
+            }
+            if (panel?.classList.contains('open')) {
+                positionMonthPanel();
+            }
         };
 
         const applySelectedRange = (startMonth, endMonth, closePanel = true) => {
@@ -7454,6 +7595,8 @@ function initDateRangePicker() {
             const startBounds = getMonthBounds(normalizedStart);
             const endBounds = getMonthBounds(normalizedEnd);
             if (!startBounds || !endBounds) return;
+            state.overviewPeriodMode = 'month';
+            draftPeriodMode = 'month';
             draftStartMonth = normalizedStart;
             draftEndMonth = normalizedEnd;
             draftSelectionStarted = false;
@@ -7470,6 +7613,7 @@ function initDateRangePicker() {
             if (state.selectedLearner) hideLearnerDetail();
             updateCommittedLabel();
             updateDraftSummary();
+            syncOverviewPeriodCopy();
             if (yearSelect) yearSelect.value = String(startBounds.year);
             if (closePanel) {
                 panel?.classList.remove('open');
@@ -7481,15 +7625,181 @@ function initDateRangePicker() {
             reloadDashboardSelectedRange();
         };
 
+        const applySelectedWeek = (weekStartValue, closePanel = true) => {
+            const bounds = getWeekBounds(weekStartValue);
+            if (!bounds) return;
+            state.overviewPeriodMode = 'week';
+            draftPeriodMode = 'week';
+            state.startDate = bounds.start;
+            state.endDate = bounds.end;
+            state.tempStartDate = bounds.start;
+            state.tempEndDate = bounds.end;
+            state.calendarMonth = new Date(bounds.monday.getFullYear(), bounds.monday.getMonth(), 1);
+            weekCalendarCursor = new Date(bounds.monday.getFullYear(), bounds.monday.getMonth(), 1);
+            state.regionUsageYear = bounds.year;
+            state.dashboardReportStatus = 'loading';
+            state.learnerTablePage = 1;
+            state.learnerDetailPage = 1;
+            state.realtimePage = 1;
+            if (state.selectedLearner) hideLearnerDetail();
+            updateCommittedLabel();
+            syncOverviewPeriodCopy();
+            renderWeekModePane();
+            if (closePanel) {
+                panel?.classList.remove('open');
+                trigger?.setAttribute('aria-expanded', 'false');
+                trigger?.focus();
+            }
+            renderAll();
+            reloadDashboardSelectedRange();
+        };
+
+        const renderWeekCalendar = () => {
+            if (!weekCalDays) return;
+            const year = weekCalendarCursor.getFullYear();
+            const month = weekCalendarCursor.getMonth();
+            if (weekCalTitle) {
+                weekCalTitle.textContent = `Tháng ${String(month + 1).padStart(2, '0')}/${year}`;
+            }
+            const currentWeekBounds = getWeekBounds(today);
+            const isNextDisabled = currentWeekBounds && new Date(year, month + 1, 1) > currentWeekBounds.sunday;
+            if (weekCalNext) weekCalNext.disabled = Boolean(isNextDisabled);
+
+            const firstOfMonth = new Date(year, month, 1);
+            const mondayOffset = (firstOfMonth.getDay() + 6) % 7;
+            const gridStart = new Date(year, month, 1 - mondayOffset);
+            const isWeekActive = state.overviewPeriodMode === 'week' && isFullCalendarWeek(state.startDate, state.endDate);
+
+            const cells = [];
+            for (let i = 0; i < 42; i += 1) {
+                const day = new Date(gridStart);
+                day.setDate(gridStart.getDate() + i);
+                const dayKey = toDateKey(day);
+                const dayWeek = getWeekBounds(day);
+                const isFutureWeek = Boolean(currentWeekBounds && dayWeek && dayWeek.monday > currentWeekBounds.monday);
+                const isSelectedWeek = Boolean(isWeekActive && dayWeek && dayWeek.start === state.startDate);
+                const isWeekStart = i % 7 === 0;
+                const isWeekEnd = i % 7 === 6;
+                const classes = [
+                    'overview-week-day',
+                    day.getMonth() !== month ? 'outside' : '',
+                    isSelectedWeek ? 'in-selected-week' : '',
+                    isSelectedWeek && isWeekStart ? 'week-start' : '',
+                    isSelectedWeek && isWeekEnd ? 'week-end' : ''
+                ].filter(Boolean).join(' ');
+                const weekLabel = dayWeek ? formatWeekRangeLabel(dayWeek.start, dayWeek.end, today.getFullYear()) : '';
+                cells.push(
+                    `<button type="button" class="${classes}" data-date="${dayKey}" data-week-start="${dayWeek?.start || ''}" aria-label="Tuần ${weekLabel}, ngày ${day.getDate()}/${day.getMonth() + 1}/${day.getFullYear()}" aria-pressed="${isSelectedWeek ? 'true' : 'false'}" ${isFutureWeek ? 'disabled' : ''}>${day.getDate()}</button>`
+                );
+            }
+            weekCalDays.innerHTML = cells.join('');
+
+            const setHoverWeek = (weekStart) => {
+                weekCalDays.querySelectorAll('.overview-week-day').forEach(btn => {
+                    btn.classList.toggle('is-week-hover', Boolean(weekStart) && btn.dataset.weekStart === weekStart && !btn.disabled);
+                });
+            };
+
+            weekCalDays.querySelectorAll('.overview-week-day:not(:disabled)').forEach(btn => {
+                btn.addEventListener('mouseenter', () => setHoverWeek(btn.dataset.weekStart));
+                btn.addEventListener('mouseleave', () => setHoverWeek(''));
+                btn.addEventListener('focus', () => setHoverWeek(btn.dataset.weekStart));
+                btn.addEventListener('blur', () => setHoverWeek(''));
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.weekStart) {
+                        weekCustomExpanded = false;
+                        applySelectedWeek(btn.dataset.weekStart, true);
+                    }
+                });
+            });
+        };
+
+        const renderWeekModePane = () => {
+            if (!weekPresetsContainer) return;
+            const thisWeek = getWeekBounds(today);
+            const lastWeek = getWeekBounds(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7));
+            const twoWeeksAgo = getWeekBounds(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14));
+            const isWeekActive = state.overviewPeriodMode === 'week' && isFullCalendarWeek(state.startDate, state.endDate);
+            const activeOffset = isWeekActive ? getRelativeWeekOffset(state.startDate, state.endDate, today) : null;
+            const isCustomWeekSelected = isWeekActive && (activeOffset === null || activeOffset > 2 || activeOffset < 0);
+
+            const presets = [
+                { offset: 0, title: 'Tuần này', bounds: thisWeek },
+                { offset: 1, title: 'Tuần trước', bounds: lastWeek },
+                { offset: 2, title: '2 tuần trước', bounds: twoWeeksAgo }
+            ];
+
+            const presetButtonsHtml = presets.map(preset => {
+                const rangeText = formatWeekRangeLabel(preset.bounds.start, preset.bounds.end, today.getFullYear());
+                const isSelected = isWeekActive && activeOffset === preset.offset && !weekCustomExpanded;
+                return `
+                    <button type="button" class="overview-week-preset-option ${isSelected ? 'selected' : ''}"
+                        data-week-preset="${preset.offset}" data-week-start="${preset.bounds.start}"
+                        aria-pressed="${isSelected ? 'true' : 'false'}">
+                        <span class="overview-week-preset-name">${preset.title}</span>
+                        <span class="overview-week-preset-dates">(${rangeText})</span>
+                    </button>
+                `;
+            }).join('');
+
+            const customRangeHint = isCustomWeekSelected
+                ? `(${formatWeekRangeLabel(state.startDate, state.endDate, today.getFullYear())})`
+                : 'Mở lịch chọn tuần bất kỳ';
+            const customSelectedClass = (weekCustomExpanded || isCustomWeekSelected) ? 'selected' : '';
+
+            weekPresetsContainer.innerHTML = `
+                ${presetButtonsHtml}
+                <button type="button" class="overview-week-preset-option overview-week-custom-option ${customSelectedClass}"
+                    id="overviewWeekCustomBtn" data-week-custom="true"
+                    aria-expanded="${weekCustomExpanded ? 'true' : 'false'}"
+                    aria-controls="overviewWeekCustomPanel">
+                    <span class="overview-week-preset-name">Chọn tuần khác...</span>
+                    <span class="overview-week-preset-dates">${customRangeHint}</span>
+                </button>
+            `;
+
+            weekPresetsContainer.querySelectorAll('[data-week-preset]').forEach(button => {
+                button.addEventListener('click', () => {
+                    weekCustomExpanded = false;
+                    if (weekCustomPanel) weekCustomPanel.hidden = true;
+                    applySelectedWeek(button.dataset.weekStart, true);
+                });
+            });
+
+            weekPresetsContainer.querySelector('[data-week-custom="true"]')?.addEventListener('click', () => {
+                weekCustomExpanded = !weekCustomExpanded;
+                if (weekCustomPanel) weekCustomPanel.hidden = !weekCustomExpanded;
+                renderWeekModePane();
+                if (weekCustomExpanded) {
+                    renderWeekCalendar();
+                }
+                positionMonthPanel();
+            });
+
+            if (weekCustomPanel) {
+                weekCustomPanel.hidden = !weekCustomExpanded;
+                if (weekCustomExpanded) {
+                    renderWeekCalendar();
+                }
+            }
+
+            if (weekSummary) {
+                weekSummary.textContent = isWeekActive
+                    ? `Đang xem: ${getRelativeWeekDisplayLabel(state.startDate, state.endDate, { referenceDate: today })}.`
+                    : 'Chọn nhanh Tuần này, Tuần trước hoặc mở lịch để xem theo tuần.';
+            }
+        };
+
         const renderMonthGrid = (year = Number(yearSelect?.value) || today.getFullYear()) => {
             if (!monthGrid) return;
+            const isMonthActive = state.overviewPeriodMode !== 'week';
             monthGrid.innerHTML = Array.from({ length: 12 }, (_, monthIndex) => {
                 const key = monthKey(year, monthIndex);
                 const isFuture = year > today.getFullYear()
                     || (year === today.getFullYear() && monthIndex > today.getMonth());
-                const isInRange = key >= draftStartMonth && key <= draftEndMonth;
-                const isStart = key === draftStartMonth;
-                const isEnd = key === draftEndMonth;
+                const isInRange = isMonthActive && key >= draftStartMonth && key <= draftEndMonth;
+                const isStart = isMonthActive && key === draftStartMonth;
+                const isEnd = isMonthActive && key === draftEndMonth;
                 const classes = [
                     'overview-month-option',
                     isInRange ? 'in-range' : '',
@@ -7534,6 +7844,17 @@ function initDateRangePicker() {
             yearSelect.addEventListener('change', () => renderMonthGrid(Number(yearSelect.value)));
         }
 
+        periodTabMonth?.addEventListener('click', () => setPeriodTabMode('month'));
+        periodTabWeek?.addEventListener('click', () => setPeriodTabMode('week'));
+        weekCalPrev?.addEventListener('click', () => {
+            weekCalendarCursor = new Date(weekCalendarCursor.getFullYear(), weekCalendarCursor.getMonth() - 1, 1);
+            renderWeekCalendar();
+        });
+        weekCalNext?.addEventListener('click', () => {
+            weekCalendarCursor = new Date(weekCalendarCursor.getFullYear(), weekCalendarCursor.getMonth() + 1, 1);
+            renderWeekCalendar();
+        });
+
         trigger?.addEventListener('click', (event) => {
             event.stopPropagation();
             const willOpen = !panel?.classList.contains('open');
@@ -7544,9 +7865,24 @@ function initDateRangePicker() {
                 draftEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
                 draftSelectionStarted = false;
                 if (yearSelect) yearSelect.value = draftStartMonth.slice(0, 4);
-                positionMonthPanel();
+                const activeMode = state.overviewPeriodMode === 'week' ? 'week' : 'month';
+                const activeOffset = activeMode === 'week' ? getRelativeWeekOffset(state.startDate, state.endDate, today) : null;
+                weekCustomExpanded = activeMode === 'week' && (activeOffset === null || activeOffset > 2 || activeOffset < 0);
+                if (activeMode === 'week' && state.startDate) {
+                    const startD = parseDate(state.startDate);
+                    weekCalendarCursor = new Date(startD.getFullYear(), startD.getMonth(), 1);
+                }
+                setPeriodTabMode(activeMode);
                 renderMonthGrid(Number(yearSelect?.value) || today.getFullYear());
+                positionMonthPanel();
                 window.requestAnimationFrame(() => {
+                    if (activeMode === 'week') {
+                        const selectedPreset = weekPresetsContainer?.querySelector('.overview-week-preset-option.selected')
+                            || weekPresetsContainer?.querySelector('.overview-week-preset-option');
+                        if (selectedPreset) selectedPreset.focus();
+                        else periodTabWeek?.focus();
+                        return;
+                    }
                     const selectedMonth = monthGrid?.querySelector('[aria-pressed="true"]');
                     if (selectedMonth) selectedMonth.focus();
                     else yearSelect?.focus();
