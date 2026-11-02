@@ -2472,11 +2472,18 @@ function getWeekOptionsForYear(year) {
 
 function getRegionUsageSeries(year) {
     const headcountByRegion = new Map();
+    (dashboardReport?.monthly_regions || []).forEach(row => {
+        const region = normalizeRegionName(row.region || 'FTC');
+        const hc = Number(row.headcount) || 0;
+        if (hc > (headcountByRegion.get(region) || 0)) {
+            headcountByRegion.set(region, hc);
+        }
+    });
     technicianCatalog
         .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId))
         .forEach(technician => {
             const region = technician.dashboardRegion || 'FTC';
-            headcountByRegion.set(region, (headcountByRegion.get(region) || 0) + 1);
+            headcountByRegion.set(region, Math.max(headcountByRegion.get(region) || 0, (headcountByRegion.get(region) || 0) + 1));
         });
 
     const reportRows = (dashboardReport?.monthly_regions || []).filter(row => (
