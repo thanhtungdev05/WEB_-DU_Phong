@@ -2545,7 +2545,6 @@ function getRegionUsageSeries(year) {
     }
 
     const activeLearnerIdentities = new Set(sessions.map(s => String(s.learner || s.technicianId || '').trim().toLowerCase()).filter(Boolean));
-    const headcountByRegion = new Map();
     technicianCatalog
         .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId))
         .forEach(technician => {
