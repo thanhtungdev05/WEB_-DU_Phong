@@ -95,6 +95,20 @@ const wifiIotLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_03')
 const openSsid4 = wifiIotLesson.guidePopups.find(item => item.selector === '[id="instName_WLANSSIDConf:3"]');
 assert.ok(openSsid4, 'lab 3 must guide opening SSID4');
 assert.strictEqual(openSsid4.position, 'left', 'lab 3 must position SSID4 tooltip on the left to avoid covering adjacent controls');
+assert.ok(
+  !wifiIotLesson.instructions.some(line => line.includes('Chọn SSID4')),
+  'lab 3 instructions must not include Chọn SSID4'
+);
+const wlanConfXml = read('simulators/ax3000gz_v2/src/www/api/wlan_wlansssidconf_lua.lua.xml');
+assert.ok(
+  wlanConfXml.includes('<ParaName>_InstID</ParaName><ParaValue>DEV.WIFI.AP4</ParaValue><ParaName>Enable</ParaName><ParaValue>0</ParaValue>'),
+  'AX3000GZ V2 AP4 must default to Enable 0 (Off)'
+);
+const wlanStatusXml = read('simulators/ax3000gz_v2/src/www/api/wlan_wlanstatus.xml');
+assert.ok(
+  wlanStatusXml.includes('<ParaName>_InstID</ParaName><ParaValue>DEV.WIFI.AP4</ParaValue><ParaName>Enable</ParaName><ParaValue>0</ParaValue>'),
+  'AX3000GZ V2 AP4 status must default to Enable 0 (Off)'
+);
 
 const dhcpLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_05');
 assert.strictEqual(dhcpLesson.grading.rules.length, 16, 'lab 5 must grade LAN IP, subnet, DHCP start and DHCP end');

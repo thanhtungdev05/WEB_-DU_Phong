@@ -59,7 +59,6 @@
     subtitle: 'Cấu hình SSID IoT trên băng tần 2.4 GHz',
     instructions: [
       '<b>Yêu cầu:</b>',
-      '- Chọn SSID4 (2.4 GHz - IoT)',
       '- SSID Name: <span class="val">FPT IoT</span>',
       '- Encryption Type: <span class="val">WPA2-PSK-AES</span>',
       '- WPA Passphrase: <span class="val">Fptiot123</span>'
