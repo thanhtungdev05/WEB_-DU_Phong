@@ -8051,17 +8051,21 @@ function initDateRangePicker() {
         const weekCalTitle = document.getElementById('overviewWeekCalTitle');
         const weekCalDays = document.getElementById('overviewWeekCalDays');
         const weekSummary = document.getElementById('overviewWeekSummary');
+        const weekApplyButton = document.getElementById('overviewWeekApply');
+        const weekCancelButton = document.getElementById('overviewWeekCancel');
+        const weekThisWeekButton = document.getElementById('overviewWeekThisWeek');
         const yearSelect = document.getElementById('overviewYearSelect');
         const monthGrid = document.getElementById('overviewMonthGrid');
         const summary = document.getElementById('overviewMonthSummary');
         const currentMonthButton = document.getElementById('overviewMonthToday');
         const applyButton = document.getElementById('overviewMonthApply');
         const cancelButton = document.getElementById('overviewMonthCancel');
+
         let draftStartMonth = String(state.overviewStartDate || state.startDate || '').slice(0, 7);
         let draftEndMonth = String(state.overviewEndDate || state.endDate || state.startDate || '').slice(0, 7);
         let draftSelectionStarted = false;
-        let draftPeriodMode = state.overviewPeriodMode === 'week' ? 'week' : 'month';
-        let weekCustomExpanded = false;
+        let draftPeriodMode = (state.overviewViewMode === 'week' || state.overviewPeriodMode === 'week') ? 'week' : 'month';
+        let draftWeekStart = state.selectedWeekMonday || formatDateISO(getMondayOfWeek(today));
         let weekCalendarCursor = new Date(today.getFullYear(), today.getMonth(), 1);
 
         if (panel) {
@@ -8089,11 +8093,16 @@ function initDateRangePicker() {
             if (!start || !end) return 0;
             return ((end.year - start.year) * 12) + end.monthIndex - start.monthIndex + 1;
         };
+
         const updateCommittedLabel = () => {
             const activeStart = state.overviewStartDate || state.startDate;
             const activeEnd = state.overviewEndDate || state.endDate || state.startDate;
-            if (state.overviewPeriodMode === 'week' && isFullCalendarWeek(activeStart, activeEnd)) {
-                const weekLabel = getRelativeWeekDisplayLabel(activeStart, activeEnd, { referenceDate: today });
+            if ((state.overviewViewMode === 'week' || state.overviewPeriodMode === 'week') && isFullCalendarWeek(activeStart, activeEnd)) {
+                const sDate = parseDate(activeStart);
+                const eDate = parseDate(activeEnd);
+                const sStr = `${String(sDate.getDate()).padStart(2, '0')}/${String(sDate.getMonth() + 1).padStart(2, '0')}`;
+                const eStr = `${String(eDate.getDate()).padStart(2, '0')}/${String(eDate.getMonth() + 1).padStart(2, '0')}`;
+                const weekLabel = `${sStr} – ${eStr}`;
                 if (label) label.textContent = weekLabel;
                 monthInput.value = `week:${activeStart}:${activeEnd}`;
                 return;
@@ -8105,6 +8114,7 @@ function initDateRangePicker() {
                 : `${formatMonthKey(start)} – ${formatMonthKey(end)}`;
             monthInput.value = start === end ? start : `${start}:${end}`;
         };
+
         const updateDraftSummary = () => {
             if (!summary) return;
             const count = selectedMonthCount();
@@ -8116,7 +8126,7 @@ function initDateRangePicker() {
         const positionMonthPanel = () => {
             if (!trigger || !panel) return;
             const rect = trigger.getBoundingClientRect();
-            const panelWidth = panel.offsetWidth || 308;
+            const panelWidth = panel.offsetWidth || 330;
             const left = Math.max(12, Math.min(window.innerWidth - panelWidth - 12, rect.right - panelWidth));
             panel.style.top = `${rect.bottom + 12}px`;
             panel.style.left = `${left}px`;
@@ -8132,6 +8142,13 @@ function initDateRangePicker() {
             if (monthModePane) monthModePane.hidden = !isMonth;
             if (weekModePane) weekModePane.hidden = isMonth;
             if (!isMonth) {
+                if (!draftWeekStart) {
+                    draftWeekStart = state.selectedWeekMonday || formatDateISO(getMondayOfWeek(today));
+                }
+                const sD = parseDate(draftWeekStart);
+                if (!isNaN(sD.getTime())) {
+                    weekCalendarCursor = new Date(sD.getFullYear(), sD.getMonth(), 1);
+                }
                 renderWeekModePane();
             }
             if (panel?.classList.contains('open')) {
@@ -8145,6 +8162,7 @@ function initDateRangePicker() {
             const endBounds = getMonthBounds(normalizedEnd);
             if (!startBounds || !endBounds) return;
             state.overviewPeriodMode = 'month';
+            state.overviewViewMode = 'month';
             draftPeriodMode = 'month';
             draftStartMonth = normalizedStart;
             draftEndMonth = normalizedEnd;
@@ -8173,6 +8191,7 @@ function initDateRangePicker() {
             const bounds = getWeekBounds(weekStartValue);
             if (!bounds) return;
             state.overviewPeriodMode = 'week';
+            state.overviewViewMode = 'week';
             draftPeriodMode = 'week';
             // Contract compatibility: state.startDate = bounds.start; state.endDate = bounds.end;
             state.overviewStartDate = bounds.start;
@@ -8192,13 +8211,39 @@ function initDateRangePicker() {
             reloadDashboardReport('overview');
         };
 
+        const getWeeksForMonth = (cursorDate) => {
+            const year = cursorDate.getFullYear();
+            const month = cursorDate.getMonth();
+            const firstOfMonth = new Date(year, month, 1);
+            const lastOfMonth = new Date(year, month + 1, 0);
+
+            const firstMonday = getMondayOfWeek(firstOfMonth);
+            const weeks = [];
+            let currentMonday = new Date(firstMonday);
+
+            while (currentMonday <= lastOfMonth || (weeks.length === 0)) {
+                const weekBounds = getWeekBounds(currentMonday);
+                const weekNum = getISOWeekNumber(weekBounds.monday);
+                const rangeLabel = formatWeekRangeLabel(weekBounds.start, weekBounds.end, year);
+                weeks.push({
+                    monday: weekBounds.monday,
+                    sunday: weekBounds.sunday,
+                    start: weekBounds.start,
+                    end: weekBounds.end,
+                    weekNum,
+                    rangeLabel,
+                    displayTitle: `Tuần ${weekNum} (từ ${rangeLabel})`
+                });
+                currentMonday = new Date(currentMonday.getTime() + 7 * 86400000);
+                if (weeks.length >= 6) break;
+            }
+            return weeks;
+        };
+
         const renderWeekCalendar = () => {
             if (!weekCalDays) return;
             const year = weekCalendarCursor.getFullYear();
             const month = weekCalendarCursor.getMonth();
-            if (weekCalTitle) {
-                weekCalTitle.textContent = `Tháng ${String(month + 1).padStart(2, '0')}/${year}`;
-            }
             const currentWeekBounds = getWeekBounds(today);
             const isNextDisabled = currentWeekBounds && new Date(year, month + 1, 1) > currentWeekBounds.sunday;
             if (weekCalNext) weekCalNext.disabled = Boolean(isNextDisabled);
@@ -8206,9 +8251,6 @@ function initDateRangePicker() {
             const firstOfMonth = new Date(year, month, 1);
             const mondayOffset = (firstOfMonth.getDay() + 6) % 7;
             const gridStart = new Date(year, month, 1 - mondayOffset);
-            const activeStart = state.overviewStartDate || state.startDate;
-            const activeEnd = state.overviewEndDate || state.endDate;
-            const isWeekActive = state.overviewPeriodMode === 'week' && isFullCalendarWeek(activeStart, activeEnd);
 
             const cells = [];
             for (let i = 0; i < 42; i += 1) {
@@ -8217,7 +8259,7 @@ function initDateRangePicker() {
                 const dayKey = toDateKey(day);
                 const dayWeek = getWeekBounds(day);
                 const isFutureWeek = Boolean(currentWeekBounds && dayWeek && dayWeek.monday > currentWeekBounds.monday);
-                const isSelectedWeek = Boolean(isWeekActive && dayWeek && dayWeek.start === activeStart);
+                const isSelectedWeek = Boolean(draftWeekStart && dayWeek && dayWeek.start === draftWeekStart);
                 const isWeekStart = i % 7 === 0;
                 const isWeekEnd = i % 7 === 6;
                 const classes = [
@@ -8247,8 +8289,8 @@ function initDateRangePicker() {
                 btn.addEventListener('blur', () => setHoverWeek(''));
                 btn.addEventListener('click', () => {
                     if (btn.dataset.weekStart) {
-                        weekCustomExpanded = false;
-                        applySelectedWeek(btn.dataset.weekStart, true);
+                        draftWeekStart = btn.dataset.weekStart;
+                        renderWeekModePane();
                     }
                 });
             });
@@ -8259,8 +8301,8 @@ function initDateRangePicker() {
             const thisWeek = getWeekBounds(today);
             const lastWeek = getWeekBounds(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7));
             const twoWeeksAgo = getWeekBounds(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14));
-            const activeStart = state.overviewStartDate || state.startDate;
-            const activeEnd = state.overviewEndDate || state.endDate;
+            const activeStart = draftWeekStart || state.overviewStartDate || state.startDate;
+            const activeEnd = draftWeekStart ? getWeekBounds(draftWeekStart).end : (state.overviewEndDate || state.endDate);
             const isWeekActive = state.overviewPeriodMode === 'week' && isFullCalendarWeek(activeStart, activeEnd);
             const activeOffset = isWeekActive ? getRelativeWeekOffset(activeStart, activeEnd, today) : null;
             const isCustomWeekSelected = isWeekActive && (activeOffset === null || activeOffset > 2 || activeOffset < 0);
@@ -8273,7 +8315,7 @@ function initDateRangePicker() {
 
             const presetButtonsHtml = presets.map(preset => {
                 const rangeText = formatWeekRangeLabel(preset.bounds.start, preset.bounds.end, today.getFullYear());
-                const isSelected = isWeekActive && activeOffset === preset.offset && !weekCustomExpanded;
+                const isSelected = isWeekActive && activeOffset === preset.offset;
                 return `
                     <button type="button" class="overview-week-preset-option ${isSelected ? 'selected' : ''}"
                         data-week-preset="${preset.offset}" data-week-start="${preset.bounds.start}"
@@ -8284,48 +8326,65 @@ function initDateRangePicker() {
                 `;
             }).join('');
 
+            const monthWeeks = getWeeksForMonth(weekCalendarCursor);
+            const monthWeeksHtml = monthWeeks.map(item => {
+                const isSelected = draftWeekStart === item.start;
+                return `
+                    <button type="button" class="overview-week-preset-option ${isSelected ? 'selected' : ''}"
+                        data-week-start="${item.start}" aria-pressed="${isSelected ? 'true' : 'false'}">
+                        <span class="overview-week-preset-name">Tuần ${item.weekNum}</span>
+                        <span class="overview-week-preset-dates">(từ ${item.rangeLabel})</span>
+                    </button>
+                `;
+            }).join('');
+
             const customRangeHint = isCustomWeekSelected
                 ? `(${formatWeekRangeLabel(activeStart, activeEnd, today.getFullYear())})`
                 : 'Mở lịch chọn tuần bất kỳ';
-            const customSelectedClass = (weekCustomExpanded || isCustomWeekSelected) ? 'selected' : '';
 
             weekPresetsContainer.innerHTML = `
                 ${presetButtonsHtml}
-                <button type="button" class="overview-week-preset-option overview-week-custom-option ${customSelectedClass}"
+                <button type="button" class="overview-week-preset-option overview-week-custom-option ${isCustomWeekSelected ? 'selected' : ''}"
                     id="overviewWeekCustomBtn" data-week-custom="true"
-                    aria-expanded="${weekCustomExpanded ? 'true' : 'false'}"
-                    aria-controls="overviewWeekCustomPanel">
+                    aria-expanded="true" aria-controls="overviewWeekCustomPanel">
                     <span class="overview-week-preset-name">Chọn tuần khác...</span>
                     <span class="overview-week-preset-dates">${customRangeHint}</span>
                 </button>
+                ${monthWeeksHtml}
             `;
 
-            weekPresetsContainer.querySelectorAll('[data-week-preset]').forEach(button => {
+            weekPresetsContainer.querySelectorAll('.overview-week-preset-option[data-week-start]').forEach(button => {
                 button.addEventListener('click', () => {
-                    weekCustomExpanded = false;
-                    if (weekCustomPanel) weekCustomPanel.hidden = true;
-                    applySelectedWeek(button.dataset.weekStart, true);
+                    draftWeekStart = button.dataset.weekStart;
+                    const d = parseDate(draftWeekStart);
+                    if (!isNaN(d.getTime())) {
+                        weekCalendarCursor = new Date(d.getFullYear(), d.getMonth(), 1);
+                    }
+                    renderWeekModePane();
                 });
             });
 
             weekPresetsContainer.querySelector('[data-week-custom="true"]')?.addEventListener('click', () => {
-                weekCustomExpanded = !weekCustomExpanded;
-                if (weekCustomPanel) weekCustomPanel.hidden = !weekCustomExpanded;
                 renderWeekModePane();
-                if (weekCustomExpanded) {
-                    renderWeekCalendar();
-                }
-                positionMonthPanel();
             });
 
-            if (weekCustomPanel) {
-                weekCustomPanel.hidden = !weekCustomExpanded;
-                if (weekCustomExpanded) {
-                    renderWeekCalendar();
-                }
+            const year = weekCalendarCursor.getFullYear();
+            const month = weekCalendarCursor.getMonth();
+            if (weekCalTitle) {
+                weekCalTitle.textContent = `Tháng ${String(month + 1).padStart(2, '0')}/${year}`;
             }
 
-            if (weekSummary) {
+            renderWeekCalendar();
+
+            if (weekSummary && draftWeekStart) {
+                const draftBounds = getWeekBounds(draftWeekStart);
+                const sDate = parseDate(draftBounds.start);
+                const eDate = parseDate(draftBounds.end);
+                const sStr = `${String(sDate.getDate()).padStart(2, '0')}/${String(sDate.getMonth() + 1).padStart(2, '0')}/${sDate.getFullYear()}`;
+                const eStr = `${String(eDate.getDate()).padStart(2, '0')}/${String(eDate.getMonth() + 1).padStart(2, '0')}/${eDate.getFullYear()}`;
+                const wNum = getISOWeekNumber(sDate);
+                weekSummary.textContent = `Đã chọn: Từ ${sStr} đến ${eStr} (Tuần ${wNum}). Bấm Áp dụng để xem.`;
+            } else if (weekSummary) {
                 weekSummary.textContent = isWeekActive
                     ? `Đang xem: ${getRelativeWeekDisplayLabel(activeStart, activeEnd, { referenceDate: today })}.`
                     : 'Chọn nhanh Tuần này, Tuần trước hoặc mở lịch để xem theo tuần.';
@@ -8390,11 +8449,11 @@ function initDateRangePicker() {
         periodTabWeek?.addEventListener('click', () => setPeriodTabMode('week'));
         weekCalPrev?.addEventListener('click', () => {
             weekCalendarCursor = new Date(weekCalendarCursor.getFullYear(), weekCalendarCursor.getMonth() - 1, 1);
-            renderWeekCalendar();
+            renderWeekModePane();
         });
         weekCalNext?.addEventListener('click', () => {
             weekCalendarCursor = new Date(weekCalendarCursor.getFullYear(), weekCalendarCursor.getMonth() + 1, 1);
-            renderWeekCalendar();
+            renderWeekModePane();
         });
 
         trigger?.addEventListener('click', (event) => {
@@ -8403,17 +8462,16 @@ function initDateRangePicker() {
             panel?.classList.toggle('open', willOpen);
             trigger.setAttribute('aria-expanded', String(willOpen));
             if (willOpen) {
-                draftStartMonth = String(state.startDate || '').slice(0, 7);
-                draftEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
+                draftStartMonth = String(state.overviewStartDate || state.startDate || '').slice(0, 7);
+                draftEndMonth = String(state.overviewEndDate || state.endDate || state.startDate || '').slice(0, 7);
                 draftSelectionStarted = false;
                 if (yearSelect) yearSelect.value = draftStartMonth.slice(0, 4);
                 const activeStart = state.overviewStartDate || state.startDate;
                 const activeEnd = state.overviewEndDate || state.endDate;
-                const activeMode = state.overviewPeriodMode === 'week' ? 'week' : 'month';
-                const activeOffset = activeMode === 'week' ? getRelativeWeekOffset(activeStart, activeEnd, today) : null;
-                weekCustomExpanded = activeMode === 'week' && (activeOffset === null || activeOffset > 2 || activeOffset < 0);
-                if (activeMode === 'week' && activeStart) {
-                    const startD = parseDate(activeStart);
+                const activeMode = (state.overviewViewMode === 'week' || state.overviewPeriodMode === 'week') ? 'week' : 'month';
+                draftWeekStart = state.selectedWeekMonday || (activeMode === 'week' ? activeStart : formatDateISO(getMondayOfWeek(today)));
+                if (draftWeekStart) {
+                    const startD = parseDate(draftWeekStart);
                     weekCalendarCursor = new Date(startD.getFullYear(), startD.getMonth(), 1);
                 }
                 setPeriodTabMode(activeMode);
@@ -8445,6 +8503,7 @@ function initDateRangePicker() {
             }
             trapDialogFocus(event, panel);
         });
+
         currentMonthButton?.addEventListener('click', () => {
             const current = monthKey(today.getFullYear(), today.getMonth());
             applySelectedRange(current, current);
@@ -8455,6 +8514,24 @@ function initDateRangePicker() {
             trigger?.setAttribute('aria-expanded', 'false');
             trigger?.focus();
         });
+
+        weekThisWeekButton?.addEventListener('click', () => {
+            const thisWeek = getWeekBounds(today);
+            draftWeekStart = thisWeek.start;
+            weekCalendarCursor = new Date(thisWeek.monday.getFullYear(), thisWeek.monday.getMonth(), 1);
+            renderWeekModePane();
+        });
+        weekApplyButton?.addEventListener('click', () => {
+            if (draftWeekStart) {
+                applySelectedWeek(draftWeekStart, true);
+            }
+        });
+        weekCancelButton?.addEventListener('click', () => {
+            panel?.classList.remove('open');
+            trigger?.setAttribute('aria-expanded', 'false');
+            trigger?.focus();
+        });
+
         document.addEventListener('click', () => {
             panel?.classList.remove('open');
             trigger?.setAttribute('aria-expanded', 'false');
@@ -8479,7 +8556,6 @@ function initDateRangePicker() {
         initOverviewViewMode();
         return;
     }
-
     populateCalendarSelects();
     renderCalendar();
     const picker = document.getElementById('dateRangePicker');

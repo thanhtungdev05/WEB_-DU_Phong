@@ -1568,13 +1568,13 @@ body.report-export-open {
     flex-wrap: wrap;
 }
 
-#overview .overview-month-picker > :not(.overview-month-field):not(.overview-view-switch):not(.overview-week-field) {
+#overview .overview-month-picker > :not(.overview-month-field) {
     display: none !important;
 }
 
 #overview .overview-month-picker > .overview-view-switch,
-#overview .overview-month-picker > .overview-week-field:not([hidden]) {
-    display: flex !important;
+#overview .overview-month-picker > .overview-week-field {
+    display: none !important;
 }
 
 #overview .overview-view-switch {

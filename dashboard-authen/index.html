@@ -26,8 +26,8 @@
             document.documentElement.style.colorScheme = resolved;
         })();
     </script>
-<link rel="stylesheet" href="css/styles.css?v=fd60c03c41351c54">
-    <link rel="stylesheet" href="css/dashboard-professional.css?v=d6ed7c80bdb519cb">
+<link rel="stylesheet" href="css/styles.css?v=e70990a4c9f554f5">
+    <link rel="stylesheet" href="css/dashboard-professional.css?v=42e2d05a6a8cdbe2">
 </head>
 
 <body>
@@ -264,7 +264,7 @@
                                 <span id="overviewSectionSubtitle">Hoạt động và kết quả trong tháng báo cáo đang chọn.</span>
                             </div>
                             <div class="date-range-picker overview-month-picker" id="dateRangePicker">
-                                <div class="overview-view-switch" role="group" aria-label="Chế độ xem báo cáo">
+                                <div class="overview-view-switch" role="group" aria-label="Chế độ xem báo cáo" style="display: none !important;">
                                     <button type="button" class="overview-view-btn is-active" id="overviewViewMonthBtn" data-view="month">Theo tháng</button>
                                     <button type="button" class="overview-view-btn" id="overviewViewWeekBtn" data-view="week">Theo tuần</button>
                                 </div>
@@ -272,7 +272,7 @@
                                     <span>Kỳ báo cáo</span>
                                     <input type="hidden" id="overviewMonthSelect">
                                     <button type="button" class="overview-month-trigger" id="overviewMonthTrigger"
-                                        aria-label="Chọn một hoặc nhiều tháng báo cáo" aria-haspopup="dialog" aria-expanded="false"
+                                        aria-label="Chọn kỳ báo cáo theo tháng hoặc tuần" aria-haspopup="dialog" aria-expanded="false"
                                         aria-controls="overviewMonthPanel">
                                         <span>Kỳ <strong id="overviewMonthLabel">—</strong></span>
                                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -280,7 +280,7 @@
                                         </svg>
                                     </button>
                                     <div class="overview-month-panel" id="overviewMonthPanel" role="dialog"
-                                        aria-label="Bộ lọc chọn nhiều tháng báo cáo" tabindex="-1">
+                                        aria-label="Bộ lọc chọn kỳ báo cáo" tabindex="-1">
                                         <div class="overview-period-tabs" id="overviewPeriodTabs" role="tablist"
                                             aria-label="Chế độ xem kỳ báo cáo">
                                             <button type="button" class="overview-period-tab active" id="overviewPeriodTabMonth"
@@ -307,8 +307,8 @@
                                         <div class="overview-period-pane overview-week-pane" id="overviewWeekModePane"
                                             role="tabpanel" aria-labelledby="overviewPeriodTabWeek" hidden>
                                             <div class="overview-week-presets" id="overviewWeekPresets" role="group"
-                                                aria-label="Chọn nhanh tuần báo cáo"></div>
-                                            <div class="overview-week-custom" id="overviewWeekCustomPanel" hidden>
+                                                aria-label="Chọn tuần trong tháng"></div>
+                                            <div class="overview-week-custom" id="overviewWeekCustomPanel">
                                                 <div class="overview-week-cal-header">
                                                     <button type="button" class="calendar-nav" id="overviewWeekCalPrev"
                                                         aria-label="Tháng trước">‹</button>
@@ -324,10 +324,15 @@
                                             </div>
                                             <p class="overview-month-summary overview-week-summary" id="overviewWeekSummary"
                                                 aria-live="polite"></p>
+                                            <div class="overview-month-actions" id="overviewWeekActions">
+                                                <button type="button" class="overview-current-month" id="overviewWeekThisWeek">Tuần này</button>
+                                                <button type="button" class="button secondary" id="overviewWeekCancel">Hủy</button>
+                                                <button type="button" class="button" id="overviewWeekApply">Áp dụng</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="overview-week-field" id="overviewWeekField" hidden>
+                                <div class="overview-week-field" id="overviewWeekField" style="display: none !important;" hidden>
                                     <span>Tuần báo cáo</span>
                                     <div class="overview-week-control-group">
                                         <button type="button" class="overview-week-nav" id="overviewWeekPrev" aria-label="Tuần trước">‹</button>
@@ -1760,7 +1765,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-<script src="js/app.js?v=0fec0a338b375a5a"></script>
+<script src="js/app.js?v=c6994fd31293687f"></script>
     <script src="js/system_monitor.js?v=33a329e800f1874c"></script>
 </body>
 
