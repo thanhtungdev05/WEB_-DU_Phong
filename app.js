@@ -2080,7 +2080,10 @@
       })
       .then(function (data) {
         const user = applyCurrentUser(data && data.user ? data.user : null);
-        if (user) markSessionHeartbeatSuccess();
+        if (user) {
+          markSessionHeartbeatSuccess();
+          scheduleTrackingOutboxFlush();
+        }
         return user;
       })
       .finally(function () {
@@ -3315,13 +3318,225 @@
   }
 
   function evaluateAutoBaseline(allDocs, rules, lesson) {
-    // Theo yêu cầu: Các thao tác không liên quan đến hướng dẫn trong bài học thì không cần chấm sai.
-    return [];
+    let unexpectedErrors = [];
+
+    allDocs.forEach(doc => {
+      if (doc._ftcOriginalValues) {
+        Object.keys(doc._ftcOriginalValues).forEach(uid => {
+          const originalValue = doc._ftcOriginalValues[uid];
+          const el = doc.querySelector(`[data-ftc-id="${uid}"]`);
+          if (el) {
+            // Bỏ qua các trường thuộc trang hoặc form đăng nhập router
+            const isLoginField = (el.closest && el.closest('.login, .login-fpt, .login-form, .login-box, form[action*="login"], #login, [class*="login"]')) ||
+              el.id === 'username' || el.id === 'password' ||
+              (el.name && (el.name.toLowerCase() === 'username' || el.name.toLowerCase() === 'password')) ||
+              (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password'))) ||
+              (el.value === 'admin' && (originalValue === '' || originalValue === null || originalValue === undefined));
+            if (isLoginField) return;
+
+            // Bỏ qua các trường được cho phép hoặc nằm trong guidePopups (hướng dẫn từng bước của bài học)
+            const effectiveLesson = lesson || (typeof _currentLesson !== 'undefined' ? _currentLesson : null);
+            const guideList = (effectiveLesson && Array.isArray(effectiveLesson.guidePopups)) ? effectiveLesson.guidePopups : [];
+            const allowedSelectors = [
+              ...(effectiveLesson && Array.isArray(effectiveLesson.allowedSelectors) ? effectiveLesson.allowedSelectors : []),
+              ...(effectiveLesson && effectiveLesson.grading && Array.isArray(effectiveLesson.grading.allowedSelectors) ? effectiveLesson.grading.allowedSelectors : []),
+              ...guideList.map(g => g.selector).filter(Boolean)
+            ];
+            const isAllowedByLesson = allowedSelectors.some(sel => {
+              try {
+                const matchedList = Array.from(doc.querySelectorAll(sel));
+                if (matchedList.includes(el)) return true;
+                // Tự động cho phép input đi kèm với component dropdown/select (ví dụ MUI Select)
+                return matchedList.some(m => {
+                  if (m.contains && m.contains(el)) return true;
+                  if (el.name && m.id && m.id.includes(el.name)) return true;
+                  if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
+                  const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
+                  return mParent && mParent.contains(el);
+                });
+              } catch (e) { return false; }
+            });
+            if (isAllowedByLesson) return;
+
+            // Bỏ qua radio/select điều khiển bật/tắt chế độ phụ trợ như DNS Relay, DHCP, Wi-Fi IoT / WiFi5 enable, SSID broadcast
+            const isAuxToggle = (el.name && (
+              el.name.toLowerCase() === 'dnstyperadio' ||
+              el.name.toLowerCase() === 'dhcptyperadio' ||
+              el.name.toLowerCase().includes('enable_wifi') ||
+              el.name.toLowerCase().includes('wifi5') ||
+              el.name.toLowerCase().includes('essid_hide')
+            )) ||
+            (el.id && (
+              el.id.toLowerCase().includes('dnsrelay') ||
+              el.id.toLowerCase().includes('dhcp') ||
+              el.id.toLowerCase().includes('wifi5_enable') ||
+              el.id.toLowerCase().includes('enable_wifi')
+            ));
+            if (isAuxToggle) return;
+
+            // Kiểm tra xem input này có thuộc về các bước yêu cầu (rules) không?
+            const isExpected = (rules || []).some(r => {
+              try {
+                const selectors = [r.selector, r.interactionSelector].filter(Boolean);
+                for (const sel of selectors) {
+                  const matchedList = Array.from(doc.querySelectorAll(sel));
+                  if (matchedList.includes(el)) return true;
+                  if (matchedList.some(m => {
+                    if (m.contains && m.contains(el)) return true;
+                    if (el.name && m.id && m.id.includes(el.name)) return true;
+                    if (el.name && m.getAttribute && m.getAttribute('aria-labelledby') && m.getAttribute('aria-labelledby').includes(el.name)) return true;
+                    const mParent = m.closest ? m.closest('.MuiFormControl-root, .form-group, tr, td') : null;
+                    return mParent && mParent.contains(el);
+                  })) return true;
+                }
+                return false;
+              } catch (e) { return false; }
+            });
+
+            // Nếu KHÔNG nằm trong rule, nhưng lại bị sửa giá trị khác gốc
+            if (!isExpected) {
+              const currentValue = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+              const strCurr = String(currentValue === null || currentValue === undefined ? '' : currentValue).trim();
+              const strOrig = String(originalValue === null || originalValue === undefined ? '' : originalValue).trim();
+              let labelText = getLabelForElement(el, doc);
+              const loc = (doc.location && doc.location.pathname) ? (doc.location.pathname + doc.location.search) : '';
+              const fieldKey = `${loc}::${el.id || el.name || uid || labelText}`;
+
+              if (strCurr === strOrig) {
+                // KTV đã chỉnh lại về đúng giá trị gốc ban đầu: xóa lỗi khỏi activeUnexpectedErrors
+                if (_trackingSession && _trackingSession.activeUnexpectedErrors) {
+                  delete _trackingSession.activeUnexpectedErrors[fieldKey];
+                  delete _trackingSession.activeUnexpectedErrors[labelText];
+                  delete _trackingSession.activeUnexpectedErrors[uid];
+                  Object.keys(_trackingSession.activeUnexpectedErrors).forEach(k => {
+                    if ((el.id && k.endsWith('::' + el.id)) || (el.name && k.endsWith('::' + el.name)) || k.endsWith('::' + uid)) {
+                      delete _trackingSession.activeUnexpectedErrors[k];
+                    }
+                  });
+                }
+              } else {
+                // Bỏ qua đánh giá radio bị tắt để tránh 1 lần click sinh 2 lỗi trùng lặp
+                if (el.type === 'radio' && !el.checked) return;
+
+                let formattedOriginal = '';
+                let formattedCurrent = '';
+
+                if (el.type === 'checkbox' || el.type === 'radio') {
+                  formattedOriginal = (originalValue === true || String(originalValue) === 'true') ? 'Bật/Enable' : 'Tắt/Disable';
+                  formattedCurrent = currentValue ? 'Bật/Enable' : 'Tắt/Disable';
+                } else if (el.tagName === 'SELECT') {
+                  try {
+                    let optOrig = el.querySelector(`option[value="${originalValue}"]`);
+                    let optCurr = el.querySelector(`option[value="${currentValue}"]`);
+                    formattedOriginal = optOrig ? optOrig.textContent.trim() : originalValue;
+                    formattedCurrent = optCurr ? optCurr.textContent.trim() : currentValue;
+                  } catch (e) {
+                    formattedOriginal = originalValue;
+                    formattedCurrent = currentValue;
+                  }
+                } else {
+                  formattedOriginal = originalValue || 'Trống';
+                  formattedCurrent = currentValue || 'Trống';
+                }
+
+                const errObj = {
+                  label: labelText,
+                  expected: formattedOriginal,
+                  actual: formattedCurrent,
+                  key: fieldKey
+                };
+
+                unexpectedErrors.push(errObj);
+                if (_trackingSession) {
+                  if (!_trackingSession.activeUnexpectedErrors) _trackingSession.activeUnexpectedErrors = {};
+                  _trackingSession.activeUnexpectedErrors[fieldKey] = errObj;
+                }
+              }
+            }
+          }
+        });
+      }
+    });
+
+    // Đồng bộ lỗi thao tác thừa theo phiên (giữ nguyên lỗi nếu KTV chuyển trang mà chưa sửa lại)
+    if (_trackingSession) {
+      if (!_trackingSession.activeUnexpectedErrors) _trackingSession.activeUnexpectedErrors = {};
+      const activeList = Object.values(_trackingSession.activeUnexpectedErrors);
+      activeList.forEach(err => {
+        if (!unexpectedErrors.some(e => e.label === err.label || (e.key && e.key === err.key))) {
+          unexpectedErrors.push(err);
+        }
+      });
+      if (activeList.length === 0) {
+        unexpectedErrors = [];
+        _trackingSession.cachedUnexpectedErrors = [];
+      } else {
+        _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
+      }
+    }
+
+    // Lọc triệt để loại bỏ các trường đăng nhập admin/admin, dnsTypeRadio, dhcpTypeRadio, wifi5/IoT toggle khỏi danh sách lỗi thao tác thừa
+    unexpectedErrors = unexpectedErrors.filter(err => {
+      const lbl = (err.label || '').toLowerCase();
+      const act = (err.actual || '').toLowerCase();
+      if ((lbl.includes('username') || lbl.includes('password') || lbl.includes('tài khoản') || lbl.includes('mật khẩu')) && (act === 'admin' || act === '')) {
+        return false;
+      }
+      if (lbl.includes('dns relay') || lbl.includes('dnstyperadio') || lbl.includes('chế độ dns') || lbl.includes('dns mode')) {
+        return false;
+      }
+      if (lbl.includes('dns') && (act === 'manual' || act === 'auto' || act === 'bật/enable' || act === 'tắt/disable')) {
+        return false;
+      }
+      if (lbl === 'dhcp' || lbl === 'dhcp server' || lbl.includes('dhcptyperadio')) {
+        return false;
+      }
+      if (lbl.includes('2.4g wifi') || lbl.includes('5g wifi') || lbl.includes('wifi5') || lbl.includes('wifi 5') || lbl.includes('enable_wifi') || lbl.includes('ssid broadcast')) {
+        return false;
+      }
+      return true;
+    });
+
+    if (_trackingSession && _trackingSession.activeUnexpectedErrors) {
+      Object.keys(_trackingSession.activeUnexpectedErrors).forEach(k => {
+        const err = _trackingSession.activeUnexpectedErrors[k];
+        if (!unexpectedErrors.includes(err)) {
+          delete _trackingSession.activeUnexpectedErrors[k];
+        }
+      });
+      _trackingSession.cachedUnexpectedErrors = unexpectedErrors;
+    }
+
+    return unexpectedErrors;
   }
 
   if (lesson.grading && typeof lesson.grading.customGrading === 'function') {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
       const customResult = lesson.grading.customGrading(allDocs);
+      if (customResult && Array.isArray(customResult.details)) {
+        const effectiveRules = (lesson.grading && Array.isArray(lesson.grading.rules)) ? lesson.grading.rules : [];
+        const unexpErrors = effectiveRules.length > 0
+          ? evaluateAutoBaseline(allDocs, effectiveRules, lesson)
+          : [];
+        if (unexpErrors && unexpErrors.length > 0) {
+          unexpErrors.forEach(err => {
+            const alreadyHas = customResult.details.some(d => d.name && (d.name.includes(err.label) || d.name === err.label));
+            if (!alreadyHas) {
+              customResult.details.push({
+                id: 'err_unexp_' + (err.label || '').replace(/\s+/g, '_').toLowerCase(),
+                name: 'Thao tác ngoài phạm vi: ' + (err.label || 'Trường không xác định'),
+                expected: err.expected || 'Giữ nguyên',
+                actual: err.actual || 'Đã bị sửa',
+                passed: false,
+                message: 'Cố tình thay đổi thông số "' + (err.label || '') + '" ngoài yêu cầu bài học'
+              });
+              customResult.passed = false;
+              customResult.totalRules = (customResult.totalRules || customResult.details.length) + 1;
+              customResult.score = Math.max(0, Math.round(((customResult.passedCount || 0) / customResult.totalRules) * 100));
+            }
+          });
+        }
+      }
       return customResult;
     }
 
@@ -3775,12 +3990,28 @@
       });
     });
 
-    // === KẾT QUẢ ĐÁNH GIÁ TIÊU CHÍ BÀI HỌC ===
-    // Theo yêu cầu: Chỉ chấm đúng các tiêu chí yêu cầu trong bài học,
-    // các thao tác không liên quan đến hướng dẫn thì không chấm sai.
+    // === BỘ LỌC AUTO-BASELINE (TÌM THAO TÁC THỪA NGOÀI HƯỚNG DẪN) ===
+    let unexpectedErrors = evaluateAutoBaseline(allDocs, rules, lesson);
+
+    // Cập nhật kết quả passed: Chỉ pass khi đủ rule VÀ không có thao tác ngoài hướng dẫn
     const criteria = rules;
-    const passed = (passedCount === criteria.length);
-    let finalTotalRules = rules.length;
+    const hasUnexpected = unexpectedErrors.length > 0;
+    const passed = (passedCount === criteria.length) && !hasUnexpected;
+
+    let finalTotalRules = rules.length + unexpectedErrors.length;
+
+    // Đẩy TẤT CẢ lỗi thao tác ngoài hướng dẫn vào danh sách details
+    unexpectedErrors.forEach(err => {
+      details.push({
+        id: 'unexpected_change_' + Math.random().toString(36).slice(2),
+        name: 'Thao tác ngoài hướng dẫn: ' + err.label,
+        expected: err.expected,
+        actual: err.actual,
+        passed: false,
+        message: 'Thao tác ngoài luồng hướng dẫn bài học'
+      });
+    });
+    // ===============================================
 
     return {
       passed: passed,
@@ -4079,6 +4310,158 @@
     });
   }
 
+  // ── Tracking outbox: không mất kết quả khi DB/API tạm lỗi ──────────
+  const TRACKING_OUTBOX_KEY = 'ftc_tracking_outbox_v1';
+  const TRACKING_OUTBOX_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+  const TRACKING_OUTBOX_MAX_ITEMS = 20;
+  const TRACKING_OUTBOX_FLUSH_MS = 45 * 1000;
+  let trackingOutboxFlushing = false;
+  let trackingOutboxTimer = null;
+
+  function readTrackingOutbox() {
+    try {
+      const items = JSON.parse(localStorage.getItem(TRACKING_OUTBOX_KEY) || '[]');
+      const now = Date.now();
+      return Array.isArray(items)
+        ? items.filter(function (item) {
+          return item && item.payload && item.payload.submission_id
+            && now - Number(item.savedAt || 0) < TRACKING_OUTBOX_TTL_MS;
+        })
+        : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function writeTrackingOutbox(items) {
+    try {
+      if (items.length) {
+        localStorage.setItem(TRACKING_OUTBOX_KEY, JSON.stringify(items.slice(-TRACKING_OUTBOX_MAX_ITEMS)));
+      } else {
+        localStorage.removeItem(TRACKING_OUTBOX_KEY);
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function enqueueTrackingResult(payload) {
+    if (!payload || !payload.submission_id) return false;
+    const items = readTrackingOutbox().filter(function (item) {
+      return item.payload.submission_id !== payload.submission_id;
+    });
+    items.push({ payload: payload, savedAt: Date.now() });
+    const saved = writeTrackingOutbox(items);
+    if (saved) scheduleTrackingOutboxFlush();
+    return saved;
+  }
+
+  function removeTrackingOutboxItem(submissionId) {
+    const items = readTrackingOutbox();
+    const remaining = items.filter(function (item) {
+      return item.payload.submission_id !== submissionId;
+    });
+    if (remaining.length !== items.length) writeTrackingOutbox(remaining);
+  }
+
+  function isTransientTrackingError(error) {
+    const status = error && error.status;
+    return !status || status >= 500 || status === 408 || status === 429;
+  }
+
+  function scheduleTrackingOutboxFlush() {
+    if (!readTrackingOutbox().length) {
+      if (trackingOutboxTimer) {
+        clearInterval(trackingOutboxTimer);
+        trackingOutboxTimer = null;
+      }
+      return;
+    }
+    if (!trackingOutboxTimer) {
+      trackingOutboxTimer = setInterval(flushTrackingOutbox, TRACKING_OUTBOX_FLUSH_MS);
+    }
+    flushTrackingOutbox();
+  }
+
+  function flushTrackingOutbox() {
+    if (trackingOutboxFlushing || !_currentUser || _guestGuideMode) return Promise.resolve();
+    const mine = readTrackingOutbox().filter(function (item) {
+      return String(item.payload.technician_id) === String(_currentUser.technician_id);
+    });
+    if (!mine.length) return Promise.resolve();
+    trackingOutboxFlushing = true;
+
+    return mine.reduce(function (chain, item) {
+      return chain.then(function (keepGoing) {
+        if (!keepGoing) return false;
+        return fetch('/api/index.php/tracking/timer', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item.payload)
+        }).then(function (res) {
+          if (res.ok) {
+            removeTrackingOutboxItem(item.payload.submission_id);
+            return true;
+          }
+          if (res.status === 401) return false; // cần đăng nhập lại; giữ nguyên hàng đợi
+          if (res.status >= 500 || res.status === 408 || res.status === 429) return false;
+          // Server từ chối vĩnh viễn (400/403/409/422...): bỏ để không lặp vô hạn.
+          console.warn('[Tracking] Bỏ kết quả trong hàng đợi do server từ chối:', res.status);
+          removeTrackingOutboxItem(item.payload.submission_id);
+          return true;
+        }).catch(function () {
+          return false;
+        });
+      });
+    }, Promise.resolve(true)).then(function () {
+      trackingOutboxFlushing = false;
+      if (!readTrackingOutbox().length && trackingOutboxTimer) {
+        clearInterval(trackingOutboxTimer);
+        trackingOutboxTimer = null;
+      }
+    });
+  }
+
+  window.addEventListener('online', flushTrackingOutbox);
+
+  function buildTrackingPayload(session, evalResult, durationSec, retryPayload, user) {
+    // Đồng bộ thời gian hoàn thành khớp chính xác với started_at + durationSec, chống lệch do độ trễ mạng/kiểm tra phiên
+    const safeDuration = Number.isFinite(Number(durationSec)) ? Math.max(0, Math.round(Number(durationSec))) : 0;
+    const startedMs = session.startedAt ? new Date(session.startedAt).getTime() : Date.now();
+    const finishedAt = new Date(startedMs + (safeDuration * 1000));
+    const deviceName = (session.device && session.device.name) ? session.device.name : (session.device && session.device.id ? session.device.id : 'Unknown');
+    const labId = session.lesson && session.lesson.id ? session.lesson.id : (session.lesson && session.lesson.title ? session.lesson.title : 'Unknown');
+
+    const payload = retryPayload ? {
+      ...retryPayload,
+      started_at: session.startedAt,
+      finished_at: finishedAt.toISOString(),
+      duration_sec: safeDuration
+    } : {
+      submission_id: session.submissionId,
+      technician_id: user.technician_id,
+      name: user.name,
+      email: user.email || undefined,
+      lab_id: labId,
+      mode: session.mode,
+      device: deviceName,
+      started_at: session.startedAt,
+      finished_at: finishedAt.toISOString(),
+      duration_sec: safeDuration
+    };
+    if (!retryPayload && evalResult) {
+      payload.status = evalResult.passed ? 'completed' : 'failed';
+      payload.is_passed = evalResult.passed;
+      payload.grading_details = evalResult.details;
+    }
+    Object.keys(payload).forEach(function (k) {
+      if (payload[k] === undefined) delete payload[k];
+    });
+    return payload;
+  }
+
   function sendTrackingTimer(evalResult, durationSec, retryPayload = null, authenticationChecked = false) {
     if (_guestGuideMode) return Promise.resolve(false);
     if (!_trackingSession) return; // Chưa có phiên nào được bắt đầu
@@ -4101,6 +4484,11 @@
         })
         .catch(function (error) {
           console.warn('[Tracking] Không thể kiểm tra phiên đăng nhập:', error);
+          if (isTransientTrackingError(error) && _currentUser
+            && enqueueTrackingResult(buildTrackingPayload(session, evalResult, durationSec, retryPayload, _currentUser))) {
+            setTrackingSaveStatus('error', 'Hệ thống đang bận. Kết quả đã được lưu tạm trên máy này và sẽ tự gửi lại; đừng xoá dữ liệu trình duyệt.', 'retry');
+            return false;
+          }
           setTrackingSaveStatus('error', 'Chưa thể kiểm tra phiên đăng nhập do lỗi kết nối.', 'retry');
           return false;
         });
@@ -4113,48 +4501,8 @@
     setTrackingActionsDisabled(true);
     setTrackingSaveStatus('saving', 'Đang lưu kết quả và cập nhật tiến độ...');
 
-    // Đồng bộ thời gian hoàn thành khớp chính xác với started_at + durationSec, chống lệch do độ trễ mạng/kiểm tra phiên
-    const safeDuration = Number.isFinite(Number(durationSec)) ? Math.max(0, Math.round(Number(durationSec))) : 0;
-    const startedMs = session.startedAt ? new Date(session.startedAt).getTime() : Date.now();
-    const finishedAt = new Date(startedMs + (safeDuration * 1000));
-
-    // Lấy tên thiết bị từ device object (ưu tiên device.name, fallback device.id)
-    const deviceName = (session.device && session.device.name) ? session.device.name : (session.device && session.device.id ? session.device.id : 'Unknown');
-
-    // Lấy lab_id chính xác từ lesson.id (khớp với data.js)
-    const labId = session.lesson && session.lesson.id ? session.lesson.id : (session.lesson && session.lesson.title ? session.lesson.title : 'Unknown');
-
     // Thông tin KTV từ phiên đăng nhập; server đối chiếu lại danh tính này.
-    const user = _currentUser;
-
-    const payload = retryPayload ? {
-      ...retryPayload,
-      started_at: session.startedAt,
-      finished_at: finishedAt.toISOString(),
-      duration_sec: safeDuration
-    } : {
-      submission_id: session.submissionId,
-      technician_id: user.technician_id,
-      name: user.name,
-      email: user.email || undefined,
-      lab_id: labId,
-      mode: session.mode,
-      device: deviceName,
-      started_at: session.startedAt,
-      finished_at: finishedAt.toISOString(),
-      duration_sec: safeDuration
-    };
-
-    if (!retryPayload && evalResult) {
-      payload.status = evalResult.passed ? 'completed' : 'failed';
-      payload.is_passed = evalResult.passed;
-      payload.grading_details = evalResult.details;
-    }
-
-    // Loại bỏ các field undefined trước khi gửi
-    Object.keys(payload).forEach(function (k) {
-      if (payload[k] === undefined) delete payload[k];
-    });
+    const payload = buildTrackingPayload(session, evalResult, durationSec, retryPayload, _currentUser);
     _lastTrackingPayload = payload;
 
     return fetch('/api/index.php/tracking/timer', {
@@ -4179,6 +4527,7 @@
           console.info('[Tracking] Đã ghi phiên thực hành & chấm điểm:', data);
           const item = data && data.item ? data.item : {};
           session.finalized = true;
+          removeTrackingOutboxItem(payload.submission_id);
           const attemptNote = item.practice_attempt_no
             ? ` Lần thực hành ${item.practice_attempt_no}.`
             : '';
@@ -4197,7 +4546,11 @@
           applyCurrentUser(null);
           setTrackingSaveStatus('error', 'Phiên đăng nhập đã hết hạn. Kết quả chưa được lưu; vui lòng đăng nhập lại.', 'login');
         } else {
-          setTrackingSaveStatus('error', `Chưa lưu được kết quả: ${err.message || 'lỗi kết nối.'}`, 'retry');
+          if (isTransientTrackingError(err) && enqueueTrackingResult(payload)) {
+            setTrackingSaveStatus('error', 'Hệ thống đang bận. Kết quả đã được lưu tạm trên máy này và sẽ tự gửi lại; đừng xoá dữ liệu trình duyệt.', 'retry');
+          } else {
+            setTrackingSaveStatus('error', `Chưa lưu được kết quả: ${err.message || 'lỗi kết nối.'}`, 'retry');
+          }
         }
       })
       .finally(function () {
