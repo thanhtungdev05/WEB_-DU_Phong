@@ -925,6 +925,109 @@ SQL;
     return $stmt->fetchAll();
 }
 
+function dashboard_report_weekly_regions(PDO $pdo, string $monday, string $sunday): array
+{
+    $sql = dashboard_report_common_cte() . ",\n" . <<<'SQL'
+people_locations AS (
+    SELECT roster.user_id::text AS person_id,
+           COALESCE(
+               NULLIF(roster.dashboard_region, ''),
+               NULLIF(roster.region_name, ''),
+               NULLIF(roster.region_code, ''),
+               'FTC'
+           ) AS region
+      FROM v_ktv_directory roster
+     WHERE roster.is_terminated = FALSE
+    UNION ALL
+    SELECT 'firebase:' || LOWER(event.normalized_email) AS person_id,
+           'FTC' AS region
+      FROM firebase_legacy_import_events event
+     WHERE event.account_group = 'KTV'
+       AND event.resolution_status = 'imported'
+       AND NULLIF(event.normalized_email, '') IS NOT NULL
+       AND NOT EXISTS (
+           SELECT 1
+             FROM v_ktv_directory roster
+            WHERE roster.is_terminated = FALSE
+              AND LOWER(roster.email) = LOWER(event.normalized_email)
+       )
+     GROUP BY LOWER(event.normalized_email)
+),
+region_population AS (
+    SELECT location.region,
+           COUNT(DISTINCT location.person_id) AS headcount
+      FROM people_locations location
+     GROUP BY location.region
+),
+days AS (
+    SELECT day::date AS day
+      FROM generate_series(
+               CAST(:week_start AS date),
+               CAST(:week_end AS date),
+               INTERVAL '1 day'
+           ) AS generated(day)
+),
+activity AS (
+    SELECT session.occurred_at::date AS day,
+           location.region,
+           COUNT(*) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND (
+                     (session.is_passed IS NOT NULL AND session.attempt_sequence_complete IS TRUE)
+                     OR session.is_historical_pass
+                 )
+           ) AS recorded_practice_count,
+           COUNT(*) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS NOT NULL
+                 AND session.attempt_sequence_complete IS TRUE
+           ) AS rate_eligible_attempt_count,
+           COUNT(*) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS TRUE
+                 AND session.attempt_sequence_complete IS TRUE
+           ) AS passed_eligible_attempt_count,
+           COUNT(*) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_historical_pass
+           ) AS historical_pass_count,
+           COUNT(DISTINCT session.person_id) FILTER (
+               WHERE session.mode IN ('Thực hành', 'practice')
+                 AND session.is_passed IS TRUE
+                 AND (
+                     session.attempt_sequence_complete IS TRUE
+                     OR session.is_historical_pass
+                 )
+           ) AS passed_technicians
+      FROM catalog_sessions session
+      JOIN people_locations location ON location.person_id = session.person_id
+     WHERE session.occurred_at >= CAST(:week_start AS date)
+       AND session.occurred_at < CAST(:week_end AS date) + INTERVAL '1 day'
+     GROUP BY session.occurred_at::date, location.region
+)
+SELECT TO_CHAR(days.day, 'YYYY-MM-DD') AS day,
+       population.region,
+       population.headcount,
+       COALESCE(activity.recorded_practice_count, 0) AS recorded_practice_count,
+       COALESCE(activity.rate_eligible_attempt_count, 0) AS rate_eligible_attempt_count,
+       COALESCE(activity.passed_eligible_attempt_count, 0) AS passed_eligible_attempt_count,
+       COALESCE(activity.historical_pass_count, 0) AS historical_pass_count,
+       COALESCE(activity.passed_technicians, 0) AS passed_technicians
+  FROM days
+ CROSS JOIN region_population population
+  LEFT JOIN activity
+    ON activity.day = days.day
+   AND activity.region = population.region
+ ORDER BY days.day, population.region
+SQL;
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        'week_start' => $monday,
+        'week_end' => $sunday,
+    ]);
+    return $stmt->fetchAll();
+}
+
 function dashboard_report_branch_drilldown(PDO $pdo, ?string $from, ?string $to): array
 {
     $activityWhere = [];
@@ -1511,6 +1614,22 @@ function dashboard_report_payload(PDO $pdo, array $query): array
     }
     $monthly = $includeTrends ? dashboard_report_monthly($pdo, $reportStartYear, $reportEndYear) : [];
     $monthlyRegions = $includeTrends ? dashboard_report_monthly_regions($pdo, $reportStartYear, $reportEndYear) : [];
+    $weeklyMondayStr = trim((string)($query['week_monday'] ?? ''));
+    if ($weeklyMondayStr !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $weeklyMondayStr)) {
+        $weekMondayDate = new DateTimeImmutable($weeklyMondayStr);
+        $weekSundayDate = $weekMondayDate->modify('+6 days');
+    } elseif ($from !== null && $to !== null && (int)$from->diff($to)->format('%a') === 6) {
+        $weekMondayDate = $from;
+        $weekSundayDate = $to;
+    } else {
+        $weekMondayDate = $today->modify('monday this week');
+        $weekSundayDate = $weekMondayDate->modify('+6 days');
+    }
+    $weeklyRegions = $includeTrends ? dashboard_report_weekly_regions(
+        $pdo,
+        $weekMondayDate->format('Y-m-d'),
+        $weekSundayDate->format('Y-m-d')
+    ) : [];
     $matrix = $includeMatrix
         ? dashboard_report_matrix(
             $pdo,
@@ -1554,6 +1673,11 @@ function dashboard_report_payload(PDO $pdo, array $query): array
         'summary' => $includeSummary ? ['current' => $current, 'previous' => $previous, 'lifetime' => $lifetime] : null,
         'monthly' => $monthly,
         'monthly_regions' => $monthlyRegions,
+        'weekly_regions' => $weeklyRegions,
+        'weekly_period' => [
+            'monday' => $weekMondayDate->format('Y-m-d'),
+            'sunday' => $weekSundayDate->format('Y-m-d'),
+        ],
         'matrix' => $matrix,
     ];
 }

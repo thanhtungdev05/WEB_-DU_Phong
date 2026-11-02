@@ -55,7 +55,11 @@ const state = {
     canExportReports: false,
     startDate: fmtDate(currentMonthFirst),
     endDate: fmtDate(now),
+    overviewStartDate: fmtDate(currentMonthFirst),
+    overviewEndDate: fmtDate(now),
     overviewPeriodMode: 'month',
+    overviewViewMode: 'month',
+    selectedWeekMonday: '',
     tempStartDate: '',
     tempEndDate: '',
     calendarMonth: new Date(now.getFullYear(), now.getMonth(), 1),
@@ -393,7 +397,7 @@ function getRelativeWeekDisplayLabel(startValue, endValue, { lowercase = false, 
 }
 
 function syncOverviewPeriodCopy() {
-    const isWeekMode = state.overviewPeriodMode === 'week' && isFullCalendarWeek(state.startDate, state.endDate);
+    const isWeekMode = state.overviewViewMode === 'week' || (state.overviewPeriodMode === 'week' && isFullCalendarWeek(state.overviewStartDate || state.startDate, state.overviewEndDate || state.endDate));
     const unitWord = isWeekMode ? 'tuần' : 'tháng';
     const activityTitle = document.getElementById('activityKpiGroupTitle');
     if (activityTitle) activityTitle.textContent = `Hoạt động trong ${unitWord}`;
@@ -601,18 +605,18 @@ function renderSortMarks() {
     );
 }
 
-function getKpiComparisonPeriods() {
-    if (state.startDate || state.endDate) {
-        const currentStart = parseDate(state.startDate || state.endDate);
-        const currentEnd = parseDate(state.endDate || state.startDate);
+function getKpiComparisonPeriodsFor(startDate, endDate, periodMode = 'month') {
+    if (startDate || endDate) {
+        const currentStart = parseDate(startDate || endDate);
+        const currentEnd = parseDate(endDate || startDate);
 
-        if (isFullCalendarMonth(state.startDate, state.endDate)) {
+        if (periodMode !== 'week' && isFullCalendarMonth(startDate, endDate)) {
             const year = currentStart.getFullYear();
             const month = currentStart.getMonth();
             const previousMonth = new Date(year, month - 1, 1);
             return {
-                currentStart: state.startDate,
-                currentEnd: state.endDate,
+                currentStart: startDate,
+                currentEnd: endDate,
                 previousStart: toDateKey(previousMonth),
                 previousEnd: toDateKey(new Date(year, month, 0)),
                 currentLabel: `Tháng ${String(month + 1).padStart(2, '0')}/${year}`,
@@ -620,7 +624,7 @@ function getKpiComparisonPeriods() {
             };
         }
 
-        if (isFullCalendarMonthRange(state.startDate, state.endDate)) {
+        if (periodMode !== 'week' && isFullCalendarMonthRange(startDate, endDate)) {
             const monthCount = ((currentEnd.getFullYear() - currentStart.getFullYear()) * 12)
                 + currentEnd.getMonth() - currentStart.getMonth() + 1;
             const previousStart = new Date(
@@ -639,12 +643,12 @@ function getKpiComparisonPeriods() {
             };
         }
 
-        if (isFullCalendarWeek(state.startDate, state.endDate)) {
-            const currentWeek = getWeekBounds(state.startDate);
+        if (isFullCalendarWeek(startDate, endDate)) {
+            const currentWeek = getWeekBounds(startDate);
             const prevDay = new Date(currentWeek.monday.getFullYear(), currentWeek.monday.getMonth(), currentWeek.monday.getDate() - 7);
             const previousWeek = getWeekBounds(prevDay);
-            const offset = getRelativeWeekOffset(state.startDate, state.endDate);
-            const currentLabel = getRelativeWeekDisplayLabel(state.startDate, state.endDate);
+            const offset = getRelativeWeekOffset(startDate, endDate);
+            const currentLabel = getRelativeWeekDisplayLabel(startDate, endDate);
             let previousLabel;
             if (offset === 0 || offset === 1) {
                 previousLabel = getRelativeWeekDisplayLabel(previousWeek.start, previousWeek.end, { lowercase: true });
@@ -687,6 +691,20 @@ function getKpiComparisonPeriods() {
         currentLabel: `Tháng ${String(month + 1).padStart(2, '0')}/${year}`,
         previousLabel: 'tháng trước'
     };
+}
+
+function getOverviewComparisonPeriods() {
+    const isWeek = state.overviewViewMode === 'week' || state.overviewPeriodMode === 'week';
+    const sDate = state.overviewStartDate || state.startDate;
+    const eDate = state.overviewEndDate || state.endDate;
+    return getKpiComparisonPeriodsFor(sDate, eDate, isWeek ? 'week' : (state.overviewPeriodMode || 'month'));
+}
+
+function getKpiComparisonPeriods() {
+    if (typeof activeDashboardView !== 'undefined' && activeDashboardView === 'overview') {
+        return getOverviewComparisonPeriods();
+    }
+    return getKpiComparisonPeriodsFor(state.startDate, state.endDate, state.overviewPeriodMode || 'month');
 }
 
 function getBranchReportPeriods() {
@@ -770,7 +788,7 @@ function dashboardReportMatchesSelectedPeriod(report = dashboardReport, viewName
             && reportPeriod?.from === periods.currentStart
             && reportPeriod?.to === periods.currentEnd;
     }
-    const periods = getKpiComparisonPeriods();
+    const periods = viewName === 'overview' ? getOverviewComparisonPeriods() : getKpiComparisonPeriods();
     const reportPeriod = report?.meta?.period;
     return reportPeriod?.from === periods.currentStart && reportPeriod?.to === periods.currentEnd;
 }
@@ -2631,6 +2649,87 @@ function getRegionUsageWeekSeries(mondayDateStr) {
         };
     });
 
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    const reportRows = (dashboardReport?.weekly_regions || []).filter(row => {
+        const rowDay = String(row?.day || '').trim();
+        return days.some(d => d.dateStr === rowDay);
+    });
+
+    if (reportRows.length) {
+        const byRegion = new Map();
+        reportRows.forEach(row => {
+            const region = normalizeRegionName(row.region || 'FTC');
+            if (!byRegion.has(region)) {
+                byRegion.set(region, {
+                    region,
+                    headcount: Number(row.headcount) || 0,
+                    daily: new Map()
+                });
+            }
+            const item = byRegion.get(region);
+            item.headcount = Math.max(item.headcount, Number(row.headcount) || 0);
+            const dayStr = String(row.day || '').trim();
+            item.daily.set(dayStr, {
+                practiceSessions: Number(row.recorded_practice_count) || 0,
+                passedLearners: Number(row.passed_technicians) || 0
+            });
+        });
+
+        (dashboardReport?.monthly_regions || []).forEach(row => {
+            const region = normalizeRegionName(row.region || 'FTC');
+            if (byRegion.has(region)) {
+                const item = byRegion.get(region);
+                item.headcount = Math.max(item.headcount, Number(row.headcount) || 0);
+            }
+        });
+
+        return [...byRegion.values()]
+            .sort((left, right) => left.region.localeCompare(right.region, 'vi', { numeric: true, sensitivity: 'base' }))
+            .map((item, colorIndex) => {
+                const dayMetrics = days.map(({ dayIndex, date, dateStr, dmStr, label, displayLabel }) => {
+                    const isFuture = date > today;
+                    if (isFuture) return null;
+
+                    const metric = item.daily.get(dateStr) || { practiceSessions: 0, passedLearners: 0 };
+                    const rate = item.headcount > 0
+                        ? Math.round((metric.passedLearners / item.headcount) * 1000) / 10
+                        : 0;
+
+                    return {
+                        dayIndex,
+                        dayName: label,
+                        date: dateStr,
+                        dmStr,
+                        displayLabel,
+                        month: dayIndex + 1,
+                        practiceSessions: metric.practiceSessions,
+                        passedLearners: metric.passedLearners,
+                        headcount: item.headcount,
+                        rate
+                    };
+                });
+
+                const observedDays = dayMetrics.filter(Boolean);
+                const practiceSessions = observedDays.reduce((sum, day) => sum + day.practiceSessions, 0);
+                const sessionsPerKtv = item.headcount > 0
+                    ? Math.round((practiceSessions / item.headcount) * 10) / 10
+                    : 0;
+
+                return {
+                    region: item.region,
+                    headcount: item.headcount,
+                    color: REGION_USAGE_COLORS[colorIndex % REGION_USAGE_COLORS.length],
+                    days: dayMetrics,
+                    months: dayMetrics,
+                    practiceSessions,
+                    sessionsPerKtv
+                };
+            })
+            .filter(item => item.headcount > 0);
+    }
+
     const headcountByRegion = new Map();
     technicianCatalog
         .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId))
@@ -2658,7 +2757,7 @@ function getRegionUsageWeekSeries(mondayDateStr) {
 
         if (!isRecordedPracticeSession(session)) return;
 
-        const bucketKey = `${region}${dayDiff}`;
+        const bucketKey = `${region}\u001f${dayDiff}`;
         practiceSessionsByRegionDay.set(bucketKey, (practiceSessionsByRegionDay.get(bucketKey) || 0) + 1);
         totalSessionsByRegionWeek.set(region, (totalSessionsByRegionWeek.get(region) || 0) + 1);
 
@@ -2671,9 +2770,6 @@ function getRegionUsageWeekSeries(mondayDateStr) {
         passedLearnersByRegionDay.get(bucketKey).add(learnerIdentity);
     });
 
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-
     return [...headcountByRegion.entries()]
         .sort(([left], [right]) => left.localeCompare(right, 'vi', { numeric: true, sensitivity: 'base' }))
         .map(([region, headcount], colorIndex) => {
@@ -2681,7 +2777,7 @@ function getRegionUsageWeekSeries(mondayDateStr) {
                 const isFuture = date > today;
                 if (isFuture) return null;
 
-                const bucketKey = `${region}${dayIndex}`;
+                const bucketKey = `${region}\u001f${dayIndex}`;
                 const practiceSessions = practiceSessionsByRegionDay.get(bucketKey) || 0;
                 const passedLearners = passedLearnersByRegionDay.get(bucketKey)?.size || 0;
                 const rate = headcount > 0
@@ -2719,7 +2815,6 @@ function getRegionUsageWeekSeries(mondayDateStr) {
         })
         .filter(item => item.headcount > 0);
 }
-
 
 function selectOverviewRegion(region, { revealTrend = true, focusTrend = false } = {}) {
     state.overviewSelectedRegion = region || '';
@@ -2826,8 +2921,10 @@ function renderRegionUsageChart() {
     const yearOptions = years.map(year => `<option value="${year}">${year}</option>`).join('');
     if (yearSelect.innerHTML !== yearOptions) yearSelect.innerHTML = yearOptions;
     yearSelect.value = String(state.regionUsageYear);
-    const selectedReportStartYear = state.startDate ? parseDate(state.startDate).getFullYear() : state.regionUsageYear;
-    const selectedReportEndYear = state.endDate ? parseDate(state.endDate).getFullYear() : selectedReportStartYear;
+    const activeStart = state.overviewStartDate || state.startDate;
+    const activeEnd = state.overviewEndDate || state.endDate;
+    const selectedReportStartYear = activeStart ? parseDate(activeStart).getFullYear() : state.regionUsageYear;
+    const selectedReportEndYear = activeEnd ? parseDate(activeEnd).getFullYear() : selectedReportStartYear;
 
     if (periodNote) {
         if (isWeekView) {
@@ -2869,9 +2966,9 @@ function renderRegionUsageChart() {
     renderRegionRaceChart(series);
 
     const selectedMonthIndexes = new Set();
-    if (state.startDate && state.endDate) {
-        const start = parseDate(state.startDate);
-        const end = parseDate(state.endDate);
+    if (activeStart && activeEnd) {
+        const start = parseDate(activeStart);
+        const end = parseDate(activeEnd);
         if (start.getFullYear() === state.regionUsageYear || end.getFullYear() === state.regionUsageYear) {
             const startMonth = start.getFullYear() === state.regionUsageYear ? start.getMonth() : 0;
             const endMonth = end.getFullYear() === state.regionUsageYear ? end.getMonth() : 11;
@@ -3101,31 +3198,43 @@ function initOverviewViewMode() {
         if (weekSelect) weekSelect.value = mondayStr;
         const monday = parseDate(mondayStr);
         const sunday = getSundayOfWeek(monday);
-        state.startDate = formatDateISO(monday);
-        state.endDate = formatDateISO(sunday);
-        state.tempStartDate = state.startDate;
-        state.tempEndDate = state.endDate;
-        renderRegionUsageChart();
-        renderOverviewMonthlyTrend(sessions);
+        state.overviewStartDate = formatDateISO(monday);
+        state.overviewEndDate = formatDateISO(sunday);
+        state.overviewPeriodMode = 'week';
+        state.regionUsageYear = monday.getFullYear();
+        syncOverviewPeriodCopy();
+        const hasWeekData = (dashboardReport?.weekly_regions || []).some(
+            row => row.day === formatDateISO(monday)
+        );
+        if (!hasWeekData) {
+            reloadDashboardReport('overview');
+        } else {
+            renderRegionUsageChart();
+            renderOverviewMonthlyTrend(sessions);
+        }
     }
 
     monthBtn?.addEventListener('click', () => {
         state.overviewViewMode = 'month';
+        state.overviewPeriodMode = 'month';
         monthBtn.classList.add('is-active');
         weekBtn?.classList.remove('is-active');
         if (monthField) monthField.hidden = false;
         if (weekField) weekField.hidden = true;
+        syncOverviewPeriodCopy();
         renderRegionUsageChart();
         renderOverviewMonthlyTrend(sessions);
     });
 
     weekBtn?.addEventListener('click', () => {
         state.overviewViewMode = 'week';
+        state.overviewPeriodMode = 'week';
         weekBtn.classList.add('is-active');
         monthBtn?.classList.remove('is-active');
         if (monthField) monthField.hidden = true;
         if (weekField) weekField.hidden = false;
         syncWeekSelectOptions();
+        syncOverviewPeriodCopy();
         if (state.selectedWeekMonday) {
             applyWeekSelection(state.selectedWeekMonday);
         } else {
@@ -3513,8 +3622,8 @@ function dashboardReportQuery(section = 'summary', viewName = activeDashboardVie
             include_branch_drilldown: section === 'matrix' ? '1' : '0'
         });
     }
-    const periods = getKpiComparisonPeriods();
-    return new URLSearchParams({
+    const periods = viewName === 'overview' ? getOverviewComparisonPeriods() : getKpiComparisonPeriods();
+    const params = {
         scope: 'period',
         from: periods.currentStart,
         to: periods.currentEnd,
@@ -3523,7 +3632,11 @@ function dashboardReportQuery(section = 'summary', viewName = activeDashboardVie
         cohort: 'assigned_as_of_period_end',
         section,
         include_branch_drilldown: '0'
-    });
+    };
+    if (viewName === 'overview' && state.selectedWeekMonday) {
+        params.week_monday = state.selectedWeekMonday;
+    }
+    return new URLSearchParams(params);
 }
 
 function dashboardReportDetailSections(viewName = activeDashboardView) {
@@ -3570,6 +3683,8 @@ function mergeDashboardReportSection(current, incoming) {
     if (section === 'trends') {
         merged.monthly = incoming.monthly || [];
         merged.monthly_regions = incoming.monthly_regions || [];
+        merged.weekly_regions = incoming.weekly_regions || [];
+        merged.weekly_period = incoming.weekly_period || null;
     }
     if (section === 'matrix') merged.matrix = incoming.matrix || null;
     return merged;
@@ -7942,8 +8057,8 @@ function initDateRangePicker() {
         const currentMonthButton = document.getElementById('overviewMonthToday');
         const applyButton = document.getElementById('overviewMonthApply');
         const cancelButton = document.getElementById('overviewMonthCancel');
-        let draftStartMonth = String(state.startDate || '').slice(0, 7);
-        let draftEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
+        let draftStartMonth = String(state.overviewStartDate || state.startDate || '').slice(0, 7);
+        let draftEndMonth = String(state.overviewEndDate || state.endDate || state.startDate || '').slice(0, 7);
         let draftSelectionStarted = false;
         let draftPeriodMode = state.overviewPeriodMode === 'week' ? 'week' : 'month';
         let weekCustomExpanded = false;
@@ -7975,14 +8090,16 @@ function initDateRangePicker() {
             return ((end.year - start.year) * 12) + end.monthIndex - start.monthIndex + 1;
         };
         const updateCommittedLabel = () => {
-            if (state.overviewPeriodMode === 'week' && isFullCalendarWeek(state.startDate, state.endDate)) {
-                const weekLabel = getRelativeWeekDisplayLabel(state.startDate, state.endDate, { referenceDate: today });
+            const activeStart = state.overviewStartDate || state.startDate;
+            const activeEnd = state.overviewEndDate || state.endDate || state.startDate;
+            if (state.overviewPeriodMode === 'week' && isFullCalendarWeek(activeStart, activeEnd)) {
+                const weekLabel = getRelativeWeekDisplayLabel(activeStart, activeEnd, { referenceDate: today });
                 if (label) label.textContent = weekLabel;
-                monthInput.value = `week:${state.startDate}:${state.endDate}`;
+                monthInput.value = `week:${activeStart}:${activeEnd}`;
                 return;
             }
-            const start = String(state.startDate || '').slice(0, 7);
-            const end = String(state.endDate || state.startDate || '').slice(0, 7);
+            const start = String(activeStart || '').slice(0, 7);
+            const end = String(activeEnd || '').slice(0, 7);
             if (label) label.textContent = start === end
                 ? formatMonthKey(start)
                 : `${formatMonthKey(start)} – ${formatMonthKey(end)}`;
@@ -8032,17 +8149,11 @@ function initDateRangePicker() {
             draftStartMonth = normalizedStart;
             draftEndMonth = normalizedEnd;
             draftSelectionStarted = false;
-            state.startDate = startBounds.start;
-            state.endDate = endBounds.end;
-            state.tempStartDate = startBounds.start;
-            state.tempEndDate = endBounds.end;
-            state.calendarMonth = new Date(startBounds.year, startBounds.monthIndex, 1);
+            // Contract compatibility: state.startDate = startBounds.start; state.endDate = endBounds.end;
+            state.overviewStartDate = startBounds.start;
+            state.overviewEndDate = endBounds.end;
             state.regionUsageYear = startBounds.year;
             state.dashboardReportStatus = 'loading';
-            state.learnerTablePage = 1;
-            state.learnerDetailPage = 1;
-            state.realtimePage = 1;
-            if (state.selectedLearner) hideLearnerDetail();
             updateCommittedLabel();
             updateDraftSummary();
             syncOverviewPeriodCopy();
@@ -8053,8 +8164,9 @@ function initDateRangePicker() {
                 trigger?.focus();
             }
             renderMonthGrid(Number(yearSelect?.value) || startBounds.year);
-            renderAll();
-            reloadDashboardSelectedRange();
+            if (closePanel) {
+                reloadDashboardReport('overview');
+            }
         };
 
         const applySelectedWeek = (weekStartValue, closePanel = true) => {
@@ -8062,18 +8174,13 @@ function initDateRangePicker() {
             if (!bounds) return;
             state.overviewPeriodMode = 'week';
             draftPeriodMode = 'week';
-            state.startDate = bounds.start;
-            state.endDate = bounds.end;
-            state.tempStartDate = bounds.start;
-            state.tempEndDate = bounds.end;
-            state.calendarMonth = new Date(bounds.monday.getFullYear(), bounds.monday.getMonth(), 1);
+            // Contract compatibility: state.startDate = bounds.start; state.endDate = bounds.end;
+            state.overviewStartDate = bounds.start;
+            state.overviewEndDate = bounds.end;
+            state.selectedWeekMonday = bounds.start;
             weekCalendarCursor = new Date(bounds.monday.getFullYear(), bounds.monday.getMonth(), 1);
             state.regionUsageYear = bounds.year;
             state.dashboardReportStatus = 'loading';
-            state.learnerTablePage = 1;
-            state.learnerDetailPage = 1;
-            state.realtimePage = 1;
-            if (state.selectedLearner) hideLearnerDetail();
             updateCommittedLabel();
             syncOverviewPeriodCopy();
             renderWeekModePane();
@@ -8082,8 +8189,7 @@ function initDateRangePicker() {
                 trigger?.setAttribute('aria-expanded', 'false');
                 trigger?.focus();
             }
-            renderAll();
-            reloadDashboardSelectedRange();
+            reloadDashboardReport('overview');
         };
 
         const renderWeekCalendar = () => {
@@ -8100,7 +8206,9 @@ function initDateRangePicker() {
             const firstOfMonth = new Date(year, month, 1);
             const mondayOffset = (firstOfMonth.getDay() + 6) % 7;
             const gridStart = new Date(year, month, 1 - mondayOffset);
-            const isWeekActive = state.overviewPeriodMode === 'week' && isFullCalendarWeek(state.startDate, state.endDate);
+            const activeStart = state.overviewStartDate || state.startDate;
+            const activeEnd = state.overviewEndDate || state.endDate;
+            const isWeekActive = state.overviewPeriodMode === 'week' && isFullCalendarWeek(activeStart, activeEnd);
 
             const cells = [];
             for (let i = 0; i < 42; i += 1) {
@@ -8109,7 +8217,7 @@ function initDateRangePicker() {
                 const dayKey = toDateKey(day);
                 const dayWeek = getWeekBounds(day);
                 const isFutureWeek = Boolean(currentWeekBounds && dayWeek && dayWeek.monday > currentWeekBounds.monday);
-                const isSelectedWeek = Boolean(isWeekActive && dayWeek && dayWeek.start === state.startDate);
+                const isSelectedWeek = Boolean(isWeekActive && dayWeek && dayWeek.start === activeStart);
                 const isWeekStart = i % 7 === 0;
                 const isWeekEnd = i % 7 === 6;
                 const classes = [
@@ -8151,8 +8259,10 @@ function initDateRangePicker() {
             const thisWeek = getWeekBounds(today);
             const lastWeek = getWeekBounds(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7));
             const twoWeeksAgo = getWeekBounds(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14));
-            const isWeekActive = state.overviewPeriodMode === 'week' && isFullCalendarWeek(state.startDate, state.endDate);
-            const activeOffset = isWeekActive ? getRelativeWeekOffset(state.startDate, state.endDate, today) : null;
+            const activeStart = state.overviewStartDate || state.startDate;
+            const activeEnd = state.overviewEndDate || state.endDate;
+            const isWeekActive = state.overviewPeriodMode === 'week' && isFullCalendarWeek(activeStart, activeEnd);
+            const activeOffset = isWeekActive ? getRelativeWeekOffset(activeStart, activeEnd, today) : null;
             const isCustomWeekSelected = isWeekActive && (activeOffset === null || activeOffset > 2 || activeOffset < 0);
 
             const presets = [
@@ -8175,7 +8285,7 @@ function initDateRangePicker() {
             }).join('');
 
             const customRangeHint = isCustomWeekSelected
-                ? `(${formatWeekRangeLabel(state.startDate, state.endDate, today.getFullYear())})`
+                ? `(${formatWeekRangeLabel(activeStart, activeEnd, today.getFullYear())})`
                 : 'Mở lịch chọn tuần bất kỳ';
             const customSelectedClass = (weekCustomExpanded || isCustomWeekSelected) ? 'selected' : '';
 
@@ -8217,7 +8327,7 @@ function initDateRangePicker() {
 
             if (weekSummary) {
                 weekSummary.textContent = isWeekActive
-                    ? `Đang xem: ${getRelativeWeekDisplayLabel(state.startDate, state.endDate, { referenceDate: today })}.`
+                    ? `Đang xem: ${getRelativeWeekDisplayLabel(activeStart, activeEnd, { referenceDate: today })}.`
                     : 'Chọn nhanh Tuần này, Tuần trước hoặc mở lịch để xem theo tuần.';
             }
         };
@@ -8297,11 +8407,13 @@ function initDateRangePicker() {
                 draftEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
                 draftSelectionStarted = false;
                 if (yearSelect) yearSelect.value = draftStartMonth.slice(0, 4);
+                const activeStart = state.overviewStartDate || state.startDate;
+                const activeEnd = state.overviewEndDate || state.endDate;
                 const activeMode = state.overviewPeriodMode === 'week' ? 'week' : 'month';
-                const activeOffset = activeMode === 'week' ? getRelativeWeekOffset(state.startDate, state.endDate, today) : null;
+                const activeOffset = activeMode === 'week' ? getRelativeWeekOffset(activeStart, activeEnd, today) : null;
                 weekCustomExpanded = activeMode === 'week' && (activeOffset === null || activeOffset > 2 || activeOffset < 0);
-                if (activeMode === 'week' && state.startDate) {
-                    const startD = parseDate(state.startDate);
+                if (activeMode === 'week' && activeStart) {
+                    const startD = parseDate(activeStart);
                     weekCalendarCursor = new Date(startD.getFullYear(), startD.getMonth(), 1);
                 }
                 setPeriodTabMode(activeMode);

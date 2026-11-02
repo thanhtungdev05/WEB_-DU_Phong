@@ -25,7 +25,7 @@ function dashboard_report_cache_key(string $version, array $query): string
 {
     $allowed = [
         'section', 'scope', 'from', 'to', 'compare_from', 'compare_to',
-        'cohort', 'include_branch_drilldown',
+        'cohort', 'include_branch_drilldown', 'week_monday',
     ];
     $normalized = ['data_version' => $version];
     foreach ($allowed as $key) {
