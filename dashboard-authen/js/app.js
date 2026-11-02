@@ -150,6 +150,9 @@ const state = {
     branchMatrixRegionCode: '',
     branchMatrixUnitCode: '',
     regionUsageYear: now.getFullYear(),
+    regionRaceSort: 'practice_desc',
+    overviewViewMode: 'month',
+    selectedWeekMonday: '',
     overviewSelectedRegion: '',
     overviewMonthlyExpanded: false,
     branchReportPeriodType: 'month',
@@ -2303,7 +2306,78 @@ function isPracticeSession(session) {
     return session?.mode === 'Thực hành' || session?.mode === 'practice';
 }
 
+const WEEK_DAY_LABELS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+
+function formatDateISO(d) {
+    if (!d || isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function getMondayOfWeek(d) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    date.setDate(date.getDate() + diff);
+    date.setHours(0, 0, 0, 0);
+    return date;
+}
+
+function getSundayOfWeek(monday) {
+    const sunday = new Date(monday);
+    sunday.setDate(sunday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    return sunday;
+}
+
+function getISOWeekNumber(d) {
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+function getWeekOptionsForYear(year) {
+    const options = [];
+    const jan1 = new Date(year, 0, 1);
+    const firstMonday = getMondayOfWeek(jan1);
+    const seen = new Set();
+    for (let i = 0; i < 54; i++) {
+        const m = new Date(firstMonday.getTime() + i * 7 * 86400000);
+        const sun = getSundayOfWeek(m);
+        if (m.getFullYear() !== year && sun.getFullYear() !== year) {
+            if (m.getFullYear() > year) break;
+            continue;
+        }
+        const key = formatDateISO(m);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const wNum = getISOWeekNumber(m);
+        const mStr = `${String(m.getDate()).padStart(2, '0')}/${String(m.getMonth() + 1).padStart(2, '0')}`;
+        const sunStr = `${String(sun.getDate()).padStart(2, '0')}/${String(sun.getMonth() + 1).padStart(2, '0')}/${sun.getFullYear()}`;
+        options.push({
+            value: key,
+            label: `Tuần ${wNum} (${mStr} - ${sunStr})`,
+            weekNumber: wNum,
+            monday: m,
+            sunday: sun
+        });
+    }
+    return options;
+}
+
 function getRegionUsageSeries(year) {
+    const headcountByRegion = new Map();
+    technicianCatalog
+        .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId))
+        .forEach(technician => {
+            const region = technician.dashboardRegion || 'FTC';
+            headcountByRegion.set(region, (headcountByRegion.get(region) || 0) + 1);
+        });
+
     const reportRows = (dashboardReport?.monthly_regions || []).filter(row => (
         Number(String(row?.month || '').slice(0, 4)) === year
     ));
@@ -2319,7 +2393,8 @@ function getRegionUsageSeries(year) {
                 });
             }
             const item = byRegion.get(region);
-            item.headcount = Math.max(item.headcount, Number(row.headcount) || 0);
+            const dbCount = headcountByRegion.get(region) || 0;
+            item.headcount = Math.max(item.headcount, dbCount || Number(row.headcount) || 0);
             const monthIndex = Number(String(row.month || '').slice(5, 7)) - 1;
             if (monthIndex >= 0 && monthIndex < 12) {
                 item.monthly.set(monthIndex, {
@@ -2364,7 +2439,7 @@ function getRegionUsageSeries(year) {
     const activeLearnerIdentities = new Set(sessions.map(s => String(s.learner || s.technicianId || '').trim().toLowerCase()).filter(Boolean));
     const headcountByRegion = new Map();
     technicianCatalog
-        .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId) && (Boolean(technician.lastLoginAt) || activeLearnerIdentities.has(technician.email)))
+        .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId))
         .forEach(technician => {
             const region = technician.dashboardRegion || 'FTC';
             headcountByRegion.set(region, (headcountByRegion.get(region) || 0) + 1);
@@ -2429,6 +2504,116 @@ function getRegionUsageSeries(year) {
         .filter(item => item.headcount > 0);
 }
 
+function getRegionUsageWeekSeries(mondayDateStr) {
+    const monday = mondayDateStr ? parseDate(mondayDateStr) : getMondayOfWeek(now);
+    monday.setHours(0, 0, 0, 0);
+    const weekStartMs = monday.getTime();
+    const weekEndMs = weekStartMs + 7 * 86400000;
+
+    const days = [0, 1, 2, 3, 4, 5, 6].map(dayIndex => {
+        const d = new Date(monday.getTime() + dayIndex * 86400000);
+        const dStr = formatDateISO(d);
+        const dmStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+        return {
+            dayIndex,
+            date: d,
+            dateStr: dStr,
+            dmStr,
+            label: WEEK_DAY_LABELS[dayIndex],
+            displayLabel: `${WEEK_DAY_LABELS[dayIndex]} (${dmStr})`
+        };
+    });
+
+    const headcountByRegion = new Map();
+    technicianCatalog
+        .filter(technician => !technician.isTerminated && (technician.email || technician.employeeId))
+        .forEach(technician => {
+            const region = technician.dashboardRegion || 'FTC';
+            headcountByRegion.set(region, (headcountByRegion.get(region) || 0) + 1);
+        });
+
+    const practiceSessionsByRegionDay = new Map();
+    const passedLearnersByRegionDay = new Map();
+    const totalSessionsByRegionWeek = new Map();
+
+    sessions.forEach(session => {
+        const date = parseDate(session.date);
+        const timeMs = date.getTime();
+        if (isNaN(timeMs) || timeMs < weekStartMs || timeMs >= weekEndMs) return;
+
+        const dayDiff = Math.floor((timeMs - weekStartMs) / 86400000);
+        if (dayDiff < 0 || dayDiff > 6) return;
+
+        const region = getLearnerRegion(session.learner);
+        if (!headcountByRegion.has(region)) {
+            headcountByRegion.set(region, 0);
+        }
+
+        if (!isRecordedPracticeSession(session)) return;
+
+        const bucketKey = `${region}${dayDiff}`;
+        practiceSessionsByRegionDay.set(bucketKey, (practiceSessionsByRegionDay.get(bucketKey) || 0) + 1);
+        totalSessionsByRegionWeek.set(region, (totalSessionsByRegionWeek.get(region) || 0) + 1);
+
+        if (!isCompletionEvidenceSession(session)) return;
+        const learnerIdentity = String(session.learner || session.technicianId || '').trim().toLowerCase();
+        if (!learnerIdentity) return;
+        if (!passedLearnersByRegionDay.has(bucketKey)) {
+            passedLearnersByRegionDay.set(bucketKey, new Set());
+        }
+        passedLearnersByRegionDay.get(bucketKey).add(learnerIdentity);
+    });
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    return [...headcountByRegion.entries()]
+        .sort(([left], [right]) => left.localeCompare(right, 'vi', { numeric: true, sensitivity: 'base' }))
+        .map(([region, headcount], colorIndex) => {
+            const dayMetrics = days.map(({ dayIndex, date, dateStr, dmStr, label, displayLabel }) => {
+                const isFuture = date > today;
+                if (isFuture) return null;
+
+                const bucketKey = `${region}${dayIndex}`;
+                const practiceSessions = practiceSessionsByRegionDay.get(bucketKey) || 0;
+                const passedLearners = passedLearnersByRegionDay.get(bucketKey)?.size || 0;
+                const rate = headcount > 0
+                    ? Math.round((passedLearners / headcount) * 1000) / 10
+                    : 0;
+
+                return {
+                    dayIndex,
+                    dayName: label,
+                    date: dateStr,
+                    dmStr,
+                    displayLabel,
+                    month: dayIndex + 1,
+                    practiceSessions,
+                    passedLearners,
+                    headcount,
+                    rate
+                };
+            });
+
+            const practiceSessions = totalSessionsByRegionWeek.get(region) || 0;
+            const sessionsPerKtv = headcount > 0
+                ? Math.round((practiceSessions / headcount) * 10) / 10
+                : 0;
+
+            return {
+                region,
+                headcount,
+                color: REGION_USAGE_COLORS[colorIndex % REGION_USAGE_COLORS.length],
+                days: dayMetrics,
+                months: dayMetrics,
+                practiceSessions,
+                sessionsPerKtv
+            };
+        })
+        .filter(item => item.headcount > 0);
+}
+
+
 function selectOverviewRegion(region, { revealTrend = true, focusTrend = false } = {}) {
     state.overviewSelectedRegion = region || '';
     if (revealTrend) state.overviewMonthlyExpanded = true;
@@ -2444,14 +2629,49 @@ function selectOverviewRegion(region, { revealTrend = true, focusTrend = false }
 function renderRegionRaceChart(series) {
     const container = document.getElementById('regionRaceChart');
     const reset = document.getElementById('overviewRegionReset');
+    const sortSelect = document.getElementById('regionRaceSort');
+    const raceDesc = document.getElementById('regionRaceDescription');
     if (!container || !reset) return;
 
-    const ranked = [...series].sort((left, right) => (
-        right.sessionsPerKtv - left.sessionsPerKtv
-        || right.practiceSessions - left.practiceSessions
-        || left.region.localeCompare(right.region, 'vi')
-    ));
-    const maxRate = Math.max(1, ...ranked.map(item => item.sessionsPerKtv));
+    if (raceDesc) {
+        raceDesc.textContent = state.overviewViewMode === 'week'
+            ? 'Số lượt thực hành trong tuần của khu vực.'
+            : 'Số lượt thực hành trong năm của khu vực.';
+    }
+
+    const sortMode = state.regionRaceSort || 'practice_desc';
+    if (sortSelect && sortSelect.value !== sortMode) {
+        sortSelect.value = sortMode;
+    }
+
+    const ranked = [...series].sort((left, right) => {
+        switch (sortMode) {
+            case 'practice_asc':
+                return (left.practiceSessions - right.practiceSessions)
+                    || left.region.localeCompare(right.region, 'vi');
+            case 'name_asc':
+                return left.region.localeCompare(right.region, 'vi')
+                    || (right.practiceSessions - left.practiceSessions);
+            case 'name_desc':
+                return right.region.localeCompare(left.region, 'vi')
+                    || (right.practiceSessions - left.practiceSessions);
+            case 'headcount_desc':
+                return (right.headcount - left.headcount)
+                    || (right.practiceSessions - left.practiceSessions)
+                    || left.region.localeCompare(right.region, 'vi');
+            case 'headcount_asc':
+                return (left.headcount - right.headcount)
+                    || (right.practiceSessions - left.practiceSessions)
+                    || left.region.localeCompare(right.region, 'vi');
+            case 'practice_desc':
+            default:
+                return (right.practiceSessions - left.practiceSessions)
+                    || (right.headcount - left.headcount)
+                    || left.region.localeCompare(right.region, 'vi');
+        }
+    });
+
+    const maxSessions = Math.max(1, ...series.map(item => item.practiceSessions));
     reset.classList.toggle('is-selected', !state.overviewSelectedRegion);
     reset.setAttribute('aria-pressed', String(!state.overviewSelectedRegion));
 
@@ -2461,17 +2681,20 @@ function renderRegionRaceChart(series) {
     }
 
     container.innerHTML = ranked.map((item, index) => {
-        const width = item.sessionsPerKtv > 0 ? Math.max(4, (item.sessionsPerKtv / maxRate) * 100) : 0;
+        const width = item.practiceSessions > 0 ? Math.max(4, (item.practiceSessions / maxSessions) * 100) : 0;
         const selected = state.overviewSelectedRegion === item.region;
+        const formattedSessions = formatNumber.format(item.practiceSessions);
+        const formattedHeadcount = formatNumber.format(item.headcount);
         return `
             <button type="button" class="region-race-row ${selected ? 'is-selected' : ''}"
-                data-overview-region="${escapeHTML(item.region)}" aria-pressed="${selected}">
+                data-overview-region="${escapeHTML(item.region)}" aria-pressed="${selected}"
+                title="${escapeHTML(item.region)}: ${formattedSessions} lượt thực hành (${formattedHeadcount} KTV)">
                 <span class="region-race-rank">${index + 1}</span>
                 <span class="region-race-content">
-                    <span class="region-race-label"><strong>${escapeHTML(item.region)}</strong><small>${item.practiceSessions} lượt / ${item.headcount} KTV</small></span>
+                    <span class="region-race-label"><strong>${escapeHTML(item.region)}</strong><small>${formattedHeadcount} KTV</small></span>
                     <span class="region-race-track"><i style="width:${width.toFixed(1)}%; --race-color:${item.color}"></i></span>
                 </span>
-                <strong class="region-race-value">${item.sessionsPerKtv.toFixed(1)}</strong>
+                <strong class="region-race-value">${formattedSessions}</strong>
             </button>
         `;
     }).join('');
@@ -2490,6 +2713,7 @@ function renderRegionUsageChart() {
     const periodNote = document.getElementById('regionUsagePeriodNote');
     if (!container || !legend || !insights || !yearSelect || !tooltip) return;
 
+    const isWeekView = state.overviewViewMode === 'week';
     const years = getRegionUsageYears();
     if (!years.includes(state.regionUsageYear)) state.regionUsageYear = years[0] || now.getFullYear();
     const yearOptions = years.map(year => `<option value="${year}">${year}</option>`).join('');
@@ -2497,21 +2721,34 @@ function renderRegionUsageChart() {
     yearSelect.value = String(state.regionUsageYear);
     const selectedReportStartYear = state.startDate ? parseDate(state.startDate).getFullYear() : state.regionUsageYear;
     const selectedReportEndYear = state.endDate ? parseDate(state.endDate).getFullYear() : selectedReportStartYear;
+
     if (periodNote) {
-        const inSelectedRange = state.regionUsageYear >= selectedReportStartYear
-            && state.regionUsageYear <= selectedReportEndYear;
-        const selectedYearsLabel = selectedReportStartYear === selectedReportEndYear
-            ? String(selectedReportStartYear)
-            : `${selectedReportStartYear}–${selectedReportEndYear}`;
-        const mismatch = !inSelectedRange
-            ? ` Khác kỳ báo cáo đang chọn (${selectedYearsLabel}).`
-            : '';
-        periodNote.textContent = `Toàn năm ${state.regionUsageYear}; tính trên KTV đã đăng nhập theo khu vực hiện tại.${mismatch}`;
+        if (isWeekView) {
+            const monday = parseDate(state.selectedWeekMonday || formatDateISO(getMondayOfWeek(now)));
+            const sunday = getSundayOfWeek(monday);
+            const wNum = getISOWeekNumber(monday);
+            const mStr = `${String(monday.getDate()).padStart(2, '0')}/${String(monday.getMonth() + 1).padStart(2, '0')}`;
+            const sStr = `${String(sunday.getDate()).padStart(2, '0')}/${String(sunday.getMonth() + 1).padStart(2, '0')}`;
+            periodNote.textContent = `Tuần ${wNum} (${mStr} – ${sStr}); tính trên toàn bộ KTV của từng khu vực có trong database.`;
+        } else {
+            const inSelectedRange = state.regionUsageYear >= selectedReportStartYear
+                && state.regionUsageYear <= selectedReportEndYear;
+            const selectedYearsLabel = selectedReportStartYear === selectedReportEndYear
+                ? String(selectedReportStartYear)
+                : `${selectedReportStartYear}–${selectedReportEndYear}`;
+            const mismatch = !inSelectedRange
+                ? ` Khác kỳ báo cáo đang chọn (${selectedYearsLabel}).`
+                : '';
+            periodNote.textContent = `Toàn năm ${state.regionUsageYear}; tính trên toàn bộ KTV của từng khu vực có trong database.${mismatch}`;
+        }
     }
 
-    const series = getRegionUsageSeries(state.regionUsageYear);
+    const series = isWeekView
+        ? getRegionUsageWeekSeries(state.selectedWeekMonday)
+        : getRegionUsageSeries(state.regionUsageYear);
+
     if (!series.length) {
-        container.innerHTML = '<div class="region-usage-empty">Chưa có danh mục nhân sự theo khu vực để tính tỷ lệ.</div>';
+        container.innerHTML = `<div class="region-usage-empty">${isWeekView ? 'Chưa có dữ liệu thống kê cho tuần này.' : 'Chưa có danh mục nhân sự theo khu vực để tính tỷ lệ.'}</div>`;
         legend.innerHTML = '';
         insights.innerHTML = '';
         renderRegionRaceChart([]);
@@ -2521,50 +2758,92 @@ function renderRegionUsageChart() {
     if (state.overviewSelectedRegion && !series.some(item => item.region === state.overviewSelectedRegion)) {
         state.overviewSelectedRegion = '';
     }
+
     renderRegionRaceChart(series);
 
-    const yMax = 100;
-    const yTicks = [0, 25, 50, 75, 100];
+    const selectedMonthIndexes = new Set();
+    if (state.startDate && state.endDate) {
+        const start = parseDate(state.startDate);
+        const end = parseDate(state.endDate);
+        if (start.getFullYear() === state.regionUsageYear || end.getFullYear() === state.regionUsageYear) {
+            const startMonth = start.getFullYear() === state.regionUsageYear ? start.getMonth() : 0;
+            const endMonth = end.getFullYear() === state.regionUsageYear ? end.getMonth() : 11;
+            for (let month = startMonth; month <= endMonth; month += 1) {
+                selectedMonthIndexes.add(month);
+            }
+        }
+    }
 
     const width = 1080;
-    const height = 410;
-    const plot = { left: 68, right: 26, top: 26, bottom: 58 };
+    const height = 400;
+    const plot = {
+        top: 24,
+        right: 26,
+        bottom: 46,
+        left: 68
+    };
     const plotWidth = width - plot.left - plot.right;
     const plotHeight = height - plot.top - plot.bottom;
-    const xAt = monthIndex => plot.left + (plotWidth * monthIndex / 11);
-    const yAt = rate => plot.top + plotHeight - (Math.min(rate, yMax) / yMax * plotHeight);
-    const selectedStartMonth = String(state.startDate || '').slice(0, 7);
-    const selectedEndMonth = String(state.endDate || state.startDate || '').slice(0, 7);
-    const selectedMonthIndexes = new Set(Array.from({ length: 12 }, (_, monthIndex) => monthIndex)
-        .filter(monthIndex => {
-            const key = `${state.regionUsageYear}-${String(monthIndex + 1).padStart(2, '0')}`;
-            return key >= selectedStartMonth && key <= selectedEndMonth;
-        }));
+    const ticks = [0, 25, 50, 75, 100];
+    const yAt = rate => plot.top + plotHeight - (plotHeight * (Math.max(0, Math.min(100, rate)) / 100));
+    const xAt = isWeekView
+        ? (dayIndex => plot.left + (plotWidth * dayIndex / 6))
+        : (monthIndex => plot.left + (plotWidth * monthIndex / 11));
 
-    const grid = yTicks.map(value => {
+    const grid = ticks.map(value => {
         const y = yAt(value);
         return `
             <line x1="${plot.left}" y1="${y}" x2="${width - plot.right}" y2="${y}" class="region-usage-grid-line" />
             <text x="${plot.left - 13}" y="${y + 4}" text-anchor="end" class="region-usage-axis-label">${value}%</text>
         `;
     }).join('');
-    const monthLabels = Array.from({ length: 12 }, (_, monthIndex) => `
-        <text x="${xAt(monthIndex)}" y="${height - 22}" text-anchor="middle" class="region-usage-month-label ${selectedMonthIndexes.has(monthIndex) ? 'is-selected' : ''}">Th ${monthIndex + 1}</text>
-    `).join('');
+
+    const currentDayIndex = (() => {
+        if (!isWeekView) return -1;
+        const today = new Date();
+        const m = parseDate(state.selectedWeekMonday || formatDateISO(getMondayOfWeek(now)));
+        const diff = Math.floor((today.getTime() - m.getTime()) / 86400000);
+        return (diff >= 0 && diff <= 6) ? diff : -1;
+    })();
+
+    const monthLabels = isWeekView
+        ? WEEK_DAY_LABELS.map((dayLabel, dayIndex) => `
+            <text x="${xAt(dayIndex)}" y="${height - 22}" text-anchor="middle" class="region-usage-month-label ${dayIndex === currentDayIndex ? 'is-selected' : ''}">${escapeHTML(dayLabel)}</text>
+        `).join('')
+        : Array.from({ length: 12 }, (_, monthIndex) => `
+            <text x="${xAt(monthIndex)}" y="${height - 22}" text-anchor="middle" class="region-usage-month-label ${selectedMonthIndexes.has(monthIndex) ? 'is-selected' : ''}">Th ${monthIndex + 1}</text>
+        `).join('');
+
     const lines = series.map((item, seriesIndex) => {
-        const points = item.months
-            .map((point, monthIndex) => point ? { ...point, x: xAt(monthIndex), y: yAt(point.rate) } : null)
+        const points = (isWeekView ? item.days : item.months)
+            .map((point, idx) => point ? { ...point, x: xAt(idx), y: yAt(point.rate) } : null)
             .filter(Boolean);
         const path = points.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
-        const circles = points.map(point => `
-            <circle class="region-usage-point ${selectedMonthIndexes.has(point.month - 1) ? 'is-selected-month' : ''}" cx="${point.x}" cy="${point.y}" r="${selectedMonthIndexes.has(point.month - 1) ? '6' : '4.5'}" tabindex="0"
-                data-region="${escapeHTML(item.region)}" data-month="${point.month}" data-rate="${point.rate.toFixed(1)}"
-                data-sessions="${point.practiceSessions}" data-passed-learners="${point.passedLearners}"
-                data-headcount="${item.headcount}"
-                aria-label="${escapeHTML(`${item.region}, tháng ${point.month}: ${point.rate.toFixed(1)}%, ${point.passedLearners} trên ${item.headcount} KTV có lượt đạt`)}">
-                <title>${escapeHTML(`${item.region} • Tháng ${point.month}: ${point.rate.toFixed(1)}% (${point.passedLearners}/${item.headcount} KTV có ít nhất 1 phiên đạt)`)}</title>
-            </circle>
-        `).join('');
+        const circles = points.map(point => {
+            if (isWeekView) {
+                const isSelected = point.dayIndex === currentDayIndex;
+                const ariaLabel = `${item.region}, ${point.dayName}: ${point.rate.toFixed(1)}%, ${point.passedLearners} trên ${item.headcount} KTV có lượt đạt`;
+                const title = `${item.region} • ${point.displayLabel}: ${point.rate.toFixed(1)}% (${point.passedLearners}/${item.headcount} KTV có ít nhất 1 phiên đạt)`;
+                return `
+                    <circle class="region-usage-point ${isSelected ? 'is-selected-month' : ''}" cx="${point.x}" cy="${point.y}" r="${isSelected ? '6' : '4.5'}" tabindex="0"
+                        data-region="${escapeHTML(item.region)}" data-day="${point.dayIndex}" data-label="${escapeHTML(point.displayLabel)}" data-rate="${point.rate.toFixed(1)}"
+                        data-sessions="${point.practiceSessions}" data-passed-learners="${point.passedLearners}"
+                        data-headcount="${item.headcount}"
+                        aria-label="${escapeHTML(ariaLabel)}">
+                        <title>${escapeHTML(title)}</title>
+                    </circle>
+                `;
+            }
+            return `
+                <circle class="region-usage-point ${selectedMonthIndexes.has(point.month - 1) ? 'is-selected-month' : ''}" cx="${point.x}" cy="${point.y}" r="${selectedMonthIndexes.has(point.month - 1) ? '6' : '4.5'}" tabindex="0"
+                    data-region="${escapeHTML(item.region)}" data-month="${point.month}" data-rate="${point.rate.toFixed(1)}"
+                    data-sessions="${point.practiceSessions}" data-passed-learners="${point.passedLearners}"
+                    data-headcount="${item.headcount}"
+                    aria-label="${escapeHTML(`${item.region}, tháng ${point.month}: ${point.rate.toFixed(1)}%, ${point.passedLearners} trên ${item.headcount} KTV có lượt đạt`)}">
+                    <title>${escapeHTML(`${item.region} • Tháng ${point.month}: ${point.rate.toFixed(1)}% (${point.passedLearners}/${item.headcount} KTV có ít nhất 1 phiên đạt)`)}</title>
+                </circle>
+            `;
+        }).join('');
         return `
             <g class="region-usage-series" data-series-region="${escapeHTML(item.region)}" style="--series-color:${item.color}; --series-order:${seriesIndex}">
                 <path d="${path}" class="region-usage-line" />
@@ -2573,10 +2852,17 @@ function renderRegionUsageChart() {
         `;
     }).join('');
 
+    const svgTitle = isWeekView
+        ? 'Tỷ lệ KTV thực hành đạt theo khu vực theo tuần'
+        : `Tỷ lệ KTV thực hành đạt theo khu vực năm ${state.regionUsageYear}`;
+    const svgDesc = isWeekView
+        ? `Biểu đồ đường gồm ${series.length} khu vực, trục ngang là các thứ trong tuần từ Thứ 2 đến Chủ nhật và trục dọc là tỷ lệ KTV có ít nhất một lượt thực hành đạt trên tổng số KTV khu vực có trong database.`
+        : `Biểu đồ đường gồm ${series.length} khu vực, trục ngang là 12 tháng và trục dọc là tỷ lệ KTV có ít nhất một lượt thực hành đạt trên tổng số KTV khu vực.`;
+
     container.innerHTML = `
         <svg class="region-usage-svg" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="regionUsageSvgTitle regionUsageSvgDesc">
-            <title id="regionUsageSvgTitle">Tỷ lệ KTV thực hành đạt theo khu vực năm ${state.regionUsageYear}</title>
-            <desc id="regionUsageSvgDesc">Biểu đồ đường gồm ${series.length} khu vực, trục ngang là 12 tháng và trục dọc là tỷ lệ KTV có ít nhất một lượt thực hành đạt trên tổng số KTV khu vực.</desc>
+            <title id="regionUsageSvgTitle">${svgTitle}</title>
+            <desc id="regionUsageSvgDesc">${svgDesc}</desc>
             <text x="18" y="${plot.top + plotHeight / 2}" text-anchor="middle" class="region-usage-y-title" transform="rotate(-90 18 ${plot.top + plotHeight / 2})">KTV thực hành đạt (%)</text>
             ${grid}
             ${monthLabels}
@@ -2584,29 +2870,53 @@ function renderRegionUsageChart() {
         </svg>
     `;
 
-    const selectedMonthIndex = [...selectedMonthIndexes].at(-1) ?? -1;
-    const focusMonthIndex = selectedMonthIndex >= 0
-        ? selectedMonthIndex
-        : Math.max(0, Math.min(11, state.regionUsageYear === now.getFullYear() ? now.getMonth() : 11));
-    const rankedForMonth = [...series].sort((left, right) => (
-        (right.months[focusMonthIndex]?.rate || 0) - (left.months[focusMonthIndex]?.rate || 0)
-    ));
-    const highest = rankedForMonth[0];
-    const totalHeadcount = series.reduce((sum, item) => sum + item.headcount, 0);
-    const totalPassedLearners = series.reduce((sum, item) => sum + (item.months[focusMonthIndex]?.passedLearners || 0), 0);
-    const systemRate = totalHeadcount ? Math.round((totalPassedLearners / totalHeadcount) * 1000) / 10 : 0;
-    insights.innerHTML = `
-        <article><span>Cao nhất · Tháng ${focusMonthIndex + 1}</span><strong>${highest ? escapeHTML(highest.region) : '—'}</strong><small>${highest ? `${(highest.months[focusMonthIndex]?.rate || 0).toFixed(1)}% KTV thực hành đạt` : 'Chưa có khu vực hợp lệ'}</small></article>
-        <article><span>Toàn hệ thống · Tháng ${focusMonthIndex + 1}</span><strong>${systemRate.toFixed(1)}%</strong><small>${totalPassedLearners}/${totalHeadcount} KTV đạt / đã đăng nhập</small></article>
-    `;
-    legend.innerHTML = series.map(item => `
-        <button type="button" class="region-usage-legend-item ${state.overviewSelectedRegion === item.region ? 'is-selected' : ''}"
-            data-legend-region="${escapeHTML(item.region)}" aria-pressed="${state.overviewSelectedRegion === item.region}">
-            <i style="--legend-color:${item.color}"></i>
-            <span>${escapeHTML(item.region)}</span>
-            <small>${(item.months[focusMonthIndex]?.rate || 0).toFixed(1)}%</small>
-        </button>
-    `).join('');
+    if (isWeekView) {
+        const focusDayIndex = currentDayIndex >= 0 ? currentDayIndex : 6;
+        const focusLabel = WEEK_DAY_LABELS[focusDayIndex];
+        const rankedForPeriod = [...series].sort((left, right) => (
+            (right.days[focusDayIndex]?.rate || 0) - (left.days[focusDayIndex]?.rate || 0)
+        ));
+        const highest = rankedForPeriod[0];
+        const totalHeadcount = series.reduce((sum, item) => sum + item.headcount, 0);
+        const totalPassedLearners = series.reduce((sum, item) => sum + (item.days[focusDayIndex]?.passedLearners || 0), 0);
+        const systemRate = totalHeadcount ? Math.round((totalPassedLearners / totalHeadcount) * 1000) / 10 : 0;
+        insights.innerHTML = `
+            <article><span>Cao nhất · ${focusLabel}</span><strong>${highest ? escapeHTML(highest.region) : '—'}</strong><small>${highest ? `${(highest.days[focusDayIndex]?.rate || 0).toFixed(1)}% KTV thực hành đạt` : 'Chưa có khu vực hợp lệ'}</small></article>
+            <article><span>Toàn hệ thống · ${focusLabel}</span><strong>${systemRate.toFixed(1)}%</strong><small>${totalPassedLearners}/${totalHeadcount} KTV đạt</small></article>
+        `;
+        legend.innerHTML = series.map(item => `
+            <button type="button" class="region-usage-legend-item ${state.overviewSelectedRegion === item.region ? 'is-selected' : ''}"
+                data-legend-region="${escapeHTML(item.region)}" aria-pressed="${state.overviewSelectedRegion === item.region}">
+                <i style="--legend-color:${item.color}"></i>
+                <span>${escapeHTML(item.region)}</span>
+                <small>${(item.days[focusDayIndex]?.rate || 0).toFixed(1)}%</small>
+            </button>
+        `).join('');
+    } else {
+        const selectedMonthIndex = [...selectedMonthIndexes].at(-1) ?? -1;
+        const focusMonthIndex = selectedMonthIndex >= 0
+            ? selectedMonthIndex
+            : Math.max(0, Math.min(11, state.regionUsageYear === now.getFullYear() ? now.getMonth() : 11));
+        const rankedForMonth = [...series].sort((left, right) => (
+            (right.months[focusMonthIndex]?.rate || 0) - (left.months[focusMonthIndex]?.rate || 0)
+        ));
+        const highest = rankedForMonth[0];
+        const totalHeadcount = series.reduce((sum, item) => sum + item.headcount, 0);
+        const totalPassedLearners = series.reduce((sum, item) => sum + (item.months[focusMonthIndex]?.passedLearners || 0), 0);
+        const systemRate = totalHeadcount ? Math.round((totalPassedLearners / totalHeadcount) * 1000) / 10 : 0;
+        insights.innerHTML = `
+            <article><span>Cao nhất · Tháng ${focusMonthIndex + 1}</span><strong>${highest ? escapeHTML(highest.region) : '—'}</strong><small>${highest ? `${(highest.months[focusMonthIndex]?.rate || 0).toFixed(1)}% KTV thực hành đạt` : 'Chưa có khu vực hợp lệ'}</small></article>
+            <article><span>Toàn hệ thống · Tháng ${focusMonthIndex + 1}</span><strong>${systemRate.toFixed(1)}%</strong><small>${totalPassedLearners}/${totalHeadcount} KTV đạt</small></article>
+        `;
+        legend.innerHTML = series.map(item => `
+            <button type="button" class="region-usage-legend-item ${state.overviewSelectedRegion === item.region ? 'is-selected' : ''}"
+                data-legend-region="${escapeHTML(item.region)}" aria-pressed="${state.overviewSelectedRegion === item.region}">
+                <i style="--legend-color:${item.color}"></i>
+                <span>${escapeHTML(item.region)}</span>
+                <small>${(item.months[focusMonthIndex]?.rate || 0).toFixed(1)}%</small>
+            </button>
+        `).join('');
+    }
 
     const setSeriesFocus = region => {
         container.querySelectorAll('.region-usage-series').forEach(group => {
@@ -2623,7 +2933,8 @@ function renderRegionUsageChart() {
     });
 
     const showTooltip = (point, event) => {
-        tooltip.innerHTML = `<strong>${escapeHTML(point.dataset.region)} · Tháng ${point.dataset.month}</strong><span>${point.dataset.rate}%</span><small>${point.dataset.passedLearners}/${point.dataset.headcount} KTV có lượt đạt · ${point.dataset.sessions} phiên thực hành</small>`;
+        const pointLabel = point.dataset.label || (`Tháng ${point.dataset.month}`);
+        tooltip.innerHTML = `<strong>${escapeHTML(point.dataset.region)} · ${escapeHTML(pointLabel)}</strong><span>${point.dataset.rate}%</span><small>${point.dataset.passedLearners}/${point.dataset.headcount} KTV có lượt đạt · ${point.dataset.sessions} phiên thực hành</small>`;
         tooltip.hidden = false;
         const chartRect = container.getBoundingClientRect();
         const pointRect = point.getBoundingClientRect();
@@ -2645,9 +2956,117 @@ function renderRegionUsageChart() {
     });
 }
 
+function initOverviewViewMode() {
+    if (state.overviewViewModeInitialized) return;
+    state.overviewViewModeInitialized = true;
+
+    const monthBtn = document.getElementById('overviewViewMonthBtn');
+    const weekBtn = document.getElementById('overviewViewWeekBtn');
+    const monthField = document.getElementById('overviewMonthField');
+    const weekField = document.getElementById('overviewWeekField');
+    const weekSelect = document.getElementById('overviewWeekSelect');
+    const weekPrev = document.getElementById('overviewWeekPrev');
+    const weekNext = document.getElementById('overviewWeekNext');
+
+    function syncWeekSelectOptions() {
+        if (!weekSelect) return;
+        const year = state.regionUsageYear || now.getFullYear();
+        const weeks = getWeekOptionsForYear(year);
+        weekSelect.innerHTML = weeks.map(w => `<option value="${w.value}">${w.label}</option>`).join('');
+        if (!state.selectedWeekMonday || !weeks.some(w => w.value === state.selectedWeekMonday)) {
+            const curMonday = formatDateISO(getMondayOfWeek(now));
+            const curMatch = weeks.find(w => w.value === curMonday);
+            if (curMatch) {
+                state.selectedWeekMonday = curMonday;
+            } else if (weeks.length) {
+                const todayIso = formatDateISO(now);
+                const past = weeks.filter(w => w.value <= todayIso);
+                state.selectedWeekMonday = (past.length ? past[past.length - 1] : weeks[weeks.length - 1]).value;
+            }
+        }
+        if (state.selectedWeekMonday) {
+            weekSelect.value = state.selectedWeekMonday;
+        }
+    }
+
+    function applyWeekSelection(mondayStr) {
+        state.selectedWeekMonday = mondayStr;
+        if (weekSelect) weekSelect.value = mondayStr;
+        const monday = parseDate(mondayStr);
+        const sunday = getSundayOfWeek(monday);
+        state.startDate = formatDateISO(monday);
+        state.endDate = formatDateISO(sunday);
+        state.tempStartDate = state.startDate;
+        state.tempEndDate = state.endDate;
+        renderRegionUsageChart();
+        renderOverviewMonthlyTrend(sessions);
+    }
+
+    monthBtn?.addEventListener('click', () => {
+        state.overviewViewMode = 'month';
+        monthBtn.classList.add('is-active');
+        weekBtn?.classList.remove('is-active');
+        if (monthField) monthField.hidden = false;
+        if (weekField) weekField.hidden = true;
+        renderRegionUsageChart();
+        renderOverviewMonthlyTrend(sessions);
+    });
+
+    weekBtn?.addEventListener('click', () => {
+        state.overviewViewMode = 'week';
+        weekBtn.classList.add('is-active');
+        monthBtn?.classList.remove('is-active');
+        if (monthField) monthField.hidden = true;
+        if (weekField) weekField.hidden = false;
+        syncWeekSelectOptions();
+        if (state.selectedWeekMonday) {
+            applyWeekSelection(state.selectedWeekMonday);
+        } else {
+            renderRegionUsageChart();
+            renderOverviewMonthlyTrend(sessions);
+        }
+    });
+
+    weekSelect?.addEventListener('change', event => {
+        applyWeekSelection(event.target.value);
+    });
+
+    weekPrev?.addEventListener('click', () => {
+        if (!weekSelect) return;
+        const curIdx = weekSelect.selectedIndex;
+        if (curIdx > 0) {
+            weekSelect.selectedIndex = curIdx - 1;
+            applyWeekSelection(weekSelect.value);
+        }
+    });
+
+    weekNext?.addEventListener('click', () => {
+        if (!weekSelect) return;
+        const curIdx = weekSelect.selectedIndex;
+        if (curIdx < weekSelect.options.length - 1) {
+            weekSelect.selectedIndex = curIdx + 1;
+            applyWeekSelection(weekSelect.value);
+        }
+    });
+
+    syncWeekSelectOptions();
+}
+
 function initRegionUsageChart() {
+    initOverviewViewMode();
     document.getElementById('regionUsageYear')?.addEventListener('change', event => {
         state.regionUsageYear = Number(event.target.value) || now.getFullYear();
+        if (state.overviewViewMode === 'week') {
+            const weekSelect = document.getElementById('overviewWeekSelect');
+            if (weekSelect) {
+                const weeks = getWeekOptionsForYear(state.regionUsageYear);
+                weekSelect.innerHTML = weeks.map(w => `<option value="${w.value}">${w.label}</option>`).join('');
+                if (weeks.length) {
+                    state.selectedWeekMonday = weeks[0].value;
+                    weekSelect.value = state.selectedWeekMonday;
+                }
+            }
+        }
         renderRegionUsageChart();
         renderOverviewMonthlyTrend(sessions);
     });
@@ -2665,6 +3084,13 @@ function initRegionUsageChart() {
     });
     document.getElementById('overviewRegionReset')?.addEventListener('click', () => {
         selectOverviewRegion('', { revealTrend: state.overviewMonthlyExpanded });
+    });
+    document.getElementById('regionRaceSort')?.addEventListener('change', event => {
+        state.regionRaceSort = event.target.value || 'practice_desc';
+        const currentSeries = state.overviewViewMode === 'week'
+            ? getRegionUsageWeekSeries(state.selectedWeekMonday)
+            : getRegionUsageSeries(state.regionUsageYear);
+        renderRegionRaceChart(currentSeries);
     });
 }
 
@@ -7596,6 +8022,7 @@ function initDateRangePicker() {
 
         const current = monthKey(today.getFullYear(), today.getMonth());
         applySelectedRange(current, current, false);
+        initOverviewViewMode();
         return;
     }
 
