@@ -6,6 +6,7 @@ Chạy như một daemon thread trong run_all.py. Tự động:
 2. Kiểm tra storage Neon mỗi 2 giờ và in cảnh báo khi > 80%
 3. Có thể tự kiểm tra /health/live; không coi đây là bảo đảm chống Render spin-down
 4. Ghi log vào stderr để Render Logs có thể theo dõi
+5. Cảnh báo quota qua webhook HTTPS (Discord/Slack) và/hoặc Zalo OA (xem send_zalo)
 
 Không có dependency ngoài stdlib + psycopg (đã có sẵn qua Django).
 """
@@ -16,6 +17,8 @@ import os
 import sys
 import threading
 import time
+import json
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
@@ -29,6 +32,15 @@ STORAGE_CHECK_INTERVAL_SEC = 2 * 3600      # 2 giờ
 CLEANUP_INTERVAL_SEC       = 6 * 3600      # 6 giờ
 KEEPALIVE_INTERVAL_SEC     = 10 * 60       # 10 phút; chỉ dùng khi bật self-health ping
 FIRST_RUN_DELAY_SEC        = 60            # Chờ 60s sau startup để DB ổn định
+QUOTA_CHECK_INTERVAL_SEC   = 15 * 60       # Neon API; không đánh thức compute nên không tốn CU-hours
+
+# Ngưỡng cảnh báo quota Neon (compute hours / data transfer), theo % limit.
+QUOTA_LEVELS = ((95, "CRITICAL"), (85, "HIGH"), (70, "WARN"))
+ALERT_COOLDOWN_SEC = 6 * 3600              # Nhắc lại cùng mức sau 6 giờ
+FREE_COMPUTE_LIMIT_HOURS = 100.0
+FREE_DATA_TRANSFER_LIMIT_GB = 5.0
+_alert_state: dict[str, tuple[int, float]] = {}
+_alert_lock = threading.Lock()
 
 # ── Logger ──────────────────────────────────────────────────────
 log = logging.getLogger("db_guardian")
@@ -129,8 +141,7 @@ def cleanup_expired_sessions() -> dict:
                 # PHP app_sessions
                 try:
                     cur.execute(
-                        "DELETE FROM app_sessions WHERE expires_at < NOW() "
-                        "RETURNING 1"
+                        "DELETE FROM app_sessions WHERE expires_at < NOW()"
                     )
                     results["app_sessions"] = cur.rowcount
                 except Exception as exc:
@@ -139,8 +150,7 @@ def cleanup_expired_sessions() -> dict:
                 # Django sessions
                 try:
                     cur.execute(
-                        "DELETE FROM django_session WHERE expire_date < NOW() "
-                        "RETURNING 1"
+                        "DELETE FROM django_session WHERE expire_date < NOW()"
                     )
                     results["django_session"] = cur.rowcount
                 except Exception as exc:
@@ -150,8 +160,7 @@ def cleanup_expired_sessions() -> dict:
                 try:
                     cur.execute(
                         "DELETE FROM login_logs "
-                        "WHERE created_at < NOW() - INTERVAL '90 days' "
-                        "RETURNING 1"
+                        "WHERE created_at < NOW() - INTERVAL '90 days'"
                     )
                     results["login_logs"] = cur.rowcount
                 except Exception as exc:
@@ -193,7 +202,276 @@ def keepalive_ping(base_url: str = "") -> bool:
         return False
 
 
+# ── Neon quota alerts ────────────────────────────────────────────
+
+def _env_float(name: str, default: float) -> float:
+    try:
+        return float(os.environ.get(name, "").strip() or default)
+    except ValueError:
+        return default
+
+
+def send_alert(key: str, rank: int, message: str) -> bool:
+    """Log + optional webhook. Only fires on escalation or after cooldown."""
+    now = time.time()
+    with _alert_lock:
+        last_rank, last_ts = _alert_state.get(key, (0, 0.0))
+        if rank <= 0:
+            _alert_state.pop(key, None)  # recovered; allow a fresh alert later
+            return False
+        if rank <= last_rank and (now - last_ts) < ALERT_COOLDOWN_SEC:
+            return False
+        _alert_state[key] = (rank, now)
+
+    log.error("ALERT %s", message)
+    deliver_alert(message)
+    return True
+
+
+def deliver_alert(message: str) -> None:
+    """Send to every configured channel; one failing channel never blocks another."""
+    send_webhook(message)
+    send_zalo(message)
+
+
+def send_webhook(message: str) -> bool:
+    webhook = os.environ.get("ALERT_WEBHOOK_URL", "").strip()
+    if not webhook.lower().startswith("https://"):
+        return False
+    # 'content' (Discord) and 'text' (Slack/Mattermost) in one payload.
+    payload = json.dumps({"content": message, "text": message}).encode("utf-8")
+    try:
+        req = urllib.request.Request(
+            webhook,
+            data=payload,
+            headers={"Content-Type": "application/json", "User-Agent": "db-guardian/1.0"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=8).read()
+        return True
+    except Exception as exc:  # never let alerting break the guardian
+        log.warning("Webhook alert failed: %s", type(exc).__name__)
+        return False
+
+
+# ── Zalo OA channel ──────────────────────────────────────────────
+# Zalo rotates the refresh token on every refresh, so the newest one is persisted
+# to ZALO_TOKEN_STORE (default: system temp dir, mode 0600). If the store is lost
+# (e.g. redeploy) we fall back to ZALO_REFRESH_TOKEN from the environment.
+# Tokens are never logged. OA can only message users who interacted with the OA
+# within the last 7 days.
+ZALO_TOKEN_URL = "https://oauth.zaloapp.com/v4/oa/access_token"
+ZALO_SEND_URL = "https://openapi.zalo.me/v3.0/oa/message/cs"
+_zalo_lock = threading.Lock()
+_zalo_access: dict[str, float | str] = {"token": "", "expires_at": 0.0}
+
+
+def _zalo_settings() -> tuple[str, str, str] | None:
+    app_id = os.environ.get("ZALO_APP_ID", "").strip()
+    secret = os.environ.get("ZALO_APP_SECRET", "").strip()
+    user_id = os.environ.get("ZALO_ALERT_USER_ID", "").strip()
+    if app_id and secret and user_id:
+        return app_id, secret, user_id
+    return None
+
+
+def _zalo_store_path() -> str:
+    configured = os.environ.get("ZALO_TOKEN_STORE", "").strip()
+    if configured:
+        return configured
+    import tempfile
+    return os.path.join(tempfile.gettempdir(), "ftc-zalo-token.json")
+
+
+def _zalo_read_store() -> dict:
+    try:
+        with open(_zalo_store_path(), "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _zalo_write_store(refresh_token: str) -> None:
+    path = _zalo_store_path()
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump({"refresh_token": refresh_token, "saved_at": int(time.time())}, handle)
+    except OSError as exc:
+        log.warning("Khong luu duoc Zalo token store: %s", type(exc).__name__)
+
+
+def _zalo_post(url: str, data: bytes, headers: dict) -> dict:
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        try:
+            return json.loads(exc.read().decode("utf-8"))
+        except ValueError:
+            return {"error": exc.code}
+
+
+def _zalo_refresh_access_token(app_id: str, secret: str) -> str:
+    """Exchange the refresh token for a new access token; returns '' on failure."""
+    import urllib.parse
+    candidates = []
+    for token in (_zalo_read_store().get("refresh_token"), os.environ.get("ZALO_REFRESH_TOKEN", "").strip()):
+        if token and token not in candidates:
+            candidates.append(str(token))
+    for refresh_token in candidates:
+        body = urllib.parse.urlencode({
+            "grant_type": "refresh_token",
+            "app_id": app_id,
+            "refresh_token": refresh_token,
+        }).encode("utf-8")
+        result = _zalo_post(ZALO_TOKEN_URL, body, {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "secret_key": secret,
+        })
+        access = str(result.get("access_token") or "")
+        if access:
+            new_refresh = str(result.get("refresh_token") or refresh_token)
+            _zalo_write_store(new_refresh)
+            try:
+                ttl = float(result.get("expires_in") or 3600)
+            except (TypeError, ValueError):
+                ttl = 3600.0
+            _zalo_access["token"] = access
+            _zalo_access["expires_at"] = time.time() + max(60.0, ttl - 120.0)
+            return access
+        log.warning("Zalo refresh token that bai (error=%s).", result.get("error"))
+    return ""
+
+
+def send_zalo(message: str) -> bool:
+    settings = _zalo_settings()
+    if settings is None:
+        return False
+    app_id, secret, user_id = settings
+    body = json.dumps(
+        {"recipient": {"user_id": user_id}, "message": {"text": message[:2000]}},
+        ensure_ascii=False,
+    ).encode("utf-8")
+    try:
+        with _zalo_lock:
+            access = str(_zalo_access["token"]) if time.time() < float(_zalo_access["expires_at"]) else ""
+            if not access:
+                access = _zalo_refresh_access_token(app_id, secret)
+        if not access:
+            return False
+        for attempt in (1, 2):
+            result = _zalo_post(ZALO_SEND_URL, body, {
+                "Content-Type": "application/json",
+                "access_token": access,
+            })
+            code = result.get("error")
+            if code == 0:
+                return True
+            log.warning("Zalo gui tin that bai (error=%s).", code)
+            if attempt == 1 and code in (-216, -217, -220):  # token invalid/expired
+                with _zalo_lock:
+                    access = _zalo_refresh_access_token(app_id, secret)
+                if access:
+                    continue
+            break
+    except Exception as exc:  # never let alerting break the guardian
+        log.warning("Zalo alert failed: %s", type(exc).__name__)
+    return False
+
+
+
+def quota_level(pct: float) -> tuple[int, str]:
+    """Return (rank, label); rank 0 means below every threshold."""
+    for index, (threshold, label) in enumerate(QUOTA_LEVELS):
+        if pct >= threshold:
+            return len(QUOTA_LEVELS) - index, label
+    return 0, "OK"
+
+
+def _neon_get(path: str, api_key: str) -> dict:
+    req = urllib.request.Request(
+        "https://console.neon.tech/api/v2" + path,
+        headers={"Accept": "application/json", "Authorization": "Bearer " + api_key},
+    )
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _neon_project(api_key: str) -> dict | None:
+    project_id = os.environ.get("NEON_PROJECT_ID", "").strip()
+    if project_id:
+        return _neon_get("/projects/" + project_id, api_key).get("project")
+    projects = _neon_get("/projects?limit=10", api_key).get("projects") or []
+    if len(projects) == 1:
+        return projects[0]
+    log.warning("Dat NEON_PROJECT_ID de bat canh bao quota (khong xac dinh duoc project).")
+    return None
+
+
+def check_neon_quota() -> dict:
+    """Compare Neon compute-time and data-transfer usage against plan limits.
+
+    Free plan hard-suspends compute at 100 CU-hours or 5 GB transfer. Paid plans:
+    set NEON_COMPUTE_LIMIT_HOURS / NEON_DATA_TRANSFER_LIMIT_GB (0 disables a check).
+    """
+    api_key = os.environ.get("NEON_API_KEY", "").strip()
+    if not api_key:
+        return {}
+    try:
+        project = _neon_project(api_key)
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        log.warning("Khong goi duoc Neon API: %s", type(exc).__name__)
+        return {}
+    if not project:
+        return {}
+
+    quota = (project.get("settings") or {}).get("quota") or {}
+    compute_limit_h = _env_float("NEON_COMPUTE_LIMIT_HOURS", 0.0) or (
+        float(quota.get("compute_time_seconds") or 0) / 3600 or FREE_COMPUTE_LIMIT_HOURS
+    )
+    transfer_limit_gb = _env_float("NEON_DATA_TRANSFER_LIMIT_GB", FREE_DATA_TRANSFER_LIMIT_GB)
+    compute_h = float(project.get("compute_time_seconds") or 0) / 3600
+    transfer_gb = float(project.get("data_transfer_bytes") or 0) / 1e9
+
+    result: dict[str, float] = {}
+    for key, used, limit, unit in (
+        ("compute", compute_h, compute_limit_h, "gio compute"),
+        ("transfer", transfer_gb, transfer_limit_gb, "GB data transfer"),
+    ):
+        if limit <= 0:
+            continue
+        pct = used / limit * 100
+        result[key] = round(pct, 1)
+        rank, label = quota_level(pct)
+        message = (
+            f"[FTC Neon {label}] {used:.2f}/{limit:.0f} {unit} ({pct:.0f}%). "
+            "Chay het quota thi Neon free se TAM DUNG compute: moi truy van DB deu loi. "
+            "Hay nang plan hoac chuan bi cutover sang FALLBACK_DATABASE_URL."
+        )
+        if rank > 0:
+            send_alert("neon_" + key, rank, message)
+        else:
+            send_alert("neon_" + key, 0, "")
+            log.info("Neon %s OK: %.2f/%.0f (%.0f%%)", key, used, limit, pct)
+    return result
+
+
 # ── Worker threads ───────────────────────────────────────────────
+
+def _quota_monitor_worker():
+    """Thread kiem tra quota Neon qua Management API."""
+    time.sleep(FIRST_RUN_DELAY_SEC)
+    while True:
+        try:
+            check_neon_quota()
+        except Exception as exc:
+            log.warning("quota_monitor error: %s", type(exc).__name__)
+        time.sleep(QUOTA_CHECK_INTERVAL_SEC)
+
+
 
 def _storage_monitor_worker():
     """Thread kiểm tra storage định kỳ."""
@@ -258,6 +536,10 @@ def start(enabled: bool = True):
         ("storage-monitor", _storage_monitor_worker),
         ("session-cleanup", _cleanup_worker),
     ]
+    if os.environ.get("NEON_API_KEY", "").strip():
+        threads.append(("neon-quota-monitor", _quota_monitor_worker))
+    else:
+        log.warning("NEON_API_KEY chua dat: khong co canh bao quota Neon.")
 
     # Disabled by default because an internal/self ping is not an uptime SLA.
     self_ping_enabled = os.environ.get("RENDER_SELF_PING_ENABLED", "0").strip() == "1"
@@ -279,3 +561,12 @@ def start(enabled: bool = True):
         STORAGE_CHECK_INTERVAL_SEC // 3600,
         CLEANUP_INTERVAL_SEC // 3600,
     )
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "test-alert":
+        text = "[FTC] Tin thu canh bao tu db_guardian. Neu ban doc duoc tin nay, kenh canh bao hoat dong."
+        print("webhook:", "OK" if send_webhook(text) else "khong cau hinh hoac loi")
+        print("zalo:   ", "OK" if send_zalo(text) else "khong cau hinh hoac loi (xem log)")
+    else:
+        print("Usage: python db_guardian.py test-alert")

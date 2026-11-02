@@ -812,6 +812,27 @@ function training_class_catalog(PDO $pdo): array
 
 function training_class_learning_catalog(PDO $pdo, array $_user): array
 {
+    static $memoryCache = null;
+    if ($memoryCache !== null) {
+        return $memoryCache;
+    }
+
+    $cacheTtl = env_int('LEARNING_CATALOG_CACHE_SECONDS', 21600, 300, 86400);
+    $cacheDir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'ftc-catalog-cache';
+    $cacheFile = $cacheDir . DIRECTORY_SEPARATOR . 'learning_catalog.json';
+    $now = time();
+
+    if (is_file($cacheFile) && ($now - (int)filemtime($cacheFile)) < $cacheTtl) {
+        $raw = @file_get_contents($cacheFile);
+        if ($raw) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $memoryCache = $decoded;
+                return $memoryCache;
+            }
+        }
+    }
+
     // Authentication is enforced by handle_learning(). Assignments define the
     // reporting scope, not access to the practice catalog.
     $stmt = $pdo->query(
@@ -838,7 +859,13 @@ function training_class_learning_catalog(PDO $pdo, array $_user): array
             'lab_name' => (string)$row['lab_name'],
         ];
     }
-    return array_values($devices);
+    $result = array_values($devices);
+    $memoryCache = $result;
+    if (!is_dir($cacheDir)) {
+        @mkdir($cacheDir, 0700, true);
+    }
+    @file_put_contents($cacheFile, json_encode($result, JSON_UNESCAPED_UNICODE), LOCK_EX);
+    return $result;
 }
 
 function training_class_import_header(string $value): string

@@ -63,6 +63,50 @@ function tracking_timer_response(array $timer): array
     ];
 }
 
+function tracking_cached_lab_catalog_lookup(PDO $pdo, string $labId): ?array
+{
+    static $memoryCache = [];
+    if (isset($memoryCache[$labId])) {
+        return $memoryCache[$labId];
+    }
+
+    $cacheTtl = 300;
+    $cacheDir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'ftc-catalog-cache';
+    $cacheFile = $cacheDir . DIRECTORY_SEPARATOR . 'active_labs.json';
+    $now = time();
+
+    if (empty($memoryCache) && is_file($cacheFile) && ($now - (int)filemtime($cacheFile)) < $cacheTtl) {
+        $raw = @file_get_contents($cacheFile);
+        if ($raw) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $memoryCache = $decoded;
+            }
+        }
+    }
+
+    if (!isset($memoryCache[$labId])) {
+        $stmt = $pdo->query(
+            'SELECT lab.lab_id, lab.lab_name, lab.device_id, device.device_name, device.model
+               FROM lab_catalog lab
+               JOIN device_catalog device ON device.device_id = lab.device_id
+              WHERE lab.is_active = TRUE
+                AND device.is_active = TRUE'
+        );
+        $rows = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+        $memoryCache = [];
+        foreach ($rows as $row) {
+            $memoryCache[(string)$row['lab_id']] = $row;
+        }
+        if (!is_dir($cacheDir)) {
+            @mkdir($cacheDir, 0700, true);
+        }
+        @file_put_contents($cacheFile, json_encode($memoryCache, JSON_UNESCAPED_UNICODE), LOCK_EX);
+    }
+
+    return $memoryCache[$labId] ?? null;
+}
+
 /**
  * Mirror a live timer submission into every effective assignment for the same
  * KTV-lab pair. Progress is a person-lab outcome; overlapping active classes
@@ -200,16 +244,8 @@ function reserve_tracking_timer_start(array $trackingActor, array $input): array
     }
 
     $pdo = db();
-    $catalogLookup = $pdo->prepare(
-        'SELECT lab.lab_name, lab.device_id, device.device_name
-           FROM lab_catalog lab
-           JOIN device_catalog device ON device.device_id = lab.device_id
-          WHERE lab.lab_id = :lab_id
-            AND lab.is_active = TRUE
-            AND device.is_active = TRUE'
-    );
-    $catalogLookup->execute(['lab_id' => $labId]);
-    $catalog = $catalogLookup->fetch();
+    // Cache active lab catalog (lab.is_active = TRUE, device.is_active = TRUE) to reduce Neon transfer
+    $catalog = tracking_cached_lab_catalog_lookup($pdo, $labId);
     if (!$catalog) {
         fail(422, 'tracking/unknown-lab', 'lab_id is not in the active catalog.');
     }
@@ -508,17 +544,8 @@ function handle_tracking(array $segments, string $method): void
         $userAgent = function_exists('request_user_agent') ? request_user_agent() : ($_SERVER['HTTP_USER_AGENT'] ?? null);
 
         $pdo = db();
-
-        $catalogLookup = $pdo->prepare(
-            'SELECT lab.lab_name, lab.device_id, device.device_name, device.model
-               FROM lab_catalog lab
-               JOIN device_catalog device ON device.device_id = lab.device_id
-              WHERE lab.lab_id = :lab_id
-                AND lab.is_active = TRUE
-                AND device.is_active = TRUE'
-        );
-        $catalogLookup->execute(['lab_id' => $labId]);
-        $catalog = $catalogLookup->fetch();
+        // Cache active lab catalog (lab.is_active = TRUE, device.is_active = TRUE) to reduce Neon transfer
+        $catalog = tracking_cached_lab_catalog_lookup($pdo, $labId);
         if (!$catalog) {
             fail(422, 'tracking/unknown-lab', 'lab_id is not in the active catalog.');
         }

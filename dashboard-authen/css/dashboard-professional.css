@@ -1561,6 +1561,108 @@ body.report-export-open {
     font-weight: 760;
 }
 
+#overview .overview-month-picker {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#overview .overview-month-picker > :not(.overview-month-field):not(.overview-view-switch):not(.overview-week-field) {
+    display: none !important;
+}
+
+#overview .overview-month-picker > .overview-view-switch,
+#overview .overview-month-picker > .overview-week-field:not([hidden]) {
+    display: flex !important;
+}
+
+#overview .overview-view-switch {
+    display: inline-flex;
+    align-items: center;
+    background: #eef2f6;
+    border-radius: 9px;
+    padding: 3px;
+    gap: 3px;
+    height: 38px;
+    box-sizing: border-box;
+}
+
+#overview .overview-view-btn {
+    border: none;
+    background: transparent;
+    color: #475467;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+#overview .overview-view-btn:hover {
+    color: #1d2939;
+}
+
+#overview .overview-view-btn.is-active {
+    background: #fff;
+    color: #1f57c7;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1);
+    font-weight: 700;
+}
+
+#overview .overview-week-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#overview .overview-week-field > span {
+    color: #667085;
+    font-size: 11px;
+    font-weight: 650;
+}
+
+#overview .overview-week-control-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#overview .overview-week-select {
+    min-height: 38px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    background: #fff;
+    color: #1d2939;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+#overview .overview-week-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 38px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    background: #fff;
+    color: #475467;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+#overview .overview-week-nav:hover {
+    border-color: #8eafea;
+    color: #1f57c7;
+    background: #f8fafc;
+}
+
 #overview .overview-analysis-grid {
     display: grid;
     grid-template-columns: minmax(0, 2.1fr) minmax(310px, .9fr);
@@ -1656,12 +1758,21 @@ body.report-export-open {
     flex-direction: column;
 }
 
+#overview .region-race-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 14px 0 9px;
+    flex-wrap: wrap;
+}
+
 #overview .region-race-all {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-height: 34px;
-    margin: 14px 0 9px;
+    margin: 0;
     padding: 0 12px;
     border: 1px solid #d6dfec;
     border-radius: 9px;
@@ -1671,11 +1782,40 @@ body.report-export-open {
     font-size: 12px;
     font-weight: 740;
     cursor: pointer;
+    flex: 1 1 auto;
 }
 
 #overview .region-race-all:hover,
 #overview .region-race-all:focus-visible,
 #overview .region-race-all.is-selected {
+    border-color: #8eafea;
+    color: #1f57c7;
+    background: #eef5ff;
+    outline: none;
+}
+
+#overview .region-race-sort-wrap {
+    flex: 0 0 auto;
+}
+
+#overview .region-race-sort-select {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 10px;
+    border: 1px solid #d6dfec;
+    border-radius: 9px;
+    color: #43526a;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+
+#overview .region-race-sort-select:hover,
+#overview .region-race-sort-select:focus-visible {
     border-color: #8eafea;
     color: #1f57c7;
     background: #eef5ff;
@@ -1693,7 +1833,7 @@ body.report-export-open {
 
 #overview .region-race-row {
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) 42px;
+    grid-template-columns: 22px minmax(0, 1fr) minmax(46px, max-content);
     gap: 8px;
     align-items: center;
     min-height: 54px;
@@ -1777,6 +1917,7 @@ body.report-export-open {
     color: #21324f;
     font-size: 14px;
     text-align: right;
+    min-width: 44px;
 }
 
 #overview .region-race-value::after {
@@ -1784,7 +1925,7 @@ body.report-export-open {
     color: var(--ui-muted);
     font-size: 8px;
     font-weight: 650;
-    content: 'lượt/KTV';
+    content: 'lượt';
 }
 
 #overview .region-race-empty {
@@ -2478,7 +2619,28 @@ body.report-export-open {
 :root[data-theme="dark"] .report-export-close,
 :root[data-theme="dark"] .table-page-btn,
 :root[data-theme="dark"] .roster-page-btn,
+:root[data-theme="dark"] #overview .overview-view-switch {
+    background: var(--ui-surface-soft);
+}
+
+:root[data-theme="dark"] #overview .overview-view-btn {
+    color: var(--ui-muted);
+}
+
+:root[data-theme="dark"] #overview .overview-view-btn.is-active {
+    background: var(--ui-primary);
+    color: #fff;
+}
+
+:root[data-theme="dark"] #overview .overview-week-select,
+:root[data-theme="dark"] #overview .overview-week-nav {
+    background: var(--ui-surface-soft);
+    border-color: var(--ui-border-strong);
+    color: var(--ui-text);
+}
+
 :root[data-theme="dark"] #overview .region-race-all,
+:root[data-theme="dark"] #overview .region-race-sort-select,
 :root[data-theme="dark"] #overview .overview-monthly-close {
     color: var(--ui-text) !important;
     background: var(--ui-surface-soft) !important;

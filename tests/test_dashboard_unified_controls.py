@@ -108,6 +108,7 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
             "regionUsageTooltip",
             "regionUsagePeriodNote",
             "regionRaceChart",
+            "regionRaceSort",
             "overviewRegionReset",
             "overviewMonthlyCard",
             "overviewSessionsDrilldown",
@@ -140,6 +141,59 @@ class DashboardUnifiedControlsContractTests(unittest.TestCase):
         self.assertLess(region_chart, monthly_trend)
         self.assertLess(monthly_trend, analytics_start)
         self.assertEqual(self.html.count('id="regionUsageChart"'), 1)
+
+    def test_region_race_ranks_by_practice_sessions_and_supports_sorting(self):
+        self.assertIn("Số lượt thực hành trong năm của khu vực.", self.html)
+        self.assertNotIn("Lượt thực hành trong năm / số KTV", self.html)
+        self.assertIn('id="regionRaceSort"', self.html)
+        self.assertIn('value="practice_desc"', self.html)
+        self.assertIn('value="practice_asc"', self.html)
+        self.assertIn('value="name_asc"', self.html)
+        self.assertIn('value="name_desc"', self.html)
+        self.assertIn("regionRaceSort: 'practice_desc'", self.javascript)
+        self.assertIn("right.practiceSessions - left.practiceSessions", self.javascript)
+        self.assertIn("left.practiceSessions - right.practiceSessions", self.javascript)
+        self.assertIn("document.getElementById('regionRaceSort')?.addEventListener", self.javascript)
+        self.assertIn(".region-race-toolbar", self.professional_css)
+        self.assertIn(".region-race-sort-select", self.professional_css)
+        self.assertIn("content: 'lượt';", self.professional_css)
+        self.assertNotIn("content: 'lượt/KTV';", self.professional_css)
+
+    def test_overview_week_view_and_database_ktv_formula(self):
+        # 1. HTML Controls
+        self.assertIn('id="overviewViewMonthBtn"', self.html)
+        self.assertIn('id="overviewViewWeekBtn"', self.html)
+        self.assertIn('id="overviewWeekField"', self.html)
+        self.assertIn('id="overviewWeekSelect"', self.html)
+        self.assertIn('id="overviewWeekPrev"', self.html)
+        self.assertIn('id="overviewWeekNext"', self.html)
+
+        # 2. Formula note in HTML
+        self.assertIn('id="regionUsageFormula"', self.html)
+        self.assertIn("Số KTV có ít nhất 1 lượt thực hành đạt / tổng số KTV của khu vực đó có trong database.", self.html)
+        self.assertNotIn("tổng số KTV đã đăng nhập của khu vực", self.html)
+
+        # 3. Race chart description
+        self.assertIn('id="regionRaceDescription"', self.html)
+        self.assertIn("Số lượt thực hành trong tuần của khu vực.", self.javascript)
+        self.assertIn("Số lượt thực hành trong năm của khu vực.", self.javascript)
+
+        # 4. Week Helpers & Labels in JS
+        self.assertIn("WEEK_DAY_LABELS", self.javascript)
+        for day in ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật']:
+            self.assertIn(f"'{day}'", self.javascript)
+        self.assertIn("function getRegionUsageWeekSeries", self.javascript)
+        self.assertIn("function initOverviewViewMode", self.javascript)
+        self.assertIn("overviewViewMode: 'month'", self.javascript)
+
+        # 5. Total database KTV denominator without login requirement
+        self.assertIn("!technician.isTerminated && (technician.email || technician.employeeId)", self.javascript)
+
+        # 6. CSS styling for week view
+        self.assertIn(".overview-view-switch", self.professional_css)
+        self.assertIn(".overview-view-btn", self.professional_css)
+        self.assertIn(".overview-week-field", self.professional_css)
+        self.assertIn(".overview-week-select", self.professional_css)
 
     def test_session_status_filters_only_offer_submitted_outcomes(self):
         for container_id, clear_id in (

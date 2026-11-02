@@ -26,8 +26,8 @@
             document.documentElement.style.colorScheme = resolved;
         })();
     </script>
-    <link rel="stylesheet" href="css/styles.css?v=fd60c03c41351c54">
-    <link rel="stylesheet" href="css/dashboard-professional.css?v=2dd39da2dd16b5df">
+<link rel="stylesheet" href="css/styles.css?v=fd60c03c41351c54">
+    <link rel="stylesheet" href="css/dashboard-professional.css?v=d6ed7c80bdb519cb">
 </head>
 
 <body>
@@ -264,7 +264,11 @@
                                 <span id="overviewSectionSubtitle">Hoạt động và kết quả trong tháng báo cáo đang chọn.</span>
                             </div>
                             <div class="date-range-picker overview-month-picker" id="dateRangePicker">
-                                <div class="overview-month-field">
+                                <div class="overview-view-switch" role="group" aria-label="Chế độ xem báo cáo">
+                                    <button type="button" class="overview-view-btn is-active" id="overviewViewMonthBtn" data-view="month">Theo tháng</button>
+                                    <button type="button" class="overview-view-btn" id="overviewViewWeekBtn" data-view="week">Theo tuần</button>
+                                </div>
+                                <div class="overview-month-field" id="overviewMonthField">
                                     <span>Kỳ báo cáo</span>
                                     <input type="hidden" id="overviewMonthSelect">
                                     <button type="button" class="overview-month-trigger" id="overviewMonthTrigger"
@@ -321,6 +325,14 @@
                                             <p class="overview-month-summary overview-week-summary" id="overviewWeekSummary"
                                                 aria-live="polite"></p>
                                         </div>
+                                    </div>
+                                </div>
+                                <div class="overview-week-field" id="overviewWeekField" hidden>
+                                    <span>Tuần báo cáo</span>
+                                    <div class="overview-week-control-group">
+                                        <button type="button" class="overview-week-nav" id="overviewWeekPrev" aria-label="Tuần trước">‹</button>
+                                        <select id="overviewWeekSelect" class="overview-week-select" aria-label="Chọn tuần báo cáo"></select>
+                                        <button type="button" class="overview-week-nav" id="overviewWeekNext" aria-label="Tuần sau">›</button>
                                     </div>
                                 </div>
                                 <input type="hidden" id="startDate">
@@ -414,7 +426,7 @@
                                 <div>
                                     <span class="detail-report-eyebrow">Kết quả theo khu vực</span>
                                     <h3 id="regionUsageTitle">Tỷ lệ KTV thực hành đạt</h3>
-                                    <p>Số KTV có ít nhất 1 lượt thực hành đạt / tổng số KTV đã đăng nhập của khu vực.</p>
+                                    <p id="regionUsageFormula">Số KTV có ít nhất 1 lượt thực hành đạt / tổng số KTV của khu vực đó có trong database.</p>
                                 </div>
                                 <label class="region-usage-year-field" for="regionUsageYear">
                                     <span>Năm báo cáo</span>
@@ -435,10 +447,23 @@
                             <div class="region-race-header">
                                 <span class="detail-report-eyebrow">Mức độ thực hành</span>
                                 <h3 id="regionRaceTitle">Biểu đồ thi đua giữa các khu vực</h3>
-                                <p>Lượt thực hành trong năm / số KTV đã đăng nhập của khu vực.</p>
+                                <p id="regionRaceDescription">Số lượt thực hành trong năm của khu vực.</p>
                             </div>
-                            <button type="button" class="region-race-all is-selected" id="overviewRegionReset"
-                                aria-pressed="true">Tất cả khu vực</button>
+                            <div class="region-race-toolbar">
+                                <button type="button" class="region-race-all is-selected" id="overviewRegionReset"
+                                    aria-pressed="true">Tất cả khu vực</button>
+                                <div class="region-race-sort-wrap">
+                                    <label for="regionRaceSort" class="sr-only">Sắp xếp khu vực</label>
+                                    <select id="regionRaceSort" class="region-race-sort-select" aria-label="Sắp xếp khu vực">
+                                        <option value="practice_desc">Lượt: Cao → Thấp</option>
+                                        <option value="practice_asc">Lượt: Thấp → Cao</option>
+                                        <option value="name_asc">Khu vực: A → Z</option>
+                                        <option value="name_desc">Khu vực: Z → A</option>
+                                        <option value="headcount_desc">Số KTV: Nhiều → Ít</option>
+                                        <option value="headcount_asc">Số KTV: Ít → Nhiều</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="region-race-chart" id="regionRaceChart" aria-live="polite"></div>
                             <p class="region-race-note">Bấm một khu vực để xem chi tiết theo tháng.</p>
                         </aside>
@@ -1735,7 +1760,7 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/app.js?v=404b5dd9bb2a0927"></script>
+<script src="js/app.js?v=008d2851d0cc918f"></script>
     <script src="js/system_monitor.js?v=33a329e800f1874c"></script>
 </body>
 
