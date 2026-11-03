@@ -1,15 +1,22 @@
 /**
  * devices/mikrotik_hexs/tooltips/bai5.js — Tooltip Hướng dẫn Bài 5: Cấu hình Policy Routing
  *
- * Chuỗi 21 bước tuần tự chuẩn thực tế theo video hướng dẫn Router MikroTik (PBR - Policy Based Routing):
- *   Phần 1: Routing > Tables (Bước 1 ➔ 6): Tạo bảng định tuyến ISP1, tích chọn FIB.
- *   Phần 2: IP > Routes (Bước 7 ➔ 12): Tạo Default Route Gateway 1.1.1.1 qua bảng ISP1.
- *   Phần 3: IP > Firewall > Mangle (Bước 13 ➔ 21): Tạo luật prerouting đánh dấu lưu lượng LAN 192.168.1.0/24 qua ISP1.
+ * Chuỗi 37 bước tuần tự chuẩn thực tế theo sơ đồ Policy Based Routing (PBR) 2-PC / 2-WAN:
+ *   Phần 1: Routing > Tables (Bước 1 ➔ 10):
+ *       - Tạo bảng ra-wan1 (fib: yes)
+ *       - Tạo bảng ra-wan2 (fib: yes)
+ *   Phần 2: IP > Firewall > Mangle (Bước 11 ➔ 27):
+ *       - Tạo luật Mangle cho PC 1: Src. Address 192.168.1.100 -> New Routing Mark: ra-wan1
+ *       - Tạo luật Mangle cho PC 2: Src. Address 192.168.1.101 -> New Routing Mark: ra-wan2
+ *   Phần 3: IP > Routes (Bước 28 ➔ 37):
+ *       - Tạo Default Route cho WAN 1: Gateway pppoe-out1 (hoặc 1.1.1.1) -> Routing Table: ra-wan1
+ *       - Tạo Default Route cho WAN 2: Gateway pppoe-out2 (hoặc 2.2.2.2) -> Routing Table: ra-wan2
  *
  * NGUYÊN TẮC BẤT BIẾN:
  * 1. Chuyển bước nghiêm ngặt: bước trước cấu hình xong nhập đúng thì mới chuyển sang bước sau.
  * 2. An toàn DOM tuyệt đối: không ghi đè innerHTML/textContent của WebFig, chỉ gắn ID phụ khi chưa có ID.
- * 3. Vị trí hiển thị rõ ràng, không che khuất ô nhập liệu hay nút bấm.
+ * 3. Chống sửa đè (Anti-overwrite): Sau khi lưu mục 1 (Bảng 1 / Mangle 1 / Route 1), bắt buộc quay về danh sách
+ *    nhấn Add New rồi mới cấu hình mục 2, tuyệt đối không cho phép nhập đè lên form cũ.
  */
 
 if (!window.TOOLTIPS_MIKROTIK_HEXS) window.TOOLTIPS_MIKROTIK_HEXS = {};
@@ -107,27 +114,98 @@ function mkBai5GiaTri(doc, nhan) {
   return null;
 }
 
-function mkBai5Part1Xong(doc) {
-  if (window._FTC_MK5_BANG_SAVED) return true;
+function mkBai5GwHopLe1(gw) {
+  if (!gw) return false;
+  const s = gw.toLowerCase().trim();
+  return s === 'pppoe-out1' || s === '1.1.1.1' || s === 'ether1';
+}
+
+function mkBai5GwHopLe2(gw) {
+  if (!gw) return false;
+  const s = gw.toLowerCase().trim();
+  return s === 'pppoe-out2' || s === '2.2.2.2' || s === 'ether2';
+}
+
+function mkBai5Table1Xong(doc) {
+  if (window._FTC_MK5_BANG1_SAVED) return true;
   const ds = window._FTC_MK5_DS_BANG || [];
-  return ds.some(function (b) { return b.ten === 'ISP1'; });
+  return ds.some(function (b) { return b.ten === 'ra-wan1' || b.ten === 'ISP1'; });
 }
 
-function mkBai5Part2Xong(doc) {
-  if (window._FTC_MK5_ROUTE_SAVED) return true;
-  const ds = window._FTC_MK5_DS_TUYEN || [];
-  return ds.some(function (t) { return t.gateway === '1.1.1.1'; });
+function mkBai5Table2Xong(doc) {
+  if (window._FTC_MK5_BANG2_SAVED) return true;
+  const ds = window._FTC_MK5_DS_BANG || [];
+  return ds.some(function (b) { return b.ten === 'ra-wan2'; });
 }
 
-function mkBai5Part3Xong(doc) {
-  if (window._FTC_MK5_MANGLE_SAVED) return true;
+function mkBai5TablesXong(doc) {
+  return mkBai5Table1Xong(doc) && mkBai5Table2Xong(doc);
+}
+
+function mkBai5Mangle1Xong(doc) {
+  if (window._FTC_MK5_MANGLE1_SAVED) return true;
   const ds = window._FTC_MK5_DS_MANGLE || [];
-  return ds.some(function (m) { return m.src === '192.168.1.0/24' && m.action === 'mark routing'; });
+  return ds.some(function (m) {
+    const raw = (m.raw || '').toLowerCase();
+    return (m.src === '192.168.1.100' || raw.includes('192.168.1.100')) &&
+      (raw.includes('ra-wan1') || raw.includes('isp1') || m.action.includes('mark'));
+  });
+}
+
+function mkBai5Mangle2Xong(doc) {
+  if (window._FTC_MK5_MANGLE2_SAVED) return true;
+  const ds = window._FTC_MK5_DS_MANGLE || [];
+  return ds.some(function (m) {
+    const raw = (m.raw || '').toLowerCase();
+    return (m.src === '192.168.1.101' || raw.includes('192.168.1.101')) &&
+      (raw.includes('ra-wan2') || m.action.includes('mark'));
+  });
+}
+
+function mkBai5ManglesXong(doc) {
+  return mkBai5Mangle1Xong(doc) && mkBai5Mangle2Xong(doc);
+}
+
+function mkBai5Route1Xong(doc) {
+  if (window._FTC_MK5_ROUTE1_SAVED) return true;
+  const ds = window._FTC_MK5_DS_TUYEN || [];
+  return ds.some(function (t) {
+    const gw = (t.gateway || '').toLowerCase();
+    const bang = (t.bang || '').toLowerCase();
+    return (gw.includes('pppoe-out1') || gw.includes('1.1.1.1') || gw.includes('ether1')) &&
+      (bang.includes('ra-wan1') || bang.includes('isp1'));
+  });
+}
+
+function mkBai5Route2Xong(doc) {
+  if (window._FTC_MK5_ROUTE2_SAVED) return true;
+  const ds = window._FTC_MK5_DS_TUYEN || [];
+  return ds.some(function (t) {
+    const gw = (t.gateway || '').toLowerCase();
+    const bang = (t.bang || '').toLowerCase();
+    return (gw.includes('pppoe-out2') || gw.includes('2.2.2.2') || gw.includes('ether2')) &&
+      bang.includes('ra-wan2');
+  });
+}
+
+function mkBai5RoutesXong(doc) {
+  return mkBai5Route1Xong(doc) && mkBai5Route2Xong(doc);
 }
 
 function mkBai5CaiTheoDoi(doc) {
   try {
     if (!doc) return;
+
+    // Nút Add New trên trang Tables
+    if (mkBai5OTables(doc)) {
+      const addBtns = doc.querySelectorAll('#toolbar a.button, ul.toolbar a.button, a.button');
+      for (const btn of addBtns) {
+        if ((btn.textContent || '').trim().toLowerCase() === 'add new') {
+          if (!btn.id) btn.id = 'ftc-mk5-btn-add-table';
+          break;
+        }
+      }
+    }
 
     // Hộp thoại thêm bảng định tuyến
     const trName = mkBai5Hang(doc, 'Name');
@@ -141,6 +219,17 @@ function mkBai5CaiTheoDoi(doc) {
       if (chk && !chk.id) chk.id = 'ftc-mk5-fib';
     }
 
+    // Nút Add New trên trang Routes
+    if (mkBai5ORoutes(doc)) {
+      const addBtns = doc.querySelectorAll('#toolbar a.button, ul.toolbar a.button, a.button');
+      for (const btn of addBtns) {
+        if ((btn.textContent || '').trim().toLowerCase() === 'add new') {
+          if (!btn.id) btn.id = 'ftc-mk5-btn-add-route';
+          break;
+        }
+      }
+    }
+
     // Hộp thoại thêm tuyến đường (Route)
     const trGw = mkBai5Hang(doc, 'Gateway');
     if (trGw) {
@@ -151,6 +240,25 @@ function mkBai5CaiTheoDoi(doc) {
     if (trRt) {
       const sel = trRt.querySelector('select, input');
       if (sel && !sel.id) sel.id = 'ftc-mk5-rt';
+    }
+
+    // Tab Mangle trên trang Firewall
+    for (const a of doc.querySelectorAll('a[href]')) {
+      if (a.getAttribute('href') === '#IP:Firewall.Mangle' && a.textContent.trim().toLowerCase() === 'mangle') {
+        if (!a.id) a.id = 'ftc-mk5-the-mangle';
+        break;
+      }
+    }
+
+    // Nút Add New trên trang Mangle
+    if (mkBai5OMangle(doc)) {
+      const addBtns = doc.querySelectorAll('#toolbar a.button, ul.toolbar a.button, a.button');
+      for (const btn of addBtns) {
+        if ((btn.textContent || '').trim().toLowerCase() === 'add new') {
+          if (!btn.id) btn.id = 'ftc-mk5-btn-add-mangle';
+          break;
+        }
+      }
     }
 
     // Hộp thoại thêm luật Mangle
@@ -179,29 +287,10 @@ function mkBai5CaiTheoDoi(doc) {
         break;
       }
     }
-
-    // Tab Mangle trên trang Firewall
-    for (const a of doc.querySelectorAll('a[href]')) {
-      if (a.getAttribute('href') === '#IP:Firewall.Mangle' && a.textContent.trim().toLowerCase() === 'mangle') {
-        if (!a.id) a.id = 'ftc-mk5-the-mangle';
-        break;
-      }
-    }
-
-    // Nút Add New trên trang Mangle
-    if (mkBai5OMangle(doc)) {
-      const addBtns = doc.querySelectorAll('#toolbar a.button, ul.toolbar a.button, a.button');
-      for (const btn of addBtns) {
-        if ((btn.textContent || '').trim().toLowerCase() === 'add new') {
-          if (!btn.id) btn.id = 'ftc-mk5-btn-add-mangle';
-          break;
-        }
-      }
-    }
   } catch (e) {}
 }
 
-/* ───────────────────────── Danh sách 21 Tooltip ───────────────────────── */
+/* ───────────────────────── Danh sách 37 Tooltip ───────────────────────── */
 
 window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   // ── Màn hình đăng nhập RouterOS ─────────────────────────────────────
@@ -218,14 +307,14 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     condition: function (doc) { return mkBai5ManDangNhap(doc); }
   },
 
-  // ══════════════ PHẦN 1: ROUTING > TABLES (Bước 1 ➔ 6) ══════════════
+  // ══════════════ PHẦN 1: ROUTING > TABLES (Bước 1 ➔ 10) ══════════════
   {
     selector: 'li#Routing span, #menu a[href="#Routing"], #id_Routing, text:Routing',
     text: 'Bước 1: Chọn menu Routing',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return !mkBai5ManDangNhap(doc) && !mkBai5Part1Xong(doc)
+      return !mkBai5ManDangNhap(doc) && !mkBai5TablesXong(doc)
         && !mkBai5OTables(doc) && !mkBai5OHopThoaiBang(doc)
         && !mkBai5MenuConHien(doc, 'Tables');
     }
@@ -236,27 +325,28 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return !mkBai5ManDangNhap(doc) && !mkBai5Part1Xong(doc)
+      return !mkBai5ManDangNhap(doc) && !mkBai5TablesXong(doc)
         && !mkBai5OTables(doc) && !mkBai5OHopThoaiBang(doc)
         && mkBai5MenuConHien(doc, 'Tables');
     }
   },
+  // Bảng 1: ra-wan1
   {
-    selector: 'a.button:has-text("Add New"), a[href="#Routing:Tables.new"], text:Add New',
-    text: 'Bước 3: Chọn Add New để tạo bảng định tuyến mới',
+    selector: '#ftc-mk5-btn-add-table, a.button:has-text("Add New"), a[href="#Routing:Tables.new"], text:Add New',
+    text: 'Bước 3: Chọn Add New để tạo bảng định tuyến 1 (ra-wan1)',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return !mkBai5ManDangNhap(doc) && !mkBai5Part1Xong(doc) && mkBai5OTables(doc);
+      return !mkBai5ManDangNhap(doc) && !mkBai5Table1Xong(doc) && mkBai5OTables(doc);
     }
   },
   {
     selector: '#ftc-mk5-name, tr:has-text("Name") input',
-    text: 'Bước 4: Nhập Name: ISP1',
+    text: 'Bước 4: Nhập Name: ra-wan1',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiBang(doc) && mkBai5GiaTri(doc, 'Name') !== 'ISP1';
+      return mkBai5OHopThoaiBang(doc) && !mkBai5Table1Xong(doc) && mkBai5GiaTri(doc, 'Name') !== 'ra-wan1';
     }
   },
   {
@@ -265,176 +355,366 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiBang(doc) && mkBai5GiaTri(doc, 'Name') === 'ISP1' && mkBai5GiaTri(doc, 'FIB') !== 'yes';
+      return mkBai5OHopThoaiBang(doc) && !mkBai5Table1Xong(doc) && mkBai5GiaTri(doc, 'Name') === 'ra-wan1' && mkBai5GiaTri(doc, 'FIB') !== 'yes';
     }
   },
   {
     selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 6: Nhấn OK để lưu bảng định tuyến ISP1',
+    text: 'Bước 6: Nhấn OK để lưu bảng ra-wan1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiBang(doc) && mkBai5GiaTri(doc, 'Name') === 'ISP1' && mkBai5GiaTri(doc, 'FIB') === 'yes';
+      return mkBai5OHopThoaiBang(doc) && !mkBai5Table1Xong(doc) && mkBai5GiaTri(doc, 'Name') === 'ra-wan1' && mkBai5GiaTri(doc, 'FIB') === 'yes';
     }
   },
-
-  // ══════════════ PHẦN 2: IP > ROUTES (Bước 7 ➔ 12) ══════════════════
+  // Chống sửa đè: nếu bảng 1 đã lưu xong mà form cũ vẫn đang mở, hướng dẫn bấm Cancel
   {
-    selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
-    text: 'Bước 7: Chọn menu IP',
+    selector: 'input[value="Cancel"], input[type="button"][value="Cancel"], a.button:has-text("Cancel"), text:Cancel',
+    text: 'Đã lưu bảng ra-wan1. Nhấn Cancel để quay lại danh sách bảng',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiBang(doc) && mkBai5Table1Xong(doc) && !mkBai5Table2Xong(doc) && mkBai5GiaTri(doc, 'Name') === 'ra-wan1';
+    }
+  },
+  // Bảng 2: ra-wan2
+  {
+    selector: '#ftc-mk5-btn-add-table, a.button:has-text("Add New"), a[href="#Routing:Tables.new"], text:Add New',
+    text: 'Bước 7: Tiếp tục chọn Add New để tạo bảng định tuyến 2 (ra-wan2)',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return !mkBai5ManDangNhap(doc) && mkBai5Table1Xong(doc) && !mkBai5Table2Xong(doc) && mkBai5OTables(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk5-name, tr:has-text("Name") input',
+    text: 'Bước 8: Nhập Name: ra-wan2',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5Part1Xong(doc) && !mkBai5Part2Xong(doc)
+      return mkBai5OHopThoaiBang(doc) && mkBai5Table1Xong(doc) && !mkBai5Table2Xong(doc)
+        && mkBai5GiaTri(doc, 'Name') !== 'ra-wan1'
+        && mkBai5GiaTri(doc, 'Name') !== 'ra-wan2';
+    }
+  },
+  {
+    selector: '#ftc-mk5-fib, tr:has-text("FIB") input[type="checkbox"]',
+    text: 'Bước 9: Tích chọn ô FIB',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiBang(doc) && mkBai5Table1Xong(doc) && !mkBai5Table2Xong(doc) && mkBai5GiaTri(doc, 'Name') === 'ra-wan2' && mkBai5GiaTri(doc, 'FIB') !== 'yes';
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 10: Nhấn OK để lưu bảng ra-wan2',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiBang(doc) && mkBai5Table1Xong(doc) && !mkBai5Table2Xong(doc) && mkBai5GiaTri(doc, 'Name') === 'ra-wan2' && mkBai5GiaTri(doc, 'FIB') === 'yes';
+    }
+  },
+
+  // ══════════════ PHẦN 2: IP > FIREWALL > MANGLE (Bước 11 ➔ 27) ════════
+  {
+    selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
+    text: 'Bước 11: Chọn menu IP',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5TablesXong(doc) && !mkBai5ManglesXong(doc)
+        && !mkBai5OFirewall(doc) && !mkBai5MenuConHien(doc, 'Firewall');
+    }
+  },
+  {
+    selector: 'a[href="#IP:Firewall"], text:Firewall',
+    text: 'Bước 12: Chọn mục Firewall',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5TablesXong(doc) && !mkBai5ManglesXong(doc)
+        && !mkBai5OFirewall(doc) && mkBai5MenuConHien(doc, 'Firewall');
+    }
+  },
+  {
+    selector: '#ftc-mk5-the-mangle, a[href="#IP:Firewall.Mangle"], text:Mangle',
+    text: 'Bước 13: Chọn tab Mangle',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5TablesXong(doc) && !mkBai5ManglesXong(doc)
+        && mkBai5OFirewall(doc) && !mkBai5OMangle(doc) && !mkBai5OHopThoaiMangle(doc);
+    }
+  },
+
+  // Mangle 1: PC 1 (192.168.1.100 -> ra-wan1)
+  {
+    selector: '#ftc-mk5-btn-add-mangle, #toolbar a.button:has-text("Add New"), a.button:has-text("Add New")',
+    text: 'Bước 14: Chọn Add New để tạo luật Mangle cho PC 1',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5TablesXong(doc) && !mkBai5Mangle1Xong(doc) && mkBai5OMangle(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk5-src-btn, tr:has-text("Src. Address") a.sbtn',
+    text: 'Bước 15: Bấm mở khóa ô Src. Address',
+    position: 'left',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && !mkBai5Mangle1Xong(doc) && !mkBai5DaMoKhoa(doc, 'Src. Address');
+    }
+  },
+  {
+    selector: '#ftc-mk5-src, tr:has-text("Src. Address") input',
+    text: 'Bước 16: Nhập Src. Address: 192.168.1.100',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && !mkBai5Mangle1Xong(doc) && mkBai5DaMoKhoa(doc, 'Src. Address') && mkBai5GiaTri(doc, 'Src. Address') !== '192.168.1.100';
+    }
+  },
+  {
+    selector: '#ftc-mk5-sep-action, td.sep:has-text("Action"), text:Action',
+    text: 'Bước 17: Nhấn khối Action để mở rộng tùy chọn Action',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && !mkBai5Mangle1Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.100' && !mkBai5KhoiActionDaMo(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk5-action, tr:has-text("Action") select',
+    text: 'Bước 18: Chọn Action: mark routing',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && !mkBai5Mangle1Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.100'
+        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') !== 'mark routing';
+    }
+  },
+  {
+    selector: '#ftc-mk5-mark, tr:has-text("New Routing Mark") input, tr:has-text("New Routing Mark") select',
+    text: 'Bước 19: Chọn New Routing Mark: ra-wan1',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && !mkBai5Mangle1Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.100'
+        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
+        && mkBai5GiaTri(doc, 'New Routing Mark') !== 'ra-wan1' && mkBai5GiaTri(doc, 'New Routing Mark') !== 'ISP1';
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 20: Nhấn OK để lưu luật Mangle cho PC 1',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && !mkBai5Mangle1Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.100'
+        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
+        && (mkBai5GiaTri(doc, 'New Routing Mark') === 'ra-wan1' || mkBai5GiaTri(doc, 'New Routing Mark') === 'ISP1');
+    }
+  },
+  // Chống sửa đè Mangle 1:
+  {
+    selector: 'input[value="Cancel"], input[type="button"][value="Cancel"], a.button:has-text("Cancel"), text:Cancel',
+    text: 'Đã lưu Mangle PC 1. Nhấn Cancel để quay lại danh sách luật',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.100';
+    }
+  },
+
+  // Mangle 2: PC 2 (192.168.1.101 -> ra-wan2)
+  {
+    selector: '#ftc-mk5-btn-add-mangle, #toolbar a.button:has-text("Add New"), a.button:has-text("Add New")',
+    text: 'Bước 21: Tiếp tục chọn Add New để tạo luật Mangle cho PC 2',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5TablesXong(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc) && mkBai5OMangle(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk5-src-btn, tr:has-text("Src. Address") a.sbtn',
+    text: 'Bước 22: Bấm mở khóa ô Src. Address',
+    position: 'left',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc)
+        && mkBai5GiaTri(doc, 'Src. Address') !== '192.168.1.100'
+        && !mkBai5DaMoKhoa(doc, 'Src. Address');
+    }
+  },
+  {
+    selector: '#ftc-mk5-src, tr:has-text("Src. Address") input',
+    text: 'Bước 23: Nhập Src. Address: 192.168.1.101',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc)
+        && mkBai5GiaTri(doc, 'Src. Address') !== '192.168.1.100'
+        && mkBai5DaMoKhoa(doc, 'Src. Address') && mkBai5GiaTri(doc, 'Src. Address') !== '192.168.1.101';
+    }
+  },
+  {
+    selector: '#ftc-mk5-sep-action, td.sep:has-text("Action"), text:Action',
+    text: 'Bước 24: Nhấn khối Action để mở rộng tùy chọn Action',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.101' && !mkBai5KhoiActionDaMo(doc);
+    }
+  },
+  {
+    selector: '#ftc-mk5-action, tr:has-text("Action") select',
+    text: 'Bước 25: Chọn Action: mark routing',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.101'
+        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') !== 'mark routing';
+    }
+  },
+  {
+    selector: '#ftc-mk5-mark, tr:has-text("New Routing Mark") input, tr:has-text("New Routing Mark") select',
+    text: 'Bước 26: Chọn New Routing Mark: ra-wan2',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.101'
+        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
+        && mkBai5GiaTri(doc, 'New Routing Mark') !== 'ra-wan2';
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 27: Nhấn OK để lưu luật Mangle cho PC 2',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.101'
+        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
+        && mkBai5GiaTri(doc, 'New Routing Mark') === 'ra-wan2';
+    }
+  },
+
+  // ══════════════ PHẦN 3: IP > ROUTES (Bước 28 ➔ 37) ══════════════════
+  {
+    selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
+    text: 'Bước 28: Chọn menu IP',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5ManglesXong(doc) && !mkBai5RoutesXong(doc)
         && !mkBai5ORoutes(doc) && !mkBai5OHopThoaiTuyen(doc)
         && !mkBai5MenuConHien(doc, 'Routes');
     }
   },
   {
     selector: 'a[href="#IP:Routes"], text:Routes',
-    text: 'Bước 8: Chọn mục Routes',
+    text: 'Bước 29: Chọn mục Routes',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5Part1Xong(doc) && !mkBai5Part2Xong(doc)
+      return mkBai5ManglesXong(doc) && !mkBai5RoutesXong(doc)
         && !mkBai5ORoutes(doc) && !mkBai5OHopThoaiTuyen(doc)
         && mkBai5MenuConHien(doc, 'Routes');
     }
   },
+  // Tuyến 1: WAN 1 (pppoe-out1 / 1.1.1.1 trỏ ra-wan1)
   {
-    selector: 'a.button:has-text("Add New"), a[href="#IP:Routes.new"], text:Add New',
-    text: 'Bước 9: Chọn Add New để tạo tuyến đường mới',
+    selector: '#ftc-mk5-btn-add-route, a.button:has-text("Add New"), a[href="#IP:Routes.new"], text:Add New',
+    text: 'Bước 30: Chọn Add New để tạo tuyến đường cho WAN 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5Part1Xong(doc) && !mkBai5Part2Xong(doc) && mkBai5ORoutes(doc);
+      return mkBai5ManglesXong(doc) && !mkBai5Route1Xong(doc) && mkBai5ORoutes(doc);
     }
   },
   {
     selector: '#ftc-mk5-gw, tr:has-text("Gateway") input',
-    text: 'Bước 10: Nhập Gateway: 1.1.1.1',
+    text: 'Bước 31: Nhập Gateway: pppoe-out1 (hoặc 1.1.1.1)',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiTuyen(doc) && mkBai5GiaTri(doc, 'Gateway') !== '1.1.1.1';
+      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc) && !mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'));
     }
   },
   {
     selector: '#ftc-mk5-rt, tr:has-text("Routing Table") select',
-    text: 'Bước 11: Chọn Routing Table: ISP1',
+    text: 'Bước 32: Chọn Routing Table: ra-wan1',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiTuyen(doc) && mkBai5GiaTri(doc, 'Gateway') === '1.1.1.1' && mkBai5GiaTri(doc, 'Routing Table') !== 'ISP1';
+      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc) && mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
+        && mkBai5GiaTri(doc, 'Routing Table') !== 'ra-wan1' && mkBai5GiaTri(doc, 'Routing Table') !== 'ISP1';
     }
   },
   {
     selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 12: Nhấn OK để lưu tuyến đường',
+    text: 'Bước 33: Nhấn OK để lưu tuyến đường WAN 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiTuyen(doc) && mkBai5GiaTri(doc, 'Gateway') === '1.1.1.1' && mkBai5GiaTri(doc, 'Routing Table') === 'ISP1';
+      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc) && mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
+        && (mkBai5GiaTri(doc, 'Routing Table') === 'ra-wan1' || mkBai5GiaTri(doc, 'Routing Table') === 'ISP1');
+    }
+  },
+  // Chống sửa đè Route 1:
+  {
+    selector: 'input[value="Cancel"], input[type="button"][value="Cancel"], a.button:has-text("Cancel"), text:Cancel',
+    text: 'Đã lưu Route WAN 1. Nhấn Cancel để quay lại danh sách tuyến',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc) && mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'));
     }
   },
 
-  // ══════════════ PHẦN 3: IP > FIREWALL > MANGLE (Bước 13 ➔ 21) ════════
+  // Tuyến 2: WAN 2 (pppoe-out2 / 2.2.2.2 trỏ ra-wan2)
   {
-    selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
-    text: 'Bước 13: Chọn menu IP',
-    position: 'right',
-    condition: function (doc) {
-      mkBai5CaiTheoDoi(doc);
-      return mkBai5Part2Xong(doc) && !mkBai5Part3Xong(doc)
-        && !mkBai5OFirewall(doc) && !mkBai5MenuConHien(doc, 'Firewall');
-    }
-  },
-  {
-    selector: 'a[href="#IP:Firewall"], text:Firewall',
-    text: 'Bước 14: Chọn mục Firewall',
-    position: 'right',
-    condition: function (doc) {
-      mkBai5CaiTheoDoi(doc);
-      return mkBai5Part2Xong(doc) && !mkBai5Part3Xong(doc)
-        && !mkBai5OFirewall(doc) && mkBai5MenuConHien(doc, 'Firewall');
-    }
-  },
-  {
-    selector: '#ftc-mk5-the-mangle, a[href="#IP:Firewall.Mangle"], text:Mangle',
-    text: 'Bước 15: Chọn tab Mangle',
+    selector: '#ftc-mk5-btn-add-route, a.button:has-text("Add New"), a[href="#IP:Routes.new"], text:Add New',
+    text: 'Bước 34: Tiếp tục chọn Add New để tạo tuyến đường cho WAN 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5Part2Xong(doc) && !mkBai5Part3Xong(doc)
-        && mkBai5OFirewall(doc) && !mkBai5OMangle(doc) && !mkBai5OHopThoaiMangle(doc);
+      return mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc) && mkBai5ORoutes(doc);
     }
   },
   {
-    selector: '#ftc-mk5-btn-add-mangle, #toolbar a.button:has-text("Add New"), a.button:has-text("Add New")',
-    text: 'Bước 16: Chọn Add New để tạo luật Mangle mới',
-    position: 'bottom',
-    condition: function (doc) {
-      mkBai5CaiTheoDoi(doc);
-      return mkBai5Part2Xong(doc) && !mkBai5Part3Xong(doc) && mkBai5OMangle(doc);
-    }
-  },
-  {
-    selector: '#ftc-mk5-src-btn, tr:has-text("Src. Address") a.sbtn',
-    text: 'Bước 17: Bấm mở khóa ô Src. Address',
-    position: 'left',
-    condition: function (doc) {
-      mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiMangle(doc) && !mkBai5DaMoKhoa(doc, 'Src. Address');
-    }
-  },
-  {
-    selector: '#ftc-mk5-src, tr:has-text("Src. Address") input',
-    text: 'Bước 17: Nhập Src. Address: 192.168.1.0/24',
+    selector: '#ftc-mk5-gw, tr:has-text("Gateway") input',
+    text: 'Bước 35: Nhập Gateway: pppoe-out2 (hoặc 2.2.2.2)',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiMangle(doc) && mkBai5DaMoKhoa(doc, 'Src. Address') && mkBai5GiaTri(doc, 'Src. Address') !== '192.168.1.0/24';
+      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc)
+        && !mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
+        && !mkBai5GwHopLe2(mkBai5GiaTri(doc, 'Gateway'));
     }
   },
   {
-    selector: '#ftc-mk5-sep-action, td.sep:has-text("Action"), text:Action',
-    text: 'Bước 18: Nhấn khối Action để mở rộng tùy chọn Action',
-    position: 'bottom',
-    condition: function (doc) {
-      mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiMangle(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.0/24' && !mkBai5KhoiActionDaMo(doc);
-    }
-  },
-  {
-    selector: '#ftc-mk5-action, tr:has-text("Action") select',
-    text: 'Bước 19: Chọn Action: mark routing',
+    selector: '#ftc-mk5-rt, tr:has-text("Routing Table") select',
+    text: 'Bước 36: Chọn Routing Table: ra-wan2',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiMangle(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.0/24'
-        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') !== 'mark routing';
-    }
-  },
-  {
-    selector: '#ftc-mk5-mark, tr:has-text("New Routing Mark") input, tr:has-text("New Routing Mark") select',
-    text: 'Bước 20: Chọn New Routing Mark: ISP1',
-    position: 'right',
-    condition: function (doc) {
-      mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiMangle(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.0/24'
-        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
-        && mkBai5GiaTri(doc, 'New Routing Mark') !== 'ISP1';
+      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc) && mkBai5GwHopLe2(mkBai5GiaTri(doc, 'Gateway'))
+        && mkBai5GiaTri(doc, 'Routing Table') !== 'ra-wan2';
     }
   },
   {
     selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 21: Nhấn OK để lưu luật Mangle và hoàn thành bài tập',
+    text: 'Bước 37: Nhấn OK để lưu tuyến đường WAN 2 và hoàn thành bài tập',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiMangle(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.0/24'
-        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
-        && mkBai5GiaTri(doc, 'New Routing Mark') === 'ISP1';
+      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc) && mkBai5GwHopLe2(mkBai5GiaTri(doc, 'Gateway'))
+        && mkBai5GiaTri(doc, 'Routing Table') === 'ra-wan2';
     }
   }
 ];
