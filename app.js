@@ -2982,8 +2982,14 @@
       try { window.mkBai4Reset(); } catch (error) { }
     }
     window._FTC_MK5_BANG_SAVED = false;
+    window._FTC_MK5_BANG1_SAVED = false;
+    window._FTC_MK5_BANG2_SAVED = false;
     window._FTC_MK5_ROUTE_SAVED = false;
+    window._FTC_MK5_ROUTE1_SAVED = false;
+    window._FTC_MK5_ROUTE2_SAVED = false;
     window._FTC_MK5_MANGLE_SAVED = false;
+    window._FTC_MK5_MANGLE1_SAVED = false;
+    window._FTC_MK5_MANGLE2_SAVED = false;
     window._FTC_MK5_DS_BANG = null;
     window._FTC_MK5_DS_TUYEN = null;
     window._FTC_MK5_DS_MANGLE = null;
