@@ -94,6 +94,22 @@ def render_wlan_ssid_data(xml):
     xml = _update_instance_by_inst_id(xml, "OBJ_WLANPSK_ID", "DEV.WIFI.AP1.PSK1", {
         "KeyPassphrase": KHO.doc("wlan24.password", "fpttelecom@2026"),
     })
+        # AP4 (SSID4 - 2.4GHz IoT)
+    xml = _update_instance_by_inst_id(xml, "OBJ_WLANAP_ID", "DEV.WIFI.AP4", {
+        "Enable": KHO.doc("wlan24_ssid4.enable", "0"),
+        "ESSID": KHO.doc("wlan24_ssid4.ssid", "SSID4"),
+        "ESSIDHideEnable": KHO.doc("wlan24_ssid4.hide", "0"),
+        "BeaconType": KHO.doc("wlan24_ssid4.beacon_type", "11i"),
+        "11iAuthMode": KHO.doc("wlan24_ssid4.auth_11i", "PSKAuthentication"),
+        "11iEncryptType": KHO.doc("wlan24_ssid4.encrypt_11i", "AESEncryption"),
+        "WPAAuthMode": KHO.doc("wlan24_ssid4.auth_wpa", "PSKAuthentication"),
+        "WPAEncryptType": KHO.doc("wlan24_ssid4.encrypt_wpa", "TKIPandAESEncryption"),
+        "WPA3AuthMode": KHO.doc("wlan24_ssid4.auth_wpa3", "SAEAuthentication"),
+        "WPA3EncryptType": KHO.doc("wlan24_ssid4.encrypt_wpa3", "AESEncryption"),
+    })
+    xml = _update_instance_by_inst_id(xml, "OBJ_WLANPSK_ID", "DEV.WIFI.AP4.PSK1", {
+        "KeyPassphrase": KHO.doc("wlan24_ssid4.password", "fpttelecom@2026"),
+    })
     # AP2 (SSID2 - 2.4GHz IoT)
     xml = _update_instance_by_inst_id(xml, "OBJ_WLANAP_ID", "DEV.WIFI.AP2", {
         "Enable": KHO.doc("wlan24_ssid2.enable", "0"),

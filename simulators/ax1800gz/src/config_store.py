@@ -84,6 +84,20 @@ CAU_HINH_GOC = {
         "auth_wpa3": "SAEAuthentication",
         "encrypt_wpa3": "AESEncryption"
     },
+    "wlan24_ssid4": {
+        "enable": "0",
+        "ssid": "SSID4",
+        "hide": "0",
+        "security": "WPA2-PSK-AES",
+        "password": "fpttelecom@2026",
+        "beacon_type": "11i",
+        "auth_11i": "PSKAuthentication",
+        "encrypt_11i": "AESEncryption",
+        "auth_wpa": "PSKAuthentication",
+        "encrypt_wpa": "TKIPandAESEncryption",
+        "auth_wpa3": "SAEAuthentication",
+        "encrypt_wpa3": "AESEncryption"
+    },
     "wlan24_ssid2": {
         "enable": "0",
         "ssid": "SSID2",

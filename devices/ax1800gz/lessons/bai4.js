@@ -117,7 +117,7 @@ var lessonData = {
           {
             id: 'secondary_dns',
             name: 'Secondary DNS',
-            expected: '8.8.4.4',
+            expected: '8.8.4.4 (hoặc 8.8.8.8)',
             actual: (dns2 || '(Trống)') + (isDuplicate ? ' (Trùng Primary DNS)' : (!isSaved ? ' (Chưa lưu)' : '')),
             passed: dns2Passed && isSaved,
             message: d2Msg

@@ -44,7 +44,7 @@ window.TOOLTIPS_AX1800GZ['LAB_AX1800GZ_04'] = [
   },
   {
     selector: '#sub_DNSServer23:not(:disabled), input[name="sub_DNSServer23"]:not(:disabled)',
-    text: 'Bước 6: Nhập Secondary DNS: 8.8.4.4 ',
+    text: 'Bước 6: Nhập Secondary DNS: 8.8.4.4 hoặc 8.8.8.8 (Lưu ý: Không trùng Primary DNS)',
     position: 'right',
     condition: function (doc) {
       var p1 = [];
@@ -62,7 +62,7 @@ window.TOOLTIPS_AX1800GZ['LAB_AX1800GZ_04'] = [
         p2.push(el2 ? el2.value.trim() : '');
       }
       var ip2 = p2.join('.');
-      var valid2 = ['8.8.4.4', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
+      var valid2 = ['8.8.4.4', '8.8.8.8', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
       return valid2.indexOf(ip2) === -1 || ip2 === ip1;
     }
   },
@@ -85,7 +85,7 @@ window.TOOLTIPS_AX1800GZ['LAB_AX1800GZ_04'] = [
         var el2 = doc.querySelector('#sub_DNSServer2' + k) || doc.querySelector('input[name="sub_DNSServer2' + k + '"]');
         p2.push(el2 ? el2.value.trim() : '');
       }
-      var valid2 = ['8.8.4.4', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
+      var valid2 = ['8.8.4.4', '8.8.8.8', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
       var ip2 = p2.join('.');
       if (valid2.indexOf(ip2) === -1) return false;
 

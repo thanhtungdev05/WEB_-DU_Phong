@@ -436,6 +436,8 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
                 inst_id = pval("_InstID", "DEV.WIFI.AP1")
                 if inst_id == "DEV.WIFI.AP2":
                     prefix = "wlan24_ssid2"
+                elif inst_id == "DEV.WIFI.AP4":
+                    prefix = "wlan24_ssid4"
                 elif inst_id == "DEV.WIFI.AP5":
                     prefix = "wlan5"
                 else:

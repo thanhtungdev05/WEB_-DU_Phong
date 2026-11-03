@@ -1,16 +1,16 @@
 /**
  * devices/mikrotik_hexs/tooltips/bai5.js — Tooltip Hướng dẫn Bài 5: Cấu hình Policy Routing
  *
- * Chuỗi 37 bước tuần tự chuẩn thực tế theo sơ đồ Policy Based Routing (PBR) 2-PC / 2-WAN:
+ * Chuỗi 43 bước tuần tự chuẩn thực tế theo sơ đồ Policy Based Routing (PBR) 2-PC / 2-WAN:
  *   Phần 1: Routing > Tables (Bước 1 ➔ 10):
  *       - Tạo bảng ra-wan1 (fib: yes)
  *       - Tạo bảng ra-wan2 (fib: yes)
- *   Phần 2: IP > Firewall > Mangle (Bước 11 ➔ 27):
- *       - Tạo luật Mangle cho PC 1: Src. Address 192.168.1.100 -> New Routing Mark: ra-wan1
- *       - Tạo luật Mangle cho PC 2: Src. Address 192.168.1.101 -> New Routing Mark: ra-wan2
- *   Phần 3: IP > Routes (Bước 28 ➔ 37):
- *       - Tạo Default Route cho WAN 1: Gateway pppoe-out1 (hoặc 1.1.1.1) -> Routing Table: ra-wan1
- *       - Tạo Default Route cho WAN 2: Gateway pppoe-out2 (hoặc 2.2.2.2) -> Routing Table: ra-wan2
+ *   Phần 2: IP > Firewall > Mangle (Bước 11 ➔ 29):
+ *       - Tạo luật Mangle cho PC 1: Src. Address 192.168.1.100 -> New Routing Mark: ra-wan1 -> Apply -> OK
+ *       - Tạo luật Mangle cho PC 2: Src. Address 192.168.1.101 -> New Routing Mark: ra-wan2 -> Apply -> OK
+ *   Phần 3: IP > Routes (Bước 30 ➔ 43):
+ *       - Tạo Default Route cho WAN 1: Dst. Address 0.0.0.0/0 -> Gateway %pppoe-out1 -> Routing Table: ra-wan1 -> Apply -> OK
+ *       - Tạo Default Route cho WAN 2: Dst. Address 0.0.0.0/0 -> Gateway %pppoe-out2 -> Routing Table: ra-wan2 -> Apply -> OK
  *
  * NGUYÊN TẮC BẤT BIẾN:
  * 1. Chuyển bước nghiêm ngặt: bước trước cấu hình xong nhập đúng thì mới chuyển sang bước sau.
@@ -117,13 +117,13 @@ function mkBai5GiaTri(doc, nhan) {
 function mkBai5GwHopLe1(gw) {
   if (!gw) return false;
   const s = gw.toLowerCase().trim();
-  return s === 'pppoe-out1' || s === '1.1.1.1' || s === 'ether1';
+  return s === '%pppoe-out1' || s === 'pppoe-out1';
 }
 
 function mkBai5GwHopLe2(gw) {
   if (!gw) return false;
   const s = gw.toLowerCase().trim();
-  return s === 'pppoe-out2' || s === '2.2.2.2' || s === 'ether2';
+  return s === '%pppoe-out2' || s === 'pppoe-out2';
 }
 
 function mkBai5Table1Xong(doc) {
@@ -231,6 +231,11 @@ function mkBai5CaiTheoDoi(doc) {
     }
 
     // Hộp thoại thêm tuyến đường (Route)
+    const trDst = mkBai5Hang(doc, 'Dst. Address');
+    if (trDst) {
+      const inp = trDst.querySelector('input');
+      if (inp && !inp.id) inp.id = 'ftc-mk5-dst';
+    }
     const trGw = mkBai5Hang(doc, 'Gateway');
     if (trGw) {
       const inp = trGw.querySelector('input');
@@ -290,7 +295,7 @@ function mkBai5CaiTheoDoi(doc) {
   } catch (e) {}
 }
 
-/* ───────────────────────── Danh sách 37 Tooltip ───────────────────────── */
+/* ───────────────────────── Danh sách 43 Tooltip ───────────────────────── */
 
 window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   // ── Màn hình đăng nhập RouterOS ─────────────────────────────────────
@@ -417,7 +422,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     }
   },
 
-  // ══════════════ PHẦN 2: IP > FIREWALL > MANGLE (Bước 11 ➔ 27) ════════
+  // ══════════════ PHẦN 2: IP > FIREWALL > MANGLE (Bước 11 ➔ 29) ════════
   {
     selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
     text: 'Bước 11: Chọn menu IP',
@@ -508,14 +513,27 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     }
   },
   {
-    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 20: Nhấn OK để lưu luật Mangle cho PC 1',
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 20: Nhấn Apply để lưu cấu hình luật PC 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
       return mkBai5OHopThoaiMangle(doc) && !mkBai5Mangle1Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.100'
         && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
-        && (mkBai5GiaTri(doc, 'New Routing Mark') === 'ra-wan1' || mkBai5GiaTri(doc, 'New Routing Mark') === 'ISP1');
+        && (mkBai5GiaTri(doc, 'New Routing Mark') === 'ra-wan1' || mkBai5GiaTri(doc, 'New Routing Mark') === 'ISP1')
+        && !window._FTC_MK5_MANGLE1_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 21: Nhấn OK để đóng cửa sổ luật Mangle PC 1',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && !mkBai5Mangle1Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.100'
+        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
+        && (mkBai5GiaTri(doc, 'New Routing Mark') === 'ra-wan1' || mkBai5GiaTri(doc, 'New Routing Mark') === 'ISP1')
+        && !!window._FTC_MK5_MANGLE1_APPLIED;
     }
   },
   // Chống sửa đè Mangle 1:
@@ -532,7 +550,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   // Mangle 2: PC 2 (192.168.1.101 -> ra-wan2)
   {
     selector: '#ftc-mk5-btn-add-mangle, #toolbar a.button:has-text("Add New"), a.button:has-text("Add New")',
-    text: 'Bước 21: Tiếp tục chọn Add New để tạo luật Mangle cho PC 2',
+    text: 'Bước 22: Tiếp tục chọn Add New để tạo luật Mangle cho PC 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -541,7 +559,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-src-btn, tr:has-text("Src. Address") a.sbtn',
-    text: 'Bước 22: Bấm mở khóa ô Src. Address',
+    text: 'Bước 23: Bấm mở khóa ô Src. Address',
     position: 'left',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -552,7 +570,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-src, tr:has-text("Src. Address") input',
-    text: 'Bước 23: Nhập Src. Address: 192.168.1.101',
+    text: 'Bước 24: Nhập Src. Address: 192.168.1.101',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -563,7 +581,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-sep-action, td.sep:has-text("Action"), text:Action',
-    text: 'Bước 24: Nhấn khối Action để mở rộng tùy chọn Action',
+    text: 'Bước 25: Nhấn khối Action để mở rộng tùy chọn Action',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -572,7 +590,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-action, tr:has-text("Action") select',
-    text: 'Bước 25: Chọn Action: mark routing',
+    text: 'Bước 26: Chọn Action: mark routing',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -582,7 +600,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-mark, tr:has-text("New Routing Mark") input, tr:has-text("New Routing Mark") select',
-    text: 'Bước 26: Chọn New Routing Mark: ra-wan2',
+    text: 'Bước 27: Chọn New Routing Mark: ra-wan2',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -592,21 +610,34 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     }
   },
   {
-    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 27: Nhấn OK để lưu luật Mangle cho PC 2',
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 28: Nhấn Apply để lưu cấu hình luật PC 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
       return mkBai5OHopThoaiMangle(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.101'
         && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
-        && mkBai5GiaTri(doc, 'New Routing Mark') === 'ra-wan2';
+        && mkBai5GiaTri(doc, 'New Routing Mark') === 'ra-wan2'
+        && !window._FTC_MK5_MANGLE2_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 29: Nhấn OK để đóng cửa sổ luật Mangle PC 2',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiMangle(doc) && mkBai5Mangle1Xong(doc) && !mkBai5Mangle2Xong(doc) && mkBai5GiaTri(doc, 'Src. Address') === '192.168.1.101'
+        && mkBai5KhoiActionDaMo(doc) && mkBai5GiaTri(doc, 'Action') === 'mark routing'
+        && mkBai5GiaTri(doc, 'New Routing Mark') === 'ra-wan2'
+        && !!window._FTC_MK5_MANGLE2_APPLIED;
     }
   },
 
-  // ══════════════ PHẦN 3: IP > ROUTES (Bước 28 ➔ 37) ══════════════════
+  // ══════════════ PHẦN 3: IP > ROUTES (Bước 30 ➔ 43) ══════════════════
   {
     selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
-    text: 'Bước 28: Chọn menu IP',
+    text: 'Bước 30: Chọn menu IP',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -617,7 +648,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'a[href="#IP:Routes"], text:Routes',
-    text: 'Bước 29: Chọn mục Routes',
+    text: 'Bước 31: Chọn mục Routes',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -626,10 +657,10 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
         && mkBai5MenuConHien(doc, 'Routes');
     }
   },
-  // Tuyến 1: WAN 1 (pppoe-out1 / 1.1.1.1 trỏ ra-wan1)
+  // Tuyến 1: WAN 1 (%pppoe-out1 trỏ ra-wan1)
   {
     selector: '#ftc-mk5-btn-add-route, a.button:has-text("Add New"), a[href="#IP:Routes.new"], text:Add New',
-    text: 'Bước 30: Chọn Add New để tạo tuyến đường cho WAN 1',
+    text: 'Bước 32: Chọn Add New để tạo tuyến đường cho WAN 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -637,32 +668,61 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     }
   },
   {
-    selector: '#ftc-mk5-gw, tr:has-text("Gateway") input',
-    text: 'Bước 31: Nhập Gateway: pppoe-out1 (hoặc 1.1.1.1)',
+    selector: '#ftc-mk5-dst, tr:has-text("Dst. Address") input',
+    text: 'Bước 33: Nhập Dst. Address: 0.0.0.0/0',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc) && !mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'));
+      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc) && mkBai5GiaTri(doc, 'Dst. Address') !== '0.0.0.0/0';
+    }
+  },
+  {
+    selector: '#ftc-mk5-gw, tr:has-text("Gateway") input',
+    text: 'Bước 34: Nhập Gateway: %pppoe-out1',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc)
+        && mkBai5GiaTri(doc, 'Dst. Address') === '0.0.0.0/0'
+        && !mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'));
     }
   },
   {
     selector: '#ftc-mk5-rt, tr:has-text("Routing Table") select',
-    text: 'Bước 32: Chọn Routing Table: ra-wan1',
+    text: 'Bước 35: Chọn Routing Table: ra-wan1',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc) && mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
+      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc)
+        && mkBai5GiaTri(doc, 'Dst. Address') === '0.0.0.0/0'
+        && mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
         && mkBai5GiaTri(doc, 'Routing Table') !== 'ra-wan1' && mkBai5GiaTri(doc, 'Routing Table') !== 'ISP1';
     }
   },
   {
-    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 33: Nhấn OK để lưu tuyến đường WAN 1',
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 36: Nhấn Apply để lưu cấu hình tuyến WAN 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc) && mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
-        && (mkBai5GiaTri(doc, 'Routing Table') === 'ra-wan1' || mkBai5GiaTri(doc, 'Routing Table') === 'ISP1');
+      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc)
+        && mkBai5GiaTri(doc, 'Dst. Address') === '0.0.0.0/0'
+        && mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
+        && (mkBai5GiaTri(doc, 'Routing Table') === 'ra-wan1' || mkBai5GiaTri(doc, 'Routing Table') === 'ISP1')
+        && !window._FTC_MK5_ROUTE1_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 37: Nhấn OK để đóng cửa sổ tuyến WAN 1',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiTuyen(doc) && !mkBai5Route1Xong(doc)
+        && mkBai5GiaTri(doc, 'Dst. Address') === '0.0.0.0/0'
+        && mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
+        && (mkBai5GiaTri(doc, 'Routing Table') === 'ra-wan1' || mkBai5GiaTri(doc, 'Routing Table') === 'ISP1')
+        && !!window._FTC_MK5_ROUTE1_APPLIED;
     }
   },
   // Chống sửa đè Route 1:
@@ -676,10 +736,10 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     }
   },
 
-  // Tuyến 2: WAN 2 (pppoe-out2 / 2.2.2.2 trỏ ra-wan2)
+  // Tuyến 2: WAN 2 (%pppoe-out2 trỏ ra-wan2)
   {
     selector: '#ftc-mk5-btn-add-route, a.button:has-text("Add New"), a[href="#IP:Routes.new"], text:Add New',
-    text: 'Bước 34: Tiếp tục chọn Add New để tạo tuyến đường cho WAN 2',
+    text: 'Bước 38: Tiếp tục chọn Add New để tạo tuyến đường cho WAN 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -687,34 +747,64 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     }
   },
   {
-    selector: '#ftc-mk5-gw, tr:has-text("Gateway") input',
-    text: 'Bước 35: Nhập Gateway: pppoe-out2 (hoặc 2.2.2.2)',
+    selector: '#ftc-mk5-dst, tr:has-text("Dst. Address") input',
+    text: 'Bước 39: Nhập Dst. Address: 0.0.0.0/0',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
       return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc)
+        && !mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
+        && mkBai5GiaTri(doc, 'Dst. Address') !== '0.0.0.0/0';
+    }
+  },
+  {
+    selector: '#ftc-mk5-gw, tr:has-text("Gateway") input',
+    text: 'Bước 40: Nhập Gateway: %pppoe-out2',
+    position: 'right',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc)
+        && mkBai5GiaTri(doc, 'Dst. Address') === '0.0.0.0/0'
         && !mkBai5GwHopLe1(mkBai5GiaTri(doc, 'Gateway'))
         && !mkBai5GwHopLe2(mkBai5GiaTri(doc, 'Gateway'));
     }
   },
   {
     selector: '#ftc-mk5-rt, tr:has-text("Routing Table") select',
-    text: 'Bước 36: Chọn Routing Table: ra-wan2',
+    text: 'Bước 41: Chọn Routing Table: ra-wan2',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc) && mkBai5GwHopLe2(mkBai5GiaTri(doc, 'Gateway'))
+      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc)
+        && mkBai5GiaTri(doc, 'Dst. Address') === '0.0.0.0/0'
+        && mkBai5GwHopLe2(mkBai5GiaTri(doc, 'Gateway'))
         && mkBai5GiaTri(doc, 'Routing Table') !== 'ra-wan2';
     }
   },
   {
-    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 37: Nhấn OK để lưu tuyến đường WAN 2 và hoàn thành bài tập',
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 42: Nhấn Apply để lưu cấu hình tuyến WAN 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc) && mkBai5GwHopLe2(mkBai5GiaTri(doc, 'Gateway'))
-        && mkBai5GiaTri(doc, 'Routing Table') === 'ra-wan2';
+      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc)
+        && mkBai5GiaTri(doc, 'Dst. Address') === '0.0.0.0/0'
+        && mkBai5GwHopLe2(mkBai5GiaTri(doc, 'Gateway'))
+        && mkBai5GiaTri(doc, 'Routing Table') === 'ra-wan2'
+        && !window._FTC_MK5_ROUTE2_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 43: Nhấn OK để đóng cửa sổ tuyến WAN 2 và hoàn thành bài tập',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiTuyen(doc) && mkBai5Route1Xong(doc) && !mkBai5Route2Xong(doc)
+        && mkBai5GiaTri(doc, 'Dst. Address') === '0.0.0.0/0'
+        && mkBai5GwHopLe2(mkBai5GiaTri(doc, 'Gateway'))
+        && mkBai5GiaTri(doc, 'Routing Table') === 'ra-wan2'
+        && !!window._FTC_MK5_ROUTE2_APPLIED;
     }
   }
 ];
