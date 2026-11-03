@@ -12,8 +12,8 @@ var lessonData = {
   subtitle: 'Cấu hình Primary & Secondary DNS trên AX1800GZ',
   instructions: [
     '<b>Yêu cầu:</b>',
-    '- Primary DNS: <span class="val">210.245.31.220</span>',
-    '- Secondary DNS: <span class="val">8.8.8.8</span>'
+    '- Primary DNS: <span class="val">210.245.31.220 (hoặc 8.8.8.8)</span>',
+    '- Secondary DNS: <span class="val">8.8.4.4</span>'
   ],
   practiceUrl: '/sim_ax1800gz/login',
   onSimLoad: function (simWin) {
@@ -73,7 +73,7 @@ var lessonData = {
       var dns2 = getIP('sub_DNSServer2');
 
       var validDns1 = ['210.245.31.220', '210.245.31.221', '8.8.8.8', '1.1.1.1'];
-      var validDns2 = ['8.8.8.8', '8.8.4.4', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
+      var validDns2 = ['8.8.4.4', '8.8.8.8', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
 
       var isSaved = Boolean(
         doc._ftcIsSaved ||
@@ -82,8 +82,9 @@ var lessonData = {
         window._hasSuccHintStored
       );
 
+      var isDuplicate = (dns1 !== '' && dns1 === dns2);
       var dns1Passed = validDns1.indexOf(dns1) !== -1;
-      var dns2Passed = validDns2.indexOf(dns2) !== -1;
+      var dns2Passed = validDns2.indexOf(dns2) !== -1 && !isDuplicate;
 
       var passedCount = (dns1Passed ? 1 : 0) + (dns2Passed ? 1 : 0);
       var passed = dns1Passed && dns2Passed && isSaved;
@@ -92,9 +93,11 @@ var lessonData = {
       var d1Msg = dns1Passed
         ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DNS')
         : ('Mong muốn: "210.245.31.220" hoặc "8.8.8.8", Thực tế: "' + (dns1 || 'Trống') + '"');
-      var d2Msg = dns2Passed
-        ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DNS')
-        : ('Mong muốn: "8.8.8.8" hoặc "8.8.4.4", Thực tế: "' + (dns2 || 'Trống') + '"');
+      var d2Msg = isDuplicate
+        ? ('Secondary DNS không được trùng với Primary DNS (VD: Primary là ' + dns1 + ' thì Secondary phải là 8.8.4.4 hoặc 210.245.31.221)')
+        : (dns2Passed
+          ? (isSaved ? 'Chính xác' : 'Chưa bấm Apply trên trang thiết bị để lưu cấu hình DNS')
+          : ('Mong muốn: "8.8.4.4", Thực tế: "' + (dns2 || 'Trống') + '"'));
 
       return {
         passed: passed,
@@ -114,8 +117,8 @@ var lessonData = {
           {
             id: 'secondary_dns',
             name: 'Secondary DNS',
-            expected: '8.8.8.8 (hoặc 8.8.4.4)',
-            actual: (dns2 || '(Trống)') + (!isSaved ? ' (Chưa lưu)' : ''),
+            expected: '8.8.4.4',
+            actual: (dns2 || '(Trống)') + (isDuplicate ? ' (Trùng Primary DNS)' : (!isSaved ? ' (Chưa lưu)' : '')),
             passed: dns2Passed && isSaved,
             message: d2Msg
           }

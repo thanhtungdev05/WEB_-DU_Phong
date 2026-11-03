@@ -12,7 +12,6 @@ var lessonData = {
   subtitle: 'Cấu hình PPPoE',
   instructions: [
     '<b>Yêu cầu:</b>',
-    '- Connection Name: <span class="val">FPT</span>',
     '- Username: <span class="val">hnfdl-123456-789</span>',
     '- Password: <span class="val">d123456</span>',
   ],
@@ -23,18 +22,25 @@ var lessonData = {
         simWin.top._hasSuccHintStored = false;
         simWin.top._hasClickedSaveInGuide = false;
       }
+      // Dọn sạch ô Username & Password trong iframe để KTV tự nhập
+      if (simWin && simWin.document) {
+        var doc = simWin.document;
+        var uList = doc.querySelectorAll('#UserName, input[id^="UserName"], input[name^="UserName"]');
+        var pList = doc.querySelectorAll('#Password, input[id^="Password"], input[name^="Password"]');
+        uList.forEach(function (el) { el.value = ''; });
+        pList.forEach(function (el) { el.value = ''; });
+      }
     } catch (e) { }
   },
   clearFields: [
-    '#WANCName',
-    'input[id^="WANCName"]',
-    'input[name="WANCName"]',
     '#UserName',
     '#Password',
     'input[id^="UserName"]',
     'input[id^="Password"]',
     'input[name="UserName"]',
-    'input[name="Password"]'
+    'input[name="Password"]',
+    'input[name^="UserName"]',
+    'input[name^="Password"]'
   ],
   allowedSelectors: [
     'input[name^="IsNAT"]',
@@ -52,18 +58,9 @@ var lessonData = {
     description: 'Kiểm tra cấu hình PPPoE trên AX1800GZ',
     rules: [
       {
-        id: 'pppoe_cname',
-        name: 'Connection Name',
-        selector: '#WANCName, input[id^="WANCName"], input[name="WANCName"]',
-        expected: 'FPT',
-        type: 'text_exact',
-        trim: true,
-        required: true
-      },
-      {
         id: 'pppoe_user',
         name: 'PPPoE Username',
-        selector: '#UserName, input[id^="UserName"], input[name="UserName"]',
+        selector: '#UserName, input[id^="UserName"], input[name="UserName"], input[name^="UserName"]',
         expected: 'hnfdl-123456-789',
         type: 'text_exact',
         trim: true,
@@ -72,7 +69,7 @@ var lessonData = {
       {
         id: 'pppoe_pwd',
         name: 'PPPoE Password',
-        selector: '#Password, input[id^="Password"], input[name="Password"]',
+        selector: '#Password, input[id^="Password"], input[name="Password"], input[name^="Password"]',
         expected: 'd123456',
         type: 'text_exact',
         trim: true,

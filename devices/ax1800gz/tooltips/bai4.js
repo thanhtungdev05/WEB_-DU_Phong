@@ -44,16 +44,26 @@ window.TOOLTIPS_AX1800GZ['LAB_AX1800GZ_04'] = [
   },
   {
     selector: '#sub_DNSServer23:not(:disabled), input[name="sub_DNSServer23"]:not(:disabled)',
-    text: 'Bước 6: Nhập Secondary DNS: 8.8.8.8 (hoặc 8.8.4.4)',
+    text: 'Bước 6: Nhập Secondary DNS: 8.8.4.4 ',
     position: 'right',
     condition: function (doc) {
+      var p1 = [];
+      for (var j = 0; j < 4; j++) {
+        var el1 = doc.querySelector('#sub_DNSServer1' + j) || doc.querySelector('input[name="sub_DNSServer1' + j + '"]');
+        p1.push(el1 ? el1.value.trim() : '');
+      }
+      var valid1 = ['210.245.31.220', '210.245.31.221', '8.8.8.8', '1.1.1.1'];
+      var ip1 = p1.join('.');
+      if (valid1.indexOf(ip1) === -1) return false;
+
       var p2 = [];
       for (var k = 0; k < 4; k++) {
         var el2 = doc.querySelector('#sub_DNSServer2' + k) || doc.querySelector('input[name="sub_DNSServer2' + k + '"]');
         p2.push(el2 ? el2.value.trim() : '');
       }
-      var valid2 = ['8.8.8.8', '8.8.4.4', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
-      return valid2.indexOf(p2.join('.')) === -1;
+      var ip2 = p2.join('.');
+      var valid2 = ['8.8.4.4', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
+      return valid2.indexOf(ip2) === -1 || ip2 === ip1;
     }
   },
   {
@@ -67,15 +77,19 @@ window.TOOLTIPS_AX1800GZ['LAB_AX1800GZ_04'] = [
         p1.push(el1 ? el1.value.trim() : '');
       }
       var valid1 = ['210.245.31.220', '210.245.31.221', '8.8.8.8', '1.1.1.1'];
-      if (valid1.indexOf(p1.join('.')) === -1) return false;
+      var ip1 = p1.join('.');
+      if (valid1.indexOf(ip1) === -1) return false;
 
       var p2 = [];
       for (var k = 0; k < 4; k++) {
         var el2 = doc.querySelector('#sub_DNSServer2' + k) || doc.querySelector('input[name="sub_DNSServer2' + k + '"]');
         p2.push(el2 ? el2.value.trim() : '');
       }
-      var valid2 = ['8.8.8.8', '8.8.4.4', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
-      if (valid2.indexOf(p2.join('.')) === -1) return false;
+      var valid2 = ['8.8.4.4', '210.245.31.221', '210.245.31.220', '1.1.1.1'];
+      var ip2 = p2.join('.');
+      if (valid2.indexOf(ip2) === -1) return false;
+
+      if (ip1 === ip2) return false;
 
       var isSaved = Boolean(
         doc._ftcIsSaved ||

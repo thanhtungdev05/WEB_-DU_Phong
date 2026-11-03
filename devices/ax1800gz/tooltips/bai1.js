@@ -17,31 +17,43 @@ window.TOOLTIPS_AX1800GZ['LAB_AX1800GZ_01'] = [
     position: 'right'
   },
   {
-    selector: '#Internet_container:not(:has([id^="template_Internet_"])) #addInstBar_Internet, #addInstBar_Internet',
-    text: 'Bước 3: Chọn Create New Item',
-    position: 'bottom'
+    selector: '#template_Internet_0 .collapsibleInst:not(.instNameExp), [id^="instName_Internet"]:not(.instNameExp)',
+    text: 'Bước 3: Nhấn vào internet_tr069',
+    position: 'bottom',
+    condition: function (doc) {
+      const t = doc.querySelector('#template_Internet_0 .collapsibleInst, [id^="instName_Internet"]');
+      return !t || !t.classList.contains('instNameExp');
+    }
   },
   {
-    selector: '#WANCName:not(:disabled), input[id^="WANCName"]:not(:disabled)',
-    text: 'Bước 4: Nhập Connection Name: FPT',
+    selector: '[id^="UserName"]:not(:disabled), input[name^="UserName"]:not(:disabled)',
+    text: 'Bước 4: Nhập Username: hnfdl-123456-789',
     position: 'right',
-    expected: 'FPT'
+    expected: 'hnfdl-123456-789',
+    condition: function (doc) {
+      const el = doc.querySelector('[id^="UserName"]:not(:disabled), input[name^="UserName"]:not(:disabled)');
+      return !el || el.value.trim() !== 'hnfdl-123456-789';
+    }
   },
   {
-    selector: '#UserName:not(:disabled), input[id^="UserName"]:not(:disabled)',
-    text: 'Bước 5: Nhập Username: hnfdl-123456-789',
+    selector: '[id^="Password"]:not(:disabled), input[name^="Password"]:not(:disabled)',
+    text: 'Bước 5: Nhập Password: d123456',
     position: 'right',
-    expected: 'hnfdl-123456-789'
+    expected: 'd123456',
+    condition: function (doc) {
+      const u = doc.querySelector('[id^="UserName"]:not(:disabled), input[name^="UserName"]:not(:disabled)');
+      const p = doc.querySelector('[id^="Password"]:not(:disabled), input[name^="Password"]:not(:disabled)');
+      return (!u || u.value.trim() === 'hnfdl-123456-789') && (!p || p.value.trim() !== 'd123456');
+    }
   },
   {
-    selector: '#Password:not(:disabled), input[id^="Password"]:not(:disabled)',
-    text: 'Bước 6: Nhập Password: d123456',
-    position: 'right',
-    expected: 'd123456'
-  },
-  {
-    selector: '#Btn_apply_internet:not(.disableBtn), .Btn_apply:not(.disableBtn)',
-    text: 'Bước 7: Nhấn Apply để lưu cấu hình',
-    position: 'top'
+    selector: '[id^="Btn_apply_internet"]:not(.disableBtn), #template_Internet_0 .Btn_apply:not(.disableBtn), .Btn_apply:not(.disableBtn)',
+    text: 'Bước 6: Nhấn Apply để lưu cấu hình',
+    position: 'top',
+    condition: function (doc) {
+      const u = doc.querySelector('[id^="UserName"]:not(:disabled), input[name^="UserName"]:not(:disabled)');
+      const p = doc.querySelector('[id^="Password"]:not(:disabled), input[name^="Password"]:not(:disabled)');
+      return !!(u && u.value.trim() === 'hnfdl-123456-789' && p && p.value.trim() === 'd123456');
+    }
   }
 ];
