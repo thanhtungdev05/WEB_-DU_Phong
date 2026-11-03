@@ -13,7 +13,7 @@ var lessonData = {
   instructions: [
     '<b>Yêu cầu:</b>',
     '- SSID Name: <span class="val">FPT Telecom</span>',
-    '- Encryption Type: <span class="val">WPA2-PSK-AES</span> (hoặc WPA3)',
+    '- Encryption Type: <span class="val">WPA2-PSK(TKIP/AES)/WPA3(SAE)</span>',
     '- WPA Passphrase: <span class="val">19006600</span>'
   ],
   practiceUrl: '/sim_ax1800gz/login',
@@ -55,7 +55,8 @@ var lessonData = {
         id: 'wifi_enc_24',
         name: 'Encryption Type',
         selector: '[id="EncryptionType:0"], #EncryptionType\\:0, select[id="EncryptionType:0"]',
-        expected: 'WPA2-PSK-AES, WPA3-SAE, WPA2/WPA3-SAE',
+        expected: 'WPA2/WPA3-SAE, WPA2-PSK(TKIP/AES)/WPA3(SAE)',
+        displayExpected: 'WPA2-PSK(TKIP/AES)/WPA3(SAE)',
         type: 'any_of',
         trim: true,
         required: true
@@ -74,4 +75,9 @@ var lessonData = {
   guidePopups: (window.TOOLTIPS_AX1800GZ && window.TOOLTIPS_AX1800GZ[lessonId]) || []
 };
 
-window.DEVICE_AX1800GZ_LESSONS.push(lessonData);
+var idx = window.DEVICE_AX1800GZ_LESSONS.findIndex(function (l) { return l.id === lessonId; });
+if (idx >= 0) {
+  window.DEVICE_AX1800GZ_LESSONS[idx] = lessonData;
+} else {
+  window.DEVICE_AX1800GZ_LESSONS.push(lessonData);
+}

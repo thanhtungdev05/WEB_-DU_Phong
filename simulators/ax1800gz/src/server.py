@@ -352,7 +352,7 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
                             "Password": "",
                             "AuthType": "PAP,CHAP,MS-CHAP",
                             "ConnTrigger": "AlwaysOn",
-                            "IpMode": "Both",
+                            "IpMode": "IPv4",
                             "IsNAT": "1",
                             "VlanEnable": "0",
                             "VLANID": "0",

@@ -42,8 +42,6 @@ const lesson = sandbox.window.DEVICE_MIKROTIK_HEXS_LESSONS.find(l => l.id === 'm
 assert.ok(lesson, 'Bài mikrotik_hexs-bai5 phải được đăng ký vào DEVICE_MIKROTIK_HEXS_LESSONS');
 assert.equal(lesson.title, 'Cấu hình Policy Routing');
 assert.ok(lesson.instructions.some(txt => txt.includes('mikrotik_pbr_diagram.jpg')), 'Hướng dẫn bài học phải có ảnh sơ đồ mikrotik_pbr_diagram.jpg');
-assert.ok(lesson.instructions.some(txt => txt.includes('192.168.1.100')), 'Hướng dẫn bài học phải chứa yêu cầu PC 1 (192.168.1.100)');
-assert.ok(lesson.instructions.some(txt => txt.includes('192.168.1.101')), 'Hướng dẫn bài học phải chứa yêu cầu PC 2 (192.168.1.101)');
 console.log('✔ Metadata và hướng dẫn bài 5 sơ đồ PBR đầy đủ.');
 
 console.log('\n--- TEST 2: KIỂM TRA 37 BƯỚC TOOLTIPS TUẦN TỰ ---');

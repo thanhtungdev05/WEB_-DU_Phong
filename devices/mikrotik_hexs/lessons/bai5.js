@@ -161,7 +161,7 @@ if (typeof window !== 'undefined' && !window._ftcMoXemAnh) {
         modal.innerHTML = '<div style="position:relative;max-width:95vw;max-height:95vh;display:flex;align-items:center;justify-content:center;">' +
           '<img id="ftc-image-lightbox-img" src="" alt="Sơ đồ chi tiết" style="max-width:100%;max-height:92vh;border-radius:12px;box-shadow:0 25px 60px rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.25);cursor:default;" onclick="event.stopPropagation()">' +
           '<button type="button" style="position:absolute;top:-14px;right:-14px;width:34px;height:34px;border-radius:50%;background:#ef4444;color:#fff;border:2px solid #fff;font-size:16px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.4);line-height:1;" title="Đóng (Esc)">✕</button>' +
-        '</div>';
+          '</div>';
         modal.onclick = function () { modal.style.display = 'none'; };
         const closeBtn = modal.querySelector('button');
         if (closeBtn) closeBtn.onclick = function () { modal.style.display = 'none'; };
@@ -173,7 +173,7 @@ if (typeof window !== 'undefined' && !window._ftcMoXemAnh) {
       const img = modal.querySelector('#ftc-image-lightbox-img');
       if (img) img.src = src;
       modal.style.display = 'flex';
-    } catch (e) {}
+    } catch (e) { }
   };
 }
 
@@ -183,19 +183,16 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   subtitle: 'Định tuyến địa chỉ IP theo chính sách (Policy Based Routing)',
   instructions: [
     '<div class="ftc-pbr-diagram-wrap" style="text-align:center;margin:2px 0 6px;">' +
-      '<img src="assets/mikrotik_pbr_diagram.jpg?v=605646a08a1986a2" ' +
-      'alt="Sơ đồ Bài thực hành Policy Based Routing (PBR)" ' +
-      'style="max-width:100%;height:auto;border-radius:10px;box-shadow:0 3px 12px rgba(15,23,42,0.12);border:1px solid #e2e8f0;cursor:pointer;display:block;margin:0 auto;transition:transform 0.2s ease;" ' +
-      'onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'" ' +
-      'onclick="window._ftcMoXemAnh && window._ftcMoXemAnh(this.src)" ' +
-      'title="Nhấp vào để phóng to toàn màn hình">' +
-      '<div style="font-size:11.5px;color:#64748b;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;" onclick="window._ftcMoXemAnh && window._ftcMoXemAnh(\'assets/mikrotik_pbr_diagram.jpg?v=605646a08a1986a2\')">' +
-        '<span>🔍</span> <i>Nhấp vào ảnh để phóng to toàn màn hình</i>' +
-      '</div>' +
+    '<img src="assets/mikrotik_pbr_diagram.jpg?v=605646a08a1986a2" ' +
+    'alt="Sơ đồ Bài thực hành Policy Based Routing (PBR)" ' +
+    'style="max-width:100%;height:auto;border-radius:10px;box-shadow:0 3px 12px rgba(15,23,42,0.12);border:1px solid #e2e8f0;cursor:pointer;display:block;margin:0 auto;transition:transform 0.2s ease;" ' +
+    'onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'" ' +
+    'onclick="window._ftcMoXemAnh && window._ftcMoXemAnh(this.src)" ' +
+    'title="Nhấp vào để phóng to toàn màn hình">' +
+    '<div style="font-size:11.5px;color:#64748b;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;" onclick="window._ftcMoXemAnh && window._ftcMoXemAnh(\'assets/mikrotik_pbr_diagram.jpg?v=605646a08a1986a2\')">' +
+    '<span>🔍</span> <i>Nhấp vào ảnh để phóng to toàn màn hình</i>' +
+    '</div>' +
     '</div>',
-    '<b>Yêu cầu đề bài:</b>',
-    '• <b>PC 1 (192.168.1.100)</b>: Ép toàn bộ lưu lượng truy cập Internet qua đường <b>WAN 1 (ra-wan1)</b>.',
-    '• <b>PC 2 (192.168.1.101)</b>: Ép toàn bộ lưu lượng truy cập Internet qua đường <b>WAN 2 (ra-wan2)</b>.'
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
 
@@ -352,7 +349,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
                   try {
                     if (typeof simWin.openContent === 'function') simWin.openContent('#Routing:Tables');
                     else simWin.location.hash = '#Routing:Tables';
-                  } catch (e2) {}
+                  } catch (e2) { }
                 }, 140);
               }
             } else if (h.indexOf('#IP:Routes') === 0) {
@@ -366,7 +363,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
                   try {
                     if (typeof simWin.openContent === 'function') simWin.openContent('#IP:Routes');
                     else simWin.location.hash = '#IP:Routes';
-                  } catch (e2) {}
+                  } catch (e2) { }
                 }, 140);
               }
             } else if (h.indexOf('#IP:Firewall.Mangle') === 0) {
@@ -385,7 +382,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
                   try {
                     if (typeof simWin.openContent === 'function') simWin.openContent('#IP:Firewall.Mangle');
                     else simWin.location.hash = '#IP:Firewall.Mangle';
-                  } catch (e2) {}
+                  } catch (e2) { }
                 }, 140);
               }
             }
