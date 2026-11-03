@@ -105,12 +105,15 @@
     step('[id="instName_WLANSSIDConf:3"]', 'Bước 4: Mở SSID4 băng tần 2.4 GHz (IoT)', 'left', function (doc) {
       return isVisible(doc, '[id="instName_WLANSSIDConf:3"]') && !isVisible(doc, '[id="ESSID:3"]');
     }),
-    step('[id="ESSID:3"]', 'Bước 5: Nhập SSID Name: FPT IoT', 'right', visibleAndUnsaved('[id="ESSID:3"]')),
-    step('[id="EncryptionType:3"]', 'Bước 6: Chọn WPA2-PSK-AES', 'right', visibleAndUnsaved('[id="EncryptionType:3"]')),
-    step('[id="KeyPassphrase:3"], [id="HiddenKeyPass:3"]', 'Bước 7: Nhập WPA Passphrase: Fptiot123', 'right', function (doc) {
+    step('label[for="Enable1:3"], [id="Enable1:3"]', 'Bước 5: Chọn On để kích hoạt SSID4', 'top', function (doc) {
+      return isVisible(doc, '[id="ESSID:3"]') && val(doc, 'input[name="Enable:3"]:checked') !== '1' && !doc._ftcIsSaved;
+    }),
+    step('[id="ESSID:3"]', 'Bước 6: Nhập SSID Name: FPT IoT', 'right', visibleAndUnsaved('[id="ESSID:3"]')),
+    step('[id="EncryptionType:3"]', 'Bước 7: Chọn WPA2-PSK-AES', 'right', visibleAndUnsaved('[id="EncryptionType:3"]')),
+    step('[id="KeyPassphrase:3"], [id="HiddenKeyPass:3"]', 'Bước 8: Nhập WPA Passphrase: Fptiot123', 'right', function (doc) {
       return (visibleAndUnsaved('[id="KeyPassphrase:3"]')(doc) || visibleAndUnsaved('[id="HiddenKeyPass:3"]')(doc));
     }),
-    step('[id="Btn_apply_WLANSSIDConf:3"]', 'Bước 8: Chọn Apply', 'top', visibleAndUnsaved('[id="Btn_apply_WLANSSIDConf:3"]'))
+    step('[id="Btn_apply_WLANSSIDConf:3"]', 'Bước 9: Chọn Apply', 'top', visibleAndUnsaved('[id="Btn_apply_WLANSSIDConf:3"]'))
   ];
 
   // Bài 4: Cấu hình DNS

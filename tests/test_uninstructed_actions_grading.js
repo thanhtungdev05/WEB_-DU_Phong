@@ -67,6 +67,7 @@ const mockLessonAx3000gzV2Bai3 = {
   id: 'LAB_AX3000GZ_V2_03',
   grading: {
     rules: [
+      { id: 'iot_enable', name: 'Kích hoạt SSID4 (On)', selector: 'input[name="Enable:3"]:checked, [id="Enable1:3"]', expected: '1', type: 'text_exact' },
       { id: 'iot_ssid', name: 'SSID Name', selector: '[id="ESSID:3"]', expected: 'FPT IoT', type: 'text_exact' },
       { id: 'iot_security', name: 'Encryption Type', selector: '[id="EncryptionType:3"]', expected: 'WPA2-PSK-AES', type: 'text_exact' },
       { id: 'iot_password', name: 'WPA Passphrase', selector: '[id="HiddenKeyPass:3"]', expected: 'Fptiot123', type: 'text_exact' }
@@ -74,7 +75,7 @@ const mockLessonAx3000gzV2Bai3 = {
   }
 };
 
-// Mô phỏng DOM: KTV nhập đúng 3 tiêu chí bài yêu cầu, NHƯNG sửa thêm 1 thông số không liên quan (unrelated_field)
+// Mô phỏng DOM: KTV nhập đúng các tiêu chí bài yêu cầu, NHƯNG sửa thêm 1 thông số không liên quan (unrelated_field)
 const mockDocsWithUninstructedActions = [{
   location: { pathname: '/sim_ax3000gz_v2/' },
   _ftcIsSaved: true,
@@ -82,12 +83,14 @@ const mockDocsWithUninstructedActions = [{
     'uid_unrelated': 'default_val'
   },
   querySelectorAll: (sel) => {
+    if (sel.includes('Enable:3') || sel.includes('Enable1:3')) return [{ id: 'Enable1:3', name: 'Enable:3', value: '1', type: 'radio', checked: true, tagName: 'INPUT' }];
     if (sel === '[id="ESSID:3"]') return [{ id: 'ESSID:3', value: 'FPT IoT', tagName: 'INPUT' }];
     if (sel === '[id="EncryptionType:3"]') return [{ id: 'EncryptionType:3', value: 'WPA2-PSK-AES', tagName: 'SELECT' }];
     if (sel === '[id="HiddenKeyPass:3"]') return [{ id: 'HiddenKeyPass:3', value: 'Fptiot123', tagName: 'INPUT' }];
     return [];
   },
   querySelector: (sel) => {
+    if (sel.includes('Enable:3') || sel.includes('Enable1:3')) return { id: 'Enable1:3', name: 'Enable:3', value: '1', type: 'radio', checked: true, tagName: 'INPUT' };
     if (sel === '[id="ESSID:3"]') return { id: 'ESSID:3', value: 'FPT IoT', tagName: 'INPUT' };
     if (sel === '[id="EncryptionType:3"]') return { id: 'EncryptionType:3', value: 'WPA2-PSK-AES', tagName: 'SELECT' };
     if (sel === '[id="HiddenKeyPass:3"]') return { id: 'HiddenKeyPass:3', value: 'Fptiot123', tagName: 'INPUT' };
@@ -103,7 +106,7 @@ sandbox.deviceIframe = { contentWindow: {} };
 sandbox.currentMode = 'practice';
 const resultPractice = sandbox.evaluateLesson({ id: 'ax3000gz_v2' }, mockLessonAx3000gzV2Bai3);
 assert.strictEqual(resultPractice.passed, false, 'Chế độ Thực hành: KTV thao tác ngoài hướng dẫn PHẢI BỊ CHẤM SAI');
-assert.strictEqual(resultPractice.passedCount, 3, 'Số tiêu chí đúng của đề bài vẫn ghi nhận 3');
+assert.strictEqual(resultPractice.passedCount, 4, 'Số tiêu chí đúng của đề bài vẫn ghi nhận 4');
 assert.ok(resultPractice.details.some(d => d.passed === false && (d.name.includes('Thao tác ngoài hướng dẫn') || d.name.includes('unrelated'))), 'Details phải chứa mục lỗi thao tác ngoài hướng dẫn');
 
 // Kiểm tra ở chế độ Hướng dẫn (Guide Mode): có thao tác ngoài hướng dẫn -> CHẤM LÀ SAI
@@ -152,12 +155,14 @@ const mockDocsClean = [{
   _ftcIsSaved: true,
   _ftcOriginalValues: {},
   querySelectorAll: (sel) => {
+    if (sel.includes('Enable:3') || sel.includes('Enable1:3')) return [{ id: 'Enable1:3', name: 'Enable:3', value: '1', type: 'radio', checked: true, tagName: 'INPUT' }];
     if (sel === '[id="ESSID:3"]') return [{ id: 'ESSID:3', value: 'FPT IoT', tagName: 'INPUT' }];
     if (sel === '[id="EncryptionType:3"]') return [{ id: 'EncryptionType:3', value: 'WPA2-PSK-AES', tagName: 'SELECT' }];
     if (sel === '[id="HiddenKeyPass:3"]') return [{ id: 'HiddenKeyPass:3', value: 'Fptiot123', tagName: 'INPUT' }];
     return [];
   },
   querySelector: (sel) => {
+    if (sel.includes('Enable:3') || sel.includes('Enable1:3')) return { id: 'Enable1:3', name: 'Enable:3', value: '1', type: 'radio', checked: true, tagName: 'INPUT' };
     if (sel === '[id="ESSID:3"]') return { id: 'ESSID:3', value: 'FPT IoT', tagName: 'INPUT' };
     if (sel === '[id="EncryptionType:3"]') return { id: 'EncryptionType:3', value: 'WPA2-PSK-AES', tagName: 'SELECT' };
     if (sel === '[id="HiddenKeyPass:3"]') return { id: 'HiddenKeyPass:3', value: 'Fptiot123', tagName: 'INPUT' };
@@ -167,7 +172,7 @@ const mockDocsClean = [{
 sandbox.getAllAccessibleDocuments = () => mockDocsClean;
 const resultClean = sandbox.evaluateLesson({ id: 'ax3000gz_v2' }, mockLessonAx3000gzV2Bai3);
 assert.strictEqual(resultClean.passed, true, 'KTV làm đúng đề bài và không có thao tác thừa PHẢI ĐƯỢC CHẤM ĐẠT');
-assert.strictEqual(resultClean.passedCount, 3, '3/3 tiêu chí đạt');
-assert.strictEqual(resultClean.totalRules, 3, 'Tổng tiêu chí là 3');
+assert.strictEqual(resultClean.passedCount, 4, '4/4 tiêu chí đạt');
+assert.strictEqual(resultClean.totalRules, 4, 'Tổng tiêu chí là 4');
 
 console.log('✔ TẤT CẢ CÁC KIỂM THỬ: GÔNG CHẶT THAO TÁC NGOÀI HƯỚNG DẪN TRÊN AX3000GZ V2 VÀ AC1000Z ĐÃ ĐẠT 100%!');

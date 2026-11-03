@@ -59,6 +59,7 @@
     subtitle: 'Cấu hình SSID IoT trên băng tần 2.4 GHz',
     instructions: [
       '<b>Yêu cầu:</b>',
+      '- Kích hoạt SSID4: <span class="val">On</span>',
       '- SSID Name: <span class="val">FPT IoT</span>',
       '- Encryption Type: <span class="val">WPA2-PSK-AES</span>',
       '- WPA Passphrase: <span class="val">Fptiot123</span>'
@@ -66,6 +67,7 @@
     practiceUrl: '/sim_ac1000z/?_type=menuView&_tag=wlanBasic',
     clearFields: ['[id="ESSID:3"]', '[id="KeyPassphrase:3"]', '[id="HiddenKeyPass:3"]'],
     grading: { description: 'Kiểm tra SSID IoT và bảo mật Wi-Fi', rules: [
+      rule('iot_enable', 'Kích hoạt SSID4 (On)', 'input[name="Enable:3"]:checked, [id="Enable1:3"]', '1', 'text_exact', '[id="Enable1:3"], label[for="Enable1:3"]'),
       rule('iot_ssid', 'SSID Name', '[id="ESSID:3"]', 'FPT IoT'),
       rule('iot_security', 'Encryption Type', '[id="EncryptionType:3"]', 'WPA2-PSK-AES', 'text_exact', '[id="EncryptionType:3"], [id="ESSID:3"], [id="KeyPassphrase:3"], [id="HiddenKeyPass:3"]'),
       rule('iot_password', 'WPA Passphrase', '[id="KeyPassphrase:3"], [id="HiddenKeyPass:3"]', 'Fptiot123')

@@ -95,6 +95,10 @@ const wifiIotLesson = lessons.find(lesson => lesson.id === 'LAB_AX3000GZ_V2_03')
 const openSsid4 = wifiIotLesson.guidePopups.find(item => item.selector === '[id="instName_WLANSSIDConf:3"]');
 assert.ok(openSsid4, 'lab 3 must guide opening SSID4');
 assert.strictEqual(openSsid4.position, 'left', 'lab 3 must position SSID4 tooltip on the left to avoid covering adjacent controls');
+const enableStep = wifiIotLesson.guidePopups.find(item => item.selector === 'label[for="Enable1:3"], [id="Enable1:3"]');
+assert.ok(enableStep, 'lab 3 must guide enabling SSID4 (On)');
+assert.strictEqual(enableStep.position, 'top', 'lab 3 must position Enable tooltip on top');
+assert.ok(wifiIotLesson.grading.rules.some(rule => rule.id === 'iot_enable'), 'lab 3 must grade iot_enable');
 assert.ok(
   !wifiIotLesson.instructions.some(line => line.includes('Chọn SSID4')),
   'lab 3 instructions must not include Chọn SSID4'
@@ -153,7 +157,7 @@ const visibleDoc = {
 const simultaneousSelectors = {
   LAB_AX3000GZ_V2_01: ['[id="UserName:0"]', '[id="Password:0"]', '[id="Btn_apply_internet:0"]'],
   LAB_AX3000GZ_V2_02: ['[id="ESSID:0"]', '[id="HiddenKeyPass:0"]', '[id="Btn_apply_WLANSSIDConf:0"]'],
-  LAB_AX3000GZ_V2_03: ['[id="ESSID:3"]', '[id="EncryptionType:3"]', '[id="HiddenKeyPass:3"]', '[id="Btn_apply_WLANSSIDConf:3"]'],
+  LAB_AX3000GZ_V2_03: ['label[for="Enable1:3"], [id="Enable1:3"]', '[id="ESSID:3"]', '[id="EncryptionType:3"]', '[id="HiddenKeyPass:3"]', '[id="Btn_apply_WLANSSIDConf:3"]'],
   LAB_AX3000GZ_V2_04: ['#sub_DNSServer10', '#sub_DNSServer20', '#Btn_apply_DHCPBasicCfg'],
   LAB_AX3000GZ_V2_05: ['[id="sub_IPAddr0:DHCPBasicCfg"]', '#sub_SubMask0', '[id="sub_MinAddress0:DHCPBasicCfg"]', '[id="sub_MaxAddress0:DHCPBasicCfg"]', '#Btn_apply_DHCPBasicCfg'],
   LAB_AX3000GZ_V2_06: ['[id^="Alias"]', '[id^="S_Interface"]', '[id^="Protocol"]', '[id^="InternalClient"]', '[id^="ExternalPort"]:not([id*="EndRange"])', '[id^="ExternalPortEndRange"]', '[id^="InternalPort"]:not([id*="EndRange"])', '[id^="InternalPortEndRange"]', '[id^="Btn_apply_PortForwarding"]']
