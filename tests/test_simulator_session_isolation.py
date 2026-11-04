@@ -8,6 +8,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 def load_server(relative_path: str, module_name: str):
@@ -297,6 +299,161 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         # KTV-B KHÔNG hề bị reboot
         self.assertIsNone(module._pha_reboot(ktv_b), "KTV-B khong duoc bi coi la dang reboot")
         self.assertEqual(module._pha_reboot(ktv_a), "sap", "KTV-A phai o pha sap khi vua reboot")
+
+
+    def test_ax1800gz_multi_ktv_isolation_and_no_global_wipe(self):
+        module = load_server("simulators/ax1800gz/src/server.py", "test_ax1800gz_server")
+        ax1800gz_server_source = (ROOT / "simulators/ax1800gz/src/server.py").read_text(encoding="utf-8")
+        self.assertNotIn("_phien_xac_thuc.clear()", ax1800gz_server_source)
+
+        ktv_a = "ktv_ax1800gz_A_101"
+        ktv_b = "ktv_ax1800gz_B_202"
+
+        module._phien_xac_thuc.add(ktv_a)
+        module._phien_xac_thuc.add(ktv_b)
+
+        module.KHO.bind(ktv_a)
+        module.KHO.ghi("lan.ip", "192.168.100.10")
+        module.KHO.bind(ktv_b)
+        module.KHO.ghi("lan.ip", "192.168.100.20")
+
+        self.assertEqual(module.KHO.doc("lan.ip", key=ktv_a), "192.168.100.10")
+        self.assertEqual(module.KHO.doc("lan.ip", key=ktv_b), "192.168.100.20")
+
+        # Reset / logout KTV-A must not affect KTV-B
+        module._phien_xac_thuc.discard(ktv_a)
+        module.KHO.dat_lai(ktv_a)
+
+        self.assertNotIn(ktv_a, module._phien_xac_thuc)
+        self.assertIn(ktv_b, module._phien_xac_thuc, "KTV-B khong duoc mat phien khi KTV-A reset/logout")
+        self.assertEqual(module.KHO.doc("lan.ip", key=ktv_b), "192.168.100.20")
+        self.assertNotEqual(module.KHO.doc("lan.ip", key=ktv_a), "192.168.100.10")
+
+    def test_mobile_five_issue_safeguards_remain_active(self):
+        ftc_axc_js = (ROOT / "simulators/sim_ax3000c/ftc/ftc-ax3000c.js").read_text(encoding="utf-8")
+        # 1. OOM Tab Crash cleanup on screen/device switch
+        self.assertIn("function releaseSimulatorIframeMemory(", self.portal_js)
+        self.assertIn("_PREPATCHED_CACHE", self.axc_source)
+        # 2. Loading Mask ("Currently in agent mode...") suppression
+        self.assertIn("setInterval(trietTieuLoadingTre, 250);", ftc_axc_js)
+        self.assertIn("document.addEventListener('DOMContentLoaded', trietTieuLoadingTre);", ftc_axc_js)
+        self.assertIn("e.loading=!1", self.axc_source)
+        # 3. Port Forwarding Device/IP virtual keyboard freeze fix (<el-select> -> <el-input>)
+        self.assertIn('r("el-input",{on:{input:e.forceUpdate},model:{value:t.row.dest_ip', self.axc_source)
+        # 4. Fast Reboot countdown (0.3s instead of 5s-20s)
+        self.assertIn("_goc.REBOOT_SAP_S = 0.3", self.axc_source)
+        self.assertIn("_goc.REBOOT_CHUA_SAN_S = 0.3", self.axc_source)
+        # 5. 4G/5G network switch session persistence and fetch retry
+        self.assertIn("function getKtvClientId()", self.portal_js)
+        self.assertIn("function fetchWithRetry(", self.portal_js)
+
+    def test_ac1000hi_multi_ktv_isolation_and_reset(self):
+        import simulators.sim_ac1000HI.src.config_store as achi_kho
+        import simulators.sim_ac1000HI.src.server as achi_srv
+
+        ktv_a = "ktv_ac1000hi_A_001"
+        ktv_b = "ktv_ac1000hi_B_002"
+        sid_a = "aaaa1111"
+        sid_b = "bbbb2222"
+
+        # 2 KTV cung dang nhap tren cung 1 Wi-Fi NAT
+        achi_kho.mo_phien(sid_a, client_key=ktv_a)
+        achi_kho.mo_phien(sid_b, client_key=ktv_b)
+
+        self.assertTrue(achi_kho.phien_hop_le(sid_a))
+        self.assertTrue(achi_kho.phien_hop_le(ktv_a))
+        self.assertTrue(achi_kho.phien_hop_le(sid_b))
+        self.assertTrue(achi_kho.phien_hop_le(ktv_b))
+
+        # KTV-A doi SSID va LAN IP qua sid_a, KTV-B doi qua ktv_b
+        achi_kho.dat_phien_hien_tai(sid_a)
+        achi_kho.ghi("home_wireless.ESSID", "FPT_KTV_A")
+        achi_kho.ghi("lan.uiViewIPAddr", "192.168.10.1")
+
+        achi_kho.dat_phien_hien_tai(ktv_b)
+        achi_kho.ghi("home_wireless.ESSID", "FPT_KTV_B")
+        achi_kho.ghi("lan.uiViewIPAddr", "192.168.20.1")
+
+        # Kiem tra doc cheo qua ca SESSIONID va client_key
+        self.assertEqual(achi_kho.doc("home_wireless.ESSID", sid=sid_a), "FPT_KTV_A")
+        self.assertEqual(achi_kho.doc("home_wireless.ESSID", sid=ktv_a), "FPT_KTV_A")
+        self.assertEqual(achi_kho.doc("home_wireless.ESSID", sid=sid_b), "FPT_KTV_B")
+        self.assertEqual(achi_kho.doc("home_wireless.ESSID", sid=ktv_b), "FPT_KTV_B")
+
+        # KTV-A reset tu Portal (chi gui X-KTV-Session-ID = ktv_a)
+        handler_a = achi_srv.H.__new__(achi_srv.H)
+        handler_a.headers = {"X-KTV-Session-ID": ktv_a}
+        handler_a.path = "/api/reset?_ktv=" + ktv_a
+        self.assertEqual(handler_a._client_key(), ktv_a)
+
+        achi_kho.dat_lai_factory(ktv_a)
+        achi_kho.dong_phien(ktv_a)
+
+        # KTV-A phai ve mac dinh va dong phien (ca sid_a lan ktv_a)
+        self.assertFalse(achi_kho.phien_hop_le(sid_a))
+        self.assertFalse(achi_kho.phien_hop_le(ktv_a))
+        self.assertEqual(achi_kho.doc("home_wireless.ESSID", sid=ktv_a), "FPT")
+
+        # KTV-B TUYET DOI KHONG bi anh huong
+        self.assertTrue(achi_kho.phien_hop_le(sid_b))
+        self.assertTrue(achi_kho.phien_hop_le(ktv_b))
+        self.assertEqual(achi_kho.doc("home_wireless.ESSID", sid=sid_b), "FPT_KTV_B")
+        self.assertEqual(achi_kho.doc("lan.uiViewIPAddr", sid=ktv_b), "192.168.20.1")
+
+    def test_ax3000hv2_and_vigor2927_5000_ktv_mobile_scale_isolation(self):
+        import sys
+        vg_dir = str(ROOT / "simulators/sim_vigor2927/src")
+        if vg_dir not in sys.path:
+            sys.path.insert(0, vg_dir)
+        import simulators.sim_ax3000hv2.server2 as hv2_srv
+        import simulators.sim_vigor2927.src.vg_config_store as vg_store
+        import simulators.sim_vigor2927.src.render as vg_render
+
+        self.assertGreaterEqual(hv2_srv._MAX_SESSIONS, 10000)
+        self.assertGreaterEqual(vg_store._MAX_SESSIONS, 10000)
+
+        # Mo phong 5.000 KTV cung truy cap dong thoi tren ONT AX3000HV2 va DrayTek Vigor2927
+        for i in range(5000):
+            hv2_key = f"ktv_mob_hv2_{i}"
+            st = hv2_srv.get_client_state(hv2_key)
+            st["ESSID"] = f"FPT_HV2_{i}"
+
+            vg_key = f"ktv_mob_vg_{i}"
+            vg_store.dat_nguoi_dung_hien_tai(vg_key)
+            c_u = vg_store._nap(user_key=vg_key)
+            # Khi moi mo trang (chua sua), Copy-On-Write dict phai co 0 trang bi clone
+            self.assertEqual(len(dict.keys(c_u["pages"])), 0)
+
+        # Ca 5.000 phien KTV tren AX3000HV2 va Vigor2927 deu phai con nguyen, khong bi evict o muc 3.500
+        self.assertGreaterEqual(len(hv2_srv.USER_STATES), 5000)
+        self.assertGreaterEqual(len(vg_store.USER_CONFIGS), 5000)
+        self.assertEqual(hv2_srv.get_client_state("ktv_mob_hv2_0")["ESSID"], "FPT_HV2_0")
+        self.assertEqual(hv2_srv.get_client_state("ktv_mob_hv2_4999")["ESSID"], "FPT_HV2_4999")
+
+        # Kiem tra Copy-On-Write + Bai 8 Port Redirection tren Vigor2927 giua KTV 0 va KTV 4999
+        vg_store.dat_nguoi_dung_hien_tai("ktv_mob_vg_0")
+        vg_store.dat("doc/ENET.SHT", "sLanIp", "192.168.10.1")
+        vg_store.dat("doc/ipnatp1.htm", "_ftc_bai8_snap", {
+            "enable": True, "svcName": "Cam_KTV0", "pubPort": "8081", "prvIp": "192.168.10.10", "isSaved": True
+        })
+
+        vg_store.dat_nguoi_dung_hien_tai("ktv_mob_vg_4999")
+        self.assertNotEqual(vg_store.lay("doc/ENET.SHT", "sLanIp"), "192.168.10.1")
+        self.assertIsNone(vg_store.lay("doc/ipnatp1.htm", "_ftc_bai8_snap"))
+
+        vg_store.dat_nguoi_dung_hien_tai("ktv_mob_vg_0")
+        self.assertEqual(vg_store.lay("doc/ENET.SHT", "sLanIp"), "192.168.10.1")
+        snap_0 = vg_store.lay("doc/ipnatp1.htm", "_ftc_bai8_snap")
+        self.assertEqual(snap_0["svcName"], "Cam_KTV0")
+        rendered_list = vg_render.sua_ipnatp_list("var aryPtRedirect = ; var str=\"\";")
+        self.assertIn("Cam_KTV0", rendered_list)
+
+        # Don dep 5.000 phien test
+        for i in range(5000):
+            hv2_srv.USER_STATES.pop(f"ktv_mob_hv2_{i}", None)
+            hv2_srv._LAST_SEEN.pop(f"ktv_mob_hv2_{i}", None)
+            vg_store.USER_CONFIGS.pop(f"ktv_mob_vg_{i}", None)
+            vg_store._USER_LAST_SEEN.pop(f"ktv_mob_vg_{i}", None)
 
 
 if __name__ == "__main__":

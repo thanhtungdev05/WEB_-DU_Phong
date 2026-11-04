@@ -10,6 +10,32 @@
       - nguoi dung sua o nhap / doi lua chon -> false;
       - chuyen route -> lay lai trang thai da nho cua route do. */
 (function () {
+  // Lọc bỏ các dòng console.log gỡ lỗi nội bộ của firmware gốc để Console sạch đẹp
+  try {
+    var _origLog = console.log;
+    console.log = function () {
+      var a = arguments[0];
+      if (typeof a === 'string') {
+        if (a === 'AP-AX3000CV2' || a === 'router' || a === 'checkOUIStatus oui.ui success') return;
+      } else if (a && typeof a === 'object') {
+        if (a.mode === 'router') return;
+        if (Array.isArray(a) && a.length > 0 && typeof a[0] === 'string' && a[0].indexOf('|') !== -1) return;
+      }
+      return _origLog.apply(console, arguments);
+    };
+  } catch (_) {}
+  // Khiên chắn ngăn rò rỉ unhandled rejection từ các ubus polling ngầm (như update2 / assoclist)
+  try {
+    window.addEventListener('unhandledrejection', function (e) {
+      try {
+        var r = e && e.reason;
+        if (r && (r.req || r.error || (r.error && r.error.code))) {
+          e.preventDefault();
+        }
+      } catch (_) {}
+    });
+  } catch (_) {}
+
   try {
     if (location.href.indexOf('logout=1') !== -1) {
       sessionStorage.clear();
@@ -249,4 +275,6 @@
       }
     } catch (e) {}
   }
+  setInterval(trietTieuLoadingTre, 250);
+  document.addEventListener('DOMContentLoaded', trietTieuLoadingTre);
 })();

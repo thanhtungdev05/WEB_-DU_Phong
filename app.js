@@ -21,19 +21,23 @@
   window.CurSubMenu = 'devinfo';
 
   // Đảm bảo định danh phiên KTV độc lập theo từng trình duyệt, chống đụng độ NAT IP trong phòng đào tạo
+  // và giữ bền vững qua 3 tầng (sessionStorage + localStorage + Cookie 24h) khi chuyển sóng 4G/5G hoặc reload tab di động
   function getKtvClientId() {
     let cid = '';
     try {
-      cid = sessionStorage.getItem('ktv_client_id') || '';
-      if (!cid) {
+      cid = sessionStorage.getItem('ktv_client_id') || localStorage.getItem('ktv_client_id') || '';
+      if (!cid && document.cookie) {
         const match = document.cookie.match(/(?:^|;\s*)ktv_client_id=([^;]+)/);
         if (match) cid = match[1];
       }
       if (!cid) {
         cid = 'ktv_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10);
-        sessionStorage.setItem('ktv_client_id', cid);
       }
-      document.cookie = 'ktv_client_id=' + cid + '; Path=/; SameSite=Lax';
+      try { sessionStorage.setItem('ktv_client_id', cid); } catch (_) { }
+      try { localStorage.setItem('ktv_client_id', cid); } catch (_) { }
+      if (typeof document !== 'undefined') {
+        document.cookie = 'ktv_client_id=' + cid + '; Max-Age=86400; Path=/; SameSite=Lax';
+      }
     } catch (e) {
       if (!cid) cid = 'ktv_' + Date.now().toString(36);
     }
@@ -157,6 +161,127 @@
     });
   }
   window.fetchWithTimeout = fetchWithTimeout;
+
+  // Tự động thử lại khi mạng di động 4G/5G chuyển trạm (handover) hoặc rớt gói tạm thời
+  function fetchWithRetry(url, options, timeoutMs, maxRetries) {
+    const retries = typeof maxRetries === 'number' ? maxRetries : 2;
+    const timeout = typeof timeoutMs === 'number' ? timeoutMs : 6000;
+    let attempt = 0;
+    function execute() {
+      attempt += 1;
+      return fetchWithTimeout(url, options, timeout).then(function (response) {
+        if ((response.status === 502 || response.status === 503 || response.status === 504) && attempt <= retries) {
+          return new Promise(function (resolve) {
+            setTimeout(resolve, attempt * 350);
+          }).then(execute);
+        }
+        return response;
+      }).catch(function (error) {
+        if (attempt <= retries) {
+          return new Promise(function (resolve) {
+            setTimeout(resolve, attempt * 350);
+          }).then(execute);
+        }
+        throw error;
+      });
+    }
+    return execute();
+  }
+  window.fetchWithRetry = fetchWithRetry;
+
+  // Giải phóng triệt để DOM/JS trong iframe thiết bị khi rời màn hình thực hành để chống tràn RAM (OOM Tab Crash) trên điện thoại
+  function releaseSimulatorIframeMemory() {
+    if (!deviceIframe) return;
+    try {
+      const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+      allDocs.forEach(function (doc) {
+        try {
+          if (doc._ftcGuideBurstSyncTimer) {
+            clearInterval(doc._ftcGuideBurstSyncTimer);
+            doc._ftcGuideBurstSyncTimer = null;
+          }
+          if (doc.body) {
+            doc.body.innerHTML = '';
+          }
+        } catch (_) { }
+      });
+    } catch (_) { }
+    try {
+      if (deviceIframe.src && deviceIframe.src !== 'about:blank') {
+        deviceIframe.src = 'about:blank';
+      }
+    } catch (_) { }
+  }
+  window.releaseSimulatorIframeMemory = releaseSimulatorIframeMemory;
+
+  // Đồng bộ chiều cao thực tế khi bàn phím ảo (Virtual Keyboard) bật lên trên di động & tự động hồi phục khi chuyển mạng 4G/5G
+  function setupMobileViewportAndNetworkResilience() {
+    try {
+      if (typeof window.innerWidth === 'number' && window.innerWidth <= 900 && sidebar && sidebar.classList) {
+        sidebar.classList.add('collapsed');
+      }
+      const mainEl = document.getElementById('main');
+      if (mainEl && typeof mainEl.addEventListener === 'function') {
+        mainEl.addEventListener('click', function (e) {
+          if (typeof window.innerWidth === 'number' && window.innerWidth <= 900 && sidebar && sidebar.classList && !sidebar.classList.contains('collapsed')) {
+            const toggleBtn = e && e.target && e.target.closest ? e.target.closest('.topbar-toggle-btn') : null;
+            if (!toggleBtn) sidebar.classList.add('collapsed');
+          }
+        });
+      }
+
+      let baselineHeight = typeof window.innerHeight === 'number' ? window.innerHeight : 0;
+      const syncVisualViewport = function () {
+        try {
+          const vv = window.visualViewport;
+          const currentH = vv && typeof vv.height === 'number' ? Math.round(vv.height) : (typeof window.innerHeight === 'number' ? window.innerHeight : 0);
+          if (!currentH) return;
+          if (currentH > baselineHeight) baselineHeight = currentH;
+          if (document.documentElement && document.documentElement.style && typeof document.documentElement.style.setProperty === 'function') {
+            document.documentElement.style.setProperty('--app-height', currentH + 'px');
+          }
+          const layoutH = typeof window.innerHeight === 'number' ? window.innerHeight : baselineHeight;
+          const heightDrop = Math.max(layoutH - currentH, baselineHeight - currentH);
+          const isTouchMobile = (typeof window.innerWidth === 'number' && window.innerWidth <= 950) || ('ontouchstart' in window);
+          const isKeyboardOpen = Boolean(isTouchMobile && (heightDrop > 130 || (currentH < 440 && layoutH > 500)));
+          if (document.body && document.body.classList) {
+            if (isKeyboardOpen) {
+              document.body.classList.add('keyboard-open');
+            } else {
+              document.body.classList.remove('keyboard-open');
+            }
+          }
+        } catch (_) { }
+      };
+
+      if (window.visualViewport && typeof window.visualViewport.addEventListener === 'function') {
+        window.visualViewport.addEventListener('resize', syncVisualViewport);
+        window.visualViewport.addEventListener('scroll', syncVisualViewport);
+      }
+      window.addEventListener('resize', syncVisualViewport);
+      window.addEventListener('orientationchange', function () {
+        baselineHeight = 0;
+        setTimeout(syncVisualViewport, 150);
+      });
+      syncVisualViewport();
+
+      window.addEventListener('offline', function () {
+        if (statusText) {
+          statusText.textContent = 'Mất sóng 4G/5G · Đang giữ phiên...';
+        }
+      });
+
+      window.addEventListener('online', function () {
+        getKtvClientId();
+        if (statusText) {
+          statusText.textContent = _guestGuideMode ? 'Guest Guide Mode · Không lưu tiến độ' : 'Đã kết nối lại 4G/5G';
+        }
+        if (_lastTrackingPayload && _trackingSession && !_trackingSession.finalized && !trackingSaveInFlight && gradingModal && gradingModal.style.display === 'flex') {
+          sendTrackingTimer(_lastEvalResult, _lastSubmitDurationSec, _lastTrackingPayload);
+        }
+      });
+    } catch (_) { }
+  }
 
   function normalizeDeviceId(id) {
     if (!id) return '';
@@ -329,7 +454,7 @@
 
   function loadLearningCatalog() {
     const url = '/api/index.php/learning/catalog?v=' + catalogCacheKey();
-    return fetch(url, { credentials: 'include' })
+    return fetchWithRetry(url, { credentials: 'include' }, 6000, 2)
       .then(function (response) {
         if (!response.ok) throw new Error('Không thể tải danh sách bài luyện tập.');
         return response.json();
@@ -365,6 +490,7 @@
       selectDevice(deviceSelect.value);
     });
     btnCollapse.addEventListener('click', toggleSidebar);
+    setupMobileViewportAndNetworkResilience();
 
     // Practice screen events
     if (btnBackLesson) {
@@ -511,15 +637,16 @@
       window._lastSaveFlashTime = now;
 
       try {
+        const iframe = (typeof deviceIframe !== 'undefined' && deviceIframe) ? deviceIframe : document.getElementById('device-iframe');
         // 1. Nháy toàn bộ khung thiết bị deviceIframe 1 lần (100% -> 35% -> 100%)
-        if (deviceIframe) {
-          deviceIframe.style.transition = 'opacity 0.12s ease-in-out';
-          deviceIframe.style.opacity = '0.35';
+        if (iframe) {
+          iframe.style.transition = 'opacity 0.12s ease-in-out';
+          iframe.style.opacity = '0.35';
           setTimeout(function () {
-            if (deviceIframe) {
-              deviceIframe.style.opacity = '1';
+            if (iframe) {
+              iframe.style.opacity = '1';
               setTimeout(function () {
-                if (deviceIframe) deviceIframe.style.transition = '';
+                if (iframe) iframe.style.transition = '';
               }, 150);
             }
           }, 120);
@@ -556,6 +683,7 @@
         }
       } catch (e) { }
     }
+    window.triggerSaveFlashEffect = triggerSaveFlashEffect;
 
     // Periodic sync interval while practice screen is active
     if (!guideSyncInterval) {
@@ -648,6 +776,26 @@
 
               if (isAx3000gzV2) {
                 prepareAx3000gzV2Autofill(doc, isSimulatorLoginDocument(doc));
+              }
+
+              // Hỗ trợ cuộn mượt và chống khóa cuộn (scroll-lock) khi bàn phím ảo trên điện thoại bật lên
+              if (!doc._ftcMobileFocusBound) {
+                doc._ftcMobileFocusBound = true;
+                doc.addEventListener('focusin', function (e) {
+                  try {
+                    const el = e && e.target;
+                    if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'SELECT' && el.tagName !== 'TEXTAREA')) return;
+                    const isTouchMobile = (typeof window.innerWidth === 'number' && window.innerWidth <= 950) || ('ontouchstart' in window);
+                    if (!isTouchMobile) return;
+                    setTimeout(function () {
+                      try {
+                        if (typeof el.scrollIntoView === 'function') {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                        }
+                      } catch (_) { }
+                    }, 180);
+                  } catch (_) { }
+                }, true);
               }
 
               if (!doc._ftcSaveListenerAttached) {
@@ -2067,10 +2215,10 @@
 
   function requestCurrentUserSession() {
     if (currentUserRequest) return currentUserRequest;
-    currentUserRequest = fetch('/api/index.php/auth/session', {
+    currentUserRequest = fetchWithRetry('/api/index.php/auth/session', {
       credentials: 'include',
       cache: 'no-store'
-    })
+    }, 6000, 2)
       .then(function (res) {
         if (res.ok) return res.json();
         return res.json().catch(function () { return {}; }).then(function (payload) {
@@ -2668,6 +2816,7 @@
 
   // ── View Switchers ───────────────────────────────────────────────
   function showHero() {
+    releaseSimulatorIframeMemory();
     heroScreen.style.display = 'flex';
     lessonScreen.classList.remove('visible');
     practiceScreen.classList.remove('visible');
@@ -2675,6 +2824,7 @@
   }
 
   function showLesson() {
+    releaseSimulatorIframeMemory();
     heroScreen.style.display = 'none';
     practiceScreen.classList.remove('visible');
     lessonScreen.classList.remove('visible');
@@ -3211,7 +3361,7 @@
       try { window.mkBai6Reset(); } catch (e) { }
     }
 
-    deviceIframe.src = '';
+    releaseSimulatorIframeMemory();
     currentIframeUrl = '';
     hidePracticeBubble();
     clearGuidePopups();
@@ -4094,7 +4244,7 @@
     const labId = session.lesson && session.lesson.id
       ? session.lesson.id
       : (session.lesson && session.lesson.title ? session.lesson.title : '');
-    return fetch('/api/index.php/tracking/timer/start', {
+    return fetchWithRetry('/api/index.php/tracking/timer/start', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -4104,7 +4254,7 @@
         mode: session.mode,
         started_at: session.startedAt
       })
-    })
+    }, 6000, 2)
       .then(function (res) {
         if (!res.ok) {
           return res.json().catch(function () { return {}; }).then(function (err) {
@@ -4282,12 +4432,12 @@
     });
     _lastTrackingPayload = payload;
 
-    return fetch('/api/index.php/tracking/timer', {
+    return fetchWithRetry('/api/index.php/tracking/timer', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
-    })
+    }, 8000, 2)
       .then(function (res) {
         if (!res.ok) {
           return res.json().catch(function () { return {}; }).then(function (err) {
@@ -5238,7 +5388,13 @@
         return;
       }
     }
-    triggerSaveFlashEffect(simWin ? simWin.document : null, null);
+    try {
+      if (typeof window.triggerSaveFlashEffect === 'function') {
+        window.triggerSaveFlashEffect(simWin ? simWin.document : null, null);
+      } else if (typeof triggerSaveFlashEffect === 'function') {
+        triggerSaveFlashEffect(simWin ? simWin.document : null, null);
+      }
+    } catch (e) { }
     window._hasClickedSaveInGuide = true;
     if (currentLessonId === 'LAB_AX3000S_02') {
       const simDoc = simWin ? simWin.document : (deviceIframe ? deviceIframe.contentDocument : null);

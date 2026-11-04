@@ -55,6 +55,29 @@ def rewrite_sim_urls(content: str, sim_id: str = "sim_ac1000f") -> str:
     return content
 
 
+EXTENSION_ERROR_SHIELD = """<script>
+(function(){
+  window.addEventListener('unhandledrejection', function(e){
+    try {
+      var r = e.reason, s = (r && (r.stack || r.message)) ? String(r.stack || r.message) : String(r);
+      if (s.indexOf('useCache') !== -1 || s.indexOf('content.js') !== -1 || s.indexOf('extension') !== -1) {
+        e.preventDefault();
+      }
+    } catch(_){}
+  });
+  window.addEventListener('error', function(e){
+    try {
+      var f = e.filename || '', m = e.message || '';
+      if (f.indexOf('content.js') !== -1 || f.indexOf('extension') !== -1 || m.indexOf('useCache') !== -1) {
+        e.preventDefault();
+        return true;
+      }
+    } catch(_){}
+  });
+})();
+</script>"""
+
+
 import threading
 
 _STATE_LOCK = threading.Lock()
@@ -115,7 +138,7 @@ def apply_sim_state_to_html(html_str, p_path, state=None):
     if not state:
         return html_str
     
-    # Neu la trang home_wan.asp: inject wan_PPPUsername, wan_PPPPassword neu da luu
+    # Neu la trang home_wan.asp: inject wan_PPPUsername, wan_PPPPassword, wan_vid neu da luu
     if "home_wan" in p_path.lower():
         if "wan_PPPUsername" in state:
             u_val = state["wan_PPPUsername"]
@@ -125,6 +148,22 @@ def apply_sim_state_to_html(html_str, p_path, state=None):
             p_val = state["wan_PPPPassword"]
             html_str = re.sub(r'(NAME=["\']wan_PPPPassword["\'][^>]*?VALUE=["\'])[^"\']*?(["\'])', rf'\g<1>{p_val}\2', html_str, flags=re.IGNORECASE)
             html_str = re.sub(r'(VALUE=["\'])[^"\']*?(["\'][^>]*?NAME=["\']wan_PPPPassword["\'])', rf'\g<1>{p_val}\2', html_str, flags=re.IGNORECASE)
+        if "wan_vid" in state:
+            v_val = state["wan_vid"]
+            html_str = re.sub(r'(NAME=["\']wan_vid["\'][^>]*?VALUE=["\'])[^"\']*?(["\'])', rf'\g<1>{v_val}\2', html_str, flags=re.IGNORECASE)
+            html_str = re.sub(r'(VALUE=["\'])[^"\']*?(["\'][^>]*?NAME=["\']wan_vid["\'])', rf'\g<1>{v_val}\2', html_str, flags=re.IGNORECASE)
+
+    # Neu la trang home_wireless.asp hoac home_wireless_5g.asp: inject SSID va PreSharedKey neu da luu
+    if "home_wireless" in p_path.lower():
+        if "ESSID" in state:
+            s_val = state["ESSID"]
+            html_str = re.sub(r'(NAME=["\']ESSID["\'][^>]*?VALUE=["\'])[^"\']*?(["\'])', rf'\g<1>{s_val}\2', html_str, flags=re.IGNORECASE)
+            html_str = re.sub(r'(VALUE=["\'])[^"\']*?(["\'][^>]*?NAME=["\']ESSID["\'])', rf'\g<1>{s_val}\2', html_str, flags=re.IGNORECASE)
+        for pkey in ["PreSharedKey1", "PreSharedKey2", "PreSharedKey3"]:
+            if pkey in state:
+                k_val = state[pkey]
+                html_str = re.sub(rf'(NAME=["\']{pkey}["\'][^>]*?VALUE=["\'])[^"\']*?(["\'])', rf'\g<1>{k_val}\2', html_str, flags=re.IGNORECASE)
+                html_str = re.sub(rf'(VALUE=["\'])[^"\']*?(["\'][^>]*?NAME=["\']{pkey}["\'])', rf'\g<1>{k_val}\2', html_str, flags=re.IGNORECASE)
 
     # Neu la trang home_lan.asp: inject cac truong IP, DHCP, DNS neu da luu
     if "home_lan" in p_path.lower():
@@ -149,6 +188,10 @@ def apply_sim_state_to_html(html_str, p_path, state=None):
             if str(dns_type) == "1":
                 html_str = re.sub(r'(<option\s+value=["\']0["\'])\s+selected>', r'\1>', html_str, flags=re.IGNORECASE)
                 html_str = re.sub(r'(<option\s+value=["\']1["\'])>', r'\1 selected>', html_str, flags=re.IGNORECASE)
+        if "dhcpTypeRadio" in state:
+            dhcp_type = state["dhcpTypeRadio"]
+            if str(dhcp_type) == "1":
+                html_str = re.sub(r'(<input\b[^>]*\bname=["\']dhcpTypeRadio["\'][^>]*\bvalue=["\']1["\'][^>]*?)(/?>)', r'\1 checked\2', html_str, flags=re.IGNORECASE)
 
     return html_str
 
@@ -234,6 +277,8 @@ class H(BaseHTTPRequestHandler):
         client_state = get_client_state(client_key)
         parsed = urlparse(self.path)
         p = unquote(parsed.path)
+        if p.startswith("/sim_ac1000f/"):
+            p = p[len("/sim_ac1000f"):]
 
         if p.startswith("/internal/"):
             return self._send(b'{"status":"method_not_allowed"}', "application/json; charset=utf-8", 405)
@@ -280,6 +325,10 @@ class H(BaseHTTPRequestHandler):
 
                 # Rewrite all /cgi-bin/ and static links to /sim_ac1000f/
                 html = rewrite_sim_urls(html, "sim_ac1000f")
+                if re.search(r'</head>', html, re.IGNORECASE):
+                    html = re.sub(r'</head>', EXTENSION_ERROR_SHIELD + "</head>", html, count=1, flags=re.IGNORECASE)
+                else:
+                    html = EXTENSION_ERROR_SHIELD + html
                 data = html.encode("utf-8")
                 return self._send(data, "text/html; charset=utf-8")
 
@@ -375,17 +424,155 @@ class H(BaseHTTPRequestHandler):
 
                 text_content = rewrite_sim_urls(text_content, "sim_ac1000f")
                 text_content = apply_sim_state_to_html(text_content, p, state=client_state)
+                if re.search(r'</head>', text_content, re.IGNORECASE):
+                    text_content = re.sub(r'</head>', EXTENSION_ERROR_SHIELD + "</head>", text_content, count=1, flags=re.IGNORECASE)
+                elif re.search(r'</html>', text_content, re.IGNORECASE):
+                    text_content = re.sub(r'</html>', EXTENSION_ERROR_SHIELD + "</html>", text_content, count=1, flags=re.IGNORECASE)
+                else:
+                    text_content = text_content + EXTENSION_ERROR_SHIELD
                 return self._send(text_content.encode("utf-8"), CT.get(ext, "text/html; charset=utf-8"))
             else:
                 with open(f, "rb") as fh:
                     content = fh.read()
                 return self._send(content, CT.get(ext, "application/octet-stream"), cache_control="public, max-age=86400, stale-while-revalidate=86400")
 
+        # Fallback cac file/endpoint he thong router cu khong co tren disk nhung trinh duyet goi den
+        p_clean = p.split("?")[0].rstrip("/")
+
+        # 1. Scripts (OutVariant.asp va script mo phong)
+        if p_clean.endswith("/OutVariant.asp") or p_clean == "/OutVariant.asp":
+            return self._send(b"/* OutVariant */", "application/javascript; charset=utf-8")
+        if p_clean.endswith(".js"):
+            return self._send(b"/* simulated js */", "application/javascript; charset=utf-8")
+
+        # 2. Stylesheets
+        if p_clean.endswith(".css"):
+            return self._send(b"/* simulated css */", "text/css; charset=utf-8")
+
+        # 3. Images (1x1 transparent gif)
+        if p_clean.endswith((".png", ".gif", ".jpg", ".jpeg", ".ico", ".svg")):
+            trans_gif = b"GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+            return self._send(trans_gif, "image/gif", cache_control="public, max-age=86400")
+
+        # 4. Certificates dropdown (Lab 1 - home_wan.asp)
+        if p_clean.endswith("/getCertNames.cgi") or p_clean.endswith("/getCANames.cgi"):
+            element_name = "wan_trusted_ca" if "getCANames" in p_clean else "wan_cert"
+            dummy_html = (
+                '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
+                f'<form name="Alpha_WAN"><select name="{element_name}">'
+                '<option value="N/A">N/A</option></select></form></body></html>'
+            )
+            return self._send(dummy_html.encode("utf-8"), "text/html; charset=utf-8")
+
+        # 5. Connected Clients Table (Lab 2 & Lab 3 - show_2.4g_clients.asp / show_5g_clients.asp)
+        if p_clean.endswith("/show_2.4g_clients.asp") or p_clean.endswith("/show_5g_clients.asp"):
+            band = "5G" if "5g" in p_clean.lower() else "2.4G"
+            client_table = (
+                '<table width="600" border="1" cellpadding="3" cellspacing="0" bordercolor="#CCCCCC" '
+                'style="border-collapse:collapse;margin:10px auto;font-size:12px;background:#fff;text-align:center;">'
+                '<tr bgcolor="#EEEEEE"><th width="50">Index</th><th width="160">MAC Address</th>'
+                '<th width="130">IP Address</th><th width="70">Band</th><th width="80">RSSI</th><th width="90">Speed</th></tr>'
+                f'<tr><td>1</td><td>70:85:c2:5b:9e:10</td>'
+                f'<td>192.168.1.100</td><td>{band}</td><td style="color:#008000;font-weight:bold;">-52 dBm</td>'
+                '<td>144 Mbps</td></tr></table>'
+            )
+            return self._send(client_table.encode("utf-8"), "text/html; charset=utf-8")
+
+        # 6. Backup Configuration Romfile Download (Lab 7 - tools_update.asp)
+        if p_clean.endswith("/romfile.cfg") or p_clean.endswith("/VDSL_CO_romfile.cfg") or p_clean.endswith(".cfg"):
+            cfg_data = (
+                b"[Romfile_AC1000F]\n"
+                b"Device_Model=AC1000F\n"
+                b"Hardware_Version=AC1000F_V2\n"
+                b"Firmware_Version=V1.0.12\n"
+                b"WAN_Type=PPPoE\n"
+                b"LAN_IP=192.168.1.1\n"
+                b"SubnetMask=255.255.255.0\n"
+                b"DHCP_Enabled=1\n"
+                b"DHCP_Start=192.168.1.2\n"
+                b"DHCP_End=192.168.1.254\n"
+                b"SSID_24=FPT Telecom\n"
+                b"SSID_5G=FPT Telecom_5G\n"
+                b"Backup_Timestamp=" + str(int(time.time())).encode("ascii") + b"\n"
+            )
+            self.send_response(200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Disposition", 'attachment; filename="romfile.cfg"')
+            self.send_header("Content-Length", str(len(cfg_data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            return self.wfile.write(cfg_data)
+
+        # 7. Diagnostic logs (WIFI_2.4G_RSSI_Information.log, WIFI_5G_RSSI_Information.log, foxsys.log)
+        if p_clean.endswith(".log") or "RSSI_Information.log" in p_clean:
+            log_data = (
+                b"[AC1000F Diagnostic System Log]\n"
+                b"Time: 2026-11-04\n"
+                b"WLAN 2.4G Status: UP (SSID: FPT Telecom, Channel: 6, Power: 100%)\n"
+                b"WLAN 5G Status: UP (SSID: FPT Telecom_5G, Channel: 36, Power: 100%)\n"
+                b"Client RSSI List: 70:85:c2:5b:9e:10 (-52 dBm, SNR: 45)\n"
+            )
+            return self._send(log_data, "text/plain; charset=utf-8")
+
+        # 8. Diagnostics Packet Capture (Tcpdump.cap)
+        if p_clean.endswith(".cap") or p_clean.endswith(".pcap"):
+            cap_data = b"\xd4\xc3\xb2\xa1\x02\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x01\x00\x00\x00"
+            self.send_response(200)
+            self.send_header("Content-Type", "application/vnd.tcpdump.pcap")
+            self.send_header("Content-Disposition", 'attachment; filename="Tcpdump.cap"')
+            self.send_header("Content-Length", str(len(cap_data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            return self.wfile.write(cap_data)
+
+        # 9. PVC / Service list popups
+        if p_clean.endswith("/home_pvclist.asp") or p_clean.endswith("/home_servlist.asp"):
+            dummy_popup = (
+                '<!DOCTYPE html><html><head><meta charset="utf-8"><title>PVC/Service List</title>'
+                '<link rel="stylesheet" href="/style.css">'
+                '</head><body style="margin:10px;font-family:Arial,sans-serif;font-size:12px;background:#f5f5f5;">'
+                '<h3 style="margin-top:0;color:#005a9c;">PVC / Service List</h3>'
+                '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;background:#fff;">'
+                '<tr bgcolor="#eaeaea"><th>PVC</th><th>VPI/VCI</th><th>Encapsulation</th><th>Status</th></tr>'
+                '<tr><td align="center">PVC0</td><td align="center">0/33</td><td align="center">LLC</td><td align="center" style="color:green;font-weight:bold;">Connected</td></tr>'
+                '</table>'
+                '<p style="text-align:center;margin-top:15px;"><input type="button" value="Close Window" onclick="window.close()" style="padding:4px 12px;cursor:pointer;"></p>'
+                '</body></html>'
+            )
+            return self._send(dummy_popup.encode("utf-8"), "text/html; charset=utf-8")
+
+        # 10. Filter lists
+        if p_clean.endswith("/access_urlfilterlist.cgi") or p_clean.endswith("/access_ipfilterlist.cgi"):
+            dummy_table = (
+                '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;font-family:sans-serif;font-size:11px;">'
+                '<table border="1" cellpadding="3" cellspacing="0" style="border-collapse:collapse;width:100%;">'
+                '<tr bgcolor="#eee"><th width="30">#</th><th>Filter Rule</th><th width="60">Status</th></tr>'
+                '<tr><td align="center">1</td><td>None (Allow All)</td><td align="center" style="color:green;">Enabled</td></tr>'
+                '</table></body></html>'
+            )
+            return self._send(dummy_table.encode("utf-8"), "text/html; charset=utf-8")
+
+        # 11. Catch-all cho moi trang .asp / .cgi / .html chua duoc crawl
+        if p_clean.endswith((".asp", ".cgi", ".html", ".htm")):
+            page_title = os.path.basename(p_clean)
+            placeholder_html = (
+                '<!DOCTYPE html><html><head><meta charset="utf-8"><title>AC1000F Gateway</title>'
+                '<link rel="stylesheet" href="/style.css">'
+                '</head><body style="padding:20px;font-family:Arial,sans-serif;color:#333;background:#fff;">'
+                f'<h2 style="color:#005a9c;border-bottom:2px solid #005a9c;padding-bottom:5px;">ONT AC1000F - {page_title}</h2>'
+                '<p>Chức năng cấu hình này đang hoạt động với cấu hình mặc định của hệ thống.</p>'
+                '<p style="color:#666;font-size:12px;">Hệ thống mô phỏng FPT Telecom đã sẵn sàng cho bài thi của Kỹ thuật viên.</p>'
+                '</body></html>'
+            )
+            return self._send(placeholder_html.encode("utf-8"), "text/html; charset=utf-8")
+
         return self._send(b"Not found: " + p.encode(), "text/plain", 404)
 
     def do_POST(self):
         parsed = urlparse(self.path)
         p = unquote(parsed.path)
+        if p.startswith("/sim_ac1000f/"):
+            p = p[len("/sim_ac1000f"):]
         if self._xu_ly_internal(p):
             return
         client_key = self._client_key()

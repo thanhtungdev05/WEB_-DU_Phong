@@ -50,14 +50,33 @@ import random
 import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from http.cookies import SimpleCookie
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from . import config_store as kho                                   # noqa: E402
-from . import render_dong                                           # noqa: E402
+try:
+    from . import config_store as kho                               # noqa: E402
+    from . import render_dong                                       # noqa: E402
+except ImportError:
+    import config_store as kho                                      # noqa: E402
+    import render_dong                                              # noqa: E402
 
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8095
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8095
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "www")
+
+# Bo nho dem template HTML goc trong RAM de tranh doc dia khi 1000 KTV truy cap
+_HTML_CACHE = {}
+
+
+def _doc_html_goc(duong_dan_file):
+    cached = _HTML_CACHE.get(duong_dan_file)
+    if cached is not None:
+        return cached
+    if not os.path.exists(duong_dan_file):
+        return None
+    with open(duong_dan_file, encoding="utf-8", errors="ignore") as f:
+        html = f.read()
+    _HTML_CACHE[duong_dan_file] = html
+    return html
 
 # --------------------------------------------------------------------------
 # Than 401 — NGUYEN VAN tu thiet bi that, dung 140 byte. Khong sua mot ky tu.
@@ -141,10 +160,10 @@ class H(SimpleHTTPRequestHandler):
 
     # ---- tien ich ----
     def log_message(self, fmt, *args):
-        sys.stderr.write("  %s\n" % (fmt % args))
+        pass
 
     def _cookie(self, ten):
-        raw = self.headers.get("Cookie")
+        raw = self.headers.get("Cookie") if getattr(self, "headers", None) else None
         if not raw:
             return None
         try:
@@ -153,6 +172,48 @@ class H(SimpleHTTPRequestHandler):
             return c[ten].value if ten in c else None
         except Exception:                                    # noqa: BLE001
             return None
+
+    def _client_key(self):
+        """Dinh danh KTV rieng biet de co lap 1000 KTV cung chung Wi-Fi NAT."""
+        headers = getattr(self, "headers", None)
+        if headers:
+            hdr = headers.get("X-KTV-Session-ID")
+            if hdr and hdr.strip():
+                return hdr.strip()
+        raw_path = getattr(self, "path", "") or ""
+        if "_ktv=" in raw_path:
+            try:
+                qs = parse_qs(urlparse(raw_path).query)
+                if qs.get("_ktv") and qs["_ktv"][0].strip():
+                    return qs["_ktv"][0].strip()
+            except Exception:                                # noqa: BLE001
+                pass
+        for cookie_name in ("ktv_client_id", "ftc_session", "PHPSESSID"):
+            val = self._cookie(cookie_name)
+            if val and val.strip():
+                return val.strip()
+        if headers:
+            ref = headers.get("Referer") or ""
+            if "_ktv=" in ref:
+                try:
+                    qs = parse_qs(urlparse(ref).query)
+                    if qs.get("_ktv") and qs["_ktv"][0].strip():
+                        return qs["_ktv"][0].strip()
+                except Exception:                            # noqa: BLE001
+                    pass
+        sid_cookie = self._cookie("SESSIONID")
+        if sid_cookie and sid_cookie.strip():
+            return sid_cookie.strip()
+        if headers:
+            xff = headers.get("X-Forwarded-For")
+            if xff:
+                return xff.split(",")[0].strip()
+        if getattr(self, "client_address", None):
+            return self.client_address[0]
+        return None
+
+    def _session_id(self):
+        return self._cookie("SESSIONID") or self._client_key()
 
     def _tra_401(self):
         """Tra dung hop dong 401 cua thiet bi that."""
@@ -197,7 +258,7 @@ class H(SimpleHTTPRequestHandler):
 
     # ---- dinh tuyen ----
     def do_GET(self):                                        # noqa: N802
-        sid = self._cookie("SESSIONID")
+        sid = self._session_id()
         kho.dat_phien_hien_tai(sid)
         p = urlparse(self.path).path
 
@@ -207,6 +268,10 @@ class H(SimpleHTTPRequestHandler):
             if sid:
                 kho.dat_lai_factory(sid)
                 kho.dong_phien(sid)
+            ck = self._client_key()
+            if ck and ck != sid:
+                kho.dat_lai_factory(ck)
+                kho.dong_phien(ck)
             return self._tra_json({"status": "ok", "message": "AC1000HI factory reset"})
         if p == "/__sim/kho":
             return self._tra_json(kho.tat_ca())
@@ -221,7 +286,8 @@ class H(SimpleHTTPRequestHandler):
             psw = self._cookie("psw")
             if kho.kiem_tra_dang_nhap(uid, psw):
                 sid = "%08x" % random.getrandbits(32)
-                kho.mo_phien(sid)
+                kho.mo_phien(sid, client_key=self._client_key())
+                kho.dat_phien_hien_tai(sid)
                 return self._chuyen_huong("/cgi-bin/index.asp", sid=sid)
             # Sai tai khoan: thiet bi that tra ve gi thi CHUA DO DUOC
             # (khong thu go sai de tranh bi khoa) — ghi trong ISSUES.md.
@@ -231,6 +297,9 @@ class H(SimpleHTTPRequestHandler):
         # 4) Dang xuat
         if p == "/cgi-bin/logout.cgi":
             kho.dong_phien(sid)
+            ck = self._client_key()
+            if ck and ck != sid:
+                kho.dong_phien(ck)
             return self._chuyen_huong("/cgi-bin/login.asp")
 
         # 5) Hai trang thiet bi that tra 404 — giu nguyen
@@ -244,16 +313,15 @@ class H(SimpleHTTPRequestHandler):
         # 6) Chan cua: moi trang .asp/.cgi deu doi phien, tru trang cong khai
         la_tinh = p.endswith(DUOI_TINH)
         if not la_tinh and p not in CONG_KHAI:
-            if not kho.phien_hop_le(self._cookie("SESSIONID")):
+            if not (kho.phien_hop_le(self._cookie("SESSIONID")) or kho.phien_hop_le(sid)):
                 return self._tra_401()
 
         # 7) Trang co du lieu DONG: doc file goc roi bom gia tri tu kho cau
         #    hinh truoc khi tra (KHONG sua file goc tren dia — muc 2.2).
         if render_dong.co_bom(p):
             duong_dan_file = os.path.join(ROOT, p.lstrip("/").replace("/", os.sep))
-            if os.path.exists(duong_dan_file):
-                with open(duong_dan_file, encoding="utf-8", errors="ignore") as f:
-                    html = f.read()
+            html = _doc_html_goc(duong_dan_file)
+            if html is not None:
                 html = render_dong.bom(p, html)
                 b = html.encode("utf-8", "ignore")
                 self.send_response(200)
@@ -275,7 +343,7 @@ class H(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):                                       # noqa: N802
-        sid = self._cookie("SESSIONID")
+        sid = self._session_id()
         kho.dat_phien_hien_tai(sid)
         p = urlparse(self.path).path
 
@@ -283,6 +351,10 @@ class H(SimpleHTTPRequestHandler):
             if sid:
                 kho.dat_lai_factory(sid)
                 kho.dong_phien(sid)
+            ck = self._client_key()
+            if ck and ck != sid:
+                kho.dat_lai_factory(ck)
+                kho.dong_phien(ck)
             return self._tra_json({"status": "ok", "message": "AC1000HI factory reset"})
 
         # ------------------------------------------------------------------
@@ -299,7 +371,6 @@ class H(SimpleHTTPRequestHandler):
         # trang, khong cho duong dan long nhau.
         # ------------------------------------------------------------------
         if p == "/__sim/nhan_file":
-            from urllib.parse import parse_qs
             q = parse_qs(urlparse(self.path).query)
             ten = (q.get("ten") or [""])[0]
             cho_phep = {"BeVietnam-Regular.ttf", "BeVietnam-Bold.ttf", "PIE.htc"}
@@ -312,7 +383,6 @@ class H(SimpleHTTPRequestHandler):
             du_lieu = self.rfile.read(n)
             with open(os.path.join(ROOT, ten), "wb") as f:
                 f.write(du_lieu)
-            print(f"  [nhan_file] da ghi {ten}: {len(du_lieu)} byte")
             self.send_response(200)
             self.send_header("Access-Control-Allow-Origin", "*")
             self.send_header("Content-Type", "text/plain")
@@ -328,10 +398,9 @@ class H(SimpleHTTPRequestHandler):
         #   -> tra 200 + CHINH TRANG DO da render lai. Khong redirect, khong JSON.
         # ------------------------------------------------------------------
         if render_dong.co_ghi(p):
-            if not kho.phien_hop_le(self._cookie("SESSIONID")):
+            if not (kho.phien_hop_le(self._cookie("SESSIONID")) or kho.phien_hop_le(sid)):
                 return self._tra_401()
 
-            from urllib.parse import parse_qs
             n = int(self.headers.get("Content-Length", 0))
             raw = self.rfile.read(n).decode("utf-8", "replace")
             # keep_blank_values=True — thiet bi that GUI CA TRUONG RONG,
@@ -339,13 +408,11 @@ class H(SimpleHTTPRequestHandler):
             truong = {k: v[0] for k, v in
                       parse_qs(raw, keep_blank_values=True).items()}
 
-            da_ghi, _ = render_dong.ghi_tu_form(p, truong)
-            print(f"  [POST] {p}: da ghi {da_ghi} truong vao kho")
+            render_dong.ghi_tu_form(p, truong)
 
             # Tra lai CHINH TRANG DO, da render lai tu kho (giong thiet bi that)
             duong_dan_file = os.path.join(ROOT, p.lstrip("/").replace("/", os.sep))
-            with open(duong_dan_file, encoding="utf-8", errors="ignore") as f:
-                html = f.read()
+            html = _doc_html_goc(duong_dan_file) or ""
             if render_dong.co_bom(p):
                 html = render_dong.bom(p, html)
             b = html.encode("utf-8", "ignore")
@@ -387,4 +454,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

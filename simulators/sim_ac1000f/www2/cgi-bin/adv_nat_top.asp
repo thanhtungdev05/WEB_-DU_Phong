@@ -1336,6 +1336,21 @@ showTableTrig('porttriggeringCfg',tableHeader2,tableData2,2);
             showFakeSaveMsg(this);
         };
     }
+    // 3. Khôi phục cấu hình Port Forwarding đã lưu khi tải lại trang
+    try {
+        var rawFwd = localStorage.getItem('ftc_sim_portfwd');
+        if (rawFwd && window.tableData1 && typeof showTableVir === 'function') {
+            var d = JSON.parse(rawFwd);
+            if (d && d.start_port1) {
+                tableData1[0][1] = d.start_port1;
+                tableData1[0][2] = d.end_port1;
+                tableData1[0][3] = d.Addr1;
+                tableData1[0][4] = d.local_sport;
+                tableData1[0][5] = d.local_eport;
+                showTableVir('Virserconfigration', tableHeader1, tableData1, 2);
+            }
+        }
+    } catch(e) {}
 })();
 </script>
 <!-- KẾT THÚC SCRIPT CHẶN RELOAD -->

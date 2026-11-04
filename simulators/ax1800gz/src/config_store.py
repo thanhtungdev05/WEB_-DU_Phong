@@ -5,13 +5,20 @@ KHO CAU HINH TRUNG TAM — ONT AX1800GZ (ZTE F6600)
 ================================================
 Nguyen tac (CLAUDE.md muc 2.5):
   Moi trang doc va ghi thong qua MOT kho cau hinh duy nhat.
-  Luu ben vung ra dia (config.json) de song qua cac lan khoi dong lai.
+  Ho tro co lap phien theo tung KTV (X-KTV-Session-ID / ktv_client_id) trong RAM.
 """
-import os
+import copy
 import json
+import os
+import threading
+import time
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 TEP_LUU_MAC_DINH = os.path.join(_HERE, "config.json")
+_KHO_LOCK = threading.RLock()
+_KHO_CTX = threading.local()
+_KHO_TTL_SECONDS = 1800
+_MAX_KTV_SESSIONS = 3500
 
 CAU_HINH_GOC = {
     "auth": {
@@ -141,57 +148,123 @@ CAU_HINH_GOC = {
 class KhoCauHinh:
     def __init__(self, tep_luu=TEP_LUU_MAC_DINH):
         self.tep_luu = tep_luu
-        self.du_lieu = {}
+        self._khoa = _KHO_LOCK
+        self._kho_theo_ktv = {}
+        self._last_seen = {}
+        self._mau_goc = {}
         self.nap()
 
-    def nap(self):
+    def _nap_mau_goc(self):
+        base = copy.deepcopy(CAU_HINH_GOC)
         if os.path.exists(self.tep_luu):
             try:
                 with open(self.tep_luu, "r", encoding="utf-8") as f:
                     loaded = json.load(f)
                 if isinstance(loaded, dict):
-                    base = json.loads(json.dumps(CAU_HINH_GOC))
                     for k, v in loaded.items():
                         if isinstance(v, dict) and isinstance(base.get(k), dict):
-                            base[k].update(v)
+                            base[k].update(copy.deepcopy(v))
                         else:
-                            base[k] = v
-                    self.du_lieu = base
-                    return
+                            base[k] = copy.deepcopy(v)
             except Exception:
                 pass
-        self.khoi_phuc_xuat_xuong()
+        self._mau_goc = base
 
-    def khoi_phuc_xuat_xuong(self):
-        self.du_lieu = json.loads(json.dumps(CAU_HINH_GOC))
-        self.luu()
+    def bind(self, key):
+        """Gắn phiên KTV hiện tại vào ngữ cảnh luồng."""
+        _KHO_CTX.key = key or "default"
+        return self.current_key()
+
+    def current_key(self):
+        return getattr(_KHO_CTX, "key", "default")
+
+    def _don_phien_cu_unlocked(self, now):
+        stale = [
+            k for k, ts in list(self._last_seen.items())
+            if k != "default" and (now - ts) > _KHO_TTL_SECONDS
+        ]
+        for k in stale:
+            self._kho_theo_ktv.pop(k, None)
+            self._last_seen.pop(k, None)
+        if len(self._kho_theo_ktv) > _MAX_KTV_SESSIONS:
+            sap_xep = sorted(
+                ((k, ts) for k, ts in self._last_seen.items() if k != "default"),
+                key=lambda x: x[1],
+            )
+            so_can_xoa = max(0, len(self._kho_theo_ktv) - _MAX_KTV_SESSIONS)
+            for k, _ in sap_xep[:so_can_xoa]:
+                self._kho_theo_ktv.pop(k, None)
+                self._last_seen.pop(k, None)
+
+    def _lay_du_lieu_ktv(self, key=None):
+        session_key = key or self.current_key()
+        now = time.time()
+        with self._khoa:
+            self._don_phien_cu_unlocked(now)
+            if session_key not in self._kho_theo_ktv:
+                self._kho_theo_ktv[session_key] = copy.deepcopy(self._mau_goc)
+            self._last_seen[session_key] = now
+            return self._kho_theo_ktv[session_key]
+
+    @property
+    def du_lieu(self):
+        return self._lay_du_lieu_ktv()
+
+    @du_lieu.setter
+    def du_lieu(self, val):
+        session_key = self.current_key()
+        with self._khoa:
+            self._kho_theo_ktv[session_key] = val
+            self._last_seen[session_key] = time.time()
+
+    def nap(self):
+        with self._khoa:
+            self._nap_mau_goc()
+            session_key = self.current_key()
+            self._kho_theo_ktv[session_key] = copy.deepcopy(self._mau_goc)
+            self._last_seen[session_key] = time.time()
+
+    def dat_lai(self, key=None):
+        session_key = key or self.current_key()
+        with self._khoa:
+            self._kho_theo_ktv[session_key] = copy.deepcopy(self._mau_goc)
+            self._last_seen[session_key] = time.time()
+
+    def xoa_phien(self, key=None):
+        session_key = key or self.current_key()
+        with self._khoa:
+            self._kho_theo_ktv.pop(session_key, None)
+            self._last_seen.pop(session_key, None)
+
+    def khoi_phuc_xuat_xuong(self, key=None):
+        self.dat_lai(key=key)
 
     def luu(self):
-        try:
-            with open(self.tep_luu, "w", encoding="utf-8") as f:
-                json.dump(self.du_lieu, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"Loi ghi kho cau hinh: {e}")
+        # Giữ tương thích ngược, trạng thái KTV được cô lập trên RAM
+        pass
 
-    def doc(self, duong_dan, mac_dinh=None):
-        khoang = self.du_lieu
-        cac_khoa = duong_dan.split(".")
-        for k in cac_khoa:
-            if isinstance(khoang, dict) and k in khoang:
+    def doc(self, duong_dan, mac_dinh=None, key=None):
+        session_key = key or self.current_key()
+        with self._khoa:
+            khoang = self._lay_du_lieu_ktv(session_key)
+            cac_khoa = duong_dan.split(".")
+            for k in cac_khoa:
+                if isinstance(khoang, dict) and k in khoang:
+                    khoang = khoang[k]
+                else:
+                    return mac_dinh
+            return copy.deepcopy(khoang) if isinstance(khoang, (dict, list)) else khoang
+
+    def ghi(self, duong_dan, gia_tri, key=None):
+        session_key = key or self.current_key()
+        with self._khoa:
+            khoang = self._lay_du_lieu_ktv(session_key)
+            cac_khoa = duong_dan.split(".")
+            for k in cac_khoa[:-1]:
+                if k not in khoang or not isinstance(khoang[k], dict):
+                    khoang[k] = {}
                 khoang = khoang[k]
-            else:
-                return mac_dinh
-        return khoang
-
-    def ghi(self, duong_dan, gia_tri):
-        khoang = self.du_lieu
-        cac_khoa = duong_dan.split(".")
-        for k in cac_khoa[:-1]:
-            if k not in khoang or not isinstance(khoang[k], dict):
-                khoang[k] = {}
-            khoang = khoang[k]
-        khoang[cac_khoa[-1]] = gia_tri
-        self.luu()
+            khoang[cac_khoa[-1]] = copy.deepcopy(gia_tri) if isinstance(gia_tri, (dict, list)) else gia_tri
 
 
 KHO = KhoCauHinh()

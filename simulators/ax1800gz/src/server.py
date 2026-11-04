@@ -7,6 +7,7 @@ Chay:  python server.py [cong]     (mac dinh: 8086)
 Mo:    http://localhost:8086/
 """
 import os
+import re
 import sys
 import json
 import hashlib
@@ -41,9 +42,10 @@ _REF_FONTS = os.path.join(_DEV, "reference", "fonts")
 
 CONG = int(sys.argv[1]) if (len(sys.argv) > 1 and sys.argv[1].isdigit()) else 8086
 
-# Quan ly phien dang nhap theo SID cookie
+# Quan ly phien dang nhap theo SID cookie va phien KTV doc lap
 _phien_xac_thuc = set()
 _current_nonce = "78389087"
+_nonce_theo_ktv = {}
 
 
 class ZteF6600Handler(BaseHTTPRequestHandler):
@@ -57,8 +59,39 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
                 return "/" + raw_path[len(prefix):]
         return raw_path
 
+    def _client_key(self):
+        hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip() if hasattr(self, "headers") else ""
+        if hdr:
+            return hdr
+        raw_path = getattr(self, "path", "")
+        if "?_ktv=" in raw_path or "&_ktv=" in raw_path:
+            try:
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(raw_path).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
+        cookie_hdr = self.headers.get("Cookie", "") if hasattr(self, "headers") else ""
+        if cookie_hdr:
+            m = re.search(r'(?:ktv_client_id|ftc_session|ax1800gz_sid|PHPSESSID)=([a-zA-Z0-9_-]+)', cookie_hdr)
+            if m:
+                return m.group(1)
+        ref = self.headers.get("Referer", "") if hasattr(self, "headers") else ""
+        if ref and "_ktv=" in ref:
+            try:
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(ref).query)
+                if "_ktv" in q and q["_ktv"][0]:
+                    return q["_ktv"][0].strip()
+            except Exception:
+                pass
+        sid = self._get_cookie_sid()
+        if sid:
+            return f"sid:{sid}"
+        addr = getattr(self, "client_address", None)
+        return str(addr[0]) if addr else "default"
+
     def _get_cookie_sid(self):
-        cookie_hdr = self.headers.get("Cookie", "")
+        cookie_hdr = self.headers.get("Cookie", "") if hasattr(self, "headers") else ""
         for pair in cookie_hdr.split(";"):
             parts = pair.strip().split("=", 1)
             if len(parts) == 2 and parts[0] == "SID":
@@ -67,13 +100,17 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
 
     def _is_authenticated(self):
         sid = self._get_cookie_sid()
-        return sid in _phien_xac_thuc if sid else False
+        if sid and sid in _phien_xac_thuc:
+            return True
+        client_key = self._client_key()
+        return client_key in _phien_xac_thuc
 
     def _ensure_lab_authenticated(self):
         sid = self._get_cookie_sid()
         if not sid:
             sid = secrets.token_hex(32)
         _phien_xac_thuc.add(sid)
+        _phien_xac_thuc.add(self._client_key())
         return sid
 
     def _send_xml(self, content, status=200):
@@ -85,7 +122,7 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def _send_json(self, data_dict, status=200, set_sid=None):
+    def _send_json(self, data_dict, status=200, set_sid=None, clear_sid=False):
         data = json.dumps(data_dict, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -94,6 +131,8 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         if set_sid:
             self.send_header("Set-Cookie", f"SID={set_sid}; Path=/; HttpOnly; SameSite=Lax")
             self.send_header("Set-Cookie", "_TESTCOOKIESUPPORT=1; Path=/; SameSite=Lax")
+        elif clear_sid:
+            self.send_header("Set-Cookie", "SID=; Path=/; Max-Age=0; SameSite=Lax")
         self.end_headers()
         self.wfile.write(data)
 
@@ -148,11 +187,18 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _handle_reset(self):
-        KHO.khoi_phuc_xuat_xuong()
-        _phien_xac_thuc.clear()
-        self._send_json({"status": "ok", "message": "Reset to factory"})
+        client_key = self._client_key()
+        sid = self._get_cookie_sid()
+        if sid:
+            _phien_xac_thuc.discard(sid)
+            _phien_xac_thuc.discard(f"sid:{sid}")
+        _phien_xac_thuc.discard(client_key)
+        KHO.dat_lai(client_key)
+        self._send_json({"status": "ok", "message": "Reset to factory"}, clear_sid=True)
 
     def do_GET(self):
+        client_key = self._client_key()
+        KHO.bind(client_key)
         clean_url = self._strip_sim_prefix(self.path)
         parsed = urllib.parse.urlparse(clean_url)
         path = parsed.path
@@ -160,7 +206,7 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         _type = qs.get("_type", [None])[0]
         _tag = qs.get("_tag", [None])[0]
 
-        if path in ("/api/reset", "/reset_lab") or qs.get("reset", [None])[0] == "1":
+        if path in ("/api/reset", "/reset_lab", "/resetsession") or qs.get("reset", [None])[0] == "1":
             self._handle_reset()
             return
 
@@ -208,6 +254,7 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         if _type == "loginData" and _tag == "login_token":
             global _current_nonce
             _current_nonce = str(secrets.randbelow(89999999) + 10000000)
+            _nonce_theo_ktv[client_key] = _current_nonce
             xml_token = f"<ajax_response_xml_root>{_current_nonce}</ajax_response_xml_root>"
             self._send_xml(xml_token)
             return
@@ -243,8 +290,10 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         if path in ("", "/", "/index.html", "/login", "/login.html", "/login-page.html"):
             if qs.get("logout", [None])[0] == "1":
                 sid = self._get_cookie_sid()
-                if sid in _phien_xac_thuc:
-                    _phien_xac_thuc.remove(sid)
+                if sid:
+                    _phien_xac_thuc.discard(sid)
+                    _phien_xac_thuc.discard(f"sid:{sid}")
+                _phien_xac_thuc.discard(client_key)
             elif qs.get("autologin", [None])[0] == "1":
                 self._ensure_lab_authenticated()
 
@@ -263,6 +312,8 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         self.send_error(404, "Not Found")
 
     def do_POST(self):
+        client_key = self._client_key()
+        KHO.bind(client_key)
         clean_url = self._strip_sim_prefix(self.path)
         parsed = urllib.parse.urlparse(clean_url)
         path = parsed.path
@@ -270,7 +321,7 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         _type = qs.get("_type", [None])[0]
         _tag = qs.get("_tag", [None])[0]
 
-        if path in ("/api/reset", "/reset_lab") or qs.get("reset", [None])[0] == "1":
+        if path in ("/api/reset", "/reset_lab", "/resetsession") or qs.get("reset", [None])[0] == "1":
             self._handle_reset()
             return
 
@@ -287,11 +338,18 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
             password_hash = pval("Password", "")
 
             expected_pwd = KHO.doc("auth.admin", "admin")
-            expected_hash = hashlib.sha256((expected_pwd + _current_nonce).encode("utf-8")).hexdigest()
+            nonce_ktv = _nonce_theo_ktv.get(client_key, _current_nonce)
+            expected_hash_ktv = hashlib.sha256((expected_pwd + nonce_ktv).encode("utf-8")).hexdigest()
+            expected_hash_global = hashlib.sha256((expected_pwd + _current_nonce).encode("utf-8")).hexdigest()
 
-            if (username in ("admin", "") and (password_hash == expected_hash or password_hash == expected_pwd)):
+            if (
+                username in ("admin", "")
+                and (password_hash in (expected_hash_ktv, expected_hash_global, expected_pwd))
+            ):
                 new_sid = secrets.token_hex(32)
                 _phien_xac_thuc.add(new_sid)
+                _phien_xac_thuc.add(f"sid:{new_sid}")
+                _phien_xac_thuc.add(client_key)
                 new_sess_token = secrets.token_urlsafe(18)[:24]
                 res_data = {"sess_token": new_sess_token, "login_need_refresh": True}
                 self._send_json(res_data, status=200, set_sid=new_sid)
@@ -303,9 +361,11 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         # 2. Dang xuat / Doi che do / Doi ngon ngu
         if _type == "loginData" and _tag == "logout_entry":
             sid = self._get_cookie_sid()
-            if sid in _phien_xac_thuc:
-                _phien_xac_thuc.remove(sid)
-            self._send_json({"need_refresh": 1})
+            if sid:
+                _phien_xac_thuc.discard(sid)
+                _phien_xac_thuc.discard(f"sid:{sid}")
+            _phien_xac_thuc.discard(client_key)
+            self._send_json({"need_refresh": 1}, clear_sid=True)
             return
 
         if (_type == "loginData" and _tag == "modeswitch_entry") or (_type == "hiddenData" and _tag == "switchlang_entry"):

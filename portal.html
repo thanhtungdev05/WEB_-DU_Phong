@@ -14,18 +14,40 @@
   <script>
     (function () {
       try {
-        var cid = sessionStorage.getItem('ktv_client_id');
+        var cid = sessionStorage.getItem('ktv_client_id') || localStorage.getItem('ktv_client_id');
         if (!cid) {
           var m = document.cookie.match(/(?:^|;\s*)ktv_client_id=([^;]+)/);
           if (m) cid = m[1];
         }
         if (!cid) {
           cid = 'ktv_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10);
-          sessionStorage.setItem('ktv_client_id', cid);
         }
-        document.cookie = 'ktv_client_id=' + cid + '; Path=/; SameSite=Lax';
+        try { sessionStorage.setItem('ktv_client_id', cid); } catch (e) { }
+        try { localStorage.setItem('ktv_client_id', cid); } catch (e) { }
+        document.cookie = 'ktv_client_id=' + cid + '; Max-Age=86400; Path=/; SameSite=Lax';
         window._ktvClientId = cid;
       } catch (e) { }
+
+      // Chặn các lỗi Uncaught Promise do Extension bên ngoài (content.js) inject vào console
+      window.addEventListener('unhandledrejection', function (e) {
+        try {
+          var r = e.reason;
+          var s = (r && (r.stack || r.message)) ? String(r.stack || r.message) : String(r);
+          if (s.indexOf('useCache') !== -1 || s.indexOf('content.js') !== -1 || s.indexOf('extension') !== -1) {
+            e.preventDefault();
+          }
+        } catch (_) { }
+      });
+      window.addEventListener('error', function (e) {
+        try {
+          var f = e.filename || '';
+          var m = e.message || '';
+          if (f.indexOf('content.js') !== -1 || f.indexOf('extension') !== -1 || m.indexOf('useCache') !== -1) {
+            e.preventDefault();
+            return true;
+          }
+        } catch (_) { }
+      });
     })();
   </script>
 </head>
@@ -147,7 +169,7 @@
         <!-- ── HERO SCREEN ── -->
         <section id="hero-screen" aria-label="Màn hình chào">
           <div class="hero-image-wrap">
-            <img src="assets/server-hero.png?v=0c9ff07b02cbcd4a" alt="Mạng lưới máy chủ giả lập" loading="eager">
+            <img src="assets/server-hero.png?v=0c9ff07b02cbcd4a" alt="Mạng lưới máy chủ giả lập" loading="eager" decoding="async">
           </div>
           <h1 class="hero-title">HỆ THỐNG GIẢ LẬP MẠNG</h1>
           <p class="hero-subtitle">
@@ -582,7 +604,7 @@
 
   <script src="devices/index.js?v=91d94402f2577e5b"></script>
   <script src="data.js?v=fcd4ab3f5c1cc956"></script>
-  <script src="app.js?v=c4d6662e82eb3851"></script>
+  <script src="app.js?v=a833eaf99d660948"></script>
 
 </body>
 

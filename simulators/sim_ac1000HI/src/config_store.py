@@ -32,6 +32,9 @@ _khoa = threading.RLock()
 _SESSION_CTX = threading.local()
 ACTIVE_SESSIONS = {}
 USER_STATES = {}
+_LAST_SEEN = {}
+_SESSION_TTL = 1800
+_MAX_SESSIONS = 3500
 
 
 def dat_phien_hien_tai(session_id):
@@ -41,7 +44,6 @@ def dat_phien_hien_tai(session_id):
 
 def lay_phien_hien_tai():
     return getattr(_SESSION_CTX, "sid", None)
-
 
 
 # --------------------------------------------------------------------------
@@ -466,42 +468,8 @@ SEED = {
 
 
 _state = None
+_BASE_SEED = None
 _mtime = 0.0            # thoi diem sua file state.json ma ta da nap
-
-
-def _nap(sid=None):
-    """
-    Nap kho tu dia hoac lay tu USER_STATES cua phien hien tai.
-    """
-    if sid is None:
-        sid = lay_phien_hien_tai()
-    if sid and sid in USER_STATES:
-        return USER_STATES[sid]
-
-    global _state, _mtime
-    try:
-        m = os.path.getmtime(DUONG_DAN_STATE)
-    except OSError:
-        m = 0.0
-    if _state is not None and m == _mtime:
-        return _state
-    if m:
-        try:
-            with open(DUONG_DAN_STATE, encoding="utf-8") as f:
-                cu = json.load(f)
-            # BO SUNG KHOA MOI tu SEED vao state cu.
-            if _bo_sung_khoa_thieu(cu, SEED):
-                _state = cu
-                _luu()
-            else:
-                _state = cu
-                _mtime = m
-            return _state
-        except (OSError, ValueError):
-            pass
-    _state = copy.deepcopy(SEED)
-    _luu()
-    return _state
 
 
 def _bo_sung_khoa_thieu(dich, mau):
@@ -517,14 +485,79 @@ def _bo_sung_khoa_thieu(dich, mau):
     return co_them
 
 
-def _luu():
-    global _mtime
+def _lay_base_seed():
+    """Nap seed goc mot lan duy nhat vao RAM, khong ghi de ra dia khi 1000 KTV truy cap."""
+    global _BASE_SEED, _mtime
+    if _BASE_SEED is not None:
+        return _BASE_SEED
     try:
-        with open(DUONG_DAN_STATE, "w", encoding="utf-8") as f:
-            json.dump(_state, f, ensure_ascii=False, indent=2)
-        _mtime = os.path.getmtime(DUONG_DAN_STATE)
-    except OSError:
+        if os.path.exists(DUONG_DAN_STATE):
+            with open(DUONG_DAN_STATE, encoding="utf-8") as f:
+                cu = json.load(f)
+            _bo_sung_khoa_thieu(cu, SEED)
+            cu.setdefault("session", {})["id_hien_tai"] = None
+            _BASE_SEED = cu
+            _mtime = os.path.getmtime(DUONG_DAN_STATE)
+            return _BASE_SEED
+    except (OSError, ValueError):
         pass
+    _BASE_SEED = copy.deepcopy(SEED)
+    return _BASE_SEED
+
+
+def _don_dep_phien_unlocked(now=None):
+    """Don dep phien het han va gioi han RAM khi 1000+ KTV truy cap dong thoi."""
+    if now is None:
+        now = time.time()
+    het_han = [
+        k for k, ts in list(_LAST_SEEN.items())
+        if (now - ts) > _SESSION_TTL
+    ]
+    for k in het_han:
+        _LAST_SEEN.pop(k, None)
+        USER_STATES.pop(k, None)
+        ACTIVE_SESSIONS.pop(k, None)
+    for k, info in list(ACTIVE_SESSIONS.items()):
+        if (now - info.get("last_seen", 0)) > _SESSION_TTL:
+            ACTIVE_SESSIONS.pop(k, None)
+            USER_STATES.pop(k, None)
+            _LAST_SEEN.pop(k, None)
+    if len(USER_STATES) > _MAX_SESSIONS:
+        sap_xep = sorted(_LAST_SEEN.items(), key=lambda kv: kv[1])
+        can_xoa = len(USER_STATES) - _MAX_SESSIONS
+        for k, _ in sap_xep[: max(can_xoa, 200)]:
+            _LAST_SEEN.pop(k, None)
+            USER_STATES.pop(k, None)
+            ACTIVE_SESSIONS.pop(k, None)
+
+
+def _nap(sid=None):
+    """
+    Lay kho cau hinh rieng biet cua phien KTV hien tai trong RAM.
+    Tuyet doi khong doc/ghi state.json tren dia o moi request de tranh
+    nghen I/O va tranh ghi de cheo giua 1000 KTV cung Wi-Fi NAT.
+    """
+    global _state
+    if sid is None:
+        sid = lay_phien_hien_tai()
+    if sid:
+        now = time.time()
+        _LAST_SEEN[sid] = now
+        if sid not in USER_STATES:
+            if len(USER_STATES) >= _MAX_SESSIONS:
+                _don_dep_phien_unlocked(now)
+            USER_STATES[sid] = copy.deepcopy(_lay_base_seed())
+            USER_STATES[sid].setdefault("session", {})["id_hien_tai"] = sid
+        return USER_STATES[sid]
+
+    if _state is None:
+        _state = copy.deepcopy(_lay_base_seed())
+    return _state
+
+
+def _luu():
+    """Che do RAM-only cho moi truong da KTV: khong ghi state.json ra dia."""
+    return
 
 
 def doc(duong_dan_khoa, mac_dinh=None, sid=None):
@@ -560,13 +593,23 @@ def tat_ca(sid=None):
 
 
 def dat_lai_factory(sid=None):
-    """Dua kho ve dung seed ban dau (dung khi day hoc xong mot buoi)."""
+    """Dua kho cua KTV hien tai ve dung seed ban dau (khong anh huong KTV khac)."""
     global _state
     with _khoa:
         s = sid or lay_phien_hien_tai()
         if s:
-            USER_STATES[s] = copy.deepcopy(SEED)
-            USER_STATES[s].setdefault("session", {})["id_hien_tai"] = s
+            now = time.time()
+            info = ACTIVE_SESSIONS.get(s) or {}
+            linked_client = info.get("client_key")
+            linked_sid = info.get("session_id")
+            fresh = copy.deepcopy(SEED)
+            fresh.setdefault("session", {})["id_hien_tai"] = s
+            USER_STATES[s] = fresh
+            _LAST_SEEN[s] = now
+            for peer in (linked_client, linked_sid):
+                if peer and peer != s:
+                    USER_STATES[peer] = fresh
+                    _LAST_SEEN[peer] = now
             return USER_STATES[s]
         _state = copy.deepcopy(SEED)
         _luu()
@@ -581,15 +624,35 @@ def kiem_tra_dang_nhap(uid, psw):
     return uid == doc("auth.username") and psw == doc("auth.password")
 
 
-def mo_phien(session_id):
+def mo_phien(session_id, client_key=None):
     with _khoa:
+        now = time.time()
+        if len(USER_STATES) >= _MAX_SESSIONS or len(ACTIVE_SESSIONS) >= _MAX_SESSIONS:
+            _don_dep_phien_unlocked(now)
+        if client_key and client_key in USER_STATES:
+            state_obj = USER_STATES[client_key]
+        elif session_id in USER_STATES:
+            state_obj = USER_STATES[session_id]
+        else:
+            state_obj = copy.deepcopy(_lay_base_seed())
+        state_obj.setdefault("session", {})["id_hien_tai"] = session_id
+
         ACTIVE_SESSIONS[session_id] = {
-            "created_at": time.time(),
-            "last_seen": time.time(),
+            "created_at": now,
+            "last_seen": now,
+            "client_key": client_key or session_id,
         }
-        base = _nap(sid=None)
-        USER_STATES[session_id] = copy.deepcopy(base)
-        USER_STATES[session_id].setdefault("session", {})["id_hien_tai"] = session_id
+        USER_STATES[session_id] = state_obj
+        _LAST_SEEN[session_id] = now
+
+        if client_key and client_key != session_id:
+            ACTIVE_SESSIONS[client_key] = {
+                "created_at": now,
+                "last_seen": now,
+                "session_id": session_id,
+            }
+            USER_STATES[client_key] = state_obj
+            _LAST_SEEN[client_key] = now
         return session_id
 
 
@@ -598,7 +661,9 @@ def phien_hop_le(session_id):
         return False
     with _khoa:
         if session_id in ACTIVE_SESSIONS:
-            ACTIVE_SESSIONS[session_id]["last_seen"] = time.time()
+            now = time.time()
+            ACTIVE_SESSIONS[session_id]["last_seen"] = now
+            _LAST_SEEN[session_id] = now
             return True
         return session_id == (_state.get("session", {}).get("id_hien_tai") if _state else None)
 
@@ -608,8 +673,13 @@ def dong_phien(session_id=None):
         s = session_id or lay_phien_hien_tai()
         if not s:
             return
-        ACTIVE_SESSIONS.pop(s, None)
+        info = ACTIVE_SESSIONS.pop(s, None) or {}
         USER_STATES.pop(s, None)
+        _LAST_SEEN.pop(s, None)
+        for peer in (info.get("client_key"), info.get("session_id")):
+            if peer and peer != s:
+                ACTIVE_SESSIONS.pop(peer, None)
+                USER_STATES.pop(peer, None)
+                _LAST_SEEN.pop(peer, None)
         if _state and _state.get("session", {}).get("id_hien_tai") == s:
             _state["session"]["id_hien_tai"] = None
-

@@ -17,12 +17,19 @@ Cach thay:
 
 Trang nao chua co trong config.json thi tra NGUYEN BAN goc — khong bien doi.
 """
-import json, os, re
+import json, os, re, sys
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 SOURCE = os.path.normpath(os.path.join(BASE, "..", "reference", "source"))
 
 import vg_config_store as config_store
+
+
+def _kho():
+    return sys.modules.get("vg_config_store", config_store)
+
+_SOURCE_RAW_CACHE = {}
+_SOURCE_EXISTS_CACHE = {}
 
 
 # ------------------------------------------------------ tuong thich khung iframe
@@ -356,10 +363,13 @@ def sua_policyrt_detail(s, iPRIdx):
 def sua_ipnatp_detail(s):
     """Trong doc/ipnatp.htm va _pages/p2_130.html:
     1. Bo sung id cho Enable (#lbl-nat-enable, #chk-nat-enable), Mode, Public/Private Port/IP, nút OK (#btn-nat-ok).
-    2. Khi bam OK, luu snapshot va chuyen ve bang danh sach Port Redirection Table giong router DrayTek that va Bai 2.
-    3. Tu dong khoi phuc (Auto-Restore) gia tri KTV da nhap khi quay lai trang Index 1.
+    2. Khi bam OK, luu snapshot len ca vg_config_store (theo phien KTV tren server) lan window.top
+       va chuyen ve bang danh sach Port Redirection Table giong router DrayTek that va Bai 2.
+    3. Tu dong khoi phuc (Auto-Restore) gia tri KTV da nhap khi quay lai trang Index 1 (ke ca khi reload tab di dong).
     4. Xoa sach gia tri cu rac nhu value=","Peer ID"]" trong p2_130.html.
     """
+    server_snap = _kho().lay("doc/ipnatp1.htm", "_ftc_bai8_snap")
+    server_snap_json = json.dumps(server_snap, ensure_ascii=False) if server_snap else "null"
     save_handler = (
         "f.fid.value=2;"
         "var snap={"
@@ -379,7 +389,10 @@ def sua_ipnatp_detail(s):
         "try{if(parent){parent._FTC_VG2927_BAI8=snap;parent._ftcIsSaved=true;parent._hasClickedSaveInGuide=true;}}catch(e){}"
         "try{if(top){top._FTC_VG2927_BAI8=snap;top._ftcIsSaved=true;top._hasClickedSaveInGuide=true;}}catch(e){}"
         "try{if(top&&top.applyGuidePopups){top.applyGuidePopups();}}catch(e){}"
-        "document.location='/cgi-bin/ipnat.cgi?fid=0&iPageIdx=1&save_success=1';"
+        "var q='&en='+(snap.enable?'1':'0')+'&svc='+encodeURIComponent(snap.svcName)+'&proto='+encodeURIComponent(snap.proto)"
+        "+'&wanIf='+encodeURIComponent(snap.wanIf)+'&pub='+encodeURIComponent(snap.pubPort)+'&prv='+encodeURIComponent(snap.prvIp)"
+        "+'&prvPort='+encodeURIComponent(snap.prvPort);"
+        "document.location='/cgi-bin/ipnat.cgi?fid=0&iPageIdx=1&save_success=1'+q;"
         "return true;}}"
     )
     old_tail = "f.fid.value=2;f.submit();}}"
@@ -397,14 +410,16 @@ def sua_ipnatp_detail(s):
     s = s.replace('<b>Index No.&nbsp;0</b>', '<b>Index No.&nbsp;1</b>', 1)
     s = s.replace('name=iProfileIdx type=hidden value="0"', 'name=iProfileIdx type=hidden value="1"', 1)
 
-    # Co che Auto-Restore gia tri da nhap khi quay lai trang
+    # Co che Auto-Restore gia tri da nhap khi quay lai trang (uu tien server_snap theo phien KTV)
     auto_restore_script = (
         "<script>"
+        "var _ftcServerSnap=" + server_snap_json + ";"
         "function _ftcRestoreBai8(){"
         "try{"
         "var topWin=(typeof window!=='undefined'&&window.top)?window.top:window;"
-        "var snap=(topWin&&topWin._FTC_VG2927_BAI8)||(typeof window!=='undefined'&&window._FTC_VG2927_BAI8)||(parent&&parent._FTC_VG2927_BAI8);"
+        "var snap=_ftcServerSnap||(topWin&&topWin._FTC_VG2927_BAI8)||(typeof window!=='undefined'&&window._FTC_VG2927_BAI8)||(parent&&parent._FTC_VG2927_BAI8);"
         "if(snap&&snap.isSaved){"
+        "try{if(topWin)topWin._FTC_VG2927_BAI8=snap;if(parent)parent._FTC_VG2927_BAI8=snap;}catch(e){}"
         "var f=document.frm1;"
         "if(f){"
         "if(f.sPSrvEnable&&snap.enable)f.sPSrvEnable.checked=true;"
@@ -431,15 +446,19 @@ def sua_ipnatp_detail(s):
 
 def sua_ipnatp_list(s):
     """Trong doc/ipnatp1.htm, _pages/page_042.html va _pages/deep_032.html:
-    Dong bo du lieu KTV da luu tu snapshot top._FTC_VG2927_BAI8 vao aryPtRedirect[0],
-    giup dong so 1 hien thi day du Camera, ALL, TCP, 8080, Any, 192.168.1.10.
+    Dong bo du lieu KTV da luu tu vg_config_store (_ftc_bai8_snap) hoac snapshot top._FTC_VG2927_BAI8
+    vao aryPtRedirect[0], giup dong so 1 hien thi day du Camera, ALL, TCP, 8080, Any, 192.168.1.10.
     """
+    server_snap = _kho().lay("doc/ipnatp1.htm", "_ftc_bai8_snap")
+    server_snap_json = json.dumps(server_snap, ensure_ascii=False) if server_snap else "null"
     s = re.sub(r"var\s+aryPtRedirect\s*=\s*;", 'var aryPtRedirect = [["","",0,0,0,-2,0,"Any"]];', s)
     sync_code = (
         "try {"
+        "var _ftcServerSnap = " + server_snap_json + ";"
         "var topWin = (typeof window !== 'undefined' && window.top) ? window.top : window;"
-        "var snap = (topWin && topWin._FTC_VG2927_BAI8) || (parent && parent._FTC_VG2927_BAI8) || window._FTC_VG2927_BAI8;"
+        "var snap = _ftcServerSnap || (topWin && topWin._FTC_VG2927_BAI8) || (parent && parent._FTC_VG2927_BAI8) || window._FTC_VG2927_BAI8;"
         "if (snap && snap.isSaved) {"
+        "try{if(topWin)topWin._FTC_VG2927_BAI8=snap;if(parent)parent._FTC_VG2927_BAI8=snap;}catch(e){}"
         "document._ftcIsSaved = true; window._ftcIsSaved = true;"
         "try{if(parent){parent._hasClickedSaveInGuide=true;parent._ftcIsSaved=true;}if(top){top._hasClickedSaveInGuide=true;top._ftcIsSaved=true;}}catch(e){}"
         "var svc = snap.svcName || 'Camera';"
@@ -484,8 +503,6 @@ def sua_ipnatp_list(s):
     return s
 
 
-
-
 # ------------------------------------------------------------ tien ich
 
 def _js(v):
@@ -522,25 +539,7 @@ def _can_bang(s, i):
 # ------------------------------------------------------------ thay gia tri
 
 def _toan_cuc(s):
-    """Tap vi tri cac khai bao `var` o PHAM VI TOAN CUC (ngoai moi ham).
-
-    VI SAO CAN (loi tu gay 26/7/2026): trang tr069.htm co HAI ham khai bao
-    CUNG TEN bien cuc bo:
-        function initWAN(){ var aryslt=["iPriWANProf","iSecWANProf"]; ... }
-        function initVPN(){ var aryslt=["iPriVPNProf","iSecVPNProf"]; ... }
-    Ban truoc thay MOI cho `var aryslt` bang mot gia tri duy nhat trong kho
-    -> initVPN nhoi danh sach VPN vao o WAN, o VPN rong. Bien trong ham la
-    bien CUC BO, khong phai NVRAM — tuyet doi khong duoc dung toi.
-
-    VI SAO CAN quet ca <textarea id="*init" style="display:none">: mot so
-    trang (menu.htm, header.htm, dashboard.htm, stringobj.htm...) KHONG khai
-    bao bien NVRAM truc tiep trong <script>, ma giau trong mot the <textarea>
-    an, roi dung JS doc `.value` cua no de tao <script> that va nhoi vao
-    <head> luc chay (phat hien 2026-08-08 khi lam String Object). Neu chi
-    quet <script> se bo sot TOAN BO cac bien nay — 12 trang, co trang toi
-    90 bien (menu.htm) — khong bao gio thay duoc gia tri moi tu kho cau hinh,
-    vi pham nguyen tac 2.5 ngay ca khi kho da co gia tri dung.
-    """
+    """Tap vi tri cac khai bao `var` o PHAM VI TOAN CUC (ngoai moi ham)."""
     ok = set()
     khoi = (list(re.finditer(r'<script\b[^>]*>(.*?)</script>', s, re.S | re.I)) +
             list(re.finditer(r'<textarea\s+id=["\']?\w*init["\']?[^>]*>(.*?)</textarea>', s, re.S | re.I)))
@@ -575,14 +574,7 @@ def _toan_cuc(s):
 def _quet_khai_bao(s, i):
     """Tu vi tri NGAY SAU 'var ', tach tung khai bao `ten = gia_tri` cach nhau
     boi dau phay trong CUNG mot cau lenh var, dung khi het chuoi (gap ';' hoac
-    ky tu la o do sau 0). Tra ve [(ten, i_dau_gtri, i_cuoi_gtri), ...].
-
-    VI SAO CAN (phat hien 2026-08-08 khi lam String Object): JS nen/minify gop
-    NHIEU bien vao MOT `var`:  var a=1,  b=[2,3],  c="x";
-    Ban cu chi doc duoc bien DAU TIEN (a), am tham bo qua b, c. Anh huong
-    menu.htm (~90 bien), header.htm, dashboard.htm, stringobj.htm... — xem
-    them giai thich o _toan_cuc().
-    """
+    ky tu la o do sau 0). Tra ve [(ten, i_dau_gtri, i_cuoi_gtri), ...]."""
     ra, n = [], len(s)
     while i < n:
         while i < n and s[i] in ' \t\r\n':
@@ -622,11 +614,7 @@ def _quet_khai_bao(s, i):
 
 
 def _thay_bien(s, vars_):
-    """Thay ve phai cua `var TEN = ...` bang gia tri trong kho. Giu nguyen ten bien.
-
-    CHI thay khai bao o pham vi TOAN CUC — xem giai thich o _toan_cuc().
-    Xu ly ca khai bao gop nhieu bien — xem _quet_khai_bao().
-    """
+    """Thay ve phai cua `var TEN = ...` bang gia tri trong kho. Giu nguyen ten bien."""
     if not vars_:
         return s, 0
     tc = _toan_cuc(s)
@@ -637,8 +625,6 @@ def _thay_bien(s, vars_):
         for ten, j, k in _quet_khai_bao(s, m.end()):
             if ten not in vars_:
                 continue
-            # Chi thay khi gia tri THUC SU khac ban goc. Bang nhau thi giu nguyen
-            # tung ky tu (ke ca kieu dau nhay) — nguyen tac 2.2.
             goc_txt = s[j:k]
             try:
                 m_pi = re.match(r"parseInt\s*\(\s*['\"]?(-?\d+)['\"]?\s*\)", goc_txt)
@@ -657,16 +643,7 @@ def _thay_bien(s, vars_):
 
 
 def _vung_script(s):
-    """Khoang (dau, cuoi) cua moi khoi <script>...</script>.
-
-    VI SAO CAN: trang DrayTek dung JS dung bang, va trong JS co CHUOI chua the
-    input, vi du trong mnatop.htm (NAT >> Open Ports):
-        aryOpen[i] ? '<input type=checkbox value=1 name=enOpenPt"+i+" checked>'
-                   : '<input type=checkbox value=1 name=enOpenPt"+i+">'
-    Day KHONG phai the HTML that — day la MA NGUON JAVASCRIPT. Neu coi la the
-    HTML roi sua vao, ta dang SUA CODE JS cua thiet bi, vi pham nguyen tac 2.2,
-    va hau qua thay ngay tren man hinh: ca 40 o Open Ports deu bi tick.
-    """
+    """Khoang (dau, cuoi) cua moi khoi <script>...</script>."""
     return [(m.start(), m.end()) for m in
             re.finditer(r'<script\b[^>]*>.*?</script>', s, re.I | re.S)]
 
@@ -695,9 +672,6 @@ def _thay_input(s, inputs):
         if ty in ("button", "submit", "reset", "image", "file"):
             return m.group(0)
         if ty == "radio":
-            # RADIO khac CHECKBOX: nhieu the cung `name`, moi the mot `value`.
-            # Phai tick the co value BANG gia tri trong kho, khong duoc tick
-            # theo bool — lam vay se tick ca nhom (vd iWebAuth=1 ma van tick value=0).
             v = re.search(r'\bvalue\s*=\s*["\']?([^"\'>\s]*)', a, re.I)
             a2 = re.sub(r'\s+checked(?:\s*=\s*["\']?\w*["\']?)?', "", a, flags=re.I)
             if v is not None and str(v.group(1)) == str(gt):
@@ -751,37 +725,112 @@ def _thay_input(s, inputs):
 # ------------------------------------------------------------ API
 
 def co_trang(duong_dan_goc):
-    """Trang goc co ton tai trong reference/source/ khong."""
-    return os.path.exists(os.path.join(SOURCE, duong_dan_goc))
+    """Trang goc co ton tai trong reference/source/ khong (co cache RAM)."""
+    if duong_dan_goc in _SOURCE_EXISTS_CACHE:
+        return _SOURCE_EXISTS_CACHE[duong_dan_goc]
+    exists = os.path.exists(os.path.join(SOURCE, duong_dan_goc))
+    _SOURCE_EXISTS_CACHE[duong_dan_goc] = exists
+    return exists
+
+
+def _phan_tich_bien_goc(s):
+    """Phan tich 1 lan duy nhat danh sach (ten, j, k, goc_txt, parsed_val) cua trang goc."""
+    tc = _toan_cuc(s)
+    spans = []
+    for m in re.finditer(r'\bvar\s+', s):
+        if m.start() not in tc:
+            continue
+        for ten, j, k in _quet_khai_bao(s, m.end()):
+            goc_txt = s[j:k]
+            parsed_ok = False
+            parsed_val = None
+            m_pi = re.match(r"parseInt\s*\(\s*['\"]?(-?\d+)['\"]?\s*\)", goc_txt)
+            if m_pi:
+                try:
+                    parsed_val = ("pi", int(m_pi.group(1)))
+                    parsed_ok = True
+                except Exception:
+                    pass
+            else:
+                try:
+                    parsed_val = ("json", json.loads(goc_txt.replace("'", '"')))
+                    parsed_ok = True
+                except Exception:
+                    pass
+            spans.append((ten, j, k, goc_txt, parsed_ok, parsed_val))
+    return spans
+
+
+def _thay_bien_nhanh(s, spans, vars_):
+    """Thay bien JS tu danh sach spans da phan tich san O(so_bien) thay vi quet toan trang."""
+    if not vars_ or not spans:
+        return s, 0
+    ra, i, n = [], 0, 0
+    for ten, j, k, _goc_txt, parsed_ok, parsed_val in spans:
+        if ten not in vars_:
+            continue
+        v_new = vars_[ten]
+        if parsed_ok:
+            try:
+                if parsed_val[0] == "pi" and parsed_val[1] == int(v_new):
+                    continue
+                if parsed_val[0] == "json" and parsed_val[1] == v_new:
+                    continue
+            except Exception:
+                pass
+        ra.append(s[i:j])
+        ra.append(_js(v_new))
+        i = k
+        n += 1
+    if n == 0:
+        return s, 0
+    ra.append(s[i:])
+    return "".join(ra), n
 
 
 def render(duong_dan_goc):
     """Tra (noi_dung_bytes, thong_ke) hoac (None, None) neu khong co trang goc."""
-    p = os.path.join(SOURCE, duong_dan_goc)
-    if not os.path.exists(p):
-        return None, None
-    with open(p, "rb") as f:
-        raw = f.read()
-    try:
-        s = raw.decode("utf-8")
-        enc = "utf-8"
-    except UnicodeDecodeError:
-        s = raw.decode("latin-1")
-        enc = "latin-1"
+    kho = _kho()
+    cached = _SOURCE_RAW_CACHE.get(duong_dan_goc)
+    if cached is None:
+        p = os.path.join(SOURCE, duong_dan_goc)
+        if not co_trang(duong_dan_goc):
+            return None, None
+        with open(p, "rb") as f:
+            raw = f.read()
+        try:
+            s = raw.decode("utf-8")
+            enc = "utf-8"
+        except UnicodeDecodeError:
+            s = raw.decode("latin-1")
+            enc = "latin-1"
+        def_page = getattr(kho, "_DEFAULT_PAGES", {}).get(duong_dan_goc) or {}
+        def_inputs = dict(def_page.get("inputs") or {})
+        if def_inputs:
+            s, _ = _thay_input(s, def_inputs)
+        s = sua_top_thanh_parent(s)
+        s = bat_tab_ipv6(s)
+        if "ipbandw.htm" in duong_dan_goc:
+            s = sua_ipbandw_add(s)
+        if "ipbmac.htm" in duong_dan_goc:
+            s = sua_ipbmac_add(s)
+        if "ENET.SHT" in duong_dan_goc or "enet.sht" in duong_dan_goc.lower():
+            s = sua_enet_sht(s)
+        spans = _phan_tich_bien_goc(s)
+        cached = (s, enc, len(raw), spans, def_inputs)
+        _SOURCE_RAW_CACHE[duong_dan_goc] = cached
 
-    cfg = config_store.trang(duong_dan_goc)
-    s2, n_var = _thay_bien(s, cfg.get("vars", {}))
-    s2, n_inp = _thay_input(s2, cfg.get("inputs", {}))
-    s2 = sua_top_thanh_parent(s2)
-    s2 = bat_tab_ipv6(s2)
-    if "ipbandw.htm" in duong_dan_goc:
-        s2 = sua_ipbandw_add(s2)
-    if "ipbmac.htm" in duong_dan_goc:
-        s2 = sua_ipbmac_add(s2)
-    if "ENET.SHT" in duong_dan_goc or "enet.sht" in duong_dan_goc.lower():
-        s2 = sua_enet_sht(s2)
+    s, enc, goc_bytes, spans, def_inputs = cached
+    cfg = kho.trang(duong_dan_goc)
+    s2, n_var = _thay_bien_nhanh(s, spans, cfg.get("vars", {}))
+    cur_inputs = cfg.get("inputs") or {}
+    if cur_inputs is def_inputs or not cur_inputs:
+        diff_inputs = {}
+    else:
+        diff_inputs = {k: v for k, v in cur_inputs.items() if def_inputs.get(k) != v}
+    s2, n_inp = _thay_input(s2, diff_inputs)
     return s2.encode(enc, "replace"), {"bien": n_var, "input": n_inp,
-                                       "goc_bytes": len(raw), "ra_bytes": len(s2)}
+                                       "goc_bytes": goc_bytes, "ra_bytes": len(s2)}
 
 
 if __name__ == "__main__":
