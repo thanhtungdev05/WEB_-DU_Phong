@@ -18,6 +18,8 @@ import subprocess
 import http.client
 import ipaddress
 import gzip
+import io
+from email.utils import parsedate_to_datetime
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlparse
 
@@ -179,6 +181,23 @@ API_GZIP_CONTENT_TYPES = {
     'application/xml',
     'image/svg+xml',
 }
+STATIC_GZIP_EXTENSIONS = {'.html', '.css', '.js', '.json', '.svg', '.xml', '.txt', '.map'}
+STATIC_GZIP_CACHE = {}
+
+
+def get_compressed_static_asset(file_path, st_mtime, st_size):
+    """Retrieve or compute a cached gzip representation of a static text file."""
+    cache_key = (file_path, st_mtime, st_size)
+    cached = STATIC_GZIP_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+    with open(file_path, 'rb') as f:
+        data = f.read()
+    compressed = gzip.compress(data, compresslevel=5, mtime=0)
+    if len(STATIC_GZIP_CACHE) >= 256:
+        STATIC_GZIP_CACHE.clear()
+    STATIC_GZIP_CACHE[cache_key] = compressed
+    return compressed
 
 
 def accepts_gzip(header_value):
@@ -272,6 +291,78 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             super().handle()
         except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
             pass
+
+    def send_head(self):
+        """Send response code and headers for static files, compressing with gzip when accepted."""
+        path = self.translate_path(self.path)
+        f = None
+        if os.path.isdir(path):
+            parts = urlparse(self.path)
+            if parts.path == '/':
+                index = os.path.join(path, "index.html")
+                if os.path.exists(index):
+                    path = index
+            else:
+                self.send_error(404, "Not Found")
+                return None
+        if path.endswith("/"):
+            self.send_error(404, "File not found")
+            return None
+        try:
+            f = open(path, 'rb')
+        except OSError:
+            self.send_error(404, "File not found")
+            return None
+
+        try:
+            fs = os.fstat(f.fileno())
+            if "If-Modified-Since" in self.headers and "If-None-Match" not in self.headers:
+                try:
+                    ims = self.headers.get("If-Modified-Since")
+                    ims_dt = parsedate_to_datetime(ims)
+                    if int(ims_dt.timestamp()) >= int(fs.st_mtime):
+                        self.send_response(304)
+                        self.end_headers()
+                        f.close()
+                        return None
+                except Exception:
+                    pass
+
+            ctype = self.guess_type(path)
+            if ctype.startswith('text/') or ctype in ('application/javascript', 'application/json'):
+                if 'charset=' not in ctype:
+                    ctype = f"{ctype}; charset=utf-8"
+
+            extension = os.path.splitext(path.lower())[1]
+            accept_encoding = self.headers.get('Accept-Encoding', '')
+            compressed = False
+
+            if (
+                extension in STATIC_GZIP_EXTENSIONS
+                and fs.st_size >= API_GZIP_MIN_BYTES
+                and accepts_gzip(accept_encoding)
+            ):
+                f.close()
+                compressed_data = get_compressed_static_asset(path, fs.st_mtime, fs.st_size)
+                f = io.BytesIO(compressed_data)
+                content_length = len(compressed_data)
+                compressed = True
+            else:
+                content_length = fs.st_size
+
+            self.send_response(200)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(content_length))
+            self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
+            if compressed:
+                self.send_header("Content-Encoding", "gzip")
+                self.send_header("Vary", "Accept-Encoding")
+            self.end_headers()
+            return f
+        except Exception:
+            if f:
+                f.close()
+            raise
 
     def end_headers(self):
         request_url = urlparse(getattr(self, 'path', '/'))

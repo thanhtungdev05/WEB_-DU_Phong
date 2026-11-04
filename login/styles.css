@@ -20,7 +20,7 @@ body {
   min-height: 100vh;
   min-height: 100svh;
   color: #f8fbff;
-  background: #071632 url("../assets/bklogin.png") center center / cover no-repeat fixed;
+  background: #071632 url("../assets/bklogin.jpg") center center / cover no-repeat fixed;
   overflow-x: hidden;
 }
 

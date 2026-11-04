@@ -286,6 +286,31 @@ class DispatcherSecurityTests(unittest.TestCase):
         self.assertFalse(workbook_compressed)
         self.assertEqual(workbook, source)
 
+    def test_static_assets_support_gzip_compression_when_accepted(self):
+        # Uncompressed request
+        raw_status, raw_headers, raw_body = self.request('/styles.css')
+        raw_headers_lower = {k.lower(): v for k, v in raw_headers.items()}
+        self.assertEqual(raw_status, 200)
+        self.assertNotIn('content-encoding', raw_headers_lower)
+
+        # Gzip-compressed request
+        gz_status, gz_headers, gz_body = self.request('/styles.css', headers={'Accept-Encoding': 'gzip, deflate'})
+        gz_headers_lower = {k.lower(): v for k, v in gz_headers.items()}
+        self.assertEqual(gz_status, 200)
+        self.assertEqual(gz_headers_lower.get('content-encoding'), 'gzip')
+        self.assertIn('Accept-Encoding', gz_headers_lower.get('vary', ''))
+        self.assertLess(len(gz_body), len(raw_body))
+        self.assertEqual(gzip.decompress(gz_body), raw_body)
+
+        # Binary workbook is NOT compressed
+        wb_status, wb_headers, _ = self.request(
+            '/templates/Mau_Import_KTV.xlsx',
+            headers={'Accept-Encoding': 'gzip'},
+        )
+        wb_headers_lower = {k.lower(): v for k, v in wb_headers.items()}
+        self.assertEqual(wb_status, 200)
+        self.assertNotIn('content-encoding', wb_headers_lower)
+
 
 if __name__ == '__main__':
     unittest.main()
