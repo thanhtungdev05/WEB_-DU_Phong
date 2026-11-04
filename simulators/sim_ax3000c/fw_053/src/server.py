@@ -55,7 +55,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 GOC_WWW = os.path.abspath(os.path.join(_HERE, "..", "reference", "www"))
 GOC_API = os.path.abspath(os.path.join(_HERE, "..", "reference", "api"))
 
-CONG = int(sys.argv[1]) if len(sys.argv) > 1 else 8091
+CONG = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8091
 
 SID_TRONG = "0" * 32
 # Tai khoan THAT cua thiet bi sau khi anh Huynn reset (xem CLAUDE.md muc 1)

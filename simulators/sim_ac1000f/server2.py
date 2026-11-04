@@ -12,7 +12,7 @@ import os, sys, socket, re, hmac, json, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, unquote
 
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8081
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8081
 BASE = os.path.dirname(os.path.abspath(__file__))
 WWW = os.path.join(BASE, "www2")
 
