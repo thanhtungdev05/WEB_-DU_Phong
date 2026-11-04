@@ -14,18 +14,40 @@
   <script>
     (function () {
       try {
-        var cid = sessionStorage.getItem('ktv_client_id');
+        var cid = sessionStorage.getItem('ktv_client_id') || localStorage.getItem('ktv_client_id');
         if (!cid) {
           var m = document.cookie.match(/(?:^|;\s*)ktv_client_id=([^;]+)/);
           if (m) cid = m[1];
         }
         if (!cid) {
           cid = 'ktv_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10);
-          sessionStorage.setItem('ktv_client_id', cid);
         }
-        document.cookie = 'ktv_client_id=' + cid + '; Path=/; SameSite=Lax';
+        try { sessionStorage.setItem('ktv_client_id', cid); } catch (e) { }
+        try { localStorage.setItem('ktv_client_id', cid); } catch (e) { }
+        document.cookie = 'ktv_client_id=' + cid + '; Max-Age=86400; Path=/; SameSite=Lax';
         window._ktvClientId = cid;
       } catch (e) { }
+
+      // Chặn các lỗi Uncaught Promise do Extension bên ngoài (content.js) inject vào console
+      window.addEventListener('unhandledrejection', function (e) {
+        try {
+          var r = e.reason;
+          var s = (r && (r.stack || r.message)) ? String(r.stack || r.message) : String(r);
+          if (s.indexOf('useCache') !== -1 || s.indexOf('content.js') !== -1 || s.indexOf('extension') !== -1) {
+            e.preventDefault();
+          }
+        } catch (_) { }
+      });
+      window.addEventListener('error', function (e) {
+        try {
+          var f = e.filename || '';
+          var m = e.message || '';
+          if (f.indexOf('content.js') !== -1 || f.indexOf('extension') !== -1 || m.indexOf('useCache') !== -1) {
+            e.preventDefault();
+            return true;
+          }
+        } catch (_) { }
+      });
     })();
   </script>
 </head>
@@ -147,7 +169,7 @@
         <!-- ── HERO SCREEN ── -->
         <section id="hero-screen" aria-label="Màn hình chào">
           <div class="hero-image-wrap">
-            <img src="assets/server-hero.jpg?v=f261d5512a44808e" alt="Mạng lưới máy chủ giả lập" loading="eager">
+            <img src="assets/server-hero.jpg?v=f261d5512a44808e" alt="Mạng lưới máy chủ giả lập" loading="eager" decoding="async">
           </div>
           <h1 class="hero-title">HỆ THỐNG GIẢ LẬP MẠNG</h1>
           <p class="hero-subtitle">
@@ -549,13 +571,13 @@
   <script src="devices/mikrotik_hexs/tooltips/bai2.js?v=e979cf6dadd1dded"></script>
   <script src="devices/mikrotik_hexs/tooltips/bai3.js?v=719cb8b7628b7dd8"></script>
   <script src="devices/mikrotik_hexs/tooltips/bai4.js?v=eedb69fa4f5d7622"></script>
-  <script src="devices/mikrotik_hexs/tooltips/bai5.js?v=e7f748bbc3d843e9"></script>
+  <script src="devices/mikrotik_hexs/tooltips/bai5.js?v=ae4537d094644a92"></script>
   <script src="devices/mikrotik_hexs/tooltips/bai6.js?v=b3ebb603915c3952"></script>
   <script src="devices/mikrotik_hexs/lessons/bai1.js?v=e354afa3784e952e"></script>
   <script src="devices/mikrotik_hexs/lessons/bai2.js?v=be4f6a8a48cf2e64"></script>
   <script src="devices/mikrotik_hexs/lessons/bai3.js?v=9ce2eda39796e0a6"></script>
   <script src="devices/mikrotik_hexs/lessons/bai4.js?v=c61c4d52e6ba91e4"></script>
-  <script src="devices/mikrotik_hexs/lessons/bai5.js?v=bea7d80031b4e6a6"></script>
+  <script src="devices/mikrotik_hexs/lessons/bai5.js?v=078e5b9e0fc069e0"></script>
   <script src="devices/mikrotik_hexs/lessons/bai6.js?v=376f7587e018ad55"></script>
   <script src="devices/mikrotik_hexs/data.js?v=c04b70edff3d9c43"></script>
 
@@ -568,21 +590,21 @@
   <script src="devices/ax1800gz/tooltips/common_login.js?v=e7182b6866603020"></script>
   <script src="devices/ax1800gz/tooltips/bai1.js?v=5a2d4188016c5f19"></script>
   <script src="devices/ax1800gz/tooltips/bai2.js?v=b1e2773af1a588bf"></script>
-  <script src="devices/ax1800gz/tooltips/bai3.js?v=eb6cdb00f048f8e2"></script>
-  <script src="devices/ax1800gz/tooltips/bai4.js?v=3c0c6e66ec7e309d"></script>
+  <script src="devices/ax1800gz/tooltips/bai3.js?v=61eecb0d619de676"></script>
+  <script src="devices/ax1800gz/tooltips/bai4.js?v=7851968f2c09476a"></script>
   <script src="devices/ax1800gz/tooltips/bai5.js?v=bd34dd794ab741a8"></script>
   <script src="devices/ax1800gz/tooltips/bai6.js?v=749ab37f78cd3f47"></script>
   <script src="devices/ax1800gz/lessons/bai1.js?v=6645a9eaa953f8f2"></script>
   <script src="devices/ax1800gz/lessons/bai2.js?v=11e8216d3dfbf0eb"></script>
-  <script src="devices/ax1800gz/lessons/bai3.js?v=d1a34505baf3d585"></script>
-  <script src="devices/ax1800gz/lessons/bai4.js?v=8ca049e043902acf"></script>
+  <script src="devices/ax1800gz/lessons/bai3.js?v=5ab50c7237eb44a3"></script>
+  <script src="devices/ax1800gz/lessons/bai4.js?v=975fe79702b2800d"></script>
   <script src="devices/ax1800gz/lessons/bai5.js?v=04cbb23453591449"></script>
   <script src="devices/ax1800gz/lessons/bai6.js?v=6fe2e28ff62b1693"></script>
   <script src="devices/ax1800gz/data.js?v=5dfaf09f12af39ff"></script>
 
   <script src="devices/index.js?v=91d94402f2577e5b"></script>
   <script src="data.js?v=fcd4ab3f5c1cc956"></script>
-  <script src="app.js?v=07dc71e99481fb1c"></script>
+  <script src="app.js?v=64d4b933a3b41243"></script>
 
 </body>
 

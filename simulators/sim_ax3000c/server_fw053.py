@@ -35,7 +35,7 @@ _goc = importlib.util.module_from_spec(_spec)
 sys.modules["ax3000c_fw053_server"] = _goc
 _spec.loader.exec_module(_goc)
 
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8090
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8090
 
 # Tai khoan hoc vien: admin/admin (Portal cung bat buoc admin/admin o trang login)
 _goc.TAI_KHOAN.clear()
@@ -81,13 +81,14 @@ THAY_JS = {
         (b'c.p="/"', b'c.p="/sim_ax3000c/"'),
         (
             b'function s(e){return c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
-            b'function s(e){return"chunk-82690506"===e?c.p+"js/"+e+".9b4ab5b7.1726822665278.js?v=v21_clean_input":c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
+            b'function s(e){return"chunk-82690506"===e?c.p+"js/"+e+".9b4ab5b7.1726822665278.js?v=v21_assoclist_fix":c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
         ),
     ],
 }
 
 TEP_FTC_JS = os.path.join(_HERE, "ftc", "ftc-ax3000c.js")
-THE_CHEN = b"<script src=/sim_ax3000c/ftc-ax3000c.js?v=v21_clean_input></script>"
+THE_CHEN = b"<script src=/sim_ax3000c/ftc-ax3000c.js?v=v21_assoclist_fix></script>"
+_PREPATCHED_CACHE = {}
 
 
 def _xoa_fpt_wan(kho_dict):
@@ -108,6 +109,8 @@ _xoa_fpt_wan(_goc.KHO._du_lieu)
 
 # main() cua ban goc khong chay khi nap qua run_all.py -> dong bo khung tu uci mot lan o day
 _goc._dong_bo_khung_tu_uci()
+# Cap nhat luon vao _goc de moi phien KTV moi hoac reset deu ke thua khung da dong bo O(1)
+_goc.KHO._goc.update(_goc.KHO._current()._du_lieu)
 
 
 class _TemporaryFilesBySession(MutableMapping):
@@ -155,9 +158,6 @@ def dat_lai_thiet_bi(client_key):
     _TMP_THEO_KTV.reset(client_key)
     _goc._REBOOT_THEO_KTV.pop(client_key, None)
     _goc.KHO.reset(client_key)
-    _xoa_fpt_wan(_goc.KHO._goc)
-    _xoa_fpt_wan(_goc.KHO._du_lieu)
-    _goc._dong_bo_khung_tu_uci()
 
 
 def dat_trang_thai_bai(bai):
@@ -275,48 +275,58 @@ class Handler(_goc.H):
             ok = dat_trang_thai_bai(bai)
             return self._gui_ftc(200, json.dumps({"ok": 1 if ok else 0}).encode(), "application/json")
         if p in ("/ftc-ax3000c.js", "/sim_ax3000c/ftc-ax3000c.js"):
-            with open(TEP_FTC_JS, "rb") as f:
-                return self._gui_ftc(
-                    200,
-                    f.read(),
-                    "text/javascript",
-                    cache_control="public, max-age=86400, stale-while-revalidate=86400",
-                )
-        if p in ("", "/") and not self._dang_sap():
-            with open(os.path.join(_goc.GOC_WWW, "__ROOT__index.html"), "rb") as f:
-                html = f.read()
-            # Rewrite asset paths sang namespace /sim_ax3000c/ de tranh 404 khi load qua Portal iframe
-            html = html.replace(b"href=/css/", b"href=/sim_ax3000c/css/")
-            html = html.replace(b"href=/js/", b"href=/sim_ax3000c/js/")
-            html = html.replace(b"src=/js/", b"src=/sim_ax3000c/js/")
-            html = html.replace(b"href=/icons/", b"href=/sim_ax3000c/icons/")
-            html = html.replace(b"src=/icons/", b"src=/sim_ax3000c/icons/")
-            html = html.replace(b"src=/img/", b"src=/sim_ax3000c/img/")
-            html = html.replace(b"href=/logo-fpt.ico", b"href=/sim_ax3000c/logo-fpt.ico")
-            # chen TRUOC bundle de script chay truoc khi SPA doc sessionStorage
-            html = html.replace(b"<script src=/sim_ax3000c/js/chunk-vendors", THE_CHEN + b"<script src=/sim_ax3000c/js/chunk-vendors", 1)
-            html = html.replace(b"<script src=/js/chunk-vendors", THE_CHEN + b"<script src=/js/chunk-vendors", 1)
-            return self._gui_ftc(200, html, "text/html", cache_control="no-cache, must-revalidate")
-        ten = _goc._ten_tep(self.path)
-        if ten in THAY_JS and not self._dang_sap():
-            with open(os.path.join(_goc.GOC_WWW, ten), "rb") as f:
-                js = f.read()
-            for cu, moi in THAY_JS[ten]:
-                js = js.replace(cu, moi)
+            if "ftc_js" not in _PREPATCHED_CACHE:
+                with open(TEP_FTC_JS, "rb") as f:
+                    _PREPATCHED_CACHE["ftc_js"] = f.read()
             return self._gui_ftc(
                 200,
-                js,
+                _PREPATCHED_CACHE["ftc_js"],
+                "text/javascript",
+                cache_control="public, max-age=86400, stale-while-revalidate=86400",
+            )
+        if p in ("", "/") and not self._dang_sap():
+            if "index_html" not in _PREPATCHED_CACHE:
+                with open(os.path.join(_goc.GOC_WWW, "__ROOT__index.html"), "rb") as f:
+                    html = f.read()
+                # Rewrite asset paths sang namespace /sim_ax3000c/ de tranh 404 khi load qua Portal iframe
+                html = html.replace(b"href=/css/", b"href=/sim_ax3000c/css/")
+                html = html.replace(b"href=/js/", b"href=/sim_ax3000c/js/")
+                html = html.replace(b"src=/js/", b"src=/sim_ax3000c/js/")
+                html = html.replace(b"href=/icons/", b"href=/sim_ax3000c/icons/")
+                html = html.replace(b"src=/icons/", b"src=/sim_ax3000c/icons/")
+                html = html.replace(b"src=/img/", b"src=/sim_ax3000c/img/")
+                html = html.replace(b"href=/logo-fpt.ico", b"href=/sim_ax3000c/logo-fpt.ico")
+                # chen TRUOC bundle de script chay truoc khi SPA doc sessionStorage
+                html = html.replace(b"<script src=/sim_ax3000c/js/chunk-vendors", THE_CHEN + b"<script src=/sim_ax3000c/js/chunk-vendors", 1)
+                html = html.replace(b"<script src=/js/chunk-vendors", THE_CHEN + b"<script src=/js/chunk-vendors", 1)
+                _PREPATCHED_CACHE["index_html"] = html
+            return self._gui_ftc(200, _PREPATCHED_CACHE["index_html"], "text/html", cache_control="no-cache, must-revalidate")
+        ten = _goc._ten_tep(self.path)
+        if ten in THAY_JS and not self._dang_sap():
+            cache_k = "patched:" + ten
+            if cache_k not in _PREPATCHED_CACHE:
+                with open(os.path.join(_goc.GOC_WWW, ten), "rb") as f:
+                    js = f.read()
+                for cu, moi in THAY_JS[ten]:
+                    js = js.replace(cu, moi)
+                _PREPATCHED_CACHE[cache_k] = js
+            return self._gui_ftc(
+                200,
+                _PREPATCHED_CACHE[cache_k],
                 "text/javascript",
                 cache_control="public, max-age=31536000, immutable",
             )
         if ten.endswith(".js") and not self._dang_sap():
-            p_tep = os.path.join(_goc.GOC_WWW, ten)
-            if os.path.isfile(p_tep):
-                with open(p_tep, "rb") as f:
-                    js = f.read()
+            cache_k = "raw_js:" + ten
+            if cache_k not in _PREPATCHED_CACHE:
+                p_tep = os.path.join(_goc.GOC_WWW, ten)
+                if os.path.isfile(p_tep):
+                    with open(p_tep, "rb") as f:
+                        _PREPATCHED_CACHE[cache_k] = f.read()
+            if cache_k in _PREPATCHED_CACHE:
                 return self._gui_ftc(
                     200,
-                    js,
+                    _PREPATCHED_CACHE[cache_k],
                     "text/javascript",
                     cache_control="public, max-age=31536000, immutable",
                 )

@@ -242,13 +242,14 @@ def _cham_mtime(doi_tuong, ham, ts):
 
 def _ghi_cay_uci(cay, luc=None):
     """Ghi cay uci vao kho; config nao doi noi dung thi ghi lai moc thoi gian (mac dinh: bay gio)."""
-    cu = KHO.doc(KHOA_CAY_UCI) or {}
+    cu = KHO.doc_tho(KHOA_CAY_UCI) or {}
     mt = KHO.doc(KHOA_MTIME_UCI) or {}
     bay_gio = int(luc if luc is not None else time.time())
     for cfg in cay:
-        if json.dumps(cay[cfg], sort_keys=False) != json.dumps(cu.get(cfg), sort_keys=False):
+        if cay[cfg] is not cu.get(cfg) and json.dumps(cay[cfg], sort_keys=False) != json.dumps(cu.get(cfg), sort_keys=False):
             mt[cfg] = bay_gio
-    KHO.ghi(KHOA_CAY_UCI, cay)
+
+    KHO.ghi_uci_cow(cay)
     KHO.ghi(KHOA_MTIME_UCI, mt)
 
 
@@ -539,7 +540,7 @@ def _ghi_system(ts):
     CHUA do mot lan doi NTP that (ISSUES).
     """
     sg = KHO.doc("data_repo.weboui.system_get") or {}
-    cay = KHO.doc(KHOA_CAY_UCI) or {}
+    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
     uci_sys = cay.get("system") or {}
     sec = next((s for s in uci_sys.values()
                 if isinstance(s, dict) and s.get(".type") == "system"), None)
@@ -694,16 +695,16 @@ def _cigext_tu_uci(ban_mau, cay_cu):
     return ra
 
 
-def _dong_bo_khung_tu_uci():
+def _dong_bo_khung_tu_uci(cay=None):
     """
     Moi khung *_get = ham cua tep /etc/config (DO THAT: UR1 — 14 khung dung nguoc tu tep Backup
     trung FNV thiet bi; 2026-09-26: firewall_get sau set co nguong khi detect tat, dos tat, spi
     tat va cigext get sau upnpd_set deu doc tu uci). Goi sau moi lan ghi va sau khi nap Backup.
     """
     import ax3000c_uci_doc_nguoc as _N
-    cay = KHO.doc(KHOA_CAY_UCI) or {}
-    for khoa, moi in _N.khung_tu_uci(cay, KHO.doc).items():
-        if json.dumps(moi) != json.dumps(KHO.doc(khoa)):
+    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
+    for khoa, moi in _N.khung_tu_uci(cay, KHO.doc_tho).items():
+        if moi != KHO.doc_tho(khoa) or json.dumps(moi) != json.dumps(KHO.doc_tho(khoa)):
             KHO.ghi(khoa, moi)
     # hostname lan sang system.board / network.topology (nhu _ghi_system, do nhom 7)
     host = next((s.get("hostname") for s in (cay.get("system") or {}).values()
@@ -820,6 +821,16 @@ def _xu_ly_ubus(than):
     if doi_tuong == "oui.ui" and ham == "menu":
         return _ket_qua(0, {"menu": MENU})
 
+    if doi_tuong == "iwinfo":
+        if ham == "assoclist":
+            return _ket_qua(0, {"results": []})
+        if ham == "devices":
+            return _ket_qua(0, KHO.doc("iwinfo.devices") or {"devices": []})
+        return _ket_qua(0, {})
+
+    if doi_tuong == "ecm" and ham == "status":
+        return _ket_qua(0, {"entries": []})
+
     # oui.ui crypt {data} -> {crypt}: DO THAT 2026-09-25 (khung_that_nhom7_system.json)
     # md5-crypt "$1$" MUOI RONG, tat dinh. Trang Change Password / Remote Web goi
     # truoc khi *_set. Chi tinh toan, khong doi trang thai.
@@ -869,7 +880,7 @@ def _xu_ly_ubus(than):
     # Chieu GHI (uci set/add/delete/order/apply/confirm) CHUA DO -> roi xuong
     # nhanh "khong co bang chung" ben duoi (-32000), khong bia.
     if doi_tuong == "uci" and ham == "get":
-        cay = KHO.doc(KHOA_CAY_UCI) or {}
+        cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
         ts = ts if isinstance(ts, dict) else {}
         cfg, sec, opt = ts.get("config"), ts.get("section"), ts.get("option")
         if sec is not None:
@@ -895,7 +906,7 @@ def _xu_ly_ubus(than):
     # uci khong lo ra — CHUA DO rieng, khong mo hinh.
     # uci add / delete / order CHUA DO -> roi xuong nhanh chan ben duoi.
     if doi_tuong == "uci" and ham == "set" and isinstance(ts, dict):
-        cay = KHO.doc(KHOA_CAY_UCI) or {}
+        cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
         sec = (cay.get(ts.get("config")) or {}).get(ts.get("section"))
         if isinstance(sec, dict) and isinstance(ts.get("values"), dict):
             truoc = json.dumps(sec)
@@ -1211,13 +1222,13 @@ def _gio_thiet_bi(t):
 
 
 def _wt_xu_ly(luc):
-    cay = KHO.doc(KHOA_CAY_UCI) or {}
+    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
     sec = uci_tac_dong.wifitimer_section(cay)
     _crontab_thay(uci_tac_dong.la_dong_wifitimer, uci_tac_dong.dong_crontab_wifitimer(sec), luc)
     phut, thu = _gio_thiet_bi(luc)
     if uci_tac_dong.dat_wireless_disabled(cay, uci_tac_dong.wifitimer_muon_tat(sec, phut, thu)):
         _ghi_cay_uci(cay, luc)
-        _dong_bo_khung_tu_uci()
+        _dong_bo_khung_tu_uci(cay)
         _WT["khoa_den"] = _wt_nap_lai(luc)
 
 
@@ -1271,10 +1282,10 @@ def _hen_gio_tick():
         if v is None:
             _wt_xu_ly(luc)
             continue
-        cay = KHO.doc(KHOA_CAY_UCI) or {}
+        cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
         if uci_tac_dong.dat_wireless_disabled(cay, v):
             _ghi_cay_uci(cay, luc)
-            _dong_bo_khung_tu_uci()
+            _dong_bo_khung_tu_uci(cay)
             _wt_nap_lai(luc)      # cron cung nap lai Wi-Fi (khong giu khoa script timer)
 
 
@@ -1318,7 +1329,7 @@ def _backup_restore():
 
 def _nap_tep_backup(muc):
     import ax3000c_uci as _uci
-    cay = KHO.doc(KHOA_CAY_UCI) or {}
+    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
     mt = KHO.doc(KHOA_MTIME_UCI) or {}
     tep = KHO.doc(KHOA_TEP) or {}
     for m, nd in muc:
@@ -1337,7 +1348,8 @@ def _nap_tep_backup(muc):
         elif ten == "etc/crontabs/root":
             KHO.ghi(KHOA_CRONTAB, {"noi_dung": nd.decode("utf-8", "surrogateescape"), "mtime": int(m.mtime)})
         tep[ten] = o
-    KHO.ghi(KHOA_CAY_UCI, cay)
+
+    KHO.ghi_uci_cow(cay)
     KHO.ghi(KHOA_MTIME_UCI, mt)
     KHO.ghi(KHOA_TEP, tep)
     KHO.ghi(KHOA_MTIME_CHAM, {})
@@ -1364,16 +1376,19 @@ def _xu_ly_ubus_day_du(than):
     if not (isinstance(p, list) and len(p) >= 3 and isinstance(r, list) and r and r[0] == 0):
         return kq
     doi_tuong, ham = p[1], p[2]
+    if not (ham == "set" or (isinstance(ham, str) and ham.endswith("_set"))):
+        return kq
     ts = p[3] if len(p) > 3 and isinstance(p[3], dict) else {}
-    cay = KHO.doc(KHOA_CAY_UCI) or {}
-    doi = uci_tac_dong.ap_dung(cay, doi_tuong, ham, ts)
+    cay = dict(KHO.doc_tho(KHOA_CAY_UCI) or {})
+    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
+    doi = uci_tac_dong.ap_dung(cay, doi_tuong, ham, ts) if (ham == "set" or (isinstance(ham, str) and ham.endswith("_set"))) else False
     if doi:
         _ghi_cay_uci(cay)
     else:
         _cham_mtime(doi_tuong, ham, ts)
     if doi or (doi_tuong == "uci" and ham == "set") or ham.endswith("_set") or ham == "set":
         # 2026-09-26: moi khung *_get doc tu uci (do that) -> dung lai sau moi lan ghi
-        _dong_bo_khung_tu_uci()
+        _dong_bo_khung_tu_uci(cay)
     if doi_tuong == "network.wireless.easymesh" and ham == "set":
         _crontab_thay(lambda d: False, [], cham=True)   # do nhom 11: easymesh set cham crontab
     if doi_tuong == "data_repo.weboui" and ham in ("dhcp_reservation_set", "portfwd_set"):
@@ -1437,7 +1452,7 @@ def _tao_backup_that(bk):
     import zlib
     from ax3000c_kho_cau_hinh import cay_uci_tu_backup
     import ax3000c_uci as _uci
-    cay = KHO.doc(KHOA_CAY_UCI) or {}
+    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
     mt = KHO.doc(KHOA_MTIME_UCI) or {}
     cham = KHO.doc(KHOA_MTIME_CHAM) or {}
     tep = KHO.doc(KHOA_TEP) or {}     # tep da nap tu Upload archive (noi dung + mtime trong tar)
@@ -1490,7 +1505,7 @@ def _tao_backup():
     # Chua co tep Backup that -> cach cu (chi cau truc, noi dung suy rong)
     with open(TEP_BACKUP, encoding="utf-8") as f:
         muc = json.load(f)["tar"]["muc"]
-    cay = KHO.doc(KHOA_CAY_UCI) or {}
+    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
     tb = io.BytesIO()
     with tarfile.open(fileobj=tb, mode="w", format=tarfile.USTAR_FORMAT) as tf:
         for duong, _co, mode, loai, mtime in muc:

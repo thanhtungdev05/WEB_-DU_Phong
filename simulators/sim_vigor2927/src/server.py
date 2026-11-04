@@ -12,7 +12,7 @@ Xu ly ca dieu huong POST (nhieu trang DrayTek bam dong bang -> form.submit()).
 Chay: python server.py [port]   (mac dinh 8080)
 Dang nhap: user + password bat ky, chi can KHONG RONG.
 """
-import os, sys, json, socket, re
+import os, sys, json, socket, re, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, unquote, parse_qs
 
@@ -32,7 +32,11 @@ import vg_config_store as config_store, render
 SPEC = os.path.normpath(os.path.join(BASE, "..", "spec"))
 DA_DUNG_FILE = os.path.join(BASE, "da_dung.json")
 
-_cache = {"mt_map": 0, "url2goc": {}, "mt_dung": 0, "da_dung": set()}
+_cache = {"loaded_map": False, "url2goc": [], "loaded_dung": False, "da_dung": set()}
+_STATIC_FILE_CACHE = {}
+_DYNAMIC_RAW_CACHE = {}
+_FILE_EXISTS_CACHE = {}
+_STATIC_CACHE_EXTS = {".gif", ".png", ".jpg", ".jpeg", ".css", ".js", ".ico", ".svg", ".ttf", ".woff", ".woff2"}
 
 
 def _khoa_url(path, params):
@@ -41,34 +45,38 @@ def _khoa_url(path, params):
 
 
 def url_sang_goc():
-    """Danh sach (method, path_thuong, tham_so_dict, trang_goc) lay tu spec/cgi-map.json."""
-    p = os.path.join(SPEC, "cgi-map.json")
-    try:
-        m = os.path.getmtime(p)
-    except OSError:
+    """Danh sach (method, path_thuong, tham_so_dict, trang_goc) lay tu spec/cgi-map.json (cache RAM)."""
+    if _cache["loaded_map"]:
         return _cache["url2goc"]
-    if m != _cache["mt_map"]:
-        ds = []
-        for c in json.load(open(p, encoding="utf-8"))["endpoints"]:
+    p = os.path.join(SPEC, "cgi-map.json")
+    ds = []
+    try:
+        with open(p, encoding="utf-8") as f:
+            endpoints = json.load(f).get("endpoints", [])
+        for c in endpoints:
             if c.get("trang_dich"):
                 u = urlparse(c["url_chuan"])
                 pr = {k: v[0] for k, v in parse_qs(u.query).items() if k != "sFormAuthStr"}
                 ds.append((c.get("method", "GET"), u.path.lower(), pr, c["trang_dich"],
                            c.get("status", 302), c.get("content_type")))
-        _cache.update(mt_map=m, url2goc=ds)
+    except OSError:
+        pass
+    _cache["url2goc"] = ds
+    _cache["loaded_map"] = True
     return _cache["url2goc"]
 
 
 def da_dung():
-    """Danh sach trang goc DA duoc dung lai. Trong file nay = chua dung trang nao."""
+    """Danh sach trang goc DA duoc dung lai (cache RAM)."""
+    if _cache["loaded_dung"]:
+        return _cache["da_dung"]
     try:
-        m = os.path.getmtime(DA_DUNG_FILE)
-    except OSError:
-        return set()
-    if m != _cache["mt_dung"]:
         with open(DA_DUNG_FILE, "r", encoding="utf-8") as f:
             d = json.load(f)
-        _cache.update(mt_dung=m, da_dung=set(d.get("trang", [])))
+        _cache["da_dung"] = set(d.get("trang", []))
+    except OSError:
+        _cache["da_dung"] = set()
+    _cache["loaded_dung"] = True
     return _cache["da_dung"]
 
 
@@ -80,21 +88,7 @@ THAM_SO_DIEU_HUONG = ("fid", "iAct", "sAct", "iPageIdx", "iProfileIdx", "opmode"
 
 
 def tim_trang_goc(method, path, params):
-    """(method, URL) -> trang goc trong reference/source/, hoac None.
-
-    Khop nhu find_page: MOI tham so cua ban ghi deu phai co trong request voi
-    gia tri bang nhau; ban ghi nao nhieu tham so nhat thi thang. Can thiet vi
-    POST gui kem ca tram tham so du lieu, trong khi ban ghi chi ghi fid/iAct.
-
-    LOC THEO METHOD (sua loi 2026-08-08): truoc day ham nay gop chung ban ghi
-    GET va POST cua cung mot duong dan. Voi .cgi da nang dung chung cho nhieu
-    trang (v2x00.cgi, wan.cgi, qos.cgi...), MOI ban ghi POST hau nhu luon co
-    tap tham so RONG (fid nam trong body, extract_har.py cu khong nhung gia
-    tri vao url_chuan) — nen MOI POST deu "khop" voi ban ghi RONG dau tien tim
-    thay, kem theo do bi dieu huong sai sang trang khac hoan toan. Da sua
-    extract_har.py de nhung gia tri fid/iAct... that vao url_chuan cua ban ghi
-    POST; o day chi con can dam bao KHONG so ban ghi GET voi ban ghi POST.
-    """
+    """(method, URL) -> trang goc trong reference/source/, hoac None."""
     pl = path.lower()
     tot, tot_n = (None, None, None), -1
     for rm, rpath, rpr, goc, st, ct in url_sang_goc():
@@ -107,8 +101,6 @@ def tim_trang_goc(method, path, params):
 CT = {
     ".htm": "text/html; charset=utf-8", ".html": "text/html; charset=utf-8",
     ".cgi": "text/html; charset=utf-8",
-    # .cgi tra DU LIEU (certificatedata/usbweb/websyslog) — thiet bi that
-    # tra application/x-javascript; xem reference/har/.
     "_cgi_js": "application/x-javascript",
     ".css": "text/css", ".js": "application/javascript",
     ".png": "image/png", ".gif": "image/gif", ".jpg": "image/jpeg",
@@ -120,34 +112,23 @@ CT = {
 
 FRAME_PAGES = {"header.htm", "l_m.htm", "menu.htm", "act_sta.htm", "empty.htm"}
 
-# Mot so .cgi KHONG tra trang ma tra DU LIEU cho trang khac nap bang
-# <script src=...>. Thiet bi that tra application/x-javascript (xem reference/har/).
-# Neu tra text/html va them <!DOCTYPE html> o dau thi script LOI CU PHAP ngay
-# dong 1 -> moi bien du lieu thanh undefined -> bang do JS dung se rong,
-# thieu cot, thieu khoi. Day chinh la nguyen nhan loi nhom Certificate Management.
-# KHONG dung danh sach cung nua. Cung mot .cgi vua co the tra TRANG vua tra DU LIEU,
-# phan biet bang THAM SO chu khong bang duong dan:
-#     /cgi-bin/arp.cgi         -> 302 -> doc/iparptbl.sht   (TRANG)
-#     /cgi-bin/arp.cgi?fid=1   -> 200 application/json      (DU LIEU)
-#     /cgi-bin/hotspot.cgi?fid=0 -> 302 -> doc/hsportal1.htm (TRANG)
-# Vi vay lay Content-Type tu chinh hop dong trong spec/cgi-map.json (ghi tu HAR).
+
 def kieu_noi_dung(duong_dan, ct_hop_dong=None):
     if ct_hop_dong:
         return ct_hop_dong
     dd = "/" + duong_dan.lstrip("/")
     return CT.get(os.path.splitext(dd)[1].lower(), "text/html; charset=utf-8")
 
-# Nap _routes.json va tu dong nap lai khi file doi (theo mtime)
-_routes_cache = {"mtime": 0, "data": {}, "parsed": []}
+# Nap _routes.json mot lan vao RAM
+_routes_cache = {"loaded": False, "data": {}, "parsed": []}
 
 
 def get_routes():
-    try:
-        m = os.path.getmtime(ROUTES_FILE)
-    except OSError:
+    if _routes_cache["loaded"]:
         return _routes_cache["data"], _routes_cache["parsed"]
-    if m != _routes_cache["mtime"]:
-        data = json.load(open(ROUTES_FILE, encoding="utf-8"))
+    try:
+        with open(ROUTES_FILE, encoding="utf-8") as fh:
+            data = json.load(fh)
         parsed = []
         for key, f in data.items():
             if "?" in key:
@@ -156,7 +137,9 @@ def get_routes():
             else:
                 path, params = key, {}
             parsed.append((path, params, f))
-        _routes_cache.update(mtime=m, data=data, parsed=parsed)
+        _routes_cache.update(loaded=True, data=data, parsed=parsed)
+    except OSError:
+        _routes_cache["loaded"] = True
     return _routes_cache["data"], _routes_cache["parsed"]
 
 
@@ -164,7 +147,6 @@ def find_page(path, params):
     """Tim trang phu hop nhat: cung path, va MOI tham so cua route deu co
     trong request voi gia tri bang nhau. Uu tien route nhieu tham so nhat."""
     data, parsed = get_routes()
-    # bo sFormAuthStr khoi request params
     params = {k: v for k, v in params.items() if k != "sFormAuthStr"}
     best, best_n = None, -1
     for rpath, rparams, f in parsed:
@@ -237,26 +219,37 @@ class H(BaseHTTPRequestHandler):
 
     def _file(self, rel, params=None):
         f = os.path.join(WWW, rel.lstrip("/"))
-        if os.path.isfile(f):
+        is_file = _FILE_EXISTS_CACHE.get(f)
+        if is_file is None:
+            is_file = os.path.isfile(f)
+            _FILE_EXISTS_CACHE[f] = is_file
+        if is_file:
             ext = os.path.splitext(f)[1].lower()
-            with open(f, "rb") as fh:
-                data = fh.read()
             rl = rel.lstrip("/").replace("\\", "/")
-            if rl.startswith("doc/") or rl.startswith("_pages/"):
-                try:
-                    import importlib
-                    importlib.reload(render)
-                except Exception:
-                    pass
-                try:
-                    txt = data.decode("utf-8")
-                    enc = "utf-8"
-                except UnicodeDecodeError:
-                    txt = data.decode("latin-1")
-                    enc = "latin-1"
-                txt = render.sua_top_thanh_parent(txt)
-                txt = render.bat_tab_ipv6(txt)
-                txt = render.sua_getStrObj(txt)
+            is_dynamic = rl.startswith("doc/") or rl.startswith("_pages/")
+
+            # Bo dem RAM cho asset tinh (anh, js, css, font) tranh nghen I/O khi 5.000 KTV truy cap
+            if not is_dynamic and f in _STATIC_FILE_CACHE:
+                self._send(_STATIC_FILE_CACHE[f], CT.get(ext, "application/octet-stream"))
+                return True
+
+            if is_dynamic:
+                cached_dyn = _DYNAMIC_RAW_CACHE.get(f)
+                if cached_dyn is None:
+                    with open(f, "rb") as fh:
+                        raw_bytes = fh.read()
+                    try:
+                        txt_base = raw_bytes.decode("utf-8")
+                        enc = "utf-8"
+                    except UnicodeDecodeError:
+                        txt_base = raw_bytes.decode("latin-1")
+                        enc = "latin-1"
+                    txt_base = render.sua_top_thanh_parent(txt_base)
+                    txt_base = render.bat_tab_ipv6(txt_base)
+                    txt_base = render.sua_getStrObj(txt_base)
+                    cached_dyn = (txt_base, enc)
+                    _DYNAMIC_RAW_CACHE[f] = cached_dyn
+                txt, enc = cached_dyn
                 if "ipbandw.htm" in rl:
                     txt = render.sua_ipbandw_add(txt)
                 if "ipbmac.htm" in rl:
@@ -270,6 +263,12 @@ class H(BaseHTTPRequestHandler):
                 if "ipnatp1.htm" in rl or "page_042.html" in rl or "deep_032.html" in rl:
                     txt = render.sua_ipnatp_list(txt)
                 data = txt.encode(enc, "replace")
+            else:
+                with open(f, "rb") as fh:
+                    data = fh.read()
+                if ext in _STATIC_CACHE_EXTS or ext in (".htm", ".html"):
+                    _STATIC_FILE_CACHE[f] = data
+
             self._send(data, CT.get(ext, "application/octet-stream"))
             return True
         return False
@@ -278,7 +277,8 @@ class H(BaseHTTPRequestHandler):
         return {k: v[0] for k, v in parse_qs(qs, keep_blank_values=True).items()}
 
     def _log(self, nguon, path, chi_tiet=""):
-        print(f"  [{nguon:9}] {self.command:4} {path[:64]:64} {chi_tiet}", flush=True)
+        # Tat print(..., flush=True) tren moi request de tranh nghen stdout khi 5.000 KTV truy cap
+        pass
 
     def _phuc_vu_moi(self, goc, path):
         """Phuc vu trang DA DUNG: lay ban goc + gia tri tu config_store."""
@@ -290,20 +290,6 @@ class H(BaseHTTPRequestHandler):
         return True
 
     def _ghi_qua_ajax_get(self, path, params):
-        """Mot so trang (String Object Add/Edit) KHONG ghi cau hinh qua POST
-        302 nhu da so .cgi khac, ma dung AngularJS $http.get() goi thang
-        .cgi va doc JSON tra ve — vi du:
-            GET /cgi-bin/striobj.cgi?sAct=1&sString=...  -> 200 [1]
-        Khong khop duoc voi co che tim_trang_goc() thong thuong (tham so
-        sString la DU LIEU nguoi dung go, khong phai dieu huong co dinh nhu
-        fid — url_chuan cua tung lan chup se moi lan mot khac).
-        Tra None neu path/params nay khong thuoc dien nay (de _serve_cgi lo).
-
-        Bang chung: reference/har/Buoi_11_strobjadd_ok.har — CHI co sAct=1
-        (Add). sAct=3 (Edit-Save) / sAct=4 (Clear) CHUA co bang chung response
-        that (xem ISSUES.md 2026-08-08) — KHONG tu bia, tra None de roi ve
-        duong thuong (se ra 404, giong tinh trang chua co hop dong).
-        """
         if path != "/cgi-bin/striobj.cgi" or params.get("sAct") != "1":
             return None
         trang = "doc/stringobj.htm"
@@ -441,37 +427,25 @@ class H(BaseHTTPRequestHandler):
             config_store.dat("doc/ENET.SHT", "chkrmclnts", 1 if params.get("chkrmclnts") in ("1", 1, True, "on") else 0)
 
     def _serve_cgi(self, path, params, method="GET"):
-        # DrayTek Object String polling (fid=4048): thiet bi that tra ve chuoi ket thuc bang -1 khi het du lieu.
-        # Tra ve ngay -1 de ngan vong lap polling vo tan (gay spam [CU] POST -> _pages/page_195.html).
         if path.lower() == "/cgi-bin/v2x00.cgi" and str(params.get("fid")) == "4048":
             self._log("DULIEU", path, "-> fid=4048 Object String (-1)")
             return self._send(b"-1", "text/plain")
 
         goc, st, ct = tim_trang_goc(method, path, params)
 
-        # 0) Hop dong ghi status=200 => day la DU LIEU (JSON/JS/text), khong phai trang.
-        #    Phuc vu thang tu ban goc voi dung Content-Type. KHONG lay ban cu trong
-        #    _pages/ vi ban do bi chen <!DOCTYPE html> o dau file, lam hong script.
         if goc and st == 200 and not goc.startswith("doc/"):
             if render.co_trang(goc):
                 data, _ = render.render(goc)
                 self._log("DULIEU", path, f"-> {goc} ({len(data)}B, {ct})")
                 return self._send(data, kieu_noi_dung(goc, ct))
 
-        # 1) Uu tien ban MOI neu trang nay da duoc dung lai
         if goc and goc in da_dung() and render.co_trang(goc):
-            # HOP DONG 2.4: thiet bi that tra 302 kem Location cho cac .cgi trang.
-            # Phai giu dung 302, vi URL cuoi cung tren thanh dia chi quyet dinh
-            # cach trinh duyet giai DUONG DAN TUONG DOI trong trang
-            # (vd XBakRest.htm co <frame src=XgCert.HTM> -> phai thanh /doc/XgCert.HTM).
-            # Tra thang 200 tai /cgi-bin/... se lam moi duong dan tuong doi tro sai cho.
             if st == 302:
                 self._log("302", path, f"-> /{goc}")
                 return self._redirect("/" + goc)
             if self._phuc_vu_moi(goc, path):
                 return True
 
-        # 2) Fallback: ban CU trong www/_pages/ qua _routes.json
         page = find_page(path, params)
         if page:
             self._log("CU", path, f"-> {page}")
@@ -491,9 +465,6 @@ class H(BaseHTTPRequestHandler):
         if p in ("/", "/index.html", "/weblogin.htm", "/wlogin.htm"):
             return self._file("weblogin.htm")
 
-        # FRAMESET va cac FRAME KHUNG: uu tien ban goc trong reference/source/.
-        # Ban cu www/index.htm bi NHIEM tien ich trinh duyet (ng-scope, data-yd-,
-        # plasmo-csui) va phinh 25KB — ma day la nen cua MOI trang.
         if p in ("/index.htm", "/main.htm"):
             if "index.htm" in da_dung() and render.co_trang("index.htm"):
                 if self._phuc_vu_moi("index.htm", p):
@@ -521,6 +492,21 @@ class H(BaseHTTPRequestHandler):
             return self._file(rel)
         if p == "/cgi-bin/ipnat.cgi":
             params = self._flat(u.query)
+            if params.get("save_success") == "1" and (params.get("svc") or params.get("pub") or params.get("prv")):
+                snap = {
+                    "enable": params.get("en", "1") == "1",
+                    "mode": "Single",
+                    "svcName": params.get("svc", "Camera"),
+                    "proto": params.get("proto", "TCP"),
+                    "wanIf": params.get("wanIf", "WAN1"),
+                    "pubPort": params.get("pub", "8080"),
+                    "srcIp": "Any",
+                    "prvIp": params.get("prv", "192.168.1.10"),
+                    "prvPort": params.get("prvPort", params.get("pub", "8080")),
+                    "isSaved": True,
+                    "savedAt": int(time.time() * 1000),
+                }
+                config_store.dat("doc/ipnatp1.htm", "_ftc_bai8_snap", snap)
             if str(params.get("fid")) == "1":
                 return self._file("doc/ipnatp.htm", params)
             return self._file("doc/ipnatp1.htm", params)
@@ -532,7 +518,6 @@ class H(BaseHTTPRequestHandler):
                 return self._send(kq, "application/json")
             return self._serve_cgi(p, params)
 
-        # Trang goc truy cap thang theo DUNG duong dan that (/doc/enet1.htm, /doc/cf1.HTM)
         rel = p.lstrip("/")
         if rel in da_dung() and render.co_trang(rel):
             if self._phuc_vu_moi(rel, p):
@@ -540,7 +525,6 @@ class H(BaseHTTPRequestHandler):
 
         if self._file(p):
             return
-        # Chua co ban cu nhung CO ban goc -> van phuc vu duoc
         if render.co_trang(rel):
             return self._phuc_vu_moi(rel, p)
         return self._send(b"Not found: " + p.encode(), "text/plain", 404)
@@ -559,7 +543,6 @@ class H(BaseHTTPRequestHandler):
         config_store.dat_nguoi_dung_hien_tai(self._client_id())
         u = urlparse(self.path)
         p = unquote(u.path)
-        # doc body
         try:
             n = int(self.headers.get("Content-Length", 0))
         except ValueError:
@@ -579,9 +562,6 @@ class H(BaseHTTPRequestHandler):
             self.wfile.write(data)
             return
 
-        # Bo thu thap tich hop (thay collector.py rieng): POST /save?name=X&ext=Y
-        # Ghi vao captures_new/ de dung khi can crawl lai tu thiet bi that.
-        # Bang chung goc da duyet nam o ../reference/ (chi doc, xem CLAUDE.md 2.3).
         if p == "/save":
             name = re.sub(r"[^A-Za-z0-9_.-]", "_", params.get("name", "noname"))
             ext = re.sub(r"[^A-Za-z0-9]", "", params.get("ext", "txt"))[:8] or "txt"
@@ -605,7 +585,6 @@ class H(BaseHTTPRequestHandler):
             return self._redirect("/index.htm")
 
         if p.endswith(".cgi"):
-            # Dac biet: General Setup WAN (fid=101) luu tren mwangen1.htm, thiet bi that tra 302 ve lai mwangen1.htm
             if p == "/cgi-bin/wan.cgi" and params.get("fid") == "101":
                 self._log("302", p, "-> /doc/mwangen1.htm (General Setup)")
                 return self._redirect("/doc/mwangen1.htm")
@@ -620,8 +599,6 @@ class H(BaseHTTPRequestHandler):
                 return self._redirect("/cgi-bin/ipnat.cgi?fid=0&iPageIdx=1&save_success=1")
 
             goc, _st, _ct = tim_trang_goc("POST", p, params)
-            # POST co GHI cau hinh khi mang co `webchange` (DrayTek dung co nay
-            # de danh dau form Apply/Save, xem spec/cgi-map.json).
             is_ipbmac = (goc == "doc/ipbmac.htm" or params.get("fid") == "126")
             is_enet = (p == "/cgi-bin/enet.cgi" or (goc == "doc/ENET.SHT" and str(params.get("webchange")) == "1"))
             is_ipbandw = (goc == "doc/ipbandw.htm" or str(params.get("fid")) == "302")
@@ -638,19 +615,16 @@ class H(BaseHTTPRequestHandler):
                     self._xu_ly_post_ipbandw(params)
                 n = config_store.ghi_post(p, params, goc)
                 self._log("GHI", p, f"-> config_store: {n} gia tri  (trang {goc})")
-                # Hop dong 2.4: thiet bi that tra 302 kem Location tro sang trang dich
                 red_path = "/" + goc
                 if is_enet:
                     red_path += "?save_success=1"
                 return self._redirect(red_path)
-            # Dieu huong POST (bam dong bang -> form.submit): phuc vu dung trang
             return self._serve_cgi(p, params, method="POST")
 
-        # Form Apply/Save khac: bao thanh cong, khong ghi cau hinh
         return self._redirect(self.headers.get("Referer") or "/index.htm")
 
     def log_message(self, *a):
-        pass          # log chi tiet da in o _log(), khong can dong mac dinh cua thu vien
+        pass
 
 
 class DualStack(ThreadingHTTPServer):

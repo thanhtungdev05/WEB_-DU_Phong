@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 BOM DU LIEU DONG VAO TRANG GOC â€” ONT AC1000HI
@@ -22,7 +22,10 @@ import json
 import re
 import time
 
-from . import config_store as kho
+try:
+    from . import config_store as kho
+except ImportError:
+    import config_store as kho
 
 # Moc thoi gian khoi dong server â€” dung de tinh uptime tang dan.
 _LUC_KHOI_DONG = time.time()

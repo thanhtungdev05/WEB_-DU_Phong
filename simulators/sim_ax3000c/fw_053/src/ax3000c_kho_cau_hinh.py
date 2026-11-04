@@ -16,6 +16,7 @@ bang cach goi /ubus voi sid that. Khong co gia tri nao tu nghi ra.
 Trang thai nguoi dung sua duoc luu ra `cau_hinh.json` de song qua khoi
 dong lai — giong thiet bi that.
 """
+import copy
 import json
 import os
 import threading
@@ -127,6 +128,8 @@ def _nap_khung_goc():
     # 2026-09-25: cac config uci con lai lay tu tep Backup THAT (reference/backup).
     # Config da co khung "uci get" do truc tiep (ddns, system, upnpd, 2 Timer) GIU
     # khung do (la trang thai goc truoc cac lan do; Backup chup SAU nen co dau vet).
+    ra.setdefault("iwinfo.assoclist", {"results": []})
+    ra.setdefault("ecm.status", {"entries": []})
     cay = ra.setdefault(KHOA_CAY_UCI, {})
     for cfg, c in cay_uci_tu_backup().items():
         cay.setdefault(cfg, c)
@@ -172,15 +175,28 @@ class KhoCauHinh:
 
     # ---- doc/ghi ----------------------------------------------------
 
+    def doc_tho(self, khoa):
+        with self._khoa:
+            return self._du_lieu.get(khoa)
+
+    def ghi_uci_cow(self, cay):
+        with self._khoa:
+            self._du_lieu[KHOA_CAY_UCI] = dict(cay)
+            self._luu()
+
     def doc(self, khoa):
         with self._khoa:
             v = self._du_lieu.get(khoa)
-            return json.loads(json.dumps(v)) if v is not None else None
+            if v is None:
+                return None
+            if isinstance(v, (int, float, str, bool)):
+                return v
+            return copy.deepcopy(v)
 
     def ghi(self, khoa, gia_tri):
         """Ghi de toan bo gia tri cua mot khoa, roi luu xuong dia."""
         with self._khoa:
-            self._du_lieu[khoa] = json.loads(json.dumps(gia_tri))
+            self._du_lieu[khoa] = copy.deepcopy(gia_tri) if isinstance(gia_tri, (dict, list)) else gia_tri
             self._luu()
 
     def gop(self, khoa, phan):
@@ -195,7 +211,7 @@ class KhoCauHinh:
             if isinstance(hien, dict) and isinstance(phan, dict):
                 self._du_lieu[khoa] = _tron_sau(hien, phan)
             else:
-                self._du_lieu[khoa] = json.loads(json.dumps(phan))
+                self._du_lieu[khoa] = copy.deepcopy(phan) if isinstance(phan, (dict, list)) else phan
             self._luu()
             return self.doc(khoa)
 
@@ -242,12 +258,12 @@ class KhoCauHinh:
 
 def _tron_sau(a, b):
     """Tron b vao a theo tung cap, tra ve dict moi."""
-    ra = json.loads(json.dumps(a))
+    ra = copy.deepcopy(a)
     for k, v in b.items():
         if isinstance(v, dict) and isinstance(ra.get(k), dict):
             ra[k] = _tron_sau(ra[k], v)
         else:
-            ra[k] = json.loads(json.dumps(v))
+            ra[k] = copy.deepcopy(v) if isinstance(v, (dict, list)) else v
     return ra
 
 
@@ -255,19 +271,34 @@ _KHO_LOCK = threading.RLock()
 _KHO_THEO_KTV = {}
 _KHO_LAST_SEEN = {}
 _KHO_CONTEXT = threading.local()
-_KHO_TTL_SECONDS = 6 * 60 * 60
+_KHO_TTL_SECONDS = 1800  # 30 phut
+_MAX_KTV_SESSIONS = 10000
+_LAST_CLEANUP_TS = 0.0
 _KHO_GOC = KhoCauHinh(tu_dia=False)
 
 
 def _kho_cua_ktv(key):
     """Lấy kho cấu hình RAM riêng của một phiên Portal và dọn phiên quá hạn."""
+    global _LAST_CLEANUP_TS
     now = time.time()
     with _KHO_LOCK:
-        stale = [session_key for session_key, seen_at in _KHO_LAST_SEEN.items()
-                 if now - seen_at > _KHO_TTL_SECONDS]
-        for session_key in stale:
-            _KHO_THEO_KTV.pop(session_key, None)
-            _KHO_LAST_SEEN.pop(session_key, None)
+        existing = _KHO_THEO_KTV.get(key)
+        if existing is not None and (now - _LAST_CLEANUP_TS) < 30.0:
+            _KHO_LAST_SEEN[key] = now
+            return existing
+        if (now - _LAST_CLEANUP_TS) >= 30.0 or len(_KHO_THEO_KTV) >= _MAX_KTV_SESSIONS:
+            _LAST_CLEANUP_TS = now
+            stale = [session_key for session_key, seen_at in _KHO_LAST_SEEN.items()
+                     if now - seen_at > _KHO_TTL_SECONDS]
+            for session_key in stale:
+                _KHO_THEO_KTV.pop(session_key, None)
+                _KHO_LAST_SEEN.pop(session_key, None)
+            if len(_KHO_THEO_KTV) >= _MAX_KTV_SESSIONS and key not in _KHO_THEO_KTV:
+                sap_xep = sorted(_KHO_LAST_SEEN.items(), key=lambda x: x[1])
+                so_can_xoa = len(_KHO_THEO_KTV) - _MAX_KTV_SESSIONS + 1
+                for k, _ in sap_xep[:so_can_xoa]:
+                    _KHO_THEO_KTV.pop(k, None)
+                    _KHO_LAST_SEEN.pop(k, None)
         if key not in _KHO_THEO_KTV:
             _KHO_THEO_KTV[key] = KhoCauHinh(tu_dia=False, goc=_KHO_GOC._goc)
         _KHO_LAST_SEEN[key] = now
@@ -278,8 +309,11 @@ class _KhoTheoKTV:
     """Proxy tương thích để code firmware tiếp tục dùng biến toàn cục ``KHO``."""
 
     def bind(self, key):
-        _KHO_CONTEXT.key = key or "anonymous"
-        return _kho_cua_ktv(_KHO_CONTEXT.key)
+        k = key or "anonymous"
+        _KHO_CONTEXT.key = k
+        kho = _kho_cua_ktv(k)
+        _KHO_CONTEXT.kho = kho
+        return kho
 
     def current_key(self):
         return getattr(_KHO_CONTEXT, "key", "anonymous")
@@ -292,7 +326,10 @@ class _KhoTheoKTV:
         return self.bind(session_key)
 
     def _current(self):
-        return _kho_cua_ktv(self.current_key())
+        kho = getattr(_KHO_CONTEXT, "kho", None)
+        if kho is not None:
+            return kho
+        return self.bind(self.current_key())
 
     def __getattr__(self, name):
         return getattr(self._current(), name)

@@ -12,7 +12,7 @@ import os, sys, socket, re, hmac, json, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, unquote, parse_qs
 
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8092
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8092
 BASE = os.path.dirname(os.path.abspath(__file__))
 WWW = os.path.join(BASE, "www2")
 
@@ -25,6 +25,9 @@ CT = {
     ".ttf": "font/ttf", ".woff": "font/woff", ".woff2": "font/woff2",
     ".otf": "font/otf", ".eot": "application/vnd.ms-fontobject",
 }
+
+_RE_CGIBIN_CACHE = {}
+_RE_ASSETS_CACHE = {}
 
 
 def get_nav_and_tab_for_page(page_name):
@@ -45,15 +48,19 @@ def get_nav_and_tab_for_page(page_name):
 def rewrite_sim_urls(content: str, sim_id: str = "sim_ax3000hv2") -> str:
     if not content:
         return content
-    # Rewrite un-prefixed /cgi-bin/
-    content = re.sub(rf'(?<!/{sim_id})(?<!{sim_id})/cgi-bin/', f'/{sim_id}/cgi-bin/', content)
-    # Rewrite root static assets to remain inside simulator namespace
-    content = re.sub(
-        rf'(?<!/{sim_id})(?<!{sim_id})/(val\.js|style\.css|general\.js|ip\.js|ip_new\.js|jsl\.js|chksel\.js|spin\.js|pvc\.js|mac\.js|wanfunc\.js|mesh\.js|mesh_basic_setting\.js|mesh_topo\.js|d3\.v5\.min\.js|jquery_e8c\.js|menu_e8c\.js|util_e8c\.js|sha256\.js|stylemain_e8c\.css|mesh\.css|BeVietnam-[a-zA-Z]+\.ttf|PIE\.htc|[a-zA-Z0-9_-]+\.(?:png|gif|jpg|jpeg|ico|svg))',
-        rf'/{sim_id}/\1',
-        content,
-        flags=re.IGNORECASE
-    )
+    re_cgibin = _RE_CGIBIN_CACHE.get(sim_id)
+    if re_cgibin is None:
+        re_cgibin = re.compile(rf'(?<!/{sim_id})(?<!{sim_id})/cgi-bin/')
+        _RE_CGIBIN_CACHE[sim_id] = re_cgibin
+    re_assets = _RE_ASSETS_CACHE.get(sim_id)
+    if re_assets is None:
+        re_assets = re.compile(
+            rf'(?<!/{sim_id})(?<!{sim_id})/(val\.js|style\.css|general\.js|ip\.js|ip_new\.js|jsl\.js|chksel\.js|spin\.js|pvc\.js|mac\.js|wanfunc\.js|mesh\.js|mesh_basic_setting\.js|mesh_topo\.js|d3\.v5\.min\.js|jquery_e8c\.js|menu_e8c\.js|util_e8c\.js|sha256\.js|stylemain_e8c\.css|mesh\.css|BeVietnam-[a-zA-Z]+\.ttf|PIE\.htc|[a-zA-Z0-9_-]+\.(?:png|gif|jpg|jpeg|ico|svg))',
+            flags=re.IGNORECASE,
+        )
+        _RE_ASSETS_CACHE[sim_id] = re_assets
+    content = re_cgibin.sub(f'/{sim_id}/cgi-bin/', content)
+    content = re_assets.sub(rf'/{sim_id}/\1', content)
     return content
 
 
@@ -68,7 +75,26 @@ USER_STATES = {}
 # thi /internal/reset luon tra 403 (mac dinh an toan).
 _ADMIN_TOKEN = os.environ.get("FTC_SIM_ADMIN_TOKEN", "")
 _SESSION_TTL = float(os.environ.get("FTC_SIM_SESSION_TTL", "1800") or 1800)
+_MAX_SESSIONS = 10000
 _LAST_SEEN = {}
+_HV2_STATIC_CACHE = {}
+_HV2_TEXT_CACHE = {}
+
+
+def _doc_text_rewritten(f, sim_id="sim_ax3000hv2"):
+    """Doc va cache ban HTML da rewrite URL trong RAM de 5.000 KTV khong chay lai Regex."""
+    cache_key = (f, sim_id)
+    cached = _HV2_TEXT_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+    raw = _HV2_TEXT_CACHE.get(f)
+    if raw is None:
+        with open(f, "r", encoding="utf-8", errors="replace") as fh:
+            raw = fh.read()
+        _HV2_TEXT_CACHE[f] = raw
+    rewritten = rewrite_sim_urls(raw, sim_id)
+    _HV2_TEXT_CACHE[cache_key] = rewritten
+    return rewritten
 
 
 def _gc_sessions_unlocked(now):
@@ -76,6 +102,12 @@ def _gc_sessions_unlocked(now):
     for k in het_han:
         USER_STATES.pop(k, None)
         _LAST_SEEN.pop(k, None)
+    if len(USER_STATES) > _MAX_SESSIONS:
+        sap_xep = sorted(_LAST_SEEN.items(), key=lambda x: x[1])
+        so_can_xoa = len(USER_STATES) - _MAX_SESSIONS
+        for k, _ in sap_xep[:so_can_xoa]:
+            USER_STATES.pop(k, None)
+            _LAST_SEEN.pop(k, None)
     return len(het_han)
 
 
@@ -86,8 +118,18 @@ def _gc_loop():
             _gc_sessions_unlocked(time.time())
 
 
+_GC_STARTED = False
+
 def _khoi_dong_gc():
-    threading.Thread(target=_gc_loop, daemon=True).start()
+    global _GC_STARTED
+    with _STATE_LOCK:
+        if _GC_STARTED:
+            return
+        _GC_STARTED = True
+        threading.Thread(target=_gc_loop, daemon=True, name="ax3000hv2_gc").start()
+
+# Khoi dong GC tu dong khi nap qua run_all.py hoac chay truc tiep
+_khoi_dong_gc()
 
 def get_client_state(key):
     if not key:
@@ -95,6 +137,8 @@ def get_client_state(key):
     with _STATE_LOCK:
         _LAST_SEEN[key] = time.time()
         if key not in USER_STATES:
+            if len(USER_STATES) >= _MAX_SESSIONS:
+                _gc_sessions_unlocked(_LAST_SEEN[key])
             USER_STATES[key] = {}
         return USER_STATES[key]
 
@@ -131,16 +175,12 @@ try {
 } catch(e) {}
 </script>"""
         if re.search(r'</head>', html_str, re.IGNORECASE):
-            html_str = re.sub(r'</head>', save_js + "</head>", html_str, flags=re.IGNORECASE)
+            html_str = re.sub(r'</head>', save_js + "</head>", html_str, count=1, flags=re.IGNORECASE)
         else:
             html_str = save_js + html_str
 
-
     if not state:
         return html_str
-    else:
-        dns_keys = {k: state[k] for k in ['dnsTypeRadio', 'PrimaryDns', 'SecondDns', 'dhcpd_type'] if k in state}
-        print(f"[AX3000HV2 RENDER] Applying SIM_STATE ({len(SIM_STATE)} keys), DNS: {dns_keys}")
 
     # 1. Replace JavaScript variables to prevent inline script overrides
     VAR_MAPPINGS = {
@@ -164,7 +204,7 @@ try {
         "dhcpd_pool_count": "PoolSize",
         "dhcpd_lease": "dhcp_LeaseTime",
     }
-    
+
     for var_name, param_name in VAR_MAPPINGS.items():
         if param_name in state:
             val = state[param_name]
@@ -175,7 +215,7 @@ try {
     if "dnsTypeRadio" in state:
         val = state["dnsTypeRadio"]
         html_str = re.sub(r'(var\s+dhcpd_type\s*=\s*["\'])[^"\']*?(["\'])', fr'\g<1>{val}\g<2>', html_str, flags=re.IGNORECASE)
-        
+
     if "PrimaryDns" in state or "SecondDns" in state:
         pri = state.get("PrimaryDns", "")
         sec = state.get("SecondDns", "")
@@ -183,17 +223,16 @@ try {
         html_str = re.sub(r'(var\s+dhcpd_dns_all\s*=\s*["\'])[^"\']*?(["\'])', fr'\g<1>{val_dns}\g<2>', html_str, flags=re.IGNORECASE)
 
     # 2. Replace HTML inputs directly
-
     for name, val in state.items():
         escaped_val = val.replace('\\', '\\\\').replace('"', '\\"')
 
         def input_callback(match):
             tag = match.group(0)
-            
+
             # Check input type
             type_match = re.search(r'type=["\'](.*?)["\']', tag, flags=re.IGNORECASE)
             itype = type_match.group(1).lower() if type_match else 'text'
-            
+
             if itype in ('radio', 'checkbox'):
                 val_match = re.search(rf'value=["\'](.*?)["\']', tag, flags=re.IGNORECASE)
                 tag_clean = re.sub(r'\s+checked(=["\']?checked["\']?)?', '', tag, flags=re.IGNORECASE)
@@ -213,9 +252,9 @@ try {
                     else:
                         return tag[:-1] + f' value="{escaped_val}" >'
 
-        pattern_input = rf'<input[^>]*?name=["\']{name}["\'][^>]*?>'
+        pattern_input = rf'<input[^>]*?name=["\']{re.escape(name)}["\'][^>]*?>'
         html_str = re.sub(pattern_input, input_callback, html_str, flags=re.IGNORECASE)
-        
+
     return html_str
 
 
@@ -254,7 +293,6 @@ class H(BaseHTTPRequestHandler):
                 pass
         cookie = self.headers.get("Cookie", "")
         if cookie:
-            import re
             m = re.search(r'(?:ftc_session|ax3000hv2_sid|PHPSESSID|ktv_client_id)=([a-zA-Z0-9_-]+)', cookie)
             if m:
                 return m.group(1)
@@ -327,10 +365,11 @@ class H(BaseHTTPRequestHandler):
 
             f = os.path.join(WWW, "cgi-bin", "index.asp")
             if os.path.isfile(f):
-                with open(f, "r", encoding="utf-8", errors="replace") as fh:
-                    html = fh.read()
-
                 if page_param:
+                    if f not in _HV2_TEXT_CACHE:
+                        with open(f, "r", encoding="utf-8", errors="replace") as fh:
+                            _HV2_TEXT_CACHE[f] = fh.read()
+                    html = _HV2_TEXT_CACHE[f]
                     clean_page = page_param if page_param.startswith("/cgi-bin/") else f"/cgi-bin/{page_param}"
                     auto_nav, auto_tab = get_nav_and_tab_for_page(clean_page)
                     final_nav = nav_param if nav_param else auto_nav
@@ -339,9 +378,10 @@ class H(BaseHTTPRequestHandler):
                     html = re.sub(r'src=["\']/cgi-bin/status\.asp["\']', f'src="/cgi-bin/status.asp?tab={final_tab}"', html)
                     html = re.sub(r'src=["\']/cgi-bin/navigation-status\.asp["\']', f'src="{final_nav}?page={clean_page}"', html)
                     html = re.sub(r'src=["\']/cgi-bin/status_deviceinfo\.asp["\']', f'src="{clean_page}"', html)
+                    html = rewrite_sim_urls(html, "sim_ax3000hv2")
+                else:
+                    html = _doc_text_rewritten(f, "sim_ax3000hv2")
 
-                # Rewrite all /cgi-bin/ and static links to /sim_ax3000hv2/
-                html = rewrite_sim_urls(html, "sim_ax3000hv2")
                 html = apply_sim_state_to_html(html, show_success, page_param or p, state=client_state)
                 return self._send(html.encode("utf-8"), "text/html; charset=utf-8")
 
@@ -352,8 +392,7 @@ class H(BaseHTTPRequestHandler):
 
             f = os.path.join(WWW, "cgi-bin", "status.asp")
             if os.path.isfile(f):
-                with open(f, "r", encoding="utf-8", errors="replace") as fh:
-                    html = fh.read()
+                html = _doc_text_rewritten(f, "sim_ax3000hv2")
 
                 if tab_val:
                     tab_script = f"""
@@ -375,11 +414,10 @@ class H(BaseHTTPRequestHandler):
                     </script>
                     """
                     if re.search(r'</head>', html, re.IGNORECASE):
-                        html = re.sub(r'</head>', tab_script + "</head>", html, flags=re.IGNORECASE)
+                        html = re.sub(r'</head>', tab_script + "</head>", html, count=1, flags=re.IGNORECASE)
                     else:
                         html = tab_script + html
 
-                html = rewrite_sim_urls(html, "sim_ax3000hv2")
                 html = apply_sim_state_to_html(html, show_success, p, state=client_state)
                 return self._send(html.encode("utf-8"), "text/html; charset=utf-8")
 
@@ -388,8 +426,7 @@ class H(BaseHTTPRequestHandler):
         if os.path.isfile(f):
             ext = os.path.splitext(f)[1].lower()
             if ext in (".asp", ".html", ".htm"):
-                with open(f, "r", encoding="utf-8", errors="replace") as fh:
-                    text_content = fh.read()
+                text_content = _doc_text_rewritten(f, "sim_ax3000hv2")
 
                 if p.startswith("/cgi-bin/navigation"):
                     qs = parse_qs(parsed.query)
@@ -436,12 +473,15 @@ class H(BaseHTTPRequestHandler):
                     else:
                         text_content = nav_guard_script + text_content
 
-                text_content = rewrite_sim_urls(text_content, "sim_ax3000hv2")
                 text_content = apply_sim_state_to_html(text_content, show_success, p, state=client_state)
                 return self._send(text_content.encode("utf-8"), CT.get(ext, "text/html; charset=utf-8"))
             else:
-                with open(f, "rb") as fh:
-                    content = fh.read()
+                if f in _HV2_STATIC_CACHE:
+                    content = _HV2_STATIC_CACHE[f]
+                else:
+                    with open(f, "rb") as fh:
+                        content = fh.read()
+                    _HV2_STATIC_CACHE[f] = content
                 return self._send(content, CT.get(ext, "application/octet-stream"), cache_control="public, max-age=86400, stale-while-revalidate=86400")
 
         return self._send(b"Not found: " + p.encode(), "text/plain", 404)
@@ -464,7 +504,6 @@ class H(BaseHTTPRequestHandler):
             if length > 0:
                 body_bytes = self.rfile.read(length)
                 params = parse_qs(body_bytes.decode("utf-8", errors="replace"))
-                print(f"[AX3000HV2 POST] Received keys: {list(params.keys())}")
                 for k, v in params.items():
                     if v:
                         client_state[k] = v[0]
@@ -476,11 +515,9 @@ class H(BaseHTTPRequestHandler):
                             client_state["PreSharedKey1"] = v[0]
                         elif k == "PreSharedKey1":
                             client_state["PreSharedKey"] = v[0]
-                dns_keys = {k: client_state[k] for k in ['dnsTypeRadio', 'PrimaryDns', 'SecondDns'] if k in client_state}
-                print(f"[AX3000HV2 POST] DNS state after save: {dns_keys}")
-        except Exception as e:
-            print(f"[AX3000HV2 POST] Error: {e}")
-        
+        except Exception:
+            pass
+
         referer = self.headers.get("Referer") or "/cgi-bin/index.asp"
         ref_parsed = urlparse(referer)
         path_to_use = ref_parsed.path or "/cgi-bin/index.asp"
@@ -491,7 +528,6 @@ class H(BaseHTTPRequestHandler):
         else:
             query_part = (ref_parsed.query + "&" if ref_parsed.query else "") + "save_success=1"
             redirect_to = path_to_use + "?" + query_part
-        print(f"[AX3000HV2 POST] Redirecting to: {redirect_to}")
         self._redirect(redirect_to)
 
     def log_message(self, *a):
@@ -529,4 +565,3 @@ if __name__ == "__main__":
         srv.serve_forever()
     except KeyboardInterrupt:
         print("\nDa dung.")
-

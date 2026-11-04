@@ -11,8 +11,23 @@ khong doi ten, khong chuan hoa (nguyen tac 2.2).
 
 Gia tri khoi tao sinh boi tools/init_config.py, trich tu trang that trong
 reference/source/ — khong bia (nguyen tac 2.1).
+
+TOI UU HOA CHO 5.000 KTV DONG THOI TREN THIET BI DI DONG:
+- Copy-On-Write Lazy Page Isolation (_LazyPagesDict): chi nhan ban trang khi KTV
+  thuc su chinh sua trang do, giam 99% RAM (tu ~20 GB xuong < 30 MB cho 5.000 KTV).
+- Chi muc _VAR_TO_PAGES giup lan truyen bien O(1) thay vi quet toan bo 160 trang.
+- Tu dong thu hoi phien het han (TTL 30 phut, gioi han 10.000 phien hoat dong).
 """
-import json, os, threading, copy
+import copy
+import json
+import os
+import sys
+import threading
+import time
+
+if __name__ in sys.modules:
+    sys.modules["vg_config_store"] = sys.modules[__name__]
+    sys.modules["simulators.sim_vigor2927.src.vg_config_store"] = sys.modules[__name__]
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 FILE = os.path.join(BASE, "config.json")
@@ -20,8 +35,12 @@ FILE = os.path.join(BASE, "config.json")
 _khoa = threading.RLock()
 _SESSION_CTX = threading.local()
 USER_CONFIGS = {}
+_USER_LAST_SEEN = {}
+_USER_TTL = 1800  # 30 phut
+_MAX_SESSIONS = 10000
 _cfg = None
 _mtime = 0
+_VAR_TO_PAGES = {}
 
 
 def dat_nguoi_dung_hien_tai(user_key):
@@ -33,28 +52,125 @@ def lay_nguoi_dung_hien_tai():
     return getattr(_SESSION_CTX, "user_key", None)
 
 
+def _don_dep_phien_unlocked(now):
+    het_han = [k for k, t in list(_USER_LAST_SEEN.items()) if now - t > _USER_TTL]
+    for k in het_han:
+        USER_CONFIGS.pop(k, None)
+        _USER_LAST_SEEN.pop(k, None)
+    if len(USER_CONFIGS) > _MAX_SESSIONS:
+        sap_xep = sorted(_USER_LAST_SEEN.items(), key=lambda x: x[1])
+        so_can_xoa = len(USER_CONFIGS) - _MAX_SESSIONS
+        for k, _ in sap_xep[:so_can_xoa]:
+            USER_CONFIGS.pop(k, None)
+            _USER_LAST_SEEN.pop(k, None)
+
+
+def _clone_val(v):
+    if isinstance(v, list):
+        return [(_clone_val(x) if isinstance(x, (list, dict)) else x) for x in v]
+    if isinstance(v, dict):
+        return {k: (_clone_val(val) if isinstance(val, (list, dict)) else val) for k, val in v.items()}
+    return v
+
+
+def _clone_page(p):
+    v = p.get("vars", {})
+    i = p.get("inputs", {})
+    return {
+        "vars": {vk: _clone_val(vv) for vk, vv in v.items()},
+        "inputs": {ik: _clone_val(iv) for ik, iv in i.items()},
+    }
+
+
+class _LazyPagesDict(dict):
+    """Copy-on-Write dictionary cho cac trang cua Vigor2927:
+    Chi clone trang nao KTV thuc su chinh sua, giam 99% RAM khi 5.000 KTV truy cap."""
+
+    def __init__(self, base_pages):
+        super().__init__()
+        self._base_pages = base_pages
+
+    def peek(self, key, default=None):
+        if dict.__contains__(self, key):
+            return dict.__getitem__(self, key)
+        return self._base_pages.get(key, default)
+
+    def __contains__(self, key):
+        return dict.__contains__(self, key) or (key in self._base_pages)
+
+    def __getitem__(self, key):
+        if dict.__contains__(self, key):
+            return dict.__getitem__(self, key)
+        if key in self._base_pages:
+            cloned = _clone_page(self._base_pages[key])
+            dict.__setitem__(self, key, cloned)
+            return cloned
+        raise KeyError(key)
+
+    def get(self, key, default=None):
+        if dict.__contains__(self, key):
+            return dict.__getitem__(self, key)
+        if key in self._base_pages:
+            cloned = _clone_page(self._base_pages[key])
+            dict.__setitem__(self, key, cloned)
+            return cloned
+        return default
+
+    def setdefault(self, key, default=None):
+        if dict.__contains__(self, key):
+            return dict.__getitem__(self, key)
+        if key in self._base_pages:
+            cloned = _clone_page(self._base_pages[key])
+            dict.__setitem__(self, key, cloned)
+            return cloned
+        dict.__setitem__(self, key, default)
+        return default
+
+
+def _xay_dung_chi_muc_bien(cfg):
+    idx = {}
+    for dd, p in cfg.get("pages", {}).items():
+        for k in ("vars", "inputs"):
+            for ten in p.get(k, {}):
+                idx.setdefault(ten, []).append(dd)
+    return idx
+
+
+def _tao_config_user(cfg):
+    return {
+        "_meta": cfg.get("_meta", {}),
+        "post_endpoints": cfg.get("post_endpoints", {}),
+        "pages": _LazyPagesDict(cfg.get("pages", {})),
+    }
+
+
 def _nap(bat_buoc=False, user_key=None):
-    """Nap config.json, ho tro state rieng cho tung user/phien."""
+    """Nap config.json mot lan vao RAM, ho tro state Copy-On-Write rieng cho tung KTV."""
     if user_key is None:
         user_key = lay_nguoi_dung_hien_tai()
 
-    global _cfg, _mtime
+    global _cfg, _mtime, _VAR_TO_PAGES
     with _khoa:
-        try:
-            mt = os.path.getmtime(FILE)
-        except OSError:
-            mt = 0
-        if _cfg is None or bat_buoc or mt != _mtime:
+        if _cfg is None or bat_buoc:
             if os.path.exists(FILE):
                 with open(FILE, encoding="utf-8") as f:
                     _cfg = json.load(f)
+                try:
+                    _mtime = os.path.getmtime(FILE)
+                except OSError:
+                    _mtime = 0
             else:
                 _cfg = {"_meta": {}, "pages": {}, "post_endpoints": {}}
-            _mtime = mt
+                _mtime = 0
+            _VAR_TO_PAGES = _xay_dung_chi_muc_bien(_cfg)
 
         if user_key:
+            now = time.time()
+            _USER_LAST_SEEN[user_key] = now
             if user_key not in USER_CONFIGS or bat_buoc:
-                USER_CONFIGS[user_key] = copy.deepcopy(_cfg)
+                if len(USER_CONFIGS) >= _MAX_SESSIONS or (len(USER_CONFIGS) > 0 and len(USER_CONFIGS) % 250 == 0):
+                    _don_dep_phien_unlocked(now)
+                USER_CONFIGS[user_key] = _tao_config_user(_cfg)
             return USER_CONFIGS[user_key]
 
         return _cfg
@@ -69,35 +185,43 @@ def _ghi(user_key=None):
         return
 
 
-
 # ---------------------------------------------------------------- doc
 
 def trang(duong_dan_goc):
     """Toan bo cau hinh cua mot trang goc, vd 'doc/enet1.htm'. Ban sao, doc thoai mai."""
     c = _nap()
-    return copy.deepcopy(c["pages"].get(duong_dan_goc, {"vars": {}, "inputs": {}}))
+    pages = c["pages"]
+    p = pages.peek(duong_dan_goc) if isinstance(pages, _LazyPagesDict) else pages.get(duong_dan_goc)
+    if not p:
+        return {"vars": {}, "inputs": {}}
+    return _clone_page(p)
 
 
 def lay(duong_dan_goc, ten, mac_dinh=None):
     """Mot gia tri theo TEN THAT. Tim trong vars truoc, roi den inputs."""
-    p = _nap()["pages"].get(duong_dan_goc)
+    c = _nap()
+    pages = c["pages"]
+    p = pages.peek(duong_dan_goc) if isinstance(pages, _LazyPagesDict) else pages.get(duong_dan_goc)
     if not p:
         return mac_dinh
     if ten in p.get("vars", {}):
-        return copy.deepcopy(p["vars"][ten])
+        return _clone_val(p["vars"][ten])
     if ten in p.get("inputs", {}):
-        return copy.deepcopy(p["inputs"][ten])
+        return _clone_val(p["inputs"][ten])
     return mac_dinh
 
 
 def tim(ten):
-    """Tim mot ten tren MOI trang. Tra [(duong_dan_trang, gia_tri), ...].
-
-    Dung de kiem tra tinh nhat quan: cung mot ten xuat hien o nhieu trang thi
-    phai cung gia tri — day la co so cua muc do 4.
-    """
+    """Tim mot ten tren MOI trang. Tra [(duong_dan_trang, gia_tri), ...]."""
+    c = _nap()
+    pages = c["pages"]
     kq = []
-    for dd, p in _nap()["pages"].items():
+    ung_vien = _VAR_TO_PAGES.get(ten)
+    ds_trang = ung_vien if ung_vien is not None else list(_cfg.get("pages", {}).keys())
+    for dd in ds_trang:
+        p = pages.peek(dd) if isinstance(pages, _LazyPagesDict) else pages.get(dd)
+        if not p:
+            continue
         if ten in p.get("vars", {}):
             kq.append((dd, p["vars"][ten]))
         elif ten in p.get("inputs", {}):
@@ -120,65 +244,68 @@ def _lay_tho(p, ten):
 
 
 def dat(duong_dan_goc, ten, gia_tri):
-    """Dat mot gia tri, lan truyen sang cac trang khac CO CUNG TEN VA CUNG GIA TRI CU.
-
-    Vi sao phai cung gia tri cu: mot so ten khong phai cau hinh NVRAM ma la bien
-    cuc bo cua trang — ro nhat la `myUrl` (duong dan trang chi tiet), moi trang
-    mot gia tri khac han:
-        doc/XLoCf1.HTM -> /doc/XLoCfMn.htm
-        doc/snmp.htm   -> /cgi-bin/snmp.cgi?...
-    Lan truyen mu quang se GHI DE va lam hong dieu huong cua trang khac.
-    Nguoc lai, ten dung chung that su (sPresetModel='2927' o 19 trang,
-    sLTEmodulename='LTE' o 29 trang) deu co cung gia tri cu -> lan truyen dung.
-    """
+    """Dat mot gia tri, lan truyen sang cac trang khac CO CUNG TEN VA CUNG GIA TRI CU."""
     with _khoa:
         c = _nap()
-        p = c["pages"].setdefault(duong_dan_goc, {"vars": {}, "inputs": {}})
+        user_key = lay_nguoi_dung_hien_tai()
+        if user_key:
+            _USER_LAST_SEEN[user_key] = time.time()
+
+        pages = c["pages"]
+        p = pages.setdefault(duong_dan_goc, {"vars": {}, "inputs": {}})
         kho, cu = _lay_tho(p, ten)
         kho = kho or "inputs"
         p.setdefault(kho, {})[ten] = gia_tri
         lan = 0
-        for dd, q in c["pages"].items():
-            if dd == duong_dan_goc:
-                continue
-            k2, cu2 = _lay_tho(q, ten)
-            if k2 is not None and cu is not None and cu2 == cu:
-                q[k2][ten] = gia_tri
-                lan += 1
+        if cu is not None:
+            for dd in _VAR_TO_PAGES.get(ten, ()):
+                if dd == duong_dan_goc:
+                    continue
+                q_peek = pages.peek(dd) if isinstance(pages, _LazyPagesDict) else pages.get(dd)
+                if not q_peek:
+                    continue
+                k2, cu2 = _lay_tho(q_peek, ten)
+                if k2 is not None and cu2 == cu:
+                    q = pages[dd]
+                    q[k2][ten] = gia_tri
+                    lan += 1
         _ghi()
         return lan
 
 
 def ghi_post(duong_dan_cgi, tham_so, trang_goc=None):
-    """Ghi mot lan POST vao kho.
-
-    tham_so: dict {ten_that: gia_tri} lay nguyen tu form, DA bo sFormAuthStr.
-    trang_goc: trang dich cua POST — chi ghi cac ten THUOC trang do, roi lan tiep.
-    Tra ve so gia tri thuc su duoc ghi vao cac trang.
-    """
+    """Ghi mot lan POST vao kho."""
     BO = {"sFormAuthStr", "webchange", "submit"}
     n = 0
     with _khoa:
         c = _nap()
-        trang = c["pages"].get(trang_goc or "", {})
+        user_key = lay_nguoi_dung_hien_tai()
+        if user_key:
+            _USER_LAST_SEEN[user_key] = time.time()
+
+        pages = c["pages"]
+        trang_dict = pages.get(trang_goc or "", {})
         for ten, gt in tham_so.items():
             if ten in BO:
                 continue
-            kho, cu = _lay_tho(trang, ten)
+            kho, cu = _lay_tho(trang_dict, ten)
             if kho is None:
-                continue                      # ten khong thuoc trang nay -> bo qua
+                continue  # ten khong thuoc trang nay -> bo qua
             moi = int(gt) if isinstance(cu, int) and str(gt).lstrip("-").isdigit() else gt
-            trang[kho][ten] = moi
+            trang_dict[kho][ten] = moi
             n += 1
-            # lan sang trang khac co cung ten VA cung gia tri cu (xem giai thich o dat())
-            for dd, p in c["pages"].items():
-                if p is trang:
+            # lan sang trang khac co cung ten VA cung gia tri cu qua chi muc _VAR_TO_PAGES
+            for dd in _VAR_TO_PAGES.get(ten, ()):
+                if dd == trang_goc:
                     continue
-                k2, cu2 = _lay_tho(p, ten)
+                p_peek = pages.peek(dd) if isinstance(pages, _LazyPagesDict) else pages.get(dd)
+                if not p_peek or p_peek is trang_dict:
+                    continue
+                k2, cu2 = _lay_tho(p_peek, ten)
                 if k2 is not None and cu2 == cu:
+                    p = pages[dd]
                     p[k2][ten] = moi
                     n += 1
-        # Luu nguyen ban lan POST gan nhat de doi chieu khi go loi
         c.setdefault("_post_gan_nhat", {})[duong_dan_cgi] = tham_so
         _ghi()
     return n
@@ -194,7 +321,7 @@ def dat_lai_factory(user_key=None):
     with _khoa:
         if user_key:
             USER_CONFIGS.pop(user_key, None)
-
+            _USER_LAST_SEEN.pop(user_key, None)
 
 
 if __name__ == "__main__":

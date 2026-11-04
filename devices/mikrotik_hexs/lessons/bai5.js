@@ -5,11 +5,11 @@
  * Cấu hình Policy Based Routing (PBR) 2-PC / 2-WAN chuẩn thực tế theo 3 phần:
  *   Phần 1: Routing > Tables: Tạo 2 bảng định tuyến ra-wan1 và ra-wan2 (tích chọn FIB).
  *   Phần 2: IP > Firewall > Mangle: Tạo 2 luật prerouting đánh dấu lưu lượng:
- *       • PC1 (192.168.1.100) -> New Routing Mark: ra-wan1
- *       • PC2 (192.168.1.101) -> New Routing Mark: ra-wan2
+ *       • PC1 (192.168.1.100) -> New Routing Mark: ra-wan1 (Apply -> OK)
+ *       • PC2 (192.168.1.101) -> New Routing Mark: ra-wan2 (Apply -> OK)
  *   Phần 3: IP > Routes: Tạo 2 Default Route (Dst. Address 0.0.0.0/0):
- *       • Gateway pppoe-out1 (hoặc 1.1.1.1) trỏ vào bảng ra-wan1
- *       • Gateway pppoe-out2 (hoặc 2.2.2.2) trỏ vào bảng ra-wan2
+ *       • Dst. Address: 0.0.0.0/0 | Gateway: %pppoe-out1 | Routing Table: ra-wan1 (Apply -> OK)
+ *       • Dst. Address: 0.0.0.0/0 | Gateway: %pppoe-out2 | Routing Table: ra-wan2 (Apply -> OK)
  */
 
 window.DEVICE_MIKROTIK_HEXS_LESSONS = window.DEVICE_MIKROTIK_HEXS_LESSONS || [];
@@ -193,6 +193,9 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
     '<span>🔍</span> <i>Nhấp vào ảnh để phóng to toàn màn hình</i>' +
     '</div>' +
     '</div>',
+    '<b>Yêu cầu đề bài:</b>',
+    '• <b>PC 1 (192.168.1.100)</b>: Định tuyến ra đường <b>%pppoe-out1</b> (bảng ra-wan1).',
+    '• <b>PC 2 (192.168.1.101)</b>: Định tuyến ra đường <b>%pppoe-out2</b> (bảng ra-wan2).',
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
 
@@ -276,10 +279,10 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       details.push({
         id: 'mk5_rule_route',
         name: 'Phần 3: Default Route 0.0.0.0/0 trỏ 2 bảng ra-wan1 và ra-wan2',
-        expected: 'Gateway WAN1 trỏ ra-wan1 | Gateway WAN2 trỏ ra-wan2',
+        expected: 'Gateway %pppoe-out1 trỏ ra-wan1 | Gateway %pppoe-out2 trỏ ra-wan2',
         actual: routeDat ? 'Đã tạo đủ 2 tuyến Default Route ra 2 WAN' : (r1Saved ? 'Mới tạo tuyến cho ra-wan1, còn thiếu ra-wan2' : 'Chưa tạo tuyến Route ra 2 WAN'),
         passed: routeDat,
-        message: routeDat ? 'Chính xác' : 'Cần vào IP > Routes tạo 2 tuyến 0.0.0.0/0: pppoe-out1 vào ra-wan1 và pppoe-out2 vào ra-wan2'
+        message: routeDat ? 'Chính xác' : 'Cần vào IP > Routes tạo 2 tuyến 0.0.0.0/0: %pppoe-out1 vào ra-wan1 và %pppoe-out2 vào ra-wan2'
       });
 
       const soDung = details.filter(function (d) { return d.passed; }).length;
@@ -304,12 +307,19 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       const chuaKhoiTao = !window._FTC_MK5_BANG1_SAVED && !window._FTC_MK5_ROUTE1_SAVED && !window._FTC_MK5_MANGLE1_SAVED;
 
       if (laTrangLogin || chuaKhoiTao) {
+        window._FTC_MK5_BANG_SAVED = false;
+        window._FTC_MK5_ROUTE_SAVED = false;
+        window._FTC_MK5_MANGLE_SAVED = false;
         window._FTC_MK5_BANG1_SAVED = false;
         window._FTC_MK5_BANG2_SAVED = false;
         window._FTC_MK5_ROUTE1_SAVED = false;
         window._FTC_MK5_ROUTE2_SAVED = false;
         window._FTC_MK5_MANGLE1_SAVED = false;
         window._FTC_MK5_MANGLE2_SAVED = false;
+        window._FTC_MK5_ROUTE1_APPLIED = false;
+        window._FTC_MK5_ROUTE2_APPLIED = false;
+        window._FTC_MK5_MANGLE1_APPLIED = false;
+        window._FTC_MK5_MANGLE2_APPLIED = false;
         window._FTC_MK5_DS_BANG = null;
         window._FTC_MK5_DS_TUYEN = null;
         window._FTC_MK5_DS_MANGLE = null;
@@ -347,41 +357,58 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
               if (txt === 'ok') {
                 simWin.setTimeout(function () {
                   try {
-                    if (typeof simWin.openContent === 'function') simWin.openContent('#Routing:Tables');
-                    else simWin.location.hash = '#Routing:Tables';
+                    const curH = (simWin.location && simWin.location.hash) || '';
+                    if (curH.indexOf('#Routing:Tables.') === 0 || curH === '#Routing:Tables.new') {
+                      if (typeof simWin.openContent === 'function') simWin.openContent('#Routing:Tables');
+                      else simWin.location.hash = '#Routing:Tables';
+                    }
                   } catch (e2) { }
                 }, 140);
               }
             } else if (h.indexOf('#IP:Routes') === 0) {
               const rtField = mkBai5DocTruongForm(d, 'Routing Table');
               if (rtField) {
-                if (rtField.gt === 'ra-wan1' || rtField.gt === 'ISP1') window._FTC_MK5_ROUTE1_SAVED = true;
-                if (rtField.gt === 'ra-wan2') window._FTC_MK5_ROUTE2_SAVED = true;
+                if (rtField.gt === 'ra-wan1' || rtField.gt === 'ISP1') {
+                  if (txt === 'apply') window._FTC_MK5_ROUTE1_APPLIED = true;
+                  if (txt === 'ok') { window._FTC_MK5_ROUTE1_APPLIED = true; window._FTC_MK5_ROUTE1_SAVED = true; }
+                }
+                if (rtField.gt === 'ra-wan2') {
+                  if (txt === 'apply') window._FTC_MK5_ROUTE2_APPLIED = true;
+                  if (txt === 'ok') { window._FTC_MK5_ROUTE2_APPLIED = true; window._FTC_MK5_ROUTE2_SAVED = true; }
+                }
               }
               if (txt === 'ok') {
                 simWin.setTimeout(function () {
                   try {
-                    if (typeof simWin.openContent === 'function') simWin.openContent('#IP:Routes');
-                    else simWin.location.hash = '#IP:Routes';
+                    const curH = (simWin.location && simWin.location.hash) || '';
+                    if (curH.indexOf('#IP:Routes.') === 0 || curH === '#IP:Routes.new') {
+                      if (typeof simWin.openContent === 'function') simWin.openContent('#IP:Routes');
+                      else simWin.location.hash = '#IP:Routes';
+                    }
                   } catch (e2) { }
                 }, 140);
               }
             } else if (h.indexOf('#IP:Firewall.Mangle') === 0) {
               const srcField = mkBai5DocTruongForm(d, 'Src. Address');
               const markField = mkBai5DocTruongForm(d, 'New Routing Mark');
-              if (srcField) {
-                if (srcField.gt === '192.168.1.100' || (markField && (markField.gt === 'ra-wan1' || markField.gt === 'ISP1'))) {
-                  window._FTC_MK5_MANGLE1_SAVED = true;
-                }
-                if (srcField.gt === '192.168.1.101' || (markField && markField.gt === 'ra-wan2')) {
-                  window._FTC_MK5_MANGLE2_SAVED = true;
-                }
+              const s = srcField ? srcField.gt : '';
+              const m = markField ? markField.gt : '';
+              if (s === '192.168.1.100' || m === 'ra-wan1' || m === 'ISP1') {
+                if (txt === 'apply') window._FTC_MK5_MANGLE1_APPLIED = true;
+                if (txt === 'ok') { window._FTC_MK5_MANGLE1_APPLIED = true; window._FTC_MK5_MANGLE1_SAVED = true; }
+              }
+              if (s === '192.168.1.101' || m === 'ra-wan2') {
+                if (txt === 'apply') window._FTC_MK5_MANGLE2_APPLIED = true;
+                if (txt === 'ok') { window._FTC_MK5_MANGLE2_APPLIED = true; window._FTC_MK5_MANGLE2_SAVED = true; }
               }
               if (txt === 'ok') {
                 simWin.setTimeout(function () {
                   try {
-                    if (typeof simWin.openContent === 'function') simWin.openContent('#IP:Firewall.Mangle');
-                    else simWin.location.hash = '#IP:Firewall.Mangle';
+                    const curH = (simWin.location && simWin.location.hash) || '';
+                    if (curH.indexOf('#IP:Firewall.Mangle.') === 0 || curH === '#IP:Firewall.Mangle.new') {
+                      if (typeof simWin.openContent === 'function') simWin.openContent('#IP:Firewall.Mangle');
+                      else simWin.location.hash = '#IP:Firewall.Mangle';
+                    }
                   } catch (e2) { }
                 }, 140);
               }
@@ -411,6 +438,10 @@ window.mkBai5Reset = function () {
   window._FTC_MK5_ROUTE2_SAVED = false;
   window._FTC_MK5_MANGLE1_SAVED = false;
   window._FTC_MK5_MANGLE2_SAVED = false;
+  window._FTC_MK5_ROUTE1_APPLIED = false;
+  window._FTC_MK5_ROUTE2_APPLIED = false;
+  window._FTC_MK5_MANGLE1_APPLIED = false;
+  window._FTC_MK5_MANGLE2_APPLIED = false;
   window._FTC_MK5_DS_BANG = null;
   window._FTC_MK5_DS_TUYEN = null;
   window._FTC_MK5_DS_MANGLE = null;

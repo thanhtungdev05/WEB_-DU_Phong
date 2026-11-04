@@ -1049,7 +1049,7 @@ class DualStackServer(ThreadingHTTPServer):
     daemon_threads = True
     # Windows SO_REUSEADDR cho phep bind trung cong -> tat de chi 1 instance chay duoc
     allow_reuse_address = False
-    request_queue_size = 4096
+    request_queue_size = 8192
 
     def server_bind(self):
         try:
@@ -1300,7 +1300,7 @@ def start_server():
 
         fallback_srv = type('IPv4Server', (ThreadingHTTPServer,), {
             'allow_reuse_address': False,
-            'request_queue_size': 4096,
+            'request_queue_size': 8192,
             'handle_error': _fallback_handle_error,
         })
         srv = fallback_srv(('0.0.0.0', PORT), MasterDispatcher)
@@ -1312,7 +1312,7 @@ def start_server():
     print(f"   Quan tri Admin Panel:   http://127.0.0.1:{PORT}/admin/")
     print(f"   API noi bo (/api/*) ->  PHP (127.0.0.1:{API_PORT})")
     print(f"   Admin (/admin/*)    ->  Django (127.0.0.1:{DJANGO_PORT})")
-    print(f"   TCP Queue Backlog:      4096 ket noi cho")
+    print(f"   TCP Queue Backlog:      8192 ket noi cho")
     print("=" * 65)
 
     # Khởi động DB Guardian: monitor Neon storage, dọn session, giữ Render alive
