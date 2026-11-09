@@ -3,9 +3,9 @@
  * Bài 4: Cấu hình DHCP — MikroTik hEX S
  *
  * Cấu hình đầy đủ 3 phần theo trình tự thực tế và ảnh chụp đánh dấu:
- *   Phần 1: IP > Addresses (bridge-LAN): Address 192.168.10.1/24, Network 192.168.10.0 (Bước 1 - 6)
- *   Phần 2: IP > Pool (dhcp-pool-lan): Addresses 192.168.10.10-192.168.10.254 (Bước 7 - 11)
- *   Phần 3: IP > DHCP Server > Networks: Address 192.168.10.0/24, Gateway 192.168.10.1 (Bước 12 - 17)
+ *   Phần 1: IP > Addresses (bridge-LAN): Address 192.168.10.1/24, Network 192.168.10.0 (Bước 1 - 7)
+ *   Phần 2: IP > Pool (dhcp-pool-lan): Addresses 192.168.10.10-192.168.10.254 (Bước 8 - 13)
+ *   Phần 3: IP > DHCP Server > Networks: Address 192.168.10.0/24, Gateway 192.168.10.1 (Bước 14 - 21)
  *
  * KIẾN TRÚC & LƯU CẤU HÌNH:
  * WebFig là SPA đóng dialog ngay sau khi nhấn OK. Quản lý 3 cờ lưu riêng biệt:
@@ -312,6 +312,9 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         window._FTC_MK_BAI4_ADDRESSES_SAVED = false;
         window._FTC_MK_BAI4_POOL_SAVED = false;
         window._FTC_MK_BAI4_NETWORKS_SAVED = false;
+        window._FTC_MK4_ADDR_APPLIED = false;
+        window._FTC_MK4_POOL_APPLIED = false;
+        window._FTC_MK4_NET_APPLIED = false;
         try {
           const ktvId = (typeof window.getKtvClientId === 'function' ? window.getKtvClientId() : '') || 'ktv_default';
           simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=4&_ktv=' + encodeURIComponent(ktvId) + '&_t=' + Date.now());
@@ -350,30 +353,45 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
 
             const d = simWin.document;
             if (d) {
-              d._ftcIsSaved = true;
-              window._hasClickedSaveInGuide = true;
               if (!window._FTC_MK_BAI4) {
                 window._FTC_MK_BAI4 = { addresses: null, pool: null, networks: null };
               }
               if (mkBai4LaTrangAddresses(d)) {
+                if (txt === 'apply') window._FTC_MK4_ADDR_APPLIED = true;
+                if (txt === 'ok') {
+                  window._FTC_MK4_ADDR_APPLIED = true;
+                  window._FTC_MK_BAI4_ADDRESSES_SAVED = true;
+                }
                 const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_ADDRESSES);
                 if (ban) {
                   window._FTC_MK_BAI4.addresses = ban;
                   window._FTC_MK_BAI4_ADDRESSES_SAVED = true;
                 }
               } else if (mkBai4LaTrangPool(d)) {
+                if (txt === 'apply') window._FTC_MK4_POOL_APPLIED = true;
+                if (txt === 'ok') {
+                  window._FTC_MK4_POOL_APPLIED = true;
+                  window._FTC_MK_BAI4_POOL_SAVED = true;
+                }
                 const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_POOL);
                 if (ban) {
                   window._FTC_MK_BAI4.pool = ban;
                   window._FTC_MK_BAI4_POOL_SAVED = true;
                 }
               } else if (mkBai4LaTrangNetworks(d)) {
+                if (txt === 'apply') window._FTC_MK4_NET_APPLIED = true;
+                if (txt === 'ok') {
+                  window._FTC_MK4_NET_APPLIED = true;
+                  window._FTC_MK_BAI4_NETWORKS_SAVED = true;
+                }
                 const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_NETWORKS);
                 if (ban) {
                   window._FTC_MK_BAI4.networks = ban;
                   window._FTC_MK_BAI4_NETWORKS_SAVED = true;
                 }
               }
+              d._ftcIsSaved = true;
+              window._hasClickedSaveInGuide = true;
             }
           } catch (ex) {}
         };
@@ -394,14 +412,17 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         const ban = mkBai4ChupNhom(doc, MK_BAI4_CHUAN_ADDRESSES);
         if (ban) { window._FTC_MK_BAI4.addresses = ban; }
         window._FTC_MK_BAI4_ADDRESSES_SAVED = true;
+        window._FTC_MK4_ADDR_APPLIED = true;
       } else if (mkBai4LaTrangPool(doc)) {
         const ban = mkBai4ChupNhom(doc, MK_BAI4_CHUAN_POOL);
         if (ban) { window._FTC_MK_BAI4.pool = ban; }
         window._FTC_MK_BAI4_POOL_SAVED = true;
+        window._FTC_MK4_POOL_APPLIED = true;
       } else if (mkBai4LaTrangNetworks(doc)) {
         const ban = mkBai4ChupNhom(doc, MK_BAI4_CHUAN_NETWORKS);
         if (ban) { window._FTC_MK_BAI4.networks = ban; }
         window._FTC_MK_BAI4_NETWORKS_SAVED = true;
+        window._FTC_MK4_NET_APPLIED = true;
       }
       setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
     } catch (e) {}
@@ -416,5 +437,7 @@ window.mkBai4Reset = function () {
   window._FTC_MK_BAI4_ADDRESSES_SAVED = false;
   window._FTC_MK_BAI4_POOL_SAVED = false;
   window._FTC_MK_BAI4_NETWORKS_SAVED = false;
+  window._FTC_MK4_ADDR_APPLIED = false;
+  window._FTC_MK4_POOL_APPLIED = false;
+  window._FTC_MK4_NET_APPLIED = false;
 };
-
