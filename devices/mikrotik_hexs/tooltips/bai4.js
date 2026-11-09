@@ -1,10 +1,10 @@
 /**
  * devices/mikrotik_hexs/tooltips/bai4.js — Tooltip Hướng dẫn Bài 4: Cấu hình DHCP
  *
- * Chuỗi 17 bước chuẩn xác chia làm 3 phần theo thứ tự thực tế:
- *   Phần 1: Cấu hình IP Address (Ảnh 1 & 2 — Bước 1 ➔ 6)
- *   Phần 2: Cấu hình IP Pool (Ảnh 3 & 4 — Bước 7 ➔ 11)
- *   Phần 3: Cấu hình DHCP Server Networks (Ảnh 5 — Bước 12 ➔ 17)
+ * Chuỗi bước chuẩn xác chia làm 3 phần theo thứ tự thực tế:
+ *   Phần 1: Cấu hình IP Address (Bước 1 ➔ 7)
+ *   Phần 2: Cấu hình IP Pool (Bước 8 ➔ 13)
+ *   Phần 3: Cấu hình DHCP Server Networks (Bước 14 ➔ 21)
  */
 
 if (!window.TOOLTIPS_MIKROTIK_HEXS) window.TOOLTIPS_MIKROTIK_HEXS = {};
@@ -209,7 +209,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     condition: function (doc) { return mkBai4ManDangNhap(doc); }
   },
 
-  // ── Phần 1: IP > Addresses (Ảnh 1 & 2 — Bước 1 ➔ 6) ────────────────
+  // ── Phần 1: IP > Addresses (Bước 1 ➔ 7) ────────────────────────────
   {
     selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
     text: 'Bước 1: chọn IP',
@@ -260,20 +260,28 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 6: nhấn Apply và OK để lưu',
-    position: 'left',
-    offsetX: -120,
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 6: Nhấn Apply để lưu cấu hình',
+    position: 'bottom',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
-      return !mkBai4AddressesDaDung() && mkBai4OChiTietAddresses(doc);
+      return !mkBai4AddressesDaDung() && mkBai4OChiTietAddresses(doc) && !window._FTC_MK4_ADDR_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 7: Nhấn OK để đóng cửa sổ',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai4CaiTheoDoi(doc);
+      return !mkBai4AddressesDaDung() && mkBai4OChiTietAddresses(doc) && !!window._FTC_MK4_ADDR_APPLIED;
     }
   },
 
-  // ── Phần 2: IP > Pool (Ảnh 3 & 4 — Bước 7 ➔ 11) ───────────────────
+  // ── Phần 2: IP > Pool (Bước 8 ➔ 13) ────────────────────────────────
   {
     selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
-    text: 'Bước 7: chọn IP',
+    text: 'Bước 8: chọn IP',
     position: 'right',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -284,7 +292,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
   },
   {
     selector: 'a[href="#IP:Pool"], text:Pool',
-    text: 'Bước 8: chọn Pool',
+    text: 'Bước 9: chọn Pool',
     position: 'right',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -295,7 +303,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
   },
   {
     selector: '#ftc-mk4-pool-row, text:dhcp-pool-lan, tr:has-text("dhcp-pool-lan") td',
-    text: 'Bước 9: nhấn đúp vào dòng dhcp-pool-lan',
+    text: 'Bước 10: nhấn đúp vào dòng dhcp-pool-lan',
     position: 'right',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -304,7 +312,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
   },
   {
     selector: '#ftc-mk4-pool-addresses, tr:has-text("Addresses") input',
-    text: 'Bước 10: sửa Addresses thành 192.168.10.10-192.168.10.254',
+    text: 'Bước 11: sửa Addresses thành 192.168.10.10-192.168.10.254',
     position: 'right',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -312,20 +320,28 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 11: nhấn Apply và OK để lưu',
-    position: 'left',
-    offsetX: -120,
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 12: Nhấn Apply để lưu cấu hình Pool',
+    position: 'bottom',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
-      return mkBai4AddressesDaDung() && !mkBai4PoolDaDung() && mkBai4LaTrangPool(doc);
+      return mkBai4AddressesDaDung() && !mkBai4PoolDaDung() && mkBai4LaTrangPool(doc) && !window._FTC_MK4_POOL_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 13: Nhấn OK để đóng cửa sổ Pool',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai4CaiTheoDoi(doc);
+      return mkBai4AddressesDaDung() && !mkBai4PoolDaDung() && mkBai4LaTrangPool(doc) && !!window._FTC_MK4_POOL_APPLIED;
     }
   },
 
-  // ── Phần 3: IP > DHCP Server > Networks (Ảnh 5 — Bước 12 ➔ 17) ─────
+  // ── Phần 3: IP > DHCP Server > Networks (Bước 14 ➔ 21) ─────────────
   {
     selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
-    text: 'Bước 12: chọn IP',
+    text: 'Bước 14: chọn IP',
     position: 'right',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -336,7 +352,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
   },
   {
     selector: 'a[href="#IP:DHCP_Server"], text:DHCP Server',
-    text: 'Bước 13: chọn DHCP Server',
+    text: 'Bước 15: chọn DHCP Server',
     position: 'right',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -347,7 +363,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
   },
   {
     selector: 'a[href="#IP:DHCP_Server.Networks"], text:Networks',
-    text: 'Bước 14: chọn tab Networks',
+    text: 'Bước 16: chọn tab Networks',
     position: 'bottom',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -357,7 +373,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
   },
   {
     selector: '#ftc-mk4-net-row, text:192.168.1.0/24, tr:has-text("192.168.") td',
-    text: 'Bước 14: nhấn đúp vào rule mạng',
+    text: 'Bước 17: nhấn đúp vào rule mạng',
     position: 'right',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -367,7 +383,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
   },
   {
     selector: '#ftc-mk4-net-address, tr:has-text("Address") input',
-    text: 'Bước 15: nhập 192.168.10.0/24',
+    text: 'Bước 18: nhập 192.168.10.0/24',
     position: 'right',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -377,7 +393,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
   },
   {
     selector: '#ftc-mk4-net-gateway, tr:has-text("Gateway") input',
-    text: 'Bước 16: nhập 192.168.10.1',
+    text: 'Bước 19: nhập 192.168.10.1',
     position: 'right',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
@@ -386,14 +402,23 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'] = [
     }
   },
   {
-    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 17: nhấn Apply và OK để lưu',
-    position: 'left',
-    offsetX: -120,
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 20: Nhấn Apply để lưu cấu hình Networks',
+    position: 'bottom',
     condition: function (doc) {
       mkBai4CaiTheoDoi(doc);
       return mkBai4AddressesDaDung() && mkBai4PoolDaDung() && !mkBai4NetworksDaDung()
-        && mkBai4OChiTietNetworks(doc);
+        && mkBai4OChiTietNetworks(doc) && !window._FTC_MK4_NET_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 21: Nhấn OK để đóng cửa sổ Networks',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai4CaiTheoDoi(doc);
+      return mkBai4AddressesDaDung() && mkBai4PoolDaDung() && !mkBai4NetworksDaDung()
+        && mkBai4OChiTietNetworks(doc) && !!window._FTC_MK4_NET_APPLIED;
     }
   }
 ];
