@@ -202,7 +202,6 @@ function mkBai6LaRulePort(r) {
 function mkBai6LaRuleHairpin(r) {
   if (!r) return false;
   const rawLower = (r.raw || '').toLowerCase();
-  // Loại trừ tuyệt đối rule NAT mặc định của router FPT (ftel: masquerade...)
   if (rawLower.includes('ftel:') || rawLower.includes('default configuration') || rawLower.includes('defconf')) {
     return false;
   }
@@ -225,11 +224,9 @@ function mkBai6ChupTheoTrang(doc) {
       const ds = mkBai6ChupDanhSachNAT(doc);
       if (ds.length) {
         window._FTC_MK6_DS_NAT = ds;
-        // Phần 1: Rule NAT Port mở port 8080 cho Camera 192.168.1.10 hiển thị trên bảng NAT
         if (ds.some(mkBai6LaRulePort)) {
           window._FTC_MK6_RULE_PORT_SAVED = true;
         }
-        // Phần 2: Rule Hairpin NAT hiển thị trên bảng NAT (loại trừ rule ftel: mặc định)
         if (ds.some(mkBai6LaRuleHairpin)) {
           window._FTC_MK6_RULE_HAIRPIN_SAVED = true;
         }
@@ -246,6 +243,8 @@ window.mkBai6Reset = function () {
   window._FTC_MK6_CHUP_HAIRPIN = null;
   window._FTC_MK6_NAT_LIVE = null;
   window._FTC_MK6_DS_NAT = null;
+  window._FTC_MK6_PORT_APPLIED = false;
+  window._FTC_MK6_HAIRPIN_APPLIED = false;
 };
 
 /* ───────────────────────── Đăng ký bài học ───────────────────────── */
@@ -293,7 +292,6 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
 
       const details = [];
 
-      // Tiêu chí 1: NAT Port Camera 192.168.1.10:8080 (đầy đủ 8 thông số và đã nhảy ra bảng NAT)
       const timPort = dsNat.find(mkBai6LaRulePort);
       const portDat = portSaved || !!timPort;
       details.push({
@@ -302,10 +300,9 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         expected: 'Comment Camera, Chain dstnat, Protocol 6 (tcp), Dst. Port 8080, In. Interface pppoe-out1, Action dst-nat, To Addresses 192.168.1.10, To Ports 8080',
         actual: portDat ? 'Đã tạo rule NAT Port Camera' : (timPort ? 'Chain: ' + timPort.chain + ', Action: ' + timPort.action : 'Chưa tạo đủ thông số rule NAT Port'),
         passed: portDat,
-        message: portDat ? 'Chính xác' : 'Cần vào IP > Firewall > NAT tạo rule dstnat (Comment Camera, Protocol 6 (tcp), Dst. Port 8080, In. Interface pppoe-out1, Action dst-nat, To Addresses 192.168.1.10, To Ports 8080) và nhấn OK ra trang NAT'
+        message: portDat ? 'Chính xác' : 'Cần vào IP > Firewall > NAT tạo rule dstnat và nhấn Apply -> OK ra trang NAT'
       });
 
-      // Tiêu chí 2: Hairpin NAT cho 192.168.1.0/24 -> 192.168.1.10:8080 (đầy đủ 6 thông số và đã nhảy ra bảng NAT)
       const timHairpin = dsNat.find(mkBai6LaRuleHairpin);
       const hairpinDat = hairpinSaved || !!timHairpin;
       details.push({
@@ -314,11 +311,10 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         expected: 'Chain srcnat, Src. Address 192.168.1.0/24, Dst. Address 192.168.1.10, Protocol 6 (tcp), Dst. Port 8080, Action masquerade',
         actual: hairpinDat ? 'Đã tạo rule Hairpin NAT' : (timHairpin ? 'Chain: ' + timHairpin.chain + ', Action: ' + timHairpin.action : 'Chưa tạo đủ thông số rule Hairpin NAT'),
         passed: hairpinDat,
-        message: hairpinDat ? 'Chính xác' : 'Cần tạo rule srcnat masquerade (Src 192.168.1.0/24, Dst 192.168.1.10, Protocol 6 (tcp), Dst. Port 8080) và nhấn OK ra trang NAT'
+        message: hairpinDat ? 'Chính xác' : 'Cần tạo rule srcnat masquerade và nhấn Apply -> OK ra trang NAT'
       });
 
       const soDung = details.filter(function (d) { return d.passed; }).length;
-      // Chỉ cho phép hoàn thành cả bài (nút Nộp bài sáng lên) khi đã nhảy ra trang bảng NAT (#IP:Firewall.NAT) có đủ cả 2 phần
       const datCaBai = (soDung === details.length) && !dangOHopThoai;
 
       const phan1HopLe = portDat || mkBai6FormPortDayDu(window._FTC_MK6_CHUP_PORT);
@@ -343,6 +339,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       const doc = simWin.document;
       if (doc && doc.querySelector('input#name') && doc.querySelector('input#password')) {
         if (typeof window.mkBai6Reset === 'function') window.mkBai6Reset();
+        window._FTC_MK6_PORT_APPLIED = false;
+        window._FTC_MK6_HAIRPIN_APPLIED = false;
         try {
           const ktvId = (window.currentUser && window.currentUser.username) || 'ktv_fpt';
           simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=6&_ktv=' + encodeURIComponent(ktvId) + '&_t=' + Date.now());
@@ -376,57 +374,68 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
             let el = e.target;
             while (el && el !== simWin.document) {
               const txt = (el.textContent || el.value || '').trim().toLowerCase();
-              if (el.tagName === 'A' && txt.match(/^(ok|apply)$/)) {
-                if (simWin._ftcMkBai6DangLuu) break;
-                simWin._ftcMkBai6DangLuu = true;
-                simWin.setTimeout(function () { simWin._ftcMkBai6DangLuu = false; }, 600);
+              if (el.tagName === 'A' || el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+                if (txt.match(/^(ok|apply)$/)) {
+                  if (simWin._ftcMkBai6DangLuu) break;
+                  simWin._ftcMkBai6DangLuu = true;
+                  simWin.setTimeout(function () { simWin._ftcMkBai6DangLuu = false; }, 600);
 
-                const d = simWin.document;
-                if (d) {
-                  d._ftcIsSaved = true;
-                  window._hasClickedSaveInGuide = true;
-                  window._FTC_MK6_NAT_SAVED = true;
-                  const snap = mkBai6ChupFormNAT(d) || window._FTC_MK6_NAT_LIVE;
-                  if (snap) {
-                    if (snap.chain.toLowerCase() === 'dstnat') {
-                      window._FTC_MK6_CHUP_PORT = snap;
-                    } else if (snap.chain.toLowerCase() === 'srcnat') {
-                      window._FTC_MK6_CHUP_HAIRPIN = snap;
-                    }
-                  }
-
-                  // Tự động đóng hộp thoại quay về trang bảng NAT (#IP:Firewall.NAT) khi nhấn OK
-                  if (txt === 'ok') {
-                    simWin.setTimeout(function () {
-                      try {
-                        const curH = (simWin.location && simWin.location.hash) || '';
-                        if (curH.indexOf('#IP:Firewall.NAT.') === 0 || curH === '#IP:Firewall.NAT.new') {
-                          if (typeof simWin.openContent === 'function') {
-                            simWin.openContent('#IP:Firewall.NAT');
-                          } else {
-                            simWin.location.hash = '#IP:Firewall.NAT';
-                          }
+                  const d = simWin.document;
+                  if (d) {
+                    d._ftcIsSaved = true;
+                    window._hasClickedSaveInGuide = true;
+                    window._FTC_MK6_NAT_SAVED = true;
+                    const snap = mkBai6ChupFormNAT(d) || window._FTC_MK6_NAT_LIVE;
+                    if (snap) {
+                      const chn = (snap.chain || '').toLowerCase();
+                      if (chn === 'dstnat') {
+                        if (txt === 'apply') window._FTC_MK6_PORT_APPLIED = true;
+                        if (txt === 'ok') {
+                          window._FTC_MK6_PORT_APPLIED = true;
+                          window._FTC_MK6_RULE_PORT_SAVED = true;
                         }
-                      } catch (eh) {}
-                    }, 140);
-                  }
-
-                  // Khi WebFig nhảy từ form Add New ra trang bảng NAT (#IP:Firewall.NAT), quét bảng NAT và kích hoạt ngay Tooltip bước tiếp theo / nút Nộp bài
-                  const capNhatSauKhiLuu = function () {
-                    try {
-                      if (simWin.document) {
-                        if (typeof mkBai6CaiTheoDoi === 'function') mkBai6CaiTheoDoi(simWin.document);
-                        mkBai6ChupTheoTrang(simWin.document);
+                        window._FTC_MK6_CHUP_PORT = snap;
+                      } else if (chn === 'srcnat') {
+                        if (txt === 'apply') window._FTC_MK6_HAIRPIN_APPLIED = true;
+                        if (txt === 'ok') {
+                          window._FTC_MK6_HAIRPIN_APPLIED = true;
+                          window._FTC_MK6_RULE_HAIRPIN_SAVED = true;
+                        }
+                        window._FTC_MK6_CHUP_HAIRPIN = snap;
                       }
-                      window.postMessage({ type: 'REQUEST_GUIDE_POPUPS' }, '*');
-                      if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(simWin);
-                    } catch (e2) {}
-                  };
-                  simWin.setTimeout(capNhatSauKhiLuu, 160);
-                  simWin.setTimeout(capNhatSauKhiLuu, 320);
-                  simWin.setTimeout(capNhatSauKhiLuu, 600);
+                    }
+
+                    if (txt === 'ok') {
+                      simWin.setTimeout(function () {
+                        try {
+                          const curH = (simWin.location && simWin.location.hash) || '';
+                          if (curH.indexOf('#IP:Firewall.NAT.') === 0 || curH === '#IP:Firewall.NAT.new') {
+                            if (typeof simWin.openContent === 'function') {
+                              simWin.openContent('#IP:Firewall.NAT');
+                            } else {
+                              simWin.location.hash = '#IP:Firewall.NAT';
+                            }
+                          }
+                        } catch (eh) {}
+                      }, 140);
+                    }
+
+                    const capNhatSauKhiLuu = function () {
+                      try {
+                        if (simWin.document) {
+                          if (typeof mkBai6CaiTheoDoi === 'function') mkBai6CaiTheoDoi(simWin.document);
+                          mkBai6ChupTheoTrang(simWin.document);
+                        }
+                        window.postMessage({ type: 'REQUEST_GUIDE_POPUPS' }, '*');
+                        if (typeof window.onSimulatorSave === 'function') window.onSimulatorSave(simWin);
+                      } catch (e2) {}
+                    };
+                    simWin.setTimeout(capNhatSauKhiLuu, 160);
+                    simWin.setTimeout(capNhatSauKhiLuu, 320);
+                    simWin.setTimeout(capNhatSauKhiLuu, 600);
+                  }
+                  break;
                 }
-                break;
               }
               el = el.parentNode;
             }
@@ -444,10 +453,13 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       window._FTC_MK6_NAT_SAVED = true;
       const snap = mkBai6ChupFormNAT(doc) || window._FTC_MK6_NAT_LIVE;
       if (snap) {
-        if (snap.chain.toLowerCase() === 'dstnat') {
+        const chn = (snap.chain || '').toLowerCase();
+        if (chn === 'dstnat') {
           window._FTC_MK6_CHUP_PORT = snap;
-        } else if (snap.chain.toLowerCase() === 'srcnat') {
+          window._FTC_MK6_PORT_APPLIED = true;
+        } else if (chn === 'srcnat') {
           window._FTC_MK6_CHUP_HAIRPIN = snap;
+          window._FTC_MK6_HAIRPIN_APPLIED = true;
         }
       }
       try {
@@ -471,3 +483,15 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
   guidePopups: (window.TOOLTIPS_MIKROTIK_HEXS
                 && window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6']) || []
 });
+
+window.mkBai6Reset = function () {
+  window._FTC_MK6_NAT_SAVED = false;
+  window._FTC_MK6_RULE_PORT_SAVED = false;
+  window._FTC_MK6_RULE_HAIRPIN_SAVED = false;
+  window._FTC_MK6_CHUP_PORT = null;
+  window._FTC_MK6_CHUP_HAIRPIN = null;
+  window._FTC_MK6_NAT_LIVE = null;
+  window._FTC_MK6_DS_NAT = null;
+  window._FTC_MK6_PORT_APPLIED = false;
+  window._FTC_MK6_HAIRPIN_APPLIED = false;
+};

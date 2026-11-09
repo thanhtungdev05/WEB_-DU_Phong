@@ -2,10 +2,10 @@
  * devices/mikrotik_hexs/lessons/bai3.js
  * Bài 3: Cấu hình Bind IP to MAC — MikroTik hEX S
  *
- * Đề bài (9 bước tooltip do anh Huynn tự làm — xem tooltips/bai3.js): vào
+ * Đề bài (10 bước tooltip — xem tooltips/bai3.js): vào
  * IP > DHCP Server > Leases, mở dòng máy PC1 (192.168.1.249, đang Dynamic),
  * bấm "Make Static" để gán cố định IP theo MAC, rồi đặt Comment = "Server 1"
- * và Apply/OK để lưu.
+ * và nhấn Apply -> OK để lưu.
  *
  * ĐÁP ÁN — đo THẬT trên giả lập 2026-09-19 (đúng ảnh anh Huynn gửi): mọi giá
  * trị hiển thị trên trang chi tiết lease sau khi Make Static là ĐÚNG, đổi
@@ -219,6 +219,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         window._FTC_MK_BAI3_LIVE = null;
         window._FTC_MK_BAI3_SAVED = false;
         window._FTC_MK_BAI3_DA_STATIC = false;
+        window._FTC_MK3_APPLIED = false;
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=3'); } catch (e) {}
       }
       if (!simWin._ftcMkBai3DangTheoDoi) {
@@ -247,9 +248,14 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
               if (txt === 'make static') {
                 window._FTC_MK_BAI3_DA_STATIC = true;
               }
-              if (el.tagName === 'A' && txt.match(/^(ok|apply)$/)) {
+              if ((el.tagName === 'A' || el.tagName === 'INPUT' || el.tagName === 'BUTTON') && /^(ok|apply)$/.test(txt)) {
                 const d = simWin.document;
                 if (d) {
+                  if (txt === 'apply') window._FTC_MK3_APPLIED = true;
+                  if (txt === 'ok') {
+                    window._FTC_MK3_APPLIED = true;
+                    window._FTC_MK_BAI3_SAVED = true;
+                  }
                   d._ftcIsSaved = true;
                   window._hasClickedSaveInGuide = true;
                   const snapshot = mkBai3ChupTatCa(d);

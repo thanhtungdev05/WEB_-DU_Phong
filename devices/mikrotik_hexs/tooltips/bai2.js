@@ -100,7 +100,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
   },
   {
     selector: 'input[value="Login"], input[type="button"][value="Login"]',
-    text: 'Nhập admin',
+    text: 'Nhấn Login',
     position: 'right',
     condition: function (doc) { return mkBai2ManDangNhap(doc); }
   },
@@ -180,13 +180,25 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai2'] = [
     }
   },
 
-  // ── Bước 8: nhấn Apply và OK để lưu (Hình 5) ─────────────────────
+  // ── Bước 8: nhấn Apply để lưu cấu hình (Hình 5) ──────────────────
   {
-    selector: 'text:OK',
-    text: 'Bước 8: nhấn Apply và OK để lưu',
-    position: 'top',
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 8: Nhấn Apply để lưu cấu hình',
+    position: 'bottom',
     condition: function (doc) {
-      return mkBai2OTrangNewQueue(doc);
+      mkBai2CaiTheoDoi(doc);
+      return mkBai2OTrangNewQueue(doc) && !window._FTC_MK2_APPLIED;
+    }
+  },
+
+  // ── Bước 9: nhấn OK để đóng cửa sổ (Hình 5) ──────────────────────
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 9: Nhấn OK để đóng cửa sổ',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai2CaiTheoDoi(doc);
+      return mkBai2OTrangNewQueue(doc) && !!window._FTC_MK2_APPLIED;
     }
   }
 ];

@@ -1,16 +1,11 @@
 /**
  * devices/mikrotik_hexs/tooltips/bai1.js — Tooltip Hướng dẫn Bài 1: Cấu hình PPPoE
  *
- * LƯU Ý VỀ SELECTOR (khác hẳn DrayTek Vigor2927):
- * Giao diện WebFig của MikroTik KHÔNG đặt name/id cho ô nhập. Vì vậy khi mở
- * trang chi tiết, lesson (bai1.js) sẽ tự GẮN ID cho 2 ô cần dùng:
- *     #ftc-mk-user  và  #ftc-mk-pass
- * nhờ đó tooltip Bước 4/5 trỏ thẳng vào Ô NHẬP (không phải nhãn chữ).
- * Các bước còn lại dùng cơ chế `text:<chuỗi>` của app.js (TreeWalker).
- *
- * Chuyển bước dùng `condition(doc)` đọc DOM/hash, KHÔNG dùng hideOnPage — vì
- * hash trang chi tiết (#PPP.Interface.9) có chứa luôn chuỗi "PPP" của trang
- * danh sách nên lọc theo URL sẽ nhầm giữa hai màn hình.
+ * Chuỗi 9 bước tuần tự chuẩn thực tế theo sơ đồ Cấu hình PPPoE trên MikroTik hEX S:
+ *   - Đăng nhập (Bước 1 ➔ 2)
+ *   - Mở WebFig, vào PPP, mở pppoe-out1, mở Dial Out (Bước 3 ➔ 6)
+ *   - Nhập User, Password (Bước 7 ➔ 8)
+ *   - Lưu cấu hình: Apply -> OK (Bước 9)
  */
 
 if (!window.TOOLTIPS_MIKROTIK_HEXS) window.TOOLTIPS_MIKROTIK_HEXS = {};
@@ -49,14 +44,6 @@ function mkBai1OTrangChiTiet(doc) {
   return false;
 }
 
-/**
- * Đang ở trang danh sách PPP?
- * KHÔNG dò theo dòng "pppoe-out1" trong bảng: trang Interface List cũng liệt kê
- * interface đó nên sẽ nhận nhầm. Phải xem hash URL của WebFig:
- *   #Interface        → danh sách Interface
- *   #PPP              → danh sách PPP        (đúng chỗ cần)
- *   #PPP.Interface.9  → trang chi tiết 1 interface
- */
 function mkBai1Hash(doc) {
   try { return (doc.location && doc.location.hash) || ''; } catch (e) { return ''; }
 }
@@ -106,7 +93,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai1'] = [
   },
   {
     selector: 'input[value="Login"], input[type="button"][value="Login"]',
-    text: 'Nhập admin',
+    text: 'Nhấn Login',
     position: 'right',
     condition: function (doc) { return mkBai1ManDangNhap(doc); }
   },
@@ -158,11 +145,19 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai1'] = [
     condition: function (doc) { return mkBai1DialOutDaMo(doc); }
   },
   {
-    // Dời sang phải để không che nút OK (anh Huynn yêu cầu 2026-09-18).
-    selector: 'text:OK',
-    text: 'Bước 7: nhấn Apply để lưu',
-    position: 'left',
-    offsetX: -120,
-    condition: function (doc) { return mkBai1DialOutDaMo(doc); }
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 7: Nhấn Apply để lưu cấu hình',
+    position: 'bottom',
+    condition: function (doc) {
+      return mkBai1DialOutDaMo(doc) && !window._FTC_MK_BAI1_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 8: Nhấn OK để đóng cửa sổ',
+    position: 'bottom',
+    condition: function (doc) {
+      return mkBai1DialOutDaMo(doc) && !!window._FTC_MK_BAI1_APPLIED;
+    }
   }
 ];
