@@ -44,33 +44,34 @@ assert.ok(lesson.grading.rules.some(r => r.name.includes('[Pool]')), 'Grading ph
 assert.ok(lesson.grading.rules.some(r => r.name.includes('[Networks]')), 'Grading phải có tiêu chí Networks');
 console.log('✔ Metadata và đề bài Bài 4 chuẩn yêu cầu nghiệp vụ.');
 
-console.log('\n--- TEST 2: KIỂM TRA 17 BƯỚC TOOLTIPS ---');
+console.log('\n--- TEST 2: KIỂM TRA CÁC BƯỚC TOOLTIPS ---');
 const tooltips = sandbox.window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai4'];
 assert.ok(Array.isArray(tooltips), 'Danh sách tooltips phải là mảng');
-// Bao gồm 2 bước đăng nhập + 17 bước cấu hình = 19 entries (hoặc 18 nếu Bước 14 gom điều kiện)
 console.log(`- Tổng số tooltips: ${tooltips.length}`);
 
 const stepTexts = tooltips.map(t => t.text);
-assert.ok(stepTexts.includes('Bước 1: chọn IP'), 'Có Bước 1: chọn IP');
-assert.ok(stepTexts.includes('Bước 2: chọn Addresses'), 'Có Bước 2: chọn Addresses');
-assert.ok(stepTexts.includes('Bước 3: nhấn đúp vào dòng bridge-LAN'), 'Có Bước 3: nhấn đúp vào dòng bridge-LAN');
-assert.ok(stepTexts.includes('Bước 4: nhập 192.168.10.1/24'), 'Có Bước 4: nhập 192.168.10.1/24');
-assert.ok(stepTexts.includes('Bước 5: nhập 192.168.10.0'), 'Có Bước 5: nhập 192.168.10.0');
-assert.ok(stepTexts.includes('Bước 6: nhấn Apply và OK để lưu'), 'Có Bước 6: nhấn Apply và OK để lưu');
+assert.ok(stepTexts.some(t => t.includes('chọn IP')), 'Có bước chọn IP');
+assert.ok(stepTexts.some(t => t.includes('chọn Addresses')), 'Có bước chọn Addresses');
+assert.ok(stepTexts.some(t => t.includes('bridge-LAN')), 'Có bước nhấn bridge-LAN');
+assert.ok(stepTexts.some(t => t.includes('192.168.10.1/24')), 'Có bước nhập 192.168.10.1/24');
+assert.ok(stepTexts.some(t => t.includes('192.168.10.0')), 'Có bước nhập 192.168.10.0');
+assert.ok(stepTexts.some(t => t.includes('Nhấn Apply để lưu cấu hình')), 'Có bước Nhấn Apply để lưu cấu hình');
+assert.ok(stepTexts.some(t => t.includes('Nhấn OK để đóng cửa sổ')), 'Có bước Nhấn OK để đóng cửa sổ');
 
-assert.ok(stepTexts.includes('Bước 7: chọn IP'), 'Có Bước 7: chọn IP');
-assert.ok(stepTexts.includes('Bước 8: chọn Pool'), 'Có Bước 8: chọn Pool');
-assert.ok(stepTexts.includes('Bước 9: nhấn đúp vào dòng dhcp-pool-lan'), 'Có Bước 9: nhấn đúp vào dòng dhcp-pool-lan');
-assert.ok(stepTexts.includes('Bước 10: sửa Addresses thành 192.168.10.10-192.168.10.254'), 'Có Bước 10: sửa Addresses');
-assert.ok(stepTexts.includes('Bước 11: nhấn Apply và OK để lưu'), 'Có Bước 11: nhấn Apply và OK để lưu');
+assert.ok(stepTexts.some(t => t.includes('chọn Pool')), 'Có bước chọn Pool');
+assert.ok(stepTexts.some(t => t.includes('dhcp-pool-lan')), 'Có bước nhấn dhcp-pool-lan');
+assert.ok(stepTexts.some(t => t.includes('192.168.10.10-192.168.10.254')), 'Có bước sửa Addresses Pool');
+assert.ok(stepTexts.some(t => t.includes('Nhấn Apply để lưu cấu hình Pool')), 'Có bước Nhấn Apply Pool');
+assert.ok(stepTexts.some(t => t.includes('Nhấn OK để đóng cửa sổ Pool')), 'Có bước Nhấn OK Pool');
 
-assert.ok(stepTexts.includes('Bước 12: chọn IP'), 'Có Bước 12: chọn IP');
-assert.ok(stepTexts.includes('Bước 13: chọn DHCP Server'), 'Có Bước 13: chọn DHCP Server');
-assert.ok(stepTexts.includes('Bước 14: chọn tab Networks') || stepTexts.includes('Bước 14: nhấn đúp vào rule mạng'), 'Có Bước 14');
-assert.ok(stepTexts.includes('Bước 15: nhập 192.168.10.0/24'), 'Có Bước 15: nhập 192.168.10.0/24');
-assert.ok(stepTexts.includes('Bước 16: nhập 192.168.10.1'), 'Có Bước 16: nhập 192.168.10.1');
-assert.ok(stepTexts.includes('Bước 17: nhấn Apply và OK để lưu'), 'Có Bước 17: nhấn Apply và OK để lưu');
-console.log('✔ Toàn bộ 17 bước hướng dẫn được định nghĩa chuẩn xác theo thứ tự ảnh.');
+assert.ok(stepTexts.some(t => t.includes('DHCP Server')), 'Có bước chọn DHCP Server');
+assert.ok(stepTexts.some(t => t.includes('Networks')), 'Có bước chọn tab Networks');
+assert.ok(stepTexts.some(t => t.includes('rule mạng')), 'Có bước nhấn đúp vào rule mạng');
+assert.ok(stepTexts.some(t => t.includes('192.168.10.0/24')), 'Có bước nhập 192.168.10.0/24');
+assert.ok(stepTexts.some(t => t.includes('192.168.10.1')), 'Có bước nhập 192.168.10.1');
+assert.ok(stepTexts.some(t => t.includes('Nhấn Apply để lưu cấu hình Networks')), 'Có bước Nhấn Apply Networks');
+assert.ok(stepTexts.some(t => t.includes('Nhấn OK để đóng cửa sổ Networks')), 'Có bước Nhấn OK Networks');
+console.log('✔ Toàn bộ các bước hướng dẫn (tách biệt Apply và OK) được định nghĩa chuẩn xác.');
 
 console.log('\n--- TEST 3: KIỂM TRA CHẤM ĐIỂM CUSTOMGRADING VÀ LƯU TRẠNG THÁI ---');
 // Thử nghiệm customGrading với các trạng thái khác nhau

@@ -16,6 +16,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
     '- Password: <span class="val">fpt12345</span>'
   ],
   practiceUrl: '/sim_vigor2927/weblogin.htm',
+  allowedSelectors: ['select[name="iAccessMode0"]'],
 
   // Xóa trắng các ô nhập liệu khi bài lab mở
   clearFields: [
@@ -28,6 +29,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   // Ràng buộc điều kiện chấm đúng (3 tiêu chí)
   grading: {
     description: 'Kiểm tra cấu hình PPPoE trên DrayTek Vigor2927',
+    allowedSelectors: ['select[name="iAccessMode0"]'],
     rules: [
       {
         id: 'opt_pppoe_mode',

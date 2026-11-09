@@ -227,9 +227,9 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       }
 
       const banChup = window._FTC_MK_BAI4 || { addresses: null, pool: null, networks: null };
-      const addrDaLuu = !!(window._FTC_MK_BAI4_ADDRESSES_SAVED || (banChup && banChup.addresses) || (docAddr && docAddr._ftcIsSaved));
-      const poolDaLuu = !!(window._FTC_MK_BAI4_POOL_SAVED || (banChup && banChup.pool) || (docPool && docPool._ftcIsSaved));
-      const netDaLuu = !!(window._FTC_MK_BAI4_NETWORKS_SAVED || (banChup && banChup.networks) || (docNet && docNet._ftcIsSaved));
+      const addrDaLuu = !!(window._FTC_MK_BAI4_ADDRESSES_OK || window._FTC_MK_BAI4_ADDRESSES_SAVED || (banChup && banChup.addresses && !window._ftcMkApplyOnly) || (docAddr && docAddr._ftcIsSaved));
+      const poolDaLuu = !!(window._FTC_MK_BAI4_POOL_OK || window._FTC_MK_BAI4_POOL_SAVED || (banChup && banChup.pool && !window._ftcMkApplyOnly) || (docPool && docPool._ftcIsSaved));
+      const netDaLuu = !!(window._FTC_MK_BAI4_NETWORKS_OK || window._FTC_MK_BAI4_NETWORKS_SAVED || (banChup && banChup.networks && !window._ftcMkApplyOnly) || (docNet && docNet._ftcIsSaved));
 
       function chamNhom(tienTo, dsChuan, doc, daLuu, banChupNhom) {
         return dsChuan.map(function (muc, idx) {
@@ -272,7 +272,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
           score: ds.length ? Math.round((soDung / ds.length) * 100) : 0,
           passedCount: soDung,
           totalRules: ds.length,
-          details: ds
+          details: ds,
+          daVaoTrangCuoi: dat
         };
         if (themTrangHienTai !== undefined) r.trangHienTaiDat = themTrangHienTai;
         return r;
@@ -281,7 +282,12 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       const laHuongDan = (typeof window.ftcLayCheDo === 'function')
         && window.ftcLayCheDo() === 'guide';
       if (!laHuongDan || datCaBai) {
-        return ketQua(chiTietAddr.concat(chiTietPool, chiTietNet), datCaBai);
+        const resAll = ketQua(chiTietAddr.concat(chiTietPool, chiTietNet), datCaBai);
+        if (window._ftcMkApplyOnly || window._FTC_MK4_NET_APPLIED) {
+          resAll.daVaoTrangCuoi = datCaBai;
+          resAll.trangHienTaiDat = (addrDat && poolDat && dong(chiTietNet) === chiTietNet.length);
+        }
+        return resAll;
       }
 
       let dsTrang = chiTietAddr;
@@ -310,11 +316,15 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       if (laTrangLogin || chuaKhoiTao) {
         window._FTC_MK_BAI4 = { addresses: null, pool: null, networks: null };
         window._FTC_MK_BAI4_ADDRESSES_SAVED = false;
+        window._FTC_MK_BAI4_ADDRESSES_OK = false;
         window._FTC_MK_BAI4_POOL_SAVED = false;
+        window._FTC_MK_BAI4_POOL_OK = false;
         window._FTC_MK_BAI4_NETWORKS_SAVED = false;
+        window._FTC_MK_BAI4_NETWORKS_OK = false;
         window._FTC_MK4_ADDR_APPLIED = false;
         window._FTC_MK4_POOL_APPLIED = false;
         window._FTC_MK4_NET_APPLIED = false;
+        window._ftcMkApplyOnly = false;
         try {
           const ktvId = (typeof window.getKtvClientId === 'function' ? window.getKtvClientId() : '') || 'ktv_default';
           simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=4&_ktv=' + encodeURIComponent(ktvId) + '&_t=' + Date.now());
@@ -357,41 +367,56 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
                 window._FTC_MK_BAI4 = { addresses: null, pool: null, networks: null };
               }
               if (mkBai4LaTrangAddresses(d)) {
-                if (txt === 'apply') window._FTC_MK4_ADDR_APPLIED = true;
+                const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_ADDRESSES);
+                if (ban) { window._FTC_MK_BAI4.addresses = ban; }
+                if (txt === 'apply') {
+                  window._FTC_MK4_ADDR_APPLIED = true;
+                  window._FTC_MK_BAI4_ADDRESSES_OK = false;
+                  window._FTC_MK_BAI4_ADDRESSES_SAVED = false;
+                  window._ftcMkApplyOnly = true;
+                  d._ftcIsSaved = false;
+                }
                 if (txt === 'ok') {
                   window._FTC_MK4_ADDR_APPLIED = true;
+                  window._FTC_MK_BAI4_ADDRESSES_OK = true;
                   window._FTC_MK_BAI4_ADDRESSES_SAVED = true;
-                }
-                const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_ADDRESSES);
-                if (ban) {
-                  window._FTC_MK_BAI4.addresses = ban;
-                  window._FTC_MK_BAI4_ADDRESSES_SAVED = true;
+                  window._ftcMkApplyOnly = false;
                 }
               } else if (mkBai4LaTrangPool(d)) {
-                if (txt === 'apply') window._FTC_MK4_POOL_APPLIED = true;
+                const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_POOL);
+                if (ban) { window._FTC_MK_BAI4.pool = ban; }
+                if (txt === 'apply') {
+                  window._FTC_MK4_POOL_APPLIED = true;
+                  window._FTC_MK_BAI4_POOL_OK = false;
+                  window._FTC_MK_BAI4_POOL_SAVED = false;
+                  window._ftcMkApplyOnly = true;
+                  d._ftcIsSaved = false;
+                }
                 if (txt === 'ok') {
                   window._FTC_MK4_POOL_APPLIED = true;
+                  window._FTC_MK_BAI4_POOL_OK = true;
                   window._FTC_MK_BAI4_POOL_SAVED = true;
-                }
-                const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_POOL);
-                if (ban) {
-                  window._FTC_MK_BAI4.pool = ban;
-                  window._FTC_MK_BAI4_POOL_SAVED = true;
+                  window._ftcMkApplyOnly = false;
                 }
               } else if (mkBai4LaTrangNetworks(d)) {
-                if (txt === 'apply') window._FTC_MK4_NET_APPLIED = true;
+                const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_NETWORKS);
+                if (ban) { window._FTC_MK_BAI4.networks = ban; }
+                if (txt === 'apply') {
+                  window._FTC_MK4_NET_APPLIED = true;
+                  window._FTC_MK_BAI4_NETWORKS_OK = false;
+                  window._FTC_MK_BAI4_NETWORKS_SAVED = false;
+                  window._ftcMkApplyOnly = true;
+                  d._ftcIsSaved = false;
+                }
                 if (txt === 'ok') {
                   window._FTC_MK4_NET_APPLIED = true;
+                  window._FTC_MK_BAI4_NETWORKS_OK = true;
                   window._FTC_MK_BAI4_NETWORKS_SAVED = true;
-                }
-                const ban = mkBai4ChupNhom(d, MK_BAI4_CHUAN_NETWORKS);
-                if (ban) {
-                  window._FTC_MK_BAI4.networks = ban;
-                  window._FTC_MK_BAI4_NETWORKS_SAVED = true;
+                  window._ftcMkApplyOnly = false;
+                  d._ftcIsSaved = true;
+                  window._hasClickedSaveInGuide = true;
                 }
               }
-              d._ftcIsSaved = true;
-              window._hasClickedSaveInGuide = true;
             }
           } catch (ex) {}
         };
@@ -408,20 +433,30 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
     try {
       const doc = simWin.document;
       if (!window._FTC_MK_BAI4) window._FTC_MK_BAI4 = { addresses: null, pool: null, networks: null };
+      const isApplyOnly = Boolean(window._ftcMkApplyOnly);
       if (mkBai4LaTrangAddresses(doc)) {
         const ban = mkBai4ChupNhom(doc, MK_BAI4_CHUAN_ADDRESSES);
         if (ban) { window._FTC_MK_BAI4.addresses = ban; }
-        window._FTC_MK_BAI4_ADDRESSES_SAVED = true;
+        if (!isApplyOnly) {
+          window._FTC_MK_BAI4_ADDRESSES_SAVED = true;
+          window._FTC_MK_BAI4_ADDRESSES_OK = true;
+        }
         window._FTC_MK4_ADDR_APPLIED = true;
       } else if (mkBai4LaTrangPool(doc)) {
         const ban = mkBai4ChupNhom(doc, MK_BAI4_CHUAN_POOL);
         if (ban) { window._FTC_MK_BAI4.pool = ban; }
-        window._FTC_MK_BAI4_POOL_SAVED = true;
+        if (!isApplyOnly) {
+          window._FTC_MK_BAI4_POOL_SAVED = true;
+          window._FTC_MK_BAI4_POOL_OK = true;
+        }
         window._FTC_MK4_POOL_APPLIED = true;
       } else if (mkBai4LaTrangNetworks(doc)) {
         const ban = mkBai4ChupNhom(doc, MK_BAI4_CHUAN_NETWORKS);
         if (ban) { window._FTC_MK_BAI4.networks = ban; }
-        window._FTC_MK_BAI4_NETWORKS_SAVED = true;
+        if (!isApplyOnly) {
+          window._FTC_MK_BAI4_NETWORKS_SAVED = true;
+          window._FTC_MK_BAI4_NETWORKS_OK = true;
+        }
         window._FTC_MK4_NET_APPLIED = true;
       }
       setTimeout(function () { window._ftcMkChanTooltip = false; }, 200);
@@ -435,9 +470,13 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
 window.mkBai4Reset = function () {
   window._FTC_MK_BAI4 = { addresses: null, pool: null, networks: null };
   window._FTC_MK_BAI4_ADDRESSES_SAVED = false;
+  window._FTC_MK_BAI4_ADDRESSES_OK = false;
   window._FTC_MK_BAI4_POOL_SAVED = false;
+  window._FTC_MK_BAI4_POOL_OK = false;
   window._FTC_MK_BAI4_NETWORKS_SAVED = false;
+  window._FTC_MK_BAI4_NETWORKS_OK = false;
   window._FTC_MK4_ADDR_APPLIED = false;
   window._FTC_MK4_POOL_APPLIED = false;
   window._FTC_MK4_NET_APPLIED = false;
+  window._ftcMkApplyOnly = false;
 };

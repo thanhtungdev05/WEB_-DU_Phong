@@ -937,8 +937,17 @@
                       if (isSaveOrApply) {
                         doc._ftcLastSaveInteraction = Date.now();
                         if (laNutLuuMikrotik) {
-                          doc._ftcIsSaved = true;
-                          window._hasClickedSaveInGuide = true;
+                          const anchor = (el.tagName === 'A') ? el : (el.closest ? el.closest('a') : null);
+                          const text = (anchor ? anchor.textContent : (el.value || el.textContent || '')).trim().toLowerCase();
+                          const isApplyOnly = (text === 'apply');
+                          if (isApplyOnly) {
+                            window._ftcMkApplyOnly = true;
+                            doc._ftcIsSaved = false;
+                          } else {
+                            window._ftcMkApplyOnly = false;
+                            doc._ftcIsSaved = true;
+                            window._hasClickedSaveInGuide = true;
+                          }
                           try {
                             if (typeof window.onSimulatorSave === 'function') {
                               window.onSimulatorSave(doc.defaultView || doc.parentWindow);
@@ -1047,8 +1056,21 @@
                             );
 
                           doc._ftcLastSaveInteraction = Date.now();
-                          doc._ftcIsSaved = true;
-                          window._hasClickedSaveInGuide = true;
+                          const mkAnchor = (el.tagName === 'A') ? el : (el.closest ? el.closest('a') : null);
+                          const mkText = (mkAnchor ? mkAnchor.textContent : (el.value || el.textContent || '')).trim().toLowerCase();
+                          const isMkApplyOnly = (currentDeviceId === 'mikrotik_hexs') && (mkText === 'apply');
+
+                          if (isMkApplyOnly) {
+                            window._ftcMkApplyOnly = true;
+                            doc._ftcIsSaved = false;
+                          } else {
+                            if (currentDeviceId === 'mikrotik_hexs') {
+                              window._ftcMkApplyOnly = false;
+                            }
+                            doc._ftcIsSaved = true;
+                            window._hasClickedSaveInGuide = true;
+                          }
+
                           if (isAx3000gzV2 && e.isTrusted && _trackingSession && _trackingSession.attemptId) {
                             _trackingSession.lastSavedAt = Date.now();
                             _trackingSession.savedAttemptId = _trackingSession.attemptId;
@@ -2057,7 +2079,7 @@
                   ? evalResult.trangHienTaiDat : evalResult.passed)
                 : false;
 
-              const isSaveDone = Boolean(window._hasClickedSaveInGuide || hasSuccHint || window._hasSuccHintStored);
+              const isSaveDone = Boolean((!window._ftcMkApplyOnly && window._hasClickedSaveInGuide) || hasSuccHint || window._hasSuccHintStored);
               // Thiết bị không yêu cầu cấu hình (như BE15000) hoặc ĐÃ BẤM SAVE/APPLY VÀ ĐẠT 100%:
               if (noConfig || (isSaveDone && evalResult && evalResult.passed)) {
                 // Nút Nộp bài SÁNG LÊN
@@ -5748,7 +5770,9 @@
         triggerSaveFlashEffect(simWin ? simWin.document : null, null);
       }
     } catch (e) { }
-    window._hasClickedSaveInGuide = true;
+    if (!window._ftcMkApplyOnly) {
+      window._hasClickedSaveInGuide = true;
+    }
     if (currentLessonId === 'LAB_AX3000S_02') {
       const simDoc = simWin ? simWin.document : (deviceIframe ? deviceIframe.contentDocument : null);
       const is2g = (modalTitle === 'wlanBasicSetting2g') || (simDoc && (
@@ -5876,7 +5900,8 @@
             ? evalResult.trangHienTaiDat : evalResult.passed)
           : false;
 
-        if (noConfigSaved || (evalResult && evalResult.passed)) {
+        const isSaveDone = Boolean((!window._ftcMkApplyOnly && window._hasClickedSaveInGuide) || hasSuccHint || window._hasSuccHintStored);
+        if (noConfigSaved || (isSaveDone && evalResult && evalResult.passed)) {
           // Cấu hình ĐÚNG hoặc thiết bị không cần cấu hình: Nút Nộp bài SÁNG LÊN, Nút Lỗi sai ẨN/TẮT
           if (btnSubmitLab) {
             btnSubmitLab.disabled = false;
@@ -5898,14 +5923,18 @@
         } else {
           // Cấu hình SAI ở Hướng dẫn: Nút Lỗi sai SÁNG LÊN, Nút Nộp bài TẮT/XÁM
           if (btnGuideErrors) {
-            btnGuideErrors.style.display = 'flex';
-            btnGuideErrors.disabled = false;
-            btnGuideErrors.style.opacity = '1';
-            btnGuideErrors.style.cursor = 'pointer';
-            btnGuideErrors.style.background = '#fee2e2';
-            btnGuideErrors.style.color = '#ef4444';
-            btnGuideErrors.style.borderColor = '#fca5a5';
-            btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
+            if (isSaveDone && (!window._ftcMkApplyOnly || !trangDangLamSach)) {
+              btnGuideErrors.style.display = 'flex';
+              btnGuideErrors.disabled = false;
+              btnGuideErrors.style.opacity = '1';
+              btnGuideErrors.style.cursor = 'pointer';
+              btnGuideErrors.style.background = '#fee2e2';
+              btnGuideErrors.style.color = '#ef4444';
+              btnGuideErrors.style.borderColor = '#fca5a5';
+              btnGuideErrors.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
+            } else {
+              btnGuideErrors.style.display = 'none';
+            }
           }
           if (btnSubmitLab) {
             btnSubmitLab.disabled = true;

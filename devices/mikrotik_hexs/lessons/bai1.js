@@ -206,7 +206,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         };
       }
 
-      const daLuu = !!(banChup || (doc && doc._ftcIsSaved) || window._hasClickedSaveInGuide);
+      const daOk = Boolean(window._FTC_MK_BAI1_OK && (window._FTC_MK_BAI1 || (doc && doc._ftcIsSaved) || window._hasClickedSaveInGuide));
+      const daApply = Boolean(window._FTC_MK_BAI1_APPLIED);
 
       const details = [];
       let soDung = 0;
@@ -214,15 +215,20 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         let gt = doc ? mkBai1DocTruong(doc, muc) : null;
         if (gt === null && banChup) gt = banChup[muc.nhan];
 
-        const dat = mkBai1SoSanh(muc, gt) && daLuu;
+        const giaTriDung = mkBai1SoSanh(muc, gt);
+        const dat = giaTriDung && daOk;
         if (dat) soDung++;
 
         let loi;
         if (dat) loi = 'Chính xác';
         else if (gt === null || gt === undefined) loi = 'Chưa mở mục chứa ô này nên không đọc được giá trị';
-        else if (!daLuu) loi = 'Chưa nhấn Apply/OK để lưu cấu hình';
-        else if (muc.deBai) loi = 'Giá trị không đúng yêu cầu đề bài';
-        else loi = 'Đây là giá trị mặc định, không được thay đổi';
+        else if (!giaTriDung) {
+          if (muc.deBai) loi = 'Giá trị không đúng yêu cầu đề bài';
+          else loi = 'Đây là giá trị mặc định, không được thay đổi';
+        } else if (!daOk) {
+          if (daApply) loi = 'Đã Apply nhưng chưa nhấn OK để hoàn tất cấu hình';
+          else loi = 'Chưa nhấn Apply/OK để lưu cấu hình';
+        }
 
         details.push({
           id: 'mk_' + muc.nhan.replace(/[^A-Za-z0-9]/g, '_').toLowerCase(),
@@ -235,13 +241,26 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       });
 
       const tong = details.length;
-      return {
-        passed: soDung === tong && daLuu,
-        score: Math.round((soDung / tong) * 100),
+      const cauHinhDungHet = (function () {
+        return MK_BAI1_CHUAN.every(function (muc) {
+          let gt = doc ? mkBai1DocTruong(doc, muc) : null;
+          if (gt === null && banChup) gt = banChup[muc.nhan];
+          return mkBai1SoSanh(muc, gt);
+        });
+      })();
+
+      const res = {
+        passed: soDung === tong && daOk,
+        score: daOk ? Math.round((soDung / tong) * 100) : (daApply && cauHinhDungHet ? 90 : 0),
         passedCount: soDung,
         totalRules: tong,
         details: details
       };
+      if (daApply && !daOk) {
+        res.daVaoTrangCuoi = false;
+        res.trangHienTaiDat = cauHinhDungHet;
+      }
+      return res;
     }
   },
   onSimLoad: function (simWin) {
@@ -251,6 +270,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         window._FTC_MK_BAI1 = null;
         window._FTC_MK_BAI1_LIVE = null;
         window._FTC_MK_BAI1_APPLIED = false;
+        window._FTC_MK_BAI1_OK = false;
+        window._ftcMkApplyOnly = false;
         simWin._ftcMkBai1DaDatLai = false;
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=1'); } catch (e) {}
       }
@@ -277,12 +298,23 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
                 if (/^(ok|apply)$/.test(txt)) {
                   const d = simWin.document;
                   if (d) {
-                    if (txt === 'apply') window._FTC_MK_BAI1_APPLIED = true;
-                    if (txt === 'ok') window._FTC_MK_BAI1_APPLIED = true;
-                    d._ftcIsSaved = true;
-                    window._hasClickedSaveInGuide = true;
-                    const snapshot = mkBai1ChupTatCa(d);
-                    if (snapshot) window._FTC_MK_BAI1 = snapshot;
+                    if (txt === 'apply') {
+                      window._FTC_MK_BAI1_APPLIED = true;
+                      window._FTC_MK_BAI1_OK = false;
+                      window._ftcMkApplyOnly = true;
+                      d._ftcIsSaved = false;
+                      const snapshot = mkBai1ChupTatCa(d);
+                      if (snapshot) window._FTC_MK_BAI1_LIVE = snapshot;
+                    }
+                    if (txt === 'ok') {
+                      window._FTC_MK_BAI1_APPLIED = true;
+                      window._FTC_MK_BAI1_OK = true;
+                      window._ftcMkApplyOnly = false;
+                      d._ftcIsSaved = true;
+                      window._hasClickedSaveInGuide = true;
+                      const snapshot = mkBai1ChupTatCa(d);
+                      if (snapshot) window._FTC_MK_BAI1 = snapshot;
+                    }
                   }
                   break;
                 }
@@ -300,7 +332,11 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
     try {
       const doc = simWin.document;
       const ban = mkBai1ChupTatCa(doc) || window._FTC_MK_BAI1_LIVE;
-      if (ban) window._FTC_MK_BAI1 = ban;
+      if (window._FTC_MK_BAI1_OK) {
+        if (ban) window._FTC_MK_BAI1 = ban;
+      } else {
+        if (ban) window._FTC_MK_BAI1_LIVE = ban;
+      }
     } catch (e) {}
   },
   guidePopups: (window.TOOLTIPS_MIKROTIK_HEXS

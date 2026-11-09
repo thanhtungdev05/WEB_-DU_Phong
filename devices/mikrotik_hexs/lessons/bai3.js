@@ -134,7 +134,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       }
 
       const banChup = window._FTC_MK_BAI3 || window._FTC_MK_BAI3_LIVE || null;
-      const daLuu = !!(window._FTC_MK_BAI3_SAVED || banChup || (doc && doc._ftcIsSaved) || window._hasClickedSaveInGuide);
+      const daOk = Boolean(window._FTC_MK_BAI3_OK && (window._FTC_MK_BAI3 || window._FTC_MK_BAI3_SAVED || (doc && doc._ftcIsSaved) || window._hasClickedSaveInGuide));
+      const daApply = Boolean(window._FTC_MK3_APPLIED);
 
       if (!doc && !banChup) {
         const tong = MK_BAI3_CHUAN.length + 1;
@@ -158,30 +159,41 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       const details = [];
       let soDung = 0;
 
-      const datStatic = daStatic === true && daLuu;
+      const datStatic = (daStatic === true) && daOk;
       if (datStatic) soDung++;
+      let loiStatic;
+      if (datStatic) loiStatic = 'Chính xác';
+      else if (daStatic !== true) loiStatic = 'Chưa bấm "Make Static" trước khi lưu';
+      else if (!daOk) {
+        if (daApply) loiStatic = 'Đã Apply nhưng chưa nhấn OK để hoàn tất cấu hình';
+        else loiStatic = 'Chưa nhấn Apply/OK để lưu cấu hình';
+      }
       details.push({
         id: 'mk3_static',
         name: 'Đã bấm "Make Static" trước khi lưu (lease không còn Dynamic)',
         expected: 'Đã Make Static',
         actual: daStatic === null ? '(không xác định)' : (daStatic ? 'Đã Make Static' : 'Còn là Dynamic'),
         passed: datStatic,
-        message: datStatic ? 'Chính xác'
-          : (!daLuu ? 'Chưa nhấn Apply/OK để lưu cấu hình' : 'Chưa bấm "Make Static" trước khi lưu')
+        message: loiStatic
       });
 
       MK_BAI3_CHUAN.forEach(function (muc, idx) {
         let gt = doc ? mkBai3DocTruong(doc, muc) : null;
         if (gt === null && banChup) gt = banChup[mkBai3KhoaMuc(muc)];
-        const dat = mkBai3SoSanh(muc, gt) && daLuu;
+        const giaTriDung = mkBai3SoSanh(muc, gt);
+        const dat = giaTriDung && daOk;
         if (dat) soDung++;
 
         let loi;
         if (dat) loi = 'Chính xác';
         else if (gt === null || gt === undefined) loi = 'Chưa mở trang này nên không đọc được giá trị';
-        else if (!daLuu) loi = 'Chưa nhấn Apply/OK để lưu cấu hình';
-        else if (muc.deBai) loi = 'Giá trị không đúng yêu cầu đề bài';
-        else loi = 'Đây là giá trị mặc định, không được thay đổi';
+        else if (!giaTriDung) {
+          if (muc.deBai) loi = 'Giá trị không đúng yêu cầu đề bài';
+          else loi = 'Đây là giá trị mặc định, không được thay đổi';
+        } else if (!daOk) {
+          if (daApply) loi = 'Đã Apply nhưng chưa nhấn OK để hoàn tất cấu hình';
+          else loi = 'Chưa nhấn Apply/OK để lưu cấu hình';
+        }
 
         details.push({
           id: 'mk3_' + idx,
@@ -194,13 +206,24 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       });
 
       const tong = details.length;
-      return {
-        passed: soDung === tong && daLuu,
-        score: Math.round((soDung / tong) * 100),
+      const cauHinhDungHet = Boolean((daStatic === true) && MK_BAI3_CHUAN.every(function (muc) {
+        let gt = doc ? mkBai3DocTruong(doc, muc) : null;
+        if (gt === null && banChup) gt = banChup[mkBai3KhoaMuc(muc)];
+        return mkBai3SoSanh(muc, gt);
+      }));
+
+      const res = {
+        passed: soDung === tong && daOk,
+        score: daOk ? Math.round((soDung / tong) * 100) : (daApply && cauHinhDungHet ? 90 : 0),
         passedCount: soDung,
         totalRules: tong,
         details: details
       };
+      if (daApply && !daOk) {
+        res.daVaoTrangCuoi = false;
+        res.trangHienTaiDat = cauHinhDungHet;
+      }
+      return res;
     }
   },
 
@@ -218,8 +241,10 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         window._FTC_MK_BAI3 = null;
         window._FTC_MK_BAI3_LIVE = null;
         window._FTC_MK_BAI3_SAVED = false;
+        window._FTC_MK_BAI3_OK = false;
         window._FTC_MK_BAI3_DA_STATIC = false;
         window._FTC_MK3_APPLIED = false;
+        window._ftcMkApplyOnly = false;
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=3'); } catch (e) {}
       }
       if (!simWin._ftcMkBai3DangTheoDoi) {
@@ -251,17 +276,27 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
               if ((el.tagName === 'A' || el.tagName === 'INPUT' || el.tagName === 'BUTTON') && /^(ok|apply)$/.test(txt)) {
                 const d = simWin.document;
                 if (d) {
-                  if (txt === 'apply') window._FTC_MK3_APPLIED = true;
+                  if (txt === 'apply') {
+                    window._FTC_MK3_APPLIED = true;
+                    window._FTC_MK_BAI3_OK = false;
+                    window._FTC_MK_BAI3_SAVED = false;
+                    window._ftcMkApplyOnly = true;
+                    d._ftcIsSaved = false;
+                    const snapshot = mkBai3ChupTatCa(d);
+                    if (snapshot) window._FTC_MK_BAI3_LIVE = snapshot;
+                  }
                   if (txt === 'ok') {
                     window._FTC_MK3_APPLIED = true;
+                    window._FTC_MK_BAI3_OK = true;
                     window._FTC_MK_BAI3_SAVED = true;
-                  }
-                  d._ftcIsSaved = true;
-                  window._hasClickedSaveInGuide = true;
-                  const snapshot = mkBai3ChupTatCa(d);
-                  if (snapshot) {
-                    window._FTC_MK_BAI3 = snapshot;
-                    window._FTC_MK_BAI3_SAVED = true;
+                    window._ftcMkApplyOnly = false;
+                    d._ftcIsSaved = true;
+                    window._hasClickedSaveInGuide = true;
+                    const snapshot = mkBai3ChupTatCa(d);
+                    if (snapshot) {
+                      window._FTC_MK_BAI3 = snapshot;
+                      window._FTC_MK_BAI3_SAVED = true;
+                    }
                   }
                   if (typeof mkBai3ChiTietCoMakeStatic === 'function') {
                     window._FTC_MK_BAI3_DA_STATIC = !mkBai3ChiTietCoMakeStatic(d);
@@ -286,14 +321,18 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
     try {
       const doc = simWin.document;
       const ban = (doc && mkBai3LaLeasePC1(doc)) ? mkBai3ChupTatCa(doc) : (window._FTC_MK_BAI3_LIVE || null);
-      if (ban) {
-        window._FTC_MK_BAI3 = ban;
-        window._FTC_MK_BAI3_SAVED = true;
-        if (doc && typeof mkBai3ChiTietCoMakeStatic === 'function') {
-          window._FTC_MK_BAI3_DA_STATIC = !mkBai3ChiTietCoMakeStatic(doc);
-        } else {
-          window._FTC_MK_BAI3_DA_STATIC = true;
+      if (window._FTC_MK_BAI3_OK) {
+        if (ban) {
+          window._FTC_MK_BAI3 = ban;
+          window._FTC_MK_BAI3_SAVED = true;
         }
+      } else {
+        if (ban) window._FTC_MK_BAI3_LIVE = ban;
+      }
+      if (doc && typeof mkBai3ChiTietCoMakeStatic === 'function') {
+        window._FTC_MK_BAI3_DA_STATIC = !mkBai3ChiTietCoMakeStatic(doc);
+      } else {
+        window._FTC_MK_BAI3_DA_STATIC = true;
       }
     } catch (e) {}
   },
