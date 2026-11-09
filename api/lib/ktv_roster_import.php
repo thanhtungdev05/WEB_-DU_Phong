@@ -29,6 +29,17 @@ const KTV_ROSTER_DASHBOARD_REGIONS = [
     'TINTBB' => 'TBB',
     'TINTDDT' => 'TDDT - TIN',
     'TINTNMT' => 'TNMT - TIN',
+    'SOC' => 'SOC',
+    'TSOC' => 'TSOC',
+    'PSOC' => 'PSOC',
+];
+
+// The workbook lists every SOC technician under Parent Department "SOC", while
+// their units are catalogued under the SOC, TSOC or PSOC regions.
+const KTV_ROSTER_REGION_FAMILIES = [
+    'SOC' => ['SOC', 'TSOC', 'PSOC'],
+    'TSOC' => ['SOC', 'TSOC', 'PSOC'],
+    'PSOC' => ['SOC', 'TSOC', 'PSOC'],
 ];
 
 function ktv_roster_column_index(string $reference): int
@@ -646,11 +657,13 @@ function ktv_roster_resolve_unit(array $row, array $cache): array
     }
     $sourceRegion = strtoupper(trim((string)($row['region_code'] ?? '')));
     $catalogRegion = strtoupper(trim((string)($unit['region_code'] ?? '')));
-    if ($sourceRegion === '' || $sourceRegion !== $catalogRegion) {
+    $allowedRegions = KTV_ROSTER_REGION_FAMILIES[$sourceRegion] ?? [$sourceRegion];
+    if ($sourceRegion === '' || !in_array($catalogRegion, $allowedRegions, true)) {
         throw new RuntimeException(
             "Unit $unitCode belongs to region $catalogRegion, not $sourceRegion."
         );
     }
+
     return $unit;
 }
 
