@@ -183,6 +183,7 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         window._FTC_MK_BAI2 = null;
         window._FTC_MK_BAI2_LIVE = null;
         window._FTC_MK_BAI2_SAVED = false;
+        window._FTC_MK2_APPLIED = false;
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=2'); } catch (e) {}
       }
       // Gắn id động cho các ô để tooltip trỏ đúng (hàm ở tooltips/bai2.js).
@@ -204,18 +205,26 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
           try {
             let el = e.target;
             while (el && el !== simWin.document) {
-              if (el.tagName === 'A' && (el.textContent || '').trim().toLowerCase().match(/^(ok|apply)$/)) {
-                const d = simWin.document;
-                if (d) {
-                  d._ftcIsSaved = true;
-                  window._hasClickedSaveInGuide = true;
-                  const snapshot = mkBai2ChupTatCa(d);
-                  if (snapshot) {
-                    window._FTC_MK_BAI2 = snapshot;
-                    window._FTC_MK_BAI2_SAVED = true;
+              if (el.tagName === 'A' || el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+                const txt = (el.textContent || el.value || '').trim().toLowerCase();
+                if (/^(ok|apply)$/.test(txt)) {
+                  const d = simWin.document;
+                  if (d) {
+                    if (txt === 'apply') window._FTC_MK2_APPLIED = true;
+                    if (txt === 'ok') {
+                      window._FTC_MK2_APPLIED = true;
+                      window._FTC_MK_BAI2_SAVED = true;
+                    }
+                    d._ftcIsSaved = true;
+                    window._hasClickedSaveInGuide = true;
+                    const snapshot = mkBai2ChupTatCa(d);
+                    if (snapshot) {
+                      window._FTC_MK_BAI2 = snapshot;
+                      window._FTC_MK_BAI2_SAVED = true;
+                    }
                   }
+                  break;
                 }
-                break;
               }
               el = el.parentNode;
             }
