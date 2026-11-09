@@ -3,7 +3,7 @@
  * Bài 5: Cấu hình Policy Routing — MikroTik hEX S
  *
  * Cấu hình Policy Based Routing (PBR) 2-PC / 2-WAN chuẩn thực tế theo 3 phần:
- *   Phần 1: Routing > Tables: Tạo 2 bảng định tuyến ra-wan1 và ra-wan2 (tích chọn FIB).
+ *   Phần 1: Routing > Tables: Tạo 2 bảng định tuyến ra-wan1 và ra-wan2 (tích chọn FIB -> Apply -> OK).
  *   Phần 2: IP > Firewall > Mangle: Tạo 2 luật prerouting đánh dấu lưu lượng:
  *       • PC1 (192.168.1.100) -> New Routing Mark: ra-wan1 (Apply -> OK)
  *       • PC2 (192.168.1.101) -> New Routing Mark: ra-wan2 (Apply -> OK)
@@ -100,9 +100,11 @@ function mkBai5ChupTheoTrang(doc) {
       if (ds.length) {
         window._FTC_MK5_DS_BANG = ds;
         if (ds.some(function (b) { return b.ten === 'ra-wan1' || b.ten === 'ISP1'; })) {
+          window._FTC_MK5_BANG1_APPLIED = true;
           window._FTC_MK5_BANG1_SAVED = true;
         }
         if (ds.some(function (b) { return b.ten === 'ra-wan2'; })) {
+          window._FTC_MK5_BANG2_APPLIED = true;
           window._FTC_MK5_BANG2_SAVED = true;
         }
       }
@@ -116,6 +118,7 @@ function mkBai5ChupTheoTrang(doc) {
           return (gw.includes('pppoe-out1') || gw.includes('1.1.1.1') || gw.includes('ether1')) &&
             (bang.includes('ra-wan1') || bang.includes('isp1'));
         })) {
+          window._FTC_MK5_ROUTE1_APPLIED = true;
           window._FTC_MK5_ROUTE1_SAVED = true;
         }
         if (ds.some(function (t) {
@@ -124,6 +127,7 @@ function mkBai5ChupTheoTrang(doc) {
           return (gw.includes('pppoe-out2') || gw.includes('2.2.2.2') || gw.includes('ether2')) &&
             bang.includes('ra-wan2');
         })) {
+          window._FTC_MK5_ROUTE2_APPLIED = true;
           window._FTC_MK5_ROUTE2_SAVED = true;
         }
       }
@@ -136,6 +140,7 @@ function mkBai5ChupTheoTrang(doc) {
           return (m.src === '192.168.1.100' || raw.includes('192.168.1.100')) &&
             (raw.includes('ra-wan1') || raw.includes('isp1') || m.action.includes('mark'));
         })) {
+          window._FTC_MK5_MANGLE1_APPLIED = true;
           window._FTC_MK5_MANGLE1_SAVED = true;
         }
         if (ds.some(function (m) {
@@ -143,6 +148,7 @@ function mkBai5ChupTheoTrang(doc) {
           return (m.src === '192.168.1.101' || raw.includes('192.168.1.101')) &&
             (raw.includes('ra-wan2') || m.action.includes('mark'));
         })) {
+          window._FTC_MK5_MANGLE2_APPLIED = true;
           window._FTC_MK5_MANGLE2_SAVED = true;
         }
       }
@@ -309,6 +315,8 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         window._FTC_MK5_MANGLE_SAVED = false;
         window._FTC_MK5_BANG1_SAVED = false;
         window._FTC_MK5_BANG2_SAVED = false;
+        window._FTC_MK5_BANG1_APPLIED = false;
+        window._FTC_MK5_BANG2_APPLIED = false;
         window._FTC_MK5_ROUTE1_SAVED = false;
         window._FTC_MK5_ROUTE2_SAVED = false;
         window._FTC_MK5_MANGLE1_SAVED = false;
@@ -348,8 +356,14 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
             if (h.indexOf('#Routing:Tables') === 0) {
               const nameField = mkBai5DocTruongForm(d, 'Name');
               if (nameField) {
-                if (nameField.gt === 'ra-wan1' || nameField.gt === 'ISP1') window._FTC_MK5_BANG1_SAVED = true;
-                if (nameField.gt === 'ra-wan2') window._FTC_MK5_BANG2_SAVED = true;
+                if (nameField.gt === 'ra-wan1' || nameField.gt === 'ISP1') {
+                  if (txt === 'apply') window._FTC_MK5_BANG1_APPLIED = true;
+                  if (txt === 'ok') { window._FTC_MK5_BANG1_APPLIED = true; window._FTC_MK5_BANG1_SAVED = true; }
+                }
+                if (nameField.gt === 'ra-wan2') {
+                  if (txt === 'apply') window._FTC_MK5_BANG2_APPLIED = true;
+                  if (txt === 'ok') { window._FTC_MK5_BANG2_APPLIED = true; window._FTC_MK5_BANG2_SAVED = true; }
+                }
               }
               if (txt === 'ok') {
                 simWin.setTimeout(function () {
@@ -431,6 +445,8 @@ window.mkBai5Reset = function () {
   window._FTC_MK5_MANGLE_SAVED = false;
   window._FTC_MK5_BANG1_SAVED = false;
   window._FTC_MK5_BANG2_SAVED = false;
+  window._FTC_MK5_BANG1_APPLIED = false;
+  window._FTC_MK5_BANG2_APPLIED = false;
   window._FTC_MK5_ROUTE1_SAVED = false;
   window._FTC_MK5_ROUTE2_SAVED = false;
   window._FTC_MK5_MANGLE1_SAVED = false;
