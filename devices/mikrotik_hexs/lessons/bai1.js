@@ -26,31 +26,31 @@ var MK_BAI1_DAP_AN = { user: 'sgfdl-211208-218', pass: 'ftc1234' };
  * (trừ 2 ô User/Password là phần phải làm). Toàn bộ giá trị dưới đây đã ĐO THẬT
  * trên giả lập sau khi gọi /ftc_dat_lai?bai=1 (xoá lớp phủ, trả về gốc thiết bị).
  *   kieu: 'chu'    -> so sánh chuỗi ô text
- *         'chon'   -> so sánh nhãn mục đang chọn của <select>
- *         'tich'   -> so sánh trạng thái tick của checkbox
- *         'nhieu'  -> nhiều checkbox cùng một nhãn (hàng Allow)
+ *         'chon'    -> so sánh nhãn mục đang chọn của <select>
+ *         'tich'    -> so sánh trạng thái tick của checkbox
+ *         'nhieu'   -> nhiều checkbox cùng một nhãn (hàng Allow)
  */
 var MK_BAI1_CHUAN = [
-  { nhan: 'User',                  kieu: 'chu',   dung: 'sgfdl-211208-218', deBai: true,
+  { nhan: 'User',                            kieu: 'chu',   dung: 'sgfdl-211208-218', deBai: true,
     ten: 'User: sgfdl-211208-218' },
-  { nhan: 'Password',              kieu: 'chu',   dung: 'ftc1234',        deBai: true,
+  { nhan: 'Password',                        kieu: 'chu',   dung: 'ftc1234',         deBai: true,
     ten: 'Password: ftc1234' },
-  { nhan: 'Enabled',               kieu: 'tich',  dung: true,   ten: 'Enabled: giữ nguyên (có tích)' },
-  { nhan: 'Name',                  kieu: 'chu',   dung: 'pppoe-out1', ten: 'Name: giữ nguyên pppoe-out1' },
-  { nhan: 'Max MTU',               kieu: 'chu',   dung: '1480', ten: 'Max MTU: giữ nguyên 1480' },
-  { nhan: 'Max MRU',               kieu: 'chu',   dung: '1480', ten: 'Max MRU: giữ nguyên 1480' },
-  { nhan: 'MRRU',                  kieu: 'chu',   dung: '1614', ten: 'MRRU: giữ nguyên 1614' },
-  { nhan: 'Interfaces',            kieu: 'chon',  dung: 'ether1', ten: 'Interfaces: giữ nguyên ether1' },
-  { nhan: 'Service',               kieu: 'chu',   dung: '',     ten: 'Service: giữ nguyên (để trống)' },
-  { nhan: 'AC Name',               kieu: 'chu',   dung: '',     ten: 'AC Name: giữ nguyên (để trống)' },
-  { nhan: 'Host Uniq',             kieu: 'chu',   dung: '',     ten: 'Host Uniq: giữ nguyên (để trống)' },
-  { nhan: 'Profile',               kieu: 'chon',  dung: 'default', ten: 'Profile: giữ nguyên default' },
-  { nhan: 'Keepalive Timeout',     kieu: 'chu',   dung: '10',   ten: 'Keepalive Timeout: giữ nguyên 10' },
-  { nhan: 'Dial On Demand',        kieu: 'tich',  dung: false,  ten: 'Dial On Demand: giữ nguyên (không tích)' },
-  { nhan: 'Use Peer DNS',          kieu: 'tich',  dung: true,   ten: 'Use Peer DNS: giữ nguyên (có tích)' },
-  { nhan: 'Add Default Route',     kieu: 'tich',  dung: false,  ten: 'Add Default Route: giữ nguyên (không tích)' },
-  { nhan: 'Default Route Distance',kieu: 'chu',   dung: '1',    ten: 'Default Route Distance: giữ nguyên 1' },
-  { nhan: 'Allow',                 kieu: 'nhieu', dung: [false, false, true, true],
+  { nhan: 'Enabled',                         kieu: 'tich',  dung: true,    ten: 'Enabled: giữ nguyên (có tích)' },
+  { nhan: 'Name',                            kieu: 'chu',   dung: 'pppoe-out1', ten: 'Name: giữ nguyên pppoe-out1' },
+  { nhan: 'Max MTU',                         kieu: 'chu',   dung: '1480', ten: 'Max MTU: giữ nguyên 1480' },
+  { nhan: 'Max MRU',                         kieu: 'chu',   dung: '1480', ten: 'Max MRU: giữ nguyên 1480' },
+  { nhan: 'MRRU',                            kieu: 'chu',   dung: '1614', ten: 'MRRU: giữ nguyên 1614' },
+  { nhan: 'Interfaces',                      kieu: 'chon',  dung: 'ether1', ten: 'Interfaces: giữ nguyên ether1' },
+  { nhan: 'Service',                         kieu: 'chu',   dung: '',     ten: 'Service: giữ nguyên (để trống)' },
+  { nhan: 'AC Name',                         kieu: 'chu',   dung: '',     ten: 'AC Name: giữ nguyên (để trống)' },
+  { nhan: 'Host Uniq',                       kieu: 'chu',   dung: '',     ten: 'Host Uniq: giữ nguyên (để trống)' },
+  { nhan: 'Profile',                         kieu: 'chon',  dung: 'default', ten: 'Profile: giữ nguyên default' },
+  { nhan: 'Keepalive Timeout',               kieu: 'chu',   dung: '10',   ten: 'Keepalive Timeout: giữ nguyên 10' },
+  { nhan: 'Dial On Demand',                  kieu: 'tich',  dung: false,  ten: 'Dial On Demand: giữ nguyên (không tích)' },
+  { nhan: 'Use Peer DNS',                    kieu: 'tich',  dung: true,   ten: 'Use Peer DNS: giữ nguyên (có tích)' },
+  { nhan: 'Add Default Route',               kieu: 'tich',  dung: false,  ten: 'Add Default Route: giữ nguyên (không tích)' },
+  { nhan: 'Default Route Distance',          kieu: 'chu',   dung: '1',    ten: 'Default Route Distance: giữ nguyên 1' },
+  { nhan: 'Allow',                           kieu: 'nhieu', dung: [false, false, true, true],
     ten: 'Allow: giữ nguyên (chỉ tích chap và pap)' }
 ];
 
@@ -133,12 +133,6 @@ function mkBai1ChuHoaGiaTri(muc, gt) {
 
 /**
  * Theo dõi nền: gắn id cho 2 ô User/Password ngay khi mục Dial Out được bung.
- * WebFig không đặt name/id cho ô nhập nên nếu không gắn thì tooltip Bước 4/5
- * chỉ trỏ được vào nhãn chữ, không trỏ được vào chính ô nhập.
- *
- * KHÔNG đặt lại giá trị mặc định ở đây: đã đo thực tế (2026-09-18) thấy WebFig
- * đồng bộ liên tục từ máy chủ và ghi đè lại sau ~4 giây. Việc đặt lại về
- * fpt/123 làm ở tầng máy chủ — xem onSimLoad gọi /ftc_dat_lai?bai=1.
  */
 function mkBai1CaiTheoDoi(win) {
   try {
@@ -189,7 +183,6 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       }
     ],
     customGrading: function (allDocs) {
-      // Tìm document đang mở trang chi tiết pppoe-out1 (trang này có hàng "Name")
       let doc = null;
       for (const d of allDocs) {
         try {
@@ -197,7 +190,6 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
         } catch (e) {}
       }
 
-      // Cả hai nút Apply và OK đều lưu cấu hình; nếu trang chi tiết đóng thì lấy bản chụp đã lưu.
       const banChup = window._FTC_MK_BAI1 || window._FTC_MK_BAI1_LIVE || null;
 
       if (!doc && !banChup) {
@@ -219,7 +211,6 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       const details = [];
       let soDung = 0;
       MK_BAI1_CHUAN.forEach(function (muc) {
-        // Ưu tiên giá trị đang hiển thị; nếu trang đã đóng thì lấy bản chụp.
         let gt = doc ? mkBai1DocTruong(doc, muc) : null;
         if (gt === null && banChup) gt = banChup[muc.nhan];
 
@@ -253,18 +244,13 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       };
     }
   },
-  /**
-   * Xoá bản chụp cũ khi học viên mở lại bài (đang ở màn đăng nhập), để lần làm
-   * mới không ăn theo kết quả của lần trước.
-   */
   onSimLoad: function (simWin) {
     try {
       const doc = simWin.document;
       if (doc && doc.querySelector('input#name') && doc.querySelector('input#password')) {
-        // Đang ở màn đăng nhập = lượt làm bài mới: xoá bản chụp cũ và gọi máy
-        // chủ đặt lại User/Password về mặc định fpt/123.
         window._FTC_MK_BAI1 = null;
         window._FTC_MK_BAI1_LIVE = null;
+        window._FTC_MK_BAI1_APPLIED = false;
         simWin._ftcMkBai1DaDatLai = false;
         try { simWin.fetch('/sim_mikrotik_hexs/ftc_dat_lai?bai=1'); } catch (e) {}
       }
@@ -286,15 +272,20 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
           try {
             let el = e.target;
             while (el && el !== simWin.document) {
-              if (el.tagName === 'A' && (el.textContent || '').trim().toLowerCase().match(/^(ok|apply)$/)) {
-                const d = simWin.document;
-                if (d) {
-                  d._ftcIsSaved = true;
-                  window._hasClickedSaveInGuide = true;
-                  const snapshot = mkBai1ChupTatCa(d);
-                  if (snapshot) window._FTC_MK_BAI1 = snapshot;
+              if (el.tagName === 'A' || el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+                const txt = (el.textContent || el.value || '').trim().toLowerCase();
+                if (/^(ok|apply)$/.test(txt)) {
+                  const d = simWin.document;
+                  if (d) {
+                    if (txt === 'apply') window._FTC_MK_BAI1_APPLIED = true;
+                    if (txt === 'ok') window._FTC_MK_BAI1_APPLIED = true;
+                    d._ftcIsSaved = true;
+                    window._hasClickedSaveInGuide = true;
+                    const snapshot = mkBai1ChupTatCa(d);
+                    if (snapshot) window._FTC_MK_BAI1 = snapshot;
+                  }
+                  break;
                 }
-                break;
               }
               el = el.parentNode;
             }
@@ -305,10 +296,6 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       }
     } catch (e) {}
   },
-
-  /**
-   * Chụp lại cấu hình ngay lúc bấm Apply/OK.
-   */
   onSimSave: function (simWin) {
     try {
       const doc = simWin.document;
@@ -316,7 +303,6 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
       if (ban) window._FTC_MK_BAI1 = ban;
     } catch (e) {}
   },
-
   guidePopups: (window.TOOLTIPS_MIKROTIK_HEXS
-                && window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai1']) || []
+              && window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai1']) || []
 });
