@@ -193,9 +193,6 @@ window.DEVICE_MIKROTIK_HEXS_LESSONS.push({
     '<span>🔍</span> <i>Nhấp vào ảnh để phóng to toàn màn hình</i>' +
     '</div>' +
     '</div>',
-    '<b>Yêu cầu đề bài:</b>',
-    '• <b>PC 1 (192.168.1.100)</b>: Định tuyến ra đường <b>%pppoe-out1</b> (bảng ra-wan1).',
-    '• <b>PC 2 (192.168.1.101)</b>: Định tuyến ra đường <b>%pppoe-out2</b> (bảng ra-wan2).',
   ],
   practiceUrl: '/sim_mikrotik_hexs/index.html',
 
