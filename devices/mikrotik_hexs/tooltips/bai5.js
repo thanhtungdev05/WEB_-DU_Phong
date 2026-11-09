@@ -1,14 +1,14 @@
 /**
  * devices/mikrotik_hexs/tooltips/bai5.js — Tooltip Hướng dẫn Bài 5: Cấu hình Policy Routing
  *
- * Chuỗi 43 bước tuần tự chuẩn thực tế theo sơ đồ Policy Based Routing (PBR) 2-PC / 2-WAN:
- *   Phần 1: Routing > Tables (Bước 1 ➔ 10):
- *       - Tạo bảng ra-wan1 (fib: yes)
- *       - Tạo bảng ra-wan2 (fib: yes)
- *   Phần 2: IP > Firewall > Mangle (Bước 11 ➔ 29):
+ * Chuỗi 45 bước tuần tự chuẩn thực tế theo sơ đồ Policy Based Routing (PBR) 2-PC / 2-WAN:
+ *   Phần 1: Routing > Tables (Bước 1 ➔ 12):
+ *       - Tạo bảng ra-wan1 (fib: yes -> Apply -> OK)
+ *       - Tạo bảng ra-wan2 (fib: yes -> Apply -> OK)
+ *   Phần 2: IP > Firewall > Mangle (Bước 13 ➔ 31):
  *       - Tạo luật Mangle cho PC 1: Src. Address 192.168.1.100 -> New Routing Mark: ra-wan1 -> Apply -> OK
  *       - Tạo luật Mangle cho PC 2: Src. Address 192.168.1.101 -> New Routing Mark: ra-wan2 -> Apply -> OK
- *   Phần 3: IP > Routes (Bước 30 ➔ 43):
+ *   Phần 3: IP > Routes (Bước 32 ➔ 45):
  *       - Tạo Default Route cho WAN 1: Dst. Address 0.0.0.0/0 -> Gateway %pppoe-out1 -> Routing Table: ra-wan1 -> Apply -> OK
  *       - Tạo Default Route cho WAN 2: Dst. Address 0.0.0.0/0 -> Gateway %pppoe-out2 -> Routing Table: ra-wan2 -> Apply -> OK
  *
@@ -295,7 +295,7 @@ function mkBai5CaiTheoDoi(doc) {
   } catch (e) {}
 }
 
-/* ───────────────────────── Danh sách 43 Tooltip ───────────────────────── */
+/* ───────────────────────── Danh sách 45 Tooltip ───────────────────────── */
 
 window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   // ── Màn hình đăng nhập RouterOS ─────────────────────────────────────
@@ -312,7 +312,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     condition: function (doc) { return mkBai5ManDangNhap(doc); }
   },
 
-  // ══════════════ PHẦN 1: ROUTING > TABLES (Bước 1 ➔ 10) ══════════════
+  // ══════════════ PHẦN 1: ROUTING > TABLES (Bước 1 ➔ 12) ══════════════
   {
     selector: 'li#Routing span, #menu a[href="#Routing"], #id_Routing, text:Routing',
     text: 'Bước 1: Chọn menu Routing',
@@ -364,12 +364,25 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     }
   },
   {
-    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 6: Nhấn OK để lưu bảng ra-wan1',
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 6: Nhấn Apply để lưu cấu hình bảng ra-wan1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiBang(doc) && !mkBai5Table1Xong(doc) && mkBai5GiaTri(doc, 'Name') === 'ra-wan1' && mkBai5GiaTri(doc, 'FIB') === 'yes';
+      return mkBai5OHopThoaiBang(doc) && !mkBai5Table1Xong(doc)
+        && mkBai5GiaTri(doc, 'Name') === 'ra-wan1' && mkBai5GiaTri(doc, 'FIB') === 'yes'
+        && !window._FTC_MK5_BANG1_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 7: Nhấn OK để đóng cửa sổ bảng ra-wan1',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiBang(doc) && !mkBai5Table1Xong(doc)
+        && mkBai5GiaTri(doc, 'Name') === 'ra-wan1' && mkBai5GiaTri(doc, 'FIB') === 'yes'
+        && !!window._FTC_MK5_BANG1_APPLIED;
     }
   },
   // Chống sửa đè: nếu bảng 1 đã lưu xong mà form cũ vẫn đang mở, hướng dẫn bấm Cancel
@@ -385,7 +398,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   // Bảng 2: ra-wan2
   {
     selector: '#ftc-mk5-btn-add-table, a.button:has-text("Add New"), a[href="#Routing:Tables.new"], text:Add New',
-    text: 'Bước 7: Tiếp tục chọn Add New để tạo bảng định tuyến 2 (ra-wan2)',
+    text: 'Bước 8: Tiếp tục chọn Add New để tạo bảng định tuyến 2 (ra-wan2)',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -394,7 +407,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-name, tr:has-text("Name") input',
-    text: 'Bước 8: Nhập Name: ra-wan2',
+    text: 'Bước 9: Nhập Name: ra-wan2',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -405,7 +418,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-fib, tr:has-text("FIB") input[type="checkbox"]',
-    text: 'Bước 9: Tích chọn ô FIB',
+    text: 'Bước 10: Tích chọn ô FIB',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -413,19 +426,32 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     }
   },
   {
-    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 10: Nhấn OK để lưu bảng ra-wan2',
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 11: Nhấn Apply để lưu cấu hình bảng ra-wan2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
-      return mkBai5OHopThoaiBang(doc) && mkBai5Table1Xong(doc) && !mkBai5Table2Xong(doc) && mkBai5GiaTri(doc, 'Name') === 'ra-wan2' && mkBai5GiaTri(doc, 'FIB') === 'yes';
+      return mkBai5OHopThoaiBang(doc) && mkBai5Table1Xong(doc) && !mkBai5Table2Xong(doc)
+        && mkBai5GiaTri(doc, 'Name') === 'ra-wan2' && mkBai5GiaTri(doc, 'FIB') === 'yes'
+        && !window._FTC_MK5_BANG2_APPLIED;
+    }
+  },
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 12: Nhấn OK để đóng cửa sổ bảng ra-wan2',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai5CaiTheoDoi(doc);
+      return mkBai5OHopThoaiBang(doc) && mkBai5Table1Xong(doc) && !mkBai5Table2Xong(doc)
+        && mkBai5GiaTri(doc, 'Name') === 'ra-wan2' && mkBai5GiaTri(doc, 'FIB') === 'yes'
+        && !!window._FTC_MK5_BANG2_APPLIED;
     }
   },
 
-  // ══════════════ PHẦN 2: IP > FIREWALL > MANGLE (Bước 11 ➔ 29) ════════
+  // ══════════════ PHẦN 2: IP > FIREWALL > MANGLE (Bước 13 ➔ 31) ════════
   {
     selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
-    text: 'Bước 11: Chọn menu IP',
+    text: 'Bước 13: Chọn menu IP',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -435,7 +461,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'a[href="#IP:Firewall"], text:Firewall',
-    text: 'Bước 12: Chọn mục Firewall',
+    text: 'Bước 14: Chọn mục Firewall',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -445,7 +471,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-the-mangle, a[href="#IP:Firewall.Mangle"], text:Mangle',
-    text: 'Bước 13: Chọn tab Mangle',
+    text: 'Bước 15: Chọn tab Mangle',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -457,7 +483,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   // Mangle 1: PC 1 (192.168.1.100 -> ra-wan1)
   {
     selector: '#ftc-mk5-btn-add-mangle, #toolbar a.button:has-text("Add New"), a.button:has-text("Add New")',
-    text: 'Bước 14: Chọn Add New để tạo luật Mangle cho PC 1',
+    text: 'Bước 16: Chọn Add New để tạo luật Mangle cho PC 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -466,7 +492,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-src-btn, tr:has-text("Src. Address") a.sbtn',
-    text: 'Bước 15: Bấm mở khóa ô Src. Address',
+    text: 'Bước 17: Bấm mở khóa ô Src. Address',
     position: 'left',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -475,7 +501,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-src, tr:has-text("Src. Address") input',
-    text: 'Bước 16: Nhập Src. Address: 192.168.1.100',
+    text: 'Bước 18: Nhập Src. Address: 192.168.1.100',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -484,7 +510,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-sep-action, td.sep:has-text("Action"), text:Action',
-    text: 'Bước 17: Nhấn khối Action để mở rộng tùy chọn Action',
+    text: 'Bước 19: Nhấn khối Action để mở rộng tùy chọn Action',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -493,7 +519,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-action, tr:has-text("Action") select',
-    text: 'Bước 18: Chọn Action: mark routing',
+    text: 'Bước 20: Chọn Action: mark routing',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -503,7 +529,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-mark, tr:has-text("New Routing Mark") input, tr:has-text("New Routing Mark") select',
-    text: 'Bước 19: Chọn New Routing Mark: ra-wan1',
+    text: 'Bước 21: Chọn New Routing Mark: ra-wan1',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -514,7 +540,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
-    text: 'Bước 20: Nhấn Apply để lưu cấu hình luật PC 1',
+    text: 'Bước 22: Nhấn Apply để lưu cấu hình luật PC 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -526,7 +552,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 21: Nhấn OK để đóng cửa sổ luật Mangle PC 1',
+    text: 'Bước 23: Nhấn OK để đóng cửa sổ luật Mangle PC 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -550,7 +576,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   // Mangle 2: PC 2 (192.168.1.101 -> ra-wan2)
   {
     selector: '#ftc-mk5-btn-add-mangle, #toolbar a.button:has-text("Add New"), a.button:has-text("Add New")',
-    text: 'Bước 22: Tiếp tục chọn Add New để tạo luật Mangle cho PC 2',
+    text: 'Bước 24: Tiếp tục chọn Add New để tạo luật Mangle cho PC 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -559,7 +585,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-src-btn, tr:has-text("Src. Address") a.sbtn',
-    text: 'Bước 23: Bấm mở khóa ô Src. Address',
+    text: 'Bước 25: Bấm mở khóa ô Src. Address',
     position: 'left',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -570,7 +596,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-src, tr:has-text("Src. Address") input',
-    text: 'Bước 24: Nhập Src. Address: 192.168.1.101',
+    text: 'Bước 26: Nhập Src. Address: 192.168.1.101',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -581,7 +607,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-sep-action, td.sep:has-text("Action"), text:Action',
-    text: 'Bước 25: Nhấn khối Action để mở rộng tùy chọn Action',
+    text: 'Bước 27: Nhấn khối Action để mở rộng tùy chọn Action',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -590,7 +616,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-action, tr:has-text("Action") select',
-    text: 'Bước 26: Chọn Action: mark routing',
+    text: 'Bước 28: Chọn Action: mark routing',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -600,7 +626,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-mark, tr:has-text("New Routing Mark") input, tr:has-text("New Routing Mark") select',
-    text: 'Bước 27: Chọn New Routing Mark: ra-wan2',
+    text: 'Bước 29: Chọn New Routing Mark: ra-wan2',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -611,7 +637,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
-    text: 'Bước 28: Nhấn Apply để lưu cấu hình luật PC 2',
+    text: 'Bước 30: Nhấn Apply để lưu cấu hình luật PC 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -623,7 +649,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 29: Nhấn OK để đóng cửa sổ luật Mangle PC 2',
+    text: 'Bước 31: Nhấn OK để đóng cửa sổ luật Mangle PC 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -634,10 +660,10 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
     }
   },
 
-  // ══════════════ PHẦN 3: IP > ROUTES (Bước 30 ➔ 43) ══════════════════
+  // ══════════════ PHẦN 3: IP > ROUTES (Bước 32 ➔ 45) ══════════════════
   {
     selector: 'li#IP span, #menu a[href="#IP"], #id_IP, text:IP',
-    text: 'Bước 30: Chọn menu IP',
+    text: 'Bước 32: Chọn menu IP',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -648,7 +674,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'a[href="#IP:Routes"], text:Routes',
-    text: 'Bước 31: Chọn mục Routes',
+    text: 'Bước 33: Chọn mục Routes',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -660,7 +686,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   // Tuyến 1: WAN 1 (%pppoe-out1 trỏ ra-wan1)
   {
     selector: '#ftc-mk5-btn-add-route, a.button:has-text("Add New"), a[href="#IP:Routes.new"], text:Add New',
-    text: 'Bước 32: Chọn Add New để tạo tuyến đường cho WAN 1',
+    text: 'Bước 34: Chọn Add New để tạo tuyến đường cho WAN 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -669,7 +695,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-dst, tr:has-text("Dst. Address") input',
-    text: 'Bước 33: Nhập Dst. Address: 0.0.0.0/0',
+    text: 'Bước 35: Nhập Dst. Address: 0.0.0.0/0',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -678,7 +704,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-gw, tr:has-text("Gateway") input',
-    text: 'Bước 34: Nhập Gateway: %pppoe-out1',
+    text: 'Bước 36: Nhập Gateway: %pppoe-out1',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -689,7 +715,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-rt, tr:has-text("Routing Table") select',
-    text: 'Bước 35: Chọn Routing Table: ra-wan1',
+    text: 'Bước 37: Chọn Routing Table: ra-wan1',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -701,7 +727,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
-    text: 'Bước 36: Nhấn Apply để lưu cấu hình tuyến WAN 1',
+    text: 'Bước 38: Nhấn Apply để lưu cấu hình tuyến WAN 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -714,7 +740,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 37: Nhấn OK để đóng cửa sổ tuyến WAN 1',
+    text: 'Bước 39: Nhấn OK để đóng cửa sổ tuyến WAN 1',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -739,7 +765,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   // Tuyến 2: WAN 2 (%pppoe-out2 trỏ ra-wan2)
   {
     selector: '#ftc-mk5-btn-add-route, a.button:has-text("Add New"), a[href="#IP:Routes.new"], text:Add New',
-    text: 'Bước 38: Tiếp tục chọn Add New để tạo tuyến đường cho WAN 2',
+    text: 'Bước 40: Tiếp tục chọn Add New để tạo tuyến đường cho WAN 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -748,7 +774,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-dst, tr:has-text("Dst. Address") input',
-    text: 'Bước 39: Nhập Dst. Address: 0.0.0.0/0',
+    text: 'Bước 41: Nhập Dst. Address: 0.0.0.0/0',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -759,7 +785,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-gw, tr:has-text("Gateway") input',
-    text: 'Bước 40: Nhập Gateway: %pppoe-out2',
+    text: 'Bước 42: Nhập Gateway: %pppoe-out2',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -771,7 +797,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: '#ftc-mk5-rt, tr:has-text("Routing Table") select',
-    text: 'Bước 41: Chọn Routing Table: ra-wan2',
+    text: 'Bước 43: Chọn Routing Table: ra-wan2',
     position: 'right',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -783,7 +809,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
-    text: 'Bước 42: Nhấn Apply để lưu cấu hình tuyến WAN 2',
+    text: 'Bước 44: Nhấn Apply để lưu cấu hình tuyến WAN 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
@@ -796,7 +822,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai5'] = [
   },
   {
     selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
-    text: 'Bước 43: Nhấn OK để đóng cửa sổ tuyến WAN 2 và hoàn thành bài tập',
+    text: 'Bước 45: Nhấn OK để đóng cửa sổ tuyến WAN 2 và hoàn thành bài tập',
     position: 'bottom',
     condition: function (doc) {
       mkBai5CaiTheoDoi(doc);
