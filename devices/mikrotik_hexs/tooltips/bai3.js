@@ -145,7 +145,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai3'] = [
   },
   {
     selector: 'input[value="Login"], input[type="button"][value="Login"]',
-    text: 'Nhập admin',
+    text: 'Nhấn Login',
     position: 'right',
     condition: function (doc) { return mkBai3ManDangNhap(doc); }
   },
@@ -210,10 +210,10 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai3'] = [
     }
   },
 
-  // ── Bước 7: chọn ô texbox này (Hình 4) ───────────────────────────
+  // ── Bước 7: chọn ô textbox này (Hình 4) ───────────────────────────
   {
     selector: '#ftc-mk3-comment-cell, tr:has-text("192.168.1.249") td:nth-child(3), tr:has-text("PC1") td:nth-child(3), text:Server 1',
-    text: 'Bước 7: chọn ô texbox này',
+    text: 'Bước 7: chọn ô textbox này',
     position: 'bottom',
     condition: function (doc) {
       mkBai3CaiTheoDoi(doc);
@@ -232,13 +232,25 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai3'] = [
     }
   },
 
-  // ── Bước 9: chọn Apply và OK để lưu (Hình 5) ──────────────────────
+  // ── Bước 9: Nhấn Apply để lưu cấu hình (Hình 5) ──────────────────
   {
-    selector: 'a.button:has-text("Apply"), text:Apply',
-    text: 'Bước 9: chọn Apply và OK để lưu',
-    position: 'left',
+    selector: 'input[value="Apply"], input[type="button"][value="Apply"], a.button:has-text("Apply"), text:Apply',
+    text: 'Bước 9: Nhấn Apply để lưu cấu hình',
+    position: 'bottom',
     condition: function (doc) {
-      return !mkBai3ManDangNhap(doc) && mkBai3OTrangEditStatic(doc);
+      mkBai3CaiTheoDoi(doc);
+      return !mkBai3ManDangNhap(doc) && mkBai3OTrangEditStatic(doc) && !window._FTC_MK3_APPLIED;
+    }
+  },
+
+  // ── Bước 10: Nhấn OK để đóng cửa sổ (Hình 5) ─────────────────────
+  {
+    selector: 'input[value="OK"], input[type="button"][value="OK"], a.button:has-text("OK"), text:OK',
+    text: 'Bước 10: Nhấn OK để đóng cửa sổ',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai3CaiTheoDoi(doc);
+      return !mkBai3ManDangNhap(doc) && mkBai3OTrangEditStatic(doc) && !!window._FTC_MK3_APPLIED;
     }
   }
 ];
