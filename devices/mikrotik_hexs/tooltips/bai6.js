@@ -1,24 +1,19 @@
 /**
  * devices/mikrotik_hexs/tooltips/bai6.js — Tooltip Hướng dẫn Bài 6: Cấu hình NAT Port & Hairpin NAT
  *
- * Chuỗi 23 bước tuần tự chuẩn thực tế theo tài liệu kỹ thuật Việt Tuấn:
- *   Phần 1: Cấu hình NAT Port Camera (Bước 1 ➔ 15):
+ * Chuỗi bước tuần tự chuẩn thực tế theo tài liệu kỹ thuật Việt Tuấn:
+ *   Phần 1: Cấu hình NAT Port Camera (Bước 1 ➔ 16):
  *       • Nhập ghi chú Comment: Camera để quản lý rule NAT mở cổng.
  *       • Mở cổng 8080 cho Camera nội bộ 192.168.1.10 đi qua cổng WAN (pppoe-out1).
  *       • Chain: dstnat, Protocol: 6 (tcp), Dst. Port: 8080, In. Interface: pppoe-out1.
  *       • Action: dst-nat, To Addresses: 192.168.1.10, To Ports: 8080.
- *   Phần 2: Cấu hình Hairpin NAT (Bước 16 ➔ 23):
+ *       • Nhấn Apply -> OK để lưu rule thứ nhất.
+ *   Phần 2: Cấu hình Hairpin NAT (Bước 17 ➔ 25):
  *       • Cho phép client LAN 192.168.1.0/24 truy cập Camera nội bộ bằng IP WAN / DDNS.
  *       • Chain: srcnat (mặc định sẵn), Src. Address: 192.168.1.0/24, Dst. Address: 192.168.1.10.
  *       • Protocol: 6 (tcp), Dst. Port: 8080.
  *       • Action: masquerade.
- *
- * NGUYÊN TẮC:
- * 1. Chuyển bước nghiêm ngặt: bước trước hoàn tất mới hiển thị bước sau.
- * 2. An toàn DOM tuyệt đối: không dùng text:Add New / text:OK hoặc :has-text() để chống giật lag và lỗi selector.
- * 3. Gán ID tĩnh độc nhất cho nút Add New và các ô nhập liệu.
- * 4. Không che khuất dấu xổ chọn (dropdown arrow) của ô Combobox Chain.
- * 5. Tách biệt hoàn toàn rule Hairpin NAT với rule WAN masquerade mặc định của router.
+ *       • Nhấn Apply -> OK để lưu rule thứ hai và hoàn thành.
  */
 
 if (!window.TOOLTIPS_MIKROTIK_HEXS) window.TOOLTIPS_MIKROTIK_HEXS = {};
@@ -135,19 +130,16 @@ function mkBai6GiaTri(doc, nhan) {
       if (chk.type === 'checkbox') return chk.checked ? 'yes' : 'no';
     }
 
-    // 1. Nếu có Combobox của WebFig (span.cbox input)
     const cboxInp = tr.querySelector('span.cbox input, .cbox input');
     if (cboxInp && (cboxInp.value || '').trim() !== '') {
       return cboxInp.value.trim();
     }
 
-    // 2. Tìm input text/number có giá trị
     for (const inp of tr.querySelectorAll('input:not([type="checkbox"]):not([type="button"]):not([type="submit"])')) {
       const v = (inp.value || '').trim();
       if (v !== '') return v;
     }
 
-    // 3. Tìm select có option được chọn
     for (const sel of tr.querySelectorAll('select')) {
       if (sel.selectedIndex >= 0 && sel.options && sel.options[sel.selectedIndex]) {
         const txt = (sel.options[sel.selectedIndex].text || '').trim();
@@ -158,11 +150,9 @@ function mkBai6GiaTri(doc, nhan) {
       if ((sel.value || '').trim() !== '') return sel.value.trim();
     }
 
-    // 4. Nếu có input nhưng rỗng
     const firstInp = tr.querySelector('input:not([type="checkbox"]):not([type="button"]):not([type="submit"])');
     if (firstInp) return (firstInp.value || '').trim();
 
-    // 5. Textarea (Comment)
     const ta = tr.querySelector('textarea');
     if (ta) return (ta.value || '').trim();
   } catch (e) { }
@@ -185,12 +175,7 @@ function mkBai6Part1Xong(doc) {
   if (window._FTC_MK6_RULE_PORT_SAVED) return true;
   const ds = window._FTC_MK6_DS_NAT || [];
   if (typeof mkBai6LaRulePort === 'function') return ds.some(mkBai6LaRulePort);
-  return ds.some(function (r) {
-    if (!r) return false;
-    const rawLower = (r.raw || '').toLowerCase();
-    return (r.chain === 'dstnat' || r.action === 'dst-nat' || rawLower.includes('dst-nat')) &&
-      (rawLower.includes('192.168.1.10') || rawLower.includes('8080'));
-  });
+  return false;
 }
 
 function mkBai6Part2Xong(doc) {
@@ -198,19 +183,7 @@ function mkBai6Part2Xong(doc) {
   if (window._FTC_MK6_RULE_HAIRPIN_SAVED) return true;
   const ds = window._FTC_MK6_DS_NAT || [];
   if (typeof mkBai6LaRuleHairpin === 'function') return ds.some(mkBai6LaRuleHairpin);
-  return ds.some(function (r) {
-    if (!r) return false;
-    const rawLower = (r.raw || '').toLowerCase();
-    // Loại trừ tuyệt đối dòng rule NAT mặc định của router FPT (ftel: masquerade...)
-    if (rawLower.includes('ftel:') || rawLower.includes('default configuration') || rawLower.includes('defconf')) {
-      return false;
-    }
-    const laSrcnat = r.chain === 'srcnat' || rawLower.includes('srcnat');
-    const laMasq = (r.action || '').includes('masquera') || rawLower.includes('masquera');
-    const coSrcLan = (r.src || '').includes('192.168.1.0') || rawLower.includes('192.168.1.0');
-    const coDstCam = (r.dst || '').includes('192.168.1.1') || rawLower.includes('192.168.1.10');
-    return laSrcnat && laMasq && coSrcLan && coDstCam;
-  });
+  return false;
 }
 
 function mkBai6DuThongSoPhan1(doc) {
@@ -277,7 +250,6 @@ function mkBai6CaiTheoDoi(doc) {
     mkBai6GanIdTheoNhan(doc, 'To Addresses', 'ftc-mk6-toaddr', 'ftc-mk6-toaddr-nut');
     mkBai6GanIdTheoNhan(doc, 'To Ports', 'ftc-mk6-toports', 'ftc-mk6-toports-nut');
 
-    // Phân biệt chính xác dòng tiêu đề khối Action
     for (const td of doc.querySelectorAll('td.sep, th.sep, .sep')) {
       if ((td.textContent || '').trim().toLowerCase() === 'action') {
         mkBai6DatId(td.querySelector('span') || td, 'ftc-mk6-sep-action');
@@ -292,7 +264,6 @@ function mkBai6CaiTheoDoi(doc) {
       }
     }
 
-    // Nút Add New trên trang NAT (không ghi đè ID gốc của WebFig nếu đã có)
     if (mkBai6ONAT(doc)) {
       const addBtns = doc.querySelectorAll('#toolbar a.button, ul.toolbar a.button, a.button');
       for (const btn of addBtns) {
@@ -304,15 +275,19 @@ function mkBai6CaiTheoDoi(doc) {
       }
     }
 
-    // Nút OK lưu cấu hình trong hộp thoại NAT Rule (tránh nhầm với nút Reset Counters)
     if (mkBai6OHopThoaiNAT(doc)) {
       const btns = doc.querySelectorAll('#toolbar a.button, ul.toolbar a.button, a.button, input[type="button"], input[type="submit"], button');
       for (const btn of btns) {
         const txt = (btn.textContent || btn.value || '').trim().toLowerCase();
-        if (txt === 'ok') {
-          mkBai6DatId(btn, 'ftc-mk6-btn-ok');
-          try { btn.setAttribute('data-ftc-mk6-ok', '1'); } catch (e) { }
-          break;
+        if (txt === 'apply' || txt === 'ok') {
+          if (txt === 'apply') {
+            mkBai6DatId(btn, 'ftc-mk6-btn-apply');
+            try { btn.setAttribute('data-ftc-mk6-apply', '1'); } catch (e) { }
+          }
+          if (txt === 'ok') {
+            mkBai6DatId(btn, 'ftc-mk6-btn-ok');
+            try { btn.setAttribute('data-ftc-mk6-ok', '1'); } catch (e) { }
+          }
         }
       }
     }
@@ -333,7 +308,7 @@ function mkBai6CuonToiNutOk(doc) {
   } catch (e) { }
 }
 
-/* ───────────────────────── Danh sách 24 Tooltip ───────────────────────── */
+/* ───────────────────────── Danh sách Tooltip ───────────────────────── */
 
 window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   // ── Màn hình đăng nhập RouterOS ─────────────────────────────────────
@@ -350,7 +325,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
     condition: function (doc) { return mkBai6ManDangNhap(doc); }
   },
 
-  // ══════════════ PHẦN 1: CẤU HÌNH NAT PORT CAMERA (Bước 1 ➔ 15) ════════
+  // ══════════════ PHẦN 1: CẤU HÌNH NAT PORT CAMERA (Bước 1 ➔ 16) ════════
   {
     selector: '#id_WebFig, a#id_WebFig',
     text: 'Bước 1: Chọn menu WebFig',
@@ -567,22 +542,34 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
     }
   },
   {
-    selector: '#ftc-mk6-btn-ok, [data-ftc-mk6-ok="1"], input[value="OK"], input[type="button"][value="OK"]',
-    text: 'Bước 15: Nhấn OK để lưu rule NAT Port',
+    selector: '#ftc-mk6-btn-apply, [data-ftc-mk6-apply="1"], input[value="Apply"], input[type="button"][value="Apply"]',
+    text: 'Bước 15: Nhấn Apply để lưu cấu hình NAT Port',
     position: 'bottom',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
       const ok = !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
-        && mkBai6DuThongSoPhan1(doc);
+        && mkBai6DuThongSoPhan1(doc) && !window._FTC_MK6_PORT_APPLIED;
+      if (ok) mkBai6CuonToiNutOk(doc);
+      return ok;
+    }
+  },
+  {
+    selector: '#ftc-mk6-btn-ok, [data-ftc-mk6-ok="1"], input[value="OK"], input[type="button"][value="OK"]',
+    text: 'Bước 16: Nhấn OK để đóng cửa sổ NAT Port',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      const ok = !mkBai6Part1Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6DuThongSoPhan1(doc) && !!window._FTC_MK6_PORT_APPLIED;
       if (ok) mkBai6CuonToiNutOk(doc);
       return ok;
     }
   },
 
-  // ══════════════ PHẦN 2: CẤU HÌNH HAIRPIN NAT (Bước 16 ➔ 23) ═══════════
+  // ══════════════ PHẦN 2: CẤU HÌNH HAIRPIN NAT (Bước 17 ➔ 25) ═══════════
   {
     selector: '#ftc-mk6-btn-add-nat, [data-ftc-mk6-add="1"], #toolbar a.button, a.button',
-    text: 'Bước 16: Tiếp tục nhấp Add New để tạo rule thứ 2',
+    text: 'Bước 17: Tiếp tục nhấp Add New để tạo rule thứ 2',
     position: 'bottom',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -601,7 +588,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-src-nut',
-    text: 'Bước 17: Mở khóa ô Src. Address',
+    text: 'Bước 18: Mở khóa ô Src. Address',
     position: 'left',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -612,7 +599,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-src, input[name="src-address"]',
-    text: 'Bước 17: Nhập Src. Address: 192.168.1.0/24',
+    text: 'Bước 18: Nhập Src. Address: 192.168.1.0/24',
     position: 'right',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -624,7 +611,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-dst-nut',
-    text: 'Bước 18: Mở khóa ô Dst. Address',
+    text: 'Bước 19: Mở khóa ô Dst. Address',
     position: 'left',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -635,7 +622,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-dst, input[name="dst-address"]',
-    text: 'Bước 18: Nhập Dst. Address: 192.168.1.10',
+    text: 'Bước 19: Nhập Dst. Address: 192.168.1.10',
     position: 'right',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -647,7 +634,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-proto-nut',
-    text: 'Bước 19: Mở khóa ô Protocol',
+    text: 'Bước 20: Mở khóa ô Protocol',
     position: 'left',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -658,7 +645,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-proto, select[name="protocol"]',
-    text: 'Bước 19: Chọn Protocol: 6 (tcp)',
+    text: 'Bước 20: Chọn Protocol: 6 (tcp)',
     position: 'right',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -670,7 +657,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-dstport-nut',
-    text: 'Bước 20: Mở khóa ô Dst. Port',
+    text: 'Bước 21: Mở khóa ô Dst. Port',
     position: 'left',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -682,7 +669,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-dstport, input[name="dst-port"]',
-    text: 'Bước 20: Nhập Dst. Port: 8080',
+    text: 'Bước 21: Nhập Dst. Port: 8080',
     position: 'right',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -694,7 +681,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-sep-action, td.sep',
-    text: 'Bước 21: Nhấn khối Action để mở rộng tùy chọn',
+    text: 'Bước 22: Nhấn khối Action để mở rộng tùy chọn',
     position: 'bottom',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -706,7 +693,7 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
   },
   {
     selector: '#ftc-mk6-action, select[name="action"]',
-    text: 'Bước 22: Chọn Action: masquerade',
+    text: 'Bước 23: Chọn Action: masquerade',
     position: 'right',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
@@ -718,13 +705,25 @@ window.TOOLTIPS_MIKROTIK_HEXS['mikrotik_hexs-bai6'] = [
     }
   },
   {
-    selector: '#ftc-mk6-btn-ok, [data-ftc-mk6-ok="1"], input[value="OK"], input[type="button"][value="OK"]',
-    text: 'Bước 23: Nhấn OK để lưu rule Hairpin NAT và hoàn thành bài tập',
+    selector: '#ftc-mk6-btn-apply, [data-ftc-mk6-apply="1"], input[value="Apply"], input[type="button"][value="Apply"]',
+    text: 'Bước 24: Nhấn Apply để lưu cấu hình Hairpin NAT',
     position: 'bottom',
     condition: function (doc) {
       mkBai6CaiTheoDoi(doc);
       const ok = mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
-        && mkBai6DuThongSoPhan2(doc);
+        && mkBai6DuThongSoPhan2(doc) && !window._FTC_MK6_HAIRPIN_APPLIED;
+      if (ok) mkBai6CuonToiNutOk(doc);
+      return ok;
+    }
+  },
+  {
+    selector: '#ftc-mk6-btn-ok, [data-ftc-mk6-ok="1"], input[value="OK"], input[type="button"][value="OK"]',
+    text: 'Bước 25: Nhấn OK để đóng cửa sổ Hairpin NAT và hoàn thành bài tập',
+    position: 'bottom',
+    condition: function (doc) {
+      mkBai6CaiTheoDoi(doc);
+      const ok = mkBai6Part1Xong(doc) && !mkBai6Part2Xong(doc) && mkBai6OHopThoaiNAT(doc)
+        && mkBai6DuThongSoPhan2(doc) && !!window._FTC_MK6_HAIRPIN_APPLIED;
       if (ok) mkBai6CuonToiNutOk(doc);
       return ok;
     }
