@@ -3097,9 +3097,9 @@
 
     if (!practiceBubbleContainer.style.left) {
       practiceBubbleContainer.style.right = '20px';
-      practiceBubbleContainer.style.bottom = '20px';
+      practiceBubbleContainer.style.top = '115px';
+      practiceBubbleContainer.style.bottom = 'auto';
       practiceBubbleContainer.style.left = 'auto';
-      practiceBubbleContainer.style.top = 'auto';
     }
 
     // Mặc định luôn ở trạng thái thu gọn (icon tròn Messenger ở góc) khi vào bài mới
