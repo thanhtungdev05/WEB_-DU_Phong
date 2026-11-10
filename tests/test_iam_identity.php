@@ -53,6 +53,29 @@ try {
         throw new RuntimeException('IAM login and callback must never run from a read-and-close session; oauth2state writes would be lost.');
     }
 
+    if (!str_contains($apiSource, 'function fail_or_redirect_iam_callback(int $status, string $code, string $message): void')
+        || !str_contains($apiSource, '$existingUser = find_active_session_user();')
+        || !str_contains($apiSource, 'redirect_to(iam_post_login_url($existingUser));')
+        || !str_contains($apiSource, 'redirect_to(iam_login_page_url($code));')
+        || !str_contains($apiSource, '!hash_equals($expectedState, $state)')) {
+        throw new RuntimeException('IAM callback must redirect active sessions to portal.html and browser navigations to login/index.html when state is replayed.');
+    }
+
+    $indexHtml = file_get_contents(dirname(__DIR__) . '/index.html');
+    if (!is_string($indexHtml)
+        || !str_contains($indexHtml, 'ftc_consumed_iam_state')
+        || !str_contains($indexHtml, 'window.history.replaceState')
+        || !str_contains($indexHtml, "alreadyConsumedCallback ? 'portal.html'")) {
+        throw new RuntimeException('index.html must scrub OAuth callback query parameters and redirect replayed states to portal.html.');
+    }
+
+    $portalHtml = file_get_contents(dirname(__DIR__) . '/portal.html');
+    if (!is_string($portalHtml)
+        || !str_contains($portalHtml, 'oauthParams.delete(\'state\')')
+        || !str_contains($portalHtml, 'window.history.replaceState({}, document.title, cleanUrl)')) {
+        throw new RuntimeException('portal.html must strip OAuth callback query parameters from browser history.');
+    }
+
     fwrite(STDOUT, "IAM identity name-order tests passed.\n");
 } catch (Throwable $exception) {
     fwrite(STDERR, $exception->getMessage() . "\n");

@@ -9,10 +9,26 @@
     content="Hệ thống giả lập mạng FPT — Danh mục thiết bị và bài thực hành được đồng bộ theo hệ thống đào tạo.">
   <title>NETWORK SIMULATOR — Hệ Thống Giả Lập Mạng FPT</title>
   <link rel="icon" type="image/png" href="/assets/logoFPT.png?v=58a119fe563bd62a">
-  <link rel="stylesheet" href="styles.css?v=9c40addff434ba20">
-  <script>window.CATALOG_FINGERPRINT="ab0ac33e5904959d";</script>
+  <link rel="stylesheet" href="styles.css?v=4daba9b57bcf9553">
+  <script>window.CATALOG_FINGERPRINT="77b65d7113fda884";</script>
   <script>
     (function () {
+      try {
+        if (window.history && typeof window.history.replaceState === 'function' && window.location.search) {
+          var oauthParams = new URLSearchParams(window.location.search);
+          if (oauthParams.has('code') || oauthParams.has('state') || oauthParams.has('session_state') || oauthParams.has('error') || oauthParams.has('error_description')) {
+            oauthParams.delete('code');
+            oauthParams.delete('state');
+            oauthParams.delete('session_state');
+            oauthParams.delete('error');
+            oauthParams.delete('error_description');
+            var cleanQuery = oauthParams.toString();
+            var cleanUrl = window.location.pathname + (cleanQuery ? '?' + cleanQuery : '') + (window.location.hash || '');
+            window.history.replaceState({}, document.title, cleanUrl);
+          }
+        }
+      } catch (e) { }
+
       try {
         var cid = sessionStorage.getItem('ktv_client_id') || localStorage.getItem('ktv_client_id');
         if (!cid) {
@@ -513,7 +529,7 @@
 
   <!-- DrayTek Vigor2927 -->
   <script src="devices/vigor2927/tooltips/common_login.js?v=b43885bb5d6849e0"></script>
-  <script src="devices/vigor2927/tooltips/bai1.js?v=06fed84125d1bd8c"></script>
+  <script src="devices/vigor2927/tooltips/bai1.js?v=83d8dacd6918f3a7"></script>
   <script src="devices/vigor2927/tooltips/bai2.js?v=729596ac79174e90"></script>
   <script src="devices/vigor2927/tooltips/bai3.js?v=ddabd23de002f963"></script>
   <script src="devices/vigor2927/tooltips/bai4.js?v=6ce87d897c1c53c8"></script>
@@ -521,7 +537,7 @@
   <script src="devices/vigor2927/tooltips/bai6.js?v=32175f2357aa3588"></script>
   <script src="devices/vigor2927/tooltips/bai7.js?v=03771784a44e68be"></script>
   <script src="devices/vigor2927/tooltips/bai8.js?v=52ddaf3f2c763bfc"></script>
-  <script src="devices/vigor2927/lessons/bai1.js?v=96909c832498dcf9"></script>
+  <script src="devices/vigor2927/lessons/bai1.js?v=ec0d4c68d334f71f"></script>
   <script src="devices/vigor2927/lessons/bai2.js?v=074ac9ccd63c3514"></script>
   <script src="devices/vigor2927/lessons/bai3.js?v=cbf1a6a3276530d3"></script>
   <script src="devices/vigor2927/lessons/bai4.js?v=6841e59b1a870b36"></script>
@@ -567,18 +583,18 @@
   <script src="devices/ONT_be6500c/data.js?v=694ed1696525fba0"></script>
 
   <!-- MikroTik hEX S: tooltip nạp trước lesson, data.js cuối cùng -->
-  <script src="devices/mikrotik_hexs/tooltips/bai1.js?v=8dc9700e1da090fa"></script>
-  <script src="devices/mikrotik_hexs/tooltips/bai2.js?v=e979cf6dadd1dded"></script>
-  <script src="devices/mikrotik_hexs/tooltips/bai3.js?v=719cb8b7628b7dd8"></script>
-  <script src="devices/mikrotik_hexs/tooltips/bai4.js?v=eedb69fa4f5d7622"></script>
-  <script src="devices/mikrotik_hexs/tooltips/bai5.js?v=ae4537d094644a92"></script>
-  <script src="devices/mikrotik_hexs/tooltips/bai6.js?v=b3ebb603915c3952"></script>
-  <script src="devices/mikrotik_hexs/lessons/bai1.js?v=e354afa3784e952e"></script>
-  <script src="devices/mikrotik_hexs/lessons/bai2.js?v=be4f6a8a48cf2e64"></script>
-  <script src="devices/mikrotik_hexs/lessons/bai3.js?v=9ce2eda39796e0a6"></script>
-  <script src="devices/mikrotik_hexs/lessons/bai4.js?v=c61c4d52e6ba91e4"></script>
-  <script src="devices/mikrotik_hexs/lessons/bai5.js?v=078e5b9e0fc069e0"></script>
-  <script src="devices/mikrotik_hexs/lessons/bai6.js?v=376f7587e018ad55"></script>
+  <script src="devices/mikrotik_hexs/tooltips/bai1.js?v=47645a4645883dc2"></script>
+  <script src="devices/mikrotik_hexs/tooltips/bai2.js?v=ef065f1610e26cee"></script>
+  <script src="devices/mikrotik_hexs/tooltips/bai3.js?v=59ec500c804a95f3"></script>
+  <script src="devices/mikrotik_hexs/tooltips/bai4.js?v=00ac50aba233b7e9"></script>
+  <script src="devices/mikrotik_hexs/tooltips/bai5.js?v=df4a3f9a22c8a484"></script>
+  <script src="devices/mikrotik_hexs/tooltips/bai6.js?v=59fa45701ffe762c"></script>
+  <script src="devices/mikrotik_hexs/lessons/bai1.js?v=3b95719cfa3b92c7"></script>
+  <script src="devices/mikrotik_hexs/lessons/bai2.js?v=e924aafffb1549eb"></script>
+  <script src="devices/mikrotik_hexs/lessons/bai3.js?v=eacb7136e47dcb52"></script>
+  <script src="devices/mikrotik_hexs/lessons/bai4.js?v=6efa4659e85906c4"></script>
+  <script src="devices/mikrotik_hexs/lessons/bai5.js?v=5c4d396f440bb675"></script>
+  <script src="devices/mikrotik_hexs/lessons/bai6.js?v=f46bc608af9ee0e2"></script>
   <script src="devices/mikrotik_hexs/data.js?v=c04b70edff3d9c43"></script>
 
   <!-- ONT AC1000Z (ZTE F671Y): tooltip -> lesson -> data -->
@@ -604,7 +620,7 @@
 
   <script src="devices/index.js?v=91d94402f2577e5b"></script>
   <script src="data.js?v=fcd4ab3f5c1cc956"></script>
-  <script src="app.js?v=64d4b933a3b41243"></script>
+  <script src="app.js?v=1151f5620de6f237"></script>
 
 </body>
 

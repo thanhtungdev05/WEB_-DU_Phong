@@ -810,6 +810,69 @@ function iam_post_login_url(array $user): string
     return app_url('/portal.html');
 }
 
+function iam_login_page_url(?string $errorCode = null): string
+{
+    $url = app_url('/login/index.html');
+    if ($errorCode !== null && $errorCode !== '') {
+        $url .= '?error=' . rawurlencode($errorCode);
+    }
+    return $url;
+}
+
+function is_browser_navigation_request(): bool
+{
+    if (strtolower(trim((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''))) === 'xmlhttprequest') {
+        return false;
+    }
+    $secFetchMode = strtolower(trim((string)($_SERVER['HTTP_SEC_FETCH_MODE'] ?? '')));
+    if ($secFetchMode !== '') {
+        return $secFetchMode === 'navigate';
+    }
+    $accept = strtolower((string)($_SERVER['HTTP_ACCEPT'] ?? ''));
+    if (str_contains($accept, 'text/html') || str_contains($accept, 'application/xhtml+xml')) {
+        return true;
+    }
+    if (str_contains($accept, 'application/json')) {
+        return false;
+    }
+    return true;
+}
+
+function find_active_session_user(): ?array
+{
+    if (is_dev_bypass_session()) {
+        return mock_bypass_user();
+    }
+    $userId = current_user_id();
+    $email = current_email();
+    if (!$userId && !$email) {
+        return null;
+    }
+    try {
+        $user = $userId ? find_user_by_id((string)$userId, true) : find_user((string)$email, true);
+    } catch (Throwable $exception) {
+        report_exception($exception, 'iam-callback-session-check');
+        return null;
+    }
+    if (!$user || database_boolean($user['is_terminated'] ?? false)) {
+        unset($_SESSION['user_id'], $_SESSION['user_email'], $_SESSION['iam_subject']);
+        return null;
+    }
+    return $user;
+}
+
+function fail_or_redirect_iam_callback(int $status, string $code, string $message): void
+{
+    $existingUser = find_active_session_user();
+    if ($existingUser !== null) {
+        redirect_to(iam_post_login_url($existingUser));
+    }
+    if (is_browser_navigation_request()) {
+        redirect_to(iam_login_page_url($code));
+    }
+    fail($status, $code, $message);
+}
+
 function request_ip(): ?string
 {
     $dispatcherClient = trim((string)($_SERVER['HTTP_X_FTC_CLIENT_IP'] ?? ''));
@@ -939,29 +1002,40 @@ function handle_iam(array $segments, string $method): void
 function process_iam_callback(): void
 {
     if (!empty($_GET['error'])) {
+        unset($_SESSION['oauth2state']);
         $message = (string)($_GET['error_description'] ?? $_GET['error']);
-        fail(401, 'iam/login-failed', $message);
+        fail_or_redirect_iam_callback(401, 'iam/login-failed', $message);
     }
 
     $state = (string)($_GET['state'] ?? '');
-    if ($state === '' || empty($_SESSION['oauth2state']) || $state !== $_SESSION['oauth2state']) {
+    $expectedState = (string)($_SESSION['oauth2state'] ?? '');
+    if ($state === '' || $expectedState === '' || !hash_equals($expectedState, $state)) {
         unset($_SESSION['oauth2state']);
-        fail(400, 'iam/invalid-state', 'Invalid IAM state. Please start login again.');
+        fail_or_redirect_iam_callback(400, 'iam/invalid-state', 'Invalid IAM state. Please start login again.');
     }
     unset($_SESSION['oauth2state']);
 
     $code = (string)($_GET['code'] ?? '');
     if ($code === '') {
-        fail(400, 'iam/missing-code', 'IAM callback is missing authorization code.');
+        fail_or_redirect_iam_callback(400, 'iam/missing-code', 'IAM callback is missing authorization code.');
     }
 
-    $provider = iam_provider();
-    $token = $provider->getAccessToken('authorization_code', ['code' => $code]);
-    $owner = $provider->getResourceOwner($token);
-    $profile = $owner->toArray();
-    $user = upsert_iam_user($profile);
+    try {
+        $provider = iam_provider();
+        $token = $provider->getAccessToken('authorization_code', ['code' => $code]);
+        $owner = $provider->getResourceOwner($token);
+        $profile = $owner->toArray();
+        $user = upsert_iam_user($profile);
+    } catch (Throwable $exception) {
+        report_exception($exception, 'iam-callback-token');
+        fail_or_redirect_iam_callback(401, 'iam/login-failed', 'Unable to complete IAM sign-in. Please start login again.');
+    }
+
     if (database_boolean($user['is_terminated'] ?? false)) {
         unset($_SESSION['user_id'], $_SESSION['user_email'], $_SESSION['iam_subject']);
+        if (is_browser_navigation_request()) {
+            redirect_to(iam_login_page_url('auth/account-inactive'));
+        }
         fail(403, 'auth/account-inactive', 'This employee account is no longer active.');
     }
 

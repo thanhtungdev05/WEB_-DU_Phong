@@ -6,7 +6,8 @@
   <title>FTC - Giả lập Thiết bị</title>
   <link rel="icon" type="image/png" href="/assets/logoFPT.png?v=58a119fe563bd62a">
   <script>
-    const query = new URLSearchParams(window.location.search);
+    const rawSearch = window.location.search;
+    const query = new URLSearchParams(rawSearch);
     const isIamCallback = query.has('code') || query.has('state') || query.has('error');
     const state = query.get('state') || '';
 
@@ -28,15 +29,32 @@
         if (origin.protocol !== 'http:' || !isLocalHost) {
           return null;
         }
-        return `${origin.origin}/api/index.php/iam/callback${window.location.search}`;
+        return `${origin.origin}/api/index.php/iam/callback${rawSearch}`;
       } catch (error) {
         return null;
       }
     }
 
+    let alreadyConsumedCallback = false;
+    if (isIamCallback && state) {
+      try {
+        if (sessionStorage.getItem('ftc_consumed_iam_state') === state) {
+          alreadyConsumedCallback = true;
+        } else {
+          sessionStorage.setItem('ftc_consumed_iam_state', state);
+        }
+      } catch (error) {}
+    }
+
+    if (isIamCallback && window.history && typeof window.history.replaceState === 'function') {
+      try {
+        window.history.replaceState({}, document.title, window.location.pathname || '/');
+      } catch (error) {}
+    }
+
     const localTarget = localCallbackUrl();
     const target = isIamCallback
-      ? localTarget || `api/index.php/iam/callback${window.location.search}`
+      ? (alreadyConsumedCallback ? 'portal.html' : (localTarget || `api/index.php/iam/callback${rawSearch}`))
       : 'login/index.html';
 
     window.location.replace(target);

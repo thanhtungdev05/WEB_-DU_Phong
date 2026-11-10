@@ -35,9 +35,32 @@
 
   const defaultLabel = label.textContent;
 
+  try {
+    if (typeof sessionStorage !== 'undefined' && sessionStorage) {
+      sessionStorage.removeItem('ftc_consumed_iam_state');
+    }
+    if (window.history && typeof window.history.replaceState === 'function' && window.location.search) {
+      const loginParams = new URLSearchParams(window.location.search);
+      if (loginParams.has('error') || loginParams.has('error_description') || loginParams.has('code') || loginParams.has('state')) {
+        loginParams.delete('error');
+        loginParams.delete('error_description');
+        loginParams.delete('code');
+        loginParams.delete('state');
+        const cleanQuery = loginParams.toString();
+        const cleanUrl = (window.location.pathname || '/login/index.html') + (cleanQuery ? '?' + cleanQuery : '');
+        window.history.replaceState({}, document.title || '', cleanUrl);
+      }
+    }
+  } catch (_) {}
+
   enterGuestGuideModeWhenDatabaseIsUnavailable();
 
   loginButton.addEventListener('click', function () {
+    try {
+      if (typeof sessionStorage !== 'undefined' && sessionStorage) {
+        sessionStorage.removeItem('ftc_consumed_iam_state');
+      }
+    } catch (_) {}
     loginButton.classList.add('is-loading');
     loginButton.setAttribute('aria-busy', 'true');
     label.textContent = isLocalHost ? 'Đang vào local…' : 'Đang chuyển đến IAM…';
