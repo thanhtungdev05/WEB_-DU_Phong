@@ -12,6 +12,7 @@ window.DEVICE_VIGOR2927_LESSONS.push({
   instructions: [
     '<b>Yêu cầu:</b>',
     'Thực hiện cấu hình kết nối WAN/Internet trên thiết bị và thiết lập kết nối PPPoE theo các thông số được cung cấp dưới đây:',
+    '- Service Name: <span class="val">FPT Telecom</span>',
     '- Username: <span class="val">sgfdl-211208-218</span>',
     '- Password: <span class="val">fpt12345</span>'
   ],
@@ -20,13 +21,15 @@ window.DEVICE_VIGOR2927_LESSONS.push({
 
   // Xóa trắng các ô nhập liệu khi bài lab mở
   clearFields: [
+    '#opt-pppoe-servicename',
+    'input[name="sDOutPPPSrv1"]',
     '#opt-pppoe-username',
     'input[name="sDOutUser1"]',
     '#opt-pppoe-password',
     'input[name="sDOutPass1"]'
   ],
 
-  // Ràng buộc điều kiện chấm đúng (3 tiêu chí)
+  // Ràng buộc điều kiện chấm đúng (4 tiêu chí)
   grading: {
     description: 'Kiểm tra cấu hình PPPoE trên DrayTek Vigor2927',
     allowedSelectors: ['select[name="iAccessMode0"]'],
@@ -42,6 +45,15 @@ window.DEVICE_VIGOR2927_LESSONS.push({
         // hình, dễ gây hiểu nhầm (anh Huynn báo 2026-09-23). `valueLabels` đổi
         // giá trị thô sang đúng chữ hiển thị khi in ra bảng kết quả.
         valueLabels: { '1': 'Enable', '0': 'Disable' },
+        type: 'text_exact',
+        trim: true,
+        required: true
+      },
+      {
+        id: 'opt_pppoe_service_name',
+        name: 'PPPoE Service Name',
+        selector: '#opt-pppoe-servicename, input[name="sDOutPPPSrv1"]',
+        expected: 'FPT Telecom',
         type: 'text_exact',
         trim: true,
         required: true
@@ -94,20 +106,26 @@ window.DEVICE_VIGOR2927_LESSONS.push({
       expected: '1'
     },
     {
+      selector: '#opt-pppoe-servicename, input[name="sDOutPPPSrv1"]',
+      text: 'Bước 6: nhập FPT Telecom',
+      position: 'right',
+      expected: 'FPT Telecom'
+    },
+    {
       selector: '#opt-pppoe-username, input[name="sDOutUser1"]',
-      text: 'Bước 6: nhập sgfdl-211208-218',
+      text: 'Bước 7: nhập sgfdl-211208-218',
       position: 'right',
       expected: 'sgfdl-211208-218'
     },
     {
       selector: '#opt-pppoe-password, input[name="sDOutPass1"]',
-      text: 'Bước 7: nhập fpt12345',
+      text: 'Bước 8: nhập fpt12345',
       position: 'right',
       expected: 'fpt12345'
     },
     {
       selector: '#btn-pppoe-ok, input[name="submit"][value="OK"], input[type="submit"][value="OK"]',
-      text: 'Bước 8: nhấn OK',
+      text: 'Bước 9: nhấn OK',
       position: 'top'
     }
   ]

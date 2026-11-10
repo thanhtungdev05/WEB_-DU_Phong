@@ -50,20 +50,26 @@ window.TOOLTIPS_VIGOR2927['vg2927-bai1'] = [
     expected: '1'
   },
   {
+    selector: '#opt-pppoe-servicename, input[name="sDOutPPPSrv1"]',
+    text: 'Bước 6: nhập FPT Telecom',
+    position: 'right',
+    expected: 'FPT Telecom'
+  },
+  {
     selector: '#opt-pppoe-username, input[name="sDOutUser1"]',
-    text: 'Bước 6: nhập sgfdl-211208-218',
+    text: 'Bước 7: nhập sgfdl-211208-218',
     position: 'right',
     expected: 'sgfdl-211208-218'
   },
   {
     selector: '#opt-pppoe-password, input[name="sDOutPass1"]',
-    text: 'Bước 7: nhập fpt12345',
+    text: 'Bước 8: nhập fpt12345',
     position: 'right',
     expected: 'fpt12345'
   },
   {
     selector: '#btn-pppoe-ok, input[name="submit"][value="OK"], input[type="submit"][value="OK"]',
-    text: 'Bước 8: nhấn OK',
+    text: 'Bước 9: nhấn OK',
     position: 'top'
   }
 ];
