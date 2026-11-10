@@ -328,16 +328,54 @@ BANG = [
     ("data_repo.cigext.cay_cau_hinh", cigext_cay),
 ]
 
+BANG_PHU_THUOC = {
+    "data_repo.weboui.wifi_get": ("wireless",),
+    "data_repo.weboui.wifiadv_get": ("wireless",),
+    "data_repo.weboui.firewall_get": ("firewall",),
+    "data_repo.weboui.dmz_get": ("firewall",),
+    "data_repo.weboui.upnpd_get": ("upnpd",),
+    "data_repo.weboui.speedtest_get": ("speedtest",),
+    "data_repo.weboui.systemlog_get": ("system",),
+    "data_repo.weboui.system_get": ("system",),
+    "data_repo.weboui.dhcp_reservation_get": ("dhcp",),
+    "data_repo.weboui.portfwd_get": ("firewall",),
+    "data_repo.weboui.parentctrl_get": ("firewall",),
+    "data_repo.weboui.websitefilter_get": ("dhcp", "firewall"),
+    "alg.get": ("alg", "firewall"),
+    "ssh.get": ("firewall",),
+    "network.wireless.easymesh.get": ("ezmesh",),
+    "aei-route.get": ("network",),
+    "aei-route6.get": ("network",),
+}
 
-def khung_tu_uci(cay, doc):
+
+def khung_tu_uci(cay, doc, cfgs_doi=None):
     """
     cay: {config: values} (dang 'uci get'); doc(khoa) -> khung hien tai trong kho.
     Tra ve {khoa: khung_moi} cho moi khoa co trong kho (ban sao, khong sua kho).
+    Neu `cfgs_doi` duoc truyen (set/iter cac ten config uci vua thay doi), chi tinh
+    lai nhung khung phu thuoc vao cac config do de tranh deepcopy toan bo 18 khung.
     """
+    if cfgs_doi is not None and not cfgs_doi:
+        return {}
     ra = {}
     for khoa, ham in BANG:
+        if cfgs_doi is not None and khoa != "data_repo.cigext.cay_cau_hinh":
+            deps = BANG_PHU_THUOC.get(khoa)
+            if deps and not any(c in cfgs_doi for c in deps):
+                continue
         hien = doc(khoa)
         if not isinstance(hien, dict):
+            continue
+        if cfgs_doi is not None and khoa == "data_repo.cigext.cay_cau_hinh":
+            if not any(c in hien for c in cfgs_doi):
+                continue
+            moi = dict(hien)
+            for c in cfgs_doi:
+                if c in moi and isinstance(moi[c], dict):
+                    moi[c] = copy.deepcopy(moi[c])
+                    cigext_cay(cay, {c: moi[c]})
+            ra[khoa] = moi
             continue
         moi = copy.deepcopy(hien)
         ham(cay, moi)

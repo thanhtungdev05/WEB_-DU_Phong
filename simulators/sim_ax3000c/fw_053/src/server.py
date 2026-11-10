@@ -539,9 +539,11 @@ def _ghi_system(ts):
     ntp.list -> uci system/ntp.server: anh xa SUY tu viec hai noi cung gia tri;
     CHUA do mot lan doi NTP that (ISSUES).
     """
+    import copy as _copy
     sg = KHO.doc("data_repo.weboui.system_get") or {}
-    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
-    uci_sys = cay.get("system") or {}
+    cay = dict(KHO.doc_tho(KHOA_CAY_UCI) or {})
+    uci_sys = _copy.deepcopy(cay.get("system") or {})
+    cay["system"] = uci_sys
     sec = next((s for s in uci_sys.values()
                 if isinstance(s, dict) and s.get(".type") == "system"), None)
 
@@ -587,7 +589,7 @@ def _lech_mui_gio():
     phai 'ICT-7' goc may) -> ban cu roi ve UTC, Local Time lech 7 gio. Nay doi
     chieu du 425 muc bang mui gio cua OUI voi libc: 0 lech.
     """
-    cay = (KHO.doc(KHOA_CAY_UCI) or {}).get("system", {})
+    cay = (KHO.doc_tho(KHOA_CAY_UCI) or {}).get("system", {})
     for sec in cay.values():
         if isinstance(sec, dict) and sec.get(".type") == "system":
             v = lech_giay(sec.get("timezone", ""))
@@ -677,7 +679,7 @@ def _cigext_tu_uci(ban_mau, cay_cu):
     (config, section) KHONG co trong uci -> giu cach cu (loc cay cigext da do) — chua do.
     """
     import ax3000c_uci_doc_nguoc as _N
-    uci = KHO.doc(KHOA_CAY_UCI) or {}
+    uci = KHO.doc_tho(KHOA_CAY_UCI) or {}
     ra = {}
     for cfg, secs in ban_mau.items():
         if not isinstance(secs, dict):
@@ -695,31 +697,35 @@ def _cigext_tu_uci(ban_mau, cay_cu):
     return ra
 
 
-def _dong_bo_khung_tu_uci(cay=None):
+def _dong_bo_khung_tu_uci(cay=None, cfgs_doi=None):
     """
     Moi khung *_get = ham cua tep /etc/config (DO THAT: UR1 — 14 khung dung nguoc tu tep Backup
     trung FNV thiet bi; 2026-09-26: firewall_get sau set co nguong khi detect tat, dos tat, spi
     tat va cigext get sau upnpd_set deu doc tu uci). Goi sau moi lan ghi va sau khi nap Backup.
     """
     import ax3000c_uci_doc_nguoc as _N
-    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
-    for khoa, moi in _N.khung_tu_uci(cay, KHO.doc_tho).items():
-        if moi != KHO.doc_tho(khoa) or json.dumps(moi) != json.dumps(KHO.doc_tho(khoa)):
-            KHO.ghi(khoa, moi)
+    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc_tho(KHOA_CAY_UCI) or {})
+    for khoa, moi in _N.khung_tu_uci(cay, KHO.doc_tho, cfgs_doi=cfgs_doi).items():
+        cu_k = KHO.doc_tho(khoa)
+        if moi != cu_k or json.dumps(moi) != json.dumps(cu_k):
+            KHO.ghi_tho(khoa, moi)
+    if cfgs_doi is not None and "system" not in cfgs_doi:
+        return
     # hostname lan sang system.board / network.topology (nhu _ghi_system, do nhom 7)
     host = next((s.get("hostname") for s in (cay.get("system") or {}).values()
                  if isinstance(s, dict) and s.get(".type") == "system"), None)
-    bd = KHO.doc("system.board")
+    bd = KHO.doc_tho("system.board")
     if host and isinstance(bd, dict) and bd.get("hostname") != host:
+        bd = dict(bd)
         cu = bd.get("hostname")
         bd["hostname"] = host
-        KHO.ghi("system.board", bd)
+        KHO.ghi_tho("system.board", bd)
         tp = KHO.doc("network.topology")
         if isinstance(tp, dict):
             for m in tp.values():
                 if isinstance(m, dict) and m.get("hostname") == cu:
                     m["hostname"] = host
-            KHO.ghi("network.topology", tp)
+            KHO.ghi_tho("network.topology", tp)
 
 
 def _co_trong_acl(doi_tuong, ham):
@@ -825,7 +831,7 @@ def _xu_ly_ubus(than):
         if ham == "assoclist":
             return _ket_qua(0, {"results": []})
         if ham == "devices":
-            return _ket_qua(0, KHO.doc("iwinfo.devices") or {"devices": []})
+            return _ket_qua(0, KHO.doc_tho("iwinfo.devices") or {"devices": []})
         return _ket_qua(0, {})
 
     if doi_tuong == "ecm" and ham == "status":
@@ -844,8 +850,7 @@ def _xu_ly_ubus(than):
         # Lay NGUYEN khung that roi chi thay hai truong doi theo thoi gian.
         # Truoc day em tu go lai dict nay va QUEN khoi "memory" -> trang Home
         # hien "Memory Usage 100%". Khong go tay nua, luon lay tu kho.
-        goc = KHO.doc("system.info") or {}
-        goc = dict(goc)
+        goc = dict(KHO.doc_tho("system.info") or {})
         # localtime = epoch UTC + lech mui gio (DO 2026-09-25: ddns datetime la
         # UTC, localtime cung luc lech ~+7 h, khop timezone "ICT-7" trong uci
         # system). Lay do lech tu CHINH kho (uci system timezone), khong hardcode.
@@ -859,8 +864,8 @@ def _xu_ly_ubus(than):
     # do voi gia tri that. Goi voi {} thi tra {} — dung co che, khong phai loi.
     # Bang chung: reference/api/khung_that_cigext_wan.json
     if doi_tuong == "data_repo.cigext" and ham in ("get", "set"):
-        cay = KHO.doc(KHOA_CAY_CIGEXT) or {}
         if ham == "get":
+            cay = KHO.doc_tho(KHOA_CAY_CIGEXT) or {}
             # 2026-09-26: DO THAT cigext get DOC THANG uci (upnpd_set tat -> cigext get
             # {upnpd:{config:{enabled}}} tra '0' ngay). Truoc day doc cay rieng -> lech
             # khi trang khac sua cung config. Nay: (config, section) co trong uci -> doc uci.
@@ -880,7 +885,7 @@ def _xu_ly_ubus(than):
     # Chieu GHI (uci set/add/delete/order/apply/confirm) CHUA DO -> roi xuong
     # nhanh "khong co bang chung" ben duoi (-32000), khong bia.
     if doi_tuong == "uci" and ham == "get":
-        cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
+        cay = KHO.doc_tho(KHOA_CAY_UCI) or {}
         ts = ts if isinstance(ts, dict) else {}
         cfg, sec, opt = ts.get("config"), ts.get("section"), ts.get("option")
         if sec is not None:
@@ -906,8 +911,12 @@ def _xu_ly_ubus(than):
     # uci khong lo ra — CHUA DO rieng, khong mo hinh.
     # uci add / delete / order CHUA DO -> roi xuong nhanh chan ben duoi.
     if doi_tuong == "uci" and ham == "set" and isinstance(ts, dict):
-        cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
-        sec = (cay.get(ts.get("config")) or {}).get(ts.get("section"))
+        import copy as _copy
+        cay = dict(KHO.doc_tho(KHOA_CAY_UCI) or {})
+        cfg_ten = ts.get("config")
+        if cfg_ten in cay:
+            cay[cfg_ten] = _copy.deepcopy(cay[cfg_ten])
+        sec = (cay.get(cfg_ten) or {}).get(ts.get("section"))
         if isinstance(sec, dict) and isinstance(ts.get("values"), dict):
             truoc = json.dumps(sec)
             for k, v in ts["values"].items():
@@ -916,7 +925,7 @@ def _xu_ly_ubus(than):
                 if sec.get(k) != v:
                     sec.pop(k, None)
                     sec[k] = v
-            if json.dumps(sec) != truoc and ts.get("config") == "aeiWiFiTimer":
+            if json.dumps(sec) != truoc and cfg_ten == "aeiWiFiTimer":
                 _WT["cho_apply"] = True     # reload_config chi chay voi config DA DOI
             _ghi_cay_uci(cay)
             return _ket_qua(0)
@@ -1108,8 +1117,8 @@ def _xu_ly_ubus(than):
                 KHOA_MTIME_CHAM, "tep.ghi_de", "tk.admin_crypt"):
         return _loi(*LOI_KHONG_THAY)
 
-    # chieu DOC: khoa co san trong kho
-    gt = KHO.doc(khoa)
+    # chieu DOC: khoa co san trong kho (chi doc de serialize JSON, khong sua -> doc_tho)
+    gt = KHO.doc_tho(khoa)
     if gt is not None:
         return _ket_qua(0, gt)
 
@@ -1125,7 +1134,7 @@ def _xu_ly_ubus(than):
         # fail" cho trung thuc, cho toi khi do duoc bang mot lan Apply that.
         if _co_danh_sach(ts):
             return _loi(*LOI_KHONG_THAY)
-        if KHO.doc(khoa_doc) is not None:
+        if KHO.doc_tho(khoa_doc) is not None:
             KHO.gop(khoa_doc, ts if isinstance(ts, dict) else {})
             # systemlog_set -> uci: uci_tac_dong.systemlog_set (nhom 11, du 5 option)
             # Moi *_set cua data_repo da do deu tra [0,{status:true}]
@@ -1147,15 +1156,15 @@ def _xu_ly_ubus(than):
     if doi_tuong == "network.wireless.easymesh" and ham == "set" and isinstance(ts, dict):
         truoc = KHO.doc("network.wireless.easymesh.get")
         if truoc is not None:
-            KHO.gop("network.wireless.easymesh.get", ts)
+            moi_em = KHO.gop("network.wireless.easymesh.get", ts)
             if ts.get("MeshRole", truoc.get("MeshRole")) == truoc.get("MeshRole"):
                 return _ket_qua(0, truoc)
-            return _ket_qua(0, KHO.doc("network.wireless.easymesh.get"))
+            return _ket_qua(0, moi_em)
     if ham == "set":
         khoa_doc = f"{doi_tuong}.get"
-        if KHO.doc(khoa_doc) is not None:
-            KHO.gop(khoa_doc, ts if isinstance(ts, dict) else {})
-            return _ket_qua(0, KHO.doc(khoa_doc))
+        if KHO.doc_tho(khoa_doc) is not None:
+            moi_set = KHO.gop(khoa_doc, ts if isinstance(ts, dict) else {})
+            return _ket_qua(0, moi_set)
 
     # Chua co bang chung -> tra dung khoi error cua thiet bi that, khong bia du lieu
     return _loi(*LOI_KHONG_THAY)
@@ -1369,26 +1378,35 @@ def _xu_ly_ubus_day_du(than):
     vi tri — dung quy tac do nhom 9, nay dung ca khi co section khac chen truoc).
     """
     _hen_gio_tick()
-    goc = json.loads(json.dumps(than)) if isinstance(than, dict) else than
+    p_in = than.get("params") if isinstance(than, dict) else None
+    la_ghi = (
+        isinstance(p_in, list)
+        and len(p_in) >= 3
+        and (p_in[2] == "set" or (isinstance(p_in[2], str) and p_in[2].endswith("_set")))
+    )
+    goc = json.loads(json.dumps(than)) if (la_ghi and isinstance(than, dict)) else than
     kq = _xu_ly_ubus(than)
+    if not la_ghi:
+        return kq
     p = (goc or {}).get("params") if isinstance(goc, dict) else None
     r = kq.get("result") if isinstance(kq, dict) else None
     if not (isinstance(p, list) and len(p) >= 3 and isinstance(r, list) and r and r[0] == 0):
         return kq
     doi_tuong, ham = p[1], p[2]
-    if not (ham == "set" or (isinstance(ham, str) and ham.endswith("_set"))):
-        return kq
     ts = p[3] if len(p) > 3 and isinstance(p[3], dict) else {}
     cay = dict(KHO.doc_tho(KHOA_CAY_UCI) or {})
-    cay = cay if ("cay" in locals() and cay is not None) else (KHO.doc(KHOA_CAY_UCI) or {})
-    doi = uci_tac_dong.ap_dung(cay, doi_tuong, ham, ts) if (ham == "set" or (isinstance(ham, str) and ham.endswith("_set"))) else False
+    doi, cfgs_cham = uci_tac_dong.ap_dung_chi_tiet(cay, doi_tuong, ham, ts)
     if doi:
         _ghi_cay_uci(cay)
     else:
         _cham_mtime(doi_tuong, ham, ts)
-    if doi or (doi_tuong == "uci" and ham == "set") or ham.endswith("_set") or ham == "set":
-        # 2026-09-26: moi khung *_get doc tu uci (do that) -> dung lai sau moi lan ghi
-        _dong_bo_khung_tu_uci(cay)
+    if doi_tuong == "uci" and ham == "set":
+        cfgs_cham = {ts.get("config")} if isinstance(ts, dict) and ts.get("config") else set()
+    elif doi_tuong == "data_repo.weboui" and ham == "system_set":
+        cfgs_cham = {"system"}
+    if cfgs_cham:
+        # 2026-09-26: moi khung *_get doc tu uci (do that) -> dung lai cac khung phu thuoc config vua cham
+        _dong_bo_khung_tu_uci(cay, cfgs_cham)
     if doi_tuong == "network.wireless.easymesh" and ham == "set":
         _crontab_thay(lambda d: False, [], cham=True)   # do nhom 11: easymesh set cham crontab
     if doi_tuong == "data_repo.weboui" and ham in ("dhcp_reservation_set", "portfwd_set"):
@@ -1399,7 +1417,7 @@ def _xu_ly_ubus_day_du(than):
         if len(ten) == len(dong):
             for d, t in zip(dong, ten):
                 d["_idx"] = t
-            KHO.ghi(khoa, hien)
+            KHO.ghi_tho(khoa, hien)
     if doi_tuong == "data_repo.weboui" and ham == "speedtest_set":
         _crontab_speedtest(ts)
     return kq

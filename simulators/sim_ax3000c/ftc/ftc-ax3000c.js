@@ -37,9 +37,19 @@
   } catch (_) {}
 
   try {
-    if (location.href.indexOf('logout=1') !== -1) {
-      sessionStorage.clear();
-      localStorage.clear();
+    var initHash = String(location.hash || '').toLowerCase();
+    if (
+      location.href.indexOf('logout=1') !== -1 ||
+      initHash === '' ||
+      initHash === '#' ||
+      initHash === '#/' ||
+      initHash.indexOf('#/login') === 0
+    ) {
+      sessionStorage.removeItem('sid');
+      if (location.href.indexOf('logout=1') !== -1) {
+        sessionStorage.clear();
+        localStorage.clear();
+      }
     }
   } catch (e) {}
 
@@ -277,4 +287,23 @@
   }
   setInterval(trietTieuLoadingTre, 250);
   document.addEventListener('DOMContentLoaded', trietTieuLoadingTre);
+
+  // 5. Tu phuc hoi neu #app bi trang (0 phan tu con) do mang di dong ngat quang luc nap chunk
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      try {
+        var appEl = document.getElementById('app');
+        if (appEl && appEl.children.length === 0) {
+          var daThu = sessionStorage.getItem('ftc_ax3000c_recover');
+          if (!daThu) {
+            sessionStorage.setItem('ftc_ax3000c_recover', '1');
+            sessionStorage.removeItem('sid');
+            location.replace(location.pathname + location.search + '#/login');
+          }
+        } else {
+          sessionStorage.removeItem('ftc_ax3000c_recover');
+        }
+      } catch (e) {}
+    }, 3500);
+  });
 })();

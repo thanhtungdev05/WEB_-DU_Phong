@@ -581,10 +581,10 @@ def bang_set(td, ham, ts):
                 gf.xoa(gf.theo_ten("rule_block_" + s))
 
 
-def ap_dung(cay_uci, doi_tuong, ham, ts):
+def ap_dung_chi_tiet(cay_uci, doi_tuong, ham, ts):
     """
     Ap tac dong cua mot loi goi ghi THANH CONG len cay uci (sua tai cho).
-    Tra ve (co_doi, ghi_chu) — ghi_chu dung cho crontab speedtest.
+    Tra ve (co_doi, cfgs_cham).
     """
     td = TacDong(cay_uci)
     ts = ts if isinstance(ts, dict) else {}
@@ -617,8 +617,17 @@ def ap_dung(cay_uci, doi_tuong, ham, ts):
                                     "websitefilter_set"):
         bang_set(td, ham, ts)
     else:
-        return False
-    return td.ket_qua()
+        return False, set()
+    return td.ket_qua(), set(td.goi.keys())
+
+
+def ap_dung(cay_uci, doi_tuong, ham, ts):
+    """
+    Ap tac dong cua mot loi goi ghi THANH CONG len cay uci (sua tai cho).
+    Tra ve (co_doi, ghi_chu) — ghi_chu dung cho crontab speedtest.
+    """
+    doi, _ = ap_dung_chi_tiet(cay_uci, doi_tuong, ham, ts)
+    return doi
 
 
 def ten_bang(cay_uci, ham):
@@ -632,4 +641,4 @@ def ten_bang(cay_uci, ham):
     return None
 
 
-__all__ = ["ap_dung", "ten_bang", "dong_crontab_speedtest", "json"]
+__all__ = ["ap_dung", "ap_dung_chi_tiet", "ten_bang", "dong_crontab_speedtest", "json"]

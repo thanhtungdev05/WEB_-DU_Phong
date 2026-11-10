@@ -233,6 +233,53 @@ class TestAX3000CAllLabs(unittest.TestCase):
         self.assertEqual(res_ecm["result"][0], 0)
         self.assertEqual(res_ecm["result"][1], {"entries": []})
 
+    def test_10_anti_white_screen_and_prefetch_storm_protection(self):
+        """Kiểm tra triệt tiêu 87 thẻ rel=prefetch, nén Gzip, ETag 304 và các bản vá chống trắng màn/bão polling."""
+        import gzip as _gzip
+
+        # 1. Trang gốc / không còn thẻ <link rel=prefetch> gây nghẽn mạng di động
+        raw_index = f"GET / HTTP/1.1\r\nHost: localhost\r\n{self.cookie_header}\r\n".encode()
+        headers, body = execute_req(ax3000c.Handler, raw_index)
+        self.assertIn("200 OK", headers)
+        self.assertNotIn(b"rel=prefetch", body)
+        self.assertIn(b"/sim_ax3000c/js/chunk-vendors", body)
+
+        # 2. Hỗ trợ nén Gzip + ETag + 304 Not Modified cho bundle lớn
+        raw_app_gz = f"GET /js/app.9b4ab5b7.1726822665278.js HTTP/1.1\r\nHost: localhost\r\nAccept-Encoding: gzip\r\n{self.cookie_header}\r\n".encode()
+        headers_gz, body_gz = execute_req(ax3000c.Handler, raw_app_gz)
+        self.assertIn("200 OK", headers_gz)
+        self.assertIn("Content-Encoding: gzip", headers_gz)
+        self.assertIn("ETag:", headers_gz)
+        app_uncompressed = _gzip.decompress(body_gz)
+        # Kiểm tra các bản vá chống trắng màn hình trong app.js
+        self.assertIn(b'state:{menus:[],hostname:"",lang:"en"}', app_uncompressed)
+        self.assertIn(b"v21_fw053_stable", app_uncompressed)
+        self.assertIn(b'console.warn("[Router]"', app_uncompressed)
+        self.assertIn(b'console.warn("[ChunkError]"', app_uncompressed)
+
+        # Kiểm tra If-None-Match trả về 304 Not Modified tức thì (0 byte body)
+        etag_line = [line for line in headers_gz.splitlines() if line.lower().startswith("etag:")][0]
+        etag_val = etag_line.split(":", 1)[1].strip()
+        raw_304 = f"GET /js/app.9b4ab5b7.1726822665278.js HTTP/1.1\r\nHost: localhost\r\nIf-None-Match: {etag_val}\r\n{self.cookie_header}\r\n".encode()
+        headers_304, body_304 = execute_req(ax3000c.Handler, raw_304)
+        self.assertIn("304 Not Modified", headers_304)
+        self.assertEqual(body_304, b"")
+
+        # 3. Kiểm tra giảm bão polling ở Layout (chunk-47368b9a) và Home (chunk-b90fa57a), chống reload ở Port Forwarding (chunk-82690506)
+        raw_layout = f"GET /js/chunk-47368b9a.9b4ab5b7.1726822665278.js HTTP/1.1\r\nHost: localhost\r\n{self.cookie_header}\r\n".encode()
+        _, body_layout = execute_req(ax3000c.Handler, raw_layout)
+        self.assertIn(b"_u(),this.timerId=setInterval(_u,3e4)", body_layout)
+
+        raw_home = f"GET /js/chunk-b90fa57a.9b4ab5b7.1726822665278.js HTTP/1.1\r\nHost: localhost\r\n{self.cookie_header}\r\n".encode()
+        _, body_home = execute_req(ax3000c.Handler, raw_home)
+        self.assertIn(b"timers:{update:{time:3e4,autostart:!0,immediate:!0,repeat:!0},update2:{time:6e4", body_home)
+        self.assertNotIn(b"window.location.reload()", body_home)
+
+        raw_pf = f"GET /js/chunk-82690506.9b4ab5b7.1726822665278.js HTTP/1.1\r\nHost: localhost\r\n{self.cookie_header}\r\n".encode()
+        _, body_pf = execute_req(ax3000c.Handler, raw_pf)
+        self.assertNotIn(b"location.reload()", body_pf)
+        self.assertIn(b"e.getPortfwd()", body_pf)
+
 
 if __name__ == "__main__":
     unittest.main()

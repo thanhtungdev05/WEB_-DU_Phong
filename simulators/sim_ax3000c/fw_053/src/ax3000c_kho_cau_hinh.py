@@ -199,6 +199,12 @@ class KhoCauHinh:
             self._du_lieu[khoa] = copy.deepcopy(gia_tri) if isinstance(gia_tri, (dict, list)) else gia_tri
             self._luu()
 
+    def ghi_tho(self, khoa, gia_tri):
+        """Ghi truc tiep ban sao moi da duoc khoi tao san (tranh deepcopy 2 lan)."""
+        with self._khoa:
+            self._du_lieu[khoa] = gia_tri
+            self._luu()
+
     def gop(self, khoa, phan):
         """
         Tron `phan` vao gia tri dang co (gop sau, theo tung cap).
@@ -281,6 +287,10 @@ def _kho_cua_ktv(key):
     """Lấy kho cấu hình RAM riêng của một phiên Portal và dọn phiên quá hạn."""
     global _LAST_CLEANUP_TS
     now = time.time()
+    existing = _KHO_THEO_KTV.get(key)
+    if existing is not None and (now - _LAST_CLEANUP_TS) < 30.0:
+        _KHO_LAST_SEEN[key] = now
+        return existing
     with _KHO_LOCK:
         existing = _KHO_THEO_KTV.get(key)
         if existing is not None and (now - _LAST_CLEANUP_TS) < 30.0:

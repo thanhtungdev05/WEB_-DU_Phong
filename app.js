@@ -731,6 +731,7 @@
                     currentDeviceId === 'ONT_ax1800gz' || currentDeviceId === 'ax1800gz' ||
                     currentDeviceId === 'ONT_be15000' || currentDeviceId === 'be15000' ||
                     currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ax3000gz_v2' ||
+                    currentDeviceId === 'ax3000c' || currentDeviceId === 'ONT_ax3000c' || currentDeviceId === 'sim_ax3000c' ||
                     currentDeviceId === 'ac1000z' || currentDeviceId === 'ONT_ac1000z');
                 if (!skipAutofillHack) {
                   doc.querySelectorAll('form:not([data-autofill-disabled]), input:not([data-autofill-disabled])').forEach(el => {
@@ -801,10 +802,15 @@
               if (!doc._ftcSaveListenerAttached) {
 
                 // Ràng buộc đăng nhập thiết bị bắt buộc nhập admin / admin
-                const loc = (doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
-                const hsh = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
-                const isMainPage = hsh.includes('#/home') || hsh.includes('#/network') || hsh.includes('#/system') || hsh.includes('#/status') || hsh.includes('#/device');
-                const isLogin = !isMainPage && (loc.includes('login') || hsh.includes('login') || doc.querySelector('.login-fpt, form[action*="login"], #Frm_Username, #Frm_Password, #login, form#login'));
+                // Lưu ý: Với SPA như AX3000CV2 (Vue Router hash mode), doc không reload khi chuyển từ #/login sang #/home,
+                // nên phải kiểm tra trạng thái trang đăng nhập động tại thời điểm sự kiện.
+                const isDynamicLoginState = function () {
+                  const locNow = (doc.location && doc.location.href) ? doc.location.href.toLowerCase() : '';
+                  const hshNow = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
+                  const isMainNow = hshNow.includes('#/home') || hshNow.includes('#/network') || hshNow.includes('#/system') || hshNow.includes('#/status') || hshNow.includes('#/device');
+                  return !isMainNow && (locNow.includes('login') || hshNow.includes('login') || Boolean(doc.querySelector('.login-fpt, form[action*="login"], #Frm_Username, #Frm_Password, #login, form#login')));
+                };
+                const isLogin = isDynamicLoginState();
 
                 if (isLogin) {
                   // Xóa trắng ô đăng nhập một lần khi tải trang đăng nhập (tránh cache trình duyệt và hardcode)
@@ -861,6 +867,7 @@
                   };
 
                   doc.addEventListener('click', function (e) {
+                    if (!isDynamicLoginState()) return;
                     let el = e.target;
                     // Bỏ qua nếu click vào các ô nhập liệu văn bản/mật khẩu
                     if (el && el.tagName === 'INPUT' && el.type !== 'submit' && el.type !== 'button') {
@@ -890,6 +897,7 @@
                   }, true);
 
                   doc.addEventListener('keydown', function (e) {
+                    if (!isDynamicLoginState()) return;
                     if (e.key === 'Enter' || e.keyCode === 13) {
                       if (!checkLoginFields(e, e.target)) return false;
                     }
@@ -900,7 +908,7 @@
                 const markSaveInteraction = function (e) {
                   // Trang đăng nhập không có thao tác lưu cấu hình: không coi nút
                   // Login (input type=submit) là Save/Apply.
-                  if (isLogin) return;
+                  if (isDynamicLoginState()) return;
                   let el = e.target;
                   if (el && (el.id === 'LoginId' || (el.value || '').trim().toLowerCase() === 'login')) return;
                   while (el && el !== doc) {
@@ -978,7 +986,7 @@
                   // Trang đăng nhập không có thao tác lưu cấu hình: nếu không bỏ qua,
                   // nút Login (input type=submit) sẽ đặt cờ _hasClickedSaveInGuide
                   // và ở chế độ Hướng dẫn sẽ hiện "Xem lỗi sai" khi chưa cấu hình gì.
-                  if (isLogin) return;
+                  if (isDynamicLoginState()) return;
                   let el = e.target;
                   if (el && (el.id === 'LoginId' || (el.value || '').trim().toLowerCase() === 'login')) return;
                   while (el && el !== doc) {
@@ -3227,6 +3235,8 @@
       simFolder = 'sim_' + targetDev;
     }
 
+    const normDev = normalizeDeviceId(targetDev);
+
     try {
       localStorage.removeItem('ftc_sim_wifi24');
       localStorage.removeItem('ftc_sim_wifi5g');
@@ -3260,7 +3270,6 @@
       return window._inFlightResets[targetDev];
     }
 
-    const normDev = normalizeDeviceId(targetDev);
     const resetEndpoints = new Set(['/' + simFolder + '/api/reset']);
     if (normDev === 'ont_be6500c') {
       resetEndpoints.add('/sim_ONT_be6500c/api/reset');
