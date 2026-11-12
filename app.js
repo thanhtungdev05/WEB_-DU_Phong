@@ -1989,14 +1989,15 @@
                       (el.placeholder && (el.placeholder.toLowerCase().includes('username') || el.placeholder.toLowerCase().includes('password')));
                     if (isLoginField) return;
 
-                    if (!el.dataset.ftcId) el.dataset.ftcId = 'ftc_' + Math.random().toString(36).substr(2, 9);
-                    const uid = el.dataset.ftcId;
-                    // Lưu lại giá trị của field NGAY TRƯỚC KHI người dùng kịp thay đổi nó
-                    if (doc._ftcOriginalValues[uid] === undefined) {
-                      const currentRaw = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+                    const recordOriginal = function (node) {
+                      if (!node.dataset.ftcId) node.dataset.ftcId = 'ftc_' + Math.random().toString(36).substr(2, 9);
+                      const uid = node.dataset.ftcId;
+                      // Lưu lại giá trị của field NGAY TRƯỚC KHI người dùng kịp thay đổi nó
+                      if (doc._ftcOriginalValues[uid] !== undefined) return;
+                      const currentRaw = (node.type === 'checkbox' || node.type === 'radio') ? node.checked : node.value;
                       // Khi simulator vẽ lại input sau Apply, phần tử mới không còn baseline.
                       // Dùng giá trị gốc đầu tiên của phiên (theo khóa ổn định) thay vì giá trị sai đã lưu.
-                      const stableName = el.id || el.name;
+                      const stableName = node.id || (node.name ? (node.type === 'radio' ? node.name + '#' + node.value : node.name) : '');
                       const stableKey = stableName
                         ? ((doc.location ? (doc.location.pathname + doc.location.search) : '') + '::' + stableName)
                         : '';
@@ -2009,6 +2010,15 @@
                       } else {
                         doc._ftcOriginalValues[uid] = currentRaw;
                       }
+                    };
+                    recordOriginal(el);
+                    // Radio: chụp cả nhóm để đổi lại lựa chọn ban đầu không bị tính là thao tác mới
+                    if (el.type === 'radio' && el.name) {
+                      try {
+                        Array.from(doc.querySelectorAll('input[type="radio"]'))
+                          .filter(r => r.name === el.name)
+                          .forEach(recordOriginal);
+                      } catch (err) { }
                     }
                   }
                 };
