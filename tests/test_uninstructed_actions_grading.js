@@ -5,6 +5,14 @@ const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
 const appJsCode = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+assert.ok(
+  appJsCode.includes("const locationKey = doc.location ? (doc.location.pathname || '') : ''"),
+  'baseline keys must ignore transient Apply query parameters'
+);
+assert.ok(
+  appJsCode.includes("hasUniqueName ? ('name:' + node.name + radioSuffix) : ''"),
+  'baseline keys must retain a unique semantic field-name fallback across rerenders'
+);
 
 // Trích xuất hàm evaluateLesson & evaluateAutoBaseline & getLabelForElement từ app.js
 const labelMatch = appJsCode.match(/function getLabelForElement\(el, doc\) \{[\s\S]*?\n  \}/);
@@ -174,5 +182,42 @@ const resultClean = sandbox.evaluateLesson({ id: 'ax3000gz_v2' }, mockLessonAx30
 assert.strictEqual(resultClean.passed, true, 'KTV làm đúng đề bài và không có thao tác thừa PHẢI ĐƯỢC CHẤM ĐẠT');
 assert.strictEqual(resultClean.passedCount, 4, '4/4 tiêu chí đạt');
 assert.strictEqual(resultClean.totalRules, 4, 'Tổng tiêu chí là 4');
+
+// 5. Apply can replace the whole router form. A corrected field must clear the
+// saved out-of-guide error even when the new node has no ftc id/baseline map.
+const rerenderSession = {
+  attemptId: 'attempt_rerender',
+  interactedRules: {},
+  activeUnexpectedErrors: {},
+  originalValuesByKey: {}
+};
+sandbox._trackingSession = rerenderSession;
+
+const wrongMtu = {
+  id: 'MTU:0', name: 'MTU', type: 'text', value: '1500', tagName: 'INPUT',
+  closest: () => null
+};
+const wrongDocBeforeApply = {
+  location: { pathname: '/sim_ac1000z/', search: '' },
+  _ftcOriginalValues: { uid_mtu_rerender: '1492' },
+  querySelector: sel => sel.includes('data-ftc-id="uid_mtu_rerender"') ? wrongMtu : null,
+  querySelectorAll: sel => sel === 'input, select, textarea' ? [wrongMtu] : []
+};
+let rerenderErrors = sandbox.evaluateAutoBaseline([wrongDocBeforeApply], [], {});
+assert.strictEqual(rerenderErrors.length, 1, 'wrong MTU must be recorded before correction');
+assert.strictEqual(Object.keys(rerenderSession.activeUnexpectedErrors).length, 1);
+
+const correctedMtu = {
+  id: 'MTU:1', name: 'MTU', type: 'text', value: '1492', tagName: 'INPUT',
+  closest: () => null
+};
+const correctedDocAfterApply = {
+  location: { pathname: '/sim_ac1000z/', search: '?save_success=1' },
+  querySelector: () => null,
+  querySelectorAll: sel => sel === 'input, select, textarea' ? [correctedMtu] : []
+};
+rerenderErrors = sandbox.evaluateAutoBaseline([correctedDocAfterApply], [], {});
+assert.strictEqual(rerenderErrors.length, 0, 'corrected replacement node must clear the saved error');
+assert.strictEqual(Object.keys(rerenderSession.activeUnexpectedErrors).length, 0);
 
 console.log('✔ TẤT CẢ CÁC KIỂM THỬ: GÔNG CHẶT THAO TÁC NGOÀI HƯỚNG DẪN TRÊN AX3000GZ V2 VÀ AC1000Z ĐÃ ĐẠT 100%!');

@@ -1997,16 +1997,32 @@
                       const currentRaw = (node.type === 'checkbox' || node.type === 'radio') ? node.checked : node.value;
                       // Khi simulator vẽ lại input sau Apply, phần tử mới không còn baseline.
                       // Dùng giá trị gốc đầu tiên của phiên (theo khóa ổn định) thay vì giá trị sai đã lưu.
-                      const stableName = node.id || (node.name ? (node.type === 'radio' ? node.name + '#' + node.value : node.name) : '');
-                      const stableKey = stableName
-                        ? ((doc.location ? (doc.location.pathname + doc.location.search) : '') + '::' + stableName)
-                        : '';
-                      if (stableKey && _trackingSession) {
+                      const locationKey = doc.location ? (doc.location.pathname || '') : '';
+                      const radioSuffix = node.type === 'radio' ? ('#' + node.value) : '';
+                      let hasUniqueName = Boolean(node.name);
+                      if (node.name && node.type !== 'radio') {
+                        try {
+                          hasUniqueName = Array.from(doc.querySelectorAll('input, select, textarea'))
+                            .filter(candidate => candidate.name === node.name).length === 1;
+                        } catch (err) { }
+                      }
+                      const stableNames = [
+                        node.id ? ('id:' + node.id) : '',
+                        hasUniqueName ? ('name:' + node.name + radioSuffix) : ''
+                      ].filter(Boolean);
+                      const stableKeys = stableNames.map(name => locationKey + '::' + name);
+                      if (stableKeys.length > 0 && _trackingSession) {
                         if (!_trackingSession.originalValuesByKey) _trackingSession.originalValuesByKey = {};
-                        if (_trackingSession.originalValuesByKey[stableKey] === undefined) {
-                          _trackingSession.originalValuesByKey[stableKey] = currentRaw;
-                        }
-                        doc._ftcOriginalValues[uid] = _trackingSession.originalValuesByKey[stableKey];
+                        const existingKey = stableKeys.find(key => _trackingSession.originalValuesByKey[key] !== undefined);
+                        const originalRaw = existingKey
+                          ? _trackingSession.originalValuesByKey[existingKey]
+                          : currentRaw;
+                        stableKeys.forEach(key => {
+                          if (_trackingSession.originalValuesByKey[key] === undefined) {
+                            _trackingSession.originalValuesByKey[key] = originalRaw;
+                          }
+                        });
+                        doc._ftcOriginalValues[uid] = originalRaw;
                       } else {
                         doc._ftcOriginalValues[uid] = currentRaw;
                       }
@@ -3741,7 +3757,13 @@
                   label: labelText,
                   expected: formattedOriginal,
                   actual: formattedCurrent,
-                  key: fieldKey
+                  key: fieldKey,
+                  originalValue: originalValue,
+                  fieldId: el.id || '',
+                  fieldName: el.name || '',
+                  fieldType: el.type || '',
+                  fieldValue: el.value,
+                  locationPath: (doc.location && doc.location.pathname) ? doc.location.pathname : ''
                 };
 
                 unexpectedErrors.push(errObj);
@@ -3759,6 +3781,43 @@
     // Đồng bộ lỗi thao tác thừa theo phiên (giữ nguyên lỗi nếu KTV chuyển trang mà chưa sửa lại)
     if (_trackingSession) {
       if (!_trackingSession.activeUnexpectedErrors) _trackingSession.activeUnexpectedErrors = {};
+
+      // Router pages can replace form controls after Apply. Reconcile saved
+      // errors by stable field identity because the new nodes have no ftc id.
+      Object.keys(_trackingSession.activeUnexpectedErrors).forEach(errorKey => {
+        const err = _trackingSession.activeUnexpectedErrors[errorKey];
+        if (!err || (!err.fieldId && !err.fieldName)) return;
+
+        let currentField = null;
+        for (const doc of allDocs) {
+          try {
+            const docPath = (doc.location && doc.location.pathname) ? doc.location.pathname : '';
+            if (err.locationPath && docPath && err.locationPath !== docPath) continue;
+            const controls = Array.from(doc.querySelectorAll('input, select, textarea'));
+            currentField = (err.fieldId && controls.find(node => node.id === err.fieldId)) || null;
+            if (!currentField && err.fieldName) {
+              const sameNameControls = controls.filter(node =>
+                node.name === err.fieldName &&
+                (err.fieldType !== 'radio' || String(node.value) === String(err.fieldValue))
+              );
+              if (sameNameControls.length === 1) currentField = sameNameControls[0];
+            }
+          } catch (e) { }
+          if (currentField) break;
+        }
+
+        if (!currentField) return;
+        const currentRaw = (currentField.type === 'checkbox' || currentField.type === 'radio')
+          ? currentField.checked
+          : currentField.value;
+        const currentNormalized = String(currentRaw === null || currentRaw === undefined ? '' : currentRaw).trim();
+        const originalNormalized = String(err.originalValue === null || err.originalValue === undefined ? '' : err.originalValue).trim();
+        if (currentNormalized === originalNormalized) {
+          delete _trackingSession.activeUnexpectedErrors[errorKey];
+          unexpectedErrors = unexpectedErrors.filter(item => item.key !== errorKey);
+        }
+      });
+
       const activeList = Object.values(_trackingSession.activeUnexpectedErrors);
       activeList.forEach(err => {
         if (!unexpectedErrors.some(e => e.label === err.label || (e.key && e.key === err.key))) {

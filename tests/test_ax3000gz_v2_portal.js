@@ -225,7 +225,7 @@ const appJs = read('app.js').replace(/\r\n/g, '\n');
 const loginPage = read('simulators/ax3000gz_v2/src/www/login_page.html');
 const commonPage = read('simulators/ax3000gz_v2/src/www/common_page.html');
 assert.ok(
-  (appJs.match(/^\s*if \(isLogin\) return;$/gm) || []).length >= 2,
+  (appJs.match(/^\s*if \(isDynamicLoginState\(\)\) return;$/gm) || []).length >= 2,
   'both Save/Apply listeners in app.js must ignore login pages'
 );
 assert.ok(loginPage.includes('id="Frm_Username"'), 'login page must be detected as a login page');
