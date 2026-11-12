@@ -1993,7 +1993,22 @@
                     const uid = el.dataset.ftcId;
                     // Lưu lại giá trị của field NGAY TRƯỚC KHI người dùng kịp thay đổi nó
                     if (doc._ftcOriginalValues[uid] === undefined) {
-                      doc._ftcOriginalValues[uid] = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+                      const currentRaw = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+                      // Khi simulator vẽ lại input sau Apply, phần tử mới không còn baseline.
+                      // Dùng giá trị gốc đầu tiên của phiên (theo khóa ổn định) thay vì giá trị sai đã lưu.
+                      const stableName = el.id || el.name;
+                      const stableKey = stableName
+                        ? ((doc.location ? (doc.location.pathname + doc.location.search) : '') + '::' + stableName)
+                        : '';
+                      if (stableKey && _trackingSession) {
+                        if (!_trackingSession.originalValuesByKey) _trackingSession.originalValuesByKey = {};
+                        if (_trackingSession.originalValuesByKey[stableKey] === undefined) {
+                          _trackingSession.originalValuesByKey[stableKey] = currentRaw;
+                        }
+                        doc._ftcOriginalValues[uid] = _trackingSession.originalValuesByKey[stableKey];
+                      } else {
+                        doc._ftcOriginalValues[uid] = currentRaw;
+                      }
                     }
                   }
                 };
