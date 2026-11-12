@@ -51,17 +51,17 @@ _goc.REBOOT_GOC_UPTIME_S = 0.0
 THAY_JS = {
     "js__chunk-2d0b6e5b.9b4ab5b7.1726822665278.js": [  # WAN
         (b"checkNetworkStatus(2e4)", b"checkNetworkStatus(100)"),
-        (b"checkNetworkStatus(2e3)", b"checkNetworkStatus(100)"),
+        (b"checkNetworkStatus(3e3)", b"checkNetworkStatus(100)"),
         (b'loadingText:"WAN settings are unavailable currently in bridge agent mode."', b'loadingText:""'),
         (b'username:"fpt",password:"fpt"', b'username:"",password:""'),
     ],
     "js__chunk-7266f7c8.9b4ab5b7.1726822665278.js": [  # LAN
         (b"checkNetworkStatus(2e4)", b"checkNetworkStatus(100)"),
-        (b"checkNetworkStatus(2e3)", b"checkNetworkStatus(100)"),
+        (b"checkNetworkStatus(3e3)", b"checkNetworkStatus(100)"),
     ],
     "js__chunk-16271a96.9b4ab5b7.1726822665278.js": [  # LAN IPv6
         (b"checkNetworkStatus(2e4)", b"checkNetworkStatus(100)"),
-        (b"checkNetworkStatus(2e3)", b"checkNetworkStatus(100)"),
+        (b"checkNetworkStatus(3e3)", b"checkNetworkStatus(100)"),
     ],
     "js__chunk-2d237504.9b4ab5b7.1726822665278.js": [  # Wi-Fi
         (b"e.checkWIFiStatus(0)", b"e.loading=!1"),
@@ -80,6 +80,30 @@ THAY_JS = {
             b'(e.deleteLine=[],e.deleteLines=[],e.getPortfwd(),e.$message.success(e.$t("Configuration has been applied")))',
         ),
     ],
+    "js__chunk-3404a532.9b4ab5b7.1726822665278.js": [  # DHCP / Reserved IP: khong reload ca SPA khi Apply
+        (
+            b'(location.reload(),e.$message.success(e.$t("Configuration has been applied")))',
+            b'(e.deleteLine=[],e.deleteLines=[],e.getDHCP(),e.$message.success(e.$t("Configuration has been applied")))',
+        ),
+    ],
+    "js__chunk-13cd769e.9b4ab5b7.1726822665278.js": [  # Public LAN: khong reload ca SPA khi Apply
+        (
+            b'(t.$message.success(t.$t("Configuration has been applied")),location.reload())',
+            b'(t.deleteLine=[],t.deleteLines=[],t.getData(),t.$message.success(t.$t("Configuration has been applied")))',
+        ),
+    ],
+    "js__chunk-2d20fee3.9b4ab5b7.1726822665278.js": [  # Parental Control: khong reload ca SPA khi Apply
+        (
+            b'(location.reload(),e.$message.success(e.$t("Configuration has been applied")))',
+            b'(e.deleteLine=[],e.deleteLines=[],e.getParental(),e.$message.success(e.$t("Configuration has been applied")))',
+        ),
+    ],
+    "js__chunk-58926e63.9b4ab5b7.1726822665278.js": [  # Website Filter: khong reload ca SPA khi Apply
+        (
+            b'(location.reload(),e.$message.success(e.$t("Configuration has been applied")))',
+            b'(e.deleteLine=[],e.deleteLines=[],e.getWebsite(),e.$message.success(e.$t("Configuration has been applied")))',
+        ),
+    ],
     "js__chunk-44bc1f1e.9b4ab5b7.1726822665278.js": [  # Login: khong ban 2 request /ubus thua luc mo trang + sua duong dan icon
         (
             b'created:function(){var e=this;this.$session.login().then(function(t){t?e.$session.updateACLs().then(function(){e.$router.push("/")}):e.login=!1}).catch(function(){e.login=!1}),this.$session.logout(),',
@@ -88,13 +112,14 @@ THAY_JS = {
         (b'src:"/icons/wifi-icon.svg"', b'src:"/sim_ax3000c/icons/wifi-icon.svg"'),
         (b'"/icons/gf_logo.png"', b'"/sim_ax3000c/icons/gf_logo.png"'),
     ],
-    "js__chunk-47368b9a.9b4ab5b7.1726822665278.js": [  # Layout: giam tan suat poll system.info tu 1s xuong 30s
+    "js__chunk-47368b9a.9b4ab5b7.1726822665278.js": [  # Layout: giam tan suat poll system.info tu 1s xuong 30s + sua duong dan icon
         (
             b'this.timerId=setInterval(function(){t.$system.getInfo().then(function(e){var s=e.release,n=e.localtime,o=e.uptime,a=new Date(1e3*n),i=a.toUTCString().split("GMT")[0];t.sysinfo={release:s.revision,localtime:i,uptime:"%t".format(o)}})},1e3)',
-            b'var _u=function(){t.$system.getInfo().then(function(e){var s=e.release,n=e.localtime,o=e.uptime,a=new Date(1e3*n),i=a.toUTCString().split("GMT")[0];t.sysinfo={release:s.revision,localtime:i,uptime:"%t".format(o)}})};_u(),this.timerId=setInterval(_u,3e4)',
+            b'(function(){var _u=function(){t.$system.getInfo().then(function(e){var s=e.release,n=e.localtime,o=e.uptime,a=new Date(1e3*n),i=a.toUTCString().split("GMT")[0];t.sysinfo={release:s.revision,localtime:i,uptime:"%t".format(o)}})};_u(),this.timerId=setInterval(_u,3e4)}).call(this)',
         ),
+        (b'"/icons/', b'"/sim_ax3000c/icons/'),
     ],
-    "js__chunk-b90fa57a.9b4ab5b7.1726822665278.js": [  # Home: giam tan suat poll tu 2s xuong 30s + chan reload trang
+    "js__chunk-b90fa57a.9b4ab5b7.1726822665278.js": [  # Home: giam tan suat poll tu 2s xuong 30s + chan reload + sua icon
         (
             b"timers:{update:{time:2e3,autostart:!0,immediate:!0,repeat:!0},update2:{time:2e4,autostart:!0,immediate:!0,repeat:!0}}",
             b"timers:{update:{time:3e4,autostart:!0,immediate:!0,repeat:!0},update2:{time:6e4,autostart:!0,immediate:!0,repeat:!0}}",
@@ -103,6 +128,16 @@ THAY_JS = {
             b"1==e.reload?window.location.reload():1==e.loading&&(e.loading=!1)",
             b"e.loading=!1,e.reload=!1",
         ),
+        (b'"/icons/', b'"/sim_ax3000c/icons/'),
+    ],
+    "js__chunk-26c4d9fc.9b4ab5b7.1726822665278.js": [
+        (b'"/icons/', b'"/sim_ax3000c/icons/'),
+    ],
+    "js__chunk-6b9124a9.9b4ab5b7.1726822665278.js": [
+        (b'"/icons/', b'"/sim_ax3000c/icons/'),
+    ],
+    "js__chunk-2d2176af.9b4ab5b7.1726822665278.js": [  # EasyMesh legacy topology: xoa lenh break sai cu phap trong firmware goc
+        (b"{e.loading=!1;break}", b"e.loading=!1"),
     ],
     "js__app.9b4ab5b7.1726822665278.js": [  # Reboot, Router anti-white-screen, Chunk retry, Vuex lang default, Ubus paths
         (b"window.setTimeout(o,5e3)}", b"window.setTimeout(o,200)}"),
@@ -111,15 +146,15 @@ THAY_JS = {
         (b'c.p="/"', b'c.p="/sim_ax3000c/"'),
         (
             b'function s(e){return"chunk-82690506"===e?c.p+"js/"+e+".9b4ab5b7.1726822665278.js?v=v21_clean_input":c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
-            b'function s(e){return c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js?v=v21_fw053_stable"}',
+            b'function s(e){return c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js?v=__FTC_ASSET_V__"}',
         ),
         (
             b'function s(e){return c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js"}',
-            b'function s(e){return c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js?v=v21_fw053_stable"}',
+            b'function s(e){return c.p+"js/"+({}[e]||e)+".9b4ab5b7.1726822665278.js?v=__FTC_ASSET_V__"}',
         ),
         (
             b'c.oe=function(e){throw console.error(e),e};',
-            b'var _ce=c.e;c.e=function(e){return _ce(e).catch(function(){return a[e]=void 0,r[e]=void 0,_ce(e)})};c.oe=function(e){console.warn("[ChunkError]",e)};',
+            b'c._ce=c.e,c.e=function(e){return c._ce(e).catch(function(){return a[e]=void 0,r[e]=void 0,c._ce(e)})},c.oe=function(e){console.warn("[ChunkError]",e)};',
         ),
         (
             b'v.onError(function(e){if("MODULE_NOT_FOUND"!==e.code)throw e;v.push("/404")})',
@@ -136,6 +171,7 @@ THAY_JS = {
         (b'r.a.post("/ubus"', b'r.a.post("/sim_ax3000c/ubus"'),
         (b'.get("/i18n"', b'.get("/sim_ax3000c/i18n"'),
         (b'.get("/views/"', b'.get("/sim_ax3000c/views/"'),
+        (b'"/icons/', b'"/sim_ax3000c/icons/'),
         (b"15e3", b"6e4"),
     ],
 }
@@ -143,11 +179,78 @@ THAY_JS = {
 THAY_CSS = {
     "css__app.06c49f94.css": [
         (b"url(/icons/", b"url(/sim_ax3000c/icons/"),
+        (
+            b'font-family:Noto Sans;src:url(../fonts/NotoSans-Regular.2a1861cd.ttf) format("truetype")',
+            b'font-family:Noto Sans;font-display:swap;src:url(../fonts/NotoSans-Regular.2a1861cd.ttf) format("truetype")',
+        ),
+        (
+            b"body{font-family:Noto Sans;background-color:#fff}",
+            b"body{font-family:'Noto Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background-color:#fff}",
+        ),
+        (
+            b".oui-filebrowser .selected{background-color:#cce8ff}",
+            b".oui-filebrowser .selected{background-color:#cce8ff}"
+            b".aside-footer-right{height:50px;line-height:50px;text-decoration:underline}"
+            b".aside-footer-left{height:50px;line-height:50px;font-weight:400;font-size:14px;color:#8c8c8c;cursor:pointer}"
+            b".aside-footer-left .logout{background-image:url(/sim_ax3000c/icons/log-out.svg);display:inline-block;width:16px;height:16px;background-repeat:no-repeat;margin-left:8px;margin-bottom:-4px}"
+            b"@media(max-width:960px){"
+            b"html,body,#app{max-width:100%;overflow-x:hidden}"
+            b".login-fpt{display:flex;flex-direction:column;align-items:center;padding:16px}"
+            b".login-fpt .el-col-12{width:100%!important;float:none}"
+            b".login-fpt .el-col-12:first-child{display:none}"
+            b".logo-fpt{display:block;width:auto!important;max-width:220px!important;height:auto!important;margin:16px auto 8px!important}"
+            b".login-form{width:100%!important;max-width:420px!important;margin:0 auto!important}"
+            b".el-main{padding:12px!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}"
+            b".el-table,.el-form{max-width:100%!important;overflow-x:auto!important}"
+            b"}",
+        ),
     ],
 }
 
 TEP_FTC_JS = os.path.join(_HERE, "ftc", "ftc-ax3000c.js")
-THE_CHEN = b"<script src=/sim_ax3000c/ftc-ax3000c.js?v=v21_fw053_stable></script>"
+_ASSET_V_PLACEHOLDER = b"__FTC_ASSET_V__"
+
+
+def _tinh_phien_ban_tai_nguyen():
+    """Phien ban (16 hex) cua bo JS/CSS da va: doi khi bang va hoac tep firmware tham chieu doi.
+
+    Ten tep goc (vd app.9b4ab5b7...js) la hash cua firmware CHUA va nen khong du de pha cache.
+    Truoc 2026-11-12, index.html van tro ?v=v21_clean_input trong khi tep tra
+    "immutable" 1 nam -> may da mo truoc ban va 10/11 tiep tuc chay app.js cu (trang man/giat).
+    """
+    h = hashlib.sha256(b"ax3000c-fw053-assets-v2\n")
+    h.update(repr(sorted(THAY_JS.items())).encode("utf-8"))
+    h.update(repr(sorted(THAY_CSS.items())).encode("utf-8"))
+    try:
+        for ten in sorted(os.listdir(_goc.GOC_WWW)):
+            if ten.endswith((".js", ".css")):
+                kich_thuoc = os.path.getsize(os.path.join(_goc.GOC_WWW, ten))
+                h.update(ten.encode("utf-8") + b":" + str(kich_thuoc).encode("ascii") + b"\n")
+    except OSError:
+        pass
+    return h.hexdigest()[:16]
+
+
+def _tinh_phien_ban_ftc_js():
+    try:
+        with open(TEP_FTC_JS, "rb") as f:
+            return hashlib.sha256(f.read().replace(b"\r\n", b"\n")).hexdigest()[:16]
+    except OSError:
+        return "0" * 16
+
+
+ASSET_V = _tinh_phien_ban_tai_nguyen()
+FTC_JS_V = _tinh_phien_ban_ftc_js()
+THE_CHEN = b"<script src=/sim_ax3000c/ftc-ax3000c.js?v=" + FTC_JS_V.encode("ascii") + b"></script>"
+CACHE_CO_PHIEN_BAN = "public, max-age=31536000, immutable"
+# URL khong mang dung phien ban hien tai (chi app.js cu trong cache moi goi): luon hoi lai
+# server (ETag -> 304). Khong dung "no-cache" vi run_all.py bo header do voi tep tinh.
+CACHE_CHUA_PHIEN_BAN = "public, max-age=0, must-revalidate"
+# Anh/font/icon cua firmware khong bi va va khong doi -> cache 7 ngay.
+CACHE_TEP_TINH_KHAC = "public, max-age=604800"
+_RE_TAI_NGUYEN_INDEX = re.compile(
+    rb"((?:href|src)=/sim_ax3000c/(?:js|css)/[^\s>?]+\.(?:js|css))(?:\?v=[^\s>]*)?"
+)
 _PREPATCHED_CACHE = {}
 _CACHE_LOCK = threading.RLock()
 _GZIP_EXTS = {".html", ".js", ".css", ".json", ".svg", ".ttf", ".woff", ".ico"}
@@ -274,6 +377,14 @@ def _dong_goi_cache(raw_bytes, allow_gzip=True):
     return {"raw": raw_bytes, "gzip": gz_bytes, "etag": etag}
 
 
+def _ten_tep_ftc(duong_dan):
+    """Map ca /sim_ax3000c/... lan /... ve ten tep phang trong reference/www."""
+    p = duong_dan.split("?")[0].split("#")[0]
+    if p.startswith("/sim_ax3000c/"):
+        p = p[len("/sim_ax3000c"):]
+    return _goc._ten_tep(p)
+
+
 def _lay_cache_tep(cache_key, builder_fn, allow_gzip=True):
     entry = _PREPATCHED_CACHE.get(cache_key)
     if entry is not None:
@@ -288,6 +399,89 @@ def _lay_cache_tep(cache_key, builder_fn, allow_gzip=True):
         entry = _dong_goi_cache(raw_bytes, allow_gzip=allow_gzip)
         _PREPATCHED_CACHE[cache_key] = entry
         return entry
+
+
+def _doc_va_va_tep(ten):
+    p_tep = os.path.join(_goc.GOC_WWW, ten)
+    if not os.path.isfile(p_tep):
+        return None
+    duoi = os.path.splitext(ten)[1].lower()
+    with open(p_tep, "rb") as f:
+        data = f.read()
+    if ten in THAY_JS:
+        for cu, moi in THAY_JS[ten]:
+            data = data.replace(cu, moi)
+    if ten in THAY_CSS:
+        for cu, moi in THAY_CSS[ten]:
+            data = data.replace(cu, moi)
+    if duoi in (".js", ".css"):
+        data = data.replace(_ASSET_V_PLACEHOLDER, ASSET_V.encode("ascii"))
+    return data
+
+
+def _build_index_html():
+    with open(os.path.join(_goc.GOC_WWW, "__ROOT__index.html"), "rb") as f:
+        html = f.read()
+    # Loai bo 87 the <link rel=prefetch> gay nghen mang va trang man tren di dong
+    html = re.sub(rb"<link\b[^>]*\brel=prefetch\b[^>]*>", b"", html)
+    # Rewrite asset paths sang namespace /sim_ax3000c/ de tranh 404 khi load qua Portal iframe
+    html = html.replace(b"href=/css/", b"href=/sim_ax3000c/css/")
+    html = html.replace(b"href=/js/", b"href=/sim_ax3000c/js/")
+    html = html.replace(b"src=/js/", b"src=/sim_ax3000c/js/")
+    html = html.replace(b"href=/icons/", b"href=/sim_ax3000c/icons/")
+    html = html.replace(b"src=/icons/", b"src=/sim_ax3000c/icons/")
+    html = html.replace(b"src=/img/", b"src=/sim_ax3000c/img/")
+    # Thay favicon 192 KB trong iframe bang inline icon 0-byte de trang tai xong nhanh hon
+    html = html.replace(b"<link rel=icon href=/logo-fpt.ico>", b'<link rel=icon href="data:,">')
+    # Gan ?v=<ASSET_V> cho MOI tep JS/CSS -> index.html (no-cache) luon tro URL moi
+    html = _RE_TAI_NGUYEN_INDEX.sub(lambda m: m.group(1) + b"?v=" + ASSET_V.encode("ascii"), html)
+    # Man cho tuc thi 0ms trong luc trinh duyet tai va giai ma bundle Vue (tu bien mat khi Vue mount)
+    html = html.replace(
+        b"<div id=app></div>",
+        b'<div id=app><div id=ftc-ax3000c-boot style="min-height:100vh;display:flex;align-items:center;'
+        b'justify-content:center;font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;'
+        b'color:#555;background:#fff">' + "\u0110ang t\u1ea3i giao di\u1ec7n thi\u1ebft b\u1ecb\u2026".encode("utf-8") + b'</div></div>',
+        1,
+    )
+    # Chen TRUOC bundle de script chay truoc khi SPA doc sessionStorage
+    html = html.replace(b"<script src=/sim_ax3000c/js/chunk-vendors", THE_CHEN + b"<script src=/sim_ax3000c/js/chunk-vendors", 1)
+    html = html.replace(b"<script src=/js/chunk-vendors", THE_CHEN + b"<script src=/js/chunk-vendors", 1)
+    return html
+
+
+def _doc_ftc_js():
+    with open(TEP_FTC_JS, "rb") as _f:
+        return _f.read()
+
+
+def _prewarm_tai_nguyen():
+    """Nap va nen Gzip san cac tep cot loi trong RAM luc khoi dong de tranh nghen CPU khi dong KTV vao cung luc."""
+    try:
+        _lay_cache_tep("index_html", _build_index_html, allow_gzip=True)
+        _lay_cache_tep("ftc_js", _doc_ftc_js, allow_gzip=True)
+        cac_tep = (
+            "css__app.06c49f94.css",
+            "css__chunk-vendors.7705225a.css",
+            "js__app.9b4ab5b7.1726822665278.js",
+            "js__chunk-vendors.9b4ab5b7.1726822665278.js",
+            "js__chunk-44bc1f1e.9b4ab5b7.1726822665278.js",
+            "js__chunk-47368b9a.9b4ab5b7.1726822665278.js",
+            "js__chunk-b90fa57a.9b4ab5b7.1726822665278.js",
+            "js__chunk-2d0b6e5b.9b4ab5b7.1726822665278.js",
+            "js__chunk-2d237504.9b4ab5b7.1726822665278.js",
+            "js__chunk-2d0c8817.9b4ab5b7.1726822665278.js",
+            "js__chunk-7266f7c8.9b4ab5b7.1726822665278.js",
+            "js__chunk-82690506.9b4ab5b7.1726822665278.js",
+            "js__chunk-2d0e5bff.9b4ab5b7.1726822665278.js",
+        )
+        for ten in cac_tep:
+            duoi = os.path.splitext(ten)[1].lower()
+            _lay_cache_tep("asset:" + ten, lambda t=ten: _doc_va_va_tep(t), allow_gzip=(duoi in _GZIP_EXTS))
+    except Exception:
+        pass
+
+
+threading.Thread(target=_prewarm_tai_nguyen, daemon=True, name="ax3000c_prewarm").start()
 
 
 class Handler(_goc.H):
@@ -329,6 +523,15 @@ class Handler(_goc.H):
         key = self._client_key()
         _goc.KHO.bind(key)
         return key
+
+    def _cache_theo_phien_ban(self, phien_ban):
+        """Chi URL mang dung ?v=<phien ban hien tai> moi duoc cache immutable."""
+        from urllib.parse import parse_qs, urlparse
+        try:
+            v = (parse_qs(urlparse(self.path).query).get("v") or [""])[0]
+        except Exception:
+            v = ""
+        return CACHE_CO_PHIEN_BAN if v == phien_ban else CACHE_CHUA_PHIEN_BAN
 
     def _chap_nhan_gzip(self):
         ae = self.headers.get("Accept-Encoding", "") or ""
@@ -419,61 +622,55 @@ class Handler(_goc.H):
                 200,
                 entry,
                 "text/javascript",
-                cache_control="public, max-age=86400, stale-while-revalidate=86400",
+                cache_control=self._cache_theo_phien_ban(FTC_JS_V),
             )
         if p in ("", "/") and not self._dang_sap():
-            def _build_index():
-                with open(os.path.join(_goc.GOC_WWW, "__ROOT__index.html"), "rb") as f:
-                    html = f.read()
-                # Loai bo 87 the <link rel=prefetch> gay nghen mang va trang man tren di dong
-                html = re.sub(rb"<link\b[^>]*\brel=prefetch\b[^>]*>", b"", html)
-                # Rewrite asset paths sang namespace /sim_ax3000c/ de tranh 404 khi load qua Portal iframe
-                html = html.replace(b"href=/css/", b"href=/sim_ax3000c/css/")
-                html = html.replace(b"href=/js/", b"href=/sim_ax3000c/js/")
-                html = html.replace(b"src=/js/", b"src=/sim_ax3000c/js/")
-                html = html.replace(b"href=/icons/", b"href=/sim_ax3000c/icons/")
-                html = html.replace(b"src=/icons/", b"src=/sim_ax3000c/icons/")
-                html = html.replace(b"src=/img/", b"src=/sim_ax3000c/img/")
-                html = html.replace(b"href=/logo-fpt.ico", b"href=/sim_ax3000c/logo-fpt.ico")
-                # chen TRUOC bundle de script chay truoc khi SPA doc sessionStorage
-                html = html.replace(b"<script src=/sim_ax3000c/js/chunk-vendors", THE_CHEN + b"<script src=/sim_ax3000c/js/chunk-vendors", 1)
-                html = html.replace(b"<script src=/js/chunk-vendors", THE_CHEN + b"<script src=/js/chunk-vendors", 1)
-                return html
-
-            entry = _lay_cache_tep("index_html", _build_index, allow_gzip=True)
+            entry = _lay_cache_tep("index_html", _build_index_html, allow_gzip=True)
+            from urllib.parse import parse_qs as _pqs
+            _qs = _pqs(self.path.split("?", 1)[1] if "?" in self.path else "")
+            if _qs.get("autologin", [None])[0] == "1":
+                _auto_sid = "ftc" + os.urandom(13).hex()
+                _goc._phien[_auto_sid] = {"user": "admin", "luc": time.time(), "client_key": client_key}
+                _inj = f'<script>try{{sessionStorage.setItem("sid",{json.dumps(_auto_sid)});}}catch(e){{}}</script>'.encode("utf-8")
+                _raw = entry["raw"].replace(b"<script src=", _inj + b"<script src=", 1)
+                return self._gui_ftc(200, _raw, "text/html", cache_control="no-store")
             return self._gui_ftc(200, entry, "text/html", cache_control="no-cache, must-revalidate")
-        ten = _goc._ten_tep(self.path)
+        ten = _ten_tep_ftc(self.path)
         if not self._dang_sap():
             p_tep = os.path.join(_goc.GOC_WWW, ten)
             if os.path.isfile(p_tep):
                 duoi = os.path.splitext(ten)[1].lower()
                 kieu = _goc.KIEU_MIME.get(duoi, "application/octet-stream")
                 allow_gz = duoi in _GZIP_EXTS
-
-                def _build_static():
-                    with open(p_tep, "rb") as f:
-                        data = f.read()
-                    if ten in THAY_JS:
-                        for cu, moi in THAY_JS[ten]:
-                            data = data.replace(cu, moi)
-                    if ten in THAY_CSS:
-                        for cu, moi in THAY_CSS[ten]:
-                            data = data.replace(cu, moi)
-                    return data
-
-                entry = _lay_cache_tep("asset:" + ten, _build_static, allow_gzip=allow_gz)
+                entry = _lay_cache_tep("asset:" + ten, lambda: _doc_va_va_tep(ten), allow_gzip=allow_gz)
                 return self._gui_ftc(
                     200,
                     entry,
                     kieu,
-                    cache_control="public, max-age=31536000, immutable",
+                    cache_control=(
+                        self._cache_theo_phien_ban(ASSET_V) if duoi in (".js", ".css")
+                        else CACHE_TEP_TINH_KHAC
+                    ),
                 )
         return super().do_GET()
 
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def do_HEAD(self):
         self._bind_client()
-        # BaseHTTPRequestHandler goc khong co HEAD; tra header cho gon
-        self.send_response(200 if os.path.isfile(os.path.join(_goc.GOC_WWW, _goc._ten_tep(self.path))) else 404)
+        p = self.path.split("?")[0].split("#")[0]
+        ok = (
+            p.rstrip("/") in ("", "/sim-reset-session", "/api/reset")
+            or p in ("/ftc-ax3000c.js", "/sim_ax3000c/ftc-ax3000c.js", "/ftc-dat-bai")
+            or os.path.isfile(os.path.join(_goc.GOC_WWW, _ten_tep_ftc(self.path)))
+        )
+        self.send_response(200 if ok else 404)
         self.end_headers()
 
 

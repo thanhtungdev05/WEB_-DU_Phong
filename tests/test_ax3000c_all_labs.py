@@ -253,7 +253,9 @@ class TestAX3000CAllLabs(unittest.TestCase):
         app_uncompressed = _gzip.decompress(body_gz)
         # Kiểm tra các bản vá chống trắng màn hình trong app.js
         self.assertIn(b'state:{menus:[],hostname:"",lang:"en"}', app_uncompressed)
-        self.assertIn(b"v21_fw053_stable", app_uncompressed)
+        # Moi chunk tai qua s(e) phai mang ?v=<phien ban noi dung hien tai> (pha cache khi doi ban va)
+        self.assertIn(b".js?v=" + ax3000c.ASSET_V.encode("ascii"), app_uncompressed)
+        self.assertNotIn(b"__FTC_ASSET_V__", app_uncompressed)
         self.assertIn(b'console.warn("[Router]"', app_uncompressed)
         self.assertIn(b'console.warn("[ChunkError]"', app_uncompressed)
 

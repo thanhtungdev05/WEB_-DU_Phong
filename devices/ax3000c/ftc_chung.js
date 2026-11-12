@@ -85,11 +85,16 @@ window.FTC_AX3000C = window.FTC_AX3000C || {};
   F.datTrangThaiBai = function (simWin, bai) {
     try {
       if (!simWin || simWin._ftcDaDatBai) return;
-      const oLogin = String(simWin.location.href).indexOf('logout=1') !== -1 ||
-        !!simWin.document.querySelector('.login-fpt');
+      let hasSid = false;
+      try { hasSid = !!(simWin.sessionStorage && simWin.sessionStorage.getItem('sid')); } catch (e) {}
+      const hrefStr = String((simWin.location && simWin.location.href) || '');
+      const hashStr = String((simWin.location && simWin.location.hash) || '');
+      const oLogin = !hasSid || hrefStr.indexOf('logout=1') !== -1 ||
+        hashStr.indexOf('login') !== -1 ||
+        !!(simWin.document && simWin.document.querySelector('.login-fpt'));
       if (!oLogin) return;
       simWin._ftcDaDatBai = true;
-      simWin.fetch('/sim_ax3000c/ftc-dat-bai?bai=' + bai, { cache: 'no-store' });
+      simWin.fetch('/sim_ax3000c/ftc-dat-bai?bai=' + bai, { cache: 'no-store', credentials: 'same-origin' });
     } catch (e) { }
   };
 

@@ -38,56 +38,33 @@
 
   try {
     var initHash = String(location.hash || '').toLowerCase();
+    var isAutoLogin = location.href.indexOf('autologin=1') !== -1;
+    var mT = /[?&]_t=([^&#]+)/.exec(location.search || '');
+    var curTabT = mT ? mT[1] : '';
+    var prevTabT = sessionStorage.getItem('ftc_ax3000c_tab_t') || '';
+    var isNewLaunch = !!(curTabT && curTabT !== prevTabT);
     if (
-      location.href.indexOf('logout=1') !== -1 ||
+      location.href.indexOf('logout=1') !== -1 || isNewLaunch || (!isAutoLogin && (
       initHash === '' ||
       initHash === '#' ||
       initHash === '#/' ||
-      initHash.indexOf('#/login') === 0
+      initHash.indexOf('#/login') === 0))
     ) {
       sessionStorage.removeItem('sid');
-      if (location.href.indexOf('logout=1') !== -1) {
-        sessionStorage.clear();
-        localStorage.clear();
+      if (location.href.indexOf('logout=1') !== -1 || isNewLaunch) {
+        sessionStorage.removeItem('ftc_vua_luu');
+        sessionStorage.removeItem('ftc_ax3000c_recover');
+        for (var ki = sessionStorage.length - 1; ki >= 0; ki--) {
+          var ks = sessionStorage.key(ki);
+          if (ks && ks.indexOf('ftc_luu:') === 0) sessionStorage.removeItem(ks);
+        }
+        if (location.href.indexOf('logout=1') !== -1) {
+          sessionStorage.clear();
+          localStorage.clear();
+        }
       }
     }
-  } catch (e) {}
-
-  // 0. Cache-bust chunk-82690506 de buoc trinh duyet tai dung ban moi co el-input thay vi cache cu
-  try {
-    var origCreateElement = document.createElement;
-    document.createElement = function (tagName) {
-      var el = origCreateElement.apply(this, arguments);
-      if (el && String(tagName).toLowerCase() === 'script') {
-        var origSetAttr = el.setAttribute;
-        el.setAttribute = function (name, val) {
-          if (name === 'src' && typeof val === 'string' && val.indexOf('chunk-82690506') !== -1 && val.indexOf('v=') === -1) {
-            val += (val.indexOf('?') === -1 ? '?' : '&') + 'v=input_v3';
-          }
-          return origSetAttr.call(this, name, val);
-        };
-        try {
-          var desc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
-          Object.defineProperty(el, 'src', {
-            get: function () {
-              return (desc && desc.get) ? desc.get.call(this) : this.getAttribute('src');
-            },
-            set: function (val) {
-              if (typeof val === 'string' && val.indexOf('chunk-82690506') !== -1 && val.indexOf('v=') === -1) {
-                val += (val.indexOf('?') === -1 ? '?' : '&') + 'v=input_v3';
-              }
-              if (desc && desc.set) {
-                desc.set.call(this, val);
-              } else {
-                origSetAttr.call(this, 'src', val);
-              }
-            },
-            configurable: true
-          });
-        } catch (e) {}
-      }
-      return el;
-    };
+    if (curTabT) sessionStorage.setItem('ftc_ax3000c_tab_t', curTabT);
   } catch (e) {}
 
   var TIEN_TO = 'ftc_luu:';
@@ -126,11 +103,20 @@
   }
 
   function baoPortalDaLuu() {
+    var notified = false;
     try {
       if (window.parent && window.parent !== window && typeof window.parent.onSimulatorSave === 'function') {
         window.parent.onSimulatorSave(window);
+        notified = true;
       }
     } catch (e) {}
+    if (!notified) {
+      try {
+        if (window.top && window.top !== window) {
+          window.top.postMessage({ type: 'FTC_SAVE_SUCCESS', source: 'ax3000c' }, '*');
+        }
+      } catch (e) {}
+    }
   }
 
   function daLuuXong() {
@@ -250,8 +236,6 @@
       });
     } catch (e) {}
   }
-  setInterval(ganNhan, 300);
-  document.addEventListener('DOMContentLoaded', ganNhan);
 
   // Vue Router (hash mode) doi route bang pushState -> khong co 'hashchange'; do route dinh ky
   var routeCu = routeHienTai();
@@ -261,7 +245,18 @@
   }
   window.addEventListener('hashchange', doRoute);
   window.addEventListener('popstate', doRoute);
-  setInterval(doRoute, 250);
+  // Bat pushState/replaceState de doi route duoc nhan NGAY (khong can do dinh ky 250ms).
+  ['pushState', 'replaceState'].forEach(function (ten) {
+    try {
+      var gocHam = history[ten];
+      if (typeof gocHam !== 'function') return;
+      history[ten] = function () {
+        var kq = gocHam.apply(this, arguments);
+        try { doRoute(); } catch (e) {}
+        return kq;
+      };
+    } catch (e) {}
+  });
   capNhatTheoRoute();
 
   // 4. Triet tieu hoan toan man hinh cho / loading mask "Currently in agent mode" va khong de do tre
@@ -285,25 +280,103 @@
       }
     } catch (e) {}
   }
-  setInterval(trietTieuLoadingTre, 250);
   document.addEventListener('DOMContentLoaded', trietTieuLoadingTre);
 
-  // 5. Tu phuc hoi neu #app bi trang (0 phan tu con) do mang di dong ngat quang luc nap chunk
+  // 5. Bo lap lich DUY NHAT (2026-11-12) thay cho 3 vong setInterval 250-300ms (ganNhan, doRoute,
+  //    trietTieuLoadingTre) chay lien tuc ca khi trang dung yen -> giat tren may yeu.
+  //    - DOM doi (Vue ve lai, mo trang, hien mat na loading) -> quet sau QUET_TRE_MS (gom nhieu thay doi).
+  //    - Du phong moi QUET_DU_PHONG_MS, tam dung khi tab bi an.
+  //    - Chi theo doi childList/characterData: datNhan chi ghi thuoc tinh -> khong tu kich hoat lai.
+  var QUET_TRE_MS = 120;
+  var QUET_DU_PHONG_MS = 1500;
+  var henQuet = 0;
+  function quetNgay() {
+    if (henQuet) { clearTimeout(henQuet); henQuet = 0; }
+    doRoute();
+    trietTieuLoadingTre();
+    ganNhan();
+    anThongBaoNeuDaVe();
+  }
+  function lichQuet() {
+    if (!henQuet) henQuet = setTimeout(quetNgay, QUET_TRE_MS);
+  }
+  try {
+    if (typeof MutationObserver === 'function') {
+      new MutationObserver(lichQuet).observe(document.documentElement, {
+        childList: true, subtree: true, characterData: true
+      });
+    }
+  } catch (e) {}
+  setInterval(function () { if (!document.hidden) quetNgay(); }, QUET_DU_PHONG_MS);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) lichQuet(); });
+  document.addEventListener('DOMContentLoaded', quetNgay);
+
+  // 6. Tu phuc hoi khi #app bi trang (mang chap chon luc nap bundle/chunk).
+  //    Truoc day: chi 1 lan, va location.replace(... + '#/login') khi URL chi khac phan hash thi
+  //    KHONG tai lai trang -> co the dung trang mai. Nay:
+  //    - Vue CHUA mount sau 3.5s (bundle loi) -> tai lai that (location.reload).
+  //    - Vue DA mount nhung route chua ve (chunk dang tai tren mang yeu) -> cho them toi 15s, hien
+  //      thong bao "Dang tai..." thay cho man trang, roi moi tai lai.
+  //    - Toi da SO_LAN_CUU_TOI_DA lan moi phien; het luot -> bao KTV kiem tra mang, khong lap vo han.
+  var KHOA_CUU = 'ftc_ax3000c_recover';
+  var SO_LAN_CUU_TOI_DA = 3;
+  var MOC_KIEM_MS = [3500, 8000, 15000];
+  var ID_THONG_BAO = 'ftc-ax3000c-dang-tai';
+  function appDaVe() {
+    var appEl = document.getElementById('app');
+    return !!(appEl && appEl.children.length > 0);
+  }
+  function hienThongBao(noiDung) {
+    try {
+      var o = document.getElementById(ID_THONG_BAO);
+      if (!o) {
+        o = document.createElement('div');
+        o.id = ID_THONG_BAO;
+        o.setAttribute('role', 'status');
+        o.setAttribute('aria-live', 'polite');
+        o.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;' +
+          'justify-content:center;padding:16px;text-align:center;font:14px/1.5 Arial,sans-serif;' +
+          'color:#444;background:#fff;z-index:2147483647';
+        (document.body || document.documentElement).appendChild(o);
+      }
+      o.textContent = noiDung;
+    } catch (e) {}
+  }
+  function anThongBaoNeuDaVe() {
+    if (!appDaVe()) return;
+    var o = document.getElementById(ID_THONG_BAO);
+    if (o && o.parentNode) o.parentNode.removeChild(o);
+    try { sessionStorage.removeItem(KHOA_CUU); } catch (e) {}
+  }
+  function taiLaiDeCuu() {
+    var n = 0;
+    try { n = parseInt(sessionStorage.getItem(KHOA_CUU) || '0', 10) || 0; } catch (e) {}
+    if (n >= SO_LAN_CUU_TOI_DA) {
+      hienThongBao('Không tải được giao diện thiết bị. Vui lòng kiểm tra kết nối mạng rồi bấm F5.');
+      return;
+    }
+    hienThongBao('Đang tải lại giao diện thiết bị…');
+    try {
+      sessionStorage.setItem(KHOA_CUU, String(n + 1));
+      sessionStorage.removeItem('sid');
+      history.replaceState(null, '', location.pathname + location.search + '#/login');
+    } catch (e) {}
+    location.reload();
+  }
+  function kiemTraTrang(lan) {
+    try {
+      if (appDaVe()) { anThongBaoNeuDaVe(); return; }
+      var appEl = document.getElementById('app');
+      var daMount = !!(appEl && appEl.__vue__);
+      if (daMount && lan < MOC_KIEM_MS.length - 1) {
+        hienThongBao('Đang tải giao diện thiết bị…');
+        setTimeout(function () { kiemTraTrang(lan + 1); }, MOC_KIEM_MS[lan + 1] - MOC_KIEM_MS[lan]);
+        return;
+      }
+      taiLaiDeCuu();
+    } catch (e) {}
+  }
   window.addEventListener('load', function () {
-    setTimeout(function () {
-      try {
-        var appEl = document.getElementById('app');
-        if (appEl && appEl.children.length === 0) {
-          var daThu = sessionStorage.getItem('ftc_ax3000c_recover');
-          if (!daThu) {
-            sessionStorage.setItem('ftc_ax3000c_recover', '1');
-            sessionStorage.removeItem('sid');
-            location.replace(location.pathname + location.search + '#/login');
-          }
-        } else {
-          sessionStorage.removeItem('ftc_ax3000c_recover');
-        }
-      } catch (e) {}
-    }, 3500);
+    setTimeout(function () { kiemTraTrang(0); }, MOC_KIEM_MS[0]);
   });
 })();

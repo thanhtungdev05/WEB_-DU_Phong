@@ -953,7 +953,7 @@ def _xu_ly_ubus(than):
     # Ban gia lap khong goi duoc nha cung cap DDNS that nen luon ra "Fail" —
     # dung ket qua do duoc voi cau hinh hien co; tai khoan that CHUA DO.
     if doi_tuong == "ddns" and ham == "set":
-        bat = ((KHO.doc(KHOA_CAY_UCI) or {}).get("ddns", {})
+        bat = ((KHO.doc_tho(KHOA_CAY_UCI) or {}).get("ddns", {})
                .get("myddns_ipv4", {}).get("enabled")) == "1"
         if bat:
             st = {"address": "", "datetime": str(int(time.time())), "status": "Fail"}
@@ -986,7 +986,7 @@ def _xu_ly_ubus(than):
             d = dict(d)
             if doi_tuong == "aei-route":
                 # nhom 12 (rt_ngoai): gateway ngoai mang LAN -> "Status":"false"
-                lan = ((KHO.doc(KHOA_CAY_UCI) or {}).get("network") or {}).get("lan")
+                lan = ((KHO.doc_tho(KHOA_CAY_UCI) or {}).get("network") or {}).get("lan")
                 d.pop("Status", None)
                 d["Status"] = "true" if uci_tac_dong.trong_lan(lan, d.get("Gateway")) else "false"
             ds.append(d)
