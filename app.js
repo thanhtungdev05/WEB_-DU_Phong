@@ -2930,6 +2930,24 @@
     return Boolean(element && attemptId && element._ftcModifiedAttemptId === attemptId);
   }
 
+  // Session-level evidence survives when the simulator re-renders its inputs
+  // (e.g. after Apply), where the per-element flag above is lost.
+  function hasCurrentAttemptRuleInteraction(doc, element, lesson) {
+    const attemptId = getCurrentAttemptId();
+    if (!attemptId || !doc || !element || !_trackingSession || !_trackingSession.interactedRules) return false;
+    const rules = lesson && lesson.grading && Array.isArray(lesson.grading.rules)
+      ? lesson.grading.rules
+      : [];
+    return rules.some(rule => {
+      if (!_trackingSession.interactedRules[rule.id]) return false;
+      const selector = rule.interactionSelector || rule.selector;
+      if (!selector) return false;
+      try {
+        return Array.from(doc.querySelectorAll(selector)).includes(element);
+      } catch (error) { return false; }
+    });
+  }
+
   function prepareAx3000gzV2Autofill(doc, isLoginPage) {
     if (!isAx3000gzV2Active() || !doc || !doc.querySelectorAll) return;
     try {
@@ -3476,7 +3494,7 @@
           try {
             doc.querySelectorAll(selector).forEach(el => {
               if (isAx3000gzV2Attempt) {
-                if (hasCurrentAttemptInteraction(el)) return;
+                if (hasCurrentAttemptInteraction(el) || hasCurrentAttemptRuleInteraction(doc, el, _currentLesson)) return;
               } else if (el.dataset.ftcCleared || el._ftcUserModified) {
                 return;
               }

@@ -95,7 +95,8 @@ assert.strictEqual(
   "inputType === 'insertReplacementText'",
   "if (requiresVerifiedReset && resetSucceeded !== true)",
   "msg = 'Chưa thao tác trường này trong lượt làm hiện tại'",
-  "msg = 'Chưa bấm Apply sau khi thay đổi trong lượt làm hiện tại'"
+  "msg = 'Chưa bấm Apply sau khi thay đổi trong lượt làm hiện tại'",
+  "hasCurrentAttemptInteraction(el) || hasCurrentAttemptRuleInteraction(doc, el, _currentLesson)"
 ].forEach(marker => assert.ok(appJs.includes(marker), `app.js must retain: ${marker}`));
 assert.ok(
   !appJs.includes('hasCurrentAttemptInteraction(input) || input === doc.activeElement'),
