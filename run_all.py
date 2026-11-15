@@ -29,6 +29,100 @@ try:
 except ImportError:
     db_guardian = None
 
+import json as _json_mod
+try:
+    import mesh_sync_adapter
+except ImportError:
+    mesh_sync_adapter = None
+
+def _sanitize_ktv_id_fallback(raw_id: str) -> str:
+    if mesh_sync_adapter and hasattr(mesh_sync_adapter, 'sanitize_base_ktv_id'):
+        return mesh_sync_adapter.sanitize_base_ktv_id(raw_id)
+    cleaned = re.sub(r'[^A-Za-z0-9_-]', '', str(raw_id or ''))
+    return cleaned[:64] or 'default'
+
+_MESH_NODE_PREFIX_RE = re.compile(r'^/mesh-node/([A-Za-z0-9_-]{1,64})(?:/(.*)|$)$')
+_MESH_NODE_REF_RE = re.compile(r'/mesh-node/([A-Za-z0-9_-]{1,64})(?:/(sim_[A-Za-z0-9_]+)(?=/|\?|$))?')
+
+
+def _build_mesh_node_shim(node_id: str, sim_id: str) -> bytes:
+    """Build lightweight iframe shim keeping paths/saves scoped to /mesh-node/<node_id>/<sim_id>."""
+    nid_js = _json_mod.dumps(node_id)
+    sid_js = _json_mod.dumps(sim_id)
+    script = (
+        f'<script data-fpt-mesh-node="1">(function(){{'
+        f'var N={nid_js},S={sid_js},P="/mesh-node/"+N+"/"+S;'
+        f'window.__FPT_MESH_NODE_ID=N;window.__FPT_SIM_ID=S;'
+        f'function rw(u){{'
+        f'if(typeof u!=="string")return u;'
+        f'if(!u||u[0]==="#"||/^(?:https?:|javascript:|data:|mailto:|blob:)/i.test(u)){{'
+        f'if(u.indexOf(location.origin)===0){{u=u.slice(location.origin.length);}}else{{return u;}}}}'
+        f'if(u.indexOf("/mesh-node/"+N+"/")===0||u==="/mesh-node/"+N)return u;'
+        f'if(u.indexOf("/"+S+"/")===0||u==="/"+S||u.indexOf("/"+S+"?")===0)return "/mesh-node/"+N+u;'
+        f'if(u[0]==="/"){{if(u.indexOf("/api/mesh-lab")===0)return u;return P+u;}}'
+        f'return u;}}'
+        f'function notifySave(url){{'
+        f'try{{var msg={{type:"fpt_mesh_fw_saved",nodeId:N,simId:S,url:String(url||""),ts:Date.now()}};'
+        f'if(window.top&&window.top!==window)window.top.postMessage(msg,window.location.origin);'
+        f'else if(window.parent&&window.parent!==window)window.parent.postMessage(msg,window.location.origin);'
+        f'}}catch(_e){{}}}}'
+        f'function isCfgWrite(method,url,bodyStr){{'
+        f'var m=String(method||"GET").toUpperCase(),u=String(url||""),b=String(bodyStr||"");'
+        f'if(m!=="POST"&&m!=="PUT"&&m!=="PATCH")return false;'
+        f'if(/login|logout|session_status/i.test(u))return false;'
+        f'if(/\\/ubus/i.test(u)){{if(!b)return false;return /(?:lan_set|wifi_set|wifiadv_set|wan_set|\\.set"|commit|apply|save)/i.test(b);}}'
+        f'return /_type=menuData|_type=hiddenData|\\/cgi-bin\\/|\\/api\\/|GponForm|\\.cgi|sim-state|live-sync/i.test(u);}}'
+        f'if(window.fetch){{var _of=window.fetch;window.fetch=function(input,init){{'
+        f'var u=(typeof input==="string")?input:(input&&input.url)||"";var ru=rw(u);'
+        f'var opts=init?Object.assign({{}},init):{{}};'
+        f'try{{var h=new Headers(opts.headers||(input&&input.headers)||{{}});h.set("X-Mesh-Node-ID",N);opts.headers=h;}}catch(_){{}}'
+        f'var m=(opts.method||(input&&input.method)||"GET");var b=opts.body||"";'
+        f'var arg=(typeof input==="string")?ru:(new Request(ru,input));'
+        f'var p=_of.call(this,arg,opts);'
+        f'if(isCfgWrite(m,ru,b)){{p.then(function(r){{if(r&&r.ok)notifySave(ru);}}).catch(function(){{}});}}'
+        f'return p;}};}}'
+        f'if(window.XMLHttpRequest){{'
+        f'var X=window.XMLHttpRequest.prototype,_oo=X.open,_os=X.send,_oh=X.setRequestHeader;'
+        f'X.open=function(m,u){{this.__fptM=m;this.__fptU=rw(String(u||""));'
+        f'var args=Array.prototype.slice.call(arguments);args[1]=this.__fptU;return _oo.apply(this,args);}};'
+        f'X.send=function(b){{var self=this;try{{_oh.call(this,"X-Mesh-Node-ID",N);}}catch(_){{}}'
+        f'if(isCfgWrite(self.__fptM,self.__fptU,typeof b==="string"?b:"")){{this.addEventListener("loadend",function(){{'
+        f'if(self.status>=200&&self.status<400)notifySave(self.__fptU);}});}}'
+        f'return _os.apply(this,arguments);}};}}'
+        f'function fixDom(){{'
+        f'var els=document.querySelectorAll("frame[src],iframe[src],form[action],a[href],script[src],link[href],img[src]");'
+        f'for(var i=0;i<els.length;i++){{var el=els[i];'
+        f'var attr=el.hasAttribute("src")?"src":(el.hasAttribute("action")?"action":"href");'
+        f'var v=el.getAttribute(attr);if(!v||v[0]!=="/")continue;'
+        f'var nv=rw(v);if(nv!==v)el.setAttribute(attr,nv);}}'
+        f'}}'
+        f'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",fixDom);else fixDom();'
+        f'document.addEventListener("submit",function(ev){{'
+        f'var f=ev.target;if(!f||!f.tagName)return;'
+        f'var act=f.getAttribute("action");if(act&&act[0]==="/")f.setAttribute("action",rw(act));'
+        f'var m=(f.getAttribute("method")||"GET").toUpperCase();'
+        f'if(m==="POST"&&!/login|wlogin/i.test(act||location.pathname))setTimeout(function(){{notifySave(act||location.pathname);}},350);'
+        f'}},true);'
+        f'}})();</script>'
+    )
+    return script.encode('utf-8')
+
+
+def _inject_mesh_node_shim(html_bytes: bytes, node_id: str, sim_id: str) -> bytes:
+    if not html_bytes or b'data-fpt-mesh-node="1"' in html_bytes:
+        return html_bytes
+    shim = _build_mesh_node_shim(node_id, sim_id)
+    lower = html_bytes.lower()
+    m_head = re.search(br'<head(?:\s[^>]*)?>', lower)
+    if m_head:
+        pos = m_head.end()
+        return html_bytes[:pos] + shim + html_bytes[pos:]
+    m_fs = re.search(br'<(?:frameset|body)(?:\s[^>]*)?>', lower)
+    if m_fs:
+        pos = m_fs.start()
+        return html_bytes[:pos] + shim + html_bytes[pos:]
+    return shim + html_bytes
+
 # Reconfigure stdout cho UTF-8 trên Windows
 if hasattr(sys.stdout, 'reconfigure'):
     try:
@@ -145,7 +239,7 @@ PORTAL_PATHS = {'/', '/index.html', '/styles.css', '/app.js', '/data.js', '/port
                 '/dashboard', '/dashboard/', '/dashboard-authen', '/dashboard-authen/',
                 '/admin', '/admin/', '/templates/Mau_Import_KTV.xlsx'}
 PORTAL_PREFIXES = ('/devices/', '/assets/', '/login/', '/api/',
-                   '/dashboard/', '/dashboard-authen/', '/admin/', '/admin-static/')
+                   '/dashboard/', '/dashboard-authen/', '/admin/', '/admin-static/', '/js/mesh-lab/')
 
 PUBLIC_ROOT_FILES = {
     '/index.html', '/portal.html', '/personal-dashboard.html', '/mesh-lab.html', '/styles.css', '/app.js', '/data.js', '/favicon.ico',
@@ -154,7 +248,7 @@ PUBLIC_ROOT_FILES = {
 DOWNLOADABLE_ROOT_FILES = {
     '/templates/Mau_Import_KTV.xlsx': 'Mau_Import_KTV.xlsx',
 }
-PUBLIC_ROOT_PREFIXES = ('/devices/', '/assets/', '/login/')
+PUBLIC_ROOT_PREFIXES = ('/devices/', '/assets/', '/login/', '/js/mesh-lab/')
 DASHBOARD_PUBLIC_PATHS = {
     '/', '/index.html', '/css/styles.css', '/css/dashboard-professional.css',
     '/js/app.js', '/js/system_monitor.js'
@@ -368,11 +462,18 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         request_url = urlparse(getattr(self, 'path', '/'))
         extension = os.path.splitext(request_url.path.lower())[1]
         download_filename = DOWNLOADABLE_ROOT_FILES.get(unquote(request_url.path))
-        cacheable_extensions = {'.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.avif', '.woff', '.woff2'}
+        cacheable_extensions = {
+            '.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.avif',
+            '.woff', '.woff2', '.ttf', '.eot', '.ico', '.map'
+        }
+        is_static = extension in cacheable_extensions
         version_tokens = [part[2:] for part in request_url.query.split('&') if part.startswith('v=')]
-        versioned_asset = extension in cacheable_extensions \
+        versioned_asset = is_static \
             and len(version_tokens) == 1 \
             and re.fullmatch(r'[0-9a-f]{16}', version_tokens[0]) is not None
+        has_content_hash = is_static and bool(
+            re.search(r'(?:^|[._-])[a-f0-9]{8,}(?:[._-]|$)', os.path.basename(request_url.path))
+        )
         has_cache_control = any(
             header.lower().startswith(b'cache-control:')
             for header in getattr(self, '_headers_buffer', [])
@@ -382,9 +483,9 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             for header in getattr(self, '_headers_buffer', [])
         )
         if not has_cache_control:
-            if versioned_asset:
+            if versioned_asset or has_content_hash:
                 self.send_header('Cache-Control', 'public, max-age=31536000, immutable')
-            elif extension in cacheable_extensions:
+            elif is_static:
                 self.send_header('Cache-Control', 'no-cache')
             elif request_url.path in HTML_DOCUMENT_PATHS:
                 # HTML must discover new content hashes immediately, while
@@ -404,8 +505,9 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         self.send_header('Referrer-Policy', 'strict-origin-when-cross-origin')
         self.send_header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
         self.send_header("Content-Security-Policy", "frame-ancestors 'self'")
-        if getattr(self, '_ktv_id', None) and 'ktv_client_id=' not in self.headers.get('Cookie', ''):
-            self.send_header('Set-Cookie', f'ktv_client_id={self._ktv_id}; Path=/; SameSite=Lax')
+        if not is_static:
+            if getattr(self, '_ktv_id', None) and 'ktv_client_id=' not in self.headers.get('Cookie', ''):
+                self.send_header('Set-Cookie', f'ktv_client_id={self._ktv_id}; Path=/; SameSite=Lax')
         SimpleHTTPRequestHandler.end_headers(self)
 
     def list_directory(self, path):
@@ -424,23 +526,53 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         return remote_ip
 
     def detect_simulator(self):
-        # 0. Các file/thư mục Portal luôn do Portal phục vụ (chống bị 'cướp' bởi Referer/Cookie)
-        path = self.path.split('?')[0]
-        
+        # 0. Tach prefix /mesh-node/<node_id>/... neu co (cach ly phien theo tung node tren so do Mesh)
+        path_part, sep_q, query_part = self.path.partition('?')
+        if not getattr(self, '_mesh_node_checked', False):
+            self._mesh_node_checked = True
+            self._mesh_node_id = None
+            self._mesh_node_invalid = False
+            if path_part == '/mesh-node' or path_part.startswith('/mesh-node/'):
+                m_mn = _MESH_NODE_PREFIX_RE.match(path_part)
+                if not m_mn:
+                    self._mesh_node_invalid = True
+                    return None
+                self._mesh_node_id = m_mn.group(1)
+                rest_path = '/' + (m_mn.group(2) or '').lstrip('/')
+                self.path = rest_path + (('?' + query_part) if sep_q else '')
+                path_part = rest_path
+
+        path = path_part
+        referer = self.headers.get('Referer', '')
+        ref_sim_id = None
+        if referer:
+            m_ref_mn = _MESH_NODE_REF_RE.search(referer)
+            if m_ref_mn:
+                if not self._mesh_node_id and not is_portal_path(path):
+                    self._mesh_node_id = m_ref_mn.group(1)
+                if m_ref_mn.group(2) and m_ref_mn.group(2) in SIM_MODULES:
+                    ref_sim_id = m_ref_mn.group(2)
+        if not self._mesh_node_id:
+            hdr_mn = (self.headers.get('X-Mesh-Node-ID') or '').strip()
+            if hdr_mn and mesh_sync_adapter and mesh_sync_adapter.is_valid_node_id(hdr_mn) and not is_portal_path(path):
+                self._mesh_node_id = hdr_mn
+
         # Ngoại lệ cho BE12000 và AX3000GZ_V2: các thiết bị này dùng /?_type=... cho mọi AJAX request.
         # Nếu path là / nhưng có tham số _type=, ta bỏ qua check Portal để nó được
         # route xuống simulator dựa vào Referer/Cookie.
         if path == '/' and ('?_type=' in self.path or '&_type=' in self.path):
-            referer = self.headers.get('Referer', '')
+            if ref_sim_id:
+                return ref_sim_id
             if referer:
                 for sim_id in SIM_MODULES.keys():
                     if ('/' + sim_id + '/') in referer or ('/' + sim_id + '?') in referer or referer.endswith('/' + sim_id):
                         return sim_id
-            cookie = self.headers.get('Cookie', '')
-            if cookie:
-                m = re.search(r'(?:current_sim|active_sim|sim_id)=(sim_[a-zA-Z0-9_]+)', cookie)
-                if m and m.group(1) in SIM_MODULES:
-                    return m.group(1)
+            if not self._mesh_node_id:
+                cookie = self.headers.get('Cookie', '')
+                if cookie:
+                    m = re.search(r'(?:current_sim|active_sim|sim_id)=(sim_[a-zA-Z0-9_]+)', cookie)
+                    if m and m.group(1) in SIM_MODULES:
+                        return m.group(1)
             return 'sim_be12000'
         elif is_portal_path(path):
             return None
@@ -488,7 +620,33 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             or (path.startswith('/fonts/') and ('element-icons' in path or 'NotoSans' in path))
             or (path.startswith('/img/') and ('element-icons' in path or 'logo' in path or 'Up-side' in path or 'product_' in path))
         ):
-            return 'sim_ax3000c' 
+            return 'sim_ax3000c'
+
+        # Fallback an toan cho tai nguyen doc nhat cua Vigor2927 va AX3000S (tranh current_sim cookie collision khi mo nhieu thiet bi trong mesh-lab)
+        path_lower = path.lower()
+        if (
+            path in (
+                '/weblogin.htm', '/wlogin.htm',
+                '/style.min.css', '/css/tmp_m.min.css',
+                '/js/gettext.min.js', '/js/webchange.js',
+            )
+            or path_lower in (
+                '/cgi-bin/dualwl.cgi', '/cgi-bin/v2x00.cgi',
+                '/cgi-bin/cgidashboard.cgi', '/cgi-bin/cgilte.cgi',
+                '/cgi-bin/cgiapm.cgi', '/cgi-bin/cgimesh.cgi',
+                '/cgi-bin/wvlanset.cgi', '/cgi-bin/uvlanset.cgi',
+                '/cgi-bin/wvlanctl.cgi', '/cgi-bin/wizanti.cgi',
+            )
+        ):
+            return 'sim_vigor2927'
+
+        if (
+            path.startswith('/luci-static/skgwfpt/')
+            or path.startswith('/luci-static/resources/view/skgwfpt/')
+            or path.startswith('/luci-static/resources/sk_')
+            or path in ('/sim/backend-ext.js', '/sim/net-mock.js')
+        ):
+            return 'sim_ax3000s'
 
         # 3. Kiểm tra Cookie (Fallback an toàn nhất)
         cookie = self.headers.get('Cookie', '')
@@ -661,7 +819,7 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         is_prod = os.environ.get('APP_ENV', '') == 'production'
 
         # Test hook for automated test suites in non-production environments
-        if not is_prod and self.headers.get('X-Mock-User-Role'):
+        if not is_prod and 'X-Mock-User-Role' in self.headers:
             mock_role = self.headers.get('X-Mock-User-Role', '').strip().upper()
             return mock_role == 'DEV'
 
@@ -714,7 +872,9 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 "code": "mesh_lab_beta_restricted",
                 "message": "Tính năng Lab Đấu Nối (Mesh) hiện đang thử nghiệm, chỉ dành riêng cho tài khoản DEV."
             }, ensure_ascii=False).encode('utf-8')
+            self.close_connection = True
             self.send_response(403)
+            self.send_header('Connection', 'close')
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Cache-Control', 'no-store')
             self.send_header('Content-Length', str(len(payload)))
@@ -726,21 +886,46 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         path_only = self.path.split('?')[0]
         action = path_only.replace('/api/mesh-lab/', '').replace('/api/mesh-lab', '').strip('/')
 
+        base_ktv_id = getattr(self, '_base_ktv_id', None) or _sanitize_ktv_id_fallback(getattr(self, '_ktv_id', 'default'))
+
         if method in ('GET', 'HEAD'):
-            if action in ('status', ''):
+            status_code = 200
+            if action == 'workspace':
+                st = {"status": "ok", "workspace": mesh_sync_adapter.get_workspace(base_ktv_id)}
+            elif action == 'node-config':
+                from urllib.parse import parse_qs
+                q = parse_qs(self.path.split('?', 1)[1] if '?' in self.path else '')
+                node_id = (q.get('node_id', [''])[0] or '').strip()
+                sim_id = (q.get('sim_id', [''])[0] or '').strip()
+                if not mesh_sync_adapter.is_valid_node_id(node_id) or sim_id not in SIM_MODULES:
+                    status_code = 400
+                    st = {"error": "invalid_node_or_sim", "node_id": node_id, "sim_id": sim_id}
+                else:
+                    skey = mesh_sync_adapter.make_node_session_key(base_ktv_id, node_id)
+                    cfg = mesh_sync_adapter.read_node_backend_config(sim_id, skey)
+                    st = {"status": "ok", "node_id": node_id, "sim_id": sim_id, "config": cfg}
+            elif action in ('status', ''):
                 st = mesh_zte_engine.get_state()
             elif action == 'grade':
-                st = mesh_zte_engine.evaluate_grading()
+                from urllib.parse import parse_qs
+                q = parse_qs(self.path.split('?', 1)[1] if '?' in self.path else '')
+                scenario = (q.get('scenario', [''])[0] or '').strip()
+                st = mesh_zte_engine.evaluate_grading(scenario_key=scenario, session_id=base_ktv_id)
             elif action == 'missions':
-                st = mesh_zte_engine.get_missions()
+                from urllib.parse import parse_qs
+                q = parse_qs(self.path.split('?', 1)[1] if '?' in self.path else '')
+                scenario = (q.get('scenario', [''])[0] or '').strip()
+                st = mesh_zte_engine.get_missions(scenario_key=scenario, session_id=base_ktv_id)
             elif action == 'ports':
                 st = {"ont_ports": mesh_zte_engine.ONT_PORTS, "ap_ports": mesh_zte_engine.AP_PORTS}
             else:
                 st = mesh_zte_engine.get_state()
             payload = json.dumps(st, ensure_ascii=False).encode('utf-8')
-            self.send_response(200)
+            self.send_response(status_code)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Cache-Control', 'no-store')
+            if getattr(self, '_ktv_id', None) and 'ktv_client_id=' not in self.headers.get('Cookie', ''):
+                self.send_header('Set-Cookie', f'ktv_client_id={base_ktv_id}; Path=/; SameSite=Lax')
             self.send_header('Content-Length', str(len(payload)))
             self.end_headers()
             if method != 'HEAD':
@@ -755,7 +940,10 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             except Exception:
                 data = {}
 
-            if action == 'link':
+            if action == 'workspace':
+                saved_ws = mesh_sync_adapter.save_workspace(base_ktv_id, data)
+                st = {"status": "ok", "workspace": saved_ws}
+            elif action == 'link':
                 link_type = data.get('link_type', 'ETH')
                 st = mesh_zte_engine.set_link_type(link_type)
             elif action == 'connect-ports':
@@ -772,13 +960,48 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
             elif action == 'wps':
                 st = mesh_zte_engine.trigger_wps()
             elif action == 'wifi':
-                st = mesh_zte_engine.update_ont_wifi(data.get('ssid'), data.get('key'))
+                st = mesh_zte_engine.update_ont_wifi(data.get('ssid'), data.get('key'), session_id=base_ktv_id)
+            elif action == 'lan-dhcp':
+                st = mesh_zte_engine.update_ont_lan_dhcp(data, session_id=base_ktv_id)
+            elif action == 'sync-topology':
+                adapter_sync = None
+                if isinstance(data.get('nodes'), list):
+                    adapter_sync = mesh_sync_adapter.sync_all_nodes_backend(
+                        base_ktv_id,
+                        data.get('nodes') or [],
+                        data.get('links') or [],
+                        source_node_id=data.get('source_node_id'),
+                        prefer_backend_source=bool(data.get('prefer_backend_source', False)),
+                    )
+                st = mesh_zte_engine.sync_topology_nodes(
+                    slaves=data.get('slaves'),
+                    clients=data.get('clients'),
+                    ssid=data.get('ssid'),
+                    key=data.get('key'),
+                    gateway_ip=data.get('gateway_ip'),
+                    lan_config=data.get('lan_config'),
+                    security=data.get('security'),
+                    channel=data.get('channel'),
+                    bandwidth=data.get('bandwidth'),
+                    session_id=base_ktv_id if isinstance(data.get('nodes'), list) else None,
+                )
+                if adapter_sync is not None and isinstance(st, dict):
+                    st = dict(st)
+                    st['adapter_sync'] = adapter_sync
             elif action == 'reset':
+                ws_reset = mesh_sync_adapter.reset_workspace(base_ktv_id, extra_nodes=data.get('nodes') if isinstance(data, dict) else None)
                 st = mesh_zte_engine.reset_lab()
+                if isinstance(st, dict):
+                    st = dict(st)
+                    st['workspace_reset'] = ws_reset
             elif action == 'grade':
-                st = mesh_zte_engine.evaluate_grading()
+                scenario = (data.get('scenario') or '').strip()
+                ws_data = data.get('workspace')
+                st = mesh_zte_engine.evaluate_grading(scenario_key=scenario, session_id=base_ktv_id, workspace=ws_data)
             elif action == 'missions':
-                st = mesh_zte_engine.get_missions()
+                scenario = (data.get('scenario') or '').strip()
+                ws_data = data.get('workspace')
+                st = mesh_zte_engine.get_missions(scenario_key=scenario, session_id=base_ktv_id, workspace=ws_data)
             elif action == 'ping':
                 target = data.get('target', '192.168.1.1')
                 st = mesh_zte_engine.run_ping(target)
@@ -834,10 +1057,20 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         import uuid
         return f"ktv_{uuid.uuid4().hex[:16]}"
 
+    def _set_ktv_header(self, val):
+        while 'X-KTV-Session-ID' in self.headers:
+            del self.headers['X-KTV-Session-ID']
+        self.headers['X-KTV-Session-ID'] = val
+
     def dispatch(self, method):
         # Đảm bảo định danh phiên KTV độc lập theo từng trình duyệt (chống đụng độ IP NAT phòng đào tạo)
-        self._ktv_id = self._get_or_create_ktv_id()
-        self.headers['X-KTV-Session-ID'] = self._ktv_id
+        raw_ktv_id = self._get_or_create_ktv_id()
+        self._base_ktv_id = _sanitize_ktv_id_fallback(raw_ktv_id)
+        self._ktv_id = self._base_ktv_id
+        self._mesh_node_checked = False
+        self._mesh_node_id = None
+        self._mesh_node_invalid = False
+        self._set_ktv_header(self._ktv_id)
 
         # Chuyen tiep /api/* -> PHP noi bo (browser chi can 1 cong 8080)
         # Ngoai tru /api/v1/data/* thuoc ve simulator ONT BE6500C
@@ -871,7 +1104,12 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         if path_only == '/api/mesh-lab' or path_only.startswith('/api/mesh-lab/'):
             return self._handle_mesh_lab_api(method)
 
-        if (path_only == '/api' or path_only.startswith('/api/')) and not path_only.startswith('/api/v1/data/'):
+        if path_only == '/mesh-node' or path_only.startswith('/mesh-node/'):
+            if not _MESH_NODE_PREFIX_RE.match(path_only):
+                self.send_error(400, 'Invalid mesh node id')
+                return
+
+        if (path_only == '/api' or path_only.startswith('/api/')) and not path_only.startswith('/api/v1/data/') and not path_only.startswith('/mesh-node/'):
             return self._proxy_api(method)
 
         # Chuyen tiep /admin/* va /admin-static/* -> Django Admin
@@ -906,13 +1144,29 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 self.directory = original_directory
 
         sim_id = self.detect_simulator()
+        if getattr(self, '_mesh_node_invalid', False):
+            self.send_error(400, 'Invalid mesh node id')
+            return
         if sim_id:
             mod = SIM_MODULES[sim_id]
+            active_node_id = getattr(self, '_mesh_node_id', None)
+            if active_node_id and mesh_sync_adapter:
+                self._ktv_id = mesh_sync_adapter.make_node_session_key(self._base_ktv_id, active_node_id)
+                self._set_ktv_header(self._ktv_id)
             original_class = self.__class__
             original_directory = getattr(self, 'directory', None)
+            original_send_response = self.send_response
             original_send_header = self.send_header
             original_end_headers = self.end_headers
+            real_wfile = self.wfile
             cache_control_sent = False
+            resp_status = 200
+            pending_headers = []
+            resp_content_type = ''
+            resp_content_encoding = ''
+            capturing_html = False
+            capture_buf = None
+            headers_flushed = False
             try:
                 handler_class = SIM_HANDLERS[sim_id]
                 self.__class__ = handler_class
@@ -932,50 +1186,97 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                             self.directory = cand
                             break
 
+                def _rewrite_location_value(value):
+                    if active_node_id:
+                        mn_prefix = '/mesh-node/' + active_node_id
+                        if value.startswith('/'):
+                            if value.startswith(mn_prefix + '/') or value == mn_prefix:
+                                return value
+                            if value.startswith('/' + sim_id + '/') or value == '/' + sim_id:
+                                return mn_prefix + value
+                            return mn_prefix + '/' + sim_id + value
+                        if '://' in value:
+                            try:
+                                parsed = urlparse(value)
+                                ppath = parsed.path or '/'
+                                qstr = ('?' + parsed.query) if parsed.query else ''
+                                if ppath.startswith(mn_prefix + '/') or ppath == mn_prefix:
+                                    return ppath + qstr
+                                if ppath.startswith('/' + sim_id + '/') or ppath == '/' + sim_id:
+                                    return mn_prefix + ppath + qstr
+                                return mn_prefix + '/' + sim_id + ppath + qstr
+                            except Exception:
+                                return value
+                        return value
+                    if value.startswith('/') and not value.startswith('/' + sim_id + '/') and value != '/' + sim_id:
+                        return '/' + sim_id + value
+                    if '://' in value:
+                        try:
+                            parsed = urlparse(value)
+                            if parsed.path.startswith('/') and not parsed.path.startswith('/' + sim_id + '/') and parsed.path != '/' + sim_id:
+                                return '/' + sim_id + parsed.path + (('?' + parsed.query) if parsed.query else '')
+                        except Exception:
+                            pass
+                    return value
+
+                def custom_send_response(code, message=None):
+                    nonlocal resp_status
+                    resp_status = int(code)
+                    return original_send_response(code, message)
+                if active_node_id and method != 'HEAD':
+                    self.send_response = custom_send_response
+
                 def custom_send_header(keyword, value):
-                    nonlocal cache_control_sent
+                    nonlocal cache_control_sent, resp_content_type, resp_content_encoding
                     response_path = self.path.split('?', 1)[0].lower()
                     extension = os.path.splitext(response_path)[1]
                     static_extensions = {
                         '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg',
                         '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.map',
                     }
+                    is_static = method in ('GET', 'HEAD') and extension in static_extensions
                     if keyword.lower() == 'cache-control':
                         # Nếu handler con gửi no-store / no-cache cho tài nguyên tĩnh,
                         # bỏ qua để custom_end_headers gán cache tối ưu (chống cạn kiệt băng thông Render khi 60 KTV thao tác)
-                        if method in ('GET', 'HEAD') and extension in static_extensions:
+                        if is_static:
                             if 'no-store' in value.lower() or 'no-cache' in value.lower():
                                 return
                         cache_control_sent = True
-                    if keyword.lower() in ('pragma', 'expires') and method in ('GET', 'HEAD') and extension in static_extensions:
+                    if keyword.lower() in ('pragma', 'expires') and is_static:
+                        return
+                    if keyword.lower() == 'set-cookie' and is_static:
                         return
                     if keyword.lower() == 'location':
-                        if value.startswith('/') and not value.startswith('/' + sim_id + '/') and value != '/' + sim_id:
-                            value = '/' + sim_id + value
-                        elif '://' in value:
-                            try:
-                                parsed = urlparse(value)
-                                if parsed.path.startswith('/') and not parsed.path.startswith('/' + sim_id + '/') and parsed.path != '/' + sim_id:
-                                    value = '/' + sim_id + parsed.path + (('?' + parsed.query) if parsed.query else '')
-                            except Exception:
-                                pass
+                        value = _rewrite_location_value(value)
+                    if active_node_id and method != 'HEAD':
+                        kl = keyword.lower()
+                        if kl == 'content-type':
+                            resp_content_type = str(value)
+                        elif kl == 'content-encoding':
+                            resp_content_encoding = str(value).strip().lower()
+                        pending_headers.append((keyword, value))
+                        return
                     original_send_header(keyword, value)
                 self.send_header = custom_send_header
 
-                def custom_end_headers():
-                    original_send_header('Set-Cookie', f'current_sim={sim_id}; Path=/; SameSite=Lax')
-                    if getattr(self, '_ktv_id', None) and 'ktv_client_id=' not in self.headers.get('Cookie', ''):
-                        original_send_header('Set-Cookie', f'ktv_client_id={self._ktv_id}; Path=/; SameSite=Lax')
+                def _emit_cookies_and_cache():
+                    response_path = self.path.split('?', 1)[0].lower()
+                    extension = os.path.splitext(response_path)[1]
+                    static_extensions = {
+                        '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg',
+                        '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.map',
+                    }
+                    is_static = method in ('GET', 'HEAD') and extension in static_extensions
+                    if not is_static:
+                        if not active_node_id:
+                            original_send_header('Set-Cookie', f'current_sim={sim_id}; Path=/; SameSite=Lax')
+                        base_cookie_id = getattr(self, '_base_ktv_id', None) or getattr(self, '_ktv_id', None)
+                        if base_cookie_id and 'ktv_client_id=' not in self.headers.get('Cookie', ''):
+                            original_send_header('Set-Cookie', f'ktv_client_id={base_cookie_id}; Path=/; SameSite=Lax')
                     if not cache_control_sent:
-                        response_path = self.path.split('?', 1)[0].lower()
-                        extension = os.path.splitext(response_path)[1]
-                        static_extensions = {
-                            '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg',
-                            '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.map',
-                        }
-                        if method in ('GET', 'HEAD') and extension in static_extensions:
+                        if is_static:
                             filename = os.path.basename(response_path)
-                            if re.search(r'(?:^|[._-])[a-f0-9]{8,}(?:[._-]|$)', filename):
+                            if re.search(r'(?:^|[._-])[a-f0-9]{8,}(?:[._-]|$)', filename) or '?v=' in self.path:
                                 cache_value = 'public, max-age=31536000, immutable'
                             else:
                                 cache_value = 'public, max-age=86400, stale-while-revalidate=86400'
@@ -985,6 +1286,27 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                         else:
                             cache_value = 'no-cache, must-revalidate'
                         original_send_header('Cache-Control', cache_value)
+
+                def custom_end_headers():
+                    nonlocal capturing_html, capture_buf, headers_flushed
+                    if active_node_id and method != 'HEAD':
+                        if (
+                            resp_status < 300
+                            and 'text/html' in resp_content_type.lower()
+                            and resp_content_encoding in ('', 'gzip')
+                        ):
+                            capturing_html = True
+                            capture_buf = io.BytesIO()
+                            self.wfile = capture_buf
+                            return
+                        for hk, hv in pending_headers:
+                            original_send_header(hk, hv)
+                        _emit_cookies_and_cache()
+                        headers_flushed = True
+                        original_end_headers()
+                        return
+                    _emit_cookies_and_cache()
+                    headers_flushed = True
                     original_end_headers()
                 self.end_headers = custom_end_headers
 
@@ -992,23 +1314,54 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 if handler_method is None:
                     self.send_error(501, 'Unsupported method')
                     return
-                return handler_method()
+                res = handler_method()
+                if capturing_html and capture_buf is not None:
+                    self.wfile = real_wfile
+                    raw_html = capture_buf.getvalue()
+                    if resp_content_encoding == 'gzip':
+                        try:
+                            raw_html = gzip.decompress(raw_html)
+                        except Exception:
+                            raw_html = capture_buf.getvalue()
+                            resp_content_encoding = ''
+                    body_out = _inject_mesh_node_shim(raw_html, active_node_id, sim_id)
+                    if resp_content_encoding == 'gzip':
+                        body_out = gzip.compress(body_out, compresslevel=6)
+                    for hk, hv in pending_headers:
+                        if hk.lower() in ('content-length', 'etag'):
+                            continue
+                        if hk.lower() == 'content-encoding' and not resp_content_encoding:
+                            continue
+                        original_send_header(hk, hv)
+                    original_send_header('Content-Length', str(len(body_out)))
+                    _emit_cookies_and_cache()
+                    headers_flushed = True
+                    original_end_headers()
+                    if body_out:
+                        real_wfile.write(body_out)
+                return res
             except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
                 return
             except Exception as e:
                 import traceback
                 print(f"Error in {sim_id} {method}: {e}")
                 traceback.print_exc()
+                self.wfile = real_wfile
                 self.__class__ = original_class
-                try:
-                    self.send_error(500, 'Internal Server Error')
-                except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
-                    pass
+                if not headers_flushed:
+                    try:
+                        if hasattr(self, '_headers_buffer'):
+                            self._headers_buffer.clear()
+                        self.send_error(500, 'Internal Server Error')
+                    except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+                        pass
                 return
             finally:
+                self.wfile = real_wfile
                 self.__class__ = original_class
                 if original_directory is not None:
                     self.directory = original_directory
+                self.send_response = original_send_response
                 self.send_header = original_send_header
                 self.end_headers = original_end_headers
         

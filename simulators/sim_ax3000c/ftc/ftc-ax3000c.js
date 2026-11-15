@@ -312,15 +312,12 @@
   document.addEventListener('DOMContentLoaded', quetNgay);
 
   // 6. Tu phuc hoi khi #app bi trang (mang chap chon luc nap bundle/chunk).
-  //    Truoc day: chi 1 lan, va location.replace(... + '#/login') khi URL chi khac phan hash thi
-  //    KHONG tai lai trang -> co the dung trang mai. Nay:
-  //    - Vue CHUA mount sau 3.5s (bundle loi) -> tai lai that (location.reload).
-  //    - Vue DA mount nhung route chua ve (chunk dang tai tren mang yeu) -> cho them toi 15s, hien
-  //      thong bao "Dang tai..." thay cho man trang, roi moi tai lai.
-  //    - Toi da SO_LAN_CUU_TOI_DA lan moi phien; het luot -> bao KTV kiem tra mang, khong lap vo han.
+  //    - MOC_KIEM_MS: noi rong [8000, 16000, 30000]ms tranh bao reload khi phong lab dong hoc vien
+  //    - Hien thi thong bao "Dang tai..." thay vi F5 don dap
+  //    - Them do tre ngau nhien (jitter) tranh 100 may hoc vien F5 cung luc
   var KHOA_CUU = 'ftc_ax3000c_recover';
   var SO_LAN_CUU_TOI_DA = 3;
-  var MOC_KIEM_MS = [3500, 8000, 15000];
+  var MOC_KIEM_MS = [8000, 16000, 30000];
   var ID_THONG_BAO = 'ftc-ax3000c-dang-tai';
   function appDaVe() {
     var appEl = document.getElementById('app');
@@ -361,15 +358,18 @@
       sessionStorage.removeItem('sid');
       history.replaceState(null, '', location.pathname + location.search + '#/login');
     } catch (e) {}
-    location.reload();
+    var doTre = 300 + Math.floor(Math.random() * 1500);
+    setTimeout(function () {
+      location.reload();
+    }, doTre);
   }
   function kiemTraTrang(lan) {
     try {
       if (appDaVe()) { anThongBaoNeuDaVe(); return; }
       var appEl = document.getElementById('app');
       var daMount = !!(appEl && appEl.__vue__);
-      if (daMount && lan < MOC_KIEM_MS.length - 1) {
-        hienThongBao('Đang tải giao diện thiết bị…');
+      if (lan < MOC_KIEM_MS.length - 1) {
+        hienThongBao('Đang tải giao diện thiết bị, vui lòng chờ trong giây lát…');
         setTimeout(function () { kiemTraTrang(lan + 1); }, MOC_KIEM_MS[lan + 1] - MOC_KIEM_MS[lan]);
         return;
       }

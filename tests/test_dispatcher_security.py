@@ -250,7 +250,7 @@ class DispatcherSecurityTests(unittest.TestCase):
     def test_ax3000cv2_static_assets_are_cacheable_but_state_endpoints_are_not(self):
         cookie = {'Cookie': 'ftc_session=cache-test-technician'}
         status, headers, body = self.request(
-            '/sim_ax3000c/js/chunk-vendors.9b4ab5b7.1726822665278.js',
+            '/sim_ax3000c/js/chunk-vendors.9b4ab5b7.1726822665278.js?v=' + run_all.ax3000c.ASSET_V,
             headers=cookie,
         )
         normalized_headers = {key.lower(): value for key, value in headers.items()}
@@ -258,6 +258,28 @@ class DispatcherSecurityTests(unittest.TestCase):
         self.assertTrue(body)
         self.assertIn('immutable', normalized_headers.get('cache-control', ''))
         self.assertNotIn('no-store', normalized_headers.get('cache-control', ''))
+        self.assertNotIn('set-cookie', normalized_headers)
+
+        # Requests WITHOUT cookies must NEVER emit Set-Cookie on static assets (so Cloudflare CDN caches them)
+        status_no_ck, headers_no_ck, body_no_ck = self.request(
+            '/sim_ax3000c/js/chunk-vendors.9b4ab5b7.1726822665278.js?v=' + run_all.ax3000c.ASSET_V,
+        )
+        headers_no_ck_lower = {key.lower(): value for key, value in headers_no_ck.items()}
+        self.assertEqual(status_no_ck, 200)
+        self.assertTrue(body_no_ck)
+        self.assertNotIn('set-cookie', headers_no_ck_lower)
+        self.assertIn('immutable', headers_no_ck_lower.get('cache-control', ''))
+
+        status_css, headers_css, _ = self.request('/sim_ax3000c/css/app.06c49f94.css?v=' + run_all.ax3000c.ASSET_V)
+        headers_css_lower = {key.lower(): value for key, value in headers_css.items()}
+        self.assertEqual(status_css, 200)
+        self.assertNotIn('set-cookie', headers_css_lower)
+        self.assertIn('immutable', headers_css_lower.get('cache-control', ''))
+
+        status_css_raw, headers_css_raw, _ = self.request('/sim_ax3000c/css/app.06c49f94.css')
+        headers_css_raw_lower = {key.lower(): value for key, value in headers_css_raw.items()}
+        self.assertEqual(status_css_raw, 200)
+        self.assertNotIn('set-cookie', headers_css_raw_lower)
 
         status, headers, _ = self.request(
             '/sim_ax3000c/ftc-dat-bai?bai=2',
