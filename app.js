@@ -70,6 +70,110 @@
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  function isMobileOrTouch() {
+    try {
+      const hasTouch = Boolean(
+        (typeof window !== 'undefined' && 'ontouchstart' in window) ||
+        (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)
+      );
+      const minDim = (typeof window !== 'undefined' && window.screen && typeof window.screen.width === 'number')
+        ? Math.min(window.screen.width, window.screen.height)
+        : (typeof window !== 'undefined' && typeof window.innerWidth === 'number' ? window.innerWidth : 0);
+      const isCompactScreen = minDim > 0 && minDim <= 950;
+      const isNarrowWidth = typeof window !== 'undefined' && typeof window.innerWidth === 'number' && window.innerWidth <= 900;
+      return Boolean((hasTouch && isCompactScreen) || isNarrowWidth);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function detectMobilePlatform() {
+    try {
+      const ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? String(navigator.userAgent) : '';
+      const platform = (typeof navigator !== 'undefined' && navigator.platform) ? String(navigator.platform) : '';
+      const maxTouch = (typeof navigator !== 'undefined' && typeof navigator.maxTouchPoints === 'number') ? navigator.maxTouchPoints : 0;
+      const isIOS = /iPad|iPhone|iPod/i.test(ua) || (platform === 'MacIntel' && maxTouch > 1);
+      const isAndroid = /Android/i.test(ua);
+      const isMobile = isMobileOrTouch() || isIOS || isAndroid;
+      return { isMobile, isIOS, isAndroid };
+    } catch (_) {
+      return { isMobile: false, isIOS: false, isAndroid: false };
+    }
+  }
+
+  function syncMobilePlatformClasses() {
+    try {
+      const { isMobile, isIOS, isAndroid } = detectMobilePlatform();
+      const root = typeof document !== 'undefined' ? document.documentElement : null;
+      if (root && root.classList) {
+        root.classList.toggle('mobile-device-mode', Boolean(isMobile));
+        root.classList.toggle('platform-ios', Boolean(isIOS));
+        root.classList.toggle('platform-android', Boolean(isAndroid));
+      }
+      if (typeof document !== 'undefined' && document.body && document.body.classList) {
+        document.body.classList.toggle('mobile-device-mode', Boolean(isMobile));
+        document.body.classList.toggle('platform-ios', Boolean(isIOS));
+        document.body.classList.toggle('platform-android', Boolean(isAndroid));
+      }
+    } catch (_) { }
+  }
+
+  function ensureMobileScrollAndTouchSupport(doc) {
+    if (!doc) return;
+    try {
+      const { isMobile } = detectMobilePlatform();
+      if (!isMobile) return;
+
+      const frames = doc.querySelectorAll ? doc.querySelectorAll('frame') : [];
+      if (frames && frames.length > 0) {
+        frames.forEach(frame => {
+          const fname = String(frame.name || frame.id || '').toLowerCase();
+          if (fname === 'main' || fname === 'menu' || fname === 'nav' || !fname) {
+            if (frame.getAttribute('scrolling') === 'no') {
+              frame.setAttribute('scrolling', 'auto');
+            }
+            if (frame.style) {
+              frame.style.overflow = 'auto';
+              frame.style.webkitOverflowScrolling = 'touch';
+            }
+          }
+        });
+        return;
+      }
+
+      if (!doc.getElementById('ftc-mobile-scroll-style') && (doc.head || doc.documentElement)) {
+        const styleEl = doc.createElement('style');
+        styleEl.id = 'ftc-mobile-scroll-style';
+        styleEl.textContent = `
+          html, body {
+            overflow-x: auto !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: auto !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+          }
+          #wrapper, #main_content, #page_content, #content, .main-content, .content-area, .el-scrollbar__wrap {
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: auto !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+          }
+          ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+          }
+          ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.04);
+          }
+          ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.5);
+            border-radius: 4px;
+          }
+        `;
+        (doc.head || doc.documentElement).appendChild(styleEl);
+      }
+    } catch (_) { }
+  }
+
   // ── Practice Timer State ────────────────────────────────────────
   let _practiceTimerInterval = null; // setInterval ID cho đồng hồ realtime
   let _practiceStartTime = null;     // Date object lúc bắt đầu thực hành
@@ -217,48 +321,55 @@
   // Đồng bộ chiều cao thực tế khi bàn phím ảo (Virtual Keyboard) bật lên trên di động & tự động hồi phục khi chuyển mạng 4G/5G
   function setupMobileViewportAndNetworkResilience() {
     try {
-      if (typeof window.innerWidth === 'number' && window.innerWidth <= 900 && sidebar && sidebar.classList) {
-        sidebar.classList.add('collapsed');
-      }
+      syncMobilePlatformClasses();
       const mainEl = document.getElementById('main');
       if (mainEl && typeof mainEl.addEventListener === 'function') {
-        mainEl.addEventListener('click', function (e) {
-          if (typeof window.innerWidth === 'number' && window.innerWidth <= 900 && sidebar && sidebar.classList && !sidebar.classList.contains('collapsed')) {
+        const dismissSidebarOnMobile = function (e) {
+          if (!practiceScreen || !practiceScreen.classList.contains('visible')) return;
+          if (isMobileOrTouch() && sidebar && sidebar.classList && !sidebar.classList.contains('collapsed')) {
             const toggleBtn = e && e.target && e.target.closest ? e.target.closest('.topbar-toggle-btn') : null;
             if (!toggleBtn) sidebar.classList.add('collapsed');
           }
-        });
+        };
+        mainEl.addEventListener('click', dismissSidebarOnMobile);
+        mainEl.addEventListener('touchstart', dismissSidebarOnMobile, { passive: true });
       }
 
       let baselineHeight = typeof window.innerHeight === 'number' ? window.innerHeight : 0;
+      let _vvRafId = null;
       const syncVisualViewport = function () {
-        try {
-          const vv = window.visualViewport;
-          const currentH = vv && typeof vv.height === 'number' ? Math.round(vv.height) : (typeof window.innerHeight === 'number' ? window.innerHeight : 0);
-          if (!currentH) return;
-          if (currentH > baselineHeight) baselineHeight = currentH;
-          if (document.documentElement && document.documentElement.style && typeof document.documentElement.style.setProperty === 'function') {
-            document.documentElement.style.setProperty('--app-height', currentH + 'px');
-          }
-          const layoutH = typeof window.innerHeight === 'number' ? window.innerHeight : baselineHeight;
-          const heightDrop = Math.max(layoutH - currentH, baselineHeight - currentH);
-          const isTouchMobile = (typeof window.innerWidth === 'number' && window.innerWidth <= 950) || ('ontouchstart' in window);
-          const isKeyboardOpen = Boolean(isTouchMobile && (heightDrop > 130 || (currentH < 440 && layoutH > 500)));
-          if (document.body && document.body.classList) {
-            if (isKeyboardOpen) {
-              document.body.classList.add('keyboard-open');
-            } else {
-              document.body.classList.remove('keyboard-open');
+        if (_vvRafId) return;
+        _vvRafId = requestAnimationFrame(() => {
+          _vvRafId = null;
+          try {
+            syncMobilePlatformClasses();
+            const vv = window.visualViewport;
+            const currentH = vv && typeof vv.height === 'number' ? Math.round(vv.height) : (typeof window.innerHeight === 'number' ? window.innerHeight : 0);
+            if (!currentH) return;
+
+            const currentScale = (vv && typeof vv.scale === 'number') ? vv.scale : 1;
+            const isZooming = currentScale > 1.05;
+
+            if (!isZooming && currentH > baselineHeight) baselineHeight = currentH;
+            const layoutH = typeof window.innerHeight === 'number' ? window.innerHeight : baselineHeight;
+            const heightDrop = Math.max(layoutH - currentH, baselineHeight - currentH);
+            const isTouchMobile = isMobileOrTouch();
+            const isKeyboardOpen = Boolean(!isZooming && isTouchMobile && (heightDrop > 130 || (currentH < 440 && layoutH > 500)));
+            if (document.body && document.body.classList) {
+              if (isKeyboardOpen) {
+                document.body.classList.add('keyboard-open');
+              } else {
+                document.body.classList.remove('keyboard-open');
+              }
             }
-          }
-        } catch (_) { }
+          } catch (_) { }
+        });
       };
 
       if (window.visualViewport && typeof window.visualViewport.addEventListener === 'function') {
-        window.visualViewport.addEventListener('resize', syncVisualViewport);
-        window.visualViewport.addEventListener('scroll', syncVisualViewport);
+        window.visualViewport.addEventListener('resize', syncVisualViewport, { passive: true });
       }
-      window.addEventListener('resize', syncVisualViewport);
+      window.addEventListener('resize', syncVisualViewport, { passive: true });
       window.addEventListener('orientationchange', function () {
         baselineHeight = 0;
         setTimeout(syncVisualViewport, 150);
@@ -610,6 +721,11 @@
         window._iframeLoadingTimeout = null;
       }
       iframeLoading.classList.add('hidden');
+      try {
+        syncMobilePlatformClasses();
+        const loadedDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
+        loadedDocs.forEach(doc => ensureMobileScrollAndTouchSupport(doc));
+      } catch (_) { }
       if (currentMode === 'guide') {
         setTimeout(applyGuidePopups, 100);
         setTimeout(applyGuidePopups, 350);
@@ -689,12 +805,22 @@
     if (!guideSyncInterval) {
       guideSyncInterval = setInterval(() => {
         if (practiceScreen.classList.contains('visible')) {
+          // Tránh giật đơ khi KTV đang phóng to màn hình thiết bị trên mobile
+          const vv = window.visualViewport;
+          const isZoomingMobile = Boolean(vv && typeof vv.scale === 'number' && vv.scale > 1.05 && ('ontouchstart' in window));
+          if (isZoomingMobile && window._ftcLastPinchSync && (Date.now() - window._ftcLastPinchSync < 1200)) {
+            return;
+          }
+          if (isZoomingMobile) {
+            window._ftcLastPinchSync = Date.now();
+          }
+
           // Xóa trắng trường của bài học cho cả Hướng dẫn và Thực hành khi load trang mới
           clearLessonFields();
 
-            if (currentMode === 'guide') {
-              applyGuidePopups();
-            }
+          if (currentMode === 'guide') {
+            applyGuidePopups();
+          }
 
           // Theo dõi sự kiện click vào nút Save/Apply trong iframe (chạy cho cả Hướng dẫn và Thực hành)
           try {
@@ -779,14 +905,15 @@
                 prepareAx3000gzV2Autofill(doc, isSimulatorLoginDocument(doc));
               }
 
-              // Hỗ trợ cuộn mượt và chống khóa cuộn (scroll-lock) khi bàn phím ảo trên điện thoại bật lên
+              // Hỗ trợ cuộn ngang/dọc mượt trên iPhone (iOS) & Android và chống khóa cuộn khi bàn phím ảo bật lên
+              ensureMobileScrollAndTouchSupport(doc);
               if (!doc._ftcMobileFocusBound) {
                 doc._ftcMobileFocusBound = true;
                 doc.addEventListener('focusin', function (e) {
                   try {
                     const el = e && e.target;
                     if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'SELECT' && el.tagName !== 'TEXTAREA')) return;
-                    const isTouchMobile = (typeof window.innerWidth === 'number' && window.innerWidth <= 950) || ('ontouchstart' in window);
+                    const isTouchMobile = isMobileOrTouch();
                     if (!isTouchMobile) return;
                     setTimeout(function () {
                       try {
@@ -2641,12 +2768,6 @@
 
     // Switch view to show lesson card
     showLesson();
-
-    // Auto collapse sidebar on mobile portrait so content is immediately visible
-    if (window.innerWidth <= 768) {
-      const sidebar = document.getElementById('sidebar');
-      if (sidebar) sidebar.classList.add('collapsed');
-    }
   }
 
   // ── Render Lesson Card ───────────────────────────────────────────
@@ -2827,12 +2948,6 @@
       hidePracticeBubble();
     }
 
-    // Auto collapse sidebar on mobile
-    if (window.innerWidth <= 768) {
-      const sidebar = document.getElementById('sidebar');
-      if (sidebar) sidebar.classList.add('collapsed');
-    }
-
     // Load URL into iframe
     Promise.resolve(resetPromise).then(resetSucceeded => {
       const requiresVerifiedReset = normalizeDeviceId(currentDeviceId) === 'ax3000gz_v2' || normalizeDeviceId(currentDeviceId) === 'ac1000z';
@@ -2895,6 +3010,9 @@
     lessonScreen.classList.remove('visible');
     practiceScreen.classList.remove('visible');
     hidePracticeBubble();
+    if (sidebar && sidebar.classList) {
+      sidebar.classList.remove('collapsed');
+    }
   }
 
   function showLesson() {
@@ -2906,6 +3024,9 @@
     lessonScreen.classList.add('visible');
     lessonScreen.scrollTop = 0;
     hidePracticeBubble();
+    if (sidebar && sidebar.classList) {
+      sidebar.classList.remove('collapsed');
+    }
   }
 
   function showPractice() {
@@ -2914,6 +3035,9 @@
     practiceScreen.classList.remove('visible');
     void practiceScreen.offsetWidth;
     practiceScreen.classList.add('visible');
+    if (sidebar && sidebar.classList) {
+      sidebar.classList.add('collapsed');
+    }
   }
 
   function isAx3000gzV2Active() {
