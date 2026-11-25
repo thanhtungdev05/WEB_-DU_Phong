@@ -21,9 +21,12 @@ class TestMeshMobileXResponsive(unittest.TestCase):
         cls.app_js = (ROOT / "app.js").read_text(encoding="utf-8")
 
     def test_1_portal_mobile_frame_and_toolbar_fit_375px(self):
-        """Verify portal.html mobile frame hides redundant topbar in practice, collapses sidebar on lesson select, and guards #net-canvas."""
+        """Verify portal.html mobile frame switches viewport from 1280 to device-width for Mesh Lab, hides redundant topbar, and guards #net-canvas."""
         self.assertIn("body.practice-screen-active #topbar", self.styles_css)
+        self.assertIn("html.mobile-device-mode #practice-screen.mesh-lab-active .iframe-wrap", self.styles_css)
         self.assertIn("env(safe-area-inset-left", self.styles_css)
+        self.assertIn("function syncPortalViewportForMeshLab(", self.app_js)
+        self.assertIn("width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover", self.app_js)
         self.assertIn("doc.getElementById('net-canvas')", self.app_js)
         self.assertIn("document.body.classList.add('practice-screen-active')", self.app_js)
         self.assertIn("if (window.innerWidth <= 900)", self.app_js)
@@ -205,7 +208,15 @@ assert(elements['device-sim-iframe'].style.transform.startsWith('scale(0.68'), '
 ctx.setMobileWebGuiScale('fit', 1);
 assert.strictEqual(elements['cisco-iframe-stage'].style.width, '375px', 'Fit mode stage width must match 375px viewport');
 
-// 5. Desktop (1440x900) must leave iframe 100% untouched (no transform)
+// 5. Auto-unstack pre-existing overlapping nodes restored from an older session
+ctx.window.innerWidth = 375;
+ctx.window.innerHeight = 812;
+n1.x = 180; n1.y = 220;
+n2.x = 192; n2.y = 226;
+ctx.renderNodes();
+assert(Math.hypot(n2.x - n1.x, n2.y - n1.y) >= 140, 'Overlapping restored nodes must auto-separate on renderNodes()');
+
+// 6. Desktop (1440x900) must leave iframe 100% untouched (no transform)
 ctx.window.innerWidth = 1440;
 ctx.window.innerHeight = 900;
 ctx.applyMobileWebGuiScale(1);

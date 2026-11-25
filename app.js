@@ -101,6 +101,18 @@
     }
   }
 
+  function syncPortalViewportForMeshLab(isMeshLab) {
+    try {
+      const vp = document.querySelector('meta[name="viewport"]');
+      if (!vp) return;
+      if (isMeshLab && isMobileOrTouch()) {
+        vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover');
+      } else {
+        vp.setAttribute('content', 'width=1280, user-scalable=yes');
+      }
+    } catch (_) { }
+  }
+
   function syncMobilePlatformClasses() {
     try {
       const { isMobile, isIOS, isAndroid } = detectMobilePlatform();
@@ -2891,6 +2903,7 @@
       practiceScreen.classList.toggle('mesh-lab-active', isMeshLab);
     }
     document.body.classList.toggle('mesh-lab-active', isMeshLab);
+    syncPortalViewportForMeshLab(isMeshLab);
 
 
     // Always hide server warning banner
@@ -3630,6 +3643,7 @@
     if (trackingSaveInFlight) return;
     if (practiceScreen) practiceScreen.classList.remove('mesh-lab-active');
     document.body.classList.remove('mesh-lab-active');
+    syncPortalViewportForMeshLab(false);
     if (window._iframeLoadingTimeout) {
       clearTimeout(window._iframeLoadingTimeout);
       window._iframeLoadingTimeout = null;

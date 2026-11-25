@@ -1281,16 +1281,21 @@ html, body {
 }
 
 /* ── Mesh Lab Practice Mode in Portal: 100% Viewport Fit (No scrollbar / Kệ thiết bị luôn hiển thị) ── */
-#practice-screen.mesh-lab-active .iframe-wrap {
+#practice-screen.mesh-lab-active .iframe-wrap,
+html.mobile-device-mode #practice-screen.mesh-lab-active .iframe-wrap {
   overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
 }
-#practice-screen.mesh-lab-active #device-iframe {
+#practice-screen.mesh-lab-active #device-iframe,
+html.mobile-device-mode #practice-screen.mesh-lab-active #device-iframe {
   min-width: 0 !important;
   min-height: 0 !important;
   width: 100% !important;
   height: 100% !important;
   position: absolute !important;
   inset: 0 !important;
+  touch-action: auto !important;
 }
 
 /* ── Chế độ Điện thoại iPhone (iOS) & Android: Hỗ trợ cuộn ngang/dọc 2 chiều mượt mà ── */

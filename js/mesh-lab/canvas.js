@@ -982,9 +982,53 @@
       }
     }
 
+    function autoSeparateOverlappingNodes() {
+      if (activeDragNode || activeTouchDrag) return false;
+      const nodes = studioState.nodes || [];
+      if (nodes.length < 2) return false;
+      const canvas = document.getElementById('net-canvas');
+      const z = getCanvasZoom();
+      const cw = canvas && canvas.clientWidth > 0 ? (canvas.clientWidth / z) : (window.innerWidth / z);
+      const ch = canvas && canvas.clientHeight > 0 ? (canvas.clientHeight / z) : Math.max(220, (window.innerHeight / z) - 140);
+      if (cw < 200) return false;
+
+      let separated = false;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i];
+          const b = nodes[j];
+          if (Math.hypot((a.x || 0) - (b.x || 0), (a.y || 0) - (b.y || 0)) < 88) {
+            if (nodes.length === 2) {
+              const targetY = Math.max(58, Math.min(ch - 108, Math.round(ch * 0.36) - 42));
+              if (cw <= 560) {
+                a.x = Math.max(14, Math.round(cw * 0.21) - 46);
+                b.x = Math.max(a.x + 145, Math.min(cw - 108, Math.round(cw * 0.79) - 52));
+              } else {
+                a.x = Math.max(40, Math.round(cw * 0.32) - 55);
+                b.x = Math.min(cw - 130, Math.round(cw * 0.68) - 55);
+              }
+              a.y = targetY;
+              b.y = targetY;
+            } else {
+              b.x = Math.min(cw - 110, (a.x || 40) + 145);
+              if (Math.abs(b.x - a.x) < 90) {
+                b.x = Math.max(14, (a.x || 180) - 145);
+                b.y = Math.min(ch - 106, (a.y || 70) + 112);
+              }
+            }
+            separated = true;
+          }
+        }
+      }
+      return separated;
+    }
+
     function renderNodes() {
       const container = document.getElementById('canvas-nodes');
       if (!container) return;
+      if (autoSeparateOverlappingNodes()) {
+        renderSvgWires();
+      }
       container.innerHTML = '';
       updateCanvasQuickGuideBanner();
       if (typeof renderMobileDevQuickbars === 'function') {
@@ -1022,11 +1066,11 @@
           startNodeDrag(node.id, e);
         };
 
-        el.ontouchstart = (e) => {
+        el.addEventListener('touchstart', (e) => {
           if (e.target.closest('.nq-btn')) return;
           if (!e.touches || e.touches.length !== 1) return;
           startNodeTouchInteraction(node.id, el, e);
-        };
+        }, { passive: false });
 
         el.ondblclick = () => { openDeviceWindow(node.id); };
 
@@ -1162,6 +1206,8 @@
       if (!t) return;
       const node = studioState.nodes.find(n => n.id === nodeId);
       if (!node) return;
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
       const z = getCanvasZoom();
       activeTouchDrag = {
         node: node,
@@ -1179,11 +1225,13 @@
 
     function onNodeTouchMove(e) {
       if (!activeTouchDrag || !e.touches || !e.touches[0]) return;
+      if (studioState.currentTool === 'select' && e.cancelable) {
+        e.preventDefault();
+      }
       const t = e.touches[0];
       const dist = Math.hypot(t.clientX - activeTouchDrag.startClientX, t.clientY - activeTouchDrag.startClientY);
-      if (!activeTouchDrag.moved && dist < 7) return;
+      if (!activeTouchDrag.moved && dist < 5) return;
       if (studioState.currentTool !== 'select') return;
-      e.preventDefault();
       if (!activeTouchDrag.moved) {
         activeTouchDrag.moved = true;
         closeCiscoPortPopup();
