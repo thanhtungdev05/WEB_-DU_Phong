@@ -1829,6 +1829,9 @@
       font-weight: 700;
       box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
     }
+    .canvas-quick-guide.guide-auto-hidden {
+      display: none !important;
+    }
     .mobile-dock-toggle-btn {
       display: none;
     }
@@ -1843,29 +1846,63 @@
       .node-device .node-quick-bar,
       .node-device.selected .node-quick-bar {
         display: inline-flex !important;
-        top: -30px;
-        padding: 3px 5px;
-        gap: 4px;
-        background: rgba(15, 23, 42, 0.96);
+        top: -22px;
+        padding: 2px 4px;
+        gap: 2px;
+        border-radius: 5px;
+        background: rgba(15, 23, 42, 0.95);
         border: 1px solid #475569;
       }
       .nq-btn {
-        font-size: 10.5px;
-        padding: 4px 7px;
-        min-height: 24px;
+        font-size: 9.5px;
+        padding: 2px 5px;
+        min-height: 19px;
+        border-radius: 3px;
         background: rgba(30, 41, 59, 0.9);
-        border: 1px solid rgba(148, 163, 184, 0.3);
+        border: 1px solid rgba(148, 163, 184, 0.28);
       }
     }
 
     @media (max-width: 900px), (max-height: 500px) {
+      .node-device {
+        width: 100px;
+        padding: 4px;
+        border-radius: 8px;
+      }
+      .node-svg-figure {
+        width: 68px;
+        height: 46px;
+        border-radius: 8px;
+        padding: 3px 5px;
+      }
+      .node-svg-figure .device-real-img {
+        max-width: 58px;
+        max-height: 38px;
+      }
+      .node-pwr-dot {
+        width: 5.5px;
+        height: 5.5px;
+        top: 4px;
+        right: 4px;
+      }
+      .node-caption {
+        margin-top: 3px;
+        padding: 1.5px 5px;
+        max-width: 98px;
+      }
+      .node-name {
+        font-size: 9.5px;
+      }
+      .node-ip-sub {
+        font-size: 8px;
+      }
       .lab-topbar {
         height: auto;
-        min-height: 40px;
-        padding: 4px max(10px, env(safe-area-inset-right, 0px)) 4px max(10px, env(safe-area-inset-left, 0px));
+        min-height: 36px;
+        padding: 3px max(10px, env(safe-area-inset-right, 0px)) 3px max(10px, env(safe-area-inset-left, 0px));
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        gap: 6px;
+        gap: 5px;
       }
       .brand-badge,
       #theme-toggle-text,
@@ -1873,39 +1910,46 @@
         display: none !important;
       }
       .preset-select {
-        max-width: 175px;
+        max-width: 165px;
         text-overflow: ellipsis;
       }
       .studio-ribbon {
-        height: 38px;
+        height: 31px;
         padding: 0 max(8px, env(safe-area-inset-right, 0px)) 0 max(8px, env(safe-area-inset-left, 0px));
         -webkit-overflow-scrolling: touch;
-        gap: 5px;
+        gap: 4px;
       }
       .tool-btn {
-        padding: 5px 9px;
-        font-size: 11px;
-        min-height: 28px;
+        padding: 3px 7px;
+        font-size: 10px;
+        min-height: 23px;
+        border-radius: 4px;
+        gap: 3px;
+      }
+      .tool-btn svg {
+        width: 11px;
+        height: 11px;
       }
       .canvas-quick-guide {
-        top: 6px !important;
+        top: 5px !important;
         left: max(8px, env(safe-area-inset-left, 8px)) !important;
         right: max(8px, env(safe-area-inset-right, 8px)) !important;
         max-width: none !important;
-        padding: 4px 9px !important;
-        font-size: 10.5px !important;
-        line-height: 1.35 !important;
-        gap: 6px !important;
+        padding: 3px 8px !important;
+        font-size: 9.5px !important;
+        line-height: 1.3 !important;
+        gap: 5px !important;
         white-space: normal !important;
         display: -webkit-box !important;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden !important;
       }
-      .cpt-bottom-dock {
+      .cpt-bottom-dock,
+      body.portal-lesson-embed .cpt-bottom-dock {
         grid-template-columns: 1fr !important;
         height: auto !important;
-        min-height: 68px;
+        min-height: 58px !important;
         padding-bottom: env(safe-area-inset-bottom, 0px);
         padding-left: env(safe-area-inset-left, 0px);
         padding-right: env(safe-area-inset-right, 0px);
@@ -1922,19 +1966,33 @@
         -webkit-overflow-scrolling: touch;
       }
       .palette-shelf {
-        padding: 4px 8px !important;
-        gap: 7px;
+        padding: 3px 8px !important;
+        gap: 6px;
         -webkit-overflow-scrolling: touch;
       }
-      .palette-item {
-        padding: 5px 9px !important;
-        min-height: 44px;
+      .palette-item,
+      body.portal-lesson-embed .palette-item {
+        padding: 3px 7px !important;
+        min-height: 36px;
+        gap: 5px;
+        border-radius: 6px;
+      }
+      .palette-item-icon-box {
+        width: 30px;
+        height: 24px;
+      }
+      .palette-item-name {
+        font-size: 9.5px;
+      }
+      .palette-item-sub {
+        font-size: 8px;
       }
       body.mobile-dock-collapsed .palette-shelf,
       body.mobile-dock-collapsed .palette-header {
         display: none !important;
       }
-      body.mobile-dock-collapsed .cpt-bottom-dock {
+      body.mobile-dock-collapsed .cpt-bottom-dock,
+      body.portal-lesson-embed.mobile-dock-collapsed .cpt-bottom-dock {
         min-height: 0 !important;
         height: auto !important;
       }
@@ -1944,12 +2002,12 @@
         justify-content: center;
         gap: 4px;
         width: 100%;
-        height: 22px;
+        height: 20px;
         background: var(--bg-palette-tab);
         color: var(--text-node-title);
         border: none;
         border-bottom: 1px solid var(--border-palette);
-        font-size: 10px;
+        font-size: 9.5px;
         font-weight: 700;
         cursor: pointer;
       }
@@ -2137,26 +2195,62 @@
 
     /* Chế độ xoay ngang Mobile X (812 x 375): Siêu gọn chiều cao, tránh tai thỏ 2 bên */
     @media (max-height: 500px) and (orientation: landscape) {
+      .node-device {
+        width: 92px;
+        padding: 3px;
+      }
+      .node-svg-figure {
+        width: 58px;
+        height: 38px;
+        border-radius: 7px;
+      }
+      .node-svg-figure .device-real-img {
+        max-width: 48px;
+        max-height: 32px;
+      }
+      .node-caption {
+        margin-top: 2px;
+        padding: 1px 4px;
+        max-width: 90px;
+      }
+      .node-name {
+        font-size: 8.5px;
+      }
+      .node-ip-sub {
+        font-size: 7.5px;
+      }
+      .node-device .node-quick-bar,
+      .node-device.selected .node-quick-bar {
+        top: -20px;
+        padding: 1.5px 3px;
+        gap: 2px;
+      }
+      .nq-btn {
+        font-size: 8.5px;
+        padding: 1.5px 4px;
+        min-height: 17px;
+      }
       .lab-topbar {
-        min-height: 32px;
+        min-height: 28px;
         padding-top: 2px;
         padding-bottom: 2px;
       }
       .studio-ribbon {
-        height: 32px;
+        height: 27px;
       }
       .tool-btn {
-        padding: 3px 8px;
-        min-height: 24px;
+        padding: 2px 7px;
+        min-height: 20px;
+        font-size: 9.5px;
       }
       .canvas-quick-guide {
         -webkit-line-clamp: 1;
         padding: 2px 8px !important;
-        font-size: 10px !important;
+        font-size: 9px !important;
       }
       .cpt-bottom-dock,
       body.portal-lesson-embed .cpt-bottom-dock {
-        min-height: 50px !important;
+        min-height: 44px !important;
         height: auto !important;
       }
       .palette-header {
@@ -2165,13 +2259,18 @@
       .palette-shelf {
         padding: 2px 8px !important;
       }
-      .palette-item {
-        padding: 2px 7px !important;
-        min-height: 34px;
+      .palette-item,
+      body.portal-lesson-embed .palette-item {
+        padding: 2px 6px !important;
+        min-height: 30px;
       }
       .palette-item-icon-box {
-        width: 28px;
-        height: 22px;
+        width: 24px;
+        height: 19px;
+      }
+      .mobile-dock-toggle-btn {
+        height: 18px;
+        font-size: 9px;
       }
       .cisco-titlebar {
         height: 31px;
@@ -3332,15 +3431,15 @@ Type '?' or 'help' for available commands. Press TAB to autocomplete.
   <div id="toast-box" class="toast-box">Thông báo</div>
 
   <!-- FPT NetLab Studio Modular Architecture -->
-  <script src="/js/mesh-lab/catalog.js?v=20261125mobilex3"></script>
-  <script src="/js/mesh-lab/physics-ns3.js?v=20261125mobilex3"></script>
-  <script src="/js/mesh-lab/network-stack.js?v=20261125mobilex3"></script>
-  <script src="/js/mesh-lab/canvas.js?v=20261125mobilex3"></script>
-  <script src="/js/mesh-lab/pdu-dispatcher.js?v=20261125mobilex3"></script>
-  <script src="/js/mesh-lab/chassis-view.js?v=20261125mobilex3"></script>
-  <script src="/js/mesh-lab/firmware-sync.js?v=20261125mobilex3"></script>
-  <script src="/js/mesh-lab/cli-terminal.js?v=20261125mobilex3"></script>
-  <script src="/js/mesh-lab/containerlab.js?v=20261125mobilex3"></script>
-  <script src="/js/mesh-lab/main.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/catalog.js?v=20261125mobilex4"></script>
+  <script src="/js/mesh-lab/physics-ns3.js?v=20261125mobilex4"></script>
+  <script src="/js/mesh-lab/network-stack.js?v=20261125mobilex4"></script>
+  <script src="/js/mesh-lab/canvas.js?v=20261125mobilex4"></script>
+  <script src="/js/mesh-lab/pdu-dispatcher.js?v=20261125mobilex4"></script>
+  <script src="/js/mesh-lab/chassis-view.js?v=20261125mobilex4"></script>
+  <script src="/js/mesh-lab/firmware-sync.js?v=20261125mobilex4"></script>
+  <script src="/js/mesh-lab/cli-terminal.js?v=20261125mobilex4"></script>
+  <script src="/js/mesh-lab/containerlab.js?v=20261125mobilex4"></script>
+  <script src="/js/mesh-lab/main.js?v=20261125mobilex4"></script>
 </body>
 </html>

@@ -822,6 +822,13 @@
     if (!guideSyncInterval) {
       guideSyncInterval = setInterval(() => {
         if (practiceScreen.classList.contains('visible')) {
+          // Ưu tiên 100% CPU cho thao tác chạm kéo thiết bị trên bàn vẽ Mesh (tránh khựng khung hình)
+          try {
+            if (deviceIframe && deviceIframe.contentWindow && deviceIframe.contentWindow._isMeshTouchDragging) {
+              return;
+            }
+          } catch (_) { }
+
           // Tránh giật đơ khi KTV đang phóng to màn hình thiết bị trên mobile
           const vv = window.visualViewport;
           const isZoomingMobile = Boolean(vv && typeof vv.scale === 'number' && vv.scale > 1.05 && ('ontouchstart' in window));
@@ -2271,7 +2278,9 @@
               window._hasSuccHintStored = false;
             }
 
-            const evalResult = evaluateLesson(device, lesson);
+            // Bỏ gọi evaluateLesson() định kỳ trong chế độ Thực hành hoặc bài Mesh (tránh Synchronous XHR khóa màn hình; bài Mesh chỉ chấm tươi khi bấm Nộp bài)
+            const isMeshTopologyLesson = Boolean(lesson && lesson.isMeshTopologyLab);
+            const evalResult = (currentMode === 'practice' || isMeshTopologyLesson) ? null : evaluateLesson(device, lesson);
             let btnGuideErrors = document.getElementById('btn-guide-errors');
             const noConfig = isNoConfigDevice();
 
@@ -5838,6 +5847,12 @@
           font-size: 11px !important;
           padding: 3px 6px !important;
           max-width: none !important;
+        }
+        @media (max-width: 900px), (max-height: 500px) {
+          .ftc-guide-bubble {
+            font-size: 9.5px !important;
+            padding: 3px 6px !important;
+          }
         }
         @media (max-width: 520px) {
           .ftc-guide-bubble {

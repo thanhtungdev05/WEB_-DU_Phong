@@ -1403,7 +1403,8 @@ html.mobile-device-mode #device-iframe {
 
   /* Co gọn thanh công cụ thực hành vừa khít 375px (Mobile X) không bao giờ mất nút Nộp bài */
   .practice-toolbar {
-    padding: 4px max(8px, env(safe-area-inset-right, 0px)) 4px max(8px, env(safe-area-inset-left, 0px));
+    padding: 3px max(8px, env(safe-area-inset-right, 0px)) 3px max(8px, env(safe-area-inset-left, 0px));
+    min-height: 32px;
     gap: 5px;
     overflow-x: auto;
   }
@@ -1411,28 +1412,28 @@ html.mobile-device-mode #device-iframe {
     display: none !important;
   }
   .practice-toolbar-left {
-    gap: 5px;
+    gap: 4px;
     flex: 0 1 auto;
   }
   .practice-toolbar-right {
-    gap: 5px;
+    gap: 4px;
     margin-left: auto;
   }
   .btn-toolbar {
-    padding: 5px 9px;
-    font-size: 11.5px;
-    gap: 4px;
-    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 3px;
+    border-radius: 5px;
   }
   #btn-guide-errors {
     margin-right: 0 !important;
-    padding: 5px 7px !important;
+    padding: 4px 6px !important;
   }
   #practice-timer {
     margin-left: 0 !important;
     margin-right: 0 !important;
-    padding: 4px 7px;
-    font-size: 11.5px;
+    padding: 3px 6px;
+    font-size: 11px;
   }
 }
 
@@ -1441,23 +1442,28 @@ html.mobile-device-mode #device-iframe {
     display: none !important;
   }
   .practice-toolbar {
-    padding: 3px max(12px, env(safe-area-inset-right, 0px)) 3px max(12px, env(safe-area-inset-left, 0px));
-    min-height: 34px;
+    padding: 2px max(12px, env(safe-area-inset-right, 0px)) 2px max(12px, env(safe-area-inset-left, 0px));
+    min-height: 28px;
     gap: 6px;
   }
+  .practice-info {
+    display: none !important;
+  }
   .btn-toolbar {
-    padding: 4px 10px;
-    font-size: 11.5px;
+    padding: 3px 8px;
+    font-size: 10.5px;
+    border-radius: 5px;
+    gap: 3px;
   }
   #practice-timer {
-    margin-left: 4px !important;
+    margin-left: 2px !important;
     margin-right: 2px !important;
-    padding: 3px 8px;
-    font-size: 11.5px;
+    padding: 2px 7px;
+    font-size: 10.5px;
   }
   .practice-bubble-head {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
   }
   .practice-bubble-card {
     position: fixed !important;

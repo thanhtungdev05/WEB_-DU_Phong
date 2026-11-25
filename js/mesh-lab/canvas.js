@@ -621,6 +621,18 @@
       svg.appendChild(g);
     }
 
+    function getNodeVisualCenter(node) {
+      const isLandscapeMobile = Boolean(window.innerHeight <= 500 && window.innerWidth > window.innerHeight);
+      const isPortraitMobile = Boolean(!isLandscapeMobile && window.innerWidth <= 900);
+      if (isLandscapeMobile) {
+        return { cx: node.x + 46, cy: node.y + 23, boxHalf: 33, isMobile: true };
+      }
+      if (isPortraitMobile) {
+        return { cx: node.x + 50, cy: node.y + 27, boxHalf: 37, isMobile: true };
+      }
+      return { cx: node.x + 68, cy: node.y + 38, boxHalf: 52, isMobile: false };
+    }
+
     function renderSvgWires() {
       const svg = document.getElementById('canvas-svg');
       if (!svg) return;
@@ -632,10 +644,11 @@
       studioState.nodes.forEach(node => {
         if (!node.power) return;
         if (node.category === 'gateway' || node.category === 'ap') {
+          const vc = getNodeVisualCenter(node);
           const halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          halo.setAttribute('cx', node.x + 68);
-          halo.setAttribute('cy', node.y + 38);
-          halo.setAttribute('r', node.category === 'gateway' ? '145' : '130');
+          halo.setAttribute('cx', vc.cx);
+          halo.setAttribute('cy', vc.cy);
+          halo.setAttribute('r', vc.isMobile ? (node.category === 'gateway' ? '95' : '85') : (node.category === 'gateway' ? '145' : '130'));
           halo.setAttribute('fill', node.category === 'gateway' ? 'url(#wifi-halo-master)' : 'url(#wifi-halo-slave)');
           svg.appendChild(halo);
         }
@@ -647,11 +660,12 @@
         const tgtNode = studioState.nodes.find(n => n.id === l.tgtId);
         if (!srcNode || !tgtNode) return;
 
-        // Center of each device icon box (width=136 -> centerX=68, icon centerY=38)
-        const cx1 = srcNode.x + 68;
-        const cy1 = srcNode.y + 38;
-        const cx2 = tgtNode.x + 68;
-        const cy2 = tgtNode.y + 38;
+        const vc1 = getNodeVisualCenter(srcNode);
+        const vc2 = getNodeVisualCenter(tgtNode);
+        const cx1 = vc1.cx;
+        const cy1 = vc1.cy;
+        const cx2 = vc2.cx;
+        const cy2 = vc2.cy;
 
         const pathData = `M ${cx1} ${cy1} L ${cx2} ${cy2}`;
         const bothPowered = srcNode.power && tgtNode.power;
@@ -753,10 +767,10 @@
         path.onclick = onCableClick;
         svg.appendChild(path);
 
-        // Animated flow dot
-        if (bothPowered && linkLightState !== 'down') {
+        // Animated flow dot (tạm bỏ qua trong tích tắc đang kéo cảm ứng để giữ 60/120fps mượt tuyệt đối)
+        if (bothPowered && linkLightState !== 'down' && !window._isMeshTouchDragging) {
           const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          circle.setAttribute('r', '3.5');
+          circle.setAttribute('r', vc1.isMobile ? '2.8' : '3.5');
           circle.setAttribute('fill', l.cableType === 'FIBER_SC' ? '#f97316' : (l.cableType === 'WIFI_MESH' ? '#a855f7' : '#22c55e'));
           circle.setAttribute('stroke', '#ffffff');
           circle.setAttribute('stroke-width', '1');
@@ -775,7 +789,7 @@
         const ux = vx / dist;
         const uy = vy / dist;
 
-        const offsetDist = Math.min(58, dist * 0.26);
+        const offsetDist = Math.min(vc1.boxHalf + 7, dist * 0.25);
         const lx1 = cx1 + ux * offsetDist;
         const ly1 = cy1 + uy * offsetDist;
         const lx2 = cx2 - ux * offsetDist;
@@ -786,39 +800,46 @@
 
         const strokeCol = !bothPowered ? '#ef4444' : (linkLightState === 'bottleneck' ? '#f59e0b' : (l.cableType === 'FIBER_SC' ? '#ea580c' : (l.cableType === 'WIFI_MESH' ? '#7c3aed' : '#2563eb')));
 
-        // High-contrast Pill-backed Port Labels next to Link Lights
-        if (studioState.showPortLabels && dist > 140) {
+        // Trên Mobile khi khoảng cách 2 cục gần nhau: gộp thành 1 viên nhãn gọn duy nhất ở giữa thay vì 3 viên chen chúc!
+        const useUnifiedMobilePill = Boolean(vc1.isMobile && dist < 340);
+        if (studioState.showPortLabels && dist > 140 && !useUnifiedMobilePill) {
           renderPortEndpointPill(svg, lx1 + ux * 20, ly1 - 16, getPortShortLabel(srcNode, l.srcPort), strokeCol);
           renderPortEndpointPill(svg, lx2 - ux * 20, ly2 - 16, getPortShortLabel(tgtNode, l.tgtPort), strokeCol);
         }
 
-        // Compact Speed Pill in the Midpoint of the Cable
+        // Compact Speed / Unified Port Pill in the Midpoint of the Cable
         const mx = (cx1 + cx2) / 2;
         const my = (cy1 + cy2) / 2;
         const gPill = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         gPill.setAttribute('class', 'cable-label-pill');
         gPill.onclick = onCableClick;
 
-        const pillW = Math.max(72, speedText.length * 6.6 + 16);
+        const shortSpd = l.speed >= 1000 ? (l.speed / 1000) + 'G' : l.speed + 'M';
+        const pillLabel = (useUnifiedMobilePill && studioState.showPortLabels)
+          ? `${getPortShortLabel(srcNode, l.srcPort)}↔${getPortShortLabel(tgtNode, l.tgtPort)} • ${shortSpd}`
+          : speedText;
+        const pillFontSize = vc1.isMobile ? 8.2 : 9.5;
+        const pillH = vc1.isMobile ? 16 : 20;
+        const pillW = Math.max(vc1.isMobile ? 58 : 72, pillLabel.length * (vc1.isMobile ? 5.2 : 6.6) + (vc1.isMobile ? 12 : 16));
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('x', mx - (pillW / 2));
-        rect.setAttribute('y', my - 10);
+        rect.setAttribute('y', my - (pillH / 2));
         rect.setAttribute('width', pillW);
-        rect.setAttribute('height', '20');
-        rect.setAttribute('rx', '10');
+        rect.setAttribute('height', String(pillH));
+        rect.setAttribute('rx', String(pillH / 2));
         rect.setAttribute('fill', 'var(--bg-canvas)');
         rect.setAttribute('stroke', strokeCol);
-        rect.setAttribute('stroke-width', '1.6');
+        rect.setAttribute('stroke-width', vc1.isMobile ? '1.3' : '1.6');
 
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('x', mx);
-        text.setAttribute('y', my + 3.5);
+        text.setAttribute('y', my + (vc1.isMobile ? 2.8 : 3.5));
         text.setAttribute('fill', strokeCol);
-        text.setAttribute('font-size', '9.5');
+        text.setAttribute('font-size', String(pillFontSize));
         text.setAttribute('font-family', 'JetBrains Mono, monospace');
         text.setAttribute('font-weight', '700');
         text.setAttribute('text-anchor', 'middle');
-        text.textContent = speedText;
+        text.textContent = pillLabel;
 
         gPill.appendChild(rect);
         gPill.appendChild(text);
@@ -829,8 +850,9 @@
       if (studioState.currentTool === 'wire' && studioState.wireStartNodeId && studioState.wireMousePos) {
         const srcNode = studioState.nodes.find(n => n.id === studioState.wireStartNodeId);
         if (srcNode) {
-          const cx1 = srcNode.x + 68;
-          const cy1 = srcNode.y + 38;
+          const vcSrc = getNodeVisualCenter(srcNode);
+          const cx1 = vcSrc.cx;
+          const cy1 = vcSrc.cy;
           const mx = studioState.wireMousePos.x;
           const my = studioState.wireMousePos.y;
 
@@ -956,13 +978,34 @@
       }
     }
 
+    function syncAutoMobileDockCollapse() {
+      const isMobile = Boolean(window.innerWidth <= 900 || window.innerHeight <= 500);
+      const netCount = (studioState.nodes || []).filter(n => n.category !== 'core' && n.category !== 'client').length;
+      const btn = document.getElementById('mobile-dock-toggle-btn');
+      if (isMobile && !window._mobileDockUserOverride) {
+        if (netCount >= 2) {
+          document.body.classList.add('mobile-dock-collapsed');
+        } else {
+          document.body.classList.remove('mobile-dock-collapsed');
+        }
+      }
+      if (btn) {
+        const isCollapsed = document.body.classList.contains('mobile-dock-collapsed');
+        btn.textContent = isCollapsed
+          ? `▴ Mở kệ thiết bị (${netCount} thiết bị trên bàn)`
+          : '▾ Thu gọn kệ thiết bị';
+      }
+    }
+
     function updateCanvasQuickGuideBanner() {
+      syncAutoMobileDockCollapse();
       const guideEl = document.querySelector('.canvas-quick-guide');
       if (!guideEl) return;
       if (!guideEl.dataset.defaultHtml) {
         guideEl.dataset.defaultHtml = guideEl.innerHTML;
       }
       if (studioState.currentTool === 'wire') {
+        guideEl.classList.remove('guide-auto-hidden');
         guideEl.classList.add('wiring-active-banner');
         if (studioState.wireStartNodeId) {
           const srcNode = studioState.nodes.find(n => n.id === studioState.wireStartNodeId);
@@ -975,8 +1018,15 @@
         return;
       }
       guideEl.classList.remove('wiring-active-banner');
+      const isMobile = Boolean(window.innerWidth <= 900 || window.innerHeight <= 500);
+      const netCount = (studioState.nodes || []).filter(n => n.category !== 'core' && n.category !== 'client').length;
+      if (isMobile && netCount >= 2) {
+        guideEl.classList.add('guide-auto-hidden');
+        return;
+      }
+      guideEl.classList.remove('guide-auto-hidden');
       if (window.innerWidth <= 640) {
-        guideEl.innerHTML = `<span>📌 <b>1:</b> Chạm kệ dưới thêm 2 thiết bị • <b>2:</b> Bấm <b>⚙️ Mở</b> cấu hình • <b>3:</b> Bấm <b>🔌 Cáp</b> nối dây • <b>4:</b> Nộp bài</span>`;
+        guideEl.innerHTML = `<span>📌 <b>1:</b> Chạm kệ dưới thêm 2 thiết bị • <b>2:</b> Bấm <b>⚙️ Mở</b> cấu hình • <b>3:</b> Bấm <b>🔌 Cáp</b> nối dây</span>`;
       } else {
         guideEl.innerHTML = guideEl.dataset.defaultHtml;
       }
@@ -1216,8 +1266,9 @@
       window.removeEventListener('mouseup', onNodeMouseUp);
     }
 
-    // Hỗ trợ cảm ứng ngón tay (Touch Drag & Tap) mượt 60fps trên iPhone X / Android không hủy DOM giữa chừng
+    // Hỗ trợ cảm ứng ngón tay (Touch Drag & Tap) mượt 60/120fps trên iPhone X / Android không hủy DOM giữa chừng
     let activeTouchDrag = null;
+    let _touchWireRaf = 0;
     let lastTouchTapInfo = { nodeId: null, time: 0 };
 
     function startNodeTouchInteraction(nodeId, nodeEl, e) {
@@ -1253,26 +1304,37 @@
       if (studioState.currentTool !== 'select') return;
       if (!activeTouchDrag.moved) {
         activeTouchDrag.moved = true;
+        window._isMeshTouchDragging = true;
         closeCiscoPortPopup();
         studioState.selectedNodeId = activeTouchDrag.node.id;
       }
       const z = getCanvasZoom();
       const canvas = document.getElementById('net-canvas');
       const maxW = canvas ? (canvas.clientWidth / z) : (window.innerWidth / z);
-      const maxH = canvas ? (canvas.clientHeight / z) : ((window.innerHeight / z) - 100);
-      activeTouchDrag.node.x = Math.max(8, Math.min(Math.max(8, maxW - 110), (t.clientX / z) - activeTouchDrag.offsetX));
-      activeTouchDrag.node.y = Math.max(36, Math.min(Math.max(36, maxH - 98), (t.clientY / z) - activeTouchDrag.offsetY));
+      const maxH = canvas ? (canvas.clientHeight / z) : ((window.innerHeight / z) - 70);
+      activeTouchDrag.node.x = Math.max(6, Math.min(Math.max(6, maxW - 96), (t.clientX / z) - activeTouchDrag.offsetX));
+      activeTouchDrag.node.y = Math.max(24, Math.min(Math.max(24, maxH - 76), (t.clientY / z) - activeTouchDrag.offsetY));
       if (activeTouchDrag.el) {
         activeTouchDrag.el.style.left = activeTouchDrag.node.x + 'px';
         activeTouchDrag.el.style.top = activeTouchDrag.node.y + 'px';
       }
-      renderSvgWires();
+      if (!_touchWireRaf) {
+        _touchWireRaf = requestAnimationFrame(() => {
+          _touchWireRaf = 0;
+          renderSvgWires();
+        });
+      }
     }
 
     function onNodeTouchEnd(e) {
       window.removeEventListener('touchmove', onNodeTouchMove);
       window.removeEventListener('touchend', onNodeTouchEnd);
       window.removeEventListener('touchcancel', onNodeTouchEnd);
+      if (_touchWireRaf) {
+        cancelAnimationFrame(_touchWireRaf);
+        _touchWireRaf = 0;
+      }
+      window._isMeshTouchDragging = false;
       if (!activeTouchDrag) return;
       const dragInfo = activeTouchDrag;
       activeTouchDrag = null;
@@ -1897,9 +1959,13 @@
 
     window.toggleMobileBottomDock = function() {
       const collapsed = document.body.classList.toggle('mobile-dock-collapsed');
+      window._mobileDockUserOverride = true;
+      const netCount = (studioState.nodes || []).filter(n => n.category !== 'core' && n.category !== 'client').length;
       const btn = document.getElementById('mobile-dock-toggle-btn');
       if (btn) {
-        btn.textContent = collapsed ? '▴ Mở kệ thiết bị' : '▾ Thu gọn kệ thiết bị';
+        btn.textContent = collapsed
+          ? `▴ Mở kệ thiết bị (${netCount} thiết bị trên bàn)`
+          : '▾ Thu gọn kệ thiết bị';
       }
       setTimeout(clampNodesInsideCanvasViewport, 60);
     };

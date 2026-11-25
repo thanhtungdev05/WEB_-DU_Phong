@@ -17,6 +17,7 @@ class TestMeshMobileXResponsive(unittest.TestCase):
         cls.canvas_js = (ROOT / "js" / "mesh-lab" / "canvas.js").read_text(encoding="utf-8")
         cls.chassis_js = (ROOT / "js" / "mesh-lab" / "chassis-view.js").read_text(encoding="utf-8")
         cls.fw_sync_js = (ROOT / "js" / "mesh-lab" / "firmware-sync.js").read_text(encoding="utf-8")
+        cls.main_js = (ROOT / "js" / "mesh-lab" / "main.js").read_text(encoding="utf-8")
         cls.styles_css = (ROOT / "styles.css").read_text(encoding="utf-8")
         cls.app_js = (ROOT / "app.js").read_text(encoding="utf-8")
 
@@ -30,6 +31,9 @@ class TestMeshMobileXResponsive(unittest.TestCase):
         self.assertIn("doc.getElementById('net-canvas')", self.app_js)
         self.assertIn("document.body.classList.add('practice-screen-active')", self.app_js)
         self.assertIn("if (window.innerWidth <= 900)", self.app_js)
+        self.assertIn("_isMeshTouchDragging", self.app_js)
+        self.assertIn("(currentMode === 'practice' || isMeshTopologyLesson) ? null : evaluateLesson(device, lesson)", self.app_js)
+        self.assertNotIn("setInterval(syncZteBackend", self.main_js)
 
     def test_2_mesh_canvas_touch_drag_and_non_overlapping_spawn(self):
         """Verify touch drag updates coordinates without destroying DOM mid-gesture, blocks iOS callout, and smart spawn separates devices."""
@@ -42,6 +46,9 @@ class TestMeshMobileXResponsive(unittest.TestCase):
         self.assertIn("function onNodeTouchEnd(", self.canvas_js)
         self.assertIn("function getRecommendedPaletteKeys()", self.canvas_js)
         self.assertIn("function clampNodesInsideCanvasViewport()", self.canvas_js)
+        self.assertIn("function syncAutoMobileDockCollapse()", self.canvas_js)
+        self.assertIn("function getNodeVisualCenter(", self.canvas_js)
+        self.assertIn("_touchWireRaf", self.canvas_js)
         self.assertIn("BƯỚC 2/2: CẮM VÀO", self.canvas_js)
         self.assertIn("palette-item-recommended", self.canvas_js)
 
@@ -138,7 +145,7 @@ elements['cisco-device-window-2'] = makeEl('cisco-device-window-2', 375, 812);
 
 const ctx = {
   console, Math, Date, Number, String, Boolean, Array, Object, Set, RegExp, parseFloat, parseInt, encodeURIComponent,
-  setTimeout: () => 0, clearTimeout: () => {}, requestAnimationFrame: fn => fn(),
+  setTimeout: () => 0, clearTimeout: () => {}, requestAnimationFrame: fn => { fn(); return 1; }, cancelAnimationFrame: () => {},
   location: { origin: 'http://localhost:8000', search: '?embed=1&lab=LAB_AX3000CV2_07&scenario=p3_mesh_ax3000cv2' },
   URL, URLSearchParams,
   sessionStorage: { removeItem() {}, getItem() { return null; }, setItem() {} },
@@ -189,6 +196,7 @@ assert(firstItem.className.includes('palette-item-recommended'), 'ax3000c must h
 firstItem.onclick();
 firstItem.onclick();
 assert.strictEqual(ctx.studioState.nodes.length, 2, 'Should have 2 spawned nodes');
+assert(ctx.document.body.classList.contains('mobile-dock-collapsed'), 'Bottom dock must auto-collapse once 2 devices are placed on mobile');
 const [n1, n2] = ctx.studioState.nodes;
 const distPortrait = Math.hypot(n2.x - n1.x, n2.y - n1.y);
 assert(distPortrait >= 145, 'Two nodes on 375px portrait must NOT overlap, got dist=' + distPortrait);

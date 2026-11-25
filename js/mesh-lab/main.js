@@ -761,7 +761,6 @@
           await syncTopologyNodesToBackend(null, false);
         }
         await saveWorkspaceNow(false);
-        setInterval(syncZteBackend, 4000);
         return;
       }
       const savedWs = await tryLoadSavedWorkspace();
@@ -778,7 +777,6 @@
         }
         await saveWorkspaceNow(false);
       }
-      setInterval(syncZteBackend, 4000);
     }
 
     async function checkAccessAndInit() {
