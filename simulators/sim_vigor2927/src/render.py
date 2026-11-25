@@ -49,14 +49,112 @@ _SOURCE_EXISTS_CACHE = {}
 # la nhung ten CHAC CHAN thuoc ve index.htm (frame cha, luon dung du co bi nhung
 # them iframe hay khong), khong phai gia tri cau hinh cua thiet bi nen khong vi
 # pham nguyen tac "khong bia dat gia tri". Xem ISSUES.md muc [2026-xx-xx].
-_TOP_VE_PARENT = re.compile(
-    r'\btop\.(act_sta|webcfg|ACTION_STATUS|iActionStatusFlag|iFwUpgradeState|'
-    r'gettext|angular|myApp|locale)\b')
+_VIGOR_TOP_TOKENS = (
+    r'act_sta|webcfg|ACTION_STATUS|iActionStatusFlag|iFwUpgradeState|'
+    r'gettext|angular|myApp|locale|authStr|notSupportWAN|idxperpage|idxperpages|'
+    r'main|menu|printLogo|tab|diagAnalyze|location|showElmtByClass|hideElmtByClass|'
+    r'showElmtById|hideElmtById|header|ifolderDelStop|ifolderDelStart|'
+    r'ifolderStaRefreshEnd|advShow|signState|rootca_idx|fimage|certTitle|cert_name|'
+    r'certidx|CAidx|setVle2Elmt|getVleFromElmt|cvmRestore|cpntCtrl|bHelpNote|'
+    r'SHOW_MESH_NODE|SHOW_SYS_ADMIN|SHOW_WIZ_LOGOUT|writeNote|hasIllegalInputs|'
+    r'isVR9Prj|isGeminiPrj|onclkIcon|sender|ctrl|document'
+)
+_TOP_VE_PARENT = re.compile(r'\b(?:window\.)?top\.(' + _VIGOR_TOP_TOKENS + r')\b')
+_OPENER2_TOP_RE = re.compile(r'\bopener\.opener\.top\b')
+_OPENER_TOP_RE = re.compile(r'\bopener\.top\b')
+_BARE_TOP_VAR_RE = re.compile(r'(\b(?:(?:var|const|let)\s+)?(?:bg|tp|tmp2)\s*=\s*)(?:window\.)?top\b(?![.\w:])')
+_BARE_TOP_TERN_RE = re.compile(r'((?:opener\s*\?\s*[^:;]+|\?\s*[^:;]+)\s*:\s*)(?:window\.)?top\b(?![.\w:])')
+_SCRIPT_SPAN_RE = re.compile(r'(<script\b[^>]*>)(.*?)(</script>)', re.S | re.I)
+_TEXTAREA_SPAN_RE = re.compile(r'(<textarea\b[^>]*>)(.*?)(</textarea>)', re.S | re.I)
+_UNQUOTED_TOP_ATTR_RE = re.compile(r'(\bng-[a-z-]+\s*=\s*)(?:window\.)?top\.(' + _VIGOR_TOP_TOKENS + r')\b')
+
+_VGROOT_EXPR = '(window.__vgRoot?window.__vgRoot():parent)'
+
+_VG_IFRAME_STYLE = (
+    '<style data-vg-responsive="1">'
+    'html,body{max-width:100%;box-sizing:border-box}'
+    '@media(max-width:960px){body{overflow-x:auto!important}'
+    'table[width],form>table{max-width:100%!important;height:auto}}'
+    '</style>'
+)
+
+_VG_IFRAME_SCRIPT = (
+    '<script data-vg-shim="1">'
+    '(function(){if(window.__vgRoot)return;'
+    'window.__vgRoot=function(w){try{var cur=w||window;for(var i=0;i<8;i++){'
+    'if(cur.__vgIsIndex||(typeof cur.authStr!=="undefined"&&typeof cur.printLogo==="function"))return cur;'
+    'if(!cur.parent||cur.parent===cur)break;cur=cur.parent;}}catch(e){}'
+    'try{if(w&&w.parent&&w.parent!==w)return w.parent;}catch(e){}return (window.parent&&window.parent!==window)?window.parent:window;};'
+    'window.__vgPrefix=(function(){try{var cur=window;for(var i=0;i<8;i++){'
+    'var p="";try{p=cur.location&&cur.location.pathname||"";}catch(e){}'
+    r'var m=p.match(/^(\/sim_vigor2927)(?:\/|$)/);if(m)return m[1];'
+    'if(!cur.parent||cur.parent===cur)break;cur=cur.parent;}}catch(e){}return "";})();'
+    'window.__vgUrl=function(u){if(typeof u!=="string"||!window.__vgPrefix)return u;'
+    'if(u.indexOf("/")===0&&u.indexOf("//")!==0&&u.indexOf(window.__vgPrefix+"/")!==0&&u!==window.__vgPrefix)return window.__vgPrefix+u;'
+    'return u;};'
+    'var pfx=window.__vgPrefix;'
+    'if(pfx){'
+    'try{if(window.XMLHttpRequest&&!XMLHttpRequest.prototype.__vgPatched){'
+    'var xo=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){'
+    'var args=Array.prototype.slice.call(arguments);if(typeof args[1]==="string")args[1]=window.__vgUrl(args[1]);'
+    'return xo.apply(this,args);};XMLHttpRequest.prototype.__vgPatched=true;}}catch(e){}'
+    'try{if(window.fetch&&!window.fetch.__vgPatched){'
+    'var wf=window.fetch;window.fetch=function(u,init){if(typeof u==="string")u=window.__vgUrl(u);return wf.call(window,u,init);};'
+    'window.fetch.__vgPatched=true;}}catch(e){}'
+    'try{var wo=window.open;window.open=function(u,n,f){if(typeof u==="string")u=window.__vgUrl(u);return wo.call(window,u,n,f);};}catch(e){}'
+    'document.addEventListener("submit",function(ev){var fm=ev.target;if(!fm||!fm.getAttribute)return;'
+    'var act=fm.getAttribute("action")||"";if(act.indexOf("/")===0&&act.indexOf(pfx+"/")!==0)fm.setAttribute("action",window.__vgUrl(act));},true);'
+    'document.addEventListener("click",function(ev){var a=ev.target&&ev.target.closest?ev.target.closest("a[href]"):null;'
+    'if(!a)return;var hr=a.getAttribute("href")||"";if(hr.indexOf("/")===0&&hr.indexOf("//")!==0&&hr.indexOf(pfx+"/")!==0)a.setAttribute("href",window.__vgUrl(hr));},true);'
+    '}'
+    '})();'
+    '</script>'
+)
 
 
-def sua_top_thanh_parent(s):
-    """Doi top.X -> parent.X cho danh sach bien scaffolding frame o tren."""
-    return _TOP_VE_PARENT.sub(r'parent.\1', s)
+def _rewrite_vigor_js(js):
+    js = _OPENER2_TOP_RE.sub('(window.__vgRoot?window.__vgRoot(opener&&opener.opener):opener.opener.parent)', js)
+    js = _OPENER_TOP_RE.sub('(window.__vgRoot?window.__vgRoot(opener):opener.parent)', js)
+    js = _TOP_VE_PARENT.sub(_VGROOT_EXPR + r'.\1', js)
+    js = js.replace('.menu.lastClickedFolder', '.menu?.lastClickedFolder')
+    js = _BARE_TOP_VAR_RE.sub(r'\1' + _VGROOT_EXPR, js)
+    js = _BARE_TOP_TERN_RE.sub(r'\1' + _VGROOT_EXPR, js)
+    return js
+
+
+def sua_top_thanh_parent(s, is_js=False):
+    """Doi cac bien scaffolding frame Vigor tu top -> __vgRoot()/parent de chay an toan trong iframe."""
+    if is_js:
+        return _rewrite_vigor_js(s)
+    s = _SCRIPT_SPAN_RE.sub(lambda m: m.group(1) + _rewrite_vigor_js(m.group(2)) + m.group(3), s)
+    s = _TEXTAREA_SPAN_RE.sub(lambda m: m.group(1) + _rewrite_vigor_js(m.group(2)) + m.group(3), s)
+    s = _UNQUOTED_TOP_ATTR_RE.sub(r'\1parent.\2', s)
+    return _TOP_VE_PARENT.sub(_VGROOT_EXPR + r'.\1', s)
+
+
+def inject_iframe_shim(html, is_index=False):
+    """Chen helper __vgRoot/__vgPrefix/__vgUrl va responsive CSS vao trang HTML Vigor."""
+    if "window.__vgRoot" in html:
+        return html
+    if is_index:
+        shim = (
+            '<script>window.__vgIsIndex=true;</script>'
+            + _VG_IFRAME_SCRIPT
+            + '<script>(function(){function fitFs(){try{if(window.innerWidth>0&&window.innerWidth<1020){var fs=document.getElementsByTagName("frameset");if(fs.length>1&&fs[1].cols&&fs[1].cols.indexOf("214,")===0)fs[1].cols="184,*,0,0";}}catch(e){}}'
+            + 'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",fitFs);else fitFs();'
+            + 'window.addEventListener("resize",fitFs);})();</script>'
+        )
+    else:
+        shim = _VG_IFRAME_STYLE + _VG_IFRAME_SCRIPT
+    m_head = re.search(r'<head\b[^>]*>', html, re.I)
+    if m_head:
+        idx = m_head.end()
+        return html[:idx] + shim + html[idx:]
+    m_html = re.search(r'<html\b[^>]*>', html, re.I)
+    if m_html:
+        idx = m_html.end()
+        return html[:idx] + '<head>' + shim + '</head>' + html[idx:]
+    return shim + html
 
 
 _RE_GETSTROBJ = re.compile(r'function getStrObj\(\)\{.*?\$http\.post\(.*?\n?.*?\}\);?\}')
@@ -808,8 +906,12 @@ def render(duong_dan_goc):
         def_inputs = dict(def_page.get("inputs") or {})
         if def_inputs:
             s, _ = _thay_input(s, def_inputs)
+        if "<title>Authorization Required !!!</title>" in s:
+            s = s.replace("<title>Authorization Required !!!</title>", "<title>Service Activation Wizard</title>")
         s = sua_top_thanh_parent(s)
         s = bat_tab_ipv6(s)
+        s = sua_getStrObj(s)
+        s = inject_iframe_shim(s, is_index=(duong_dan_goc.lower() == "index.htm"))
         if "ipbandw.htm" in duong_dan_goc:
             s = sua_ipbandw_add(s)
         if "ipbmac.htm" in duong_dan_goc:

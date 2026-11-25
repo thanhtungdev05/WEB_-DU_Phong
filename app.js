@@ -238,6 +238,9 @@
   const gmChecklistBody = document.getElementById('gm-checklist-body');
   const gmSaveStatus = document.getElementById('gm-save-status');
 
+  // Đảm bảo xóa bỏ cache tỷ lệ zoom cũ để mặc định luôn là 100%
+  try { localStorage.removeItem('ftc_mesh_zoom'); } catch (_) {}
+
   // Track current iframe URL
   let currentIframeUrl = '';
   let trackingSaveInFlight = false;
@@ -826,6 +829,29 @@
           try {
             const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
             allDocs.forEach(doc => {
+              if (!doc._ftcGuideInputLiveSyncBound) {
+                doc._ftcGuideInputLiveSyncBound = true;
+                const onLiveInputOrChange = function () {
+                  if (currentMode === 'guide') {
+                    applyGuidePopups();
+                  }
+                };
+                doc.addEventListener('input', onLiveInputOrChange, true);
+                doc.addEventListener('change', onLiveInputOrChange, true);
+
+                const docWin = doc.defaultView || doc.parentWindow;
+                if (docWin && !docWin._ftcGuideRouteSyncBound) {
+                  docWin._ftcGuideRouteSyncBound = true;
+                  const onRouteChanged = function () {
+                    if (currentMode === 'guide') {
+                      setTimeout(applyGuidePopups, 50);
+                    }
+                  };
+                  docWin.addEventListener('hashchange', onRouteChanged);
+                  docWin.addEventListener('popstate', onRouteChanged);
+                }
+              }
+
               // AX3000GZ V2 / AC1000Z tải nhiều panel bằng AJAX. Đồng bộ dày ngay sau click để
               // tooltip của bước kế tiếp xuất hiện trước khi KTV có thể thao tác tiếp.
               const isAx3000gzV2 = currentDeviceId === 'ONT_ax3000gz_v2' || currentDeviceId === 'ax3000gz_v2' ||
@@ -2269,6 +2295,17 @@
                 if (btnGuideErrors) {
                   btnGuideErrors.style.display = 'none';
                 }
+              } else if (lesson && lesson.isMeshTopologyLab) {
+                // Bài học Mesh 4 bước: Không tự bật cảnh báo lỗi khi đang cấu hình dở; cho phép bấm Nộp bài để chấm và báo lỗi chi tiết từng bước
+                if (btnGuideErrors) {
+                  btnGuideErrors.style.display = 'none';
+                }
+                if (btnSubmitLab) {
+                  btnSubmitLab.disabled = false;
+                  btnSubmitLab.style.opacity = '1';
+                  btnSubmitLab.style.cursor = 'pointer';
+                  btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
+                }
               } else {
                 // Chưa đạt hoặc chưa bấm Save trong Hướng dẫn:
                 if (btnGuideErrors) {
@@ -2725,13 +2762,14 @@
         item.dataset.lessonId = lesson.id;
 
         // Parse "Bài X - " for the number
-        const match = lesson.title.match(/^(Bài\s*\d+)\s*[-—]\s*(.+)$/i);
+        const shownTitle = lesson.displayTitle || lesson.title;
+        const match = shownTitle.match(/^(Bài\s*\d+)\s*[-—]\s*(.+)$/i);
         const numPart = match ? match[1] : `${idx + 1}`;
-        const labelPart = match ? match[2] : lesson.title;
+        const labelPart = match ? match[2] : shownTitle;
 
         item.innerHTML = `
           <span class="nav-num">${numPart}</span>
-          <span class="nav-label" title="${lesson.title}">- ${labelPart}</span>`;
+          <span class="nav-label" title="${shownTitle}">- ${labelPart}</span>`;
 
         item.addEventListener('click', () => {
           if (!confirmLeavePracticeSession()) return;
@@ -2761,7 +2799,7 @@
 
     // Breadcrumb
     const secName = 'Học Tập';
-    setBreadcrumb([device.name, secName, lesson.title]);
+    setBreadcrumb([device.name, secName, lesson.displayTitle || lesson.title]);
 
     // Render lesson card
     renderLessonCard(lesson);
@@ -2772,7 +2810,8 @@
 
   // ── Render Lesson Card ───────────────────────────────────────────
   function renderLessonCard(lesson) {
-    lcTitle.textContent = lesson.title.toUpperCase();
+    const shownTitle = lesson.displayTitle || lesson.title;
+    lcTitle.textContent = shownTitle.toUpperCase();
     lcSubtitle.textContent = lesson.subtitle || '';
 
     // Build instruction list
@@ -2793,6 +2832,17 @@
       btnPrac.className = 'btn-guide teal';
     }
 
+    function buildLessonLaunchUrl(modeName) {
+      if (lesson && lesson.isMeshTopologyLab) {
+        const baseMeshUrl = lesson.meshPracticeUrl
+          || ('/mesh-lab.html?embed=1&lab=' + encodeURIComponent(lesson.id)
+              + '&device=' + encodeURIComponent(device.id)
+              + '&scenario=' + encodeURIComponent(lesson.meshLabScenario || 'p3_mesh_ax3000cv2'));
+        return baseMeshUrl + (baseMeshUrl.includes('?') ? '&' : '?') + 'mode=' + encodeURIComponent(modeName) + '&_t=' + Date.now();
+      }
+      return device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'lab=' + encodeURIComponent(lesson.id) + '&mode=' + encodeURIComponent(modeName) + '&_t=' + Date.now();
+    }
+
     // 💡 Hướng dẫn — mở giao diện thiết bị và BẬT POPUP HƯỚNG DẪN TỪNG BƯỚC
     btnGuide.onclick = () => {
       if (!_currentUser && !_guestGuideMode) {
@@ -2800,7 +2850,7 @@
         return;
       }
       currentMode = 'guide';
-      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'lab=' + encodeURIComponent(lesson.id) + '&mode=guide&_t=' + Date.now();
+      const loginUrl = buildLessonLaunchUrl('guide');
       openInFrame(device, lesson, loginUrl, '💡 Hướng dẫn', true);
     };
 
@@ -2811,7 +2861,7 @@
         return;
       }
       currentMode = 'practice';
-      const loginUrl = device.loginUrl + (device.loginUrl.includes('?') ? '&' : '?') + 'lab=' + encodeURIComponent(lesson.id) + '&mode=practice&_t=' + Date.now();
+      const loginUrl = buildLessonLaunchUrl('practice');
       openInFrame(device, lesson, loginUrl, '⚡ Thực hành', false);
     };
   }
@@ -2832,7 +2882,14 @@
       practiceModeLabel.textContent = modeLabel + ':';
       practiceModeLabel.className = 'practice-badge ' + (enableGuide ? 'guide' : 'practice');
     }
-    if (practiceLessonTitle) practiceLessonTitle.textContent = lesson.title;
+    if (practiceLessonTitle) practiceLessonTitle.textContent = lesson.displayTitle || lesson.title;
+
+    const isMeshLab = Boolean(lesson && lesson.isMeshTopologyLab);
+    if (practiceScreen) {
+      practiceScreen.classList.toggle('mesh-lab-active', isMeshLab);
+    }
+    document.body.classList.toggle('mesh-lab-active', isMeshLab);
+
 
     // Always hide server warning banner
     if (serverWarning) {
@@ -3264,7 +3321,7 @@
     if (!practiceBubbleContainer || !lesson) return;
 
     if (practiceBubbleLessonTitle) {
-      practiceBubbleLessonTitle.textContent = lesson.title || 'Yêu cầu thực hành';
+      practiceBubbleLessonTitle.textContent = lesson.displayTitle || lesson.title || 'Yêu cầu thực hành';
     }
 
     if (practiceBubbleContent) {
@@ -3475,6 +3532,9 @@
     if (devResetUrl) {
       resetEndpoints.add(devResetUrl);
     }
+    if (currentLessonId === 'LAB_AX3000CV2_07' || (window._currentLesson && window._currentLesson.isMeshTopologyLab)) {
+      resetEndpoints.add('/api/mesh-lab/reset');
+    }
 
     const doFetch = (typeof fetchWithTimeout === 'function')
       ? fetchWithTimeout
@@ -3541,6 +3601,8 @@
 
   function backToLesson() {
     if (trackingSaveInFlight) return;
+    if (practiceScreen) practiceScreen.classList.remove('mesh-lab-active');
+    document.body.classList.remove('mesh-lab-active');
     if (window._iframeLoadingTimeout) {
       clearTimeout(window._iframeLoadingTimeout);
       window._iframeLoadingTimeout = null;
@@ -3993,32 +4055,38 @@
 
   if (lesson.grading && typeof lesson.grading.customGrading === 'function') {
       const allDocs = getAllAccessibleDocuments(deviceIframe.contentWindow);
-      const customResult = lesson.grading.customGrading(allDocs);
-      if (customResult && Array.isArray(customResult.details)) {
-        const effectiveRules = (lesson.grading && Array.isArray(lesson.grading.rules)) ? lesson.grading.rules : [];
-        const unexpErrors = effectiveRules.length > 0
-          ? evaluateAutoBaseline(allDocs, effectiveRules, lesson)
-          : [];
-        if (unexpErrors && unexpErrors.length > 0) {
-          unexpErrors.forEach(err => {
-            const alreadyHas = customResult.details.some(d => d.name && (d.name.includes(err.label) || d.name === err.label));
-            if (!alreadyHas) {
-              customResult.details.push({
-                id: 'err_unexp_' + (err.label || '').replace(/\s+/g, '_').toLowerCase(),
-                name: 'Thao tác ngoài phạm vi: ' + (err.label || 'Trường không xác định'),
-                expected: err.expected || 'Giữ nguyên',
-                actual: err.actual || 'Đã bị sửa',
-                passed: false,
-                message: 'Cố tình thay đổi thông số "' + (err.label || '') + '" ngoài yêu cầu bài học'
-              });
-              customResult.passed = false;
-              customResult.totalRules = (customResult.totalRules || customResult.details.length) + 1;
-              customResult.score = Math.max(0, Math.round(((customResult.passedCount || 0) / customResult.totalRules) * 100));
-            }
-          });
-        }
+      let customArg = allDocs;
+      if (lesson.isMeshTopologyLab && deviceIframe && deviceIframe.contentWindow && typeof deviceIframe.contentWindow.evaluatePortalMeshLessonSync === 'function') {
+        customArg = deviceIframe.contentWindow;
       }
-      return customResult;
+      const customResult = lesson.grading.customGrading(customArg);
+      if (customResult) {
+        if (!lesson.isMeshTopologyLab && Array.isArray(customResult.details)) {
+          const effectiveRules = (lesson.grading && Array.isArray(lesson.grading.rules)) ? lesson.grading.rules : [];
+          const unexpErrors = effectiveRules.length > 0
+            ? evaluateAutoBaseline(allDocs, effectiveRules, lesson)
+            : [];
+          if (unexpErrors && unexpErrors.length > 0) {
+            unexpErrors.forEach(err => {
+              const alreadyHas = customResult.details.some(d => d.name && (d.name.includes(err.label) || d.name === err.label));
+              if (!alreadyHas) {
+                customResult.details.push({
+                  id: 'err_unexp_' + (err.label || '').replace(/\s+/g, '_').toLowerCase(),
+                  name: 'Thao tác ngoài phạm vi: ' + (err.label || 'Trường không xác định'),
+                  expected: err.expected || 'Giữ nguyên',
+                  actual: err.actual || 'Đã bị sửa',
+                  passed: false,
+                  message: 'Cố tình thay đổi thông số "' + (err.label || '') + '" ngoài yêu cầu bài học'
+                });
+                customResult.passed = false;
+                customResult.totalRules = (customResult.totalRules || customResult.details.length) + 1;
+                customResult.score = Math.max(0, Math.round(((customResult.passedCount || 0) / customResult.totalRules) * 100));
+              }
+            });
+          }
+        }
+        return customResult;
+      }
     }
 
     let rules = (lesson.grading && lesson.grading.rules && lesson.grading.rules.length > 0)
@@ -4561,8 +4629,14 @@
     // Dừng đồng hồ và lấy thời gian chính xác
     const durationSec = stopPracticeTimer();
 
-    // Chấm điểm
-    const evalResult = evaluateLesson(device, lesson);
+    // Chấm điểm (Luôn buộc chấm tươi 100% từ Backend đối với bài học Mesh khi bấm Nộp bài)
+    window._forceFreshMeshGrade = true;
+    let evalResult = null;
+    try {
+      evalResult = evaluateLesson(device, lesson);
+    } finally {
+      window._forceFreshMeshGrade = false;
+    }
 
     // Lưu kết quả tạm để nút modal dùng khi cần thiết
     _lastEvalResult = evalResult;
@@ -4607,7 +4681,7 @@
     const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
     if (gmMetaDevice) gmMetaDevice.textContent = (device && device.name) ? device.name : 'Thiết bị';
-    if (gmMetaLesson) gmMetaLesson.textContent = (lesson && lesson.title) ? lesson.title : 'Bài học';
+    if (gmMetaLesson) gmMetaLesson.textContent = (lesson && (lesson.displayTitle || lesson.title)) ? (lesson.displayTitle || lesson.title) : 'Bài học';
     if (gmMetaMode) gmMetaMode.textContent = (mode === 'guide' ? '💡 Hướng dẫn' : '⚡ Thực hành');
     if (gmMetaTime) gmMetaTime.textContent = timeStr;
 
@@ -5203,13 +5277,351 @@
     });
   }
 
+  window.addEventListener('message', function (ev) {
+    if (!ev || !ev.data || typeof ev.data !== 'object') return;
+    if (ev.data.type === 'fpt_mesh_fw_saved' || ev.data.type === 'FTC_MESH_LAB_SAVED' || ev.data.type === 'FTC_CANVAS_TOPOLOGY_CHANGED') {
+      window._hasClickedSaveInGuide = true;
+      if (currentMode === 'guide') {
+        setTimeout(applyGuidePopups, 30);
+      }
+    }
+  });
+
   // ── Step By Step Guide Popups Logic ──────────────────────────────
   function getLessonPopups(deviceId, lesson) {
     return getLessonPopupsForDoc(deviceId, lesson, null);
   }
 
+  function getMeshTopologyGuidePopupsForDoc(deviceId, lesson, doc) {
+    if (!doc) return [];
+    const storeKey = 'TOOLTIPS_' + deviceId.toUpperCase();
+    const store = window[storeKey] || {};
+
+    // TẦNG 1: Document của mesh-lab.html (Canvas kéo thả thiết bị & đấu nối dây)
+    if (doc.getElementById && (doc.getElementById('net-canvas') || doc.getElementById('topology-canvas'))) {
+      const win = doc.defaultView || doc.parentWindow;
+      const st = (win && win.studioState) ? win.studioState : null;
+      const reqDevs = Array.isArray(lesson.meshRequiredDevices) && lesson.meshRequiredDevices.length >= 2
+        ? lesson.meshRequiredDevices
+        : ['ax3000c', 'ax3000c'];
+      let netNodes = (st && Array.isArray(st.nodes))
+        ? st.nodes.filter(n => n && n.category !== 'core' && n.category !== 'client')
+        : [];
+      if (netNodes.length === 0) {
+        const domNodes = Array.from(doc.querySelectorAll('.canvas-node:not(.core):not(.client)'));
+        if (domNodes.length > 0) {
+          netNodes = domNodes.map(el => ({
+            id: el.id || el.dataset.nodeId,
+            catalogKey: el.dataset.catalogKey || 'ax3000c'
+          }));
+        }
+      }
+      const links = (st && Array.isArray(st.links)) ? st.links : [];
+      const ciscoWin1 = doc.getElementById('cisco-device-window');
+      const ciscoWin2 = doc.getElementById('cisco-device-window-2');
+      const win1Open = Boolean(ciscoWin1 && ciscoWin1.style.display === 'flex' && !ciscoWin1.classList.contains('minimized'));
+      const win2Open = Boolean(ciscoWin2 && ciscoWin2.style.display === 'flex' && !ciscoWin2.classList.contains('minimized'));
+
+      const g4Canvas = (win && win.__lastGrading4Step) ? win.__lastGrading4Step : (window.__lastGrading4Step || null);
+      const rulesCanvas = (g4Canvas && Array.isArray(g4Canvas.rules)) ? g4Canvas.rules : [];
+      const detailsCanvas = (g4Canvas && Array.isArray(g4Canvas.details)) ? g4Canvas.details : [];
+      const rStep1Canvas = rulesCanvas.find(r => r.id === 'step1_mesh_mode');
+      const rPppUserCanvas = detailsCanvas.find(d => d.id === 'step2_pppoe_user');
+      const rPppPassCanvas = detailsCanvas.find(d => d.id === 'step2_pppoe_pass');
+      const rWifiSsidCanvas = detailsCanvas.find(d => d.id === 'step2_wifi_ssid');
+      const rWifiPassCanvas = detailsCanvas.find(d => d.id === 'step2_wifi_pass');
+      const rWiringCanvas = rulesCanvas.find(r => r.id === 'step3_wiring');
+
+      const step1DoneCanvas = Boolean(rStep1Canvas && rStep1Canvas.passed);
+      const step2DoneCanvas = Boolean(
+        rPppUserCanvas && rPppUserCanvas.passed &&
+        rPppPassCanvas && rPppPassCanvas.passed &&
+        rWifiSsidCanvas && rWifiSsidCanvas.passed &&
+        rWifiPassCanvas && rWifiPassCanvas.passed
+      );
+      const wiringDoneCanvas = Boolean(rWiringCanvas && rWiringCanvas.passed);
+
+      if (win1Open || win2Open) {
+        const activeBtn = win2Open ? doc.getElementById('tab-btn-webgui-2') : doc.getElementById('tab-btn-webgui');
+        if (activeBtn && !activeBtn.classList.contains('active')) {
+          return [{
+            selector: win2Open ? '#tab-btn-webgui-2' : '#tab-btn-webgui',
+            text: 'Bấm chọn tab 🌐 Web GUI (Firmware) để cấu hình thiết bị',
+            position: 'bottom'
+          }];
+        }
+        if (lesson.id === 'LAB_AX3000CV2_07' && step1DoneCanvas && step2DoneCanvas && !wiringDoneCanvas) {
+          return [{
+            selector: '.btn-back-canvas-embed',
+            text: 'Bước 18: Bấm "⬅ Quay lại Sơ đồ Canvas"',
+            position: 'left'
+          }];
+        }
+        return [];
+      }
+
+      // Kiểm tra nếu KTV kéo nhầm thiết bị không thuộc bài học lên Canvas
+      const reqCounts = {};
+      reqDevs.forEach(k => { reqCounts[k] = (reqCounts[k] || 0) + 1; });
+      const seenCounts = {};
+      let wrongNode = null;
+      for (const n of netNodes) {
+        const ck = String(n.catalogKey || '').trim();
+        seenCounts[ck] = (seenCounts[ck] || 0) + 1;
+        if (!reqCounts[ck] || seenCounts[ck] > reqCounts[ck]) {
+          wrongNode = n;
+          break;
+        }
+      }
+      if (wrongNode) {
+        return [{
+          selector: `.canvas-node[data-node-id="${wrongNode.id}"]`,
+          text: `Sai thiết bị! Bài học này chỉ dùng ${lesson.meshPairLabel || '2 thiết bị AX3000CV2'}. Bấm nút ✕ trên thiết bị này để xóa`,
+          position: 'top'
+        }];
+      }
+
+      if (netNodes.length < 2) {
+        const nextIdx = netNodes.length;
+        const targetKey = reqDevs[nextIdx] || reqDevs[0] || 'ax3000c';
+        if (lesson.id === 'LAB_AX3000CV2_07') {
+          return [{
+            selector: `.palette-item[data-device="${targetKey}"], .palette-item[data-key="${targetKey}"]`,
+            text: nextIdx === 0
+              ? 'Bước 1: Kéo AX3000CV2 thứ 1 (Controller) lên Canvas'
+              : 'Bước 2: Kéo tiếp AX3000CV2 thứ 2 (Agent) lên Canvas',
+            position: 'top'
+          }];
+        }
+        return [{
+          selector: `.palette-item[data-device="${targetKey}"], .palette-item[data-key="${targetKey}"]`,
+          text: nextIdx === 0
+            ? 'Kéo thả thiết bị AX3000CV2 thứ 1 (Thiết bị Chính - Controller) từ kệ lên Canvas'
+            : 'Kéo thả tiếp thiết bị AX3000CV2 thứ 2 (Thiết bị Phụ - Agent) từ kệ lên Canvas',
+          position: 'top'
+        }];
+      }
+
+      if (!step1DoneCanvas || !step2DoneCanvas) {
+        if (lesson.id === 'LAB_AX3000CV2_07') {
+          return [{
+            selector: `.canvas-node[data-node-id="${netNodes[0].id}"]`,
+            text: 'Bước 3: Double-click hoặc bấm ⚙️ Mở',
+            position: 'top',
+            offsetY: -22
+          }];
+        }
+        return [{
+          selector: `.canvas-node[data-node-id="${netNodes[0].id}"]`,
+          text: 'Double-click vào Trạm chính AX3000CV2 để bắt đầu Bước 1: Bật EasyMesh và chọn MeshRole = Controller',
+          position: 'top'
+        }];
+      }
+
+      const portPopup = doc.getElementById('cpt-port-popup');
+      if (portPopup && portPopup.style.display !== 'none') {
+        const isZte = reqDevs.includes('be15000');
+        const targetPortSel = (isZte && st && st.wireStartNodeId)
+          ? '.cpt-port-popup-item[data-port-id*="WAN"], .cpt-port-popup-item'
+          : '.cpt-port-popup-item[data-port-id*="LAN"], .cpt-port-popup-item';
+        if (lesson.id === 'LAB_AX3000CV2_07') {
+          return [{
+            selector: targetPortSel,
+            text: (!st || !st.wireStartNodeId)
+              ? 'Bước 20: Chọn cổng LAN 1 trên Trạm chính'
+              : 'Bước 21: Chọn cổng LAN 1 trên Trạm phụ',
+            position: 'right'
+          }];
+        }
+        return [{
+          selector: targetPortSel,
+          text: isZte && st && st.wireStartNodeId
+            ? 'Bước 3 (Đấu nối cáp Backhaul): Chọn cổng WAN trên thiết bị ZTE Agent (LAN ➔ WAN)'
+            : 'Bước 3 (Đấu nối cáp Backhaul): Chọn cổng LAN 1 (1GE) để đấu nối đường trục LAN ➔ LAN',
+          position: 'right'
+        }];
+      }
+
+      if (links.length === 0 || !wiringDoneCanvas) {
+        if (!st || st.currentTool !== 'wire') {
+          return [{
+            selector: '#cable-btn-ETH_CAT6A, #tool-auto-wire',
+            text: (lesson.id === 'LAB_AX3000CV2_07')
+              ? 'Bước 19: Bấm chọn "🔌 Nối Cáp Mạng"'
+              : 'Bước 3 (Đấu nối cáp Backhaul): Bấm chọn "🔌 Nối Cáp Mạng (LAN/WAN)" để nối dây LAN ➔ LAN giữa Trạm chính và Trạm phụ',
+            position: 'bottom'
+          }];
+        }
+        if (!st.wireStartNodeId) {
+          return [{
+            selector: `.canvas-node[data-node-id="${netNodes[0].id}"]`,
+            text: (lesson.id === 'LAB_AX3000CV2_07')
+              ? 'Bước 20: Chọn cổng LAN 1 trên Trạm chính'
+              : 'Bước 3: Click vào Trạm chính và chọn cổng LAN 1 (1GE)',
+            position: 'top'
+          }];
+        }
+        return [{
+          selector: `.canvas-node[data-node-id="${netNodes[1].id}"]`,
+          text: (lesson.id === 'LAB_AX3000CV2_07')
+            ? 'Bước 21: Chọn cổng LAN 1 trên Trạm phụ'
+            : 'Bước 3: Click vào Trạm phụ và chọn cổng LAN 1 (1GE)',
+          position: 'top'
+        }];
+      }
+
+      if (g4Canvas && g4Canvas.passed) {
+        return [];
+      }
+
+      return [{
+        selector: `.canvas-node[data-node-id="${netNodes[0].id}"]`,
+        text: (lesson.id === 'LAB_AX3000CV2_07')
+          ? 'Bước 22: Double-click hoặc bấm ⚙️ Mở kiểm tra Topology'
+          : 'Bước 4: Double-click vào Trạm chính, kiểm tra mục Status >> Easymesh Topo và bấm "Nộp bài & Chấm điểm"!',
+        position: 'top',
+        offsetY: -22
+      }];
+    }
+
+    // TẦNG 2: Document bên trong iframe Web GUI của thiết bị giả lập (#device-sim-iframe)
+    if (isSimulatorLoginDocument(doc)) {
+      if (lesson.id === 'LAB_AX3000CV2_07' || (lesson && lesson.isMeshTopologyLab)) {
+        const uInp = doc.querySelector('.el-form-item[data-ftc-nhan="Username"] input, .login-form input[type="text"], input[name="username"], input[type="text"]');
+        const pInp = doc.querySelector('.el-form-item[data-ftc-nhan="Password"] input, .login-form input[type="password"], input[name="password"], input[type="password"]');
+        const uVal = uInp ? (uInp.value || '').trim() : '';
+        const pVal = pInp ? (pInp.value || '').trim() : '';
+
+        if (uVal !== 'admin') {
+          return [{
+            selector: '.el-form-item[data-ftc-nhan="Username"] input, .login-form input[type="text"], input[name="username"], input[type="text"]',
+            text: 'Nhập Username: admin',
+            position: 'right'
+          }];
+        }
+        if (pVal !== 'admin') {
+          return [{
+            selector: '.el-form-item[data-ftc-nhan="Password"] input, .login-form input[type="password"], input[name="password"], input[type="password"]',
+            text: 'Nhập Password: admin',
+            position: 'right'
+          }];
+        }
+        return [{
+          selector: '.login-form .el-button--primary, .el-button--primary, button[type="submit"]',
+          text: 'Bấm Log In',
+          position: 'right'
+        }];
+      }
+
+      return [{
+        selector: '.el-input[data-ftc-nhan="Username"] input, input[name="username"], input[type="text"], .el-button--primary',
+        text: 'Đăng nhập vào Trạm điều khiển Mesh (Tài khoản: admin / Mật khẩu: admin)',
+        position: 'right'
+      }];
+    }
+
+    const hash = (doc.location && doc.location.hash) ? doc.location.hash.toLowerCase() : '';
+    const meshWin = (deviceIframe && deviceIframe.contentWindow) ? deviceIframe.contentWindow : null;
+    const g4 = (meshWin && meshWin.__lastGrading4Step) ? meshWin.__lastGrading4Step : (window.__lastGrading4Step || null);
+    const rules4 = (g4 && Array.isArray(g4.rules)) ? g4.rules : [];
+    const details4 = (g4 && Array.isArray(g4.details)) ? g4.details : [];
+    const rStep1 = rules4.find(r => r.id === 'step1_mesh_mode');
+    const rPppUser = details4.find(d => d.id === 'step2_pppoe_user');
+    const rPppPass = details4.find(d => d.id === 'step2_pppoe_pass');
+    const rWanProto = details4.find(d => d.id === 'step2_wan_proto');
+    const rWifiSep = details4.find(d => d.id === 'step2_wifi_separate');
+    const rWifiSsid = details4.find(d => d.id === 'step2_wifi_ssid');
+    const rWifiPass = details4.find(d => d.id === 'step2_wifi_pass');
+    const rWiring = rules4.find(r => r.id === 'step3_wiring');
+
+    const step1Done = Boolean(rStep1 && rStep1.passed);
+    const pppoeDone = Boolean(
+      rPppUser && rPppUser.passed &&
+      rPppPass && rPppPass.passed &&
+      (!rWanProto || rWanProto.passed)
+    );
+    const wifiDone = Boolean(
+      rWifiSsid && rWifiSsid.passed &&
+      rWifiPass && rWifiPass.passed &&
+      (!rWifiSep || rWifiSep.passed)
+    );
+    const wiringDone = Boolean(rWiring && rWiring.passed);
+
+    if (lesson.id === 'LAB_AX3000CV2_07') {
+      if (!step1Done) {
+        if (window.TOOLTIPS_AX3000C && typeof window.TOOLTIPS_AX3000C.getMeshBai7LiveStep === 'function') {
+          const liveStep = window.TOOLTIPS_AX3000C.getMeshBai7LiveStep(doc, 'easymesh');
+          if (liveStep && liveStep.length > 0) return liveStep;
+        }
+        return store['LAB_AX3000CV2_07_STEP1'] || store['LAB_AX3000CV2_07'] || [];
+      }
+
+      if (!pppoeDone) {
+        if (window.TOOLTIPS_AX3000C && typeof window.TOOLTIPS_AX3000C.getMeshBai7LiveStep === 'function') {
+          const liveStep = window.TOOLTIPS_AX3000C.getMeshBai7LiveStep(doc, 'wan');
+          if (liveStep && liveStep.length > 0) return liveStep;
+        }
+        return store['LAB_AX3000CV2_07_WAN'] || store['LAB_AX3000CV2_01'] || [];
+      }
+
+      if (!wifiDone) {
+        if (window.TOOLTIPS_AX3000C && typeof window.TOOLTIPS_AX3000C.getMeshBai7LiveStep === 'function') {
+          const liveStep = window.TOOLTIPS_AX3000C.getMeshBai7LiveStep(doc, 'wifi');
+          if (liveStep && liveStep.length > 0) return liveStep;
+        }
+        return store['LAB_AX3000CV2_07_WIFI'] || store['LAB_AX3000CV2_02'] || [];
+      }
+
+      if (!wiringDone) {
+        return [{
+          selector: '.btn-back-canvas-embed',
+          text: 'Bước 18: Bấm "⬅ Quay lại Sơ đồ Canvas"',
+          position: 'left'
+        }];
+      }
+
+      if (window.TOOLTIPS_AX3000C && typeof window.TOOLTIPS_AX3000C.getMeshBai7LiveStep === 'function') {
+        const liveStep = window.TOOLTIPS_AX3000C.getMeshBai7LiveStep(doc, 'topo');
+        if (liveStep && liveStep.length > 0) return liveStep;
+      }
+      return store['LAB_AX3000CV2_07_TOPO'] || [];
+    }
+
+    // Bước 1: Kích hoạt EasyMesh Mode Controller (Trạm điều khiển trung tâm quản lý cụm Mesh)
+    if (!step1Done) {
+      return store['LAB_AX3000CV2_07_STEP1'] || store['LAB_AX3000CV2_07'] || [];
+    }
+    // Bước 2.1: Cấu hình Internet PPPoE (Gateway cấp mạng cho toàn cụm Mesh)
+    if (!pppoeDone) {
+      return store['LAB_AX3000CV2_07_WAN'] || store['LAB_AX3000CV2_01'] || [];
+    }
+    // Bước 2.2: Cấu hình Wi-Fi Roaming FPT (Profile sóng phát chung cho toàn mạng Mesh)
+    if (!wifiDone) {
+      return store['LAB_AX3000CV2_07_WIFI'] || store['LAB_AX3000CV2_02'] || [];
+    }
+
+    // Nếu KTV chưa cắm cáp Backhaul LAN ➔ LAN:
+    if (!wiringDone) {
+      return [{
+        selector: '.btn-back-canvas-embed',
+        text: 'Bước 3 (Đấu nối cáp): Bấm "⬅ Quay lại Sơ đồ Canvas" để cắm cáp mạng LAN ➔ LAN giữa Trạm chính và Trạm phụ',
+        position: 'left'
+      }];
+    }
+
+    // Bước 4: Nghiệm thu Sơ đồ Topology Mesh (Status >> Easymesh Topo)
+    if (!hash.includes('status/easymeshtopo') && !hash.includes('status/easymesh')) {
+      return (store['LAB_AX3000CV2_07_TOPO'] || []).filter(item => item.page !== 'status/easymeshtopo' && item.page !== 'status/easymesh');
+    }
+    return (store['LAB_AX3000CV2_07_TOPO'] || []).filter(item => item.page === 'status/easymeshtopo' || item.page === 'status/easymesh');
+  }
+
   function getLessonPopupsForDoc(deviceId, lesson, doc) {
     if (!deviceId || !lesson) return [];
+
+    if (lesson.isMeshTopologyLab && doc) {
+      return getMeshTopologyGuidePopupsForDoc(deviceId, lesson, doc);
+    }
 
     const storeKey = 'TOOLTIPS_' + deviceId.toUpperCase();
     const store = window[storeKey];
@@ -5305,10 +5717,15 @@
       allDocs.forEach(doc => {
         const popups = getLessonPopupsForDoc(currentDeviceId, lesson, doc);
         if (popups && popups.length > 0) {
+          if (doc.body) doc.body.classList.add('ftc-guide-active');
           injectGuidePopupsIntoDoc(doc, popups);
         } else {
+          if (doc.body) doc.body.classList.remove('ftc-guide-active');
           doc.querySelectorAll('.ftc-guide-bubble').forEach(el => el.remove());
-          doc.querySelectorAll('.ftc-guide-target-highlight').forEach(el => el.classList.remove('ftc-guide-target-highlight'));
+          doc.querySelectorAll('.ftc-guide-target-highlight, .ftc-guide-target-halo').forEach(el => {
+            el.classList.remove('ftc-guide-target-highlight');
+            el.classList.remove('ftc-guide-target-halo');
+          });
         }
       });
     } catch (e) { }
@@ -5364,8 +5781,10 @@
           font-weight: 700 !important;
           line-height: 1.2 !important;
           padding: 4px 8px !important;
-          border-radius: 3px !important;
-          box-shadow: 0 2px 8px rgba(255, 0, 0, 0.35) !important;
+          border-radius: 4px !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: 0 2px 8px rgba(255, 0, 0, 0.4) !important;
           white-space: nowrap !important;
           pointer-events: none !important;
           user-select: none !important;
@@ -5411,6 +5830,17 @@
           transform: translateX(-50%) !important;
           border-width: 8px 6px 0 6px !important;
           border-color: #ff0000 transparent transparent transparent !important;
+        }
+        .ftc-guide-target-halo {
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        .ftc-guide-active .cpt-hover-card,
+        body.ftc-guide-active .cpt-hover-card {
+          display: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
         }
         @keyframes ftcGuidePopIn {
           0% { opacity: 0; transform: scale(0.88) translateY(3px); }
@@ -5648,6 +6078,7 @@
         if (oldBubble) oldBubble.remove();
         return;
       }
+      try { target.classList.add('ftc-guide-target-halo'); } catch (_) {}
 
       const rect = target.getBoundingClientRect();
       if (rect.width === 0 && rect.height === 0 && target.offsetParent === null) {
@@ -6146,6 +6577,14 @@
           }
           if (btnGuideErrors) {
             btnGuideErrors.style.display = 'none';
+          }
+        } else if (lesson && lesson.isMeshTopologyLab) {
+          if (btnGuideErrors) btnGuideErrors.style.display = 'none';
+          if (btnSubmitLab) {
+            btnSubmitLab.disabled = false;
+            btnSubmitLab.style.opacity = '1';
+            btnSubmitLab.style.cursor = 'pointer';
+            btnSubmitLab.style.animation = 'submitBtnPulse 2.5s infinite';
           }
         } else if (trangDangLamSach && (evalResult && evalResult.daVaoTrangCuoi === false)) {
           if (btnGuideErrors) btnGuideErrors.style.display = 'none';

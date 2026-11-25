@@ -479,9 +479,9 @@ for(var i=0;i<len;i++){if(value.charCodeAt(i)<32||value.charCodeAt(i)>126){retur
 var a=value.charAt(i);if(value.charCodeAt(i)<255){if(a==' '){}
 if(!reg.test(a)){}}}}
 function isValidSsid2(value)
-{if(value==""||value==null){parent.warninfo_show("Wifi名称不能为空！");return-1;}
-var len=getByteLen(value);if((len<1)||(len>29)){parent.warninfo_show("Wifi名称长度无效，当输入英文时，最多可输入29个字符。如果含有中文，一个中文字符将占用多个英文字符的长度！");return-2;}
-for(var i=0;i<len;i++){if(value.charAt(i)=='%'||value.charAt(i)=='\\'){parent.warninfo_show("Wifi名称不能包含无效字'%'或'\\'!");return-3;}}
+{if(value==""||value==null){warninfo_show("Wifi名称不能为空！");return-1;}
+var len=getByteLen(value);if((len<1)||(len>29)){warninfo_show("Wifi名称长度无效，当输入英文时，最多可输入29个字符。如果含有中文，一个中文字符将占用多个英文字符的长度！");return-2;}
+for(var i=0;i<len;i++){if(value.charAt(i)=='%'||value.charAt(i)=='\\'){warninfo_show("Wifi名称不能包含无效字'%'或'\\'!");return-3;}}
 return true;}
 function MobileisValidPassword(value)
 {if(value==""||value==null){return-1;}
@@ -498,8 +498,8 @@ return true;}
 function isComplexEnough(password){var str=password;var regLetter=/[a-zA-Z]/;var regNumber=/[0-9]/;var regSpecial=/[_.!@#$%^&*`~()-+=]/g;var complex=0;if(regLetter.test(str)){++complex;}
 if(regNumber.test(str)){++complex;}
 if(regSpecial.test(str)){++complex;}
-if(complex<3||str.length<8){return false;}else{return true;}};function isValidWpsPin(value){if(value==""||value==null){parent.warninfo_show("PIN码不能为空！");return-1;}
-var len=value.length;for(var i=0;i<len;i++){var a=value.charAt(i);if((a.match(/[^0-9]/ig)!=null)){parent.warninfo_show("PIN码无效，请重新输入！");return-3;}}
+if(complex<3||str.length<8){return false;}else{return true;}};function isValidWpsPin(value){if(value==""||value==null){warninfo_show("PIN码不能为空！");return-1;}
+var len=value.length;for(var i=0;i<len;i++){var a=value.charAt(i);if((a.match(/[^0-9]/ig)!=null)){warninfo_show("PIN码无效，请重新输入！");return-3;}}
 return true;}
 function isreserveaddr(address)
 {ipParts=address.split('.');num=parseInt(addrParts[0]);if(num<=255&&num>=240)

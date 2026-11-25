@@ -47,11 +47,11 @@ selist[i].checked=false;}}
 function BtnClick_SchedulerAdd()
 {if(getScheduleEntryNumber()>31)
 {warninfo_show(_("Warning_Maximum_32_Rules"));return;}
-var data={"type":"form","tittle":_("Add_New_Scheduler"),"panelContent":null,"submit":"BtnClick_SchedulerAddApply"};data.panelContent=new Array();data.panelContent.push({"type":"text","id":"sc_name","tittle":_("Schedule_Name"),"value":""});data.panelContent.push({"type":"timerange","id":"sc_time","tittle":_("Time"),"value":""});data.panelContent.push({"type":"week","id":"week","tittle":_("Repeat_Period"),"value":""});parent.panel_show(data);getObj("sc_name").style.padding="0px 6px";}
+var data={"type":"form","tittle":_("Add_New_Scheduler"),"panelContent":null,"submit":"BtnClick_SchedulerAddApply"};data.panelContent=new Array();data.panelContent.push({"type":"text","id":"sc_name","tittle":_("Schedule_Name"),"value":""});data.panelContent.push({"type":"timerange","id":"sc_time","tittle":_("Time"),"value":""});data.panelContent.push({"type":"week","id":"week","tittle":_("Repeat_Period"),"value":""});panel_show(data);getObj("sc_name").style.padding="0px 6px";}
 function getparentValue(id)
-{return($("#"+id,parent.document).val());}
+{return($("#"+id,document).val());}
 function getparentChecked(id)
-{return($("#"+id,parent.document).is(':checked'));}
+{return($("#"+id,document).is(':checked'));}
 function BtnClick_SchedulerAddApply()
 {var schname=getparentValue("sc_name");var hourval;var minval;var days='';var stimev;var etimev;var weekdays;if(schname==''){warninfo_show(_("Warning_Enter_Schedule_Name"));return;}else if(isValidName(getparentValue("sc_name"))==false){warninfo_show(_("Warning_Enter_Valid_Rule_Name_No_Special"));return;}else if(schname=="Always"){warninfo_show(_("Warning_Enter_Valid_Rule_Name"));return;}
 if(schname.length<=0||schname.length>32){warninfo_show(_("Warn_Filter_Name_Length"));return;}

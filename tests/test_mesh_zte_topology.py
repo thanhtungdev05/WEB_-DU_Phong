@@ -271,6 +271,11 @@ class TestMeshZteDispatcherApi(unittest.TestCase):
         portal_html = (root / "portal.html").read_text(encoding="utf-8")
         app_js = (root / "app.js").read_text(encoding="utf-8")
         mesh_lab_html = (root / "mesh-lab.html").read_text(encoding="utf-8")
+        import re
+        for script_src in re.findall(r'<script\s+src="([^"]+)"></script>', mesh_lab_html):
+            script_path = root / script_src.split('?', 1)[0].lstrip('/')
+            if script_path.exists():
+                mesh_lab_html += "\n" + script_path.read_text(encoding="utf-8")
 
         # 1. Nút Lab Đấu Nối trên Portal phải ẩn mặc định (display: none)
         self.assertIn('id="btn-mesh-lab"', portal_html)
@@ -285,6 +290,261 @@ class TestMeshZteDispatcherApi(unittest.TestCase):
         self.assertIn('Giới Hạn Quyền Truy Cập Phòng Lab', mesh_lab_html)
         self.assertIn('/api/index.php/auth/session', mesh_lab_html)
         self.assertIn("role === 'DEV'", mesh_lab_html)
+
+        # 4. Kiểm tra các tính năng nâng cấp chuẩn Cisco Packet Tracer trong mesh-lab.html
+        self.assertIn("getDeviceSvgGraphic", mesh_lab_html)
+        self.assertIn("drawCiscoLinkLight", mesh_lab_html)
+        self.assertIn("autoConnectTwoNodes", mesh_lab_html)
+        self.assertIn("executeSimplePdu", mesh_lab_html)
+        self.assertIn("renderRearChassisSvg", mesh_lab_html)
+        self.assertIn("pdu-scenario-tbody", mesh_lab_html)
+        self.assertIn("setWorkspaceMode", mesh_lab_html)
+        self.assertIn("openCiscoPortPopup", mesh_lab_html)
+        self.assertIn("attachWebGuiTwoWayBridge", mesh_lab_html)
+        self.assertIn("syncFromWebGuiIframe", mesh_lab_html)
+
+        # 5. Kiểm tra đủ 16 bộ giả lập thiết bị thật từ run_all.py có mặt trong FPT_CATALOG của mesh-lab.html
+        expected_sim_folders = [
+            "sim_be12000", "sim_be15000", "sim_ONT_be6500c", "sim_be6500c",
+            "sim_ax3000gz", "sim_ax3000gz_v2", "sim_ax3000hv2", "sim_ax3000s", "sim_ax1800gz", "sim_ax3000c",
+            "sim_ac1000f", "sim_ac1000HI", "sim_ac1000z", "sim_ac1000cv2",
+            "sim_mikrotik_hexs", "sim_vigor2927"
+        ]
+        for sim_folder in expected_sim_folders:
+            self.assertIn(sim_folder, mesh_lab_html, f"Missing simulator {sim_folder} in mesh-lab.html")
+
+        # 6. Kiểm tra Giai đoạn 2: Hop-by-Hop ARP/ICMP & PDU Inspector (OSI 7 Tầng + Wireshark + Hex Dump)
+        self.assertIn("findTopologyPathHops", mesh_lab_html)
+        self.assertIn("buildPduHopEvents", mesh_lab_html)
+        self.assertIn("openPduInspectorModal", mesh_lab_html)
+        self.assertIn("buildWiresharkHexDump", mesh_lab_html)
+        self.assertIn("stepSimForward", mesh_lab_html)
+
+        # 7. Kiểm tra Giai đoạn 3: Máy Trạng Thái CLI Đa Hãng Phân Cấp (Cisco IOS / MikroTik RouterOS / ZTE PON / KTV Shell)
+        self.assertIn("getCliVendorProfile", mesh_lab_html)
+        self.assertIn("initCliForNode", mesh_lab_html)
+        self.assertIn("autocompleteCliInput", mesh_lab_html)
+        self.assertIn("buildCiscoShowIpIntBrief", mesh_lab_html)
+        self.assertIn("buildZtePonOpticalInfo", mesh_lab_html)
+        self.assertIn("buildMikrotikOutput", mesh_lab_html)
+        self.assertIn("show pon optical-info", mesh_lab_html)
+        self.assertIn("/interface print", mesh_lab_html)
+        self.assertIn("show ip interface brief", mesh_lab_html)
+
+        # 8. Kiểm tra Giai đoạn 4: Mô hình Vật lý ns-3 (Suy hao Quang PON dBm & Tường Cản Sóng Wi-Fi)
+        self.assertIn("calculateOpticalPonMetrics", mesh_lab_html)
+        self.assertIn("calculateWifiLinkPhysics", mesh_lab_html)
+        self.assertIn("toggleNs3PhysicsPanel", mesh_lab_html)
+        self.assertIn("applyNs3PhysicsConfig", mesh_lab_html)
+        self.assertIn('id="ns3-physics-panel"', mesh_lab_html)
+        self.assertIn("COST-231 Multi-Wall", mesh_lab_html)
+
+        # 9. Kiểm tra Giai đoạn 5: Topology-as-Code (Containerlab YAML / .fptlab JSON) & Kho Đề Bài Pan Bệnh Thực Tế
+        self.assertIn("openContainerlabModal", mesh_lab_html)
+        self.assertIn("buildContainerlabYaml", mesh_lab_html)
+        self.assertIn("buildFptLabJson", mesh_lab_html)
+        self.assertIn("loadTroubleshootingFaultScenario", mesh_lab_html)
+        self.assertIn("verifyCurrentFaultResolved", mesh_lab_html)
+        self.assertIn('id="containerlab-modal"', mesh_lab_html)
+
+        # 10. Kiểm tra Liên thông 3 Lớp Firmware Thiết bị A ➔ Dây cáp ➔ Firmware Thiết bị B
+        self.assertIn("triggerManualCrossDeviceSync", mesh_lab_html)
+        self.assertIn("propagateFirmwareStateAcrossLinks", mesh_lab_html)
+        self.assertIn("extractConfigFromFirmwareDom", mesh_lab_html)
+        self.assertIn("injectLinkedStateIntoFirmwareDom", mesh_lab_html)
+        self.assertIn("renderFwLinkSyncOverlay", mesh_lab_html)
+        self.assertIn("syncTopologyNodesToBackend", mesh_lab_html)
+        self.assertIn('id="fw-link-sync-overlay"', mesh_lab_html)
+        self.assertIn('id="btn-apply-fw-sync"', mesh_lab_html)
+        self.assertIn("/api/mesh-lab/sync-topology", mesh_lab_html)
+        self.assertIn("scheduleAutoCrossDeviceSync", mesh_lab_html)
+        self.assertIn("triggerAutoCrossDeviceSync", mesh_lab_html)
+        self.assertIn("handleConfigTabLiveEdit", mesh_lab_html)
+        self.assertIn("hasKtvCustomConfig", mesh_lab_html)
+        self.assertIn("customFieldMap", mesh_lab_html)
+        self.assertIn("readOctetIpFromDoc", mesh_lab_html)
+        self.assertIn("writeOctetIpToDoc", mesh_lab_html)
+        self.assertIn("isOctetSplitInput", mesh_lab_html)
+        self.assertIn("toggleMinimizeDeviceWindow", mesh_lab_html)
+        self.assertIn("toggleCompactDeviceWindow", mesh_lab_html)
+        self.assertIn("toggleFwLinkSyncOverlay", mesh_lab_html)
+        self.assertIn("closeFwLinkSyncOverlay", mesh_lab_html)
+        self.assertIn("initNodeNetworkStack", mesh_lab_html)
+        self.assertIn("updateNodeNetworkStackFromConfig", mesh_lab_html)
+        self.assertIn("learnSourceMacOnSwitch", mesh_lab_html)
+        self.assertIn("networkStack", mesh_lab_html)
+        self.assertIn("isSameSubnet", mesh_lab_html)
+
+    def test_cisco_virtual_network_stack_phase1(self):
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[1]
+        ns_js = (root / "js" / "mesh-lab" / "network-stack.js").read_text(encoding="utf-8")
+        
+        # 1. Kiểm tra các hàm toán học Bitwise Subnetting
+        self.assertIn("ipToLong", ns_js)
+        self.assertIn("longToIp", ns_js)
+        self.assertIn("isSameSubnet", ns_js)
+        self.assertIn("calculateNetworkAddress", ns_js)
+        self.assertIn("calculateBroadcastAddress", ns_js)
+
+        # 2. Kiểm tra Ngăn xếp L2/L3 Network Stack
+        self.assertIn("initNodeNetworkStack", ns_js)
+        self.assertIn("updateNodeNetworkStackFromConfig", ns_js)
+        self.assertIn("learnSourceMacOnSwitch", ns_js)
+        self.assertIn("macAddressTable", ns_js)
+        self.assertIn("arpTable", ns_js)
+        self.assertIn("routingTable", ns_js)
+        self.assertIn("accessControlLists", ns_js)
+        self.assertIn("portSecurity", ns_js)
+        self.assertIn("dhcpServer", ns_js)
+        self.assertIn("dhcpClient", ns_js)
+
+    def test_cisco_dynamic_pdu_dispatcher_phase2(self):
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[1]
+        pdu_js = (root / "js" / "mesh-lab" / "pdu-dispatcher.js").read_text(encoding="utf-8")
+        
+        # 1. Kiểm tra các hàm L2/L3 Routing, ACL và PDU Hop Evaluator
+        self.assertIn("evaluateL3PacketRoute", pdu_js)
+        self.assertIn("checkRouterAclFilter", pdu_js)
+        self.assertIn("findTopologyPathHops", pdu_js)
+        self.assertIn("buildPduHopEvents", pdu_js)
+        self.assertIn("executeSimplePdu", pdu_js)
+
+        # 2. Kiểm tra các cơ chế phân tích lỗi mạng không kịch bản
+        self.assertIn("ICMP Destination Net Unreachable", pdu_js)
+        self.assertIn("ACL Filter Denied", pdu_js)
+        self.assertIn("ARP Request", pdu_js)
+        self.assertIn("ARP Reply", pdu_js)
+        self.assertIn("ICMP Echo Request", pdu_js)
+        self.assertIn("ICMP Echo Reply", pdu_js)
+
+    def test_cisco_cli_state_machine_phase3(self):
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[1]
+        cli_js = (root / "js" / "mesh-lab" / "cli-terminal.js").read_text(encoding="utf-8")
+        
+        # 1. Kiểm tra các hàm Show Commands mới chuẩn Cisco Packet Tracer
+        self.assertIn("buildCiscoShowIpRoute", cli_js)
+        self.assertIn("buildCiscoShowVlanBrief", cli_js)
+        self.assertIn("buildCiscoShowPortSecurity", cli_js)
+        self.assertIn("buildCiscoShowAccessLists", cli_js)
+
+        # 2. Kiểm tra bộ phân tích cú pháp cấu hình động CLI
+        self.assertIn("switchport mode access", cli_js)
+        self.assertIn("switchport access vlan", cli_js)
+        self.assertIn("switchport mode trunk", cli_js)
+        self.assertIn("switchport port-security", cli_js)
+        self.assertIn("switchport port-security mac-address sticky", cli_js)
+        self.assertIn("ip route", cli_js)
+        self.assertIn("access-list", cli_js)
+        self.assertIn("vlan", cli_js)
+        self.assertIn("config-vlan", cli_js)
+
+    def test_lan_dhcp_4octet_sync_be12000_to_be15000(self):
+        import pathlib
+        from simulators.sim_be15000 import server as be15000_server
+
+        # Mô phỏng cấu hình từ BE12000Z như Ảnh 2 của KTV:
+        # LAN IP: 192.168.10.1, Start: 192.168.10.2, End: 192.168.10.254, Primary DNS: 192.168.1.1
+        st = mesh_zte_engine.update_ont_lan_dhcp({
+            "sub_IPAddr0:DHCPBasicCfg": "192",
+            "sub_IPAddr1:DHCPBasicCfg": "168",
+            "sub_IPAddr2:DHCPBasicCfg": "10",
+            "sub_IPAddr3:DHCPBasicCfg": "1",
+            "sub_SubMask0": "255",
+            "sub_SubMask1": "255",
+            "sub_SubMask2": "255",
+            "sub_SubMask3": "0",
+            "sub_MinAddress0:DHCPBasicCfg": "192",
+            "sub_MinAddress1:DHCPBasicCfg": "168",
+            "sub_MinAddress2:DHCPBasicCfg": "10",
+            "sub_MinAddress3:DHCPBasicCfg": "2",
+            "sub_MaxAddress0:DHCPBasicCfg": "192",
+            "sub_MaxAddress1:DHCPBasicCfg": "168",
+            "sub_MaxAddress2:DHCPBasicCfg": "10",
+            "sub_MaxAddress3:DHCPBasicCfg": "254",
+            "sub_DNSServer10": "192",
+            "sub_DNSServer11": "168",
+            "sub_DNSServer12": "1",
+            "sub_DNSServer13": "1",
+            "LeaseTime": "86400"
+        })
+        self.assertEqual(st["ont_lan_ip"], "192.168.10.1")
+        self.assertEqual(st["gateway_ip"], "192.168.10.1")
+        self.assertEqual(st["ont_dhcp_start"], "192.168.10.2")
+        self.assertEqual(st["ont_dhcp_end"], "192.168.10.254")
+        self.assertEqual(st["ont_primary_dns"], "192.168.1.1")
+        self.assertEqual(st["ap_lan_ip"], "192.168.10.100")
+
+        # Kiểm tra store của BE12000Z nhận đủ thông số + bảng Allocated Address (DHCP)
+        dhcp_inst = GLOBAL_SIM["store"]._state["objects"]["OBJ_Br0AndDhcpsHosCfg_ID"]["instances"][0]
+        self.assertEqual(dhcp_inst["IPAddr"], "192.168.10.1")
+        self.assertEqual(dhcp_inst["MinAddress"], "192.168.10.2")
+        self.assertEqual(dhcp_inst["MaxAddress"], "192.168.10.254")
+        self.assertEqual(dhcp_inst["DNSServer1"], "192.168.1.1")
+        dhcp_hosts = GLOBAL_SIM["store"]._state["objects"]["OBJ_DHCPHOSTINFO_ID"]["instances"]
+        self.assertGreaterEqual(len(dhcp_hosts), 1)
+        self.assertEqual(dhcp_hosts[0]["HostName"], "BE15000Z")
+        self.assertEqual(dhcp_hosts[0]["IPAddr"], "192.168.10.100")
+
+        # Kiểm tra trang lanMgrIpv4.html của BE15000Z được tiêm đúng từng ô octet 192.168.10.1 / .2 / .254 / 192.168.1.1
+        root = pathlib.Path(__file__).resolve().parents[1]
+        raw_html = (root / "simulators" / "sim_be15000" / "www" / "pages" / "lanMgrIpv4.html").read_text(encoding="utf-8", errors="ignore")
+        injected = be15000_server._inject_lan_mgr_ipv4(raw_html, st)
+        self.assertIn('id="sub_IPAddr2:DHCPBasicCfg" value="10"', injected)
+        self.assertIn('id="sub_MinAddress2:DHCPBasicCfg" value="10"', injected)
+        self.assertIn('id="sub_MaxAddress2:DHCPBasicCfg" value="10"', injected)
+        self.assertIn('id="sub_MaxAddress3:DHCPBasicCfg" value="254"', injected)
+        self.assertIn('id="sub_DNSServer12" value="1"', injected)
+        self.assertIn('id="IPAddr:DHCPBasicCfg" value="192.168.10.1"', injected)
+        self.assertIn('id="MinAddress:DHCPBasicCfg" value="192.168.10.2"', injected)
+        self.assertIn('id="MaxAddress:DHCPBasicCfg" value="192.168.10.254"', injected)
+        self.assertIn('id="DNSServer1" value="192.168.1.1"', injected)
+
+    def test_cross_device_sync_topology_api(self):
+        conn = self.http.HTTPConnection('127.0.0.1', self.port, timeout=5)
+        payload = self.json.dumps({
+            "ssid": "FPT_WiFi7_Synced_A_To_B",
+            "key": "88889999",
+            "gateway_ip": "192.168.88.1",
+            "slaves": [
+                {
+                    "name": "AP_BE15000Z_Tang2",
+                    "model": "ZTE H6701Q BE15000Z",
+                    "mac": "94:87:E0:99:99:A2",
+                    "ip": "192.168.88.2",
+                    "backhaul": "Ethernet",
+                    "speed_mbps": 2500,
+                    "rssi": -25
+                }
+            ],
+            "clients": [
+                {
+                    "name": "Laptop_KTV",
+                    "mac": "AA:BB:CC:11:22:01",
+                    "ip": "192.168.88.10",
+                    "band": "5GHz + 6GHz (MLO)",
+                    "rssi": -40,
+                    "rate_mbps": 2882
+                }
+            ]
+        })
+        conn.request(
+            'POST',
+            '/api/mesh-lab/sync-topology',
+            body=payload,
+            headers={'Content-Type': 'application/json', 'X-Mock-User-Role': 'DEV'}
+        )
+        res = conn.getresponse()
+        data = self.json.loads(res.read().decode('utf-8'))
+        self.assertEqual(res.status, 200)
+        self.assertEqual(data["ont_wifi_ssid"], "FPT_WiFi7_Synced_A_To_B")
+        self.assertEqual(data["gateway_ip"], "192.168.88.1")
+        self.assertEqual(data["ap_synced_ssid"], "FPT_WiFi7_Synced_A_To_B")
+        self.assertEqual(len(data.get("custom_slaves", [])), 1)
+        self.assertEqual(data["custom_slaves"][0]["name"], "AP_BE15000Z_Tang2")
+        conn.close()
 
 
 if __name__ == "__main__":

@@ -488,7 +488,7 @@ class Handler(_goc.H):
     def _client_key(self):
         hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip()
         if hdr:
-            return "cookie:" + hdr
+            return hdr
         if "?_ktv=" in getattr(self, "path", "") or "&_ktv=" in getattr(self, "path", ""):
             try:
                 from urllib.parse import parse_qs, urlparse

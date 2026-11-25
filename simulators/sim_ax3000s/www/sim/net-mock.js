@@ -98,6 +98,20 @@
     }
 
     // translations : trả rỗng -> nhãn hiển thị nguyên gốc (tiếng Anh)
+    if (url.indexOf("/cgi-bin/cgi-exec") !== -1) {
+      var cmd = (options && options.data && options.data.command) || "";
+      var out = "[AX3000S] System log initialized\n[kernel] br-lan: link up\n[wifi] ra0 / rai0 AP started\n";
+      if (cmd.indexOf("usage.log") !== -1) {
+        var nowSec = Math.floor(Date.now() / 1000);
+        out = [2, 1, 0].map(function (k) { return (nowSec - k * 30) + "," + (14 + k * 2) + "," + (38 + k); }).join("\n");
+      }
+      return respond(options, out);
+    }
+
+    if (url.indexOf("/cgi-bin/cgi-download") !== -1) {
+      return respond(options, new Blob(["FPT AX3000S simulated diagnostic file\n"], { type: "text/plain" }));
+    }
+
     if (url.indexOf("/translations") !== -1) {
       return respond(options, {});
     }

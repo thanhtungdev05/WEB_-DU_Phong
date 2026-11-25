@@ -150,9 +150,9 @@ function checkSSIDRepid(ssid)
 return false;}
 return true;}
 function BntClick_Apply()
-{var ssid=getValue("Txt_SSID");var password=getValue("Pwd_WpaPsk");var acsTime=getValue("Txt_acsTime");var channel=getValue("Sel_Channel");var bandwidth=getValue("Sel_BandWidth");var ret=true;ret=isValidSsid(ssid);if(ret==-1){parent.warninfo_show(_("basicSetting2g_ssidempty"));return;}else if(ret==-2){parent.warninfo_show(_("basicSetting2g_ssidlengthlimit"));return;}else if(ret==-3){parent.warninfo_show(_("basicSetting2g_ssidspacelimit"));return;}else if(ret==-4){parent.warninfo_show(_("basicSetting2g_ssidcharlimit"));return;}
+{var ssid=getValue("Txt_SSID");var password=getValue("Pwd_WpaPsk");var acsTime=getValue("Txt_acsTime");var channel=getValue("Sel_Channel");var bandwidth=getValue("Sel_BandWidth");var ret=true;ret=isValidSsid(ssid);if(ret==-1){warninfo_show(_("basicSetting2g_ssidempty"));return;}else if(ret==-2){warninfo_show(_("basicSetting2g_ssidlengthlimit"));return;}else if(ret==-3){warninfo_show(_("basicSetting2g_ssidspacelimit"));return;}else if(ret==-4){warninfo_show(_("basicSetting2g_ssidcharlimit"));return;}
 if(!checkSSIDRepid(ssid))
-{parent.warninfo_show(_("basicSetting2g_ssidduplicated"));return;}
-ret=isValidPassword(password);if(ret==-1){parent.warninfo_show(_("basicSetting2g_pwdempty"));return;}else if(ret==-2){parent.warninfo_show(_("basicSetting2g_pwdlengthlimit"));return;}else if(ret==-3){parent.warninfo_show(_("basicSetting2g_pwdcharlimit"));return;}else if(ret==-4){parent.warninfo_show(_("basicSetting2g_pwdspacelimit"));return;}
+{warninfo_show(_("basicSetting2g_ssidduplicated"));return;}
+ret=isValidPassword(password);if(ret==-1){warninfo_show(_("basicSetting2g_pwdempty"));return;}else if(ret==-2){warninfo_show(_("basicSetting2g_pwdlengthlimit"));return;}else if(ret==-3){warninfo_show(_("basicSetting2g_pwdcharlimit"));return;}else if(ret==-4){warninfo_show(_("basicSetting2g_pwdspacelimit"));return;}
 ftcNotifyPortalSave(ssid,password,bandwidth);
 setRadioInfo();}

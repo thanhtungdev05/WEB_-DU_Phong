@@ -3,7 +3,7 @@ function pageLoad()
 {wanInfoLoad();contentLoad();check_fwlevel()}
 function check_fwlevel()
 {var level=0;var ubusparam=new Array("rtweb.firewall","getFwLevel",{});var jsonparam={"id":1,"params":ubusparam};sk_auth_post(jsonparam,function(result){console.log(result.result[1]);level=result.result[1]["firewalllevel"]["level"];if(level==2)
-{parent.warninfo_show(_("DMZnottakeeffect"));}});}
+{warninfo_show(_("DMZnottakeeffect"));}});}
 function contentLoad()
 {var ubusparam=new Array("rtweb.sta","getStaInfo",{});var jsonparam={"id":1,"params":ubusparam};sk_auth_post(jsonparam,function(result){hostInfoLoad(result.result[1]);});}
 function hostInfoLoad(resArr)

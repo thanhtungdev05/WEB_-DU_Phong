@@ -63,14 +63,14 @@ def _build_mesh_node_shim(node_id: str, sim_id: str) -> bytes:
         f'return u;}}'
         f'function notifySave(url){{'
         f'try{{var msg={{type:"fpt_mesh_fw_saved",nodeId:N,simId:S,url:String(url||""),ts:Date.now()}};'
-        f'if(window.top&&window.top!==window)window.top.postMessage(msg,window.location.origin);'
-        f'else if(window.parent&&window.parent!==window)window.parent.postMessage(msg,window.location.origin);'
+        f'if(window.parent&&window.parent!==window)window.parent.postMessage(msg,window.location.origin);'
+        f'if(window.top&&window.top!==window&&window.top!==window.parent)window.top.postMessage(msg,window.location.origin);'
         f'}}catch(_e){{}}}}'
         f'function isCfgWrite(method,url,bodyStr){{'
         f'var m=String(method||"GET").toUpperCase(),u=String(url||""),b=String(bodyStr||"");'
         f'if(m!=="POST"&&m!=="PUT"&&m!=="PATCH")return false;'
         f'if(/login|logout|session_status/i.test(u))return false;'
-        f'if(/\\/ubus/i.test(u)){{if(!b)return false;return /(?:lan_set|wifi_set|wifiadv_set|wan_set|\\.set"|commit|apply|save)/i.test(b);}}'
+        f'if(/\\/ubus/i.test(u)){{if(!b)return false;return /(?:lan_set|wifi_set|wifiadv_set|wan_set|portfwd_set|dmz_set|upnpd_set|firewall_set|dhcp_reservation_set|parentctrl_set|websitefilter_set|\\.set"|"network\\.wireless\\.easymesh"\\s*,\\s*"set"|"data_repo\\.cigext"\\s*,\\s*"set"|commit|apply|save)/i.test(b);}}'
         f'return /_type=menuData|_type=hiddenData|\\/cgi-bin\\/|\\/api\\/|GponForm|\\.cgi|sim-state|live-sync/i.test(u);}}'
         f'if(window.fetch){{var _of=window.fetch;window.fetch=function(input,init){{'
         f'var u=(typeof input==="string")?input:(input&&input.url)||"";var ru=rw(u);'
@@ -111,6 +111,15 @@ def _build_mesh_node_shim(node_id: str, sim_id: str) -> bytes:
 def _inject_mesh_node_shim(html_bytes: bytes, node_id: str, sim_id: str) -> bytes:
     if not html_bytes or b'data-fpt-mesh-node="1"' in html_bytes:
         return html_bytes
+    sim_b = sim_id.encode('ascii')
+    nid_b = node_id.encode('ascii')
+    prefix_b = b'/mesh-node/' + nid_b + b'/' + sim_b + b'/'
+    # Keep all HTML frame/link/form/JS references under /mesh-node/<node_id>/<sim_id>/
+    html_bytes = re.sub(
+        rb'(?<!/mesh-node/' + re.escape(nid_b) + rb')/' + re.escape(sim_b) + rb'/',
+        prefix_b,
+        html_bytes,
+    )
     shim = _build_mesh_node_shim(node_id, sim_id)
     lower = html_bytes.lower()
     m_head = re.search(br'<head(?:\s[^>]*)?>', lower)
@@ -826,6 +835,12 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
         cookie = self.headers.get('Cookie', '')
         client_ip = self._trusted_client_ip()
         is_local = client_ip in ('127.0.0.1', '::1', 'localhost', '')
+        referer = self.headers.get('Referer', '')
+        is_portal_lesson = bool(
+            (self.headers.get('X-Mesh-Portal-Lab') or '').strip()
+            or ('embed=1' in referer)
+            or ('embed=1' in self.path)
+        )
 
         # If a session cookie is present, check with PHP session endpoint
         if cookie:
@@ -848,12 +863,14 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                     user = data.get('user')
                     if user:
                         role = str(user.get('role') or '').upper()
-                        return role == 'DEV'
+                        return True if is_portal_lesson else (role == 'DEV')
             except Exception:
                 pass
             finally:
                 if conn is not None:
                     conn.close()
+            if is_portal_lesson and is_local and not is_prod:
+                return True
             return False
 
         # If no cookie provided, allow local developer / automated test runners when not in production
@@ -910,12 +927,26 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 from urllib.parse import parse_qs
                 q = parse_qs(self.path.split('?', 1)[1] if '?' in self.path else '')
                 scenario = (q.get('scenario', [''])[0] or '').strip()
-                st = mesh_zte_engine.evaluate_grading(scenario_key=scenario, session_id=base_ktv_id)
+                lab_id = (q.get('lab_id', [''])[0] or q.get('lab', [''])[0] or '').strip()
+                g_mode = (q.get('grading_mode', [''])[0] or '').strip()
+                st = mesh_zte_engine.evaluate_grading(
+                    scenario_key=scenario,
+                    session_id=base_ktv_id,
+                    lab_id=lab_id or None,
+                    grading_mode=g_mode or None,
+                )
             elif action == 'missions':
                 from urllib.parse import parse_qs
                 q = parse_qs(self.path.split('?', 1)[1] if '?' in self.path else '')
                 scenario = (q.get('scenario', [''])[0] or '').strip()
-                st = mesh_zte_engine.get_missions(scenario_key=scenario, session_id=base_ktv_id)
+                lab_id = (q.get('lab_id', [''])[0] or q.get('lab', [''])[0] or '').strip()
+                g_mode = (q.get('grading_mode', [''])[0] or '').strip()
+                st = mesh_zte_engine.get_missions(
+                    scenario_key=scenario,
+                    session_id=base_ktv_id,
+                    lab_id=lab_id or None,
+                    grading_mode=g_mode or None,
+                )
             elif action == 'ports':
                 st = {"ont_ports": mesh_zte_engine.ONT_PORTS, "ap_ports": mesh_zte_engine.AP_PORTS}
             else:
@@ -988,6 +1019,15 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                 if adapter_sync is not None and isinstance(st, dict):
                     st = dict(st)
                     st['adapter_sync'] = adapter_sync
+                    try:
+                        st['grading_4step'] = mesh_zte_engine.evaluate_mesh_4step_grading(
+                            scenario_key=(data.get('scenario') or '').strip() or None,
+                            session_id=base_ktv_id,
+                            workspace={'nodes': data.get('nodes') or [], 'links': data.get('links') or []},
+                            lab_id=(data.get('lab_id') or '').strip() or None,
+                        )
+                    except Exception:
+                        pass
             elif action == 'reset':
                 ws_reset = mesh_sync_adapter.reset_workspace(base_ktv_id, extra_nodes=data.get('nodes') if isinstance(data, dict) else None)
                 st = mesh_zte_engine.reset_lab()
@@ -996,12 +1036,28 @@ class MasterDispatcher(SimpleHTTPRequestHandler):
                     st['workspace_reset'] = ws_reset
             elif action == 'grade':
                 scenario = (data.get('scenario') or '').strip()
+                lab_id = (data.get('lab_id') or data.get('lab') or '').strip()
+                g_mode = (data.get('grading_mode') or '').strip()
                 ws_data = data.get('workspace')
-                st = mesh_zte_engine.evaluate_grading(scenario_key=scenario, session_id=base_ktv_id, workspace=ws_data)
+                st = mesh_zte_engine.evaluate_grading(
+                    scenario_key=scenario,
+                    session_id=base_ktv_id,
+                    workspace=ws_data,
+                    lab_id=lab_id or None,
+                    grading_mode=g_mode or None,
+                )
             elif action == 'missions':
                 scenario = (data.get('scenario') or '').strip()
+                lab_id = (data.get('lab_id') or data.get('lab') or '').strip()
+                g_mode = (data.get('grading_mode') or '').strip()
                 ws_data = data.get('workspace')
-                st = mesh_zte_engine.get_missions(scenario_key=scenario, session_id=base_ktv_id, workspace=ws_data)
+                st = mesh_zte_engine.get_missions(
+                    scenario_key=scenario,
+                    session_id=base_ktv_id,
+                    workspace=ws_data,
+                    lab_id=lab_id or None,
+                    grading_mode=g_mode or None,
+                )
             elif action == 'ping':
                 target = data.get('target', '192.168.1.1')
                 st = mesh_zte_engine.run_ping(target)

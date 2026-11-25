@@ -71,7 +71,7 @@
 <div class="topology-row" style="margin-left:35px; margin-top:35px; width:900px;background-color:white; border-radius:10px">
 
 <div class="topology-row-y topology-row-1">
-  <a href=""><div class="icon-internert" style="cursor:pointer;" onclick="sk_redirect('/cgi-bin/luci/admin/network/wancfg');" ></div></a>
+  <a href="javascript:void(0)" onclick="sk_redirect('/cgi-bin/luci/admin/network/wancfg');return false;"><div class="icon-internert" style="cursor:pointer;"></div></a>
  <div class="topology-row-mini">
    <div class="topology-row-1" style="cursor:default;">
 	 <span>{{Internet}}</span>
@@ -86,7 +86,7 @@
 </div>
 
 <div class="topology-row-y topology-row-1">
-   <a href=""><div class="icon-router" style="cursor:pointer;" onclick="sk_redirect('/cgi-bin/luci/admin/wlan/wlanaband');"></div></a>
+   <a href="javascript:void(0)" onclick="sk_redirect('/cgi-bin/luci/admin/wlan/wlanaband');return false;"><div class="icon-router" style="cursor:pointer;"></div></a>
 <div class="topology-row-mini">
    <div class="topology-row-1" style="cursor:default;">
 	 <span id="onutpye">{{Router}}</span>
@@ -110,7 +110,7 @@
 
 <!-- �¹��豸�����ֶ� -->
 <div class="topology-row-y topology-row-1">
-  <a href=""><div class="icon-pc" style="cursor:pointer;" onclick="sk_redirect('/cgi-bin/luci/admin/status/laninfo/lanStaInfo');"></div></a>
+  <a href="javascript:void(0)" onclick="sk_redirect('/cgi-bin/luci/admin/status/laninfo/lanStaInfo');return false;"><div class="icon-pc" style="cursor:pointer;"></div></a>
  <div class="topology-row-mini">
    <div class="topology-row-1" style="cursor:default;">
 	 <span id="DevNum">{{Devices}}: <b id="DeviceNum">1</b>
@@ -202,7 +202,7 @@
 		  <div id="WlanCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="WlanImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="WlanImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -217,7 +217,7 @@
 		  <div id="2GfemCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="2GfemImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="2GfemImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
   
   <div class="card-content">
@@ -232,7 +232,7 @@
 		  <div id="5GfemCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="5GfemImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="5GfemImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>  
   
   <div class="card-content">
@@ -247,7 +247,7 @@
 		  <div id="DnsCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="DnsImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="DnsImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -261,7 +261,7 @@
 		  <div id="InternetCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="InternetImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="InternetImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -275,7 +275,7 @@
 		  <div id="NatCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="NatImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="NatImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -290,7 +290,7 @@
 		  <div id="LanCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="LanImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="LanImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -304,7 +304,7 @@
 		  <div id="DhcpCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="DhcpImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="DhcpImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
 </div>
@@ -321,7 +321,7 @@
 		  <div id="Lan1Check" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="Lan1Img" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="Lan1Img" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -336,7 +336,7 @@
 		  <div id="Lan2Check" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="Lan2Img" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="Lan2Img" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -351,7 +351,7 @@
 		  <div id="Lan3Check" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="Lan3Img" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="Lan3Img" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -366,7 +366,7 @@
 		  <div id="Lan4Check" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="Lan4Img" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="Lan4Img" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -381,7 +381,7 @@
 		  <div id="RAMSizeCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="RAMSizeImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="RAMSizeImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -396,7 +396,7 @@
 		  <div id="ROMSizeCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="ROMSizeImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="ROMSizeImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
 
   <div class="card-content">
@@ -410,7 +410,7 @@
 		  <div id="WanCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="WanImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="WanImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div>
   
     <!--<div class="card-content">
@@ -425,7 +425,7 @@
 		  <div id="LedCheck" class="progress-success-status"></div>
 	  </div>
 	  </div>
-	  <img id="LedImg" src="/luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
+	  <img id="LedImg" src="luci-static/resources/cbi/cancel.svg" width="15" height="15" class="icon-svg">
   </div> -->
 </div>
 </div>

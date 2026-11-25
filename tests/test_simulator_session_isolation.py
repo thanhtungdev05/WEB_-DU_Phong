@@ -335,7 +335,10 @@ class SimulatorSessionIsolationTests(unittest.TestCase):
         self.assertIn("function releaseSimulatorIframeMemory(", self.portal_js)
         self.assertIn("_PREPATCHED_CACHE", self.axc_source)
         # 2. Loading Mask ("Currently in agent mode...") suppression
-        self.assertIn("setInterval(trietTieuLoadingTre, 250);", ftc_axc_js)
+        # Mat na duoc go ngay khi DOM doi (MutationObserver) + du phong dinh ky, thay cho 3 vong 250-300ms
+        self.assertIn("new MutationObserver(lichQuet)", ftc_axc_js)
+        self.assertIn("trietTieuLoadingTre();", ftc_axc_js)
+        self.assertNotIn("setInterval(trietTieuLoadingTre", ftc_axc_js)
         self.assertIn("document.addEventListener('DOMContentLoaded', trietTieuLoadingTre);", ftc_axc_js)
         self.assertIn("e.loading=!1", self.axc_source)
         # 3. Port Forwarding Device/IP virtual keyboard freeze fix (<el-select> -> <el-input>)

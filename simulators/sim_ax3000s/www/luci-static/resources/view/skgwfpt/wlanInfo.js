@@ -32,13 +32,13 @@ continue;ssidStatisticsTab+="<tr><td class='hd'>"+convertInterfaceName(ssidStats
 $("#Tab_SsidStatistics").html(ssidStatisticsTab);}});}
 function ViewClick(ssid,ifname){var first3name=ifname.substring(0,3);if(first3name==="rai")
 {if(ifname==="rai0")
-{window.location.href='/cgi-bin/luci/admin/wlan/wlanaband/wlanBasicSetting5g';}
+{sk_redirect('/cgi-bin/luci/admin/wlan/wlanaband/wlanBasicSetting5g');}
 else
-{window.location.href='/cgi-bin/luci/admin/wlan/advance/wlanMapSettingAll';}}
+{sk_redirect('/cgi-bin/luci/admin/wlan/advance/wlanMapSettingAll');}}
 else
 {if(ifname==="ra0")
-{window.location.href='/cgi-bin/luci/admin/wlan/wlangband/wlanBasicSetting2g';}
+{sk_redirect('/cgi-bin/luci/admin/wlan/wlangband/wlanBasicSetting2g');}
 else
-{window.location.href='/cgi-bin/luci/admin/wlan/advance/wlanMapSettingAll';}}}
+{sk_redirect('/cgi-bin/luci/admin/wlan/advance/wlanMapSettingAll');}}}
 function pageLoad()
 {var ubusparamRadio=new Array("rtweb.wifi","wlanRadioGet",{"band":"all"});var ubusparamBSS=new Array("rtweb.wifi","wlanBasicGet",{"band":"all"});var ubusparamBSSInfo=new Array("rtweb.wifi","wlanBasicStat",{"band":"all"});var ubusparammesh=new Array("rtweb.mesh","wlanMeshGet",{});var jsonparam=[{"id":1,"params":ubusparamRadio},{"id":2,"params":ubusparamBSS},{"id":3,"params":ubusparamBSSInfo},{"id":4,"params":ubusparammesh}];sk_auth_post(jsonparam,function(result){wlan_show_info(result);});}

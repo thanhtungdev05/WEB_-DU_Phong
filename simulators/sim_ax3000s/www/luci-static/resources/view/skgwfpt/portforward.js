@@ -2,7 +2,7 @@
 var VirCfgJson = {}; var waninfoTable = {}; var stainfoTable = {}; var lancfg = {}; var PORTFORWARDING_MAX_ENTRY = 32; var actionapply = "add"; var delist = new Array(); var selindex = 0; var APP = [{ "name": "Custom Service", "proto": 0, "ex_port": "", "in_port": "" }, { "name": "Domain Name Server", "proto": 2, "ex_port": "53", "in_port": "53" }, { "name": "FTP Server", "proto": 1, "ex_port": "21", "in_port": "21" }, { "name": "IPSEC", "proto": 2, "ex_port": "500", "in_port": "500" }, { "name": "Mail POP3", "proto": 1, "ex_port": "110", "in_port": "110" }, { "name": "Mail SMTP", "proto": 1, "ex_port": "25", "in_port": "25" }, { "name": "PPTP", "proto": 1, "ex_port": "1723", "in_port": "1723" }, { "name": "Real Player 8 Plus", "proto": 2, "ex_port": "7070", "in_port": "7070" }, { "name": "Secure Shell Server", "proto": 1, "ex_port": "22", "in_port": "22" }, { "name": "Secure Web Server HTTPS", "proto": 1, "ex_port": "443", "in_port": "443" }, { "name": "SNMP", "proto": 2, "ex_port": "161", "in_port": "161" }, { "name": "SNMP Trap", "proto": 2, "ex_port": "162", "in_port": "162" }, { "name": "Telnet Server", "proto": 1, "ex_port": "23", "in_port": "23" }, { "name": "TFTP", "proto": 2, "ex_port": "69", "in_port": "69" }, { "name": "Web Server HTTP", "proto": 1, "ex_port": "80", "in_port": "80" }]; function pageLoad() { contentLoad(); check_fwlevel() }
 function check_fwlevel() {
     var level = 0; var ubusparam = new Array("rtweb.firewall", "getFwLevel", {}); var jsonparam = { "id": 1, "params": ubusparam }; sk_auth_post(jsonparam, function (result) {
-        console.log(result.result[1]); level = result.result[1]["firewalllevel"]["level"]; if (level == 2) { parent.warninfo_show(_("PFnottakeeffect")); }
+        console.log(result.result[1]); level = result.result[1]["firewalllevel"]["level"]; if (level == 2) { warninfo_show(_("PFnottakeeffect")); }
     });
 }
 function contentLoad() { var ubusparam1 = new Array("gwweb.virserver", "get", {}); var ubusparam2 = new Array("gwweb.wancfg", "status", {}); var ubusparam3 = new Array("rtweb.sta", "getStaInfo", {}); var ubusparam4 = new Array("rtweb.lancfg", "getLanCfg", {}); var jsonparam = [{ "id": 1, "params": ubusparam1 }, { "id": 2, "params": ubusparam2 }, { "id": 3, "params": ubusparam3 }, { "id": 4, "params": ubusparam4 }]; sk_auth_post(jsonparam, function (result) { VirCfgJson = result[0].result[1].vircfg; waninfoTable = result[1].result[1].wan; stainfoTable = result[2].result[1].staDevices; lancfg = result[3].result[1]; showVircfgEntry(); }); }
@@ -71,14 +71,14 @@ function parseString(str) {
     return set;
 }
 function checkAlreadyExistBoundPort(data) {
-    if (data == null) { parent.warninfo_show('External port is invalid.'); return true; }
+    if (data == null) { warninfo_show('External port is invalid.'); return true; }
     const set1 = parseString(data.ex_port); for (var i = 0; i < VirCfgJson.length; i++) {
         if (VirCfgJson[i] == null)
             continue; if (selindex == VirCfgJson[i].idx)
             continue; if (VirCfgJson[i].wanidx != data.wanidx)
             continue; if (VirCfgJson[i].ip_version != data.ip_version)
             continue; if ((VirCfgJson[i].protocol != 0) && (data.protocol != 0) && (VirCfgJson[i].protocol != data.protocol))
-            continue; const set2 = parseString(VirCfgJson[i].ex_port); for (let num of set1) { if (set2.has(num)) { parent.warninfo_show('External port:' + num + ' is already used.'); return true; } }
+            continue; const set2 = parseString(VirCfgJson[i].ex_port); for (let num of set1) { if (set2.has(num)) { warninfo_show('External port:' + num + ' is already used.'); return true; } }
     }
     return false;
 }
@@ -114,7 +114,7 @@ if (actionapply == "add") {
 else if (actionapply == "edit") { apply_data.idx = parseInt(selindex); ubusparam = new Array("gwweb.virserver", "edit", apply_data); }
 else { return; }
 jsonparam = { "id": 1, "params": ubusparam }; sk_auth_apply(jsonparam, function (result) {
-    if (result.result.length > 1) { if (3 == result.result[1].result) { parent.warninfo_show(result.result[1].failreason); } }
+    if (result.result.length > 1) { if (3 == result.result[1].result) { warninfo_show(result.result[1].failreason); } }
     $("#vir_cfg").hide(); $("#vir_info").fadeIn(300); pageLoad();
 });
 }

@@ -47,6 +47,7 @@ HOP DONG DA DO TREN THIET BI THAT (2026-08-22)
 import json
 import os
 import random
+import re
 import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from http.cookies import SimpleCookie
@@ -260,7 +261,9 @@ class H(SimpleHTTPRequestHandler):
     def do_GET(self):                                        # noqa: N802
         sid = self._session_id()
         kho.dat_phien_hien_tai(sid)
-        p = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        p = parsed.path
+        qs = parse_qs(parsed.query)
 
         # 1) Duong dan quan tri CHI CO o ban gia lap (khong ton tai tren thiet
         #    bi that) — dat tien to __sim/ de khong bao gio lan voi duong that.
@@ -310,11 +313,48 @@ class H(SimpleHTTPRequestHandler):
         #  "BAI HOC 2026-08-22" o dau tap tin. Ba tep do CO THAT, nay phuc vu
         #  binh thuong nhu moi tai nguyen tinh khac.)
 
+        auto_sid = None
+        if p == "/cgi-bin/index.asp" and qs.get("autologin", [""])[0] == "1":
+            if not (kho.phien_hop_le(self._cookie("SESSIONID")) or kho.phien_hop_le(sid)):
+                auto_sid = "%08x" % random.getrandbits(32)
+                kho.mo_phien(auto_sid, client_key=self._client_key())
+                kho.dat_phien_hien_tai(auto_sid)
+                sid = auto_sid
+
         # 6) Chan cua: moi trang .asp/.cgi deu doi phien, tru trang cong khai
         la_tinh = p.endswith(DUOI_TINH)
         if not la_tinh and p not in CONG_KHAI:
             if not (kho.phien_hop_le(self._cookie("SESSIONID")) or kho.phien_hop_le(sid)):
                 return self._tra_401()
+
+        if p == "/cgi-bin/index.asp":
+            duong_dan_file = os.path.join(ROOT, "cgi-bin", "index.asp")
+            html = _doc_html_goc(duong_dan_file)
+            if html is not None:
+                page = (qs.get("page", [""])[0] or "").strip()
+                if page and page.endswith(".asp"):
+                    clean_page = page if page.startswith("/cgi-bin/") else f"/cgi-bin/{page.lstrip('/')}"
+                    if len(clean_page) < 80 and re.fullmatch(r"/cgi-bin/[A-Za-z0-9_.\-]+", clean_page):
+                        if "/home_" in clean_page:
+                            nav_src = "/cgi-bin/navigation-basic.asp"
+                        elif "/adv_" in clean_page:
+                            nav_src = "/cgi-bin/navigation-advanced.asp"
+                        elif "/access_" in clean_page:
+                            nav_src = "/cgi-bin/navigation-access.asp"
+                        elif "/help_" in clean_page or "/tools_" in clean_page:
+                            nav_src = "/cgi-bin/navigation-maintenance.asp"
+                        else:
+                            nav_src = "/cgi-bin/navigation-status.asp"
+                        html = html.replace('src="/cgi-bin/navigation-status.asp"', f'src="{nav_src}"', 1)
+                        html = html.replace('src="/cgi-bin/status_deviceinfo.asp"', f'src="{clean_page}"', 1)
+                b = html.encode("utf-8", "ignore")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", str(len(b)))
+                if auto_sid:
+                    self.send_header("Set-Cookie", f"SESSIONID={auto_sid}; path=/")
+                self.end_headers()
+                return self.wfile.write(b)
 
         # 7) Trang co du lieu DONG: doc file goc roi bom gia tri tu kho cau
         #    hinh truoc khi tra (KHONG sua file goc tren dia — muc 2.2).
@@ -345,7 +385,9 @@ class H(SimpleHTTPRequestHandler):
     def do_POST(self):                                       # noqa: N802
         sid = self._session_id()
         kho.dat_phien_hien_tai(sid)
-        p = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        p = parsed.path
+        qs = parse_qs(parsed.query)
 
         if p in ("/__sim/dat_lai", "/api/reset", "/resetsession"):
             if sid:

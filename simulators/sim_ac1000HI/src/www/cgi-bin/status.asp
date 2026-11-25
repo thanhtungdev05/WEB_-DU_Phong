@@ -1,4 +1,4 @@
-﻿
+
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
@@ -175,7 +175,7 @@
 
 					function transferpage()
 					{
-						top.test.nav.location="/cgi-bin/status_deviceinfo.asp"; 
+						(parent.nav||parent.main||window).location=(location.pathname.indexOf("/sim_ac1000HI/")===0?"/sim_ac1000HI/cgi-bin/status_deviceinfo.asp":"/cgi-bin/status_deviceinfo.asp");
 					}
 				
 

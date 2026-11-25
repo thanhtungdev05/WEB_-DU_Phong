@@ -33,6 +33,22 @@
   <link href="luci-static/skgwfpt/sk_181_form.css" rel="stylesheet">
   <link href="luci-static/skgwfpt/jquery.jOrgChart.css" rel="stylesheet">
   <style>
+    @media (max-width: 1220px) {
+      html, body { overflow-x: hidden; }
+      .pagetittle { height: auto !important; min-height: 60px; }
+      .container, .layer1-menu { width: 100% !important; min-width: 0 !important; box-sizing: border-box; }
+      .logo_text { padding-left: 12px; }
+      .logo_text img { height: 52px !important; }
+      .logo-setup { right: 12px !important; top: 14px !important; }
+      .nav-layer1 { height: auto !important; min-height: 39px; overflow: hidden; }
+      .nav-layer1 li { padding: 0 10px !important; font-size: 13px !important; line-height: 34px !important; margin: 0 3px 0 0 !important; }
+      .layer2-menu { width: 195px !important; }
+      .layer2-menu > ul > li { margin-right: 10px !important; font-size: 13px !important; }
+      .content-detail { margin-left: 196px !important; min-width: 0 !important; padding: 10px 12px !important; box-sizing: border-box; overflow-x: auto !important; }
+      .topology-row { width: auto !important; max-width: 100% !important; margin-left: 0 !important; margin-top: 12px !important; }
+    }
+  </style>
+  <style>
     /* Tránh việc thẻ <a> bao ngoài <li> bị collapse inline box khiến vị trí tooltip bị lệch */
     .nav-layer1 a {
       display: block;
@@ -47,7 +63,7 @@
   <script src="sim/net-mock.js"></script>
   <script src="menu.js?v=4"></script>
   <script src="sim/langs.js"></script> <!-- 949 chuỗi dịch EN giải mã từ .lmo gốc -->
-  <script src="sim/tracker.js?v=7"></script> <!-- Bộ theo dõi và giám sát bài thực hành -->
+  <!-- tracker.js omitted in simulator build -->
 
   <!-- Biến toàn cục mà mã gốc cần -->
   <script>
@@ -78,11 +94,11 @@
     (function () {
       if (window.parent && window.parent !== window) {
         try {
-          window.parent.panel_show = panel_show;
-          window.parent.warninfo_show = warninfo_show;
-          window.parent.loading_show = loading_show;
-          window.parent.loading_show_data = loading_show_data;
-          window.parent.daillog_show = daillog_show;
+          /* keep panel/warninfo/loading scoped strictly to this iframe window */
+          /* warninfo_show stays window-local */
+          /* loading_show stays window-local */
+          /* loading_show_data stays window-local */
+          /* daillog_show stays window-local */
         } catch (e) {
           console.warn('[app.html] Không gán được panel_show/warninfo_show lên parent frame:', e);
         }
@@ -105,7 +121,7 @@
       </div>
       <div class="logo-setup">
         <input type="button" id="quickset" class="btn btn-large btn-default" value="Wizard"
-          onclick="alert('Trang Wizard sẽ được bổ sung ở mốc sau.')" />
+          onclick="if (typeof loadView === 'function') loadView('quickset');" />
         <select name="language" id="language" class="btn btn-large btn-default" style="height:35px;" size="1">
           <option value="vi">Tiếng Việt</option>
           <option value="en" selected>English</option>
@@ -145,7 +161,7 @@
       }
       // Một node "hiện được" nếu là skview hoặc là thư mục chứa skview (đệ quy).
       function visible(node) {
-        if (isSkview(node)) return true;
+        if (isSkview(node)) return !(node.action && node.action.hidden);
         if (node.children) for (var k in node.children) if (visible(node.children[k])) return true;
         return false;
       }
@@ -203,7 +219,7 @@
               var ch3 = l2.children || {};
               Object.keys(ch3).forEach(function (l3name) {
                 var l3 = ch3[l3name];
-                if (!isSkview(l3)) return;
+                if (!visible(l3)) return;
                 var a3 = document.createElement("a");
                 a3.href = URLBASE + "/" + l1name + "/" + l2name + "/" + l3name;
                 a3.id = "Sky_" + title(l3, l3name).replace(/ /g, "_");
@@ -273,6 +289,7 @@
           // highlight mục đang chọn
           jQuery(".layer2-menu .dt").removeClass("layer2-select");
           jQuery(".layer3-menu li").removeClass("active");
+          jQuery(".layer2-menu .dt").removeClass("layer2-folder-select");
           if (el) {
             jQuery(el).find(".dt").addClass("layer2-select");
             jQuery(el).find("li").addClass("active");
@@ -287,6 +304,48 @@
               "<p style='padding:24px;color:#888'>Trang này chưa được mô phỏng ở mốc hiện tại.</p>");
           }
         }
+        function syncSidebarHighlight(href) {
+          var p = new URL(href, window.location.origin).pathname.split("/"), l1 = p[4], l2 = p[5], l3 = p[6];
+          var link = null;
+          if (l1 && l2 && l3) link = jQuery("#layer2-ul-" + l1 + " a[href$='/" + l1 + "/" + l2 + "/" + l3 + "']");
+          else if (l1 && l2) link = jQuery("#layer2-ul-" + l1 + " a[href$='/" + l1 + "/" + l2 + "']");
+          if ((!link || !link.length) && l1 && l2) link = jQuery("#layer2-leaf-" + l2 + " .layer3-menu a").first();
+          if ((!link || !link.length) && l1) link = jQuery("#layer2-ul-" + l1 + " a").first();
+          if (link && link.length) {
+            link.find(".dt").addClass("layer2-select");
+            link.find("li").addClass("active");
+            var l3wrap = link.closest(".layer3-menu");
+            if (l3wrap.length) {
+              l3wrap.show();
+              l3wrap.closest("li").find("> .dt").addClass("layer2-folder-select");
+              l3wrap.closest("li").find("> .dt .menu-array").addClass("layer3-show");
+            }
+          }
+        }
+        function findHrefBySkview(targetView) {
+          function walk(node, segs) {
+            if (!node) return null;
+            if (node.action && node.action.type === "skview" && node.action.path === targetView && !node.action.hidden) {
+              return URLBASE + "/" + segs.join("/");
+            }
+            if (node.children) {
+              var keys = Object.keys(node.children);
+              for (var i = 0; i < keys.length; i++) {
+                if (keys[i] === "logout" || keys[i] === "wizard") continue;
+                var hit = walk(node.children[keys[i]], segs.concat([keys[i]]));
+                if (hit) return hit;
+              }
+            }
+            return null;
+          }
+          return walk({ children: treemenu }, []);
+        }
+        var _origNavTo = navTo;
+        navTo = function (href, el) {
+          _origNavTo(href, el);
+          if (!el || jQuery(el).closest(".nav-layer1").length) syncSidebarHighlight(href);
+        };
+        window.navTo = navTo;
         if (window.jQuery) {
           jQuery(".nav-layer1 a, .layer2-menu a").off("click").on("click", function (e) {
             e.preventDefault();
@@ -333,7 +392,13 @@
         if (typeof loadView === "function") {
           var initialHref = window.location.pathname;
           var initialPath = resolvePath(initialHref);
-          if (initialPath) {
+          var sp = new URLSearchParams(window.location.search || "");
+          var reqView = (sp.get("view") || sp.get("nav") || "").trim();
+          if (reqView && /^[A-Za-z0-9_]+$/.test(reqView)) {
+            var matchedHref = findHrefBySkview(reqView);
+            if (matchedHref) navTo(matchedHref);
+            else loadView(reqView);
+          } else if (initialPath) {
             navTo(initialHref);
           } else {
             loadView("devinfo");

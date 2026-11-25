@@ -41,6 +41,53 @@ _phien_xac_thuc = set()
 _current_nonce = "2H7y9kh6bcXGCMY7K9yLwZmK2F3N7rl8"
 
 
+_AC2_TOP_TOKENS = (
+    r'XWebTimeout|XCurrentUser|XCurrentMenu|CurSubMenu|CurMainMenu|MainMenu|'
+    r'WebProject|WebPotsNumber|WebShowIpv6|XHasWifi|XHas80211acWifi|XHasUsb|'
+    r'num_lan|num_wifi|num_5g_wifi|num_usb|wanConnModifyIdx|wanIdx|host_idx|'
+    r'portfwdeditIdx|reboot_flag|restore_default_flag|ping_btn_flag|'
+    r'traceroute_btn_flag|collect_alllog_btn_flag|stopdump_btn_flag|tcpdump_btn_flag'
+)
+_AC2_TOP_TOKEN_RE = None
+_AC2_TOP_LOC_RE = None
+_AC2_TOP_SELF_RE = None
+
+
+def _rewrite_ac2_scope(text):
+    global _AC2_TOP_TOKEN_RE, _AC2_TOP_LOC_RE, _AC2_TOP_SELF_RE
+    if _AC2_TOP_TOKEN_RE is None:
+        import re
+        _AC2_TOP_TOKEN_RE = re.compile(r'\b(?:window\.)?top\.(' + _AC2_TOP_TOKENS + r')\b')
+        _AC2_TOP_LOC_RE = re.compile(r'\b(?:window\.)?top\.(?:window\.)?location\b')
+        _AC2_TOP_SELF_RE = re.compile(r'\bwindow\.top(\s*[!=]==?\s*)window\.self\b')
+    root_expr = '(window.__ac2Root?window.__ac2Root():window)'
+    text = text.replace(
+        'var _target = (window.top && window.top !== window.self) ? window.top : window;',
+        f'var _target = {root_expr};',
+    )
+    text = _AC2_TOP_SELF_RE.sub(rf'{root_expr}\1window.self', text)
+    text = _AC2_TOP_LOC_RE.sub(f'{root_expr}.location', text)
+    text = _AC2_TOP_TOKEN_RE.sub(rf'{root_expr}.\1', text)
+    return text
+
+
+_AC2_SHIM_HTML = (
+    '<style data-ac2-responsive="1">'
+    '@media(max-width:960px){html,body{max-width:100%;overflow-x:auto!important}'
+    'table[width]{max-width:100%!important}}'
+    '</style>'
+    '<script data-ac2-shim="1">'
+    '(function(){if(window.__ac2Root)return;'
+    'window.__ac2Root=function(){try{var c=window;for(var i=0;i<6;i++){'
+    'if(c.__ac2IsIndex)return c;'
+    'if(!c.parent||c.parent===c)break;'
+    'var pp="";try{pp=c.parent.location&&c.parent.location.pathname||"";}catch(e){}'
+    'if(pp.indexOf("/sim_ac1000cv2")!==0&&typeof c.parent.XWebTimeout==="undefined")break;'
+    'c=c.parent;}return c;}catch(e){return window;}};'
+    '})();</script>'
+)
+
+
 class GponHandler(BaseHTTPRequestHandler):
     def _client_key(self):
         hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip() if hasattr(self, "headers") else ""
@@ -99,6 +146,22 @@ class GponHandler(BaseHTTPRequestHandler):
         return ""
 
     def _send_html(self, content, status=200, extra_headers=None):
+        if isinstance(content, str) and 'id="contentfrm"' in content and hasattr(self, "path"):
+            _qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            _pg = (_qs.get("page", [None])[0] or "").strip()
+            if _pg and _pg.endswith(".html") and "/" not in _pg and "\\" not in _pg and len(_pg) < 40:
+                content = content.replace('src="devinfo.html"', f'src="{_pg}"', 1)
+        if isinstance(content, str):
+            is_idx = 'id="contentfrm"' in content
+            content = _rewrite_ac2_scope(content)
+            if 'data-ac2-shim="1"' not in content and ("<head" in content.lower() or "<html" in content.lower() or "<frameset" in content.lower()):
+                shim = ('<script>window.__ac2IsIndex=true;</script>' if is_idx else '') + _AC2_SHIM_HTML
+                import re as _re
+                m_h = _re.search(r'</head>', content, _re.IGNORECASE)
+                if m_h:
+                    content = content[:m_h.start()] + shim + content[m_h.start():]
+                else:
+                    content = shim + content
         data = content.encode("utf-8") if isinstance(content, str) else content
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -107,6 +170,9 @@ class GponHandler(BaseHTTPRequestHandler):
         if getattr(self, "_need_set_client_cookie", False):
             self.send_header("Set-Cookie", f"ac1000cv2_sid={self._generated_client_key}; Path=/; SameSite=Lax")
             self._need_set_client_cookie = False
+        if getattr(self, "_need_set_auth_cookie", False):
+            self.send_header("Set-Cookie", "ac1000cv2_auth=1; Path=/; SameSite=Lax")
+            self._need_set_auth_cookie = False
         if extra_headers:
             for k, v in extra_headers.items():
                 self.send_header(k, v)
@@ -115,6 +181,7 @@ class GponHandler(BaseHTTPRequestHandler):
 
     def _send_401(self):
         prefix = self._get_prefix()
+
         target = f"{prefix}/login.html" if prefix else "login.html"
         html_401 = ('<!DOCTYPE html PUBLIC "-//W3C//Dtd XHTML 1.0 Strict//EN" "http://www.w3.org/tr/xhtml1/Dtd/xhtml1-Transitional.dtd">\n'
                     '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">\n'
@@ -146,6 +213,8 @@ class GponHandler(BaseHTTPRequestHandler):
 
         with open(filepath, "rb") as f:
             data = f.read()
+        if filepath.endswith(".js") or mime == "text/javascript":
+            data = _rewrite_ac2_scope(data.decode("utf-8", errors="replace")).encode("utf-8")
 
         self.send_response(200)
         self.send_header("Content-Type", mime)
@@ -170,6 +239,14 @@ class GponHandler(BaseHTTPRequestHandler):
         if not path.startswith("/"):
             path = "/" + path
         prefix = self._get_prefix()
+
+
+        qs = urllib.parse.parse_qs(parsed.query)
+        if qs.get("autologin", [None])[0] == "1" and path not in ("/login.html", "/logout.html") and (path in ("", "/", "/index.html") or path.endswith(".html")):
+            _phien_xac_thuc.add(client_key)
+            raw_cookie = self.headers.get("Cookie", "") if hasattr(self, "headers") else ""
+            if "ac1000cv2_auth=1" not in raw_cookie:
+                self._need_set_auth_cookie = True
 
         # 0. API Reset session (ho tro Portal)
         if path in ("/api/reset", "/resetsession"):
@@ -290,6 +367,7 @@ class GponHandler(BaseHTTPRequestHandler):
         host = self.headers.get("Host", "")
         referer = self.headers.get("Referer", "")
         prefix = self._get_prefix()
+
 
         # 0. API Reset session
         if path in ("/api/reset", "/resetsession"):

@@ -21,24 +21,24 @@ function showdatalist(macaddr)
 {var eth=_("ETH");var devicelist=_("Device list");var device=_("Device");var Controller=_("Controller");var ethAgent=_("Agent(ETH)");var wifiAgent=_("Agent(WiFi)");var ConnMode=_("Connect Mode:");$("body").append("<div class='backimg'></div>");var paneldiv=$("<div>");paneldiv.addClass("panel");paneldiv.css("width","550px");paneldiv.hide();var tittlediv=$("<div>");tittlediv.addClass("panel-header");tittlediv.append("<h3>"+devicelist+"</h3>");paneldiv.append(tittlediv);var contentdiv=$("<div>");contentdiv.addClass("panel-content");contentdiv.append("<table><colgroup><col style=\"width:30%\"><col style=\"width:70%\"></colgroup><tbody id=\"devlistbody\"></tbody></table>");paneldiv.append(contentdiv);paneldiv.append("<span class=\"close\" onclick=\"hide_mode();\" style=\"top: -13px;\"><i class=\"bi-x\"></i></span>");$("body").append(paneldiv);$.each(origntopo,function(index,val){if(macaddr==val.mac)
 {var str;var agentip=val.ipv4;if(val.role==1)
 {if(val.mac.toLowerCase()==lanconf.macaddr.toLowerCase()){agentip=lanconf.ipaddr;}
-str+="<tr><td><img src='/luci-static/resources/cbi/router.svg'/></td><td><ul><li><span>"+device+":</span> <span>"+Controller+"</span></li><li><span>MAC:</span><span>";}
+str+="<tr><td><img src='luci-static/resources/cbi/router.svg'/></td><td><ul><li><span>"+device+":</span> <span>"+Controller+"</span></li><li><span>MAC:</span><span>";}
 else
 {$.each(stalist,function(index,tmpSta){if(tmpSta.macAddr.toLowerCase()==macaddr.toLowerCase()){agentip=tmpSta.ipAddr;}});var location="http://"+agentip;if(val.medium=='ethernet')
-str+="<tr><td><img src='/luci-static/resources/cbi/router.svg'/ style='cursor:pointer;' onclick='location.href=\""+location+"\"'></td><td><ul><li><span>"+device+":</span> <span>"+ethAgent+"</span></li><li><span>MAC:</span><span>";else
-str+="<tr><td><img src='/luci-static/resources/cbi/router.svg'/ style='cursor:pointer;' onclick='location.href=\""+location+"\"'></td><td><ul><li><span>"+device+":</span> <span>"+wifiAgent+"</span></li><li><span>MAC:</span><span>";}
+str+="<tr><td><img src='luci-static/resources/cbi/router.svg'/ style='cursor:pointer;' onclick='location.href=\""+location+"\"'></td><td><ul><li><span>"+device+":</span> <span>"+ethAgent+"</span></li><li><span>MAC:</span><span>";else
+str+="<tr><td><img src='luci-static/resources/cbi/router.svg'/ style='cursor:pointer;' onclick='location.href=\""+location+"\"'></td><td><ul><li><span>"+device+":</span> <span>"+wifiAgent+"</span></li><li><span>MAC:</span><span>";}
 if(val.role==1)
 str+=val.mac+"</span></li><li><span>IP:</span><span onclick=\"location.href='http://"+agentip+"'\">"+agentip+"</span></li></ul></td></tr>";else
 {const matchedItem=stalist.find(Item=>Item.macAddr===val.mac.toUpperCase());if(matchedItem!=undefined)
 str+=wan_mac_shift(val.mac,1)+"</span></li><li><span>IP:</span><span onclick=\"location.href='http://"+agentip+"'\">"+agentip+"</span></li><li><span>RSSI:</span><span>"+(val.rssi===0?'-':val.rssi)+"</span></li><li><span>Backhaul PhyRate:</span><span>"+(val.rssi===0?matchedItem.negorate/1000:val.rate/10|0)+"</span></li></ul></td></tr>";else
 str+=wan_mac_shift(val.mac,1)+"</span></li><li><span>IP:</span><span onclick=\"location.href='http://"+agentip+"'\">"+agentip+"</span></li><li><span>RSSI:</span><span>"+(val.rssi===0?'-':val.rssi)+"</span></li><li><span>Backhaul PhyRate:</span><span>"+(val.rssi===0?'-':val.rate/10|0)+"</span></li></ul></td></tr>";}
 if(val.ETH_CLIENT.length>0)
-{$.each(val.ETH_CLIENT,function(idx,vdev){$.each(stalist,function(index,tmpSta){if(tmpSta.macAddr.toLowerCase()==vdev.mac.toLowerCase()){vdev.ipv4=tmpSta.ipAddr;vdev.name=tmpSta.hostname}});if(vdev.ipv4!="0.0.0.0"){str+="<tr><td><img src='/luci-static/resources/cbi/iphone.png'/></td><td><ul><li><span>"+device+":</span> <span>"+vdev.name+"</span></li><li><span>MAC:</span><span>"+vdev.mac+"</span></li><li><span>IP:</span>"
+{$.each(val.ETH_CLIENT,function(idx,vdev){$.each(stalist,function(index,tmpSta){if(tmpSta.macAddr.toLowerCase()==vdev.mac.toLowerCase()){vdev.ipv4=tmpSta.ipAddr;vdev.name=tmpSta.hostname}});if(vdev.ipv4!="0.0.0.0"){str+="<tr><td><img src='luci-static/resources/cbi/iphone.png'/></td><td><ul><li><span>"+device+":</span> <span>"+vdev.name+"</span></li><li><span>MAC:</span><span>"+vdev.mac+"</span></li><li><span>IP:</span>"
 +"<span>"+vdev.ipv4+"</span></li><li><span>"+ConnMode+"</span><span>"+eth+"</span></li></ul></td></tr>";}});}
 $.each(val.RADIO,function(idx,obj){$.each(obj.VAP,function(i,objm){$.each(objm.RADIO_CLIENT,function(j,objn){$.each(stalist,function(index,tmpSta1){if(tmpSta1.macAddr.toLowerCase()==objn.mac.toLowerCase()){objn.ipv4=tmpSta1.ipAddr;objn.name=tmpSta1.hostname;}});if(objn.ipv4!="0.0.0.0"){if(obj.ifname=="ra0")
-str+="<tr><td><img src='/luci-static/resources/cbi/iphone.png'/></td><td><ul><li><span>"+device+":</span> <span>"+objn.name+"</span></li><li><span>MAC:</span><span>"+objn.mac+"</span></li><li><span>IP:</span>"
+str+="<tr><td><img src='luci-static/resources/cbi/iphone.png'/></td><td><ul><li><span>"+device+":</span> <span>"+objn.name+"</span></li><li><span>MAC:</span><span>"+objn.mac+"</span></li><li><span>IP:</span>"
 +"<span>"+objn.ipv4+"</span></li><li><span>"+ConnMode+"</span><span>2.4G</span></li></ul></td></tr>";else
-str+="<tr><td><img src='/luci-static/resources/cbi/iphone.png'/></td><td><ul><li><span>"+device+":</span> <span>"+objn.name+"</span></li><li><span>MAC:</span><span>"+objn.mac+"</span></li><li><span>IP:</span>"
-+"<span>"+objn.ipv4+"</span></li><li><span>"+ConnMode+"</span><span>5G</span></li></ul></td></tr>";}});});});$("#devlistbody",window.parent.document).append(str);}});$(".panel").fadeIn(300);}
+str+="<tr><td><img src='luci-static/resources/cbi/iphone.png'/></td><td><ul><li><span>"+device+":</span> <span>"+objn.name+"</span></li><li><span>MAC:</span><span>"+objn.mac+"</span></li><li><span>IP:</span>"
++"<span>"+objn.ipv4+"</span></li><li><span>"+ConnMode+"</span><span>5G</span></li></ul></td></tr>";}});});});$("#devlistbody",document).append(str);}});$(".panel").fadeIn(300);}
 function showtopo(menu_list,parentobj)
 {$.each(menu_list,function(index,val){var devicerole;var connect_type;var eth=_("ETH");if(val.role=="master")
 {devicerole=_("Controller");}
@@ -47,9 +47,9 @@ else
 if(val.medium=="ethernet")
 connect_type="<div style='color: #03bbff;font-size: 12px;'>"+eth+"</div>";else
 connect_type="<div style='color: #03bbff;font-size: 12px;'>5G</div>";var li=$("<li></li>");if(val.role=="master")
-{li.append("<div onclick='showdatalist(\""+val.macaddr+"\")'><img src='/luci-static/resources/cbi/router.svg' id='"+val.macaddr+"' style='width:67px;height:61px' /><span>"+devicerole+"</span></div>").append("<ul></ul>").appendTo(parentobj);}
+{li.append("<div onclick='showdatalist(\""+val.macaddr+"\")'><img src='luci-static/resources/cbi/router.svg' id='"+val.macaddr+"' style='width:67px;height:61px' /><span>"+devicerole+"</span></div>").append("<ul></ul>").appendTo(parentobj);}
 else
-{li.append("<div onclick='showdatalist(\""+val.macaddr+"\")'>"+connect_type+"<img src='/luci-static/resources/cbi/router.svg' id='"+val.macaddr+"' style='width:67px;height:61px' /><span>"+devicerole+"</span></div>").append("<ul></ul>").appendTo(parentobj);}
+{li.append("<div onclick='showdatalist(\""+val.macaddr+"\")'>"+connect_type+"<img src='luci-static/resources/cbi/router.svg' id='"+val.macaddr+"' style='width:67px;height:61px' /><span>"+devicerole+"</span></div>").append("<ul></ul>").appendTo(parentobj);}
 if(val.agent&&val.agent.length>0)
 {showtopo(val.agent,$(li).children().eq(1));}});}
 function showall(data,parentobj)

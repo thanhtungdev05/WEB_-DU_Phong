@@ -32,7 +32,7 @@ _RE_ASSETS_CACHE = {}
 
 def get_nav_and_tab_for_page(page_name):
     page_lower = page_name.lower()
-    if any(k in page_lower for k in ["home_wan", "home_wireless", "home_lan", "adv_nat", "adv_qos", "home_wizard", "wifi_basic", "wifi_guest", "wifi5"]):
+    if any(k in page_lower for k in ["home_wan", "home_wireless", "home_lan", "adv_nat", "adv_qos", "home_wizard", "wifi_basic", "wifi_guest", "wifi5", "mesh_"]):
         return "/cgi-bin/navigation-basic.asp", "Network"
     if any(k in page_lower for k in ["access_", "urlfilter", "ipfilter", "ddns", "cwmp", "snmp", "upnp", "samba"]):
         return "/cgi-bin/navigation-access.asp", "Access"
@@ -43,6 +43,66 @@ def get_nav_and_tab_for_page(page_name):
     if any(k in page_lower for k in ["status_"]):
         return "/cgi-bin/navigation-status.asp", "Status"
     return "/cgi-bin/navigation-basic.asp", "Network"
+
+
+_HV2_TOP_TOKEN_RE = re.compile(
+    r'\b(?:window\.)?top\.(Content_[A-Za-z0-9_]+|g_url|json_string|gateWayName|ModelName)\b'
+)
+_HV2_TOP_LOC_RE = re.compile(r'\b(?:window\.)?top\.(?:window\.)?location\b')
+_HV2_TOP_TEST_NAV_RE = re.compile(r'\b(?:window\.)?top\.test\.nav\.location\b')
+
+_HV2_IFRAME_STYLE = (
+    '<style data-hv2-responsive="1">'
+    '@media(max-width:960px){html,body{max-width:100%;overflow-x:auto!important}'
+    'table[width]{max-width:100%!important}}'
+    '</style>'
+)
+
+_HV2_FRAMESET_SCRIPT = (
+    '<script data-hv2-fs="1">'
+    'window.__hv2IsIndex=true;'
+    '(function(){function fitFs(){try{'
+    'var w=window.innerWidth||(document.documentElement&&document.documentElement.clientWidth)||0;'
+    'if(!w)return;'
+    'var fs=document.getElementsByTagName("frameset");'
+    'if(w<960){'
+    'if(fs.length>1)fs[1].cols="0,*,0,0";'
+    'if(fs.length>2)fs[2].cols="215,*";'
+    '}else{'
+    'if(fs.length>1)fs[1].cols="*,956,*,0";'
+    'if(fs.length>2)fs[2].cols="266.5,*";'
+    '}}catch(e){}}'
+    'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",fitFs);else fitFs();'
+    'window.addEventListener("load",fitFs);'
+    'window.addEventListener("resize",fitFs);'
+    'setTimeout(fitFs,150);setTimeout(fitFs,500);})();'
+    '</script>'
+)
+
+
+def _hv2_shim_script(sim_id: str) -> str:
+    return (
+        '<script data-hv2-shim="1">'
+        '(function(){if(window.__hv2Root)return;'
+        'window.__hv2Root=function(){try{var c=window;for(var i=0;i<6;i++){'
+        'if(c.__hv2IsIndex)return c;'
+        'if(!c.parent||c.parent===c)break;'
+        'var pp="";try{pp=c.parent.location&&c.parent.location.pathname||"";}catch(e){}'
+        f'if(pp.indexOf("/{sim_id}/")===-1&&!c.parent.ary_strings)break;'
+        'c=c.parent;}return c;}catch(e){return window;}};'
+        'var r=window.__hv2Root();'
+        'if(r&&!r.gateWayName)r.gateWayName="FPT Internet Hub";'
+        'if(r&&!r.ModelName)r.ModelName="AX3000HV2";'
+        '})();</script>'
+    )
+
+
+def _rewrite_hv2_js(js: str) -> str:
+    root_expr = '(window.__hv2Root?window.__hv2Root():window.parent)'
+    js = _HV2_TOP_TEST_NAV_RE.sub(f'(({root_expr}.nav||window.parent).location)', js)
+    js = _HV2_TOP_LOC_RE.sub(f'{root_expr}.location', js)
+    js = _HV2_TOP_TOKEN_RE.sub(rf'{root_expr}.\1', js)
+    return js
 
 
 def rewrite_sim_urls(content: str, sim_id: str = "sim_ax3000hv2") -> str:
@@ -61,6 +121,15 @@ def rewrite_sim_urls(content: str, sim_id: str = "sim_ax3000hv2") -> str:
         _RE_ASSETS_CACHE[sim_id] = re_assets
     content = re_cgibin.sub(f'/{sim_id}/cgi-bin/', content)
     content = re_assets.sub(rf'/{sim_id}/\1', content)
+    content = _rewrite_hv2_js(content)
+    if 'data-hv2-shim="1"' not in content and ("<head" in content.lower() or "<frameset" in content.lower() or "<html" in content.lower()):
+        is_fs = "<frameset" in content.lower()
+        shim = (_HV2_FRAMESET_SCRIPT if is_fs else _HV2_IFRAME_STYLE) + _hv2_shim_script(sim_id)
+        m_head = re.search(r'</head>', content, re.IGNORECASE)
+        if m_head:
+            content = content[:m_head.start()] + shim + content[m_head.start():]
+        else:
+            content = shim + content
     return content
 
 
@@ -158,72 +227,210 @@ def apply_sim_state_to_html(html_str, show_success=False, page_path="", state=No
 
     if show_success or has_saved_data:
         # Inject: danh dau _ftcIsSaved + goi onSimulatorSave len Portal (khong alert native popup)
-        save_js = """<script type="text/javascript">
+        st_safe_msg = state or {}
+        save_payload = {
+            "meshEnabled": str(st_safe_msg.get("mesh_active", "1")) != "0",
+        }
+        if st_safe_msg.get("ESSID"):
+            save_payload["ssid"] = str(st_safe_msg["ESSID"])
+        if st_safe_msg.get("ESSID_5g"):
+            save_payload["ssid5g"] = str(st_safe_msg["ESSID_5g"])
+        if st_safe_msg.get("PreSharedKey"):
+            save_payload["password"] = str(st_safe_msg["PreSharedKey"])
+        if st_safe_msg.get("PreSharedKey_5g"):
+            save_payload["password5g"] = str(st_safe_msg["PreSharedKey_5g"])
+        if st_safe_msg.get("WEP_Selection"):
+            save_payload["authMode2g"] = str(st_safe_msg["WEP_Selection"])
+        if st_safe_msg.get("WEP_Selection_5g"):
+            save_payload["authMode5g"] = str(st_safe_msg["WEP_Selection_5g"])
+        if "ESSID_HIDE_Selection" in st_safe_msg:
+            save_payload["hideSsid2g"] = str(st_safe_msg["ESSID_HIDE_Selection"]) == "1"
+        if "ESSID_HIDE_Selection_5g" in st_safe_msg:
+            save_payload["hideSsid5g"] = str(st_safe_msg["ESSID_HIDE_Selection_5g"]) == "1"
+        if "bandsteering_enable" in st_safe_msg:
+            save_payload["bandSteering"] = str(st_safe_msg["bandsteering_enable"]) != "0"
+        save_payload_js = json.dumps(save_payload, ensure_ascii=False)
+        show_badge_js = "true" if (show_success and "wifi_basic" in (page_path or "").lower()) else "false"
+        save_js = f"""<script type="text/javascript">
 document._ftcIsSaved = true;
-window.addEventListener("DOMContentLoaded", function() {
+window.addEventListener("DOMContentLoaded", function() {{
     document._ftcIsSaved = true;
     // Lang nghe thay doi input -> reset co neu nguoi dung sua lai
-    document.addEventListener('input', function() { document._ftcIsSaved = false; });
-    document.addEventListener('change', function() { document._ftcIsSaved = false; });
-    // Thong bao len Portal (app.js) qua postMessage de vuot qua gioi han cross-origin
-    try {
-        window.top.postMessage({ type: 'FTC_SAVE_SUCCESS', source: 'ax3000hv2' }, '*');
-    } catch(e) {}
-});
-try {
-    window.top.postMessage({ type: 'FTC_SAVE_SUCCESS', source: 'ax3000hv2' }, '*');
-} catch(e) {}
+    document.addEventListener('input', function() {{ document._ftcIsSaved = false; }});
+    document.addEventListener('change', function() {{ document._ftcIsSaved = false; }});
+    // Hien thong bao xac nhan luu CHI khi chay trong Mesh Lab (khong anh huong portal.html)
+    if ({show_badge_js} && window.__FPT_MESH_NODE_ID) {{
+        var badgeHost = document.getElementById('firstDiv');
+        if (badgeHost) {{
+            badgeHost.innerHTML = '<span style="display:inline-block;margin-left:10px;padding:4px 10px;border-radius:4px;background:#e6f9ef;border:1px solid #18cd6c;color:#0f7a43;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;">&#10003; Saved &amp; Synced to Mesh AP</span>';
+        }}
+    }}
+    // Thong bao len Portal (app.js) / Mesh Lab qua postMessage
+    try {{
+        window.top.postMessage({{ type: 'FTC_SAVE_SUCCESS', source: 'ax3000hv2', nodeId: window.__FPT_MESH_NODE_ID || '', simId: 'sim_ax3000hv2', data: {save_payload_js} }}, '*');
+    }} catch(e) {{}}
+}});
+try {{
+    window.top.postMessage({{ type: 'FTC_SAVE_SUCCESS', source: 'ax3000hv2', nodeId: window.__FPT_MESH_NODE_ID || '', simId: 'sim_ax3000hv2', data: {save_payload_js} }}, '*');
+}} catch(e) {{}}
 </script>"""
         if re.search(r'</head>', html_str, re.IGNORECASE):
             html_str = re.sub(r'</head>', save_js + "</head>", html_str, count=1, flags=re.IGNORECASE)
         else:
             html_str = save_js + html_str
 
+    p_lower = (page_path or "").lower()
+    if "mesh_basic_setting" in p_lower or "mesh_topo" in p_lower:
+        st_safe = state or {}
+        mesh_active = "0" if str(st_safe.get("mesh_active", "1")) == "0" else "1"
+        mesh_role = str(st_safe.get("mesh_Role", "1") or "1")
+        mesh_state_str = "Controller" if (mesh_active == "1" and mesh_role == "1") else ("Agent" if (mesh_active == "1" and mesh_role == "2") else "Disabled")
+        html_str = re.sub(r'("mapEnable"\s*:\s*")[^"]*(")', rf'\g<1>{mesh_active}\2', html_str, count=1)
+        html_str = re.sub(r'("deviceRole"\s*:\s*")[^"]*(")', rf'\g<1>{mesh_role}\2', html_str, count=1)
+        html_str = re.sub(r'("state"\s*:\s*")[^"]*(")', rf'\g<1>{mesh_state_str}\2', html_str, count=1)
+
+        if "mesh_topo" in p_lower:
+            root_mac = str(st_safe.get("_mesh_root_mac") or "20:be:b4:0b:16:91").lower()
+            root_ip = str(st_safe.get("uiViewIPAddr") or "192.168.1.1")
+            root_host = str(st_safe.get("_mesh_root_hostname") or "AX3000HV2-1691")
+            root_clients = st_safe.get("_mesh_root_clients")
+            if not isinstance(root_clients, list):
+                root_clients = []
+            topo_list = [{
+                "Role": "01",
+                "Distance": "0",
+                "Mac": root_mac,
+                "IP": root_ip,
+                "HostName": root_host,
+                "UplinkMac": "",
+                "BhType": "",
+                "RSSI": "",
+                "BhPhyRate": "",
+                "assocTime": "",
+                "StaInfo": root_clients,
+            }]
+            if mesh_active == "1":
+                agents = st_safe.get("_mesh_topo_agents")
+                if isinstance(agents, list):
+                    for ag in agents:
+                        if not isinstance(ag, dict):
+                            continue
+                        bh_type = str(ag.get("BhType") or "Ethernet")
+                        is_wired = (bh_type == "Ethernet")
+                        topo_list.append({
+                            "Role": "02",
+                            "Distance": str(ag.get("Distance") or "1"),
+                            "Mac": str(ag.get("Mac") or "30:60:0a:db:d5:8f").lower(),
+                            "IP": str(ag.get("IP") or "192.168.1.100"),
+                            "HostName": str(ag.get("HostName") or "AP-AX3000CV2"),
+                            "UplinkMac": root_mac,
+                            "BhType": bh_type,
+                            "RSSI": "N/A" if is_wired else str(ag.get("RSSI") or "-55"),
+                            "BhPhyRate": "N/A" if is_wired else str(ag.get("BhPhyRate") or "2401"),
+                            "assocTime": "" if is_wired else str(ag.get("assocTime") or "00:05:12"),
+                            "StaInfo": ag.get("StaInfo") if isinstance(ag.get("StaInfo"), list) else [],
+                        })
+            topo_json_str = json.dumps(topo_list, ensure_ascii=False)
+            html_str = re.sub(
+                r'"topo_json"\s*:\s*\[[\s\S]*?\](?=\s*,\s*"meshSetText")',
+                lambda _m: f'"topo_json": {topo_json_str}',
+                html_str,
+                count=1,
+            )
+
     if not state:
         return html_str
 
     # 1. Replace JavaScript variables to prevent inline script overrides
-    VAR_MAPPINGS = {
-        "pppoe_name": "pppUserName",
-        "pppoe_pwd": "pppPassword",
-        "wifi_ssid_2g": "ESSID",
-        "wifi_pwd_2g": "PreSharedKey",
-        "wifi_ssid_5g": "ESSID_5g",
-        "wifi_pwd_5g": "PreSharedKey_5g",
-        "wifi_enable_2g": "enable_SSID",
-        "wifi_enable_5g": "enable_SSID_5g",
-        "wifi5_ssid_2g": "wifi5SSid_2G",
-        "wifi5_psk_2g": "wifi5Pwd_2G",
-        "wifi5_ssid_5g": "wifi5SSid_5G",
-        "wifi5_psk_5g": "wifi5Pwd_5G",
-        "wifi5_enable_2g": "Enable_Wifi5_2G",
-        "wifi5_enable_5g": "Enable_Wifi5_5G",
-        "lan_ip": "uiViewIPAddr",
-        "lan_netmask": "uiViewNetMask",
-        "dhcpd_start": "StartIp",
-        "dhcpd_pool_count": "PoolSize",
-        "dhcpd_lease": "dhcp_LeaseTime",
-    }
+    is_guest_page = "wifi_guest" in p_lower
+    if is_guest_page:
+        VAR_MAPPINGS = {
+            "wifi_ssid_2g": "guest_ESSID",
+            "wifi_pwd_2g": "guest_PreSharedKey",
+            "wifi_ssid_5g": "guest_ESSID_5g",
+            "wifi_pwd_5g": "guest_PreSharedKey_5g",
+            "wifi_enable_2g": "guest_enable_SSID",
+            "wifi_enable_5g": "guest_enable_SSID_5g",
+            "wifi_authMode_2g": "guest_WEP_Selection",
+            "wifi_authMode_5g": "guest_WEP_Selection_5g",
+            "wifi_encrypType_2g": "guest_TKIP_Selection",
+            "wifi_encrypType_5g": "guest_TKIP_Selection_5g",
+            "wifi_hideSSID_2g": "guest_ESSID_HIDE_Selection",
+            "wifi_hideSSID_5g": "guest_ESSID_HIDE_Selection_5g",
+        }
+    else:
+        VAR_MAPPINGS = {
+            "pppoe_name": "pppUserName",
+            "pppoe_pwd": "pppPassword",
+            "wifi_bandsteer_enable": "bandsteering_enable",
+            "wifi_ssid_2g": "ESSID",
+            "wifi_pwd_2g": "PreSharedKey",
+            "wifi_ssid_5g": "ESSID_5g",
+            "wifi_pwd_5g": "PreSharedKey_5g",
+            "wifi_enable_2g": "enable_SSID",
+            "wifi_enable_5g": "enable_SSID_5g",
+            "wifi_authMode_2g": "WEP_Selection",
+            "wifi_authMode_5g": "WEP_Selection_5g",
+            "wifi_encrypType_2g": "TKIP_Selection",
+            "wifi_encrypType_5g": "TKIP_Selection_5g",
+            "wifi_hideSSID_2g": "ESSID_HIDE_Selection",
+            "wifi_hideSSID_5g": "ESSID_HIDE_Selection_5g",
+            "wifi_ft_support_2g": "ft_support",
+            "wifi_ft_support_5g": "ft_support_5g",
+            "wifi5_ssid_2g": "wifi5SSid_2G",
+            "wifi5_psk_2g": "wifi5Pwd_2G",
+            "wifi5_ssid_5g": "wifi5SSid_5G",
+            "wifi5_psk_5g": "wifi5Pwd_5G",
+            "wifi5_enable_2g": "Enable_Wifi5_2G",
+            "wifi5_enable_5g": "Enable_Wifi5_5G",
+            "lan_ip": "uiViewIPAddr",
+            "lan_netmask": "uiViewNetMask",
+            "dhcpd_start": "StartIp",
+            "dhcpd_pool_count": "PoolSize",
+            "dhcpd_lease": "dhcp_LeaseTime",
+        }
 
     for var_name, param_name in VAR_MAPPINGS.items():
-        if param_name in state:
+        if param_name in state and isinstance(state[param_name], str):
             val = state[param_name]
-            escaped_val = val.replace('\\', '\\\\').replace('"', '\\"')
-            html_str = re.sub(rf'(var\s+{var_name}\s*=\s*["\'])[^"\']*?(["\'])', rf'\g<1>{escaped_val}\2', html_str, flags=re.IGNORECASE)
-            html_str = re.sub(rf'\b({var_name}\s*=\s*["\'])[^"\']*?(["\'])', rf'\g<1>{escaped_val}\2', html_str, flags=re.IGNORECASE)
+            escaped_val = val.replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
+            html_str = re.sub(
+                rf'(var\s+{var_name}\s*=\s*["\'])[^"\']*?(["\'])',
+                lambda m, v=escaped_val: m.group(1) + v + m.group(2),
+                html_str,
+                flags=re.IGNORECASE,
+            )
+            html_str = re.sub(
+                rf'\b({var_name}\s*=\s*["\'])[^"\']*?(["\'])',
+                lambda m, v=escaped_val: m.group(1) + v + m.group(2),
+                html_str,
+                flags=re.IGNORECASE,
+            )
 
-    if "dnsTypeRadio" in state:
+    if "dnsTypeRadio" in state and isinstance(state["dnsTypeRadio"], str):
         val = state["dnsTypeRadio"]
         html_str = re.sub(r'(var\s+dhcpd_type\s*=\s*["\'])[^"\']*?(["\'])', fr'\g<1>{val}\g<2>', html_str, flags=re.IGNORECASE)
 
     if "PrimaryDns" in state or "SecondDns" in state:
-        pri = state.get("PrimaryDns", "")
-        sec = state.get("SecondDns", "")
+        pri = str(state.get("PrimaryDns", ""))
+        sec = str(state.get("SecondDns", ""))
         val_dns = f"N/A,{pri},{sec}"
         html_str = re.sub(r'(var\s+dhcpd_dns_all\s*=\s*["\'])[^"\']*?(["\'])', fr'\g<1>{val_dns}\g<2>', html_str, flags=re.IGNORECASE)
 
     # 2. Replace HTML inputs directly
+    _guest_shared = {
+        "ESSID", "ESSID_5g", "PreSharedKey", "PreSharedKey_5g",
+        "WEP_Selection", "WEP_Selection_5g", "TKIP_Selection", "TKIP_Selection_5g",
+        "enable_SSID", "enable_SSID_5g", "ESSID_HIDE_Selection", "ESSID_HIDE_Selection_5g",
+    }
     for name, val in state.items():
+        if not isinstance(val, str) or name.startswith("_"):
+            continue
+        if is_guest_page and name in _guest_shared:
+            continue
+        if not is_guest_page and name.startswith("guest_"):
+            continue
+        target_name = name[6:] if (is_guest_page and name.startswith("guest_")) else name
         escaped_val = val.replace('\\', '\\\\').replace('"', '\\"')
 
         def input_callback(match):
@@ -244,7 +451,7 @@ try {
                 return tag_clean
             else:
                 if re.search(r'value=["\']', tag, flags=re.IGNORECASE):
-                    tag_clean = re.sub(r'(value=["\'])[^"\']*?(["\'])', rf'\g<1>{escaped_val}\2', tag, flags=re.IGNORECASE)
+                    tag_clean = re.sub(r'(value=["\'])[^"\']*?(["\'])', lambda m, v=escaped_val: m.group(1) + v + m.group(2), tag, flags=re.IGNORECASE)
                     return tag_clean
                 else:
                     if tag.endswith('/>'):
@@ -252,7 +459,7 @@ try {
                     else:
                         return tag[:-1] + f' value="{escaped_val}" >'
 
-        pattern_input = rf'<input[^>]*?name=["\']{re.escape(name)}["\'][^>]*?>'
+        pattern_input = rf'<input[^>]*?name=["\']{re.escape(target_name)}["\'][^>]*?>'
         html_str = re.sub(pattern_input, input_callback, html_str, flags=re.IGNORECASE)
 
     return html_str
@@ -338,7 +545,14 @@ class H(BaseHTTPRequestHandler):
         if p.startswith("/internal/"):
             return self._send(b'{"status":"method_not_allowed"}', "application/json; charset=utf-8", 405)
 
+        qs_get = parse_qs(parsed.query)
+        if p == "/cgi-bin/login.asp" and qs_get.get("autologin", [""])[0] == "1":
+            pg_q = (qs_get.get("page", [""])[0] or "").strip()
+            return self._redirect("/cgi-bin/index.asp" + (f"?page={pg_q}" if pg_q else ""))
         if p in ("/", "/index.html", "/cgi-bin/login.html"):
+            if qs_get.get("autologin", [""])[0] == "1":
+                pg_q = (qs_get.get("page", [""])[0] or "").strip()
+                return self._redirect("/cgi-bin/index.asp" + (f"?page={pg_q}" if pg_q else ""))
             return self._redirect("/cgi-bin/login.asp")
 
         if p in ("/cgi-bin/requestFromLoginPage", "/cgi-bin/reqLogin", "/cgi-bin/logincheck.cgi"):
@@ -481,6 +695,8 @@ class H(BaseHTTPRequestHandler):
                 else:
                     with open(f, "rb") as fh:
                         content = fh.read()
+                    if ext == ".js":
+                        content = _rewrite_hv2_js(content.decode("utf-8", errors="replace")).encode("utf-8")
                     _HV2_STATIC_CACHE[f] = content
                 return self._send(content, CT.get(ext, "application/octet-stream"), cache_control="public, max-age=86400, stale-while-revalidate=86400")
 
@@ -499,6 +715,13 @@ class H(BaseHTTPRequestHandler):
             return self._send(resp, "application/json; charset=utf-8")
 
         client_state = get_client_state(client_key)
+        referer_raw = self.headers.get("Referer") or ""
+        is_guest_post = ("wifi_guest" in p.lower()) or ("wifi_guest" in referer_raw.lower())
+        _GUEST_SHARED_KEYS = {
+            "ESSID", "ESSID_5g", "PreSharedKey", "PreSharedKey_5g",
+            "WEP_Selection", "WEP_Selection_5g", "TKIP_Selection", "TKIP_Selection_5g",
+            "enable_SSID", "enable_SSID_5g", "ESSID_HIDE_Selection", "ESSID_HIDE_Selection_5g",
+        }
         try:
             length = int(self.headers.get("Content-Length", 0) or 0)
             if length > 0:
@@ -506,6 +729,9 @@ class H(BaseHTTPRequestHandler):
                 params = parse_qs(body_bytes.decode("utf-8", errors="replace"))
                 for k, v in params.items():
                     if v:
+                        if is_guest_post and k in _GUEST_SHARED_KEYS:
+                            client_state["guest_" + k] = v[0]
+                            continue
                         client_state[k] = v[0]
                         if k == "Username":
                             client_state["pppUserName"] = v[0]
@@ -518,15 +744,23 @@ class H(BaseHTTPRequestHandler):
         except Exception:
             pass
 
-        referer = self.headers.get("Referer") or "/cgi-bin/index.asp"
-        ref_parsed = urlparse(referer)
-        path_to_use = ref_parsed.path or "/cgi-bin/index.asp"
+        referer = self.headers.get("Referer") or ""
+        ref_parsed = urlparse(referer) if referer else None
+        if ref_parsed and ref_parsed.path and ref_parsed.path.lower().endswith(".asp"):
+            path_to_use = ref_parsed.path
+            ref_query = ref_parsed.query
+        elif p and p.lower().endswith(".asp"):
+            path_to_use = p
+            ref_query = parsed.query
+        else:
+            path_to_use = "/cgi-bin/index.asp"
+            ref_query = ""
         if not path_to_use.startswith('/'):
             path_to_use = '/' + path_to_use
-        if "save_success=1" in referer:
-            redirect_to = path_to_use + (("?" + ref_parsed.query) if ref_parsed.query else "")
+        if "save_success=1" in ref_query:
+            redirect_to = path_to_use + (("?" + ref_query) if ref_query else "")
         else:
-            query_part = (ref_parsed.query + "&" if ref_parsed.query else "") + "save_success=1"
+            query_part = (ref_query + "&" if ref_query else "") + "save_success=1"
             redirect_to = path_to_use + "?" + query_part
         self._redirect(redirect_to)
 

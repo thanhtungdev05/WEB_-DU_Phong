@@ -4,7 +4,7 @@ function pageLoad()
 var gNeighboringTimerFlag;var gNeighboringTimerOut;var scanflag=0;var radiolistall;var radiolista2g;function formLoad(){}
 function NeighboringTimerOut()
 {clearTimeout(gNeighboringTimerFlag);clearTimeout(gNeighboringTimerOut);hide_mode();if(scanflag==0)
-{setTimeout(parent.warninfo_show("Scan failed!"),2000);}}
+{setTimeout(function(){warninfo_show("Scan failed!");},2000);}}
 function sortSignal(a,b)
 {return b.Signal-a.Signal;}
 function utf8to16(str){var out,i,len,c;var char2,char3;out="";len=str.length;i=0;while(i<len){c=str.charCodeAt(i++);if(c>=0x4e00&&c<=0x9fa5)
@@ -22,7 +22,7 @@ row+="<tr><td>"+obj.Ssid+"</td><td>"+obj.MacAddr+"</td><td>"+obj.Channel+"</td><
 else
 {gNeighboringTimerFlag=setTimeout("NeighboringResultQuery()",1000);}});}
 function BntClick_ScanNeighbor()
-{clearTimeout(gNeighboringTimerFlag);clearTimeout(gNeighboringTimerOut);scanflag=0;$(".loading p",parent.document).html("scanning for wireless signals...");parent.loading_show();var ubusparam=new Array("rtweb.wifi","wlanScanTrigger",{"band":"2.4G"});var jsonparam={"id":1,"params":ubusparam};sk_auth_post(jsonparam,function(result){NeighboringResultQuery();gNeighboringTimerOut=setTimeout("NeighboringTimerOut()",1000*25);});}
+{clearTimeout(gNeighboringTimerFlag);clearTimeout(gNeighboringTimerOut);scanflag=0;$(".loading p",document).html("scanning for wireless signals...");loading_show();var ubusparam=new Array("rtweb.wifi","wlanScanTrigger",{"band":"2.4G"});var jsonparam={"id":1,"params":ubusparam};sk_auth_post(jsonparam,function(result){NeighboringResultQuery();gNeighboringTimerOut=setTimeout("NeighboringTimerOut()",1000*25);});}
 function BntClick_PbcApply()
 {setwpsCfg("pbc","");}
 function BntClick_PinApply()

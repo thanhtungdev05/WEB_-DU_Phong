@@ -18,13 +18,13 @@
 
 .tooltip {
 	position: absolute;
-	text-align: center;
-	padding: 8px;
-	font: 12px sans-serif;
-	background: blue;
+	padding: 8px 11px;
+	font: 12px/1.45 sans-serif;
+	background: #18cd6c;
 	border: 0px;
 	border-radius: 8px;
 	pointer-events: none;
 	color: white;
 	text-align: left;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
 }

@@ -116,6 +116,7 @@ class ConfigStore:
         self._static_legacy: set[str] = set()
         self._generic_templates: dict[str, str] = {}
         self._generic_values: dict[str, list[dict]] = {}
+        self._topo_lua: dict | None = None
         self.reset()
 
     def reset(self) -> None:
@@ -132,6 +133,21 @@ class ConfigStore:
             self._generic_templates = dict(_RAW_GENERIC_TEMPLATES)
             self._generic_values = {k: copy.deepcopy(v) for k, v in _RAW_GENERIC_VALUES.items()}
             self._data["internet_status"] = {k: copy.deepcopy(v) for k, v in _RAW_INTERNET_STATUS.items()}
+            self._topo_lua = None
+
+    def set_topo_lua(self, data: dict | None) -> None:
+        with self._lock:
+            self._topo_lua = copy.deepcopy(data) if data is not None else None
+
+    def get_topo_lua(self) -> dict | None:
+        with self._lock:
+            return copy.deepcopy(self._topo_lua)
+
+    def get_topo_lua_bytes(self) -> bytes | None:
+        with self._lock:
+            if self._topo_lua is not None:
+                return json.dumps(self._topo_lua).encode("utf-8")
+            return None
 
     # ─────────────────────────────────────────
     # Public helpers
@@ -206,19 +222,29 @@ class ConfigStore:
 
             return None
 
-    def update_values(self, tag: str, fields: dict[str, str]) -> bool:
+    def update_values(self, tag: str, fields: dict[str, str], inst_id: str | None = None) -> bool:
         """
         Cập nhật các ParaValue trong ConfigStore từ dict {ParaName: ParaValue}.
+        Nếu inst_id được chỉ định, chỉ cập nhật instance tương ứng (hoặc inst_id.PSK1 cho KeyPassphrase).
         Trả về True nếu tìm được ít nhất 1 trường.
         """
         updated = False
         with self._lock:
             if tag in self._generic_values:
+                cur_inst = None
                 for item in self._generic_values[tag]:
                     name = item["name"]
-                    if name in fields:
-                        item["value"] = fields[name]
-                        updated = True
+                    if name == "_InstID":
+                        cur_inst = item["value"]
+                    if inst_id:
+                        is_target = (cur_inst == inst_id) or (name == "KeyPassphrase" and cur_inst == f"{inst_id}.PSK1")
+                        if is_target and name in fields:
+                            item["value"] = fields[name]
+                            updated = True
+                    else:
+                        if name in fields:
+                            item["value"] = fields[name]
+                            updated = True
             # Cũng thử cập nhật legacy Internet Status
             if tag in self._data.get("internet_status", {}):
                 for item in self._data["internet_status"][tag]:

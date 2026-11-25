@@ -1,6 +1,6 @@
 
-$(document).ready(function(){$(".nav-layer1 a,.layer2-menu a").on('click',function(e){e.preventDefault();sk_redirect($(this).attr('href'));});$("#language").change(function(){change_lang($(this).val());});History.Adapter.bind(window,'statechange',function(){var State=History.getState();show_lev1TreeMenu(State.data);show_lev23TreeMenu(State.data);loadView(State.data.path);});});const activeRequests=[];function sk_redirect(id)
-{var data={};var webtittle;var idarray=id.split("/");data.lev1tree=idarray[4];if(idarray.length>5)
+$(document).ready(function(){if(typeof window.navTo==='function')return;$(".nav-layer1 a,.layer2-menu a").on('click',function(e){e.preventDefault();sk_redirect($(this).attr('href'));});$("#language").change(function(){change_lang($(this).val());});History.Adapter.bind(window,'statechange',function(){var State=History.getState();show_lev1TreeMenu(State.data);show_lev23TreeMenu(State.data);loadView(State.data.path);});});const activeRequests=[];function sk_redirect(id)
+{if(id&&id.indexOf('/wizard')!==-1){if(typeof loadView==='function'){loadView('quickset');}return false;}if(id&&id.indexOf('/logout')!==-1){window.location.href='login.html';return false;}if(typeof window.navTo==='function'){window.navTo(id);return false;}var data={};var webtittle;var idarray=id.split("/");data.lev1tree=idarray[4];if(idarray.length>5)
 data.lev2tree=idarray[5];if(idarray.length>6)
 data.lev3tree=idarray[6];if(idarray.length==5)
 {if(treemenu[idarray[4]].action.type!="skview")
@@ -68,12 +68,12 @@ else
 $(item).hide();});}
 var g_timeout=null;function init_expritime()
 {var host=window.location.host;var ubusparam=new Array("system","board",{});var jsonparam={"id":1,"params":ubusparam};sk_auth_post(jsonparam,function(result){if(result.error)
-window.location.href='http://'+host;else
-window.location='/cgi-bin/luci/admin/logout';});}
+window.location.href='login.html';else
+window.location.href='login.html';});}
 function renew_session()
 {$.ajax({url:"/cgi-bin/luci/admin/renew",type:"get",dataType:"json",success:function(result){if(g_timeout)
 clearTimeout(g_timeout);var timeout=(parseInt(envcar.sessiontime)+1)*1000
-g_timeout=setTimeout("init_expritime()",timeout);},error:function(xhr,status,error){window.location.href='http://'+window.location.host;}});}
+g_timeout=setTimeout("init_expritime()",timeout);},error:function(xhr,status,error){/* keep simulated session alive inside iframe */}});}
 if(!Array.isArray){Array.isArray=function(arg){return Object.prototype.toString.call(arg)==='[object Array]';};}
 function fill_data(data)
 {data.jsonrpc="2.0";data.method="call";data.params.unshift(envcar.sessionid);}
@@ -264,7 +264,7 @@ function ping_gateway()
 {var wanparam=new Array("rtweb.devinfo","get",{});var jsonparam={"id":1,"params":wanparam};sk_auth_post(jsonparam,function(result){if(result.error&&result.error.message=="Object not found")
 {setTimeout("ping_gateway()",3000);}
 else
-{var host=window.location.host;window.location.href='http://'+host;}},function(){setTimeout("ping_gateway()",3000);});}
+{window.location.href='app.html';}},function(){setTimeout("ping_gateway()",3000);});}
 function getAesString(data,key,iv)
 {var key=CryptoJS.enc.Utf8.parse(key);var iv=CryptoJS.enc.Utf8.parse(iv);var encrypted=CryptoJS.AES.encrypt(data,key,{iv:iv,mode:CryptoJS.mode.CBC,padding:CryptoJS.pad.Pkcs7});return encrypted.toString();}
 function getAES(data)

@@ -54,42 +54,42 @@ apply_data.enable=1;else
 apply_data.enable=0;if(vpnMode.value=="0")
 apply_data.type=0;else if(vpnMode.value=="1")
 apply_data.type=1;else
-parent.warninfo_show(_("vpncfg_Mode")+_("vpncfg_VPNTypeError"));servername=serverName.value;if(servername.length==0)
-{parent.warninfo_show(_("vpncfg_ServerName")+_("vpncfg_ServerNameEmptyError"));return;}
+warninfo_show(_("vpncfg_Mode")+_("vpncfg_VPNTypeError"));servername=serverName.value;if(servername.length==0)
+{warninfo_show(_("vpncfg_ServerName")+_("vpncfg_ServerNameEmptyError"));return;}
 else if(serverName.length>64)
-{parent.warninfo_show(_("vpncfg_ServerName")+_("vpncfg_ServerNameTooLongError"));return 0;}
+{warninfo_show(_("vpncfg_ServerName")+_("vpncfg_ServerNameTooLongError"));return 0;}
 if(enableMPPE.checked==true)
 apply_data.pptp_mppe=1;else
 apply_data.pptp_mppe=0;serveripaddr=serverIpaddr.value;if(serveripaddr.length==0)
-{parent.warninfo_show(_("vpncfg_IPAddr")+_("vpncfg_ServerIpAddrEmptyError"));return;}
+{warninfo_show(_("vpncfg_IPAddr")+_("vpncfg_ServerIpAddrEmptyError"));return;}
 if(serveripaddr[0]<'0'||serveripaddr[0]>'9')
 {if(serveripaddr.indexOf(".")==-1)
-{parent.warninfo_show(_("vpncfg_IPAddr")+_("vpncfg_Invalid")+"!");return 0;}
+{warninfo_show(_("vpncfg_IPAddr")+_("vpncfg_Invalid")+"!");return 0;}
 if(serveripaddr.length>32)
-{parent.warninfo_show(_("vpncfg_IPAddr")+_("vpncfg_Invalid")+"!");return 0;}}
+{warninfo_show(_("vpncfg_IPAddr")+_("vpncfg_Invalid")+"!");return 0;}}
 else
 {if(isValidIpAddress(serveripaddr)==false||checkIsSpecialIP(serveripaddr)==true)
-{parent.warninfo_show(_("vpncfg_IPAddr")+" "+serveripaddr+" "+_("vpncfg_Invalid")+"!");return 0;}}
+{warninfo_show(_("vpncfg_IPAddr")+" "+serveripaddr+" "+_("vpncfg_Invalid")+"!");return 0;}}
 username=userName.value;if(username.length==0)
-{parent.warninfo_show(_("vpncfg_Username")+_("vpncfg_UserNameEmptyError"));return;}
+{warninfo_show(_("vpncfg_Username")+_("vpncfg_UserNameEmptyError"));return;}
 if(username.length>64)
-{parent.warninfo_show(_("vpncfg_Username")+_("vpncfg_UserNameTooLongError"));return;}
-if(apply_data.type==1&&check_quotation_mark_existed(username)){parent.warninfo_show(_("vpncfg_Username")+_("vpncfg_Invalid")+"!");return;}
+{warninfo_show(_("vpncfg_Username")+_("vpncfg_UserNameTooLongError"));return;}
+if(apply_data.type==1&&check_quotation_mark_existed(username)){warninfo_show(_("vpncfg_Username")+_("vpncfg_Invalid")+"!");return;}
 password=uPsd.value;if(password.length==0)
-{parent.warninfo_show(_("vpncfg_Uassword")+_("vpncfg_PasswordEmptyError"));return;}
+{warninfo_show(_("vpncfg_Uassword")+_("vpncfg_PasswordEmptyError"));return;}
 if(password.length>64)
-{parent.warninfo_show(_("vpncfg_Uassword")+_("vpncfg_PasswordTooLongError"));return;}
-if(apply_data.type==1&&check_quotation_mark_existed(password)){parent.warninfo_show(_("vpncfg_Uassword")+_("vpncfg_Invalid")+"!");return;}
-if(enableencrypt.checked==true){psk=PreShareKey.value;if(encryptMode.value=="psk"){if(psk.length==0){parent.warninfo_show(_("vpncfg_PreShareKey")+_("vpncfg_EncryptKeyEmptyError"));return;}
-if(psk.length>64){parent.warninfo_show(_("vpncfg_PreShareKey")+_("vpncfg_EncryptKeyTooLongError"));return;}
-if(/[\u4e00-\u9fa5]/.test(psk)){parent.warninfo_show(_("vpncfg_PreShareKey")+_("vpncfg_EncryptKeyContainsChineseError"));return;}
-if(check_quotation_mark_existed(psk)){parent.warninfo_show(_("vpncfg_PreShareKey")+_("vpncfg_Invalid")+"!");return;}}}}
+{warninfo_show(_("vpncfg_Uassword")+_("vpncfg_PasswordTooLongError"));return;}
+if(apply_data.type==1&&check_quotation_mark_existed(password)){warninfo_show(_("vpncfg_Uassword")+_("vpncfg_Invalid")+"!");return;}
+if(enableencrypt.checked==true){psk=PreShareKey.value;if(encryptMode.value=="psk"){if(psk.length==0){warninfo_show(_("vpncfg_PreShareKey")+_("vpncfg_EncryptKeyEmptyError"));return;}
+if(psk.length>64){warninfo_show(_("vpncfg_PreShareKey")+_("vpncfg_EncryptKeyTooLongError"));return;}
+if(/[\u4e00-\u9fa5]/.test(psk)){warninfo_show(_("vpncfg_PreShareKey")+_("vpncfg_EncryptKeyContainsChineseError"));return;}
+if(check_quotation_mark_existed(psk)){warninfo_show(_("vpncfg_PreShareKey")+_("vpncfg_Invalid")+"!");return;}}}}
 apply_data.name=servername;apply_data.server=serveripaddr;apply_data.username=username;apply_data.password=getAES(password);if(enableencrypt.checked==true){if(encryptMode.value=="psk"){apply_data.encrypt_mode=1;apply_data.encrypt_key=psk;}else{apply_data.encrypt_mode=2;}}else{apply_data.encrypt_mode=0;}
 if(actionapply=="add")
-{if(apply_data.encrypt_mode==1&&ipsec_existed!=-1){parent.warninfo_show(_("vpncfg_ipsec_existed!"));return;}
+{if(apply_data.encrypt_mode==1&&ipsec_existed!=-1){warninfo_show(_("vpncfg_ipsec_existed!"));return;}
 ubusparam=new Array("gwweb.vpn","add",apply_data);}
 else if(actionapply=="edit")
-{apply_data.index=parseInt(selindex);if(apply_data.encrypt_mode==1&&ipsec_existed!=selindex&&ipsec_existed!=-1){parent.warninfo_show(_("vpncfg_ipsec_existed!"));return;}
+{apply_data.index=parseInt(selindex);if(apply_data.encrypt_mode==1&&ipsec_existed!=selindex&&ipsec_existed!=-1){warninfo_show(_("vpncfg_ipsec_existed!"));return;}
 ubusparam=new Array("gwweb.vpn","edit",apply_data);}
 else
 {return;}

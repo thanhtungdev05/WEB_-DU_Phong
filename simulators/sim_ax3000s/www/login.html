@@ -156,6 +156,15 @@
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       var params = new URLSearchParams(window.location.search);
+      if (params.get('autologin') === '1') {
+        var now = Date.now().toString();
+        localStorage.setItem('labStartTime', now);
+        localStorage.setItem('labStartSession', (params.get('lab') || '0') + '_' + now);
+        params.delete('autologin');
+        params.set('v', now);
+        window.location.href = "app.html" + (params.toString() ? "?" + params.toString() : "");
+        return;
+      }
       if (params.get('mode') !== 'guide') {
         var tooltips = document.querySelectorAll('.guide-tooltip');
         tooltips.forEach(function (t) { t.style.display = 'none'; });
@@ -176,7 +185,7 @@
         localStorage.setItem('labStartTime', now);
         localStorage.setItem('labStartSession', labId + '_' + now);
         // Bản giả lập: chuyển thẳng vào trang quản trị.
-        window.location.href = "app.html" + window.location.search + "&v=" + new Date().getTime();
+        var qs = window.location.search; window.location.href = "app.html" + (qs ? qs + "&" : "?") + "v=" + new Date().getTime();
       } else {
         alert("Bạn nhập sai Username hay Password");
       }

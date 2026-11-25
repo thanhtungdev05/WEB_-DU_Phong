@@ -136,11 +136,16 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def _send_html(self, content, status=200):
+    def _send_html(self, content, status=200, set_sid=None, clear_sid=False):
         data = content.encode("utf-8") if isinstance(content, str) else content
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
+        if set_sid:
+            self.send_header("Set-Cookie", f"SID={set_sid}; Path=/; HttpOnly; SameSite=Lax")
+            self.send_header("Set-Cookie", "_TESTCOOKIESUPPORT=1; Path=/; SameSite=Lax")
+        elif clear_sid:
+            self.send_header("Set-Cookie", "SID=; Path=/; Max-Age=0; SameSite=Lax")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
         self.end_headers()
         self.wfile.write(data)
@@ -210,6 +215,17 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
             self._handle_reset()
             return
 
+        if path == "/api/sim-state":
+            st = {
+                "lan": KHO.doc("lan", {}),
+                "wlan24": KHO.doc("wlan24", {}),
+                "wlan5": KHO.doc("wlan5", {}),
+                "wan_instances": KHO.doc("wan_instances", []),
+                "topo": KHO.doc("topo_lua", None),
+            }
+            self._send_json(st)
+            return
+
         # 1. Tai nguyen tinh
         if path == "/favicon.ico":
             self._send_static(os.path.join(_REF_IMG, "favicon.ico"), "image/x-icon")
@@ -267,7 +283,7 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         # 4. View endpoint (menuView)
         if _type == "menuView" and _tag:
             if not self._is_authenticated():
-                self._ensure_lab_authenticated()
+                auto_sid = self._ensure_lab_authenticated()
             html_view = render.render_view(_tag)
             if html_view is not None:
                 self._send_html(html_view)
@@ -278,7 +294,19 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         # 5. Data endpoint (menuData & hiddenData)
         if (_type == "menuData" or _type == "hiddenData") and _tag:
             if not self._is_authenticated():
-                self._ensure_lab_authenticated()
+                auto_sid = self._ensure_lab_authenticated()
+            if _tag == "topo_lua.lua":
+                topo_custom = KHO.doc("topo_lua")
+                if topo_custom is not None:
+                    self._send_json(topo_custom)
+                    return
+                raw_topo = render.render_data(_tag)
+                if raw_topo:
+                    try:
+                        self._send_json(json.loads(raw_topo))
+                        return
+                    except Exception:
+                        pass
             xml_data = render.render_data(_tag)
             if xml_data is not None:
                 self._send_xml(xml_data)
@@ -288,25 +316,47 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
 
         # 6. Trang chu / va cac duong dan goc (/index.html, /login, /login.html)
         if path in ("", "/", "/index.html", "/login", "/login.html", "/login-page.html"):
-            if qs.get("logout", [None])[0] == "1":
+            auto_sid = None
+            is_logout = (qs.get("logout", [None])[0] == "1") or (path in ("/login", "/login.html", "/login-page.html") and qs.get("autologin", [None])[0] != "1")
+            if is_logout:
                 sid = self._get_cookie_sid()
                 if sid:
                     _phien_xac_thuc.discard(sid)
                     _phien_xac_thuc.discard(f"sid:{sid}")
                 _phien_xac_thuc.discard(client_key)
             elif qs.get("autologin", [None])[0] == "1":
-                self._ensure_lab_authenticated()
+                auto_sid = self._ensure_lab_authenticated()
 
-            if self._is_authenticated() and path not in ("/login", "/login.html", "/login-page.html"):
+            if self._is_authenticated() and not is_logout and path not in ("/login", "/login.html", "/login-page.html"):
                 auth_file = os.path.join(_REF_HTML, "root.html")
                 with open(auth_file, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
-                self._send_html(content)
+                view = (qs.get("view", [None])[0] or "").strip()
+                if view and re.fullmatch(r"[A-Za-z0-9_]+", view) and "</body>" in content:
+                    hook = (
+                        f'<script>(function(){{var v="{view}",done=false;'
+                        'function go(){if(done)return;if(typeof openLink==="function"){done=true;try{openLink(v+"&Menu3Location=0");}catch(e){}}}'
+                        'if(window.jQuery){jQuery(function(){jQuery(document).one("ajaxStop",function(){setTimeout(go,50);});setTimeout(go,600);});}'
+                        'else{window.addEventListener("load",function(){setTimeout(go,400);});}'
+                        '})();</script></body>'
+                    )
+                    content = content.replace("</body>", hook, 1)
+                self._send_html(content, set_sid=auto_sid)
             else:
                 unauth_file = os.path.join(_REF_HTML, "unauth_root.html")
                 with open(unauth_file, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
-                self._send_html(content)
+                view = (qs.get("view", [None])[0] or "").strip()
+                if view and re.fullmatch(r"[A-Za-z0-9_]+", view) and "</body>" in content:
+                    hook = (
+                        f'<script>(function(){{var v="{view}",done=false;'
+                        'function go(){if(done)return;if(typeof openLink==="function"){done=true;try{openLink(v+"&Menu3Location=0");}catch(e){}}}'
+                        'if(window.jQuery){jQuery(function(){jQuery(document).one("ajaxStop",function(){setTimeout(go,50);});setTimeout(go,600);});}'
+                        'else{window.addEventListener("load",function(){setTimeout(go,400);});}'
+                        '})();</script></body>'
+                    )
+                    content = content.replace("</body>", hook, 1)
+                self._send_html(content, set_sid=auto_sid, clear_sid=is_logout)
             return
 
         self.send_error(404, "Not Found")
@@ -325,12 +375,33 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
             self._handle_reset()
             return
 
+        if path == "/api/sim-state":
+            length = int(self.headers.get("Content-Length", 0) or 0)
+            body = self.rfile.read(length) if length > 0 else b"{}"
+            try:
+                data = json.loads(body.decode("utf-8"))
+            except Exception:
+                data = {}
+            for k, v in data.items():
+                KHO.ghi(k, v)
+            self._send_json({"result": "ok"})
+            return
+
         length = int(self.headers.get("Content-Length", 0) or 0)
         body = self.rfile.read(length) if length > 0 else b""
-        params = urllib.parse.parse_qs(body.decode("utf-8", "ignore"), keep_blank_values=True)
+        raw_body_str = body.decode("utf-8", "ignore")
+        params = urllib.parse.parse_qs(raw_body_str, keep_blank_values=True)
+        try:
+            json_body = json.loads(raw_body_str) if raw_body_str.strip().startswith("{") else {}
+        except Exception:
+            json_body = {}
 
         def pval(key, default=None):
-            return params[key][0] if key in params and params[key] else default
+            if key in params and params[key]:
+                return params[key][0]
+            if key in json_body and json_body[key] is not None:
+                return str(json_body[key])
+            return default
 
         # 1. Dang nhap
         if _type == "loginData" and _tag == "login_entry":
@@ -375,7 +446,7 @@ class ZteF6600Handler(BaseHTTPRequestHandler):
         # 3. Luu cau hinh menuData
         if _type == "menuData" and _tag:
             if not self._is_authenticated():
-                self._ensure_lab_authenticated()
+                auto_sid = self._ensure_lab_authenticated()
 
             action = pval("IF_ACTION", "Apply")
             inst_id_out = pval("_InstID", "")

@@ -1350,12 +1350,18 @@ var SupClass = "";
 var SupLiID = "";
 var FirstOne = "yes";
 var navBarWidth = $("#mainNavigator").width();
-var leftPadWidth = $("#mn_first").width();
-var rightPadWidth = $("#mn_last").width();
+if (!navBarWidth || navBarWidth < 300) {
+    navBarWidth = 960;
+}
+var leftPadWidth = $("#mn_first").width() || 5;
+var rightPadWidth = $("#mn_last").width() || 5;
 var menuAreaWidth = navBarWidth - leftPadWidth - rightPadWidth;
 menuAreaWidth -= 7;
-var menuWidth = menuAreaWidth/(menuTreeJSON.length);
-menuWidth = Math.floor(menuWidth);
+var menuLen = (typeof menuTreeJSON !== "undefined" && menuTreeJSON && menuTreeJSON.length) ? menuTreeJSON.length : 6;
+var menuWidth = Math.floor(menuAreaWidth / menuLen);
+if (!menuWidth || menuWidth < 120) {
+    menuWidth = 145;
+}
 for (var index in menuTreeJSON)
 {
 var menu = menuTreeJSON[index]
@@ -1392,6 +1398,15 @@ FirstMenuContent = FirstMenuContent
 }
 FirstMenuContent = FirstMenuContent + "</ul>";
 $("#mn_li").html(FirstMenuContent);
+if (!$(window).data("class1_resize_attached")) {
+    $(window).data("class1_resize_attached", true);
+    $(window).on("resize orientationchange", function() {
+        var _MenuInfo = $("#_MenuInfo");
+        var pId = $("#_NextPageInfo", _MenuInfo).text();
+        var sId = $("#_NowSupIdInfo", _MenuInfo).text();
+        Class1MenuShow(pId, sId);
+    });
+}
 $("#mn_li li a").click(function(){
 var MenuOBJ = $(this);
 if ( !checkDisClickAttr(MenuOBJ) )
@@ -1540,12 +1555,18 @@ var SupClass = "MenuItem";
 var SupLiID = "";
 var FirstOne = "yes";
 var navBarWidth = $("#mainNavigator").width();
-var leftPadWidth = $("#mn_first").width();
-var rightPadWidth = $("#mn_last").width();
+if (!navBarWidth || navBarWidth < 300) {
+    navBarWidth = 960;
+}
+var leftPadWidth = $("#mn_first").width() || 5;
+var rightPadWidth = $("#mn_last").width() || 5;
 var menuAreaWidth = navBarWidth - leftPadWidth - rightPadWidth;
 menuAreaWidth -= 7;
-var menuWidth = menuAreaWidth/(menuTreeJSON.length);
-menuWidth = Math.floor(menuWidth);
+var menuLen = (typeof menuTreeJSON !== "undefined" && menuTreeJSON && menuTreeJSON.length) ? menuTreeJSON.length : 6;
+var menuWidth = Math.floor(menuAreaWidth / menuLen);
+if (!menuWidth || menuWidth < 120) {
+    menuWidth = 145;
+}
 for (var index in menuTreeJSON)
 {
 var menu = menuTreeJSON[index]
@@ -1572,6 +1593,12 @@ FirstMenuContent = FirstMenuContent
 }
 FirstMenuContent = FirstMenuContent + "</ul>";
 $("#mn_li").html(FirstMenuContent);
+if (!$(window).data("fake_class1_resize_attached")) {
+    $(window).data("fake_class1_resize_attached", true);
+    $(window).on("resize orientationchange", function() {
+        FakeClass1MenuShow();
+    });
+}
 }
 function showWaitTip(show, TipMsg, StopTag)
 {
@@ -3239,23 +3266,16 @@ function LogOff()
 {
 showWaitTip(true);
 $.post( "/?_type=loginData&_tag=logout_entry", {IF_LogOff:1, _sessionTOKEN:_sessionTmpToken}, undefined)
-.done(function( data ) {
-if($.isPlainObject(data))
-{
-if ( data.need_refresh )
-{
-window.location.href = window.location.pathname.indexOf("/sim_ax1800gz") === 0 ? "/sim_ax1800gz/login" : "/login";
+.always(function( data ) {
+var curPath = window.location.pathname;
+var target = "/sim_ax1800gz/login?logout=1";
+if (curPath.indexOf("/mesh-node/") === 0) {
+    var segs = curPath.split("/");
+    if (segs.length >= 3) {
+        target = "/" + segs[1] + "/" + segs[2] + "/sim_ax1800gz/login?logout=1";
+    }
 }
-else
-{
-alert("This page has expired, please refresh and try again. ");
-showWaitTip(false);
-}
-}
-else
-{
-window.location.href = window.location.pathname.indexOf("/sim_ax1800gz") === 0 ? "/sim_ax1800gz/login" : "/login";
-}
+window.location.href = target;
 });
 }
 function LogUser()
@@ -7779,6 +7799,14 @@ position: absolute;
 </div>
 <script type="text/javascript">
 MenuShow("ClassOne", "Home_t.lp", "mmHome");
+setTimeout(function(){
+    var _MenuInfo = $("#_MenuInfo");
+    var NowNextpage = $("#_NextPageInfo",_MenuInfo).text() || "homePage";
+    var NowSupId = $("#_NowSupIdInfo",_MenuInfo).text() || "homePage";
+    var NowMidId = $("#_NowMidIdInfo",_MenuInfo).text() || "";
+    var NowThdId = $("#_NowThdIdInfo",_MenuInfo).text() || "";
+    MenuShow("ClassAll", NowNextpage, NowSupId, NowMidId, NowThdId);
+}, 120);
 </script>
 <script>
 

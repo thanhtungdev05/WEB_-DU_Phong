@@ -37,17 +37,17 @@ function delWlanAcl(delname,delmac)
 function modifyWlanAcl(srcname,srcmac,dstname,dstmac)
 {var ubusparam=new Array("rtweb.wifi.acl","modifyAcl",{"srcname":srcname,"srcmac":srcmac,"dstname":dstname,"dstmac":dstmac});var jsonparam={"id":1,"params":ubusparam};sk_auth_apply(jsonparam,function(result){console.log(result.result[1]);if(result.result[1]["result"]=="0"){getObj("wlanacl_MAC_Table").rows[index+1].cells[0].innerHTML=dstname;getObj("wlanacl_MAC_Table").rows[index+1].cells[1].innerHTML=dstmac;WlanACLEntries[index]["name"]=dstname;WlanACLEntries[index]["mac"]=dstmac;}});}
 function select_dev(obj)
-{if(obj.value=="manulMac"){$("#MacAddr",parent.document).val("");$("#DevName",parent.document).val("");$("#MacAddr",parent.document).attr("disabled",false);}
-else{var paramList=obj.value.split(',');$("#MacAddr",parent.document).val(paramList[0]);$("#DevName",parent.document).val(paramList[1]);$("#MacAddr",parent.document).attr("disabled",true);}}
+{if(obj.value=="manulMac"){$("#MacAddr",document).val("");$("#DevName",document).val("");$("#MacAddr",document).attr("disabled",false);}
+else{var paramList=obj.value.split(',');$("#MacAddr",document).val(paramList[0]);$("#DevName",document).val(paramList[1]);$("#MacAddr",document).attr("disabled",true);}}
 function BtnClick_AccessAddApply(mode)
-{var macs="";var device_names="";var macVal=$("#MacAddr",parent.document).val().toUpperCase();var deviceNameVal=$("#DevName",parent.document).val();var ret=isValidDeviceName(deviceNameVal);if(ret==-1){return;}
+{var macs="";var device_names="";var macVal=$("#MacAddr",document).val().toUpperCase();var deviceNameVal=$("#DevName",document).val();var ret=isValidDeviceName(deviceNameVal);if(ret==-1){return;}
 for(var i=0;i<WlanACLEntries.length;i++){if(WlanACLEntries[i]["mac"]!=""){if(WlanACLEntries[i]["mac"]==macVal){warninfo_show(_('wlanAccessControl_macConflict'));return;}
 if(WlanACLEntries[i]["name"]==deviceNameVal){warninfo_show(_('wlanAccessControl_nameConflict'));return;}
 if(i==15){warninfo_show(_('wlanAccessControl_macMax'));return;}}}
 var ret=isValidMacAddress(macVal);if(ret!=true){warninfo_show(_('wlanAccessControl_macInvalid'));return;}
 addWlanAcl(deviceNameVal,macVal);}
 function BtnClick_AccessAdd(mode)
-{var data={"type":"form","tittle":"Add MAC Address","panelContent":null,"submit":"BtnClick_AccessAddApply"};data.panelContent=new Array();var options=new Array();options.push({"value":"manulMac","name":_('wlanAccessControl_Select')});$.each(devlistobj,function(index,obj){console.log(obj.macAddr+" --link_type is "+obj.type);if(obj.type!=""&&(obj.type==2||obj.type==3)){if(AgentMacList.indexOf(obj.macAddr)==-1){var param=[obj.macAddr,obj.hostname];options.push({"value":param,"name":obj.hostname+" ("+obj.macAddr+")"});}}});data.panelContent.push({"type":"select","id":"userMac","tittle":_('wlanAccessControl_DeviceList'),"value":"","option":options,"onchange":"select_dev"});data.panelContent.push({"type":"text","id":"DevName","tittle":_('wlanAccessControl_devname'),"value":""});data.panelContent.push({"type":"text","id":"MacAddr","tittle":_('wlanAccessControl_mac'),"value":""});parent.panel_show(data);}
+{var data={"type":"form","tittle":"Add MAC Address","panelContent":null,"submit":"BtnClick_AccessAddApply"};data.panelContent=new Array();var options=new Array();options.push({"value":"manulMac","name":_('wlanAccessControl_Select')});$.each(devlistobj,function(index,obj){console.log(obj.macAddr+" --link_type is "+obj.type);if(obj.type!=""&&(obj.type==2||obj.type==3)){if(AgentMacList.indexOf(obj.macAddr)==-1){var param=[obj.macAddr,obj.hostname];options.push({"value":param,"name":obj.hostname+" ("+obj.macAddr+")"});}}});data.panelContent.push({"type":"select","id":"userMac","tittle":_('wlanAccessControl_DeviceList'),"value":"","option":options,"onchange":"select_dev"});data.panelContent.push({"type":"text","id":"DevName","tittle":_('wlanAccessControl_devname'),"value":""});data.panelContent.push({"type":"text","id":"MacAddr","tittle":_('wlanAccessControl_mac'),"value":""});panel_show(data);}
 function BtnClick_AccessDel(no)
 {var macs="";var device_names="";var isChked=0;var i=0;var rml=document.getElementsByName("rml");console.log(typeof(rml));if(typeof(rml)=="undefined")
 return;if(typeof(rml.length)=="undefined"){if(rml.checked==true)

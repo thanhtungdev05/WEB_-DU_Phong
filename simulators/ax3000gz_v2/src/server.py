@@ -71,6 +71,21 @@ def zte_encrypt(plain: str, sess_token: str) -> str:
     return base64.b64encode(enc.update(raw) + enc.finalize()).decode()
 
 
+def zte_decrypt(cipher_b64: str, sess_token: str) -> str:
+    """AES-256-CBC giải mã dữ liệu mã hóa từ thiết bị / form nếu có."""
+    try:
+        key = hashlib.sha256(sess_token.encode()).digest()
+        iv = hashlib.sha256(sess_token[::-1].encode()).digest()[:16]
+        raw = base64.b64decode(cipher_b64)
+        if len(raw) % 16 != 0 or len(raw) == 0:
+            return cipher_b64
+        dec = Cipher(algorithms.AES(key), modes.CBC(iv)).decryptor()
+        plain = dec.update(raw) + dec.finalize()
+        return plain.rstrip(b"\x00").decode("utf-8")
+    except Exception:
+        return cipher_b64
+
+
 def para(name: str, value) -> str:
     return f"<ParaName>{name}</ParaName><ParaValue>{xml_escape(value)}</ParaValue>"
 
@@ -303,7 +318,19 @@ class Handler(BaseHTTPRequestHandler):
         with open(path, "rb") as fh:
             self._send(fh.read(), ctype)
 
-    def _common_page(self, sess):
+    def _inject_view_hook(self, text: str, view: str = None) -> str:
+        if view and re.fullmatch(r"[A-Za-z0-9_]+", view) and "</body>" in text:
+            hook = (
+                f'<script>(function(){{var v="{view}",done=false;'
+                'function go(){if(done)return;if(typeof openLink==="function"){done=true;try{openLink(v+"&Menu3Location=0");}catch(e){}}}'
+                'if(window.jQuery){jQuery(function(){jQuery(document).one("ajaxStop",function(){setTimeout(go,50);});setTimeout(go,600);});}'
+                'else{window.addEventListener("load",function(){setTimeout(go,400);});}'
+                '})();</script></body>'
+            )
+            return text.replace("</body>", hook, 1)
+        return text
+
+    def _common_page(self, sess, sid=None, view=None):
         with open(os.path.join(WWW, "common_page.html"), encoding="utf-8") as fh:
             text = fh.read()
         escaped = zte_hex(sess["sess_token"])
@@ -312,7 +339,7 @@ class Handler(BaseHTTPRequestHandler):
             lambda match: match.group(1) + escaped + match.group(2),
             text,
         )
-        self._send(text.encode("utf-8"), "text/html; charset=utf-8")
+        self._send(self._inject_view_hook(text, view).encode("utf-8"), "text/html; charset=utf-8", sid=sid)
 
     def _enc(self, payload: bytes, sess: dict) -> bytes:
         """Mã hóa theo phiên các trường liệt kê trong thẻ <encode>.
@@ -352,7 +379,7 @@ class Handler(BaseHTTPRequestHandler):
     def _serv_data(self, payload: bytes, sess: dict):
         return self._send(self._enc(payload, sess), "text/xml; charset=utf-8")
 
-    def _menu_view(self, rel: str, sess):
+    def _menu_view(self, rel: str, sess, sid=None, view=None):
         with open(os.path.join(WWW, rel), encoding="utf-8") as fh:
             text = fh.read()
         escaped = zte_hex(sess["sess_token"])
@@ -361,7 +388,7 @@ class Handler(BaseHTTPRequestHandler):
             lambda match: match.group(1) + escaped + match.group(2),
             text,
         )
-        self._send(text.encode("utf-8"), "text/html; charset=utf-8")
+        self._send(self._inject_view_hook(text, view).encode("utf-8"), "text/html; charset=utf-8", sid=sid)
 
     def do_GET(self):
         bind_user(self._client_key())
@@ -373,8 +400,12 @@ class Handler(BaseHTTPRequestHandler):
         sid, sess, created = self._session(create=True)
 
         if u.path == "/" and not typ:
+            if q.get("autologin", [None])[0] == "1" and not sess["logged_in"]:
+                with LOCK:
+                    sess["logged_in"] = True
+                created = True
             if sess["logged_in"]:
-                return self._common_page(sess)
+                return self._common_page(sess, sid=sid if created else None, view=(q.get("view", [None])[0] or "").strip())
             with open(os.path.join(WWW, "login_page.html"), "rb") as fh:
                 return self._send(fh.read(), "text/html; charset=utf-8", sid=sid if created else None)
 
@@ -475,6 +506,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._serv_data(static_routes_xml(False), sess)
         if typ == "menuData" and tag == "route_routestaticipv6_lua.lua":
             return self._serv_data(static_routes_xml(True), sess)
+        if typ == "menuData" and tag == "topo_lua.lua":
+            topo_bytes = STORE.get_topo_lua_bytes()
+            if topo_bytes is not None:
+                return self._send(topo_bytes, "application/json; charset=utf-8")
         if typ in ("menuData", "hiddenData") and tag and tag not in dynamic_tags:
             payload = STORE.generic_data(tag)
             if payload is not None:
@@ -834,7 +869,16 @@ class Handler(BaseHTTPRequestHandler):
             inst_id = form.get("_InstID", ["IGD"])[0]
             if inst_id == "-1":
                 inst_id = "DEV.INST1"
-            STORE.update_values(tag, fields)
+            # Fallback cho mat khau neu form gui HiddenKeyPass / VisibleKeyPass
+            if "HiddenKeyPass" in fields and not fields.get("KeyPassphrase"):
+                fields["KeyPassphrase"] = fields["HiddenKeyPass"]
+            elif "VisibleKeyPass" in fields and not fields.get("KeyPassphrase"):
+                fields["KeyPassphrase"] = fields["VisibleKeyPass"]
+            # Giai ma neu truong duoc ma hoa AES/base64 tu trinh duyet
+            for enc_field in ("KeyPassphrase", "WEPKey", "MasterAuthServerSecret"):
+                if enc_field in fields and fields[enc_field]:
+                    fields[enc_field] = zte_decrypt(fields[enc_field], sess.get("sess_token", ""))
+            STORE.update_values(tag, fields, inst_id=inst_id if inst_id != "IGD" else None)
             body = (f"<ajax_response_xml_root><INSTIDENTITY>{xml_escape(inst_id)}</INSTIDENTITY>"
                     f"<IF_ERRORID>0</IF_ERRORID><IF_ERRORTYPE>SUCC</IF_ERRORTYPE>"
                     f"<IF_ERRORSTR>SUCC</IF_ERRORSTR><IF_ERRORPARAM>SUCC</IF_ERRORPARAM>"

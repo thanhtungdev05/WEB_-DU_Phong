@@ -103,6 +103,54 @@
       lan: { ".type": "interface", proto: "static", ipaddr: LAN.ipaddr, netmask: LAN.netmask }
     }
   };
+  var MESH = { enable: 1, role: "controller", nodes: [] };
+
+  (function _hydrateFromPy() {
+    var init = global.__AX3000S_INIT_STATE;
+    if (!init || typeof init !== "object") return;
+    if (init.lan && typeof init.lan === "object") {
+      Object.keys(init.lan).forEach(function (k) { LAN[k] = init.lan[k]; });
+      UCI.network.lan.ipaddr = LAN.ipaddr;
+      UCI.network.lan.netmask = LAN.netmask;
+    }
+    if (Array.isArray(init.radios)) {
+      init.radios.forEach(function (r, idx) {
+        if (r && RADIOS[idx]) {
+          Object.keys(r).forEach(function (k) { RADIOS[idx][k] = r[k]; });
+        }
+      });
+    }
+    if (init.wan && typeof init.wan === "object" && WAN[0]) {
+      Object.keys(init.wan).forEach(function (k) { WAN[0][k] = init.wan[k]; });
+    }
+    if (init.mesh && typeof init.mesh === "object") {
+      Object.keys(init.mesh).forEach(function (k) { MESH[k] = init.mesh[k]; });
+    }
+    if (Array.isArray(init.clients)) {
+      CLIENTS.length = 0;
+      init.clients.forEach(function (c) { CLIENTS.push(c); });
+    }
+  })();
+
+  function _apiPrefix() {
+    var m = (location.pathname || "").match(/^(\/mesh-node\/[A-Za-z0-9_-]+)?(\/sim_ax3000s)?/);
+    return (m && m[0]) ? m[0] : "";
+  }
+  function _persistPyState() {
+    try {
+      var payload = { lan: LAN, radios: RADIOS, wan: WAN[0] || {}, mesh: MESH, clients: CLIENTS };
+      if (typeof fetch === "function") {
+        fetch(_apiPrefix() + "/api/sim-state", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }).catch(function () {});
+      }
+      if (global.parent && global.parent !== global && global.parent.postMessage) {
+        global.parent.postMessage({ type: "fpt_mesh_fw_saved", source: "ax3000s", payload: payload }, "*");
+      }
+    } catch (e) {}
+  }
 
   /* ----- HAM TIEN ICH ----- */
   function uptimeSec() { return Math.floor((Date.now() - BOOT_TIME) / 1000); }
@@ -129,24 +177,44 @@
     return CLIENTS.filter(function (c) { return c.online; }).length;
   }
 
-  // Cay topology mesh (chi co controller)
+  // Cay topology mesh
   function meshTopology() {
     var clientsArr = CLIENTS.map(function (c) {
       return { mac: c.mac, ipv4: c.ipv4, hostname: c.hostname, ifname: c.ifname, medium: c.medium };
     });
-    var topo = {
-      "topology information": [
-        {
-          role: 1, mac: DEV.mac, ipv4: LAN.ipaddr, medium: "ethernet",
-          ETH_CLIENT: clientsArr.filter(function (c) { return c.medium === "ethernet"; }),
-          RADIO: RADIOS.map(function (r) {
-            return {
-              ifname: r.ifname,
-              VAP: [{ RADIO_CLIENT: clientsArr.filter(function (c) { return c.ifname === r.ifname; }) }]
-            };
-          })
+    var topoList = [
+      {
+        role: MESH.role === "agent" ? 2 : 1, mac: DEV.mac, ipv4: LAN.ipaddr, medium: "ethernet",
+        child_devices: Array.isArray(MESH.nodes) ? MESH.nodes : [],
+        ETH_CLIENT: clientsArr.filter(function (c) { return c.medium === "ethernet"; }),
+        RADIO: RADIOS.map(function (r) {
+          return {
+            ifname: r.ifname,
+            VAP: [{ RADIO_CLIENT: clientsArr.filter(function (c) { return c.ifname === r.ifname; }) }]
+          };
+        })
+      }
+    ];
+    if (Array.isArray(MESH.nodes)) {
+      MESH.nodes.forEach(function (node) {
+        if (node && (String(node.role || "").toLowerCase() === "agent" || node.role == 2)) {
+          var isWifi = (node.backhaul || "").toLowerCase().indexOf("wi-fi") !== -1 || (node.backhaul || "").toLowerCase().indexOf("wifi") !== -1;
+          topoList.push({
+            role: 2,
+            mac: (node.mac || "5C:1A:6F:C3:A2:61").toUpperCase(),
+            ipv4: node.ip || node.lanIp || "192.168.1.200",
+            uplinkmac: DEV.mac,
+            medium: isWifi ? "wifi" : "ethernet",
+            model: node.model || "AP-AX3000CV2",
+            hostname: node.name || "AP-AX3000CV2",
+            ETH_CLIENT: [],
+            RADIO: []
+          });
         }
-      ]
+      });
+    }
+    var topo = {
+      "topology information": topoList
     };
     return { TopologyInfo: JSON.stringify(topo) };
   }
@@ -239,8 +307,11 @@
         if (a.netmask) LAN.netmask = a.netmask;
         if (a.dhcp_start) LAN.dhcp_start = a.dhcp_start;
         if (a.dhcp_end) LAN.dhcp_end = a.dhcp_end;
+        if (a.pridns || a.dns1) LAN.dns1 = a.pridns || a.dns1;
+        if (a.secdns || a.dns2) LAN.dns2 = a.secdns || a.dns2;
         if (typeof a.dhcp_enable !== "undefined") LAN.dhcp_enable = a.dhcp_enable;
       }
+      _persistPyState();
       return { result: "ok" };
     },
 
@@ -283,7 +354,10 @@
         if (a.startip) LAN.dhcp_start = a.startip;
         if (a.endip) LAN.dhcp_end = a.endip;
         if (a.leasetime) LAN.dhcp_lease = a.leasetime;
+        if (a.pridns) LAN.dns1 = a.pridns;
+        if (a.secdns) LAN.dns2 = a.secdns;
       }
+      _persistPyState();
       return { result: "ok" };
     },
 
@@ -317,7 +391,7 @@
             enable: i === 0 ? 1 : 0,
             ssid: i === 0 ? r.ssid : "",
             password: i === 0 ? r.password : "",
-            securityMode: i === 0 ? "WPA2-PSK/WPA3-SAE" : "Open System",
+            securityMode: i === 0 ? (r.security || "WPA2-PSK/WPA3-SAE") : "Open System",
             encrypt: "AESEncryption", hide: r.hidden, acCtrlEN: 0, maxClient: 32, wmm: 1
           };
         })
@@ -359,27 +433,28 @@
         if (r.bandwidth) RADIOS[idx].bandwidth = r.bandwidth;
         if (typeof r.channel !== "undefined") RADIOS[idx].channel = r.channel;
       }
+      _persistPyState();
       return { result: "ok" };
     },
     "rtweb.wifi.wlanBasicSet": function (a) {
-      if (a && a.bss && a.bss[0]) {
-        var b = a.bss[0];
-        var is5G = (b.index === 15);
+      var bssList = (a && Array.isArray(a.bss)) ? a.bss : (a && a.bss ? [a.bss] : []);
+      bssList.forEach(function (b) {
+        if (!b) return;
+        var is5G = (b.band === "5G" || b.index === 15);
         var idx = is5G ? 1 : 0;
         if (b.ssid !== undefined) {
           RADIOS[idx].ssid = b.ssid;
-          if (idx === 0) {
-            RADIOS[1].ssid = b.ssid; // mirror to 5G
-          }
         }
         if (b.hide !== undefined) RADIOS[idx].hidden = b.hide;
-      }
+      });
+      _persistPyState();
       return { result: "ok" };
     },
     "rtweb.wifi.wlanBasicSet_encrypt": function (a) {
-      if (a && a.bss && a.bss[0]) {
-        var b = a.bss[0];
-        var is5G = (b.index === 15);
+      var bssList = (a && Array.isArray(a.bss)) ? a.bss : (a && a.bss ? [a.bss] : []);
+      bssList.forEach(function (b) {
+        if (!b) return;
+        var is5G = (b.band === "5G" || b.index === 15);
         var idx = is5G ? 1 : 0;
         
         var clearPassword = b.password;
@@ -403,23 +478,15 @@
 
         if (b.ssid !== undefined) {
           RADIOS[idx].ssid = b.ssid;
-          if (idx === 0) {
-            RADIOS[1].ssid = b.ssid; // mirror to 5G
-          }
         }
         if (clearPassword !== undefined) {
           RADIOS[idx].password = clearPassword;
-          if (idx === 0) {
-            RADIOS[1].password = clearPassword; // mirror to 5G
-          }
         }
         if (b.securityMode !== undefined) {
           RADIOS[idx].security = b.securityMode;
-          if (idx === 0) {
-            RADIOS[1].security = b.securityMode; // mirror to 5G
-          }
         }
-      }
+      });
+      _persistPyState();
       return { result: "ok" };
     },
     "rtweb.wifi.reload": function () { return { result: "ok" }; },
@@ -438,9 +505,8 @@
     },
 
     "rtweb.mesh.MeshTopyGet": function () { return meshTopology(); },
-    "rtweb.mesh.getMeshCfg": function () { return { enable: 1, role: "controller" }; },
-    // Trang WLAN Mesh + get_wlan_info doc: enable, role (so), meshroleexchange
-    "rtweb.mesh.wlanMeshGet": function () { return { enable: 1, role: 1, meshroleexchange: 0, staDevices: [] }; },
+    "rtweb.mesh.getMeshCfg": function () { return { enable: MESH.enable, role: MESH.role || "controller" }; },
+    "rtweb.mesh.wlanMeshGet": function () { return { enable: MESH.enable, role: MESH.role === "agent" ? 2 : 1, meshroleexchange: 0, staDevices: Array.isArray(MESH.nodes) ? MESH.nodes : [] }; },
 
     // --- WAN Info: VPN + thong tin PON (che do Router: PON rong) ---
     "gwweb.vpn.info": function () { return { vpninfo: [] }; },

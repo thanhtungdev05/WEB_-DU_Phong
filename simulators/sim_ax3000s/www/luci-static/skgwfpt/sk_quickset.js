@@ -6,7 +6,7 @@ $(this).find("input[type=radio]").prop("checked","checked");});$(".bi-password")
 {$(this).prevAll("input").attr("type","text");$(this).removeClass("bi-eye-slash-fill").addClass("bi-eye-fill");$(this).prevAll("i").attr("style","right: 3.6em;");}
 else
 {$(this).prevAll("input").attr("type","password");$(this).removeClass("bi-eye-fill").addClass("bi-eye-slash-fill");}});$("input").on('keyup',function(e){var obj=$(this)[0];check_data_valid(obj);})
-var curl=window.location.href;if(curl.indexOf("quickset")==-1&&curl.indexOf(br0IPaddr)==-1){top.location.href="http://"+br0IPaddr;}});var wanmode;var radiolist;var radiolist24G;var radiolist5G;var g_ap_interval;var g_ap_timeout;function change_lang(lang)
+/* skip external router IP redirect in simulator iframe */});var wanmode;var radiolist;var radiolist24G;var radiolist5G;var g_ap_interval;var g_ap_timeout;function change_lang(lang)
 {var ubusparam=new Array("uci","set",{"config":"luci","section":"main","values":{"lang":lang}});var ubusparam2=new Array("uci","apply",{"rollback":false,"timeout":1});var jsonparam=[{"id":1,"params":ubusparam},{"id":2,"params":ubusparam2}];sk_auth_post(jsonparam,function(result){window.location.reload();});}
 function s8(bytes,off){var n=bytes[off];return(n>0x7F)?(n-256)>>>0:n;}
 function u16(bytes,off){return((bytes[off+1]<<8)+bytes[off])>>>0;}
@@ -267,8 +267,8 @@ function transwanmode(wanmode)
 return zhcnmode;}
 function jump()
 {if(sid=="")
-top.location.href="http://"+br0IPaddr;else
-top.location.href="http://"+br0IPaddr+"/cgi-bin/luci/admin/logout";}
+window.location.href = "app.html"; else
+window.location.href = "login.html"; }
 function generateRandomString(length){var characters='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';var result='';for(var i=0;i<length;i++){var randomIndex=Math.floor(Math.random()*characters.length);result+=characters.charAt(randomIndex);}
 return result;}
 function ping_router()

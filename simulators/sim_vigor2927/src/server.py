@@ -14,7 +14,7 @@ Dang nhap: user + password bat ky, chi can KHONG RONG.
 """
 import os, sys, json, socket, re, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse, unquote, parse_qs
+from urllib.parse import urlparse, unquote, parse_qs, quote
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8080
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -27,12 +27,26 @@ ROUTES_FILE = os.path.join(WWW, "_routes.json")
 # Trang CHUA DUNG -> giu nguyen ban cu trong www/_pages/ qua _routes.json.
 # Khi nhom cuoi cung xong thi _pages/ khong con duoc dung toi nua.
 sys.path.insert(0, BASE)
-import vg_config_store as config_store, render
+import vg_config_store as config_store, render, vigor_pages_extra
 
 SPEC = os.path.normpath(os.path.join(BASE, "..", "spec"))
 DA_DUNG_FILE = os.path.join(BASE, "da_dung.json")
 
-_cache = {"loaded_map": False, "url2goc": [], "loaded_dung": False, "da_dung": set()}
+REF_SOURCE = os.path.normpath(os.path.join(BASE, "..", "reference", "source"))
+_REF_DATA_FILES = {
+    "/check_swm_enable.cgi": ("check_swm_enable.cgi", "application/json"),
+    "/dashbctl.cgi": ("dashbctl.cgi", "application/json"),
+    "/hsportaluser.cgi": ("hsportaluser.cgi", "text/plain; charset=utf-8"),
+    "/qosclsrule.cgi": ("qosclsrule.cgi", "text/plain; charset=utf-8"),
+    "/cgi-bin/arp.cgi": ("cgi-bin/arp.cgi", "application/json"),
+    "/cgi-bin/certificatedata.cgi": ("cgi-bin/certificatedata.cgi", "application/x-javascript; charset=utf-8"),
+    "/cgi-bin/striobj.cgi": ("cgi-bin/striobj.cgi", "application/json"),
+    "/cgi-bin/usbweb.cgi": ("cgi-bin/usbweb.cgi", "application/x-javascript; charset=utf-8"),
+    "/cgi-bin/websyslog.cgi": ("cgi-bin/websyslog.cgi", "application/x-javascript; charset=utf-8"),
+    "/cgi-bin/webvpngraph.js": ("cgi-bin/webvpngraph.js", "application/x-javascript; charset=utf-8"),
+}
+_CI_DIR_CACHE = {}
+_cache = {"loaded_map": False, "url2goc": [], "loaded_dung": False, "da_dung": set(), "da_dung_ci": {}}
 _STATIC_FILE_CACHE = {}
 _DYNAMIC_RAW_CACHE = {}
 _FILE_EXISTS_CACHE = {}
@@ -74,10 +88,54 @@ def da_dung():
         with open(DA_DUNG_FILE, "r", encoding="utf-8") as f:
             d = json.load(f)
         _cache["da_dung"] = set(d.get("trang", []))
+        _cache["da_dung_ci"] = {x.lower(): x for x in _cache["da_dung"]}
     except OSError:
         _cache["da_dung"] = set()
     _cache["loaded_dung"] = True
     return _cache["da_dung"]
+
+
+def da_dung_ci(rel):
+    """Tra ve key chuan trong da_dung.json khop khong phan biet hoa/thuong."""
+    da_dung()
+    key = rel.lstrip("/").replace("\\", "/")
+    if key in _cache["da_dung"]:
+        return key
+    return _cache["da_dung_ci"].get(key.lower())
+
+
+def _resolve_dir_ci(root_dir, rel):
+    """Tim duong dan file that trong root_dir khong phan biet hoa/thuong (co cache)."""
+    rel_clean = rel.lstrip("/").replace("\\", "/")
+    if not rel_clean:
+        return None
+    cache_key = (root_dir, rel_clean.lower())
+    if cache_key in _CI_DIR_CACHE:
+        return _CI_DIR_CACHE[cache_key]
+    parts = [part for part in rel_clean.split("/") if part and part != "."]
+    if ".." in parts:
+        _CI_DIR_CACHE[cache_key] = None
+        return None
+    cur = root_dir
+    out_parts = []
+    for part in parts:
+        try:
+            entries = os.listdir(cur)
+        except OSError:
+            _CI_DIR_CACHE[cache_key] = None
+            return None
+        match = next((e for e in entries if e == part), None)
+        if match is None:
+            pl = part.lower()
+            match = next((e for e in entries if e.lower() == pl), None)
+        if match is None:
+            _CI_DIR_CACHE[cache_key] = None
+            return None
+        out_parts.append(match)
+        cur = os.path.join(cur, match)
+    resolved = "/".join(out_parts) if os.path.isfile(cur) else None
+    _CI_DIR_CACHE[cache_key] = resolved
+    return resolved
 
 
 # Tham so QUYET DINH trang nao duoc mo (khac voi tham so du lieu cua form).
@@ -150,7 +208,7 @@ def find_page(path, params):
     params = {k: v for k, v in params.items() if k != "sFormAuthStr"}
     best, best_n = None, -1
     for rpath, rparams, f in parsed:
-        if rpath != path:
+        if rpath.lower() != path.lower():
             continue
         ok = all(params.get(k) == v for k, v in rparams.items())
         if ok and len(rparams) > best_n:
@@ -162,7 +220,7 @@ class H(BaseHTTPRequestHandler):
     def _send(self, data, ctype, code=200):
         if isinstance(data, str):
             data = data.encode("utf-8")
-        if "text/html" in ctype and (b"translate" in data or b"{{" in data):
+        if "text/html" in ctype and b"ng-app" not in data and (b"translate" in data or b"{{" in data):
             data = re.sub(rb'\{\{\s*[\x27\x22]([^\x27\x22]+)[\x27\x22]\s*\|\s*translate\s*\}\}', rb'\1', data)
             data = re.sub(rb'option\s*\{\{num\}\}', rb'option', data)
         self.send_response(code)
@@ -247,6 +305,7 @@ class H(BaseHTTPRequestHandler):
                     txt_base = render.sua_top_thanh_parent(txt_base)
                     txt_base = render.bat_tab_ipv6(txt_base)
                     txt_base = render.sua_getStrObj(txt_base)
+                    txt_base = render.inject_iframe_shim(txt_base, is_index=False)
                     cached_dyn = (txt_base, enc)
                     _DYNAMIC_RAW_CACHE[f] = cached_dyn
                 txt, enc = cached_dyn
@@ -263,6 +322,35 @@ class H(BaseHTTPRequestHandler):
                 if "ipnatp1.htm" in rl or "page_042.html" in rl or "deep_032.html" in rl:
                     txt = render.sua_ipnatp_list(txt)
                 data = txt.encode(enc, "replace")
+            elif ext == ".js" and rl.startswith("js/"):
+                with open(f, "rb") as fh:
+                    raw_bytes = fh.read()
+                js_txt = raw_bytes.decode("utf-8", "ignore")
+                js_txt = render.sua_top_thanh_parent(js_txt, is_js=True)
+                data = js_txt.encode("utf-8", "replace")
+                _STATIC_FILE_CACHE[f] = data
+            elif rl in FRAME_PAGES or rl in ("index.htm", "weblogin.htm"):
+                with open(f, "rb") as fh:
+                    raw_bytes = fh.read()
+                try:
+                    txt = raw_bytes.decode("utf-8")
+                    enc = "utf-8"
+                except UnicodeDecodeError:
+                    txt = raw_bytes.decode("latin-1")
+                    enc = "latin-1"
+                txt = render.sua_top_thanh_parent(txt)
+                if rl == "menu.htm":
+                    txt = txt.replace("function MainFunction(url) {", "function MainFunction(url) { url = (window.__vgUrl ? window.__vgUrl(url) : url);", 1)
+                elif rl == "header.htm":
+                    for _hd_src, _hd_dst in (
+                        ('parent.main.location="/doc/guicontent.htm"', 'parent.main.location=(window.__vgUrl?window.__vgUrl("/doc/guicontent.htm"):"/doc/guicontent.htm")'),
+                        ('parent.main.location.href="/cgi-bin/cgidashboard.cgi?sFormAuthStr="+authStr+"&fid=1"', 'parent.main.location.href=(window.__vgUrl?window.__vgUrl("/cgi-bin/cgidashboard.cgi?sFormAuthStr="+authStr+"&fid=1"):"/cgi-bin/cgidashboard.cgi?sFormAuthStr="+authStr+"&fid=1")'),
+                        ('parent.location="/cgi-bin/wlogout.cgi?sFormAuthStr="+authStr', 'parent.location=(window.__vgUrl?window.__vgUrl("/cgi-bin/wlogout.cgi?sFormAuthStr="+authStr):"/cgi-bin/wlogout.cgi?sFormAuthStr="+authStr)'),
+                    ):
+                        txt = txt.replace(_hd_src, _hd_dst)
+                txt = render.inject_iframe_shim(txt, is_index=(rl == "index.htm"))
+                data = txt.encode(enc, "replace")
+                _STATIC_FILE_CACHE[f] = data
             else:
                 with open(f, "rb") as fh:
                     data = fh.read()
@@ -430,6 +518,13 @@ class H(BaseHTTPRequestHandler):
         if path.lower() == "/cgi-bin/v2x00.cgi" and str(params.get("fid")) == "4048":
             self._log("DULIEU", path, "-> fid=4048 Object String (-1)")
             return self._send(b"-1", "text/plain")
+        goc_post = tim_trang_goc("POST", path, params)[0] if method == "POST" else None
+        if method == "GET" or path.lower() == "/cgi-bin/wizanti.cgi" or goc_post is None:
+            extra_html = vigor_pages_extra.render_extra_cgi(path, params, config_store, saved=(params.get("save_success") == "1"))
+        else:
+            extra_html = None
+        if extra_html is not None:
+            return self._send(extra_html.encode("utf-8"), "text/html; charset=utf-8")
 
         goc, st, ct = tim_trang_goc(method, path, params)
 
@@ -439,7 +534,9 @@ class H(BaseHTTPRequestHandler):
                 self._log("DULIEU", path, f"-> {goc} ({len(data)}B, {ct})")
                 return self._send(data, kieu_noi_dung(goc, ct))
 
-        if goc and goc in da_dung() and render.co_trang(goc):
+        goc_ci = da_dung_ci(goc) if goc else None
+        if goc_ci and render.co_trang(goc_ci):
+            goc = goc_ci
             if st == 302:
                 self._log("302", path, f"-> /{goc}")
                 return self._redirect("/" + goc)
@@ -455,17 +552,110 @@ class H(BaseHTTPRequestHandler):
             self._log("CU", path, f"-> {page} (khop path tran)")
             return self._file(page)
         self._log("RONG", path, "khong co ban ghi")
-        return self._send("", "text/html; charset=utf-8")
+        fallback_html = vigor_pages_extra._render_vigor_page(
+            "Router Status", f"Endpoint: {path}", path, str(params.get("fid", "0")), {},
+            '<table class="vg-sec" border="1" bordercolor="#ccc"><tr><td class="vg-lbl">Endpoint Status</td><td>Ready</td></tr></table>',
+            read_only=True,
+        )
+        return self._send(fallback_html.encode("utf-8"), "text/html; charset=utf-8")
+
+    def _serve_ref_data(self, p, params):
+        pl = p.lower()
+        if pl == "/dashbclose.cgi":
+            self._send(b'{"status":"ok"}', "application/json")
+            return True
+        ref_entry = _REF_DATA_FILES.get(pl)
+        if not ref_entry:
+            return False
+        if pl == "/cgi-bin/arp.cgi" and "fid" not in params:
+            return False
+        if pl == "/cgi-bin/striobj.cgi":
+            if params.get("sAct") == "1":
+                kq = self._ghi_qua_ajax_get(p, params)
+                self._send(kq, "application/json")
+                return True
+            if "sString" not in params:
+                return False
+        rel_ref, ctype = ref_entry
+        full_path = os.path.join(REF_SOURCE, rel_ref)
+        if full_path in _STATIC_FILE_CACHE:
+            self._send(_STATIC_FILE_CACHE[full_path], ctype)
+            return True
+        if not os.path.isfile(full_path):
+            return False
+        with open(full_path, "rb") as fh:
+            data = fh.read()
+        if "javascript" in ctype:
+            js_txt = data.decode("utf-8", "ignore")
+            js_txt = render.sua_top_thanh_parent(js_txt, is_js=True)
+            data = js_txt.encode("utf-8", "replace")
+        _STATIC_FILE_CACHE[full_path] = data
+        self._send(data, ctype)
+        return True
+
+    def _serve_doc_fallback(self, rel, req_path, params):
+        clean_rel = rel.lstrip("/").replace("\\", "/")
+        base_name = clean_rel.split("/")[-1]
+        had_rel_prefix = base_name.upper().startswith("REL:")
+        if had_rel_prefix:
+            base_name = base_name[4:]
+        cand_rels = [clean_rel]
+        if (clean_rel.lower().startswith("cgi-bin/") or had_rel_prefix) and base_name.lower().endswith((".htm", ".html", ".sht")):
+            cand_rels.append(f"doc/{base_name}")
+        elif had_rel_prefix and base_name:
+            cand_rels.append(base_name)
+        for cand in cand_rels:
+            canon = da_dung_ci(cand)
+            if canon and render.co_trang(canon):
+                if self._phuc_vu_moi(canon, req_path):
+                    return True
+            www_ci = _resolve_dir_ci(WWW, cand)
+            if www_ci and self._file(www_ci, params):
+                return True
+            if cand.lower().endswith((".htm", ".html", ".sht")):
+                src_ci = _resolve_dir_ci(REF_SOURCE, cand)
+                if src_ci and render.co_trang(src_ci):
+                    if self._phuc_vu_moi(src_ci, req_path):
+                        return True
+            sub_html = vigor_pages_extra.render_sub_doc(cand, config_store)
+            if sub_html is not None:
+                self._send(sub_html.encode("utf-8"), "text/html; charset=utf-8")
+                return True
+        return False
 
     def do_GET(self):
         config_store.dat_nguoi_dung_hien_tai(self._client_id())
-        u = urlparse(self.path)
+        raw_path = self.path.replace(".cgi&", ".cgi?", 1) if ".cgi&" in self.path else self.path
+        u = urlparse(raw_path)
         p = unquote(u.path)
 
         if p in ("/", "/index.html", "/weblogin.htm", "/wlogin.htm"):
+            q_login = parse_qs(u.query)
+            if q_login.get("autologin", [""])[0] == "1":
+                main_q = (q_login.get("main", [""])[0] or "").strip()
+                red = "/index.htm"
+                if main_q and re.match(r"^/(cgi-bin|doc)/[A-Za-z0-9_.\-/?=&%]+$", main_q):
+                    red = f"/index.htm?main={quote(main_q, safe='')}"
+                return self._redirect(red)
             return self._file("weblogin.htm")
 
         if p in ("/index.htm", "/main.htm"):
+            main_param = (parse_qs(u.query).get("main", [None])[0] or "").strip()
+            if main_param and re.match(r"^/(cgi-bin|doc)/[A-Za-z0-9_.\-/?=&%]+$", main_param):
+                try:
+                    with open(os.path.join(WWW, "index.htm"), "r", encoding="utf-8", errors="ignore") as _fh:
+                        _idx_html = _fh.read()
+                    _safe_main = main_param.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+                    _idx_html = _idx_html.replace(
+                        'src="/cgi-bin/cgidashboard.cgi?sFormAuthStr=K8sEXFc1TfxSlPA&fid=1"',
+                        f'src="{_safe_main}"',
+                        1,
+                    )
+                    _idx_html = render.sua_top_thanh_parent(_idx_html)
+                    _idx_html = render.inject_iframe_shim(_idx_html, is_index=True)
+                    return self._send(_idx_html.encode("utf-8"), CT.get(".htm", "text/html; charset=utf-8"))
+                except OSError:
+                    pass
             if "index.htm" in da_dung() and render.co_trang("index.htm"):
                 if self._phuc_vu_moi("index.htm", p):
                     return
@@ -480,6 +670,12 @@ class H(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
             return
+        params_q = self._flat(u.query)
+        if self._serve_ref_data(p, params_q):
+            return
+        if "wlogout.cgi" in p.lower() and params_q.get("sAct") == "1":
+            config_store.dat("l_m.htm", "sTimeout", params_q.get("sTimeout", "300"))
+            return self._redirect("/l_m.htm")
         if "logout" in p.lower():
             uid = self._client_id()
             config_store.USER_CONFIGS.pop(uid, None)
@@ -519,11 +715,20 @@ class H(BaseHTTPRequestHandler):
             return self._serve_cgi(p, params)
 
         rel = p.lstrip("/")
+        if rel.lower().endswith("constructerr.htm"):
+            sub_html = vigor_pages_extra.render_sub_doc("constructerr.htm", config_store)
+            if sub_html is not None:
+                return self._send(sub_html.encode("utf-8"), "text/html; charset=utf-8")
+        canon_dd = da_dung_ci(rel)
+        if canon_dd:
+            rel = canon_dd
         if rel in da_dung() and render.co_trang(rel):
             if self._phuc_vu_moi(rel, p):
                 return
 
         if self._file(p):
+            return
+        if self._serve_doc_fallback(rel, p, params_q):
             return
         if render.co_trang(rel):
             return self._phuc_vu_moi(rel, p)
@@ -541,7 +746,8 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         config_store.dat_nguoi_dung_hien_tai(self._client_id())
-        u = urlparse(self.path)
+        raw_path = self.path.replace(".cgi&", ".cgi?", 1) if ".cgi&" in self.path else self.path
+        u = urlparse(raw_path)
         p = unquote(u.path)
         try:
             n = int(self.headers.get("Content-Length", 0))
@@ -597,6 +803,18 @@ class H(BaseHTTPRequestHandler):
             if p == "/cgi-bin/ipnat.cgi" and str(params.get("fid")) == "2":
                 self._log("302", p, "-> Port Redirection (fid=2)")
                 return self._redirect("/cgi-bin/ipnat.cgi?fid=0&iPageIdx=1&save_success=1")
+            pl_post = p.lower()
+            if vigor_pages_extra.save_extra_cgi(p, params, config_store):
+                redir_q = [("fid", params.get("fid", "0")), ("save_success", "1")]
+                for extra_k in ("iAct", "sCnObjAct", "sAct", "sProfileAct", "act"):
+                    if extra_k in params:
+                        redir_q.append((extra_k, params[extra_k]))
+                qs = "&".join(f"{quote(str(k))}={quote(str(v))}" for k, v in redir_q)
+                return self._redirect(f"{p}?{qs}")
+            if pl_post in ("/cgi-bin/wvlanset.cgi", "/cgi-bin/uvlanset.cgi", "/cgi-bin/wvlanctl.cgi"):
+                target_fid = "2060" if "wvlanset" in pl_post else ("2061" if "uvlanset" in pl_post else "2063")
+                config_store.ghi_post(p, params, p)
+                return self._redirect(f"/cgi-bin/v2x00.cgi?fid={target_fid}&save_success=1")
 
             goc, _st, _ct = tim_trang_goc("POST", p, params)
             is_ipbmac = (goc == "doc/ipbmac.htm" or params.get("fid") == "126")

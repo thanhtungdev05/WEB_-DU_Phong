@@ -92,10 +92,10 @@ var jsonArr=[];var paramId=1;for(i=0;i<selist.length;i++){if(selist[i].checked==
 if(paramId==1){return;}
 sk_auth_apply(jsonArr,function(result){setTimeout(getMacFilter(),300);});}
 function macf_select_dev(obj)
-{if(obj.value=="manulMac"){$("#MfMac",parent.document).val("");$("#MfMac",parent.document).attr("disabled",false);$("#FilterName",parent.document).val("");}
-else{var paramList=obj.value.split(',');$("#MfMac",parent.document).val(paramList[0]);$("#MfMac",parent.document).attr("disabled",true);$("#FilterName",parent.document).val(paramList[1]);}}
+{if(obj.value=="manulMac"){$("#MfMac",document).val("");$("#MfMac",document).attr("disabled",false);$("#FilterName",document).val("");}
+else{var paramList=obj.value.split(',');$("#MfMac",document).val(paramList[0]);$("#MfMac",document).attr("disabled",true);$("#FilterName",document).val(paramList[1]);}}
 function getparentChecked(id)
-{return($("#"+id,parent.document).is(':checked'));}
+{return($("#"+id,document).is(':checked'));}
 function getparentTime()
 {var hourval;var minval;var days='';var stimev;var etimev;var weekdays;hourval=getparentValue("sc_timestarthour");if(parseInt(hourval)<10){hourval="0"+hourval;}
 minval=getparentValue("sc_timestartmin");if(parseInt(minval)<10){minval="0"+minval;}
@@ -124,7 +124,7 @@ function Macf_btnAdd()
 {warninfo_show(_("Warning_Enable_first"));return;}
 if(getMacfEntryNumber()>31)
 {warninfo_show(_("Warning_Maximum_32_Rules"));return;}
-var data={"type":"form","tittle":_("Add_New_Rule"),"panelContent":null,"submit":"add_macfilter_rule"};data.panelContent=new Array();var options=new Array();options.push({"value":"manulMac","name":_("User_Define_Select")});$.each(mfstalist,function(index,obj){var param=[obj.macaddr,obj.hostname];options.push({"value":param,"name":obj.hostname+" ("+obj.macaddr+")"});});data.panelContent.push({"type":"select","id":"userMac","tittle":_("Select_Device"),"value":"","option":options,"onchange":"macf_select_dev"});data.panelContent.push({"type":"text","id":"FilterName","tittle":_("Filter_Name"),"value":""});data.panelContent.push({"type":"text","id":"MfMac","datatype":"macaddr","tittle":_("MAC_Address"),"value":""});data.panelContent.push({"type":"timerange","id":"sc_time","tittle":_("Time"),"value":""});data.panelContent.push({"type":"week","id":"week","tittle":_("Repeat_Period"),"value":""});parent.panel_show(data);getObj("FilterName").style.padding="0px 6px";getObj("MfMac").style.padding="0px 6px";}
+var data={"type":"form","tittle":_("Add_New_Rule"),"panelContent":null,"submit":"add_macfilter_rule"};data.panelContent=new Array();var options=new Array();options.push({"value":"manulMac","name":_("User_Define_Select")});$.each(mfstalist,function(index,obj){var param=[obj.macaddr,obj.hostname];options.push({"value":param,"name":obj.hostname+" ("+obj.macaddr+")"});});data.panelContent.push({"type":"select","id":"userMac","tittle":_("Select_Device"),"value":"","option":options,"onchange":"macf_select_dev"});data.panelContent.push({"type":"text","id":"FilterName","tittle":_("Filter_Name"),"value":""});data.panelContent.push({"type":"text","id":"MfMac","datatype":"macaddr","tittle":_("MAC_Address"),"value":""});data.panelContent.push({"type":"timerange","id":"sc_time","tittle":_("Time"),"value":""});data.panelContent.push({"type":"week","id":"week","tittle":_("Repeat_Period"),"value":""});panel_show(data);getObj("FilterName").style.padding="0px 6px";getObj("MfMac").style.padding="0px 6px";}
 function getparentValue(id)
 {return($("#"+id,document).val());}
 function CheckMac(Addr)

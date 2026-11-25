@@ -320,7 +320,7 @@ if(del_wancfg){if(del_wancfg.networktype=="bridge"&&del_wancfg.vlanmode==1){var 
 utag_bridge_num++;}
 for(var i=0;i<WanConnJson.length;i++){for(j=0;j<vlan_array.length;j++){if(WanConnJson[i].vlanid==vlan_array[j]){same_vlan_route_wan=true;break;}}
 vlan_array[i]=WanConnJson[i].vlanid;}
-if(same_vlan_route_wan&&utag_bridge_num==1){parent.warninfo_show(_("wancfg_vlan_exist_on_del_utag_bridge_error"));return;}}}}
+if(same_vlan_route_wan&&utag_bridge_num==1){warninfo_show(_("wancfg_vlan_exist_on_del_utag_bridge_error"));return;}}}}
 apply_data.index=parseInt(index);ubusparam=new Array("gwweb.wancfg","del_WanConnection",apply_data);jsonparam={"id":1,"params":ubusparam};sk_auth_apply(jsonparam,function(result){delist.shift();if(delist.length==0)
 {pageLoad();return;}
 delWanIface(delist[0]);});}
@@ -386,7 +386,7 @@ function saveMtu()
 var IpVersion = f.IpVersion, connMode = f.connMode, serviceMode = f.serviceMode, vlanMode = f.vlanMode, vlanID = f.vlanID, multiVID = f.multiVID, d8021 = f.d8021, mtu = f.mtu, nat = f.nat, ipAddr = f.ipAddr, netMask = f.netMask, defGW = f.defGW, firstDns = f.firstDns, secondDns = f.secondDns, userName = f.userName, uPsd = f.uPsd, dialMode = f.dialMode, idleTime = f.idleTime, EnableStaticIp = f.EnableStaticIp, pppStaticIPAddress = f.pppStaticIPAddress, pppStaticSubnetMask = f.pppStaticSubnetMask, pppStaticStartAddress = f.pppStaticStartAddress, pppStaticEndAddress = f.pppStaticEndAddress, enblIANA = f.enblIANA, defaultroute = f.defaultroute, defaultroutev6 = f.defaultroutev6, wanAddress6 = f.wanAddress6, wanAddress6prefix = f.wanAddress6prefix, wanGateway6 = f.wanGateway6, enblPD = f.enblPD, delegatePrefix = f.delegatePrefix, delegatePrefixLen = f.delegatePrefixLen, dns6Primary = f.dns6Primary, dns6Secondary = f.dns6Secondary, enbl6RD = f.enbl6RD, ipv6rdBrAddr = f.ipv6rdBrAddr, ipv6rdIpv4MaskLen = f.ipv6rdIpv4MaskLen, ipv6rdPrefix = f.ipv6rdPrefix, ipv6rdPrefixLen = f.ipv6rdPrefixLen, enblDSLite = f.enblDSLite, dsLiteServer = f.dsLiteServer, enable = f.enable, seletall = f.seletall, btn_edit = f.btn_edit, btn_del = f.btn_del, btn_add = f.btn_add;
 if(true)
 {maxMtu=parseInt(mtu.value);if(!isNumber(mtu.value)||maxMtu<currMinMtu||maxMtu>currMaxMtu)
-{parent.warninfo_show(_("wancfg_MTUValue")+": "+mtu.value+" "+_("wancfg_MTUValueError")+$("#span_mtu").html());return 0;}
+{warninfo_show(_("wancfg_MTUValue")+": "+mtu.value+" "+_("wancfg_MTUValueError")+$("#span_mtu").html());return 0;}
 apply_data.mtu=maxMtu}
 return 1;}
 var tr069ServiceBit=0;var internetServiceBit=1;var voipServiceBit=2;var otherServiceBit=3;function getServModeMask(serverlist)
@@ -411,11 +411,11 @@ if(true)
 {serverlist=parseInt(serviceMode.value)
 servModeMask=getServModeMask(serverlist);if(connMode.value!="bridge")
 {if((servModeMask&(1<<tr069ServiceBit))&&(checkSameWanServiceExist(tr069ServiceBit)==true))
-{parent.warninfo_show(_("wancfg_TR69ExistedError"));serviceMode.focus();return 0;}}
+{warninfo_show(_("wancfg_TR69ExistedError"));serviceMode.focus();return 0;}}
 if((servModeMask&(1<<voipServiceBit))&&(checkSameWanServiceExist(voipServiceBit)==true))
-{parent.warninfo_show(_("wancfg_VOIPExistedError"));serviceMode.focus();return 0;}
+{warninfo_show(_("wancfg_VOIPExistedError"));serviceMode.focus();return 0;}
 if((servModeMask&(1<<otherServiceBit))&&(checkSameWanServiceExist(otherServiceBit)==true))
-{parent.warninfo_show(_("wancfg_IPTVExistedError"));serviceMode.focus();return 0;}
+{warninfo_show(_("wancfg_IPTVExistedError"));serviceMode.focus();return 0;}
 apply_data.servicelist=serverlist;}
 return 1;}
 function checkAlreadyExistBridgeNotBoundPort()
@@ -433,7 +433,7 @@ if(true)
 {bindportlist+=lanPort.value;bindportlist+=","
 num++;}}
 if(connMode.value=="bridge"&&(2!=parseInt(serviceMode.value))&&num==allportlistarry.length)
-{parent.warninfo_show(_("wancfg_otherBridgeError"));return 0;}
+{warninfo_show(_("wancfg_otherBridgeError"));return 0;}
 apply_data.portbind=bindportlist;}
 return 1;}
 function saveNat()
@@ -489,25 +489,25 @@ if(true)
 {if(IpVersion.value==1||connMode.value!="route"||$('input:radio[name="ipproto"]:checked').val()!="static")
 {return 1;}
 wanIpAddress=ipAddr.value;wanSubnetMask=netMask.value;wanIntfGateway=defGW.value;dnsPrimary=firstDns.value;dnsSecondary=secondDns.value;if(isValidIpAddress(wanIpAddress)==false||checkIsSpecialIP(wanIpAddress)==true)
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+wanIpAddress+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+wanIpAddress+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isValidSubnetMask(wanSubnetMask)==false||checkIsSpecialIP(wanSubnetMask)==true)
-{parent.warninfo_show(_("wancfg_SubnetMask")+" "+wanSubnetMask+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_SubnetMask")+" "+wanSubnetMask+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isNetworkaddr(wanIpAddress,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+wanIpAddress+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+wanIpAddress+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isValidIpAddress(wanIntfGateway)==false||checkIsSpecialIP(wanIntfGateway)==true)
-{parent.warninfo_show(_("wancfg_IPGateway")+" "+wanIntfGateway+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPGateway")+" "+wanIntfGateway+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isNetworkaddr(wanIntfGateway,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_IPGateway")+" "+wanIntfGateway+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPGateway")+" "+wanIntfGateway+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isValidIpAddress(dnsPrimary)==false||checkIsSpecialIP(dnsPrimary)==true)
-{parent.warninfo_show(_("wancfg_PriDNS")+" "+dnsPrimary+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_PriDNS")+" "+dnsPrimary+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isNetworkaddr(dnsPrimary,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_PriDNS")+" "+dnsPrimary+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_PriDNS")+" "+dnsPrimary+" "+_("wancfg_Invalid")+"!");return 0;}
 if(dnsSecondary!=""&&(isValidIpAddress(dnsSecondary)==false||checkIsSpecialIP(dnsSecondary)==true))
-{parent.warninfo_show(_("wancfg_SecDNS")+" "+dnsSecondary+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_SecDNS")+" "+dnsSecondary+" "+_("wancfg_Invalid")+"!");return 0;}
 if(dnsSecondary!=""&&isNetworkaddr(dnsSecondary,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_SecDNS")+" "+dnsSecondary+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_SecDNS")+" "+dnsSecondary+" "+_("wancfg_Invalid")+"!");return 0;}
 if(!isSameSubNet(wanIpAddress,wanSubnetMask,wanIntfGateway,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_staticIPNotSameSubError"));return 0;}
+{warninfo_show(_("wancfg_staticIPNotSameSubError"));return 0;}
 apply_data.ipaddr=wanIpAddress;apply_data.subnetmask=wanSubnetMask;apply_data.gateway=wanIntfGateway;apply_data.dns1=dnsPrimary;if(dnsSecondary!="")
 {apply_data.dns2=dnsSecondary;}}
 return 1;}
@@ -518,15 +518,15 @@ if(true)
 {if(IpVersion.value==0||$('input:radio[name="ipproto"]:checked').val()!="static"||connMode.value!="route")
 {return 1;}
 var ipv6Addr;var ipv6prefix=wanAddress6prefix.value;if(wanAddress6prefix.value=='')
-ipv6prefix=64;ipv6Addr=wanAddress6.value+"/"+ipv6prefix;if(wanAddress6.value==''||isValidIpv6Address(ipv6Addr)==false){parent.warninfo_show(_("wancfg_WanAddress6Error2"));return 0;}
-if(wanGateway6.value==''||sk_isValidIpAddress6(wanGateway6.value)==false){parent.warninfo_show(_("wancfg_WanGWAddress6Error1"));return 0;}
-if(dns6Primary.value==''){parent.warninfo_show(_("wancfg_Dns6PrimaryError1"));return 0;}
-if(dns6Primary.value!=''&&sk_isValidIpAddress6(dns6Primary.value)==false){parent.warninfo_show(_("wancfg_Dns6PrimaryError2"));return 0;}
-if(dns6Secondary.value!=''&&sk_isValidIpAddress6(dns6Secondary.value)==false){parent.warninfo_show(_("wancfg_Dns6SecondaryError2"));return 0;}
+ipv6prefix=64;ipv6Addr=wanAddress6.value+"/"+ipv6prefix;if(wanAddress6.value==''||isValidIpv6Address(ipv6Addr)==false){warninfo_show(_("wancfg_WanAddress6Error2"));return 0;}
+if(wanGateway6.value==''||sk_isValidIpAddress6(wanGateway6.value)==false){warninfo_show(_("wancfg_WanGWAddress6Error1"));return 0;}
+if(dns6Primary.value==''){warninfo_show(_("wancfg_Dns6PrimaryError1"));return 0;}
+if(dns6Primary.value!=''&&sk_isValidIpAddress6(dns6Primary.value)==false){warninfo_show(_("wancfg_Dns6PrimaryError2"));return 0;}
+if(dns6Secondary.value!=''&&sk_isValidIpAddress6(dns6Secondary.value)==false){warninfo_show(_("wancfg_Dns6SecondaryError2"));return 0;}
 if($("#PDTable").is(':visible')==true&&$("#enblPD").is(':checked')==true)
 {var PD;var PDLen=delegatePrefixLen.value;if(delegatePrefixLen.value=='')
-PDLen=64;if(delegatePrefix.value==''){parent.warninfo_show(_("wancfg_PrefixError1"));return 0;}
-PD=delegatePrefix.value+"/"+PDLen;if(delegatePrefix.value!=''&&isValidIpv6Address(PD)==false){parent.warninfo_show(_("wancfg_PrefixError2"));return 0;}
+PDLen=64;if(delegatePrefix.value==''){warninfo_show(_("wancfg_PrefixError1"));return 0;}
+PD=delegatePrefix.value+"/"+PDLen;if(delegatePrefix.value!=''&&isValidIpv6Address(PD)==false){warninfo_show(_("wancfg_PrefixError2"));return 0;}
 apply_data.prefixsrc=2;apply_data.prefix=PD;}
 else
 {apply_data.prefixsrc=0}
@@ -542,11 +542,11 @@ return true;}
 function saveDslite(){var f = document.forms[0];
 var IpVersion = f.IpVersion, connMode = f.connMode, serviceMode = f.serviceMode, vlanMode = f.vlanMode, vlanID = f.vlanID, multiVID = f.multiVID, d8021 = f.d8021, mtu = f.mtu, nat = f.nat, ipAddr = f.ipAddr, netMask = f.netMask, defGW = f.defGW, firstDns = f.firstDns, secondDns = f.secondDns, userName = f.userName, uPsd = f.uPsd, dialMode = f.dialMode, idleTime = f.idleTime, EnableStaticIp = f.EnableStaticIp, pppStaticIPAddress = f.pppStaticIPAddress, pppStaticSubnetMask = f.pppStaticSubnetMask, pppStaticStartAddress = f.pppStaticStartAddress, pppStaticEndAddress = f.pppStaticEndAddress, enblIANA = f.enblIANA, defaultroute = f.defaultroute, defaultroutev6 = f.defaultroutev6, wanAddress6 = f.wanAddress6, wanAddress6prefix = f.wanAddress6prefix, wanGateway6 = f.wanGateway6, enblPD = f.enblPD, delegatePrefix = f.delegatePrefix, delegatePrefixLen = f.delegatePrefixLen, dns6Primary = f.dns6Primary, dns6Secondary = f.dns6Secondary, enbl6RD = f.enbl6RD, ipv6rdBrAddr = f.ipv6rdBrAddr, ipv6rdIpv4MaskLen = f.ipv6rdIpv4MaskLen, ipv6rdPrefix = f.ipv6rdPrefix, ipv6rdPrefixLen = f.ipv6rdPrefixLen, enblDSLite = f.enblDSLite, dsLiteServer = f.dsLiteServer, enable = f.enable, seletall = f.seletall, btn_edit = f.btn_edit, btn_del = f.btn_del, btn_add = f.btn_add;
 if(true){if(!enblDSLite.checked){apply_data.dslite_mode=0;}else{if($('input:radio[name="dsliteMode"]:checked').val()=="dsliteAuto"){apply_data.dslite_mode=1;}
-else{if(dsLiteServer.value==''){parent.warninfo_show(_("dsliteServer")+_("cannotBeEmptyError"));return-1;}
-if(dsLiteServer.value.indexOf(":")==-1){if(dsLiteServer.value.indexOf(".")==-1){parent.warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}}else{if("::"==dsLiteServer.value||isValidIpv6Address(dsLiteServer.value)!=true||true==isMultiCastIpv6Address(dsLiteServer.value)){parent.warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}
-if(!isGlobalIpv6Address(dsLiteServer.value)){parent.warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}}
+else{if(dsLiteServer.value==''){warninfo_show(_("dsliteServer")+_("cannotBeEmptyError"));return-1;}
+if(dsLiteServer.value.indexOf(":")==-1){if(dsLiteServer.value.indexOf(".")==-1){warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}}else{if("::"==dsLiteServer.value||isValidIpv6Address(dsLiteServer.value)!=true||true==isMultiCastIpv6Address(dsLiteServer.value)){warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}
+if(!isGlobalIpv6Address(dsLiteServer.value)){warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}}
 apply_data.dslite_mode=2;apply_data.dslite_peeraddr=dsLiteServer.value;}
-if((checkDSLiteExist()==false)){parent.warninfo_show(_("dsliteExistError"));return-1;}}}
+if((checkDSLiteExist()==false)){warninfo_show(_("dsliteExistError"));return-1;}}}
 return 0;}
 function checkIpv6rdExist()
 {var i=0;for(i=0;i<WanConnJson.length;i++)
@@ -556,17 +556,17 @@ function checkIpv6rdExist()
 return true;}
 function saveIpv6rd(){var f = document.forms[0];
 var IpVersion = f.IpVersion, connMode = f.connMode, serviceMode = f.serviceMode, vlanMode = f.vlanMode, vlanID = f.vlanID, multiVID = f.multiVID, d8021 = f.d8021, mtu = f.mtu, nat = f.nat, ipAddr = f.ipAddr, netMask = f.netMask, defGW = f.defGW, firstDns = f.firstDns, secondDns = f.secondDns, userName = f.userName, uPsd = f.uPsd, dialMode = f.dialMode, idleTime = f.idleTime, EnableStaticIp = f.EnableStaticIp, pppStaticIPAddress = f.pppStaticIPAddress, pppStaticSubnetMask = f.pppStaticSubnetMask, pppStaticStartAddress = f.pppStaticStartAddress, pppStaticEndAddress = f.pppStaticEndAddress, enblIANA = f.enblIANA, defaultroute = f.defaultroute, defaultroutev6 = f.defaultroutev6, wanAddress6 = f.wanAddress6, wanAddress6prefix = f.wanAddress6prefix, wanGateway6 = f.wanGateway6, enblPD = f.enblPD, delegatePrefix = f.delegatePrefix, delegatePrefixLen = f.delegatePrefixLen, dns6Primary = f.dns6Primary, dns6Secondary = f.dns6Secondary, enbl6RD = f.enbl6RD, ipv6rdBrAddr = f.ipv6rdBrAddr, ipv6rdIpv4MaskLen = f.ipv6rdIpv4MaskLen, ipv6rdPrefix = f.ipv6rdPrefix, ipv6rdPrefixLen = f.ipv6rdPrefixLen, enblDSLite = f.enblDSLite, dsLiteServer = f.dsLiteServer, enable = f.enable, seletall = f.seletall, btn_edit = f.btn_edit, btn_del = f.btn_del, btn_add = f.btn_add;
-if(true){if(!enbl6RD.checked){apply_data.ipv6rd_mode=0;return 0;}else{if((checkIpv6rdExist()==false)){parent.warninfo_show(_("ipv6rdExistError"));return-1;}
+if(true){if(!enbl6RD.checked){apply_data.ipv6rd_mode=0;return 0;}else{if((checkIpv6rdExist()==false)){warninfo_show(_("ipv6rdExistError"));return-1;}
 if($('input:radio[name="ipv6RDMode"]:checked').val()=="ipv6RDAuto"){apply_data.ipv6rd_mode=1;}
 else
-{if(ipv6rdBrAddr.value==''){parent.warninfo_show(_("ipv6rdBRV4Addr ")+_("cannotBeEmptyError"));return-1;}
-if(ipv6rdIpv4MaskLen.value==''){parent.warninfo_show(_("ipv6rdV4MaskLen")+_("cannotBeEmptyError"));return-1;}
-if(ipv6rdPrefix.value==''){parent.warninfo_show(_("ipv6rdPrefix")+_("cannotBeEmptyError"));return-1;}
-if(ipv6rdPrefixLen.value==''){parent.warninfo_show(_("ipv6rdPrefixLen")+_("cannotBeEmptyError"));return-1;}
-if(isValidIpAddress(ipv6rdBrAddr.value)==false){parent.warninfo_show(_("ipv6rdBRV4Addr")+ipv6rdBrAddr.value+_("isInvalidError"));return-1;}
-apply_data.ipv6rd_peeraddr=ipv6rdBrAddr.value;var maskLen;maskLen=parseInt(ipv6rdIpv4MaskLen.value);if(isNaN(ipv6rdIpv4MaskLen.value)||maskLen<0||maskLen>31){parent.warninfo_show(_("ipv6rdV4MaskLen")+ipv6rdIpv4MaskLen.value+_("isInvalidError"));return-1;}
-apply_data.ipv6rd_ipv4mask_len=maskLen;if(isValidIpv6Address(ipv6rdPrefix.value)==false||(ipv6rdPrefix.value.indexOf("2001:0db8")==0||ipv6rdPrefix.value.indexOf("2001:db8")==0)){parent.warninfo_show(_("ipv6rdPrefix")+ipv6rdPrefix.value+_("isInvalidError"));return-1;}
-var prefixLen;prefixLen=parseInt(ipv6rdPrefixLen.value);if(isNaN(ipv6rdPrefixLen.value)||prefixLen<=1||prefixLen>32){parent.warninfo_show(_("ipv6rdPrefixLen")+ipv6rdPrefixLen.value+_("isInvalidError"));return-1;}
+{if(ipv6rdBrAddr.value==''){warninfo_show(_("ipv6rdBRV4Addr ")+_("cannotBeEmptyError"));return-1;}
+if(ipv6rdIpv4MaskLen.value==''){warninfo_show(_("ipv6rdV4MaskLen")+_("cannotBeEmptyError"));return-1;}
+if(ipv6rdPrefix.value==''){warninfo_show(_("ipv6rdPrefix")+_("cannotBeEmptyError"));return-1;}
+if(ipv6rdPrefixLen.value==''){warninfo_show(_("ipv6rdPrefixLen")+_("cannotBeEmptyError"));return-1;}
+if(isValidIpAddress(ipv6rdBrAddr.value)==false){warninfo_show(_("ipv6rdBRV4Addr")+ipv6rdBrAddr.value+_("isInvalidError"));return-1;}
+apply_data.ipv6rd_peeraddr=ipv6rdBrAddr.value;var maskLen;maskLen=parseInt(ipv6rdIpv4MaskLen.value);if(isNaN(ipv6rdIpv4MaskLen.value)||maskLen<0||maskLen>31){warninfo_show(_("ipv6rdV4MaskLen")+ipv6rdIpv4MaskLen.value+_("isInvalidError"));return-1;}
+apply_data.ipv6rd_ipv4mask_len=maskLen;if(isValidIpv6Address(ipv6rdPrefix.value)==false||(ipv6rdPrefix.value.indexOf("2001:0db8")==0||ipv6rdPrefix.value.indexOf("2001:db8")==0)){warninfo_show(_("ipv6rdPrefix")+ipv6rdPrefix.value+_("isInvalidError"));return-1;}
+var prefixLen;prefixLen=parseInt(ipv6rdPrefixLen.value);if(isNaN(ipv6rdPrefixLen.value)||prefixLen<=1||prefixLen>32){warninfo_show(_("ipv6rdPrefixLen")+ipv6rdPrefixLen.value+_("isInvalidError"));return-1;}
 apply_data.ipv6rd_ipv6prefix=ipv6rdPrefix.value;apply_data.ipv6rd_ipv6prefix_len=prefixLen;apply_data.ipv6rd_mode=2;}}}
 return 0;}
 function saveIpVersion()
@@ -598,7 +598,7 @@ pppUserName=userName.value;pppPassword=uPsd.value;if(dialMode.value==1)
 {pppIdleTime=0;}
 else
 {pppIdleTime=parseInt(idleTime.value);if(isNaN(pppIdleTime)||pppIdleTime<30||pppIdleTime>9999)
-{parent.warninfo_show(_("wancfg_pppIdleTimeValue")+": "+idleTime.value+" "+_("wancfg_pppIdleTimeValueError"));return 0;}}
+{warninfo_show(_("wancfg_pppIdleTimeValue")+": "+idleTime.value+" "+_("wancfg_pppIdleTimeValueError"));return 0;}}
 if(EnableStaticIp.checked==false)
 {pppStaticIPEnable=0;}
 else
@@ -607,28 +607,28 @@ else
 else
 {pppStaticIPEnable=1;}}
 pppIpAddr=pppStaticIPAddress.value;pppInetMask=pppStaticSubnetMask.value;pppIpStartAddr=pppStaticStartAddress.value;pppIpEndAddr=pppStaticEndAddress.value;if(pppUserName.length==0)
-{parent.warninfo_show(_("wancfg_PPPoEUserNameError1"));return 0;}
+{warninfo_show(_("wancfg_PPPoEUserNameError1"));return 0;}
 else if(pppUserName.length>64)
-{parent.warninfo_show(_("wancfg_PPPoEUserNameError2"));return 0;}
+{warninfo_show(_("wancfg_PPPoEUserNameError2"));return 0;}
 if(isContainNOSupportChar(pppUserName)==true)
-{parent.warninfo_show(_("wancfg_PPPoEUserNameError3"));return 0;}
+{warninfo_show(_("wancfg_PPPoEUserNameError3"));return 0;}
 if(pppPassword.length==0)
-{parent.warninfo_show(_("wancfg_PPPoEPasswordError1"));return 0;}
+{warninfo_show(_("wancfg_PPPoEPasswordError1"));return 0;}
 else if(pppPassword.length>32)
-{parent.warninfo_show(_("wancfg_PPPoEPasswordError2"));return 0;}
+{warninfo_show(_("wancfg_PPPoEPasswordError2"));return 0;}
 if(isContainNOSupportChar(pppPassword)==true)
-{parent.warninfo_show(_("wancfg_PPPoEPasswordError3"));return 0;}
+{warninfo_show(_("wancfg_PPPoEPasswordError3"));return 0;}
 if(pppIpAddr.length>0&&(isValidIpAddress(pppIpAddr)==false||checkIsSpecialIP(pppIpAddr)==true))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+pppIpAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+pppIpAddr+" "+_("wancfg_Invalid")+"!");return 0;}
 if(pppInetMask.length>0&&(isValidSubnetMask(pppInetMask)==false||checkIsSpecialIP(pppInetMask)==true))
-{parent.warninfo_show(_("wancfg_SubnetMask")+" "+pppInetMask+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_SubnetMask")+" "+pppInetMask+" "+_("wancfg_Invalid")+"!");return 0;}
 if(pppIpAddr.length>0&&pppInetMask.length>0&&isNetworkaddr(pppIpAddr,pppInetMask))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+ipAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+ipAddr+" "+_("wancfg_Invalid")+"!");return 0;}
 if(pppIpStartAddr.length>0&&(isValidIpAddress(pppIpStartAddr)==false||checkIsSpecialIP(pppIpStartAddr)==true))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+pppIpStartAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+pppIpStartAddr+" "+_("wancfg_Invalid")+"!");return 0;}
 if(pppIpEndAddr.length>0&&(isValidIpAddress(pppIpEndAddr)==false||checkIsSpecialIP(pppIpEndAddr)==true))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+pppIpEndAddr+" "+_("wancfg_Invalid")+"!");return 0;}
-if(pppIpStartAddr.length>0&&!cmpIpAddress(pppIpStartAddr,pppIpEndAddr)){parent.warninfo_show(_("wancfg_IPAddr")+" "+pppIpEndAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+pppIpEndAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+if(pppIpStartAddr.length>0&&!cmpIpAddress(pppIpStartAddr,pppIpEndAddr)){warninfo_show(_("wancfg_IPAddr")+" "+pppIpEndAddr+" "+_("wancfg_Invalid")+"!");return 0;}
 apply_data.dial=pppIdleTime*60;apply_data.pppoename=pppUserName;apply_data.pppoepwd=getAES(pppPassword);apply_data.PPPoEStaticIPEnable=pppStaticIPEnable;apply_data.PPPoEStaticAddr=pppIpAddr;apply_data.PPPoEStaticMask=pppInetMask;apply_data.PPPoEStaticStartAddr=pppIpStartAddr;apply_data.PPPoEStaticEndAddr=pppIpEndAddr;}
 return 1;}
 function saveConnType()
@@ -664,9 +664,9 @@ else
 if(apply_data.networktype!="static")
 {apply_data.dnsv6src=1;}
 var dnsmode=$('input:radio[name="dnsv6mode"]:checked').val();if(dnsmode=='enable')
-{if(dns6Primary.value==''){parent.warninfo_show(_("wancfg_Dns6PrimaryError1"));return 0;}
-if(dns6Primary.value!=''&&sk_isValidIpAddress6(dns6Primary.value)==false){parent.warninfo_show(_("wancfg_Dns6PrimaryError2"));return 0;}
-if(dns6Secondary.value!=''&&sk_isValidIpAddress6(dns6Secondary.value)==false){parent.warninfo_show(_("wancfg_Dns6SecondaryError2"));return 0;}
+{if(dns6Primary.value==''){warninfo_show(_("wancfg_Dns6PrimaryError1"));return 0;}
+if(dns6Primary.value!=''&&sk_isValidIpAddress6(dns6Primary.value)==false){warninfo_show(_("wancfg_Dns6PrimaryError2"));return 0;}
+if(dns6Secondary.value!=''&&sk_isValidIpAddress6(dns6Secondary.value)==false){warninfo_show(_("wancfg_Dns6SecondaryError2"));return 0;}
 apply_data.peer_dnsv6=0;apply_data.peer_staticdns1v6=dns6Primary.value;if(dns6Secondary.value!='')
 {apply_data.peer_staticdns2v6=dns6Secondary.value;}}
 else
@@ -717,7 +717,7 @@ for(var i=0;i<WanConnJson.length;i++)
 {for(j=0;j<vlan_array.length;j++)
 {if(WanConnJson[i].vlanid==vlan_array[j]){same_vlan_route_wan=true;break;}}
 vlan_array[i]=WanConnJson[i].vlanid;}
-if(same_vlan_route_wan&&!utag_bridge_num){parent.warninfo_show(_("wancfg_vlan_exist_on_add_utag_bridge_error"));return;}}}
+if(same_vlan_route_wan&&!utag_bridge_num){warninfo_show(_("wancfg_vlan_exist_on_add_utag_bridge_error"));return;}}}
 if(actionapply=="add")
 {ubusparam=new Array("gwweb.wancfg","add_WanConnection_encrypt",apply_data);}
 else if(actionapply=="edit")

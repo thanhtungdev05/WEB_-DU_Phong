@@ -323,6 +323,46 @@
         hKey.value = keyVal;
       }
       
+      try {
+        var _getMV = function (n) {
+          var e = document.getElementById("modal_field_" + n);
+          if (!e) return "";
+          if (e.tagName && e.tagName !== "DIV" && e.tagName !== "SPAN" && e.value !== undefined) return e.value || "";
+          var c = e.querySelector ? e.querySelector("input, select") : null;
+          return c ? (c.value || "") : "";
+        };
+        var encVal = _getMV("encryption");
+        var chVal = _getMV("Channel");
+        var bwVal = _getMV("BandWidth");
+        var patch = {};
+        if (ssidVal || keyVal || encVal) {
+          var wObj = {};
+          if (ssidVal) wObj.SSID = ssidVal;
+          if (keyVal) wObj.KeyPassphrase = keyVal;
+          if (encVal) wObj.encryption = encVal;
+          if (ssidIndex === 5) { patch.wlan5 = wObj; }
+          else { patch.wlan24 = Object.assign({}, wObj); patch.wlan5 = Object.assign({}, wObj); }
+        }
+        if (chVal || bwVal) {
+          var gObj = {};
+          if (chVal) gObj.Channel = chVal;
+          if (bwVal) gObj.BandWidth = bwVal;
+          patch.wlan24 = Object.assign(patch.wlan24 || {}, gObj);
+          patch.wlan5 = Object.assign(patch.wlan5 || {}, gObj);
+        }
+        var mGz2 = (location.pathname || "").match(/^(\/mesh-node\/[A-Za-z0-9_-]+)?(\/sim_ax3000gz)?/);
+        var pfx2 = (mGz2 && mGz2[0]) ? mGz2[0] : "";
+        if (Object.keys(patch).length && typeof fetch === "function") {
+          fetch(pfx2 + "/api/sim-state", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(patch)
+          }).catch(function () {});
+        }
+        if (window.parent && window.parent !== window && window.parent.postMessage) {
+          window.parent.postMessage({ type: "fpt_mesh_fw_saved", source: "ax3000gz", payload: patch }, "*");
+        }
+      } catch (e) {}
       var w = window.parent || window;
       if (w.onSimulatorSave) {
         try {
@@ -454,12 +494,13 @@
     ';
     document.head.appendChild(style);
 
+    var _mPfx = (location.pathname || '').match(/^(\/mesh-node\/[A-Za-z0-9_-]+)?(\/sim_ax3000gz)?/);
+    var _pfx = (_mPfx && _mPfx[0]) ? _mPfx[0] : '';
     Promise.all([
-      fetch('/modal-defs.json').then(function (r) { return r.json(); }),
+      fetch(_pfx + '/modal-defs.json').then(function (r) { return r.json(); }),
       window.__FIRSTCHILD ||
-      fetch('/firstchild.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-      // dat duoi /luci-static/ de server phuc vu duoc ngay, khong can khoi dong lai
-      fetch('/luci-static/gia-tri-that.json').then(function (r) { return r.json(); })
+      fetch(_pfx + '/firstchild.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+      fetch(_pfx + '/luci-static/gia-tri-that.json').then(function (r) { return r.json(); })
         .catch(function () { return {}; })
     ]).then(function (kq) {
       DEFS = kq[0]; FIRSTCHILD = kq[1] || {}; GIATRI = kq[2] || {};

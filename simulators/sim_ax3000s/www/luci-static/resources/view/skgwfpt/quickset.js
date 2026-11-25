@@ -83,7 +83,7 @@ else if(dhcpmode==2)
 {if(isValidIpAddress(getValue("dhcpSrvAddr"))==false||isMulticastAddr(getValue("dhcpSrvAddr"))==true){warninfo_show(_("DHCP Server is invalid!"));return false;}}
 return true;}
 function jumpTonew()
-{var newhost=getValue("ethIpAddress");window.location.href="http://"+newhost+"/cgi-bin/luci/admin/network/lancfg/lancfgv4";}
+{sk_redirect('/cgi-bin/luci/admin/network/lancfg/lancfgv4');}
 function lancfg_apply()
 {if(lancfgv4_pageCheckValue()==true)
 {if(oldlanip!=getValue("ethIpAddress"))
@@ -292,12 +292,12 @@ function checkSSIDRepid(ssid)
 return false;}
 return true;}
 function BntClick_Apply_wlan()
-{var ssid=getValue("Txt_SSID");var password_wlan=getValue("Pwd_WpaPsk");var acsTime=getValue("Txt_acsTime");var channel=getValue("Sel_Channel");var ret=true;var ssid_iot=getValue("Txt_SSID_IOT");var password_wlan_iot=getValue("Pwd_WpaPsk_IOT");ret=isValidSsid(ssid);if(ret==-1){parent.warninfo_show(_("basicSetting2g_ssidempty"));return;}else if(ret==-2){parent.warninfo_show(_("basicSetting2g_ssidlengthlimit"));return;}else if(ret==-3){parent.warninfo_show(_("basicSetting2g_ssidspacelimit"));return;}else if(ret==-4){parent.warninfo_show(_("basicSetting2g_ssidcharlimit"));return;}
-ret=isValidSsid(ssid_iot);if(ret==-1){parent.warninfo_show(_("iotSetting2g_ssidempty"));return;}else if(ret==-2){parent.warninfo_show(_("iotSetting2g_ssidlengthlimit"));return;}else if(ret==-3){parent.warninfo_show(_("iotSetting2g_ssidspacelimit"));return;}else if(ret==-4){parent.warninfo_show(_("iotSetting2g_ssidcharlimit"));return;}
+{var ssid=getValue("Txt_SSID");var password_wlan=getValue("Pwd_WpaPsk");var acsTime=getValue("Txt_acsTime");var channel=getValue("Sel_Channel");var ret=true;var ssid_iot=getValue("Txt_SSID_IOT");var password_wlan_iot=getValue("Pwd_WpaPsk_IOT");ret=isValidSsid(ssid);if(ret==-1){warninfo_show(_("basicSetting2g_ssidempty"));return;}else if(ret==-2){warninfo_show(_("basicSetting2g_ssidlengthlimit"));return;}else if(ret==-3){warninfo_show(_("basicSetting2g_ssidspacelimit"));return;}else if(ret==-4){warninfo_show(_("basicSetting2g_ssidcharlimit"));return;}
+ret=isValidSsid(ssid_iot);if(ret==-1){warninfo_show(_("iotSetting2g_ssidempty"));return;}else if(ret==-2){warninfo_show(_("iotSetting2g_ssidlengthlimit"));return;}else if(ret==-3){warninfo_show(_("iotSetting2g_ssidspacelimit"));return;}else if(ret==-4){warninfo_show(_("iotSetting2g_ssidcharlimit"));return;}
 if(!checkSSIDRepid(ssid))
-{parent.warninfo_show(_("basicSetting2g_ssidduplicated"));return;}
-ret=isValidPassword(password_wlan);if(ret==-1){parent.warninfo_show(_("basicSetting2g_pwdempty"));return;}else if(ret==-2){parent.warninfo_show(_("basicSetting2g_pwdlengthlimit"));return;}else if(ret==-3){parent.warninfo_show(_("basicSetting2g_pwdcharlimit"));return;}else if(ret==-4){parent.warninfo_show(_("basicSetting2g_pwdspacelimit"));return;}
-ret=isValidPassword(password_wlan_iot);if(ret==-1){parent.warninfo_show(_("iotSetting2g_pwdempty"));return;}else if(ret==-2){parent.warninfo_show(_("iotSetting2g_pwdlengthlimit"));return;}else if(ret==-3){parent.warninfo_show(_("iotSetting2g_pwdcharlimit"));return;}else if(ret==-4){parent.warninfo_show(_("iotSetting2g_pwdspacelimit"));return;}
+{warninfo_show(_("basicSetting2g_ssidduplicated"));return;}
+ret=isValidPassword(password_wlan);if(ret==-1){warninfo_show(_("basicSetting2g_pwdempty"));return;}else if(ret==-2){warninfo_show(_("basicSetting2g_pwdlengthlimit"));return;}else if(ret==-3){warninfo_show(_("basicSetting2g_pwdcharlimit"));return;}else if(ret==-4){warninfo_show(_("basicSetting2g_pwdspacelimit"));return;}
+ret=isValidPassword(password_wlan_iot);if(ret==-1){warninfo_show(_("iotSetting2g_pwdempty"));return;}else if(ret==-2){warninfo_show(_("iotSetting2g_pwdlengthlimit"));return;}else if(ret==-3){warninfo_show(_("iotSetting2g_pwdcharlimit"));return;}else if(ret==-4){warninfo_show(_("iotSetting2g_pwdspacelimit"));return;}
 setRadioInfo();}
 var apply_data={};var buildStaticPPP=0;var lanPortNum=4;var actionapply="add";var selindex=0;var delist=new Array();var portlist={};var WanConnJson={};var allportlistarry=new Array();var brlanipaddr="";var brlansubnetmask="";var sfuBindPort="";var onuType="";var pppoe_static_ip_support="";var ft_passthrough_bridge="";var bridgeMaxMtu=1500;var bridgeMinMtu=1280;var ipMaxMtu=1500;var ipMinMtu=576;var ipMinMtuV6=1280;var pppMaxMtu=1492;var pppMinMtu=576;var pppMinMtuV6=1280;var currMaxMtu=1500;var currMinMtu=1280;function unSeleLanPort(portId)
 {var f = document.forms[0];
@@ -625,7 +625,7 @@ if(del_wancfg){if(del_wancfg.networktype=="bridge"&&del_wancfg.vlanmode==1){var 
 utag_bridge_num++;}
 for(var i=0;i<WanConnJson.length;i++){for(j=0;j<vlan_array.length;j++){if(WanConnJson[i].vlanid==vlan_array[j]){same_vlan_route_wan=true;break;}}
 vlan_array[i]=WanConnJson[i].vlanid;}
-if(same_vlan_route_wan&&utag_bridge_num==1){parent.warninfo_show(_("wancfg_vlan_exist_on_del_utag_bridge_error"));return;}}}}
+if(same_vlan_route_wan&&utag_bridge_num==1){warninfo_show(_("wancfg_vlan_exist_on_del_utag_bridge_error"));return;}}}}
 apply_data.index=parseInt(index);ubusparam=new Array("gwweb.wancfg","del_WanConnection",apply_data);jsonparam={"id":1,"params":ubusparam};sk_auth_apply(jsonparam,function(result){delist.shift();if(delist.length==0)
 {pageLoad();return;}
 delWanIface(delist[0]);});}
@@ -691,7 +691,7 @@ function saveMtu()
 var Box_TxPower = f.Box_TxPower, Chk_HideEnable = f.Chk_HideEnable, Chk_RadioEnable = f.Chk_RadioEnable, Chk_SsidEnable = f.Chk_SsidEnable, Control_Enable = f.Control_Enable, DMUMIMO_Enable = f.DMUMIMO_Enable, DMUOFDMA_Enable = f.DMUOFDMA_Enable, DSLiteEnable = f.DSLiteEnable, DSLiteEnableTable = f.DSLiteEnableTable, DSLiteModeTable = f.DSLiteModeTable, Defaultroute = f.Defaultroute, Defaultroutev6 = f.Defaultroutev6, Enable = f.Enable, EnableStaticIp = f.EnableStaticIp, IANATable = f.IANATable, IOT = f.IOT, IOTBS = f.IOTBS, IOTBSDisable = f.IOTBSDisable, IOTBSDisable_label = f.IOTBSDisable_label, IOTBSEnable = f.IOTBSEnable, IOTBSEnable_label = f.IOTBSEnable_label, IOTBSTable = f.IOTBSTable, IOTDisable = f.IOTDisable, IOTDisable_label = f.IOTDisable_label, IOTEnable = f.IOTEnable, IOTEnable_label = f.IOTEnable_label, IOTTable = f.IOTTable, IOT_PSK = f.IOT_PSK, IpVersion = f.IpVersion, Networkconfigid = f.Networkconfigid, OnDemandTable = f.OnDemandTable, PDTable = f.PDTable, PDTableStatic = f.PDTableStatic, Pwd_WpaPsk = f.Pwd_WpaPsk, Pwd_WpaPsk_IOT = f.Pwd_WpaPsk_IOT, Sel_AuthMode = f.Sel_AuthMode, Sel_BandWidth = f.Sel_BandWidth, Sel_Channel = f.Sel_Channel, Sel_Encryption = f.Sel_Encryption, Sel_PhyMode = f.Sel_PhyMode, Sel_TxPower = f.Sel_TxPower, Sel_guardInterval = f.Sel_guardInterval, Sky_Apply = f.Sky_Apply, Sky_Cancel = f.Sky_Cancel, Sky_DHCP_Disable = f.Sky_DHCP_Disable, Sky_DHCP_Enable = f.Sky_DHCP_Enable, Sky_DHCP_Mode_Auto = f.Sky_DHCP_Mode_Auto, Sky_DHCP_Mode_Proxy = f.Sky_DHCP_Mode_Proxy, Sky_DHCP_Mode_Static = f.Sky_DHCP_Mode_Static, Sky_DHCP_Relay = f.Sky_DHCP_Relay, Tr_Encryption = f.Tr_Encryption, Tr_WpaPSK = f.Tr_WpaPSK, Txt_SSID = f.Txt_SSID, Txt_SSID_IOT = f.Txt_SSID_IOT, Txt_acsTime = f.Txt_acsTime, UMUMIMO_Enable = f.UMUMIMO_Enable, UMUOFDMA_Enable = f.UMUOFDMA_Enable, WMM_Enable = f.WMM_Enable, briTable = f.briTable, bridgeapply = f.bridgeapply, btn_add = f.btn_add, btn_del = f.btn_del, btn_edit = f.btn_edit, button_apply = f.button_apply, client_num = f.client_num, connMode = f.connMode, d8021 = f.d8021, defGW = f.defGW, default_route = f.default_route, default_routev6 = f.default_routev6, defaultroute = f.defaultroute, defaultroutev6 = f.defaultroutev6, delegatePrefix = f.delegatePrefix, delegatePrefixLen = f.delegatePrefixLen, dhcpEthEnd = f.dhcpEthEnd, dhcpEthStart = f.dhcpEthStart, dhcpLeasedTime = f.dhcpLeasedTime, dhcpMode = f.dhcpMode, dhcpSrvAddr = f.dhcpSrvAddr, dhcpSrvType = f.dhcpSrvType, dhcpSrvType1 = f.dhcpSrvType1, dhcpSrvType2 = f.dhcpSrvType2, dhcpSrvType3 = f.dhcpSrvType3, dhcpstaticContent = f.dhcpstaticContent, dhcpstaticTBody = f.dhcpstaticTBody, dialMode = f.dialMode, dialTable = f.dialTable, dns6Primary = f.dns6Primary, dns6Secondary = f.dns6Secondary, dnsPrimary = f.dnsPrimary, dnsSecondary = f.dnsSecondary, dnsmode = f.dnsmode, dnsmode1 = f.dnsmode1, dnsmode2 = f.dnsmode2, dnsmode3 = f.dnsmode3, dnsv4Satic = f.dnsv4Satic, dnsv6Table = f.dnsv6Table, dnsv6disable = f.dnsv6disable, dnsv6enable = f.dnsv6enable, dnsv6mode = f.dnsv6mode, dsLiteServer = f.dsLiteServer, dsliteManualTable = f.dsliteManualTable, dsliteMode = f.dsliteMode, dsliteModeAuto = f.dsliteModeAuto, dsliteModeManual = f.dsliteModeManual, dsliteTable = f.dsliteTable, enable = f.enable, enbl6RD = f.enbl6RD, enblDSLite = f.enblDSLite, enblIANA = f.enblIANA, enblPD = f.enblPD, ethIpAddress = f.ethIpAddress, ethSubnetMask = f.ethSubnetMask, firstDns = f.firstDns, fullConeNat = f.fullConeNat, fullapply = f.fullapply, idleTime = f.idleTime, ipAddr = f.ipAddr, ipAddrTable = f.ipAddrTable, ipproto = f.ipproto, ipprotodhcp = f.ipprotodhcp, ipprotopppoe = f.ipprotopppoe, ipprotostatic = f.ipprotostatic, ipv6RDEnableTable = f.ipv6RDEnableTable, ipv6RDMode = f.ipv6RDMode, ipv6RDModeAuto = f.ipv6RDModeAuto, ipv6RDModeManual = f.ipv6RDModeManual, ipv6RDModeTable = f.ipv6RDModeTable, ipv6Table = f.ipv6Table, ipv6rdBrAddr = f.ipv6rdBrAddr, ipv6rdIpv4MaskLen = f.ipv6rdIpv4MaskLen, ipv6rdManualTable = f.ipv6rdManualTable, ipv6rdPrefix = f.ipv6rdPrefix, ipv6rdPrefixLen = f.ipv6rdPrefixLen, ipv6rdTable = f.ipv6rdTable, ipversionmode = f.ipversionmode, lan_port_list = f.lan_port_list, lancfg_StaticipAdd = f.lancfg_StaticipAdd, lancfg_StaticipDel = f.lancfg_StaticipDel, lancfg_dhcpserver = f.lancfg_dhcpserver, maximum_client = f.maximum_client, mtu = f.mtu, multiVID = f.multiVID, nat = f.nat, natEnble = f.natEnble, nattable = f.nattable, netMask = f.netMask, noipv6apply = f.noipv6apply, pdEnable = f.pdEnable, portbindtable = f.portbindtable, pppStaticEndAddress = f.pppStaticEndAddress, pppStaticIPAddress = f.pppStaticIPAddress, pppStaticIPEnableTable = f.pppStaticIPEnableTable, pppStaticIPTable = f.pppStaticIPTable, pppStaticStartAddress = f.pppStaticStartAddress, pppStaticSubnetMask = f.pppStaticSubnetMask, pppoeMode = f.pppoeMode, radio_hide = f.radio_hide, relayInfo = f.relayInfo, rouTable = f.rouTable, secondDns = f.secondDns, selectAll = f.selectAll, seletall = f.seletall, serviceMode = f.serviceMode, span_mtu = f.span_mtu, static6Table = f.static6Table, staticIpAll_Sel = f.staticIpAll_Sel, staticIp_Tbl = f.staticIp_Tbl, staticMode = f.staticMode, uPsd = f.uPsd, userName = f.userName, vlanID = f.vlanID, vlanMode = f.vlanMode, vlanvfg = f.vlanvfg, wanAddress6 = f.wanAddress6, wanAddress6prefix = f.wanAddress6prefix, wanGateway6 = f.wanGateway6, wanform = f.wanform, wanindex = f.wanindex, wantittleinfo = f.wantittleinfo;
 if(true)
 {maxMtu=parseInt(mtu.value);if(!isNumber(mtu.value)||maxMtu<currMinMtu||maxMtu>currMaxMtu)
-{parent.warninfo_show(_("wancfg_MTUValue")+": "+mtu.value+" "+_("wancfg_MTUValueError")+$("#span_mtu").html());return 0;}
+{warninfo_show(_("wancfg_MTUValue")+": "+mtu.value+" "+_("wancfg_MTUValueError")+$("#span_mtu").html());return 0;}
 apply_data.mtu=maxMtu}
 return 1;}
 var tr069ServiceBit=0;var internetServiceBit=1;var voipServiceBit=2;var otherServiceBit=3;function getServModeMask(serverlist)
@@ -716,11 +716,11 @@ if(true)
 {serverlist=parseInt(serviceMode.value)
 servModeMask=getServModeMask(serverlist);if(connMode.value!="bridge")
 {if((servModeMask&(1<<tr069ServiceBit))&&(checkSameWanServiceExist(tr069ServiceBit)==true))
-{parent.warninfo_show(_("wancfg_TR69ExistedError"));serviceMode.focus();return 0;}}
+{warninfo_show(_("wancfg_TR69ExistedError"));serviceMode.focus();return 0;}}
 if((servModeMask&(1<<voipServiceBit))&&(checkSameWanServiceExist(voipServiceBit)==true))
-{parent.warninfo_show(_("wancfg_VOIPExistedError"));serviceMode.focus();return 0;}
+{warninfo_show(_("wancfg_VOIPExistedError"));serviceMode.focus();return 0;}
 if((servModeMask&(1<<otherServiceBit))&&(checkSameWanServiceExist(otherServiceBit)==true))
-{parent.warninfo_show(_("wancfg_IPTVExistedError"));serviceMode.focus();return 0;}
+{warninfo_show(_("wancfg_IPTVExistedError"));serviceMode.focus();return 0;}
 apply_data.servicelist=serverlist;}
 return 1;}
 function checkAlreadyExistBridgeNotBoundPort()
@@ -738,7 +738,7 @@ if(true)
 {bindportlist+=lanPort.value;bindportlist+=","
 num++;}}
 if(connMode.value=="bridge"&&(2!=parseInt(serviceMode.value))&&num==allportlistarry.length)
-{parent.warninfo_show(_("wancfg_otherBridgeError"));return 0;}
+{warninfo_show(_("wancfg_otherBridgeError"));return 0;}
 apply_data.portbind=bindportlist;}
 return 1;}
 function saveNat()
@@ -769,7 +769,7 @@ if(true)
 else
 {enVlanMux=0;vlanMuxId=0;vlanMuxPr=0;}
 if(enVlanMux&&vlanID.value=="")
-{parent.warninfo_show(_("wancfg_VLANIDError1"));return 0;}
+{warninfo_show(_("wancfg_VLANIDError1"));return 0;}
 if(enVlanMux)
 {vlanMuxId=parseInt(vlanID.value);vlanMuxMId=parseInt(multiVID.value);}
 else
@@ -779,9 +779,9 @@ if(d8021.value=="")
 else
 {vlanMuxPr=d8021.value;}
 if(enVlanMux&&(vlanMuxId<1||vlanMuxId>4094||isNumber(vlanID.value)==false))
-{parent.warninfo_show("VLAN ID : "+vlanID.value+" "+_("wancfg_VLANIDError2"));return 0;}
+{warninfo_show("VLAN ID : "+vlanID.value+" "+_("wancfg_VLANIDError2"));return 0;}
 if(enVlanMux&&(multiVID.value!="")&&(vlanMuxMId<1||vlanMuxMId>4094||isNumber(multiVID.value)==false))
-{parent.warninfo_show("MULTI VLAN ID : "+multiVID.value+" "+_("wancfg_VLANIDError2"));return 0;}
+{warninfo_show("MULTI VLAN ID : "+multiVID.value+" "+_("wancfg_VLANIDError2"));return 0;}
 if(enVlanMux&&(!vlanMuxMId)){vlanMuxMId=0;}
 apply_data.vlanmode=parseInt(vlanMode.value);apply_data.vlanid=parseInt(vlanMuxId);apply_data.multivid=parseInt(vlanMuxMId);apply_data.vlanpri=parseInt(vlanMuxPr);}
 return 1;}
@@ -800,25 +800,25 @@ if(true)
 {if(IpVersion.value==1||connMode.value!="route"||$('input:radio[name="ipproto"]:checked').val()!="static")
 {return 1;}
 wanIpAddress=ipAddr.value;wanSubnetMask=netMask.value;wanIntfGateway=defGW.value;dnsPrimary=firstDns.value;dnsSecondary=secondDns.value;if(isValidIpAddress(wanIpAddress)==false||checkIsSpecialIP(wanIpAddress)==true)
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+wanIpAddress+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+wanIpAddress+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isValidSubnetMask(wanSubnetMask)==false||checkIsSpecialIP(wanSubnetMask)==true)
-{parent.warninfo_show(_("wancfg_SubnetMask")+" "+wanSubnetMask+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_SubnetMask")+" "+wanSubnetMask+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isNetworkaddr(wanIpAddress,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+wanIpAddress+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+wanIpAddress+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isValidIpAddress(wanIntfGateway)==false||checkIsSpecialIP(wanIntfGateway)==true)
-{parent.warninfo_show(_("wancfg_IPGateway")+" "+wanIntfGateway+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPGateway")+" "+wanIntfGateway+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isNetworkaddr(wanIntfGateway,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_IPGateway")+" "+wanIntfGateway+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPGateway")+" "+wanIntfGateway+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isValidIpAddress(dnsPrimary)==false||checkIsSpecialIP(dnsPrimary)==true)
-{parent.warninfo_show(_("wancfg_PriDNS")+" "+dnsPrimary+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_PriDNS")+" "+dnsPrimary+" "+_("wancfg_Invalid")+"!");return 0;}
 if(isNetworkaddr(dnsPrimary,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_PriDNS")+" "+dnsPrimary+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_PriDNS")+" "+dnsPrimary+" "+_("wancfg_Invalid")+"!");return 0;}
 if(dnsSecondary!=""&&(isValidIpAddress(dnsSecondary)==false||checkIsSpecialIP(dnsSecondary)==true))
-{parent.warninfo_show(_("wancfg_SecDNS")+" "+dnsSecondary+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_SecDNS")+" "+dnsSecondary+" "+_("wancfg_Invalid")+"!");return 0;}
 if(dnsSecondary!=""&&isNetworkaddr(dnsSecondary,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_SecDNS")+" "+dnsSecondary+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_SecDNS")+" "+dnsSecondary+" "+_("wancfg_Invalid")+"!");return 0;}
 if(!isSameSubNet(wanIpAddress,wanSubnetMask,wanIntfGateway,wanSubnetMask))
-{parent.warninfo_show(_("wancfg_staticIPNotSameSubError"));return 0;}
+{warninfo_show(_("wancfg_staticIPNotSameSubError"));return 0;}
 apply_data.ipaddr=wanIpAddress;apply_data.subnetmask=wanSubnetMask;apply_data.gateway=wanIntfGateway;apply_data.dns1=dnsPrimary;if(dnsSecondary!="")
 {apply_data.dns2=dnsSecondary;}}
 return 1;}
@@ -829,15 +829,15 @@ if(true)
 {if(IpVersion.value==0||$('input:radio[name="ipproto"]:checked').val()!="static"||connMode.value!="route")
 {return 1;}
 var ipv6Addr;var ipv6prefix=wanAddress6prefix.value;if(wanAddress6prefix.value=='')
-ipv6prefix=64;ipv6Addr=wanAddress6.value+"/"+ipv6prefix;if(wanAddress6.value==''||isValidIpv6Address(ipv6Addr)==false){parent.warninfo_show(_("wancfg_WanAddress6Error2"));return 0;}
-if(wanGateway6.value==''||sk_isValidIpAddress6(wanGateway6.value)==false){parent.warninfo_show(_("wancfg_WanGWAddress6Error1"));return 0;}
-if(dns6Primary.value==''){parent.warninfo_show(_("wancfg_Dns6PrimaryError1"));return 0;}
-if(dns6Primary.value!=''&&sk_isValidIpAddress6(dns6Primary.value)==false){parent.warninfo_show(_("wancfg_Dns6PrimaryError2"));return 0;}
-if(dns6Secondary.value!=''&&sk_isValidIpAddress6(dns6Secondary.value)==false){parent.warninfo_show(_("wancfg_Dns6SecondaryError2"));return 0;}
+ipv6prefix=64;ipv6Addr=wanAddress6.value+"/"+ipv6prefix;if(wanAddress6.value==''||isValidIpv6Address(ipv6Addr)==false){warninfo_show(_("wancfg_WanAddress6Error2"));return 0;}
+if(wanGateway6.value==''||sk_isValidIpAddress6(wanGateway6.value)==false){warninfo_show(_("wancfg_WanGWAddress6Error1"));return 0;}
+if(dns6Primary.value==''){warninfo_show(_("wancfg_Dns6PrimaryError1"));return 0;}
+if(dns6Primary.value!=''&&sk_isValidIpAddress6(dns6Primary.value)==false){warninfo_show(_("wancfg_Dns6PrimaryError2"));return 0;}
+if(dns6Secondary.value!=''&&sk_isValidIpAddress6(dns6Secondary.value)==false){warninfo_show(_("wancfg_Dns6SecondaryError2"));return 0;}
 if($("#PDTable").is(':visible')==true&&$("#enblPD").is(':checked')==true)
 {var PD;var PDLen=delegatePrefixLen.value;if(delegatePrefixLen.value=='')
-PDLen=64;if(delegatePrefix.value==''){parent.warninfo_show(_("wancfg_PrefixError1"));return 0;}
-PD=delegatePrefix.value+"/"+PDLen;if(delegatePrefix.value!=''&&isValidIpv6Address(PD)==false){parent.warninfo_show(_("wancfg_PrefixError2"));return 0;}
+PDLen=64;if(delegatePrefix.value==''){warninfo_show(_("wancfg_PrefixError1"));return 0;}
+PD=delegatePrefix.value+"/"+PDLen;if(delegatePrefix.value!=''&&isValidIpv6Address(PD)==false){warninfo_show(_("wancfg_PrefixError2"));return 0;}
 apply_data.prefixsrc=2;apply_data.prefix=PD;}
 else
 {apply_data.prefixsrc=0}
@@ -853,11 +853,11 @@ return true;}
 function saveDslite(){var f = document.forms[0];
 var Box_TxPower = f.Box_TxPower, Chk_HideEnable = f.Chk_HideEnable, Chk_RadioEnable = f.Chk_RadioEnable, Chk_SsidEnable = f.Chk_SsidEnable, Control_Enable = f.Control_Enable, DMUMIMO_Enable = f.DMUMIMO_Enable, DMUOFDMA_Enable = f.DMUOFDMA_Enable, DSLiteEnable = f.DSLiteEnable, DSLiteEnableTable = f.DSLiteEnableTable, DSLiteModeTable = f.DSLiteModeTable, Defaultroute = f.Defaultroute, Defaultroutev6 = f.Defaultroutev6, Enable = f.Enable, EnableStaticIp = f.EnableStaticIp, IANATable = f.IANATable, IOT = f.IOT, IOTBS = f.IOTBS, IOTBSDisable = f.IOTBSDisable, IOTBSDisable_label = f.IOTBSDisable_label, IOTBSEnable = f.IOTBSEnable, IOTBSEnable_label = f.IOTBSEnable_label, IOTBSTable = f.IOTBSTable, IOTDisable = f.IOTDisable, IOTDisable_label = f.IOTDisable_label, IOTEnable = f.IOTEnable, IOTEnable_label = f.IOTEnable_label, IOTTable = f.IOTTable, IOT_PSK = f.IOT_PSK, IpVersion = f.IpVersion, Networkconfigid = f.Networkconfigid, OnDemandTable = f.OnDemandTable, PDTable = f.PDTable, PDTableStatic = f.PDTableStatic, Pwd_WpaPsk = f.Pwd_WpaPsk, Pwd_WpaPsk_IOT = f.Pwd_WpaPsk_IOT, Sel_AuthMode = f.Sel_AuthMode, Sel_BandWidth = f.Sel_BandWidth, Sel_Channel = f.Sel_Channel, Sel_Encryption = f.Sel_Encryption, Sel_PhyMode = f.Sel_PhyMode, Sel_TxPower = f.Sel_TxPower, Sel_guardInterval = f.Sel_guardInterval, Sky_Apply = f.Sky_Apply, Sky_Cancel = f.Sky_Cancel, Sky_DHCP_Disable = f.Sky_DHCP_Disable, Sky_DHCP_Enable = f.Sky_DHCP_Enable, Sky_DHCP_Mode_Auto = f.Sky_DHCP_Mode_Auto, Sky_DHCP_Mode_Proxy = f.Sky_DHCP_Mode_Proxy, Sky_DHCP_Mode_Static = f.Sky_DHCP_Mode_Static, Sky_DHCP_Relay = f.Sky_DHCP_Relay, Tr_Encryption = f.Tr_Encryption, Tr_WpaPSK = f.Tr_WpaPSK, Txt_SSID = f.Txt_SSID, Txt_SSID_IOT = f.Txt_SSID_IOT, Txt_acsTime = f.Txt_acsTime, UMUMIMO_Enable = f.UMUMIMO_Enable, UMUOFDMA_Enable = f.UMUOFDMA_Enable, WMM_Enable = f.WMM_Enable, briTable = f.briTable, bridgeapply = f.bridgeapply, btn_add = f.btn_add, btn_del = f.btn_del, btn_edit = f.btn_edit, button_apply = f.button_apply, client_num = f.client_num, connMode = f.connMode, d8021 = f.d8021, defGW = f.defGW, default_route = f.default_route, default_routev6 = f.default_routev6, defaultroute = f.defaultroute, defaultroutev6 = f.defaultroutev6, delegatePrefix = f.delegatePrefix, delegatePrefixLen = f.delegatePrefixLen, dhcpEthEnd = f.dhcpEthEnd, dhcpEthStart = f.dhcpEthStart, dhcpLeasedTime = f.dhcpLeasedTime, dhcpMode = f.dhcpMode, dhcpSrvAddr = f.dhcpSrvAddr, dhcpSrvType = f.dhcpSrvType, dhcpSrvType1 = f.dhcpSrvType1, dhcpSrvType2 = f.dhcpSrvType2, dhcpSrvType3 = f.dhcpSrvType3, dhcpstaticContent = f.dhcpstaticContent, dhcpstaticTBody = f.dhcpstaticTBody, dialMode = f.dialMode, dialTable = f.dialTable, dns6Primary = f.dns6Primary, dns6Secondary = f.dns6Secondary, dnsPrimary = f.dnsPrimary, dnsSecondary = f.dnsSecondary, dnsmode = f.dnsmode, dnsmode1 = f.dnsmode1, dnsmode2 = f.dnsmode2, dnsmode3 = f.dnsmode3, dnsv4Satic = f.dnsv4Satic, dnsv6Table = f.dnsv6Table, dnsv6disable = f.dnsv6disable, dnsv6enable = f.dnsv6enable, dnsv6mode = f.dnsv6mode, dsLiteServer = f.dsLiteServer, dsliteManualTable = f.dsliteManualTable, dsliteMode = f.dsliteMode, dsliteModeAuto = f.dsliteModeAuto, dsliteModeManual = f.dsliteModeManual, dsliteTable = f.dsliteTable, enable = f.enable, enbl6RD = f.enbl6RD, enblDSLite = f.enblDSLite, enblIANA = f.enblIANA, enblPD = f.enblPD, ethIpAddress = f.ethIpAddress, ethSubnetMask = f.ethSubnetMask, firstDns = f.firstDns, fullConeNat = f.fullConeNat, fullapply = f.fullapply, idleTime = f.idleTime, ipAddr = f.ipAddr, ipAddrTable = f.ipAddrTable, ipproto = f.ipproto, ipprotodhcp = f.ipprotodhcp, ipprotopppoe = f.ipprotopppoe, ipprotostatic = f.ipprotostatic, ipv6RDEnableTable = f.ipv6RDEnableTable, ipv6RDMode = f.ipv6RDMode, ipv6RDModeAuto = f.ipv6RDModeAuto, ipv6RDModeManual = f.ipv6RDModeManual, ipv6RDModeTable = f.ipv6RDModeTable, ipv6Table = f.ipv6Table, ipv6rdBrAddr = f.ipv6rdBrAddr, ipv6rdIpv4MaskLen = f.ipv6rdIpv4MaskLen, ipv6rdManualTable = f.ipv6rdManualTable, ipv6rdPrefix = f.ipv6rdPrefix, ipv6rdPrefixLen = f.ipv6rdPrefixLen, ipv6rdTable = f.ipv6rdTable, ipversionmode = f.ipversionmode, lan_port_list = f.lan_port_list, lancfg_StaticipAdd = f.lancfg_StaticipAdd, lancfg_StaticipDel = f.lancfg_StaticipDel, lancfg_dhcpserver = f.lancfg_dhcpserver, maximum_client = f.maximum_client, mtu = f.mtu, multiVID = f.multiVID, nat = f.nat, natEnble = f.natEnble, nattable = f.nattable, netMask = f.netMask, noipv6apply = f.noipv6apply, pdEnable = f.pdEnable, portbindtable = f.portbindtable, pppStaticEndAddress = f.pppStaticEndAddress, pppStaticIPAddress = f.pppStaticIPAddress, pppStaticIPEnableTable = f.pppStaticIPEnableTable, pppStaticIPTable = f.pppStaticIPTable, pppStaticStartAddress = f.pppStaticStartAddress, pppStaticSubnetMask = f.pppStaticSubnetMask, pppoeMode = f.pppoeMode, radio_hide = f.radio_hide, relayInfo = f.relayInfo, rouTable = f.rouTable, secondDns = f.secondDns, selectAll = f.selectAll, seletall = f.seletall, serviceMode = f.serviceMode, span_mtu = f.span_mtu, static6Table = f.static6Table, staticIpAll_Sel = f.staticIpAll_Sel, staticIp_Tbl = f.staticIp_Tbl, staticMode = f.staticMode, uPsd = f.uPsd, userName = f.userName, vlanID = f.vlanID, vlanMode = f.vlanMode, vlanvfg = f.vlanvfg, wanAddress6 = f.wanAddress6, wanAddress6prefix = f.wanAddress6prefix, wanGateway6 = f.wanGateway6, wanform = f.wanform, wanindex = f.wanindex, wantittleinfo = f.wantittleinfo;
 if(true){if(!enblDSLite.checked){apply_data.dslite_mode=0;}else{if($('input:radio[name="dsliteMode"]:checked').val()=="dsliteAuto"){apply_data.dslite_mode=1;}
-else{if(dsLiteServer.value==''){parent.warninfo_show(_("dsliteServer")+_("cannotBeEmptyError"));return-1;}
-if(dsLiteServer.value.indexOf(":")==-1){if(dsLiteServer.value.indexOf(".")==-1){parent.warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}}else{if("::"==dsLiteServer.value||isValidIpv6Address(dsLiteServer.value)!=true||true==isMultiCastIpv6Address(dsLiteServer.value)){parent.warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}
-if(!isGlobalIpv6Address(dsLiteServer.value)){parent.warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}}
+else{if(dsLiteServer.value==''){warninfo_show(_("dsliteServer")+_("cannotBeEmptyError"));return-1;}
+if(dsLiteServer.value.indexOf(":")==-1){if(dsLiteServer.value.indexOf(".")==-1){warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}}else{if("::"==dsLiteServer.value||isValidIpv6Address(dsLiteServer.value)!=true||true==isMultiCastIpv6Address(dsLiteServer.value)){warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}
+if(!isGlobalIpv6Address(dsLiteServer.value)){warninfo_show(_("dsliteServer")+dsLiteServer.value+_("isInvalidError"));return-1;}}
 apply_data.dslite_mode=2;apply_data.dslite_peeraddr=dsLiteServer.value;}
-if((checkDSLiteExist()==false)){parent.warninfo_show(_("dsliteExistError"));return-1;}}}
+if((checkDSLiteExist()==false)){warninfo_show(_("dsliteExistError"));return-1;}}}
 return 0;}
 function checkIpv6rdExist()
 {var i=0;for(i=0;i<WanConnJson.length;i++)
@@ -867,17 +867,17 @@ function checkIpv6rdExist()
 return true;}
 function saveIpv6rd(){var f = document.forms[0];
 var Box_TxPower = f.Box_TxPower, Chk_HideEnable = f.Chk_HideEnable, Chk_RadioEnable = f.Chk_RadioEnable, Chk_SsidEnable = f.Chk_SsidEnable, Control_Enable = f.Control_Enable, DMUMIMO_Enable = f.DMUMIMO_Enable, DMUOFDMA_Enable = f.DMUOFDMA_Enable, DSLiteEnable = f.DSLiteEnable, DSLiteEnableTable = f.DSLiteEnableTable, DSLiteModeTable = f.DSLiteModeTable, Defaultroute = f.Defaultroute, Defaultroutev6 = f.Defaultroutev6, Enable = f.Enable, EnableStaticIp = f.EnableStaticIp, IANATable = f.IANATable, IOT = f.IOT, IOTBS = f.IOTBS, IOTBSDisable = f.IOTBSDisable, IOTBSDisable_label = f.IOTBSDisable_label, IOTBSEnable = f.IOTBSEnable, IOTBSEnable_label = f.IOTBSEnable_label, IOTBSTable = f.IOTBSTable, IOTDisable = f.IOTDisable, IOTDisable_label = f.IOTDisable_label, IOTEnable = f.IOTEnable, IOTEnable_label = f.IOTEnable_label, IOTTable = f.IOTTable, IOT_PSK = f.IOT_PSK, IpVersion = f.IpVersion, Networkconfigid = f.Networkconfigid, OnDemandTable = f.OnDemandTable, PDTable = f.PDTable, PDTableStatic = f.PDTableStatic, Pwd_WpaPsk = f.Pwd_WpaPsk, Pwd_WpaPsk_IOT = f.Pwd_WpaPsk_IOT, Sel_AuthMode = f.Sel_AuthMode, Sel_BandWidth = f.Sel_BandWidth, Sel_Channel = f.Sel_Channel, Sel_Encryption = f.Sel_Encryption, Sel_PhyMode = f.Sel_PhyMode, Sel_TxPower = f.Sel_TxPower, Sel_guardInterval = f.Sel_guardInterval, Sky_Apply = f.Sky_Apply, Sky_Cancel = f.Sky_Cancel, Sky_DHCP_Disable = f.Sky_DHCP_Disable, Sky_DHCP_Enable = f.Sky_DHCP_Enable, Sky_DHCP_Mode_Auto = f.Sky_DHCP_Mode_Auto, Sky_DHCP_Mode_Proxy = f.Sky_DHCP_Mode_Proxy, Sky_DHCP_Mode_Static = f.Sky_DHCP_Mode_Static, Sky_DHCP_Relay = f.Sky_DHCP_Relay, Tr_Encryption = f.Tr_Encryption, Tr_WpaPSK = f.Tr_WpaPSK, Txt_SSID = f.Txt_SSID, Txt_SSID_IOT = f.Txt_SSID_IOT, Txt_acsTime = f.Txt_acsTime, UMUMIMO_Enable = f.UMUMIMO_Enable, UMUOFDMA_Enable = f.UMUOFDMA_Enable, WMM_Enable = f.WMM_Enable, briTable = f.briTable, bridgeapply = f.bridgeapply, btn_add = f.btn_add, btn_del = f.btn_del, btn_edit = f.btn_edit, button_apply = f.button_apply, client_num = f.client_num, connMode = f.connMode, d8021 = f.d8021, defGW = f.defGW, default_route = f.default_route, default_routev6 = f.default_routev6, defaultroute = f.defaultroute, defaultroutev6 = f.defaultroutev6, delegatePrefix = f.delegatePrefix, delegatePrefixLen = f.delegatePrefixLen, dhcpEthEnd = f.dhcpEthEnd, dhcpEthStart = f.dhcpEthStart, dhcpLeasedTime = f.dhcpLeasedTime, dhcpMode = f.dhcpMode, dhcpSrvAddr = f.dhcpSrvAddr, dhcpSrvType = f.dhcpSrvType, dhcpSrvType1 = f.dhcpSrvType1, dhcpSrvType2 = f.dhcpSrvType2, dhcpSrvType3 = f.dhcpSrvType3, dhcpstaticContent = f.dhcpstaticContent, dhcpstaticTBody = f.dhcpstaticTBody, dialMode = f.dialMode, dialTable = f.dialTable, dns6Primary = f.dns6Primary, dns6Secondary = f.dns6Secondary, dnsPrimary = f.dnsPrimary, dnsSecondary = f.dnsSecondary, dnsmode = f.dnsmode, dnsmode1 = f.dnsmode1, dnsmode2 = f.dnsmode2, dnsmode3 = f.dnsmode3, dnsv4Satic = f.dnsv4Satic, dnsv6Table = f.dnsv6Table, dnsv6disable = f.dnsv6disable, dnsv6enable = f.dnsv6enable, dnsv6mode = f.dnsv6mode, dsLiteServer = f.dsLiteServer, dsliteManualTable = f.dsliteManualTable, dsliteMode = f.dsliteMode, dsliteModeAuto = f.dsliteModeAuto, dsliteModeManual = f.dsliteModeManual, dsliteTable = f.dsliteTable, enable = f.enable, enbl6RD = f.enbl6RD, enblDSLite = f.enblDSLite, enblIANA = f.enblIANA, enblPD = f.enblPD, ethIpAddress = f.ethIpAddress, ethSubnetMask = f.ethSubnetMask, firstDns = f.firstDns, fullConeNat = f.fullConeNat, fullapply = f.fullapply, idleTime = f.idleTime, ipAddr = f.ipAddr, ipAddrTable = f.ipAddrTable, ipproto = f.ipproto, ipprotodhcp = f.ipprotodhcp, ipprotopppoe = f.ipprotopppoe, ipprotostatic = f.ipprotostatic, ipv6RDEnableTable = f.ipv6RDEnableTable, ipv6RDMode = f.ipv6RDMode, ipv6RDModeAuto = f.ipv6RDModeAuto, ipv6RDModeManual = f.ipv6RDModeManual, ipv6RDModeTable = f.ipv6RDModeTable, ipv6Table = f.ipv6Table, ipv6rdBrAddr = f.ipv6rdBrAddr, ipv6rdIpv4MaskLen = f.ipv6rdIpv4MaskLen, ipv6rdManualTable = f.ipv6rdManualTable, ipv6rdPrefix = f.ipv6rdPrefix, ipv6rdPrefixLen = f.ipv6rdPrefixLen, ipv6rdTable = f.ipv6rdTable, ipversionmode = f.ipversionmode, lan_port_list = f.lan_port_list, lancfg_StaticipAdd = f.lancfg_StaticipAdd, lancfg_StaticipDel = f.lancfg_StaticipDel, lancfg_dhcpserver = f.lancfg_dhcpserver, maximum_client = f.maximum_client, mtu = f.mtu, multiVID = f.multiVID, nat = f.nat, natEnble = f.natEnble, nattable = f.nattable, netMask = f.netMask, noipv6apply = f.noipv6apply, pdEnable = f.pdEnable, portbindtable = f.portbindtable, pppStaticEndAddress = f.pppStaticEndAddress, pppStaticIPAddress = f.pppStaticIPAddress, pppStaticIPEnableTable = f.pppStaticIPEnableTable, pppStaticIPTable = f.pppStaticIPTable, pppStaticStartAddress = f.pppStaticStartAddress, pppStaticSubnetMask = f.pppStaticSubnetMask, pppoeMode = f.pppoeMode, radio_hide = f.radio_hide, relayInfo = f.relayInfo, rouTable = f.rouTable, secondDns = f.secondDns, selectAll = f.selectAll, seletall = f.seletall, serviceMode = f.serviceMode, span_mtu = f.span_mtu, static6Table = f.static6Table, staticIpAll_Sel = f.staticIpAll_Sel, staticIp_Tbl = f.staticIp_Tbl, staticMode = f.staticMode, uPsd = f.uPsd, userName = f.userName, vlanID = f.vlanID, vlanMode = f.vlanMode, vlanvfg = f.vlanvfg, wanAddress6 = f.wanAddress6, wanAddress6prefix = f.wanAddress6prefix, wanGateway6 = f.wanGateway6, wanform = f.wanform, wanindex = f.wanindex, wantittleinfo = f.wantittleinfo;
-if(true){if(!enbl6RD.checked){apply_data.ipv6rd_mode=0;return 0;}else{if((checkIpv6rdExist()==false)){parent.warninfo_show(_("ipv6rdExistError"));return-1;}
+if(true){if(!enbl6RD.checked){apply_data.ipv6rd_mode=0;return 0;}else{if((checkIpv6rdExist()==false)){warninfo_show(_("ipv6rdExistError"));return-1;}
 if($('input:radio[name="ipv6RDMode"]:checked').val()=="ipv6RDAuto"){apply_data.ipv6rd_mode=1;}
 else
-{if(ipv6rdBrAddr.value==''){parent.warninfo_show(_("ipv6rdBRV4Addr ")+_("cannotBeEmptyError"));return-1;}
-if(ipv6rdIpv4MaskLen.value==''){parent.warninfo_show(_("ipv6rdV4MaskLen")+_("cannotBeEmptyError"));return-1;}
-if(ipv6rdPrefix.value==''){parent.warninfo_show(_("ipv6rdPrefix")+_("cannotBeEmptyError"));return-1;}
-if(ipv6rdPrefixLen.value==''){parent.warninfo_show(_("ipv6rdPrefixLen")+_("cannotBeEmptyError"));return-1;}
-if(isValidIpAddress(ipv6rdBrAddr.value)==false){parent.warninfo_show(_("ipv6rdBRV4Addr")+ipv6rdBrAddr.value+_("isInvalidError"));return-1;}
-apply_data.ipv6rd_peeraddr=ipv6rdBrAddr.value;var maskLen;maskLen=parseInt(ipv6rdIpv4MaskLen.value);if(isNaN(ipv6rdIpv4MaskLen.value)||maskLen<0||maskLen>31){parent.warninfo_show(_("ipv6rdV4MaskLen")+ipv6rdIpv4MaskLen.value+_("isInvalidError"));return-1;}
-apply_data.ipv6rd_ipv4mask_len=maskLen;if(isValidIpv6Address(ipv6rdPrefix.value)==false||(ipv6rdPrefix.value.indexOf("2001:0db8")==0||ipv6rdPrefix.value.indexOf("2001:db8")==0)){parent.warninfo_show(_("ipv6rdPrefix")+ipv6rdPrefix.value+_("isInvalidError"));return-1;}
-var prefixLen;prefixLen=parseInt(ipv6rdPrefixLen.value);if(isNaN(ipv6rdPrefixLen.value)||prefixLen<=1||prefixLen>32){parent.warninfo_show(_("ipv6rdPrefixLen")+ipv6rdPrefixLen.value+_("isInvalidError"));return-1;}
+{if(ipv6rdBrAddr.value==''){warninfo_show(_("ipv6rdBRV4Addr ")+_("cannotBeEmptyError"));return-1;}
+if(ipv6rdIpv4MaskLen.value==''){warninfo_show(_("ipv6rdV4MaskLen")+_("cannotBeEmptyError"));return-1;}
+if(ipv6rdPrefix.value==''){warninfo_show(_("ipv6rdPrefix")+_("cannotBeEmptyError"));return-1;}
+if(ipv6rdPrefixLen.value==''){warninfo_show(_("ipv6rdPrefixLen")+_("cannotBeEmptyError"));return-1;}
+if(isValidIpAddress(ipv6rdBrAddr.value)==false){warninfo_show(_("ipv6rdBRV4Addr")+ipv6rdBrAddr.value+_("isInvalidError"));return-1;}
+apply_data.ipv6rd_peeraddr=ipv6rdBrAddr.value;var maskLen;maskLen=parseInt(ipv6rdIpv4MaskLen.value);if(isNaN(ipv6rdIpv4MaskLen.value)||maskLen<0||maskLen>31){warninfo_show(_("ipv6rdV4MaskLen")+ipv6rdIpv4MaskLen.value+_("isInvalidError"));return-1;}
+apply_data.ipv6rd_ipv4mask_len=maskLen;if(isValidIpv6Address(ipv6rdPrefix.value)==false||(ipv6rdPrefix.value.indexOf("2001:0db8")==0||ipv6rdPrefix.value.indexOf("2001:db8")==0)){warninfo_show(_("ipv6rdPrefix")+ipv6rdPrefix.value+_("isInvalidError"));return-1;}
+var prefixLen;prefixLen=parseInt(ipv6rdPrefixLen.value);if(isNaN(ipv6rdPrefixLen.value)||prefixLen<=1||prefixLen>32){warninfo_show(_("ipv6rdPrefixLen")+ipv6rdPrefixLen.value+_("isInvalidError"));return-1;}
 apply_data.ipv6rd_ipv6prefix=ipv6rdPrefix.value;apply_data.ipv6rd_ipv6prefix_len=prefixLen;apply_data.ipv6rd_mode=2;}}}
 return 0;}
 function saveIpVersion()
@@ -909,7 +909,7 @@ pppUserName=userName.value;pppPassword=uPsd.value;if(dialMode.value==1)
 {pppIdleTime=0;}
 else
 {pppIdleTime=parseInt(idleTime.value);if(isNaN(pppIdleTime)||pppIdleTime<30||pppIdleTime>9999)
-{parent.warninfo_show(_("wancfg_pppIdleTimeValue")+": "+idleTime.value+" "+_("wancfg_pppIdleTimeValueError"));return 0;}}
+{warninfo_show(_("wancfg_pppIdleTimeValue")+": "+idleTime.value+" "+_("wancfg_pppIdleTimeValueError"));return 0;}}
 if(EnableStaticIp.checked==false)
 {pppStaticIPEnable=0;}
 else
@@ -918,28 +918,28 @@ else
 else
 {pppStaticIPEnable=1;}}
 pppIpAddr=pppStaticIPAddress.value;pppInetMask=pppStaticSubnetMask.value;pppIpStartAddr=pppStaticStartAddress.value;pppIpEndAddr=pppStaticEndAddress.value;if(pppUserName.length==0)
-{parent.warninfo_show(_("wancfg_PPPoEUserNameError1"));return 0;}
+{warninfo_show(_("wancfg_PPPoEUserNameError1"));return 0;}
 else if(pppUserName.length>64)
-{parent.warninfo_show(_("wancfg_PPPoEUserNameError2"));return 0;}
+{warninfo_show(_("wancfg_PPPoEUserNameError2"));return 0;}
 if(isContainNOSupportChar(pppUserName)==true)
-{parent.warninfo_show(_("wancfg_PPPoEUserNameError3"));return 0;}
+{warninfo_show(_("wancfg_PPPoEUserNameError3"));return 0;}
 if(pppPassword.length==0)
-{parent.warninfo_show(_("wancfg_PPPoEPasswordError1"));return 0;}
+{warninfo_show(_("wancfg_PPPoEPasswordError1"));return 0;}
 else if(pppPassword.length>32)
-{parent.warninfo_show(_("wancfg_PPPoEPasswordError2"));return 0;}
+{warninfo_show(_("wancfg_PPPoEPasswordError2"));return 0;}
 if(isContainNOSupportChar(pppPassword)==true)
-{parent.warninfo_show(_("wancfg_PPPoEPasswordError3"));return 0;}
+{warninfo_show(_("wancfg_PPPoEPasswordError3"));return 0;}
 if(pppIpAddr.length>0&&(isValidIpAddress(pppIpAddr)==false||checkIsSpecialIP(pppIpAddr)==true))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+pppIpAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+pppIpAddr+" "+_("wancfg_Invalid")+"!");return 0;}
 if(pppInetMask.length>0&&(isValidSubnetMask(pppInetMask)==false||checkIsSpecialIP(pppInetMask)==true))
-{parent.warninfo_show(_("wancfg_SubnetMask")+" "+pppInetMask+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_SubnetMask")+" "+pppInetMask+" "+_("wancfg_Invalid")+"!");return 0;}
 if(pppIpAddr.length>0&&pppInetMask.length>0&&isNetworkaddr(pppIpAddr,pppInetMask))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+ipAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+ipAddr+" "+_("wancfg_Invalid")+"!");return 0;}
 if(pppIpStartAddr.length>0&&(isValidIpAddress(pppIpStartAddr)==false||checkIsSpecialIP(pppIpStartAddr)==true))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+pppIpStartAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+pppIpStartAddr+" "+_("wancfg_Invalid")+"!");return 0;}
 if(pppIpEndAddr.length>0&&(isValidIpAddress(pppIpEndAddr)==false||checkIsSpecialIP(pppIpEndAddr)==true))
-{parent.warninfo_show(_("wancfg_IPAddr")+" "+pppIpEndAddr+" "+_("wancfg_Invalid")+"!");return 0;}
-if(pppIpStartAddr.length>0&&!cmpIpAddress(pppIpStartAddr,pppIpEndAddr)){parent.warninfo_show(_("wancfg_IPAddr")+" "+pppIpEndAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+{warninfo_show(_("wancfg_IPAddr")+" "+pppIpEndAddr+" "+_("wancfg_Invalid")+"!");return 0;}
+if(pppIpStartAddr.length>0&&!cmpIpAddress(pppIpStartAddr,pppIpEndAddr)){warninfo_show(_("wancfg_IPAddr")+" "+pppIpEndAddr+" "+_("wancfg_Invalid")+"!");return 0;}
 apply_data.dial=pppIdleTime*60;apply_data.pppoename=pppUserName;apply_data.pppoepwd=getAES(pppPassword);apply_data.PPPoEStaticIPEnable=pppStaticIPEnable;apply_data.PPPoEStaticAddr=pppIpAddr;apply_data.PPPoEStaticMask=pppInetMask;apply_data.PPPoEStaticStartAddr=pppIpStartAddr;apply_data.PPPoEStaticEndAddr=pppIpEndAddr;}
 return 1;}
 function saveConnType()
@@ -1022,7 +1022,7 @@ for(var i=0;i<WanConnJson.length;i++)
 {for(j=0;j<vlan_array.length;j++)
 {if(WanConnJson[i].vlanid==vlan_array[j]){same_vlan_route_wan=true;break;}}
 vlan_array[i]=WanConnJson[i].vlanid;}
-if(same_vlan_route_wan&&!utag_bridge_num){parent.warninfo_show(_("wancfg_vlan_exist_on_add_utag_bridge_error"));return;}}}
+if(same_vlan_route_wan&&!utag_bridge_num){warninfo_show(_("wancfg_vlan_exist_on_add_utag_bridge_error"));return;}}}
 if(actionapply=="add")
 {ubusparam=new Array("gwweb.wancfg","add_WanConnection_encrypt",apply_data);}
 else if(actionapply=="edit")

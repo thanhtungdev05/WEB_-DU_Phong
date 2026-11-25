@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
  *  BACKEND-EXT - Mo rong backend ao: cap du lieu cho cac method "get" con lai
  *  (firewall, filter, QoS, DDNS, TR-069, port forward, NTP, chan doan, WPS...).
  *  Cac method GHI (set/add/del...) da duoc dispatch tra "ok" tu dong.
@@ -141,6 +141,87 @@
   });
   R("rtweb.system.get_schwifi_fpt", function () { return { enable: 0, wifitask: [], time_start: "23:00", time_end: "06:00" }; });
   R("rtweb.system.get_tmpfile", function () { return {}; });
+  R("rtweb.session.login", function () { return { result: 0 }; });
+  R("rtweb.system.diagnostic", function () { return { result: 0 }; });
+  R("file.remove", function () { return { result: 0 }; });
+  R("file.exec", function (a) {
+    var cmd = (a && a.command) || "";
+    var p0 = (a && Array.isArray(a.params) && a.params[0]) || "";
+    if (cmd === "cat" && p0 === "/tmp/one_click_process") {
+      return { code: 0, stdout: "100\n", stderr: "" };
+    }
+    return { code: 0, stdout: "OK\n", stderr: "" };
+  });
+  R("tr069.inform", function () { return { result: 0, status: "Success" }; });
+
+  var _diagHost = { ping: "127.0.0.1", dns: "fpt.vn", tracert: "8.8.8.8" };
+  R("diag.ping.ping_param_config", function (a) {
+    if (a && a.Host) _diagHost.ping = a.Host;
+    return { result: 1, failreason: "ping task configuration success" };
+  });
+  R("diag.ping.ping_start", function () { return { result: 1, failreason: "ping task start" }; });
+  R("diag.ping.ping_result", function () {
+    var h = _diagHost.ping || "127.0.0.1";
+    return {
+      is_working: 0,
+      Ori_data: "PING " + h + " (" + h + "): 56 data bytes\n" +
+        "64 bytes from " + h + ": seq=0 ttl=64 time=1.42 ms\n" +
+        "64 bytes from " + h + ": seq=1 ttl=64 time=1.38 ms\n" +
+        "64 bytes from " + h + ": seq=2 ttl=64 time=1.40 ms\n" +
+        "--- " + h + " ping statistics ---\n" +
+        "3 packets transmitted, 3 packets received, 0% packet loss\n"
+    };
+  });
+
+  R("diag.dns.dns_param_config", function (a) {
+    if (a && a.Host) _diagHost.dns = a.Host;
+    return { result: 1, failreason: "dns lookup task configuration success" };
+  });
+  R("diag.dns.dns_start", function () { return { result: 1, failreason: "dns lookup task start" }; });
+  R("diag.dns.dns_result", function () {
+    var h = _diagHost.dns || "fpt.vn";
+    return {
+      is_working: 0,
+      Ori_data: "Server:\t\t8.8.8.8\nAddress:\t8.8.8.8:53\n\nName:\t" + h + "\nAddress: 118.69.180.10\n"
+    };
+  });
+
+  R("diag.tracert.tracert_param_config", function (a) {
+    if (a && a.Host) _diagHost.tracert = a.Host;
+    return { result: 1, failreason: "traceroute task configuration success" };
+  });
+  R("diag.tracert.tracert_start", function () { return { result: 1, failreason: "traceroute task start" }; });
+  R("diag.tracert.tracert_stop", function () { return { result: 0 }; });
+  R("diag.tracert.tracert_result", function () {
+    var h = _diagHost.tracert || "8.8.8.8";
+    return {
+      is_working: 0,
+      Ori_data: "traceroute to " + h + ", 30 hops max\n 1  192.168.1.1  0.65 ms\n 2  10.10.1.1  3.12 ms\n 3  " + h + "  8.45 ms\n"
+    };
+  });
+
+  R("diag.speedtest.speedtest_start", function () { return { result: 0 }; });
+  R("diag.speedtest.speedtest_stop", function () { return { result: 0 }; });
+  R("diag.pktcap.pktcapture_set", function () { return { result: 0 }; });
+  R("diag.pktmirror.pktmirror_set", function () { return { result: 0 }; });
+
+  R("rtweb.wifi.wlanScanTrigger", function () { return { result: 0 }; });
+  R("rtweb.wifi.wlanScanResultGet", function () {
+    return {
+      number2: 3,
+      number5: 3,
+      "2.4G": [
+        null,
+        { ssid: "FPT-Office-2.4G", bssid: "70:4F:57:10:20:01", channel: 6, securityMode: "WPA2PSK", band: "2.4G", encrypt: "AES", rssi: -45 },
+        { ssid: "Neighbor-AP-2G", bssid: "A4:2B:8C:33:44:55", channel: 11, securityMode: "WPA2PSK", band: "2.4G", encrypt: "AES", rssi: -68 }
+      ],
+      "5G": [
+        null,
+        { ssid: "FPT-Office-5G", bssid: "70:4F:57:10:20:02", channel: 36, securityMode: "WPA2/WPA3", band: "5G", encrypt: "AES", rssi: -42 },
+        { ssid: "Neighbor-AP-5G", bssid: "A4:2B:8C:33:44:56", channel: 149, securityMode: "WPA2PSK", band: "5G", encrypt: "AES", rssi: -65 }
+      ]
+    };
+  });
 
   console.log("[backend-ext] Da nap them", 40, "method get (firewall, qos, ddns, tr069, chan doan...)");
 })();

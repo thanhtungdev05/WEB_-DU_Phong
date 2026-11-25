@@ -336,6 +336,9 @@ class RouterHandler(BaseHTTPRequestHandler):
 
         # Main index page
         if parsed.path == "/" and not q_type:
+            if qs.get("autologin", [None])[0] == "1" and not sess["logged_in"]:
+                with LOCK:
+                    sess["logged_in"] = True
             if not sess["logged_in"]:
                 # Serve login page
                 login_path = os.path.join(WWW, "login_page.html")
@@ -352,6 +355,16 @@ class RouterHandler(BaseHTTPRequestHandler):
                 token_hex = "".join(f"\\x{ord(c):02x}" for c in sess["sess_token"])
                 html = re.sub(r'var _sessionTmpToken = ".*?";',
                               lambda _: f'var _sessionTmpToken = "{token_hex}";', html)
+                view = (qs.get("view", [None])[0] or "").strip()
+                if view and re.fullmatch(r"[A-Za-z0-9_]+", view) and "</body>" in html:
+                    hook = (
+                        f'<script>(function(){{var v="{view}",done=false;'
+                        'function go(){if(done)return;if(typeof openLink==="function"){done=true;try{openLink(v+"&Menu3Location=0");}catch(e){}}}'
+                        'if(window.jQuery){jQuery(function(){jQuery(document).one("ajaxStop",function(){setTimeout(go,50);});setTimeout(go,600);});}'
+                        'else{window.addEventListener("load",function(){setTimeout(go,400);});}'
+                        '})();</script></body>'
+                    )
+                    html = html.replace("</body>", hook, 1)
                 self.send_html(html, sid)
                 return
 

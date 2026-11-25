@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="utf-8" lang="utf-8" dir="ltr">
 <head>
 <title>GPON Home Gateway</title>
@@ -124,6 +124,7 @@ var ary_strings = [
     }
 
 </script>
+<script>(function(){function fitFs(){try{if(window.innerWidth>0&&window.innerWidth<960){var fs=document.getElementsByTagName("frameset");if(fs.length>1&&fs[1].cols&&fs[1].cols.indexOf("956")!==-1)fs[1].cols="0,*,0,0";if(fs.length>2&&fs[2].cols&&fs[2].cols.indexOf("266.5")===0)fs[2].cols="215,*";}}catch(e){}}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",fitFs);else fitFs();window.addEventListener("resize",fitFs);})();</script>
 </head>
 <frameset rows="159,*" framespacing="0"  frameborder="0" >
         <frame name="header" src="/cgi-bin/status.asp" marginwidth="0" marginheight="0" frameborder="0" scrolling="no" style="background-color:#4acbd6;">

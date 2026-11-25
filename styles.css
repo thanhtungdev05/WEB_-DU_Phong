@@ -735,8 +735,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 10px;
+  padding: 6px 16px;
   background: #ffffff;
   border-bottom: 1px solid var(--border-color);
   box-shadow: 0 2px 6px rgba(0,0,0,0.04);
@@ -744,25 +744,34 @@ html, body {
   z-index: 10;
 }
 
-.practice-toolbar-left,
+.practice-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
 .practice-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0 !important;
 }
 
 .btn-toolbar {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 14px;
+  padding: 6px 14px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
   border-radius: 7px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
   border: 1px solid transparent;
 }
 
@@ -1269,6 +1278,19 @@ html, body {
   background: #fff;
   touch-action: pan-x pan-y pinch-zoom;
   transition: opacity 0.3s ease;
+}
+
+/* ── Mesh Lab Practice Mode in Portal: 100% Viewport Fit (No scrollbar / Kệ thiết bị luôn hiển thị) ── */
+#practice-screen.mesh-lab-active .iframe-wrap {
+  overflow: hidden !important;
+}
+#practice-screen.mesh-lab-active #device-iframe {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  inset: 0 !important;
 }
 
 /* ── Chế độ Điện thoại iPhone (iOS) & Android: Hỗ trợ cuộn ngang/dọc 2 chiều mượt mà ── */

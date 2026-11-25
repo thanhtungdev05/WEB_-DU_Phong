@@ -1361,7 +1361,7 @@ class H(BaseHTTPRequestHandler):
     def _client_key(self):
         hdr = (self.headers.get("X-KTV-Session-ID", "") or "").strip()
         if hdr:
-            return f"cookie:ktv_client_id:{hdr}"
+            return hdr
         if "?_ktv=" in getattr(self, "path", "") or "&_ktv=" in getattr(self, "path", ""):
             try:
                 from urllib.parse import parse_qs, urlparse
@@ -1570,7 +1570,18 @@ class H(BaseHTTPRequestHandler):
             return self._tra(404, b"404 Not Found", "text/plain")
         kieu = MIME.get(os.path.splitext(duong_dan)[1], "application/octet-stream")
         with open(duong_dan, "rb") as f:
-            self._tra(200, f.read(), kieu)
+            raw = f.read()
+        if p == "/webfig/index.html":
+            qs_str = self.path.split("?", 1)[1] if "?" in self.path else ""
+            raw = raw.replace(
+                b'if (location.pathname.endsWith("/webfig")) location.href = "/webfig/";',
+                b'if (location.pathname.endsWith("/webfig")) location.replace(location.pathname + "/" + location.search + location.hash);',
+            )
+            if "autologin=1" in qs_str:
+                inj = b'<script>try{if(!sessionStorage.getItem("name")){sessionStorage.setItem("name","admin");sessionStorage.setItem("password","admin");}}catch(e){}</script>\n'
+                raw = raw.replace(b'<script src="master-min', inj + b'<script src="master-min', 1)
+        self._tra(200, raw, kieu)
+
 
     # ------------------------------------------------------------- jsproxy
     def do_POST(self):

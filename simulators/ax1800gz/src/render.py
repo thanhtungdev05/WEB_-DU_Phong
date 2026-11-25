@@ -8,6 +8,7 @@ tu kho cau hinh trung tam (config_store.py).
 """
 import os
 import re
+import json
 from xml.sax.saxutils import escape as xml_escape
 
 try:
@@ -18,6 +19,39 @@ except ImportError:
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _REF_DATA = os.path.abspath(os.path.join(_HERE, "..", "reference", "data"))
 _REF_VIEWS = os.path.abspath(os.path.join(_HERE, "..", "reference", "views"))
+_SPEC_MENU = os.path.abspath(os.path.join(_HERE, "..", "spec", "menu-tree.json"))
+
+_AREA_TO_VIEW_MAP = {
+    "home_t.lp": "homePage.html",
+    "Home_t.lp": "homePage.html",
+    "topo_t.lp": "mmTopology.html",
+    "poninfo_status_t.lp": "ponopticalinfo.html",
+    "wan_eth_status_t.lp": "ethWanStatus.html",
+    "wan_eth_config_t.lp": "ethWanConfig.html",
+    "Localnet_LanMgrIpv4_t.lp": "lanMgrIpv4.html",
+    "wlan_wlanbasiconoff_t.lp": "wlanBasic.html",
+    "networkdiag_diagmgr_t.lp": "networkDiag.html",
+}
+
+if os.path.exists(_SPEC_MENU):
+    try:
+        with open(_SPEC_MENU, "r", encoding="utf-8") as _f:
+            _tree = json.load(_f)
+        def _walk_tree(nodes):
+            for n in nodes:
+                if isinstance(n, dict):
+                    mid = n.get("id")
+                    if mid:
+                        fname = f"{mid}.html"
+                        if os.path.exists(os.path.join(_REF_VIEWS, fname)):
+                            for a in n.get("area", []):
+                                if isinstance(a, dict) and a.get("area"):
+                                    _AREA_TO_VIEW_MAP.setdefault(a["area"], fname)
+                    if "children" in n and isinstance(n["children"], list):
+                        _walk_tree(n["children"])
+        _walk_tree(_tree)
+    except Exception:
+        pass
 
 
 def _replace_para_in_instance(inst_xml, para_name, new_value):
@@ -229,7 +263,18 @@ def render_data(dtag):
 
 
 def render_view(tag):
-    filename = f"{tag}.html" if not tag.endswith(".html") else tag
+    if not tag:
+        return None
+    clean_tag = str(tag).split("&")[0].split("?")[0].strip()
+    filename = _AREA_TO_VIEW_MAP.get(clean_tag)
+    if not filename:
+        clean_lower = clean_tag.lower()
+        for k, v in _AREA_TO_VIEW_MAP.items():
+            if k.lower() == clean_lower:
+                filename = v
+                break
+    if not filename:
+        filename = f"{clean_tag}.html" if not clean_tag.endswith(".html") else clean_tag
     filepath = os.path.join(_REF_VIEWS, filename)
     if not os.path.exists(filepath):
         return None

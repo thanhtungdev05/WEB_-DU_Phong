@@ -55,6 +55,7 @@ GATEWAY_DEFAULT_SIM_IDS = frozenset({
     "sim_ac1000f",
     "sim_ax3000gz",
     "sim_ax3000gz_v2",
+    "sim_ax3000hv2",
     "sim_ac1000HI",
     "sim_ac1000z",
     "sim_ax1800gz",
@@ -320,6 +321,10 @@ def normalize_cfg(raw: dict[str, Any] | None = None) -> dict[str, Any]:
     ssid = str(src.get("ssid") or "FPT_Telecom_WiFi7").strip() or "FPT_Telecom_WiFi7"
     ssid5g = str(src.get("ssid5g") or ssid).strip() or ssid
     password = str(src.get("password") or src.get("wpaKey") or src.get("key") or "12345678")
+    password5g = str(src.get("password5g") or src.get("wpaKey5g") or password)
+    sec_base = _normalize_security(src.get("security") or src.get("securityMode"))
+    sec2g = _normalize_security(src.get("security2g") or src.get("authMode2g") or sec_base)
+    sec5g = _normalize_security(src.get("security5g") or src.get("authMode5g") or sec_base)
     dns1 = str(src.get("dns1") or src.get("primaryDns") or src.get("primary_dns") or "8.8.8.8").strip() or lan_ip
     dns2 = str(src.get("dns2") or src.get("secondaryDns") or src.get("secondary_dns") or "8.8.4.4").strip() or "8.8.4.4"
     gateway_ip = str(src.get("gatewayIp") or src.get("gateway_ip") or lan_ip).strip() or lan_ip
@@ -333,7 +338,12 @@ def normalize_cfg(raw: dict[str, Any] | None = None) -> dict[str, Any]:
         "ssid": ssid,
         "ssid5g": ssid5g,
         "password": password,
-        "security": _normalize_security(src.get("security") or src.get("securityMode")),
+        "password5g": password5g,
+        "security": sec2g,
+        "security2g": sec2g,
+        "security5g": sec5g,
+        "hideSsid2g": bool(src.get("hideSsid2g", False)),
+        "hideSsid5g": bool(src.get("hideSsid5g", False)),
         "channel": _normalize_channel(src.get("channel") or src.get("channel24")),
         "channel5g": _normalize_channel(src.get("channel5g") or src.get("channel") or "36"),
         "bandwidth": _normalize_bandwidth(src.get("bandwidth") or src.get("bandWidth")),
@@ -355,6 +365,24 @@ def normalize_cfg(raw: dict[str, Any] | None = None) -> dict[str, Any]:
         "wanDns2": str(src.get("wanDns2") or src.get("wan_dns2") or "").strip(),
         "meshNodes": copy.deepcopy(mesh_nodes),
         "clients": copy.deepcopy(clients),
+        "meshEnabled": src.get("meshEnabled") if "meshEnabled" in src else None,
+        "vapDiffMode": (bool(src.get("vapDiffMode")) if src.get("vapDiffMode") is not None else None),
+        "wifi2gDisabled": bool(src.get("wifi2gDisabled", False)),
+        "wifi5gDisabled": bool(src.get("wifi5gDisabled", False)),
+        "rootMac": str(src.get("rootMac") or ""),
+        "rootHostname": str(src.get("rootHostname") or ""),
+        "rootLanIp": str(src.get("rootLanIp") or ""),
+        "rootSerial": str(src.get("rootSerial") or ""),
+        "pppoeUser": str(src.get("pppoeUser") or src.get("pppUser") or ""),
+        "pppoePass": str(src.get("pppoePass") or src.get("pppPass") or ""),
+        "wanProto": str(src.get("wanProto") or ""),
+        "wanNat": str(src.get("wanNat") or ""),
+        "wanVlan": str(src.get("wanVlan") or ""),
+        "wanConnectionName": str(src.get("wanConnectionName") or ""),
+        "topologyPeerCount": int(src.get("topologyPeerCount") or 0),
+        "topologyPeers": list(src.get("topologyPeers") or []),
+        "untouchedViolations": list(src.get("untouchedViolations") or []),
+        "webguiTouched": bool(src.get("webguiTouched", False)),
     }
 
 
@@ -377,8 +405,12 @@ def _to_frontend_contract(cfg: dict[str, Any]) -> dict[str, Any]:
 
 def _get_sim_module(sim_id: str):
     run_all_mod = sys.modules.get("run_all")
-    if run_all_mod is None:
-        run_all_mod = importlib.import_module("run_all")
+    if run_all_mod is None or not hasattr(run_all_mod, "SIM_HANDLERS"):
+        main_mod = sys.modules.get("__main__")
+        if main_mod is not None and hasattr(main_mod, "SIM_HANDLERS"):
+            run_all_mod = main_mod
+        else:
+            run_all_mod = importlib.import_module("run_all")
     handler_cls = getattr(run_all_mod, "SIM_HANDLERS", {}).get(sim_id)
     if handler_cls is None:
         return None
@@ -567,12 +599,22 @@ def _read_be12000(mod, session_key: str) -> dict[str, Any]:
     meta = _meta_get("sim_be12000", session_key)
     br = _be12000_get_inst(store, "OBJ_Br0AndDhcpsHosCfg_ID", "IGD")
     ap1 = _be12000_get_inst(store, "OBJ_WLANAP_ID", "DEV.WIFI.AP1")
+    ap4 = _be12000_get_inst(store, "OBJ_WLANAP_ID", "DEV.WIFI.AP4")
     ap5 = _be12000_get_inst(store, "OBJ_WLANAP_ID", "DEV.WIFI.AP5")
     psk1 = _be12000_get_inst(store, "OBJ_WLANPSK_ID", "DEV.WIFI.AP1.PSK1")
     rd2 = _be12000_get_inst(store, "OBJ_WLANSETTING_ID", "DEV.WIFI.RD2")
     wan0 = _be12000_get_inst(store, "ID_WAN_COMFIG", None)
     beacon = ap1.get("BeaconType") or "WPAand11i"
     sec = meta.get("security") or ("WPA3-SAE" if "WPA3" in beacon else ("Open" if beacon == "None" else "WPA2/WPA3-PSK"))
+    violations: list[str] = []
+    if (br.get("IPAddr") and br.get("IPAddr") != "192.168.1.1") or (br.get("SubMask") and br.get("SubMask") != "255.255.255.0") or str(br.get("ServerEnable", "1")) == "0":
+        violations.append("Cấu hình LAN / DHCP")
+    if br.get("DNSServer1") == "8.8.8.8" or br.get("DNSServer2") == "8.8.4.4":
+        violations.append("Cấu hình DNS LAN")
+    if str(ap4.get("Enable", "0")) == "1":
+        violations.append("Cấu hình Wi-Fi IoT")
+    slaves = store.instances("OBJ_MESH_SLAVE_ID") if hasattr(store, "instances") else []
+    topo_peers = [s.get("DeviceName") or s.get("IpAddr") or "Agent" for s in (slaves or []) if isinstance(s, dict)]
     raw = {
         "ssid": ap1.get("ESSID") or "ZTE_2.4G_DEMO01",
         "ssid5g": ap5.get("ESSID") or ap1.get("ESSID") or "ZTE_5G_DEMO01",
@@ -593,6 +635,14 @@ def _read_be12000(mod, session_key: str) -> dict[str, Any]:
         "wanGateway": wan0.get("GateWay") or "",
         "wanDns1": wan0.get("DNS1") or "",
         "wanDns2": wan0.get("DNS2") or "",
+        "pppoeUser": str(wan0.get("UserName") or wan0.get("username") or "").strip(),
+        "pppoePass": str(wan0.get("Password") or wan0.get("password") or "").strip(),
+        "wanConnectionName": str(wan0.get("WANCName") or "").strip(),
+        "wanNat": str(wan0.get("IsNAT") if wan0.get("IsNAT") is not None else "1"),
+        "wanVlan": str(wan0.get("VlanEnable") if wan0.get("VlanEnable") is not None else "0"),
+        "topologyPeerCount": len(topo_peers),
+        "topologyPeers": topo_peers,
+        "untouchedViolations": violations,
         **meta,
     }
     return _to_frontend_contract(raw)
@@ -687,8 +737,8 @@ def _write_ax3000s(mod, session_key: str, cfg: dict[str, Any], mode: str) -> Non
     radios = copy.deepcopy(st.get("radios", []))
     for idx, r in enumerate(radios):
         r["ssid"] = cfg["ssid5g"] if idx > 0 else cfg["ssid"]
-        r["password"] = cfg["password"]
-        r["security"] = cfg["security"]
+        r["password"] = cfg.get("password5g") if (idx > 0 and cfg.get("password5g")) else cfg["password"]
+        r["security"] = cfg.get("security5g") if (idx > 0 and cfg.get("security5g")) else cfg["security"]
         r["channel"] = cfg["channel"] if idx == 0 else cfg["channel5g"]
         r["bandwidth"] = cfg["bandwidth"]
     mod.update_client_state(session_key, {
@@ -715,31 +765,52 @@ def _read_ax3000s(mod, session_key: str) -> dict[str, Any]:
     r0 = radios[0] if len(radios) > 0 else {}
     r1 = radios[1] if len(radios) > 1 else r0
     mesh = st.get("mesh", {})
+    mesh_nodes = mesh.get("nodes") or meta.get("meshNodes") or []
+    topo_peers = [n.get("name") or n.get("ip") or "Agent" for n in mesh_nodes if isinstance(n, dict)]
+    violations: list[str] = []
+    if (lan.get("ipaddr") and lan.get("ipaddr") != "192.168.1.1") or lan.get("dhcp_enable") is False:
+        violations.append("Cấu hình LAN / DHCP")
+    if st.get("port_forwards"):
+        violations.append("Cấu hình Port Forwarding")
     raw = {
-        "ssid": r0.get("ssid") or "FPT_AX3000S",
-        "ssid5g": r1.get("ssid") or r0.get("ssid") or "FPT_AX3000S",
-        "password": r0.get("password") or "12345678",
-        "security": r0.get("security") or "WPA2/WPA3-PSK",
-        "channel": r0.get("channel") or "auto",
-        "bandwidth": r1.get("bandwidth") or r0.get("bandwidth") or "80MHz",
-        "lanIp": lan.get("ipaddr") or "192.168.1.1",
-        "netmask": lan.get("netmask") or "255.255.255.0",
-        "dhcpEnable": lan.get("dhcp_enable", True),
-        "dhcpStart": lan.get("dhcp_start") or "192.168.1.100",
-        "dhcpEnd": lan.get("dhcp_end") or "192.168.1.200",
-        "dhcpLease": str(lan.get("dhcp_lease") or "86400"),
-        "dns1": lan.get("dns1") or "8.8.8.8",
-        "dns2": lan.get("dns2") or "8.8.4.4",
-        "wanIp": wan.get("ipaddr") or "",
-        "wanMask": wan.get("netmask") or "",
-        "wanGateway": wan.get("gateway") or "",
-        "wanDns1": wan.get("dns1") or "",
-        "wanDns2": wan.get("dns2") or "",
-        "meshRole": mesh.get("role") or "Agent",
-        "meshNodes": mesh.get("nodes") or [],
-        "clients": st.get("clients") or [],
         **meta,
+        "ssid": r0.get("ssid") or meta.get("ssid") or "FPT_AX3000S",
+        "ssid5g": r1.get("ssid") or meta.get("ssid5g") or r0.get("ssid") or "FPT_AX3000S",
+        "password": r0.get("password") or meta.get("password") or "12345678",
+        "password5g": r1.get("password") or meta.get("password5g") or r0.get("password") or meta.get("password") or "12345678",
+        "security": r0.get("security") or meta.get("security") or "WPA2/WPA3-PSK",
+        "security2g": r0.get("security") or meta.get("security2g") or meta.get("security") or "WPA2/WPA3-PSK",
+        "security5g": r1.get("security") or meta.get("security5g") or r0.get("security") or "WPA2/WPA3-PSK",
+        "channel": r0.get("channel") or meta.get("channel") or "auto",
+        "bandwidth": r1.get("bandwidth") or meta.get("bandwidth") or r0.get("bandwidth") or "80MHz",
+        "lanIp": lan.get("ipaddr") or meta.get("lanIp") or "192.168.1.1",
+        "netmask": lan.get("netmask") or meta.get("netmask") or "255.255.255.0",
+        "dhcpEnable": lan.get("dhcp_enable", True),
+        "dhcpStart": lan.get("dhcp_start") or meta.get("dhcpStart") or "192.168.1.100",
+        "dhcpEnd": lan.get("dhcp_end") or meta.get("dhcpEnd") or "192.168.1.200",
+        "dhcpLease": str(lan.get("dhcp_lease") or meta.get("dhcpLease") or "86400"),
+        "dns1": lan.get("dns1") or meta.get("dns1") or "8.8.8.8",
+        "dns2": lan.get("dns2") or meta.get("dns2") or "8.8.4.4",
+        "wanIp": wan.get("ipaddr") or meta.get("wanIp") or "",
+        "wanMask": wan.get("netmask") or meta.get("wanMask") or "",
+        "wanGateway": wan.get("gateway") or meta.get("wanGateway") or "",
+        "wanDns1": wan.get("dns1") or meta.get("wanDns1") or "",
+        "wanDns2": wan.get("dns2") or meta.get("wanDns2") or "",
+        "pppoeUser": str(wan.get("userName") or wan.get("username") or "").strip(),
+        "pppoePass": str(wan.get("uPsd") or wan.get("password") or "").strip(),
+        "meshRole": mesh.get("role") or meta.get("meshRole") or "Controller",
+        "meshNodes": mesh_nodes,
+        "topologyPeerCount": len(topo_peers),
+        "topologyPeers": topo_peers,
+        "untouchedViolations": violations,
+        "clients": st.get("clients") or meta.get("clients") or [],
     }
+    _meta_set("sim_ax3000s", session_key, raw, patch_only={
+        "ssid": raw["ssid"],
+        "ssid5g": raw["ssid5g"],
+        "password": raw["password"],
+        "password5g": raw["password5g"],
+    })
     return _to_frontend_contract(raw)
 
 
@@ -788,6 +859,11 @@ def _read_ax3000gz(mod, session_key: str) -> dict[str, Any]:
     w2 = st.get("wlan24", {})
     w5 = st.get("wlan5", {})
     mesh = st.get("mesh", {})
+    mesh_nodes = mesh.get("nodes") or []
+    topo_peers = [n.get("name") or n.get("ip") or "Agent" for n in mesh_nodes if isinstance(n, dict)]
+    violations: list[str] = []
+    if (lan.get("ipaddr") and lan.get("ipaddr") != "192.168.1.1") or lan.get("dhcp_enable") is False:
+        violations.append("Cấu hình LAN / DHCP")
     raw = {
         "ssid": w2.get("SSID") or "FPT_AX3000GZ",
         "ssid5g": w5.get("SSID") or w2.get("SSID") or "FPT_AX3000GZ",
@@ -808,8 +884,13 @@ def _read_ax3000gz(mod, session_key: str) -> dict[str, Any]:
         "wanGateway": wan.get("gateway") or "",
         "wanDns1": wan.get("dns1") or "",
         "wanDns2": wan.get("dns2") or "",
+        "pppoeUser": str(wan.get("username") or "").strip(),
+        "pppoePass": str(wan.get("password") or "").strip(),
         "meshRole": mesh.get("role") or "Agent",
-        "meshNodes": mesh.get("nodes") or [],
+        "meshNodes": mesh_nodes,
+        "topologyPeerCount": len(topo_peers),
+        "topologyPeers": topo_peers,
+        "untouchedViolations": violations,
         "clients": st.get("clients") or [],
         **meta,
     }
@@ -841,11 +922,12 @@ def _write_zte_xml(sim_id: str, mod, session_key: str, cfg: dict[str, Any], mode
     store.update_values("dns_localdns_lua.lua", {
         "SerIPAddress1": cfg["dns1"], "SerIPAddress2": cfg["dns2"],
     })
-    sec_fields = _zte_sec_tuple(cfg["security"])
-    for ap_id, band_ssid in (("DEV.WIFI.AP1", cfg["ssid"]), ("DEV.WIFI.AP5", cfg["ssid5g"])):
-        _zte_xml_write_inst(store, "wlan_wlansssidconf_lua.lua", ap_id, {"Enable": "1", "ESSID": band_ssid, **sec_fields})
-    for psk_id in ("DEV.WIFI.AP1.PSK1", "DEV.WIFI.AP5.PSK1"):
-        _zte_xml_write_inst(store, "wlan_wlansssidconf_lua.lua", psk_id, {"KeyPassphrase": cfg["password"]})
+    sec_fields_2g = _zte_sec_tuple(cfg.get("security2g") or cfg["security"])
+    sec_fields_5g = _zte_sec_tuple(cfg.get("security5g") or cfg.get("security2g") or cfg["security"])
+    _zte_xml_write_inst(store, "wlan_wlansssidconf_lua.lua", "DEV.WIFI.AP1", {"Enable": "1", "ESSID": cfg["ssid"], **sec_fields_2g})
+    _zte_xml_write_inst(store, "wlan_wlansssidconf_lua.lua", "DEV.WIFI.AP5", {"Enable": "1", "ESSID": cfg["ssid5g"], **sec_fields_5g})
+    _zte_xml_write_inst(store, "wlan_wlansssidconf_lua.lua", "DEV.WIFI.AP1.PSK1", {"KeyPassphrase": cfg["password"]})
+    _zte_xml_write_inst(store, "wlan_wlansssidconf_lua.lua", "DEV.WIFI.AP5.PSK1", {"KeyPassphrase": cfg.get("password5g") or cfg["password"]})
     _zte_xml_write_inst(store, "wlan_wlanbasicadconf_lua.lua", "DEV.WIFI.RD1", {
         "Channel": "Auto" if cfg["channel"] == "auto" else cfg["channel"],
         "BandWidth": "20MHz" if "80" in cfg["bandwidth"] or "160" in cfg["bandwidth"] else cfg["bandwidth"],
@@ -854,6 +936,56 @@ def _write_zte_xml(sim_id: str, mod, session_key: str, cfg: dict[str, Any], mode
         "Channel": "Auto" if cfg["channel"] == "auto" else cfg["channel5g"],
         "BandWidth": cfg["bandwidth"],
     })
+
+    # EasyMesh Topology for AX3000GZ V2
+    if sim_id == "sim_ax3000gz_v2" and hasattr(store, "set_topo_lua"):
+        em_enabled = True if cfg.get("meshEnabled") is None else bool(cfg.get("meshEnabled"))
+        slaves_raw = [] if not em_enabled else [
+            sl for sl in (cfg.get("meshNodes") or [])
+            if isinstance(sl, dict) and str(sl.get("role") or "").strip().lower() != "router"
+        ]
+        slave_entries = []
+        for idx, sl in enumerate(slaves_raw, start=1):
+            sl_name = str(sl.get("name") or "AX3000CV2")
+            dev_name = "AX3000CV2" if "AX3000C" in str(sl.get("model") or sl_name).upper() else str(sl.get("model") or sl_name)
+            sl_ip = str(sl.get("ip") or sl.get("lanIp") or "192.168.1.200")
+            sl_mac = str(sl.get("mac") or f"5C:1A:6F:C3:A2:{0x60 + idx:02X}")
+            sl_access = "ETH"
+            bh = str(sl.get("backhaul") or "Ethernet")
+            if "wi-fi" in bh.lower() or "wifi" in bh.lower():
+                sl_access = "2" if "5g" in bh.lower() else "1"
+            slave_entries.append({
+                "instID": f"MESH.SLAVE{idx}",
+                "DeviceName": dev_name,
+                "SoftwareVer": "0.5.3",
+                "MacAddr": sl_mac,
+                "IpAddr": sl_ip,
+                "AccessType": sl_access,
+                "LinkSpeed": str(int(sl.get("speed_mbps") or 1000)),
+                "BhStaDataUpBpsRate": "0",
+                "BhStaDataDownBpsRate": "0",
+                "BhStaRssi": "0",
+                "AffStaNum": "0"
+            })
+        master_entry = {
+            "instID": "MESH.CONTROLLER",
+            "DeviceName": "ZTE:F6201B",
+            "SoftwareVer": "V9.3.10P6N16",
+            "MacAddr": cfg.get("mac") or "84:3c:99:29:0e:a5",
+            "IpAddr": cfg.get("lanIp") or "192.168.1.1",
+            "SerialNumber": "843C99290EA5",
+            "GPONSN": "ZTEGD79DE403",
+            "AccessType": "Connecting",
+            "AffStaNum": "0",
+            "LinkSpeed": "0"
+        }
+        topo_data = {
+            "master": master_entry,
+            "slave": slave_entries,
+            "ad": {"MGET_INST_NUM": 0}
+        }
+        store.set_topo_lua(topo_data)
+
     _meta_set(sim_id, session_key, cfg)
 
 
@@ -862,33 +994,267 @@ def _read_zte_xml(sim_id: str, mod, session_key: str) -> dict[str, Any]:
     meta = _meta_get(sim_id, session_key)
     lan = _zte_xml_read_inst(store, "Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua", "IGD")
     ap1 = _zte_xml_read_inst(store, "wlan_wlansssidconf_lua.lua", "DEV.WIFI.AP1")
+    ap4 = _zte_xml_read_inst(store, "wlan_wlansssidconf_lua.lua", "DEV.WIFI.AP4")
     ap5 = _zte_xml_read_inst(store, "wlan_wlansssidconf_lua.lua", "DEV.WIFI.AP5")
     psk1 = _zte_xml_read_inst(store, "wlan_wlansssidconf_lua.lua", "DEV.WIFI.AP1.PSK1")
+    psk5 = _zte_xml_read_inst(store, "wlan_wlansssidconf_lua.lua", "DEV.WIFI.AP5.PSK1")
     rd2 = _zte_xml_read_inst(store, "wlan_wlanbasicadconf_lua.lua", "DEV.WIFI.RD2")
     wan = _zte_xml_read_inst(store, "wan_internet_lua.lua", "IGD.WD1.WCD1.WCPPP1")
+    key_pass_2g = psk1.get("KeyPassphrase")
+    if not key_pass_2g or (len(key_pass_2g) == 24 and key_pass_2g.endswith("==")):
+        key_pass_2g = meta.get("password") or "12345678"
+
+    key_pass_5g = psk5.get("KeyPassphrase")
+    if not key_pass_5g or (len(key_pass_5g) == 24 and key_pass_5g.endswith("==")):
+        key_pass_5g = meta.get("password5g") or meta.get("password") or key_pass_2g
+
+    violations: list[str] = []
+    if (lan.get("IPAddr") and lan.get("IPAddr") != "192.168.1.1") or (lan.get("SubMask") and lan.get("SubMask") != "255.255.255.0") or str(lan.get("ServerEnable", "1")) == "0":
+        violations.append("Cấu hình LAN / DHCP")
+    d1 = str(lan.get("DNSServer1") or "").strip()
+    d2 = str(lan.get("DNSServer2") or "").strip()
+    if (d1 and d1 not in ("192.168.1.1", "8.8.8.8", "0.0.0.0")) or (d2 and d2 not in ("8.8.4.4", "8.8.8.8", "0.0.0.0")):
+        violations.append("Cấu hình DNS LAN")
+    if str(ap4.get("Enable", "0")) == "1" or str(ap4.get("ESSID", "")).strip() == "FPT IoT":
+        violations.append("Cấu hình Wi-Fi IoT (SSID4)")
+    pf_items = _zte_xml_tag_items(store, "fw_portforwarding_lua.lua") or _zte_xml_tag_items(store, "PortForwarding")
+    for it in (pf_items or []):
+        if isinstance(it, dict) and it.get("name") in ("Alias", "InternalClient") and str(it.get("value") or "").strip() in ("FPT Telecom", "192.168.1.254"):
+            if "Cấu hình Port Forwarding" not in violations:
+                violations.append("Cấu hình Port Forwarding")
+
+    topo_peers: list[str] = []
+    if hasattr(store, "get_topo_lua"):
+        try:
+            t_lua = store.get_topo_lua() or {}
+            slaves = t_lua.get("slave") or []
+            if isinstance(slaves, list):
+                topo_peers = [str(s.get("DeviceName") or s.get("IpAddr") or "Agent") for s in slaves if isinstance(s, dict)]
+        except Exception:
+            pass
+
     raw = {
-        "ssid": ap1.get("ESSID") or "FPT-Telecom",
-        "ssid5g": ap5.get("ESSID") or ap1.get("ESSID") or "FPT-Telecom",
-        "password": meta.get("password") or psk1.get("KeyPassphrase") or "12345678",
+        **meta,
+        "ssid": ap1.get("ESSID") or meta.get("ssid") or "FPT-Telecom",
+        "ssid5g": ap5.get("ESSID") or meta.get("ssid5g") or ap1.get("ESSID") or "FPT-Telecom",
+        "password": key_pass_2g,
+        "password5g": key_pass_5g,
         "security": meta.get("security") or _normalize_security(ap1.get("BeaconType")),
+        "security2g": meta.get("security2g") or meta.get("security") or _normalize_security(ap1.get("BeaconType")),
+        "security5g": meta.get("security5g") or _normalize_security(ap5.get("BeaconType")),
         "channel": meta.get("channel") or rd2.get("Channel") or "auto",
         "bandwidth": meta.get("bandwidth") or rd2.get("BandWidth") or "80MHz",
-        "lanIp": lan.get("IPAddr") or "192.168.1.1",
-        "netmask": lan.get("SubMask") or lan.get("SubnetMask") or "255.255.255.0",
-        "dhcpEnable": lan.get("ServerEnable", "1") != "0",
-        "dhcpStart": lan.get("MinAddress") or "192.168.1.2",
-        "dhcpEnd": lan.get("MaxAddress") or "192.168.1.254",
-        "dhcpLease": lan.get("LeaseTime") or "86400",
-        "dns1": lan.get("DNSServer1") or "192.168.1.1",
-        "dns2": lan.get("DNSServer2") or "0.0.0.0",
-        "wanIp": wan.get("IPAddress") or "",
-        "wanMask": wan.get("SubnetMask") or "",
-        "wanGateway": wan.get("GateWay") or "",
-        "wanDns1": wan.get("DNS1") or "",
-        "wanDns2": wan.get("DNS2") or "",
-        **meta,
+        "lanIp": lan.get("IPAddr") or meta.get("lanIp") or "192.168.1.1",
+        "netmask": lan.get("SubMask") or lan.get("SubnetMask") or meta.get("netmask") or "255.255.255.0",
+        "dhcpEnable": lan.get("ServerEnable", "1") != "0" if "ServerEnable" in lan else meta.get("dhcpEnable", True),
+        "dhcpStart": lan.get("MinAddress") or meta.get("dhcpStart") or "192.168.1.2",
+        "dhcpEnd": lan.get("MaxAddress") or meta.get("dhcpEnd") or "192.168.1.254",
+        "dhcpLease": lan.get("LeaseTime") or meta.get("dhcpLease") or "86400",
+        "dns1": lan.get("DNSServer1") or meta.get("dns1") or "192.168.1.1",
+        "dns2": lan.get("DNSServer2") or meta.get("dns2") or "0.0.0.0",
+        "wanIp": wan.get("IPAddress") or meta.get("wanIp") or "",
+        "wanMask": wan.get("SubnetMask") or meta.get("wanMask") or "",
+        "wanGateway": wan.get("GateWay") or meta.get("wanGateway") or "",
+        "wanDns1": wan.get("DNS1") or meta.get("wanDns1") or "",
+        "wanDns2": wan.get("DNS2") or meta.get("wanDns2") or "",
+        "pppoeUser": str(wan.get("UserName") or wan.get("username") or "").strip(),
+        "pppoePass": str(wan.get("Password") or wan.get("password") or "").strip(),
+        "topologyPeerCount": len(topo_peers),
+        "topologyPeers": topo_peers,
+        "untouchedViolations": violations,
     }
+    _meta_set(sim_id, session_key, raw, patch_only={
+        "ssid": raw["ssid"],
+        "ssid5g": raw["ssid5g"],
+        "password": key_pass_2g,
+        "password5g": key_pass_5g,
+    })
     return _to_frontend_contract(raw)
+
+
+def _ax3000c_unique_mac(preferred: str, used: set[str], fallback_prefix: str, idx: int) -> str:
+    cand = str(preferred or "").strip().upper()
+    if re.match(r"^[0-9A-F]{2}(:[0-9A-F]{2}){5}$", cand) and cand not in used:
+        used.add(cand)
+        return cand
+    for step in range(idx, idx + 64):
+        alt = f"{fallback_prefix}:{(0x60 + step) & 0xFF:02X}".upper()
+        if alt not in used:
+            used.add(alt)
+            return alt
+    alt = f"5C:1A:6F:C3:A2:{idx & 0xFF:02X}"
+    used.add(alt)
+    return alt
+
+
+def _build_ax3000c_easymesh_topo(kho, cfg: dict[str, Any], is_router_wan: bool = False) -> None:
+    """Populate AX3000C V2 network.topology & data_repo.data_element.get for EasyMesh Topo (vis-network).
+
+    Matches firmware 0.5.3 chunk-60de137c parser:
+    - Controller node has no `backhaul` key -> rendered as `type: "router"` (`AP-AX3000CV2` icon).
+    - Agent/Extender node has `backhaul` object:
+      * Mesh LAN: `{"connect_method": "eth1.5", "mac": <ctrl_mac>, "mac_connected": <agent_mac>}`
+        -> solid line (`dashes: false`) + `Link Rate: 1000Mbps`.
+      * Mesh Wi-Fi: `{"connect_method": "ath1", "mac": <ctrl_mac>, "mac_connected": <agent_bh_mac>}`
+        -> dashed line (`dashes: true`).
+    """
+    existing_topo = copy.deepcopy(kho.doc("network.topology") or {})
+    default_entry = next(
+        (v for v in existing_topo.values() if isinstance(v, dict) and isinstance(v.get("info"), dict)),
+        None,
+    ) or {
+        "mapdevice": "true",
+        "ip": cfg.get("lanIp") or "192.168.100.1",
+        "hostname": "AP-AX3000CV2-0A91",
+        "modelname": "AP-AX3000CV2",
+        "ipv6": ["fd00:db80::1"],
+        "info": {
+            "ath0": {"mac": "94:F7:17:24:0A:99", "medium_type": "WLAN2G"},
+            "ath1": {"mac": "94:F7:17:24:0A:A1", "medium_type": "WLAN5G"},
+            "ath11": {"mac": "94:F7:17:24:0A:A4", "medium_type": "WLAN5G"},
+            "eth1.5": {"mac": "94:F7:17:24:0A:90", "medium_type": "ETHER", "speed": "1000"},
+            "eth1.6": {"mac": "94:F7:17:24:0A:90", "medium_type": "ETHER", "speed": "0"},
+            "eth1.7": {"mac": "94:F7:17:24:0A:90", "medium_type": "ETHER", "speed": "0"},
+        },
+        "legacy_devices": [],
+        "radio": [
+            {"mac": "94:F7:17:24:0A:98", "type": "WLAN2G", "channel": "11", "bandwidth": "20MHz"},
+            {"mac": "94:F7:17:24:0A:A0", "type": "WLAN5G", "channel": "52", "bandwidth": "160MHz"},
+        ],
+    }
+
+    em_enabled = True if cfg.get("meshEnabled") is None else bool(cfg.get("meshEnabled"))
+    used_macs: set[str] = set()
+    ctrl_mac = _ax3000c_unique_mac(
+        cfg.get("rootMac") or "94:F7:17:24:0A:90",
+        used_macs,
+        "94:F7:17:24:0A",
+        0,
+    )
+    ctrl_ip = str(cfg.get("rootLanIp") or cfg.get("lanIp") or "192.168.100.1").strip()
+    ctrl_host = str(cfg.get("rootHostname") or "AP-AX3000CV2-0A91").strip()
+    ctrl_serial = str(cfg.get("rootSerial") or "FPTT24C1E15F").strip()
+
+    all_clients = [c for c in (cfg.get("clients") or []) if isinstance(c, dict)]
+    raw_agents = [] if (is_router_wan or not em_enabled) else [
+        sl for sl in (cfg.get("meshNodes") or [])
+        if isinstance(sl, dict) and str(sl.get("role") or "Agent").strip().lower() != "router"
+    ]
+
+    def _make_legacy_device(c: dict[str, Any], parent_mac: str) -> dict[str, Any]:
+        is_wifi_c = "wi-fi" in str(c.get("band") or "").lower() or "ghz" in str(c.get("band") or "").lower()
+        return {
+            "connect_interface": parent_mac,
+            "connect_method": "ath1" if is_wifi_c else "eth1.5",
+            "mac": str(c.get("mac") or "D8:43:AE:2E:65:45").upper(),
+            "ip": str(c.get("ip") or ""),
+            "hostname": str(c.get("name") or "Client"),
+            "ipv6": [],
+        }
+
+    def _make_info(dev_mac: str, speed_str: str = "1000") -> dict[str, Any]:
+        info = copy.deepcopy(default_entry.get("info") or {})
+        info["eth1.5"] = {"mac": dev_mac, "medium_type": "ETHER", "speed": speed_str}
+        info.setdefault("ath0", {"mac": dev_mac, "medium_type": "WLAN2G"})
+        info.setdefault("ath1", {"mac": dev_mac, "medium_type": "WLAN5G"})
+        return info
+
+    assigned_client_ids: set[str] = set()
+    agent_entries: list[tuple[str, dict[str, Any], str]] = []
+
+    for idx, sl in enumerate(raw_agents, start=1):
+        ag_mac = _ax3000c_unique_mac(str(sl.get("mac") or ""), used_macs, "5C:1A:6F:C3:A2", idx)
+        ag_name = str(sl.get("name") or f"AP-AX3000CV2-{idx + 1}")
+        ag_ip = str(sl.get("ip") or cfg.get("lanIp") or "192.168.100.200")
+        ag_model_raw = str(sl.get("model") or "AP-AX3000CV2")
+        ag_model = "AP-AX3000CV2" if "AX3000C" in ag_model_raw.upper() else ag_model_raw
+        bh_str = str(sl.get("backhaul") or "Ethernet")
+        is_wifi_bh = "wi-fi" in bh_str.lower() or "wifi" in bh_str.lower()
+        speed_str = str(int(sl.get("speed_mbps") or 1000))
+
+        ag_clients = []
+        for ci, c in enumerate(all_clients):
+            cid = str(c.get("nodeId") or c.get("mac") or ci)
+            ct = str(c.get("connected_to") or "")
+            if ct and (ct == ag_name or ct == str(sl.get("nodeId") or "")):
+                ag_clients.append(_make_legacy_device(c, ag_mac))
+                assigned_client_ids.add(cid)
+
+        ag_entry = copy.deepcopy(default_entry)
+        ag_entry["mapdevice"] = "true"
+        ag_entry["ip"] = ag_ip
+        ag_entry["hostname"] = ag_name
+        ag_entry["modelname"] = ag_model
+        ag_entry["ipv6"] = [f"fd00:db80::{10 + idx}"]
+        ag_entry["info"] = _make_info(ag_mac, speed_str)
+        ag_entry["legacy_devices"] = ag_clients
+        ag_entry["backhaul"] = {
+            "connect_method": "ath1" if is_wifi_bh else "eth1.5",
+            "mac": ctrl_mac,
+            "mac_connected": ag_mac,
+        }
+        ag_serial = str(sl.get("serial") or f"FPTT24C1A{idx:03X}")
+        agent_entries.append((ag_mac, ag_entry, ag_serial))
+
+    ctrl_clients = []
+    for ci, c in enumerate(all_clients):
+        cid = str(c.get("nodeId") or c.get("mac") or ci)
+        if cid not in assigned_client_ids:
+            ctrl_clients.append(_make_legacy_device(c, ctrl_mac))
+
+    ctrl_entry = copy.deepcopy(default_entry)
+    ctrl_entry.pop("backhaul", None)
+    ctrl_entry["mapdevice"] = "true"
+    ctrl_entry["ip"] = ctrl_ip
+    ctrl_entry["hostname"] = ctrl_host
+    ctrl_entry["modelname"] = "AP-AX3000CV2"
+    ctrl_entry["ipv6"] = ["fd00:db80::1"]
+    ctrl_entry["info"] = _make_info(ctrl_mac, "1000")
+    ctrl_entry["legacy_devices"] = ctrl_clients
+
+    topo: dict[str, Any] = {ctrl_mac: ctrl_entry}
+    for ag_mac, ag_entry, _ in agent_entries:
+        topo[ag_mac] = ag_entry
+    kho.ghi("network.topology", topo)
+
+    # Keep data_repo.data_element.get synchronized with topology for EasyMesh Topo vis-network
+    de_doc = copy.deepcopy(kho.doc("data_repo.data_element.get") or {})
+    if isinstance(de_doc.get("data"), list) and de_doc["data"]:
+        wfa_net = de_doc["data"][0].get("wfa-dataelements:Network")
+        if isinstance(wfa_net, dict):
+            orig_list = wfa_net.get("DeviceList") or []
+            base_dev = copy.deepcopy(orig_list[0]) if orig_list else {
+                "ID": ctrl_mac.lower(),
+                "NumberOfRadios": 2,
+                "CollectionInterval": 60000,
+                "SerialNumber": ctrl_serial,
+                "SoftwareVersion": "0.5.3",
+                "ExecutionEnv": "Linux",
+                "MultiAPCapabilities": "0x0",
+                "RadioList": [],
+            }
+            for r_idx, radio in enumerate(base_dev.get("RadioList") or []):
+                if not isinstance(radio, dict):
+                    continue
+                for bss in (radio.get("BSSList") or []):
+                    if isinstance(bss, dict):
+                        bss["SSID"] = cfg["ssid"] if r_idx == 0 else cfg["ssid5g"]
+
+            ctrl_dev = copy.deepcopy(base_dev)
+            ctrl_dev["ID"] = ctrl_mac.lower()
+            ctrl_dev["SerialNumber"] = ctrl_serial
+
+            dev_list = [ctrl_dev]
+            for ag_mac, _, ag_serial in agent_entries:
+                ag_dev = copy.deepcopy(base_dev)
+                ag_dev["ID"] = ag_mac.lower()
+                ag_dev["SerialNumber"] = ag_serial
+                dev_list.append(ag_dev)
+
+            wfa_net["ControllerID"] = ctrl_mac.lower()
+            wfa_net["NumberOfDevices"] = len(dev_list)
+            wfa_net["DeviceList"] = dev_list
+            kho.ghi("data_repo.data_element.get", de_doc)
 
 
 def _write_ax3000c(mod, session_key: str, cfg: dict[str, Any], mode: str) -> None:
@@ -905,10 +1271,32 @@ def _write_ax3000c(mod, session_key: str, cfg: dict[str, Any], mode: str) -> Non
             wan_sec["gateway"] = cfg["wanGateway"]
             wan_sec["proto"] = "dhcp"
             kho.ghi("data_repo.weboui.wan_get", wan_doc)
+            _build_ax3000c_easymesh_topo(kho, cfg, is_router_wan=True)
             _meta_set("sim_ax3000c", sk, cfg, {
                 "wanIp": cfg["wanIp"], "wanMask": cfg["wanMask"], "wanGateway": cfg["wanGateway"],
                 "wanDns1": cfg["wanDns1"], "wanDns2": cfg["wanDns2"], "opMode": cfg.get("opMode") or "router",
             })
+            continue
+
+        if mode == "source" and (cfg.get("webguiTouched") or cfg.get("requireExplicitMeshMode")):
+            _build_ax3000c_easymesh_topo(kho, cfg, is_router_wan=False)
+            if cfg["clients"]:
+                leases = [
+                    {
+                        "expires": _parse_int(cfg["dhcpLease"], 86400),
+                        "macaddr": c.get("mac") or "00:00:00:00:00:00",
+                        "ipaddr": c.get("ip") or "",
+                        "hostname": c.get("name") or "Client",
+                    }
+                    for c in cfg["clients"]
+                ]
+                arps = [
+                    {"device": "br-lan", "macaddr": c.get("mac") or "", "ipaddr": c.get("ip") or ""}
+                    for c in cfg["clients"]
+                ]
+                kho.ghi("oui.network.dhcp_leases", {"leases": leases})
+                kho.ghi("oui.network.arp_table", {"entries": arps})
+            _meta_set("sim_ax3000c", sk, cfg)
             continue
 
         lan_doc = copy.deepcopy(kho.doc("data_repo.weboui.lan_get") or {"lan": {}})
@@ -924,15 +1312,33 @@ def _write_ax3000c(mod, session_key: str, cfg: dict[str, Any], mode: str) -> Non
 
         wifi_doc = copy.deepcopy(kho.doc("data_repo.weboui.wifi_get") or {"host": {"2G": {}, "5G": {}}})
         host = wifi_doc.setdefault("host", {})
-        is_sae = "1" if "WPA3" in cfg["security"] else "0"
-        enc = "none" if cfg["security"] == "Open" else "psk2+ccmp"
-        for band, b_ssid in (("2G", cfg["ssid"]), ("5G", cfg["ssid5g"])):
+        sec2g = _normalize_security(cfg.get("security2g") or cfg.get("security"))
+        sec5g = _normalize_security(cfg.get("security5g") or cfg.get("security"))
+        enc2g = "none" if sec2g == "Open" else "psk2+ccmp"
+        sae2g = "1" if "WPA3" in sec2g else "0"
+        enc5g = "none" if sec5g == "Open" else "psk2+ccmp"
+        sae5g = "1" if "WPA3" in sec5g else "0"
+        pwd2g = cfg.get("password") or "12345678"
+        pwd5g = cfg.get("password5g") or pwd2g
+        band_values_differ = (
+            cfg["ssid"] != cfg["ssid5g"]
+            or pwd2g != pwd5g
+            or enc2g != enc5g
+            or sae2g != sae5g
+            or bool(cfg.get("wifi2gDisabled", False)) != bool(cfg.get("wifi5gDisabled", False))
+        )
+        is_diff = bool(cfg.get("vapDiffMode")) or band_values_differ
+        for band, b_ssid, b_key, b_enc, b_sae, b_dis in (
+            ("2G", cfg["ssid"], pwd2g, enc2g, sae2g, bool(cfg.get("wifi2gDisabled", False))),
+            ("5G", cfg["ssid5g"], pwd5g, enc5g, sae5g, bool(cfg.get("wifi5gDisabled", False))),
+        ):
             b = host.setdefault(band, {})
-            b["disabled"] = False
+            b["disabled"] = b_dis
+            b["vap_diff_mode"] = is_diff
             b["ssid"] = b_ssid
-            b["key"] = cfg["password"]
-            b["encryption"] = enc
-            b["sae"] = is_sae
+            b["key"] = b_key
+            b["encryption"] = b_enc
+            b["sae"] = b_sae
         kho.ghi("data_repo.weboui.wifi_get", wifi_doc)
 
         adv_doc = copy.deepcopy(kho.doc("data_repo.weboui.wifiadv_get") or {"adv": {"2G": {}, "5G": {}}})
@@ -943,25 +1349,15 @@ def _write_ax3000c(mod, session_key: str, cfg: dict[str, Any], mode: str) -> Non
             b["htmode"] = _openwrt_htmode(cfg["bandwidth"], band == "5G")
         kho.ghi("data_repo.weboui.wifiadv_get", adv_doc)
 
+        em_enabled = True if cfg.get("meshEnabled") is None else bool(cfg.get("meshEnabled"))
         kho.ghi("network.wireless.easymesh.get", {
-            "MeshEnabled": True,
+            "MeshEnabled": em_enabled,
             "MeshRole": cfg["meshRole"],
             "MeshBand": "5G",
-            "MeshBSS": f"{cfg['ssid']}BH",
+            "MeshBSS": f"{cfg['ssid5g']}BH",
         })
 
-        if cfg["meshNodes"]:
-            topo = {}
-            for idx, sl in enumerate(cfg["meshNodes"]):
-                mac = str(sl.get("mac") or f"94:F7:17:24:0A:{10 + idx:02X}")
-                topo[mac] = {
-                    "mapdevice": "true",
-                    "ip": sl.get("ip") or "",
-                    "hostname": sl.get("name") or f"AP-{idx + 1}",
-                    "modelname": sl.get("model") or "Mesh-Node",
-                    "backhaul": sl.get("backhaul") or "Ethernet",
-                }
-            kho.ghi("network.topology", topo)
+        _build_ax3000c_easymesh_topo(kho, cfg, is_router_wan=False)
 
         if cfg["clients"]:
             leases = [
@@ -983,6 +1379,20 @@ def _write_ax3000c(mod, session_key: str, cfg: dict[str, Any], mode: str) -> Non
         _meta_set("sim_ax3000c", sk, cfg)
 
 
+def ensure_ax3000c_mesh_lesson_agent_default(session_key: str) -> None:
+    """Ensure an untouched AX3000CV2 node in a Mesh Lesson starts at MeshEnabled=True, MeshRole='Agent'."""
+    kho_mod = sys.modules.get("ax3000c_kho_cau_hinh") or importlib.import_module("simulators.sim_ax3000c.fw_053.src.ax3000c_kho_cau_hinh")
+    k_bare = session_key.replace("cookie:", "")
+    for sk in (k_bare, "cookie:" + k_bare) if k_bare else (session_key,):
+        kho = kho_mod._kho_cua_ktv(sk)
+        goc_dict = getattr(kho, "_goc", {}) or {}
+        if kho.doc_tho("network.wireless.easymesh.get") is goc_dict.get("network.wireless.easymesh.get"):
+            em_init = copy.deepcopy(goc_dict.get("network.wireless.easymesh.get") or {})
+            em_init["MeshEnabled"] = True
+            em_init["MeshRole"] = "Agent"
+            kho.ghi("network.wireless.easymesh.get", em_init)
+
+
 def _read_ax3000c(mod, session_key: str) -> dict[str, Any]:
     kho_mod = sys.modules.get("ax3000c_kho_cau_hinh") or importlib.import_module("simulators.sim_ax3000c.fw_053.src.ax3000c_kho_cau_hinh")
     k_bare = session_key.replace("cookie:", "")
@@ -991,22 +1401,125 @@ def _read_ax3000c(mod, session_key: str) -> dict[str, Any]:
         kho_c = kho_mod._kho_cua_ktv("cookie:" + k_bare)
         if (kho_c.doc("data_repo.weboui.wifi_get") or {}).get("host") or (kho_c.doc("data_repo.weboui.lan_get") or {}).get("lan"):
             kho = kho_c
+    # Prefer the kho instance that has actual user ubus changes if cookie:k_bare was bound by Handler
+    kho_c_cand = kho_mod._kho_cua_ktv("cookie:" + k_bare)
+    if (kho_c_cand.doc("uci.cay_mtime") or kho_c_cand.doc("uci.cay_mtime_cham")) and not (kho.doc("uci.cay_mtime") or kho.doc("uci.cay_mtime_cham")):
+        kho = kho_c_cand
+
     meta = _meta_get("sim_ax3000c", k_bare) or _meta_get("sim_ax3000c", session_key)
     lan = (kho.doc("data_repo.weboui.lan_get") or {}).get("lan", {})
     wan = (kho.doc("data_repo.weboui.wan_get") or {}).get("wan", {})
-    host = (kho.doc("data_repo.weboui.wifi_get") or {}).get("host", {})
+    wifi_doc = kho.doc("data_repo.weboui.wifi_get") or {}
+    host = wifi_doc.get("host", {})
     adv = (kho.doc("data_repo.weboui.wifiadv_get") or {}).get("adv", {})
     w2 = host.get("2G", {})
     w5 = host.get("5G", {})
     a5 = adv.get("5G", {})
     a2 = adv.get("2G", {})
     em = kho.doc("network.wireless.easymesh.get") or {}
-    sec = "Open" if w2.get("encryption") == "none" else ("WPA2/WPA3-PSK" if str(w2.get("sae")) == "1" else "WPA2-PSK")
+    sec2 = "Open" if w2.get("encryption") == "none" else ("WPA2/WPA3-PSK" if str(w2.get("sae")) == "1" else "WPA2-PSK")
+    sec5 = "Open" if w5.get("encryption") == "none" else ("WPA2/WPA3-PSK" if str(w5.get("sae")) == "1" else "WPA2-PSK")
+
+    cig = kho.doc("data_repo.cigext.cay_cau_hinh") or {}
+    uci = kho.doc("uci.cay_cau_hinh") or {}
+    goc_dict = getattr(kho, "_goc", {}) or {}
+    goc_cig = goc_dict.get("data_repo.cigext.cay_cau_hinh") or {}
+    goc_uci = goc_dict.get("uci.cay_cau_hinh") or {}
+
+    cig_wan = (cig.get("network") or {}).get("wan") or {}
+    uci_wan = (uci.get("network") or {}).get("wan") or {}
+    pppoe_user = str(cig_wan.get("username") or uci_wan.get("username") or wan.get("username") or "").strip()
+    pppoe_pass = str(cig_wan.get("password") or uci_wan.get("password") or wan.get("password") or "").strip()
+    wan_proto = str(cig_wan.get("proto") or uci_wan.get("proto") or wan.get("proto") or "pppoe").strip()
+
+    # Check untouched out-of-scope configurations against factory defaults (_goc)
+    violations: list[str] = []
+    cur_lan_uci = (uci.get("network") or {}).get("lan") or {}
+    goc_lan_uci = (goc_uci.get("network") or {}).get("lan") or {}
+    cur_dhcp_uci = (uci.get("dhcp") or {}).get("lan") or {}
+    goc_dhcp_uci = (goc_uci.get("dhcp") or {}).get("lan") or {}
+    cur_lan_cig = (cig.get("network") or {}).get("lan") or {}
+    goc_lan_cig = (goc_cig.get("network") or {}).get("lan") or {}
+    cur_dhcp_cig = (cig.get("dhcp") or {}).get("lan") or {}
+    goc_dhcp_cig = (goc_cig.get("dhcp") or {}).get("lan") or {}
+
+    if (
+        cur_lan_uci.get("ipaddr") != goc_lan_uci.get("ipaddr")
+        or cur_lan_uci.get("netmask") != goc_lan_uci.get("netmask")
+        or cur_dhcp_uci.get("start") != goc_dhcp_uci.get("start")
+        or cur_dhcp_uci.get("limit") != goc_dhcp_uci.get("limit")
+        or cur_dhcp_uci.get("ignore") != goc_dhcp_uci.get("ignore")
+        or cur_lan_cig.get("ipaddr") != goc_lan_cig.get("ipaddr")
+        or cur_dhcp_cig.get("start") != goc_dhcp_cig.get("start")
+    ):
+        violations.append("Cấu hình LAN / DHCP")
+
+    if (
+        str(cur_lan_cig.get("dns_custom_enable") or "0") == "1"
+        or cur_lan_uci.get("dns") != goc_lan_uci.get("dns")
+        or cur_lan_cig.get("dns") != goc_lan_cig.get("dns")
+    ):
+        violations.append("Cấu hình DNS LAN")
+
+    goc_guest = ((goc_dict.get("data_repo.weboui.wifi_get") or {}).get("guest") or {})
+    cur_guest = wifi_doc.get("guest") or {}
+    if cur_guest != goc_guest:
+        violations.append("Cấu hình Wi-Fi Guest / IoT")
+
+    if (kho.doc("data_repo.weboui.portfwd_get") or {}) != (goc_dict.get("data_repo.weboui.portfwd_get") or {}):
+        violations.append("Cấu hình Port Forwarding")
+
+    if (kho.doc("data_repo.weboui.dmz_get") or {}) != (goc_dict.get("data_repo.weboui.dmz_get") or {}):
+        violations.append("Cấu hình DMZ")
+
+    if (kho.doc("data_repo.weboui.dhcp_reservation_get") or {}) != (goc_dict.get("data_repo.weboui.dhcp_reservation_get") or {}):
+        violations.append("Cấu hình DHCP Reservation")
+
+    if (kho.doc("data_repo.weboui.parentctrl_get") or {}) != (goc_dict.get("data_repo.weboui.parentctrl_get") or {}):
+        violations.append("Cấu hình Parental Control")
+
+    if (kho.doc("data_repo.weboui.websitefilter_get") or {}) != (goc_dict.get("data_repo.weboui.websitefilter_get") or {}):
+        violations.append("Cấu hình Website Filter")
+
+    # Topology peers in network.topology & data_repo.data_element.get
+    topo_doc = kho.doc("network.topology") or {}
+    topo_peers = [
+        str(v.get("hostname") or k)
+        for k, v in topo_doc.items()
+        if isinstance(v, dict) and isinstance(v.get("backhaul"), dict)
+    ]
+    de_doc = kho.doc("data_repo.data_element.get") or {}
+    wfa_num = 0
+    if isinstance(de_doc.get("data"), list) and de_doc["data"]:
+        wfa_net = de_doc["data"][0].get("wfa-dataelements:Network")
+        if isinstance(wfa_net, dict):
+            wfa_num = int(wfa_net.get("NumberOfDevices") or 0)
+    topo_peer_count = max(len(topo_peers), max(0, wfa_num - 1))
+
+    goc_em = goc_dict.get("network.wireless.easymesh.get") or {}
+    webgui_touched = bool(
+        kho.doc("uci.cay_mtime")
+        or kho.doc("uci.cay_mtime_cham")
+        or em.get("MeshRole") != goc_em.get("MeshRole")
+        or em.get("MeshEnabled") != goc_em.get("MeshEnabled")
+    )
+
+    vap_raw_2 = w2.get("vap_diff_mode", False)
+    vap_raw_5 = w5.get("vap_diff_mode", False)
+    is_vap_diff = (str(vap_raw_2).lower() in ("1", "true")) or (str(vap_raw_5).lower() in ("1", "true"))
+
     raw = {
-        "ssid": w2.get("ssid") or "FPT Telecom",
-        "ssid5g": w5.get("ssid") or w2.get("ssid") or "FPT Telecom",
-        "password": w2.get("key") or "12345678",
-        "security": meta.get("security") or sec,
+        **meta,
+        "ssid": w2.get("ssid") or "FPT Telecom-0A91",
+        "ssid5g": w5.get("ssid") or w2.get("ssid") or "FPT Telecom-0A91",
+        "password": w2.get("key") or "24c1e15f",
+        "password5g": w5.get("key") or w2.get("key") or "24c1e15f",
+        "security": sec2,
+        "security2g": sec2,
+        "security5g": sec5,
+        "vapDiffMode": is_vap_diff,
+        "wifi2gDisabled": str(w2.get("disabled", False)).lower() in ("1", "true"),
+        "wifi5gDisabled": str(w5.get("disabled", False)).lower() in ("1", "true"),
         "channel": str(a2.get("channel") or "auto"),
         "bandwidth": meta.get("bandwidth") or _normalize_bandwidth(a5.get("htmode") or a2.get("htmode")),
         "lanIp": lan.get("ipaddr") or "192.168.100.1",
@@ -1019,8 +1532,15 @@ def _read_ax3000c(mod, session_key: str) -> dict[str, Any]:
         "wanIp": wan.get("ipaddr") or "",
         "wanMask": wan.get("netmask") or "",
         "wanGateway": wan.get("gateway") or "",
-        "meshRole": em.get("MeshRole") or "Agent",
-        **meta,
+        "pppoeUser": pppoe_user,
+        "pppoePass": pppoe_pass,
+        "wanProto": wan_proto,
+        "meshEnabled": bool(em.get("MeshEnabled", True)),
+        "meshRole": str(em.get("MeshRole") or "Agent"),
+        "topologyPeerCount": topo_peer_count,
+        "topologyPeers": topo_peers,
+        "untouchedViolations": violations,
+        "webguiTouched": webgui_touched,
     }
     return _to_frontend_contract(raw)
 
@@ -1178,6 +1698,8 @@ def _read_prplos_be6500(sim_id: str, mod, session_key: str) -> dict[str, Any]:
         "wanMask": wan_if.get("mask") or "",
         "wanGateway": wan_if.get("gateway") or "",
         "wanDns1": (wan_obj.get("dnsServers") or [""])[0] if wan_obj.get("dnsServers") else "",
+        "pppoeUser": str((wan_if.get("pppoe") or {}).get("username") or wan_if.get("username") or "").strip(),
+        "pppoePass": str((wan_if.get("pppoe") or {}).get("password") or wan_if.get("password") or "").strip(),
         "meshRole": em.get("role") or "Agent",
         **meta,
     }
@@ -1231,6 +1753,8 @@ def _read_ac1000f(mod, session_key: str) -> dict[str, Any]:
         "dns2": st.get("SecondDns") or "8.8.8.8",
         "wanIp": st.get("wan_ipaddr") or "",
         "wanGateway": st.get("wan_gateway") or "",
+        "pppoeUser": str(st.get("wan_PPPUsername") or "").strip(),
+        "pppoePass": str(st.get("wan_PPPPassword") or "").strip(),
         **meta,
     }
     return _to_frontend_contract(raw)
@@ -1252,14 +1776,29 @@ def _write_ax3000hv2(mod, session_key: str, cfg: dict[str, Any], mode: str) -> N
             })
             return
 
+        def _to_hv2_auth(sec_val: str, existing: str = "") -> str:
+            s = _normalize_security(sec_val)
+            if s == "Open":
+                return "OPEN"
+            if s == "WPA3-SAE":
+                return "WPA3PSK"
+            if s == "WPA2/WPA3-PSK":
+                return "WPA2PSKWPA3PSK"
+            if str(sec_val or "").strip().upper() in ("WPAPSK", "WPA-PSK"):
+                return "WPAPSK"
+            if existing in ("WPA2PSK", "WPAPSKWPA2PSK"):
+                return existing
+            return "WPAPSKWPA2PSK"
+
         st["ESSID"] = cfg["ssid"]
         st["ESSID_5g"] = cfg["ssid5g"]
-        st["wifi5SSid_2G"] = cfg["ssid"]
-        st["wifi5SSid_5G"] = cfg["ssid5g"]
         st["PreSharedKey"] = cfg["password"]
-        st["PreSharedKey_5g"] = cfg["password"]
-        st["wifi5Pwd_2G"] = cfg["password"]
-        st["wifi5Pwd_5G"] = cfg["password"]
+        st["PreSharedKey1"] = cfg["password"]
+        st["PreSharedKey_5g"] = cfg.get("password5g") or cfg["password"]
+        st["WEP_Selection"] = _to_hv2_auth(cfg.get("security2g") or cfg.get("security") or "", str(st.get("WEP_Selection") or ""))
+        st["WEP_Selection_5g"] = _to_hv2_auth(cfg.get("security5g") or cfg.get("security") or "", str(st.get("WEP_Selection_5g") or ""))
+        st["ESSID_HIDE_Selection"] = "1" if cfg.get("hideSsid2g") else "0"
+        st["ESSID_HIDE_Selection_5g"] = "1" if cfg.get("hideSsid5g") else "0"
         st["uiViewIPAddr"] = cfg["lanIp"]
         st["uiViewNetMask"] = cfg["netmask"]
         st["StartIp"] = cfg["dhcpStart"]
@@ -1268,6 +1807,74 @@ def _write_ax3000hv2(mod, session_key: str, cfg: dict[str, Any], mode: str) -> N
         st["dnsTypeRadio"] = "1"
         st["PrimaryDns"] = cfg["dns1"]
         st["SecondDns"] = cfg["dns2"]
+
+        if "meshEnabled" in cfg and cfg["meshEnabled"] is not None:
+            st["mesh_active"] = "1" if bool(cfg["meshEnabled"]) else "0"
+        elif "mesh_active" not in st:
+            st["mesh_active"] = "1"
+
+        if cfg.get("rootMac"):
+            st["_mesh_root_mac"] = str(cfg["rootMac"]).lower()
+        if cfg.get("rootHostname"):
+            st["_mesh_root_hostname"] = str(cfg["rootHostname"])
+
+        # Populate live D3 Mesh Topology agents for mesh_topo.asp
+        mesh_enabled = str(st.get("mesh_active", "1")) != "0"
+        agents_out = []
+        if mesh_enabled and isinstance(cfg.get("meshNodes"), list):
+            for sl in cfg["meshNodes"]:
+                if not isinstance(sl, dict):
+                    continue
+                if str(sl.get("role") or "Agent").lower() != "agent":
+                    continue
+                bh_raw = str(sl.get("backhaul") or "Ethernet").lower()
+                is_wifi = ("wi-fi" in bh_raw or "wifi" in bh_raw or "5g" in bh_raw or "wlan" in bh_raw)
+                bh_type = "5G" if is_wifi else "Ethernet"
+                rssi_val = str(sl.get("rssi", -55)) if is_wifi else "N/A"
+                phy_val = str(sl.get("speed_mbps", 2401)) if is_wifi else "N/A"
+                ag_clients = [
+                    {
+                        "devname": str(c.get("name") or "Client"),
+                        "mac": str(c.get("mac") or "d8:43:ae:2e:65:45").lower(),
+                        "ip": str(c.get("ip") or ""),
+                        "medium": "5G" if "5g" in str(c.get("band") or "").lower() else "eth",
+                        "rssi": int(c.get("rssi") or 0),
+                        "phyrate": str(c.get("rate_mbps") or "1000"),
+                        "roamtime": "--",
+                        "upstream": "0",
+                        "downstream": "31",
+                    }
+                    for c in (cfg.get("clients") or [])
+                    if isinstance(c, dict) and str(c.get("connected_to") or "") == str(sl.get("name") or "")
+                ]
+                agents_out.append({
+                    "Role": "02",
+                    "Distance": "1",
+                    "Mac": str(sl.get("mac") or "30:60:0a:db:d5:8f").lower(),
+                    "IP": str(sl.get("ip") or "192.168.1.100"),
+                    "HostName": str(sl.get("name") or sl.get("model") or "AP-AX3000CV2"),
+                    "BhType": bh_type,
+                    "RSSI": rssi_val,
+                    "BhPhyRate": phy_val,
+                    "assocTime": str(sl.get("assocTime") or ("00:14:58" if is_wifi else "")),
+                    "StaInfo": ag_clients,
+                })
+        st["_mesh_topo_agents"] = agents_out
+        st["_mesh_root_clients"] = [
+            {
+                "devname": str(c.get("name") or "Client"),
+                "mac": str(c.get("mac") or "d8:43:ae:2e:65:45").lower(),
+                "ip": str(c.get("ip") or ""),
+                "medium": "5G" if "5g" in str(c.get("band") or "").lower() else "eth",
+                "rssi": int(c.get("rssi") or 0),
+                "phyrate": str(c.get("rate_mbps") or "1000"),
+                "roamtime": "--",
+                "upstream": "0",
+                "downstream": "31",
+            }
+            for c in (cfg.get("clients") or [])
+            if isinstance(c, dict)
+        ]
     _meta_set("sim_ax3000hv2", session_key, cfg)
 
 
@@ -1276,20 +1883,45 @@ def _read_ax3000hv2(mod, session_key: str) -> dict[str, Any]:
     meta = _meta_get("sim_ax3000hv2", session_key)
     start_ip = st.get("StartIp") or "192.168.1.2"
     end_ip = _end_ip_from_pool_size(start_ip, st.get("PoolSize", 100)) or "192.168.1.200"
+    sec2g = _normalize_security(st.get("WEP_Selection") or meta.get("security2g") or meta.get("security") or "WPAPSKWPA2PSK")
+    sec5g = _normalize_security(st.get("WEP_Selection_5g") or meta.get("security5g") or sec2g)
+    agents = st.get("_mesh_topo_agents") or []
+    topo_peers = [str(a.get("HostName") or a.get("IP") or "Agent") for a in agents if isinstance(a, dict)]
+    violations: list[str] = []
+    if (st.get("uiViewIPAddr") and st.get("uiViewIPAddr") != "192.168.1.1") or (st.get("uiViewNetMask") and st.get("uiViewNetMask") != "255.255.255.0") or str(st.get("dhcpTypeRadio", "1")) == "0":
+        violations.append("Cấu hình LAN / DHCP")
+    if st.get("PrimaryDns") == "8.8.8.8" and st.get("SecondDns") == "8.8.4.4":
+        violations.append("Cấu hình DNS LAN")
+    if str(st.get("ESSID_IOT_Enable", "0")) == "1" or str(st.get("ESSID_IOT", "")).strip() == "FPT IoT":
+        violations.append("Cấu hình Wi-Fi IoT")
+    if st.get("virServ_list"):
+        violations.append("Cấu hình Port Forwarding")
     raw = {
-        "ssid": st.get("ESSID") or st.get("wifi5SSid_2G") or "FPT_Telecom",
-        "ssid5g": st.get("ESSID_5g") or st.get("ESSID") or "FPT_Telecom",
-        "password": st.get("PreSharedKey") or st.get("wifi5Pwd_2G") or "12345678",
-        "lanIp": st.get("uiViewIPAddr") or "192.168.1.1",
-        "netmask": st.get("uiViewNetMask") or "255.255.255.0",
+        **meta,
+        "ssid": st.get("ESSID") or meta.get("ssid") or "FPT Telecom-1691",
+        "ssid5g": st.get("ESSID_5g") or st.get("ESSID") or meta.get("ssid5g") or "FPT Telecom-1691",
+        "password": st.get("PreSharedKey") or meta.get("password") or "24BA7659",
+        "password5g": st.get("PreSharedKey_5g") or st.get("PreSharedKey") or meta.get("password5g") or "24BA7659",
+        "security": sec2g,
+        "security2g": sec2g,
+        "security5g": sec5g,
+        "hideSsid2g": str(st.get("ESSID_HIDE_Selection", "0")) == "1",
+        "hideSsid5g": str(st.get("ESSID_HIDE_Selection_5g", "0")) == "1",
+        "lanIp": st.get("uiViewIPAddr") or meta.get("lanIp") or "192.168.1.1",
+        "netmask": st.get("uiViewNetMask") or meta.get("netmask") or "255.255.255.0",
         "dhcpStart": start_ip,
         "dhcpEnd": meta.get("dhcpEnd") or end_ip,
-        "dhcpLease": str(st.get("dhcp_LeaseTime") or "86400"),
-        "dns1": st.get("PrimaryDns") or "192.168.1.1",
-        "dns2": st.get("SecondDns") or "8.8.8.8",
-        "wanIp": st.get("wan_ipaddr") or "",
-        "wanGateway": st.get("wan_gateway") or "",
-        **meta,
+        "dhcpLease": str(st.get("dhcp_LeaseTime") or meta.get("dhcpLease") or "86400"),
+        "dns1": st.get("PrimaryDns") or meta.get("dns1") or "192.168.1.1",
+        "dns2": st.get("SecondDns") or meta.get("dns2") or "8.8.8.8",
+        "wanIp": st.get("wan_ipaddr") or meta.get("wanIp") or "",
+        "wanGateway": st.get("wan_gateway") or meta.get("wanGateway") or "",
+        "pppoeUser": str(st.get("wan_PPPUsername") or st.get("pppUserName") or st.get("username") or "").strip(),
+        "pppoePass": str(st.get("wan_PPPPassword") or st.get("pppPassword") or st.get("password") or "").strip(),
+        "meshEnabled": str(st.get("mesh_active", "1")) != "0",
+        "topologyPeerCount": len(topo_peers),
+        "topologyPeers": topo_peers,
+        "untouchedViolations": violations,
     }
     return _to_frontend_contract(raw)
 
@@ -1464,18 +2096,66 @@ def _write_ax1800gz(mod, session_key: str, cfg: dict[str, Any], mode: str) -> No
         "dns_source": "1", "dns1": cfg["dns1"], "dns2": cfg["dns2"],
     })
     sec_fields = _zte_sec_tuple(cfg["security"])
+    sec5_fields = _zte_sec_tuple(cfg.get("security5g") or cfg["security"])
     for sect, band_ssid, ch in (("wlan24", cfg["ssid"], cfg["channel"]), ("wlan5", cfg["ssid5g"], cfg["channel5g"])):
         w = copy.deepcopy(kho.doc(sect) or {})
+        s_fields = sec5_fields if sect == "wlan5" else sec_fields
         w["enable"] = "1"
         w["ssid"] = band_ssid
-        w["password"] = cfg["password"]
-        w["security"] = cfg["security"]
-        w["beacon_type"] = sec_fields["BeaconType"]
-        w["auth_11i"] = sec_fields["11iAuthMode"]
-        w["encrypt_11i"] = sec_fields["11iEncryptType"]
+        w["password"] = cfg.get("password5g") if (sect == "wlan5" and cfg.get("password5g")) else cfg["password"]
+        w["security"] = cfg.get("security5g") if (sect == "wlan5" and cfg.get("security5g")) else cfg["security"]
+        w["beacon_type"] = s_fields["BeaconType"]
+        w["auth_11i"] = s_fields["11iAuthMode"]
+        w["encrypt_11i"] = s_fields["11iEncryptType"]
         w["channel"] = ch
         w["bandwidth"] = cfg["bandwidth"]
         kho.ghi(sect, w)
+
+    # EasyMesh Topology for AX1800GZ
+    em_enabled = True if cfg.get("meshEnabled") is None else bool(cfg.get("meshEnabled"))
+    slaves_raw = [] if not em_enabled else [
+        sl for sl in (cfg.get("meshNodes") or [])
+        if isinstance(sl, dict) and str(sl.get("role") or "").strip().lower() != "router"
+    ]
+    slave_entries = []
+    for idx, sl in enumerate(slaves_raw, start=1):
+        sl_name = str(sl.get("name") or "AX3000CV2")
+        dev_name = "AX3000CV2" if "AX3000C" in str(sl.get("model") or sl_name).upper() else str(sl.get("model") or sl_name)
+        sl_ip = str(sl.get("ip") or sl.get("lanIp") or "192.168.1.200")
+        sl_mac = str(sl.get("mac") or f"5C:1A:6F:C3:A2:{0x60 + idx:02X}")
+        sl_access = "ETH"
+        bh = str(sl.get("backhaul") or "Ethernet")
+        if "wi-fi" in bh.lower() or "wifi" in bh.lower():
+            sl_access = "2" if "5g" in bh.lower() else "1"
+        slave_entries.append({
+            "instID": f"MESH.SLAVE{idx}",
+            "DeviceName": dev_name,
+            "SoftwareVer": "0.5.3",
+            "MacAddr": sl_mac,
+            "IpAddr": sl_ip,
+            "AccessType": sl_access,
+            "LinkSpeed": str(int(sl.get("speed_mbps") or 1000)),
+            "BhStaDataUpBpsRate": "0",
+            "BhStaDataDownBpsRate": "0",
+            "BhStaRssi": "0",
+            "AffStaNum": "0"
+        })
+    master_entry = {
+        "instID": "MESH.CONTROLLER",
+        "DeviceName": "ZTE:F6600",
+        "SoftwareVer": "V9.0.11P2N15B",
+        "MacAddr": cfg.get("mac") or "94:87:e0:66:00:18",
+        "IpAddr": cfg.get("lanIp") or "192.168.1.1",
+        "AccessType": "Connecting",
+        "AffStaNum": "0",
+        "LinkSpeed": "0"
+    }
+    topo_data = {
+        "master": master_entry,
+        "slave": slave_entries,
+        "ad": {"MGET_INST_NUM": 0}
+    }
+    kho.ghi("topo_lua", topo_data)
     _meta_set("sim_ax1800gz", session_key, cfg)
 
 
@@ -1488,11 +2168,23 @@ def _read_ax1800gz(mod, session_key: str) -> dict[str, Any]:
     w5 = kho.doc("wlan5") or {}
     wans = kho.doc("wan_instances") or []
     w0 = wans[0] if isinstance(wans, list) and wans else {}
+    topo = kho.doc("topo_lua") or {}
+    slaves = topo.get("slave") or []
+    topo_peers = [str(s.get("DeviceName") or s.get("IpAddr") or "Agent") for s in slaves if isinstance(s, dict)]
+    violations: list[str] = []
+    if (lan.get("ip") and lan.get("ip") != "192.168.1.1") or (lan.get("mask") and lan.get("mask") != "255.255.255.0") or str(lan.get("dhcp_enable", "1")) == "0":
+        violations.append("Cấu hình LAN / DHCP")
+    if lan.get("dns1") == "8.8.8.8" or lan.get("dns2") == "8.8.4.4":
+        violations.append("Cấu hình DNS LAN")
     raw = {
+        **(meta or {}),
         "ssid": w2.get("ssid") or "FPT_AX1800GZ_2.4G",
         "ssid5g": w5.get("ssid") or w2.get("ssid") or "FPT_AX1800GZ_5G",
         "password": w2.get("password") or "12345678",
+        "password5g": w5.get("password") or w2.get("password") or "12345678",
         "security": _normalize_security(w2.get("security")),
+        "security2g": _normalize_security(w2.get("security")),
+        "security5g": _normalize_security(w5.get("security") or w2.get("security")),
         "channel": w2.get("channel") or "auto",
         "bandwidth": w5.get("bandwidth") or w2.get("bandwidth") or "80MHz",
         "lanIp": lan.get("ip") or "192.168.1.1",
@@ -1505,8 +2197,15 @@ def _read_ax1800gz(mod, session_key: str) -> dict[str, Any]:
         "dns2": lan.get("dns2") or "0.0.0.0",
         "wanIp": w0.get("IPAddress") or "",
         "wanGateway": w0.get("GateWay") or "",
-        **meta,
+        "pppoeUser": str(w0.get("UserName") or w0.get("username") or "").strip(),
+        "pppoePass": str(w0.get("Password") or w0.get("password") or "").strip(),
+        "wanNat": str(w0.get("IsNAT") if w0.get("IsNAT") is not None else "1"),
+        "wanVlan": str(w0.get("VlanEnable") if w0.get("VlanEnable") is not None else "0"),
+        "topologyPeerCount": len(topo_peers),
+        "topologyPeers": topo_peers,
+        "untouchedViolations": violations,
     }
+    _meta_set("sim_ax1800gz", session_key, raw)
     return _to_frontend_contract(raw)
 
 
@@ -1846,6 +2545,8 @@ def reset_node_backend(sim_id: str, session_key: str) -> None:
                 with lock:
                     if hasattr(mod, "_USER_STATES"):
                         mod._USER_STATES.pop(session_key, None)
+                    if hasattr(mod, "USER_STATES"):
+                        mod.USER_STATES.pop(session_key, None)
             elif sim_id == "sim_ac1000HI":
                 mod.kho.dat_phien_hien_tai(session_key)
                 mod.kho.dat_lai_factory()
@@ -1867,16 +2568,26 @@ def reset_node_backend(sim_id: str, session_key: str) -> None:
 # Graph / Topology Propagation (Gateway/Controller -> AP/Router B)
 # ---------------------------------------------------------------------------
 
-def _root_priority(node: dict[str, Any], source_node_id: str | None, order_idx: int) -> tuple:
+def _root_priority(
+    node: dict[str, Any],
+    source_node_id: str | None,
+    order_idx: int,
+    has_wan_uplink: bool = False,
+) -> tuple:
     cat = str(node.get("category") or "").lower()
+    role = str(node.get("role") or "").lower()
     fw = node.get("firmwareConfig") if isinstance(node.get("firmwareConfig"), dict) else {}
     sim_id = str(node.get("simId") or "").strip()
     op_mode = str(node.get("opMode") or fw.get("opMode") or "").lower()
     mesh_role = str(node.get("meshRole") or fw.get("meshRole") or "").lower()
 
     score = 0
+    if cat in ("infra", "core") or role == "core":
+        score -= 300
     if node.get("hasInternet") or node.get("isGateway"):
         score += 100
+    if has_wan_uplink and sim_id == "sim_ax3000c":
+        score += 60
     if cat == "gateway":
         score += 70
     elif cat == "router":
@@ -1895,9 +2606,28 @@ def _root_priority(node: dict[str, Any], source_node_id: str | None, order_idx: 
     elif sim_id in GATEWAY_DEFAULT_SIM_IDS and cat != "ap":
         score += 20
 
-    if source_node_id and node.get("id") == source_node_id and cat != "client" and op_mode not in ("ap", "agent", "bridge"):
+    if source_node_id and node.get("id") == source_node_id and cat not in ("client", "infra", "core") and role != "core" and op_mode not in ("ap", "agent", "bridge"):
         score += 12
     return (score, -order_idx)
+
+
+def _node_has_wan_uplink(
+    nid: str,
+    node_map: dict[str, dict[str, Any]],
+    adj: dict[str, list[tuple[str, dict[str, Any]]]],
+) -> bool:
+    """Return True if node `nid` has its WAN port wired to an upstream OLT/core/gateway/router."""
+    for peer_id, ln in adj.get(nid, []):
+        peer = node_map.get(peer_id) or {}
+        p_cat = str(peer.get("category") or "").lower()
+        p_role = str(peer.get("role") or "").lower()
+        if p_cat not in ("infra", "core", "gateway", "router") and p_role != "core":
+            continue
+        l_src = str(ln.get("srcId") or ln.get("fromNodeId") or ln.get("source") or "")
+        my_port = str(ln.get("srcPort") or ln.get("fromPort") or "") if l_src == nid else str(ln.get("tgtPort") or ln.get("toPort") or "")
+        if "WAN" in my_port.upper():
+            return True
+    return False
 
 
 def _edge_info(link: dict[str, Any]) -> tuple[str, str, dict[str, Any]] | None:
@@ -1975,8 +2705,12 @@ def sync_all_nodes_backend(
             sim_id = str(n.get("simId") or "")
             if sim_id in _ADAPTER_TABLE:
                 skey = make_node_session_key(base_ktv_id, nid)
-                if prefer_backend_source and nid == source_node_id:
-                    cfg = read_node_backend_config(sim_id, skey, n.get("firmwareConfig"))
+                req_explicit = bool(n.get("requireExplicitMeshMode") or (n.get("firmwareConfig") or {}).get("requireExplicitMeshMode"))
+                if sim_id == "sim_ax3000c" and req_explicit:
+                    ensure_ax3000c_mesh_lesson_agent_default(skey)
+                existing_b = read_node_backend_config(sim_id, skey, n.get("firmwareConfig")) if (req_explicit or sim_id == "sim_ax3000c") else {}
+                if (prefer_backend_source and nid == source_node_id) or req_explicit or existing_b.get("webguiTouched"):
+                    cfg = existing_b or read_node_backend_config(sim_id, skey, n.get("firmwareConfig"))
                 else:
                     fw = dict(n.get("firmwareConfig") or {})
                     if n.get("ip") and not fw.get("lanIp"):
@@ -1986,23 +2720,65 @@ def sync_all_nodes_backend(
                 sync_modes[nid] = "standalone"
             continue
 
+        # Refresh live backend meshRole for nodes requiring explicit Web GUI Mesh configuration
+        for cid in comp_ids:
+            cn = node_map[cid]
+            csim = str(cn.get("simId") or "")
+            req_exp = bool(cn.get("requireExplicitMeshMode") or (cn.get("firmwareConfig") or {}).get("requireExplicitMeshMode"))
+            if csim == "sim_ax3000c" and req_exp:
+                try:
+                    cskey = make_node_session_key(base_ktv_id, cid)
+                    ensure_ax3000c_mesh_lesson_agent_default(cskey)
+                    cb = read_node_backend_config(csim, cskey)
+                    cn["meshRole"] = cb.get("meshRole") or "Agent"
+                    if isinstance(cn.get("firmwareConfig"), dict):
+                        cn["firmwareConfig"]["meshRole"] = cn["meshRole"]
+                        cn["firmwareConfig"]["meshEnabled"] = cb.get("meshEnabled", True)
+                except Exception:
+                    pass
+
         # Choose component Root Gateway / Controller
+        wan_uplink_ids = {
+            cid for cid in comp_ids
+            if _node_has_wan_uplink(cid, node_map, adj)
+        }
         root_id = max(
             comp_ids,
-            key=lambda cid: _root_priority(node_map[cid], source_node_id, node_order.index(cid)),
+            key=lambda cid: _root_priority(
+                node_map[cid],
+                source_node_id,
+                node_order.index(cid),
+                has_wan_uplink=(cid in wan_uplink_ids),
+            ),
         )
         root_node = node_map[root_id]
         root_sim = str(root_node.get("simId") or "")
         root_skey = make_node_session_key(base_ktv_id, root_id)
+        root_req_explicit = bool(root_node.get("requireExplicitMeshMode") or (root_node.get("firmwareConfig") or {}).get("requireExplicitMeshMode"))
+        b_root_live = read_node_backend_config(root_sim, root_skey, root_node.get("firmwareConfig")) if root_sim in _ADAPTER_TABLE else {}
 
-        if prefer_backend_source and root_id == source_node_id and root_sim in _ADAPTER_TABLE:
-            root_cfg = read_node_backend_config(root_sim, root_skey, root_node.get("firmwareConfig"))
+        if (prefer_backend_source and root_id == source_node_id and root_sim in _ADAPTER_TABLE) or root_req_explicit or b_root_live.get("webguiTouched"):
+            root_cfg = b_root_live
         else:
             raw_root = dict(root_node.get("firmwareConfig") or {})
             if root_node.get("ip") and not raw_root.get("lanIp"):
                 raw_root["lanIp"] = root_node["ip"]
+            if root_sim == "sim_ax3000c":
+                if raw_root.get("lanIp") in ("", "192.168.1.200") and not raw_root.get("hasKtvCustomConfig"):
+                    raw_root["lanIp"] = "192.168.100.1"
+                    raw_root["dhcpStart"] = "192.168.100.100"
+                    raw_root["dhcpEnd"] = "192.168.100.250"
             raw_root.setdefault("meshRole", "Controller")
+            if root_sim in ("sim_ax3000hv2", "sim_ax3000c") and "meshEnabled" not in raw_root:
+                if "meshEnabled" in b_root_live and b_root_live["meshEnabled"] is not None:
+                    raw_root["meshEnabled"] = b_root_live["meshEnabled"]
             root_cfg = normalize_cfg(raw_root)
+
+        root_actual_role = str(root_cfg.get("meshRole") or "Controller")
+        root_actual_mesh_enabled = True if root_cfg.get("meshEnabled") is None else bool(root_cfg.get("meshEnabled"))
+        root_mesh_enabled = root_actual_mesh_enabled
+        if root_req_explicit and root_sim == "sim_ax3000c" and root_actual_role.lower() != "controller":
+            root_mesh_enabled = False
 
         # Build topology & client tables per component before writing stores
         slaves_list: list[dict[str, Any]] = []
@@ -2031,10 +2807,15 @@ def sync_all_nodes_backend(
 
         for nid in bfs_order[1:]:
             par_id = parent_of[nid]
+            if par_id not in effective_cfg:
+                continue
             par_cfg = effective_cfg[par_id]
             child_node = node_map[nid]
             child_sim = str(child_node.get("simId") or "")
             child_cat = str(child_node.get("category") or "").lower()
+            child_role = str(child_node.get("role") or "").lower()
+            if child_cat in ("infra", "core") or child_role == "core":
+                continue
             ln = edge_of.get(nid, {})
             slot = slot_by_parent.get(par_id, 0) + 1
             slot_by_parent[par_id] = slot
@@ -2053,6 +2834,7 @@ def sync_all_nodes_backend(
                     "rssi": -42 if is_wifi_link else 0,
                     "rate_mbps": int(ln.get("speedMbps") or (2400 if is_wifi_link else 1000)),
                     "connected_to": node_map[par_id].get("name") or par_id,
+                    "parentNodeId": par_id,
                     "lease": par_cfg["dhcpLease"],
                 })
                 effective_cfg[nid] = {
@@ -2063,7 +2845,63 @@ def sync_all_nodes_backend(
                 sync_modes[nid] = "client"
                 continue
 
-            if is_router_mode_node(child_node):
+            child_port = ""
+            parent_port = ""
+            if ln:
+                l_src = str(ln.get("srcId") or ln.get("fromNodeId") or ln.get("source") or "")
+                if l_src == nid:
+                    child_port = str(ln.get("srcPort") or ln.get("fromPort") or "")
+                    parent_port = str(ln.get("tgtPort") or ln.get("toPort") or "")
+                else:
+                    child_port = str(ln.get("tgtPort") or ln.get("toPort") or "")
+                    parent_port = str(ln.get("srcPort") or ln.get("fromPort") or "")
+
+            hv2_cv2_pair = (root_sim == "sim_ax3000hv2" and child_sim == "sim_ax3000c" and child_cat == "ap")
+            cv2_cv2_pair = (root_sim == "sim_ax3000c" and child_sim == "sim_ax3000c" and child_cat == "ap")
+            gzv2_cv2_pair = (root_sim == "sim_ax3000gz_v2" and child_sim == "sim_ax3000c" and child_cat == "ap")
+            s_cv2_pair = (root_sim == "sim_ax3000s" and child_sim == "sim_ax3000c" and child_cat == "ap")
+            ax1800gz_cv2_pair = (root_sim == "sim_ax1800gz" and child_sim == "sim_ax3000c" and child_cat == "ap")
+            is_managed_mesh_pair = hv2_cv2_pair or cv2_cv2_pair or gzv2_cv2_pair or s_cv2_pair or ax1800gz_cv2_pair
+            hv2_wrong_wan_port = (
+                hv2_cv2_pair
+                and not is_wifi_link
+                and "WAN" in child_port.upper()
+            )
+            cv2_wrong_wan_port = (
+                cv2_cv2_pair
+                and not is_wifi_link
+                and ("WAN" in child_port.upper() or "WAN" in parent_port.upper())
+            )
+            gzv2_wrong_wan_port = (
+                gzv2_cv2_pair
+                and not is_wifi_link
+                and "WAN" in child_port.upper()
+            )
+            s_wrong_wan_port = (
+                s_cv2_pair
+                and not is_wifi_link
+                and "WAN" in child_port.upper()
+            )
+            ax1800gz_wrong_wan_port = (
+                ax1800gz_cv2_pair
+                and not is_wifi_link
+                and "WAN" in child_port.upper()
+            )
+            hv2_mesh_off = (root_sim == "sim_ax3000hv2" and not root_mesh_enabled)
+            cv2_mesh_off = (root_sim == "sim_ax3000c" and not root_mesh_enabled)
+            gzv2_mesh_off = (root_sim == "sim_ax3000gz_v2" and not root_mesh_enabled)
+            s_mesh_off = (root_sim == "sim_ax3000s" and not root_mesh_enabled)
+            ax1800gz_mesh_off = (root_sim == "sim_ax1800gz" and not root_mesh_enabled)
+            child_mesh_off = False
+            if child_sim == "sim_ax3000c":
+                child_req_exp = bool(child_node.get("requireExplicitMeshMode") or (child_node.get("firmwareConfig") or {}).get("requireExplicitMeshMode"))
+                child_b_check = read_node_backend_config(child_sim, make_node_session_key(base_ktv_id, nid))
+                if child_req_exp or child_b_check.get("webguiTouched"):
+                    if not bool(child_b_check.get("meshEnabled", True)) or str(child_b_check.get("meshRole") or "Agent").lower() != "agent":
+                        child_mesh_off = True
+            child_is_router = False if is_managed_mesh_pair else is_router_mode_node(child_node)
+
+            if child_is_router or child_mesh_off or hv2_wrong_wan_port or cv2_wrong_wan_port or gzv2_wrong_wan_port or s_wrong_wan_port or ax1800gz_wrong_wan_port or hv2_mesh_off or cv2_mesh_off or gzv2_mesh_off or s_mesh_off or ax1800gz_mesh_off:
                 # Router A -> Router B (Router mode): ONLY provision WAN! Preserve B's own LAN & SSID.
                 child_skey = make_node_session_key(base_ktv_id, nid) if child_sim in _ADAPTER_TABLE else ""
                 backend_own = read_node_backend_config(child_sim, child_skey) if child_sim in _ADAPTER_TABLE else {}
@@ -2117,7 +2955,10 @@ def sync_all_nodes_backend(
                 b_own["wanGateway"] = par_cfg["lanIp"]
                 b_own["wanDns1"] = par_cfg["dns1"] or par_cfg["lanIp"]
                 b_own["wanDns2"] = par_cfg["dns2"]
-                b_own["opMode"] = b_own.get("opMode") or "router"
+                if not is_managed_mesh_pair:
+                    b_own["opMode"] = b_own.get("opMode") or "router"
+                else:
+                    b_own["opMode"] = "ap"
                 slaves_list.append({
                     "nodeId": nid,
                     "name": child_node.get("name") or nid,
@@ -2129,41 +2970,56 @@ def sync_all_nodes_backend(
                     "backhaul": backhaul,
                     "speed_mbps": int(ln.get("speedMbps") or 1000),
                     "rssi": -25 if is_wifi_link else 0,
-                    "upstream_port": str(ln.get("fromPort") or ""),
-                    "local_port": str(ln.get("toPort") or "WAN"),
+                    "upstream_port": parent_port or str(ln.get("fromPort") or ""),
+                    "local_port": child_port or str(ln.get("toPort") or "WAN"),
                 })
                 effective_cfg[nid] = _to_frontend_contract(b_own)
                 sync_modes[nid] = "router_wan"
             else:
                 # AP Mesh / Switch / Repeater B: full inheritance from upstream parent A
-                mgmt_ip = _derive_subnet_ip(par_cfg["lanIp"], par_cfg["netmask"], slot, str(child_node.get("ip") or ""))
+                ip_slot = (199 + slot - 1) if (cv2_cv2_pair or hv2_cv2_pair or gzv2_cv2_pair or s_cv2_pair or ax1800gz_cv2_pair) else slot
+                mgmt_ip = _derive_subnet_ip(par_cfg["lanIp"], par_cfg["netmask"], ip_slot, str(child_node.get("ip") or ""))
                 b_cfg = copy.deepcopy(par_cfg)
                 b_cfg["lanIp"] = mgmt_ip
                 b_cfg["gatewayIp"] = par_cfg["lanIp"]
                 b_cfg["meshRole"] = "Agent"
-                b_cfg["opMode"] = str(
-                    (child_node.get("firmwareConfig") or {}).get("opMode")
-                    or child_node.get("opMode")
-                    or "ap"
-                )
+                if is_managed_mesh_pair or child_cat == "ap":
+                    b_cfg["opMode"] = "ap"
+                else:
+                    b_cfg["opMode"] = str(
+                        (child_node.get("firmwareConfig") or {}).get("opMode")
+                        or child_node.get("opMode")
+                        or "ap"
+                    )
                 slaves_list.append({
                     "nodeId": nid,
                     "name": child_node.get("name") or nid,
-                    "model": child_node.get("model") or child_sim or "AP",
-                    "mac": child_node.get("mac") or f"94:F7:17:BB:00:{slot:02X}",
+                    "model": "AX3000CV2" if child_sim == "sim_ax3000c" else (child_node.get("model") or child_sim or "AP"),
+                    "mac": child_node.get("mac") or f"5C:1A:6F:C3:A2:{0x60 + slot:02X}",
                     "ip": mgmt_ip,
+                    "lanIp": mgmt_ip,
                     "role": "Agent",
                     "backhaul": backhaul,
-                    "speed_mbps": int(ln.get("speedMbps") or (2500 if not is_wifi_link else 2400)),
+                    "speed_mbps": int(ln.get("speedMbps") or (1000 if (cv2_cv2_pair or gzv2_cv2_pair or hv2_cv2_pair or s_cv2_pair or ax1800gz_cv2_pair) and not is_wifi_link else (2500 if not is_wifi_link else 2400))),
                     "rssi": -28 if is_wifi_link else 0,
-                    "upstream_port": str(ln.get("fromPort") or ""),
-                    "local_port": str(ln.get("toPort") or ""),
+                    "upstream_port": parent_port or str(ln.get("fromPort") or ""),
+                    "local_port": child_port or str(ln.get("toPort") or ""),
+                    "parentNodeId": par_id,
+                    "parentMac": str(node_map[par_id].get("mac") or ""),
                 })
                 effective_cfg[nid] = _to_frontend_contract(b_cfg)
                 sync_modes[nid] = "ap_mesh"
 
         # Inject complete component meshNodes & clients into root + all ap_mesh nodes and persist to backends
+        root_mac_default = "94:F7:17:24:0A:90" if root_sim == "sim_ax3000c" else ("84:3c:99:29:0e:a5" if root_sim == "sim_ax3000gz_v2" else ("94:87:E0:66:00:18" if root_sim == "sim_ax1800gz" else ("AC:9E:17:10:20:30" if root_sim == "sim_ax3000s" else "20:be:b4:0b:16:91")))
+        root_host_default = "AP-AX3000CV2-0A91" if root_sim == "sim_ax3000c" else ("ZTE:F6201B" if root_sim == "sim_ax3000gz_v2" else ("ONT_AX1800GZ" if root_sim == "sim_ax1800gz" else ("AX3000S" if root_sim == "sim_ax3000s" else "AX3000HV2-1691")))
+        comp_root_mac = str(root_node.get("mac") or root_mac_default)
+        comp_root_host = str(root_node.get("name") or root_host_default)
+        comp_root_ip = str(effective_cfg[root_id].get("lanIp") or "192.168.100.1")
+
         for nid in bfs_order:
+            if nid not in effective_cfg:
+                continue
             n = node_map[nid]
             sim_id = str(n.get("simId") or "")
             mode = sync_modes.get(nid)
@@ -2173,15 +3029,32 @@ def sync_all_nodes_backend(
                 continue
 
             if nid == root_id or mode == "ap_mesh":
-                cfg_out["meshNodes"] = copy.deepcopy(slaves_list)
+                cfg_out["meshNodes"] = copy.deepcopy(slaves_list) if root_mesh_enabled else []
                 cfg_out["clients"] = copy.deepcopy(clients_list)
+                cfg_out["rootMac"] = comp_root_mac
+                cfg_out["rootHostname"] = comp_root_host
+                cfg_out["rootLanIp"] = comp_root_ip
                 if nid == root_id:
-                    cfg_out["meshRole"] = "Controller"
+                    cfg_out["requireExplicitMeshMode"] = root_req_explicit
+                    if root_sim in ("sim_ax3000hv2", "sim_ax3000c"):
+                        cfg_out["meshEnabled"] = root_actual_mesh_enabled
+                    if root_req_explicit and root_sim == "sim_ax3000c" and root_actual_role.lower() != "controller":
+                        cfg_out["meshRole"] = root_actual_role
+                    else:
+                        cfg_out["meshRole"] = "Controller"
                     sync_modes[nid] = "source"
-                write_mode = "ap_mesh"
+                    write_mode = "source"
+                elif root_sim in ("sim_ax3000hv2", "sim_ax3000c"):
+                    cfg_out["meshEnabled"] = root_mesh_enabled
+                    write_mode = "ap_mesh"
+                else:
+                    write_mode = "ap_mesh"
             else:
                 # router_wan
                 cfg_out["meshNodes"] = [s for s in slaves_list if s.get("nodeId") == nid]
+                cfg_out["rootMac"] = str(n.get("mac") or "5C:1A:6F:C3:A2:61")
+                cfg_out["rootHostname"] = str(n.get("name") or "AP-AX3000CV2")
+                cfg_out["rootLanIp"] = str(cfg_out.get("lanIp") or "192.168.100.1")
                 write_mode = "router_wan"
 
             if sim_id in _ADAPTER_TABLE:

@@ -94,9 +94,9 @@ function BtnClick_UrlFilterAdd()
 {warninfo_show(_("Warning_Enable_first"));return;}
 if(getUrlfEntryNumber()>31)
 {warninfo_show(_("Warning_Maximum_32_Rules"));return;}
-var data={"type":"form","tittle":_("Add_URL_Filter"),"panelContent":null,"submit":"BtnClick_UrlFilterAddApply"};data.panelContent=new Array();data.panelContent.push({"type":"text","id":"TodUrlAdd","datatype":"url","tittle":_("URL_Address"),"value":""});var seloptions=new Array();seloptions.push({"value":"Always","name":"Always"});data.panelContent.push({"type":"timerange","id":"sc_time","tittle":_("Time"),"value":""});data.panelContent.push({"type":"week","id":"week","tittle":_("Repeat_Period"),"value":""});parent.panel_show(data);getObj("TodUrlAdd").style.padding="0px 6px";}
+var data={"type":"form","tittle":_("Add_URL_Filter"),"panelContent":null,"submit":"BtnClick_UrlFilterAddApply"};data.panelContent=new Array();data.panelContent.push({"type":"text","id":"TodUrlAdd","datatype":"url","tittle":_("URL_Address"),"value":""});var seloptions=new Array();seloptions.push({"value":"Always","name":"Always"});data.panelContent.push({"type":"timerange","id":"sc_time","tittle":_("Time"),"value":""});data.panelContent.push({"type":"week","id":"week","tittle":_("Repeat_Period"),"value":""});panel_show(data);getObj("TodUrlAdd").style.padding="0px 6px";}
 function getparentValue(id)
-{return($("#"+id,parent.document).val());}
+{return($("#"+id,document).val());}
 function check_urlentry_exist(arg)
 {var num=urlf_getUrlNumber();for(var i=0;i<num;i++){if(arg.toLowerCase()==UrlEntry[i]["url"].toLowerCase()){warninfo_show(_("Warn_Url_Exist"));return false;}}
 return true;}
@@ -149,12 +149,12 @@ function BtnClick_KeyFilterAdd()
 {warninfo_show(_("Warning_Enable_first"));return;}
 if(getUrlfEntryNumber()>31)
 {warninfo_show(_("Warning_Maximum_32_Rules"));return;}
-var data={"type":"form","tittle":_("Add_Keyword_Filter"),"panelContent":null,"submit":"BtnClick_KeyFilterAddApply"};data.panelContent=new Array();data.panelContent.push({"type":"text","id":"urlfKeyword","tittle":_("Keyword"),"value":""});data.panelContent.push({"type":"timerange","id":"sc_time","tittle":_("Time"),"value":""});data.panelContent.push({"type":"week","id":"week","tittle":_("Repeat_Period"),"value":""});parent.panel_show(data);getObj("urlfKeyword").style.padding="0px 6px";}
+var data={"type":"form","tittle":_("Add_Keyword_Filter"),"panelContent":null,"submit":"BtnClick_KeyFilterAddApply"};data.panelContent=new Array();data.panelContent.push({"type":"text","id":"urlfKeyword","tittle":_("Keyword"),"value":""});data.panelContent.push({"type":"timerange","id":"sc_time","tittle":_("Time"),"value":""});data.panelContent.push({"type":"week","id":"week","tittle":_("Repeat_Period"),"value":""});panel_show(data);getObj("urlfKeyword").style.padding="0px 6px";}
 function check_keywordentry_exist(arg)
 {var num=urlf_getKeyNumber();for(var i=0;i<num;i++){if(arg.toLowerCase()==KeyEntry[i]["url"].toLowerCase()){warninfo_show(_("Warn_Key_Exist"));return false;}}
 return true;}
 function getparentChecked(id)
-{return($("#"+id,parent.document).is(':checked'));}
+{return($("#"+id,document).is(':checked'));}
 function getparentTime()
 {var hourval;var minval;var days='';var stimev;var etimev;var weekdays;hourval=getparentValue("sc_timestarthour");if(parseInt(hourval)<10){hourval="0"+hourval;}
 minval=getparentValue("sc_timestartmin");if(parseInt(minval)<10){minval="0"+minval;}

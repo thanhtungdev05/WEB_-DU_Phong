@@ -131,7 +131,7 @@ var ary_strings = [
                         <frame name="blank" noresize src="/cgi-bin/blank.asp" marginwidth="0" marginheight="0" frameborder="0" scrolling="no" style="background-color:#4acbd6;">
 
         <frameset cols="266.5,*" framespacing="0"  frameborder="0">
-                        <frame name="nav" noresize src="/cgi-bin/navigation-status.asp" marginwidth="0" marginheight="0" frameborder="0" scrolling="no" style="background-color:#4acbd6;">
+                        <frame name="nav" noresize src="/cgi-bin/navigation-status.asp" marginwidth="0" marginheight="0" frameborder="0" scrolling="auto" style="background-color:#4acbd6;">
             <frame name="main" noresize src="/cgi-bin/status_deviceinfo.asp" marginwidth="0" marginheight="0" frameborder="0" scrolling="auto" style="background-color:#4acbd6;">
         </frameset>
 

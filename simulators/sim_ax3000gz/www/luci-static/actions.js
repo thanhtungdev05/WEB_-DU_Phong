@@ -61,6 +61,26 @@
       bao(nhan(b), 'Tren thiet bi that: xoa toan bo nhat ky da luu.');
     }],
     [/^Apply$/i, function (b) {
+      try {
+        var lanPatch = {};
+        ["ipaddr", "netmask", "start", "end", "leasetime", "Primary_DNS", "Secondary_DNS"].forEach(function (k) {
+          var el = document.getElementById("widget.cbid.network.lan." + k) || document.querySelector('input[name="cbid.network.lan.' + k + '"]');
+          if (el && el.value !== undefined) lanPatch[k] = el.value;
+        });
+        var payload = Object.keys(lanPatch).length ? { lan: lanPatch } : {};
+        var mGz = (location.pathname || "").match(/^(\/mesh-node\/[A-Za-z0-9_-]+)?(\/sim_ax3000gz)?/);
+        var pfx = (mGz && mGz[0]) ? mGz[0] : "";
+        if (Object.keys(payload).length && typeof fetch === "function") {
+          fetch(pfx + "/api/sim-state", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          }).catch(function () {});
+        }
+        if (window.parent && window.parent !== window && window.parent.postMessage) {
+          window.parent.postMessage({ type: "fpt_mesh_fw_saved", source: "ax3000gz", payload: payload }, "*");
+        }
+      } catch (e) {}
       var w = window.parent || window;
       if (w.onSimulatorSave) {
         try {

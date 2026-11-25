@@ -225,7 +225,7 @@ function getTreeDepth(tree) {
 
 function init() {
 	document.getElementById("div_MeshTopList").style.display="block";
-	/*if(map_enable == '0')
+	if(typeof getdata !== "undefined" && String(getdata.mapEnable) === "0")
 	{
 		document.getElementById("mesh_disable_tip_div").style.display="";
 		document.getElementById("topo_table_id").style.display="none";
@@ -236,7 +236,7 @@ function init() {
 	else
 	{
 		document.getElementById("mesh_disable_tip_div").style.display="none";
-	}*/
+	}
 	if(treeDepth >= 3)
 	{
 		document.getElementById("topo_tree_tip_div").style.display="none";
@@ -250,22 +250,22 @@ function init() {
 	var width = 680;
 	var height = 380;
 	if(treeDepth != 2 ) {
-		width = 500;
-		height = 200;
+		width = 560;
+		height = 220;
 	}
 	var svg = d3.select("#topo_tree_div").append("svg")
 		.attr("width", width)
 		.attr("height", height);
-	var treemap = d3.tree().size([width, height]);
+	var treemap = d3.tree().size([width - 120, height - 30]);
 	var nodes = d3.hierarchy(treeJson);
 	nodes = treemap(nodes);
 
 	var g = svg.append("g")
 		.attr("transform", function(){/*拓扑图整体偏移,正表示右,上*/
 			if(treeDepth != 2)
-				return "translate(-20,0)";
+				return "translate(30,12)";
 			else
-				return "translate(0,0)";
+				return "translate(40,12)";
 		});
 
 	// 创建连接线
@@ -288,6 +288,7 @@ function init() {
 		.style("stroke-dasharray", function(d){
 			return (d.data.BhType === "2.4G" || d.data.BhType === "5G" || d.data.BhType === "Ethernet")?"none":"5,2";
 		});
+
 	// 添加连接图片
 	g.selectAll(".connectionType")
 		.data(nodes.descendants().slice(1))
@@ -296,18 +297,18 @@ function init() {
 			if (d.data.BhType === "Ethernet") {
 				d.data.connectionType = "Wired Networking";
 				d.data.RSSI = "N/A";
-				//d.data.BhPhyRate = "N/A";
+				if (!d.data.BhPhyRate) d.data.BhPhyRate = "N/A";
 			} else if(d.data.BhType === "5G"){
 				d.data.connectionType = "5G WLAN Networking";
 			} else if(d.data.BhType === "2.4G") {
 				d.data.connectionType = "2.4G WLAN Networking";
 			}
 			if (d.data.connectionType === "2.4G WLAN Networking" || d.data.connectionType === "5G WLAN Networking") {
-				return "/conn.png";
+				return "../conn.png";
 			} else if (d.data.connectionType === "Wired Networking") {
-				return "/conn-2.png"; 
+				return "../conn-2.png";
 			} else {
-				return "/conn-2.png"; 
+				return "../conn-2.png";
 			}
 		})
 		.attr("x", function(d) {
@@ -315,22 +316,17 @@ function init() {
 		})
 		.attr("y", function(d) {/*连接图片竖向位置*/
 			var midY = 0;
-			//console.log(d.parent);
-			/*if(d.parent.data.children != undefined)
-				alert(d.parent.data.children.length);
-			else
-				alert("d.parent.data.children == undefined");*/
 			if(d.parent.children != undefined && d.parent.children.length == 1) {/*其下只有一个子路由时*/
 				if(d.depth === 2) {
 					midY = d.y + (d.parent.y - d.y) * 0.6 - 30;
 				} else {
-					midY = d.y + (d.parent.y - d.y) * 0.6 + 30;
+					midY = d.y + (d.parent.y - d.y) * 0.52;
 				}
 			} else {
 				if(d.depth === 2) {
 					midY = d.y + (d.parent.y - d.y) * 0.32 - 60;
 				} else {
-					midY = d.y + (d.parent.y - d.y) * 0.32;
+					midY = d.y + (d.parent.y - d.y) * 0.4;
 				}
 			}
 			return midY - 15;
@@ -340,13 +336,13 @@ function init() {
 		.on("mouseover", function(d) {
 			tooltip.transition()
 				.duration(200)
-				.style("opacity", .9);
-			//tooltip.html("" + d.data.connectionType + "<br/>RSSI: " + d.data.RSSI + "<br/>Backhaul PhyRate: " + d.data.BhPhyRate+"<br/>Assoc Time: "+d.data.assocTime)
+				.style("opacity", .95);
 			var tooltipContent = "" + d.data.connectionType + "<br/>RSSI: " + d.data.RSSI + "<br/>Backhaul PhyRate: " + d.data.BhPhyRate;
 			if (d.data.connectionType === "2.4G WLAN Networking" || d.data.connectionType === "5G WLAN Networking") {
-				tooltipContent += "<br/>Assoc Time: " + d.data.assocTime;
+				tooltipContent += "<br/>Assoc Time: " + (d.data.assocTime || "00:00:00");
 			}
 			tooltip.html(tooltipContent)
+				.style("background-color", "#18cd6c")
 				.style("left", (d3.event.pageX + 10) + "px")
 				.style("top", (d3.event.pageY - 28) + "px");
 		})
@@ -355,6 +351,54 @@ function init() {
 				.duration(500)
 				.style("opacity", 0);
 		});
+
+	// Always-visible green link callout box matching real AX3000HI/AX3000HV2 Mesh Topology screen
+	var linkBadges = g.selectAll(".mesh-link-badge")
+		.data(nodes.descendants().slice(1))
+		.enter().append("g")
+		.attr("class", "mesh-link-badge")
+		.attr("transform", function(d) {
+			var midY = (d.parent.children && d.parent.children.length === 1)
+				? (d.depth === 2 ? d.y + (d.parent.y - d.y) * 0.6 - 30 : d.y + (d.parent.y - d.y) * 0.52)
+				: (d.depth === 2 ? d.y + (d.parent.y - d.y) * 0.32 - 60 : d.y + (d.parent.y - d.y) * 0.4);
+			var isWifi = (d.data.BhType === "5G" || d.data.BhType === "2.4G");
+			var boxH = isWifi ? 68 : 54;
+			return "translate(" + (d.x + 18) + "," + (midY - boxH / 2) + ")";
+		});
+
+	linkBadges.append("rect")
+		.attr("rx", 8)
+		.attr("ry", 8)
+		.attr("width", function(d) {
+			return (d.data.BhType === "5G" || d.data.BhType === "2.4G") ? 172 : 158;
+		})
+		.attr("height", function(d) {
+			return (d.data.BhType === "5G" || d.data.BhType === "2.4G") ? 68 : 54;
+		})
+		.style("fill", "#18cd6c")
+		.style("opacity", 0.96);
+
+	linkBadges.each(function(d) {
+		var el = d3.select(this);
+		var isWifi = (d.data.BhType === "5G" || d.data.BhType === "2.4G");
+		var lines = [
+			d.data.connectionType || (isWifi ? "5G WLAN Networking" : "Wired Networking"),
+			"RSSI: " + (d.data.RSSI || "N/A"),
+			"Backhaul PhyRate: " + (d.data.BhPhyRate || "N/A")
+		];
+		if (isWifi) {
+			lines.push("Assoc Time: " + (d.data.assocTime || "00:00:00"));
+		}
+		lines.forEach(function(line, idx) {
+			el.append("text")
+				.attr("x", 10)
+				.attr("y", 16 + idx * 15)
+				.style("fill", "#ffffff")
+				.style("font", "11.5px sans-serif")
+				.style("font-weight", idx === 0 ? "600" : "400")
+				.text(line);
+		});
+	});
 
 	// 创建 Tooltip
 	var tooltip = d3.select("body").append("div")
@@ -372,9 +416,8 @@ function init() {
 		.on("mouseover", function(d) {
 			tooltip.transition()
 				.duration(200)
-				.style("opacity", .9);
-			//alert(d.data);
-			d.data.deviceCount = d.data.StaInfo.length;
+				.style("opacity", .95);
+			d.data.deviceCount = (d.data.StaInfo || []).length;
 			tooltip.html(d.data.HostName + "<br/>MAC: " + d.data.Mac + "<br/>IP: " + d.data.IP + "<br/>" + getdata.MeshClientNumber + ": " + d.data.deviceCount)
 				.style("left", (d3.event.pageX + 10) + "px")
 				.style("top", (d3.event.pageY - 28) + "px")
@@ -390,9 +433,8 @@ function init() {
 	var clickTimer;
 	node.append("image")
 		.attr("xlink:href", function(d) {
-			return d.depth === 0 ? "/root-1.png" : "/node-1.png";
+			return d.depth === 0 ? "../root-1.png" : "../node-1.png";
 		})
-		//.attr("x", -20)
 		.attr("x", function(d) {
 			return d.depth === 0 ? -30 : -20;
 		})
@@ -402,30 +444,25 @@ function init() {
 			else
 				return d.depth === 0 ? 0 : -38;
 		})
-		//.attr("width", 40)
 		.attr("width", function(d) {
 			return d.depth === 0 ? 60 : 40;
 		})
-		//.attr("height", 38)
 		.attr("height", function(d) {
 			return d.depth === 0 ? 60 : 38;
 		})
 		.on("mouseover", function(d) {
 			if (d.depth === 0) {
-				// 如果是根节点,在mouseover时更改根节点的图片
 				d3.select(this)
-					.attr("xlink:href", "/root-2.png"); // 替换为根节点mouseover时的图片链接
+					.attr("xlink:href", "../root-2.png");
 			} else {
-				// 如果是其他节点,在mouseover时更改其他节点的图片
 				d3.select(this)
-					.attr("xlink:href", "/node-2.png"); // 替换为其他节点mouseover时的图片链接
+					.attr("xlink:href", "../node-2.png");
 			}
 		})
 		.on("mouseout", function(d) {
-			// 在mouseout时还原图片
 			d3.select(this)
 				.attr("xlink:href", function(d) {
-					return d.depth === 0 ? "/root-1.png" : "/node-1.png";
+					return d.depth === 0 ? "../root-1.png" : "../node-1.png";
 				});
 		})
 		.on("dblclick",function(d) {

@@ -45,7 +45,7 @@ GLOBAL_SIM = {"store": _store, "session": _session, "disp": _disp, "chi_tiet": F
 _USER_SIMS = {}
 
 
-def _cap_nhat_store_topo(store, slave_list, client_list):
+def _cap_nhat_store_topo(store, slave_list, client_list, lan_dhcp_cfg=None):
     if not hasattr(store, "_state") or not isinstance(store._state, dict):
         return
     jt = store._state.setdefault("jsonThoDataTags", {})
@@ -60,14 +60,67 @@ def _cap_nhat_store_topo(store, slave_list, client_list):
     else:
         ad["MGET_INST_NUM"] = 0
 
+    # Đồng bộ cấu hình LAN / DHCP Server giữa các phiên BE12000Z
+    if isinstance(lan_dhcp_cfg, dict) and lan_dhcp_cfg:
+        try:
+            store.ghi("OBJ_Br0AndDhcpsHosCfg_ID", lan_dhcp_cfg, inst=0)
+        except Exception:
+            pass
 
-def cap_nhat_topology_mesh(slave_list=None, client_list=None):
+    # Đồng bộ bảng Allocated Address (DHCP) theo thiết bị kết nối thực tế
+    objs = store._state.setdefault("objects", {})
+    dhcp_host_obj = objs.setdefault("OBJ_DHCPHOSTINFO_ID", {
+        "instances": [],
+        "paraOrder": ["_InstID", "HostName", "MACAddr", "IPAddr", "PhyPortName", "ExpiredTime"],
+        "nguon": ["Localnet_LanMgrIpv4_DHCPHostInfo_lua.lua"]
+    })
+    dhcp_host_obj["paraOrder"] = ["_InstID", "HostName", "MACAddr", "IPAddr", "PhyPortName", "ExpiredTime"]
+    dt = store._state.setdefault("dataTags", {}).get("Localnet_LanMgrIpv4_DHCPHostInfo_lua.lua")
+    if isinstance(dt, dict):
+        dt.setdefault("paraOrder", {})["OBJ_DHCPHOSTINFO_ID"] = [
+            "_InstID", "HostName", "MACAddr", "IPAddr", "PhyPortName", "ExpiredTime"
+        ]
+
+    dhcp_instances = []
+    for idx, sl in enumerate(slave_list or [], 1):
+        dhcp_instances.append({
+            "_InstID": f"IGD.DHCPHOST{idx}",
+            "HostName": sl.get("DeviceName", "BE15000Z"),
+            "MACAddr": sl.get("MacAddr", "aa:bb:cc:00:00:15"),
+            "IPAddr": sl.get("IpAddr", "192.168.1.100"),
+            "PhyPortName": "LAN1" if sl.get("AccessType") == "ETH" else "WLAN (Mesh)",
+            "ExpiredTime": "23h 58m 40s"
+        })
+    for idx, cl in enumerate(client_list or [], len(dhcp_instances) + 1):
+        dhcp_instances.append({
+            "_InstID": f"IGD.DHCPHOST{idx}",
+            "HostName": cl.get("HostName", "Smartphone_Client_KTV"),
+            "MACAddr": cl.get("MacAddr", "34:e1:2d:88:99:aa"),
+            "IPAddr": cl.get("IpAddr", "192.168.1.150"),
+            "PhyPortName": "SSID1",
+            "ExpiredTime": "23h 55m 12s"
+        })
+    dhcp_host_obj["instances"] = dhcp_instances
+
+
+def cap_nhat_topology_mesh(slave_list=None, client_list=None, lan_dhcp_cfg=None, session_id=None):
     with _SIM_LOCK:
+        if session_id is not None:
+            if session_id == "default" and "store" in GLOBAL_SIM:
+                _cap_nhat_store_topo(GLOBAL_SIM["store"], slave_list, client_list, lan_dhcp_cfg=lan_dhcp_cfg)
+            elif session_id in _USER_SIMS:
+                s = _USER_SIMS[session_id]
+                if isinstance(s, dict) and "store" in s:
+                    _cap_nhat_store_topo(s["store"], slave_list, client_list, lan_dhcp_cfg=lan_dhcp_cfg)
+            return
         if "store" in GLOBAL_SIM:
-            _cap_nhat_store_topo(GLOBAL_SIM["store"], slave_list, client_list)
-        for s in _USER_SIMS.values():
+            _cap_nhat_store_topo(GLOBAL_SIM["store"], slave_list, client_list, lan_dhcp_cfg=lan_dhcp_cfg)
+        for skey, s in _USER_SIMS.items():
+            # Never overwrite per-node /mesh-node/ sessions (__mn_) during global legacy broadcast
+            if "__mn_" in str(skey):
+                continue
             if isinstance(s, dict) and "store" in s:
-                _cap_nhat_store_topo(s["store"], slave_list, client_list)
+                _cap_nhat_store_topo(s["store"], slave_list, client_list, lan_dhcp_cfg=lan_dhcp_cfg)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -159,7 +212,12 @@ class Handler(BaseHTTPRequestHandler):
                 _USER_SIMS.pop(cid, None)
 
             if client_id not in _USER_SIMS:
-                safe_id = "".join(c for c in client_id if c.isalnum() or c in ("-", "_"))[:32] or "default"
+                import hashlib
+                raw_safe = "".join(c for c in client_id if c.isalnum() or c in ("-", "_")) or "default"
+                if len(raw_safe) > 40:
+                    safe_id = raw_safe[:22] + "_" + hashlib.sha1(client_id.encode("utf-8")).hexdigest()[:12]
+                else:
+                    safe_id = raw_safe
                 user_state_file = os.path.join(THU_MUC, "state", f"user-{safe_id}.json")
                 store = ConfigStore(user_state_file, FACTORY)
                 session = Session("admin", "admin")
@@ -212,11 +270,82 @@ class Handler(BaseHTTPRequestHandler):
         if loai == "menuView":
             sim["session"].cham()
             noi_dung, kieu, ma = sim["disp"].menu_view(tag, sim["session"].sess_token)
+            if tag == "lanMgrIpv4" and isinstance(noi_dung, str):
+                live_sync_js = """
+<script type="text/javascript">
+(function(){
+    var _syncTimer = null;
+    function _readOctets(prefix, suffix) {
+        var parts = [];
+        for (var i = 0; i < 4; i++) {
+            var el = document.getElementById(prefix + i + (suffix || ""));
+            if (!el) return "";
+            var v = (el.value || "").trim();
+            if (!/^\\d{1,3}$/.test(v) || parseInt(v, 10) > 255) return "";
+            parts.push(String(parseInt(v, 10)));
+        }
+        return parts.join(".");
+    }
+    function _pushLiveDhcpSync() {
+        var lanIp = _readOctets("sub_IPAddr", ":DHCPBasicCfg");
+        var subMask = _readOctets("sub_SubMask", "");
+        var minIp = _readOctets("sub_MinAddress", ":DHCPBasicCfg");
+        var maxIp = _readOctets("sub_MaxAddress", ":DHCPBasicCfg");
+        var dns1 = _readOctets("sub_DNSServer1", "");
+        var dns2 = _readOctets("sub_DNSServer2", "");
+        if (!lanIp && !minIp && !maxIp && !dns1) return;
+        var srvEnEl = document.getElementById("ServerEnable0");
+        var srvEn = (srvEnEl && srvEnEl.checked) ? "0" : "1";
+        var ispEl = document.getElementById("DnsServerSource1");
+        var ispDns = (ispEl && ispEl.checked) ? "1" : "0";
+        var leaseEl = document.getElementById("LeaseTimeSelfDefine") || document.getElementById("LeaseTime");
+        var leaseVal = (leaseEl && leaseEl.value) ? leaseEl.value.trim() : "86400";
+        var payload = {
+            IPAddr: lanIp,
+            SubMask: subMask,
+            MinAddress: minIp,
+            MaxAddress: maxIp,
+            DNSServer1: dns1,
+            DNSServer2: dns2,
+            ServerEnable: srvEn,
+            DnsServerSource: ispDns,
+            LeaseTime: leaseVal,
+            ts: Date.now()
+        };
+        try {
+            localStorage.setItem("fpt_mesh_live_dhcp", JSON.stringify(payload));
+            if (typeof BroadcastChannel !== "undefined") {
+                var bc = new BroadcastChannel("fpt_mesh_live_sync");
+                bc.postMessage({ type: "DHCP_SYNC", payload: payload });
+                bc.close();
+            }
+        } catch (e) {}
+        var formBody = Object.keys(payload).map(function(k){
+            return encodeURIComponent(k) + "=" + encodeURIComponent(payload[k] || "");
+        }).join("&");
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/?_type=hiddenData&_tag=mesh_auto_sync", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+            xhr.send(formBody);
+        } catch (e) {}
+    }
+    $(document).on("input change", "#DHCPBasicCfg input, #DHCPBasicCfg select", function(){
+        if (_syncTimer) clearTimeout(_syncTimer);
+        _syncTimer = setTimeout(_pushLiveDhcpSync, 180);
+    });
+    $(document).on("click", "#Btn_apply_DHCPBasicCfg", function(){
+        setTimeout(_pushLiveDhcpSync, 50);
+    });
+})();
+</script>
+"""
+                noi_dung = noi_dung + live_sync_js
             return self._gui(noi_dung, kieu, ma)
 
         if loai == "menuData":
             sim["session"].cham()
-            if tag == "topo_lua.lua":
+            if tag in ("topo_lua.lua", "Localnet_LanMgrIpv4_DHCPHostInfo_lua.lua", "Localnet_LanMgrIpv4_DHCPBasicCfg_lua.lua"):
                 try:
                     import mesh_zte_engine
                     mesh_zte_engine._sync_to_be12000()
@@ -307,10 +436,21 @@ class Handler(BaseHTTPRequestHandler):
             if than:
                 ssid = than.get("ESSID") or than.get("SSID")
                 key = than.get("HiddenKeyPass") or than.get("KeyPass") or than.get("WPAKey")
+                cid = self._client_session_info()
+                mesh_sid = cid if "__mn_" in str(cid or "") else None
                 if ssid or key:
                     try:
                         import mesh_zte_engine
-                        mesh_zte_engine.update_ont_wifi(ssid, key)
+                        mesh_zte_engine.update_ont_wifi(ssid, key, session_id=mesh_sid)
+                    except Exception:
+                        pass
+                if (
+                    "dhcpbasiccfg" in (tag or "").lower()
+                    or any(k in than for k in ("IPAddr", "SubMask", "SubnetMask", "MinAddress", "MaxAddress", "DNSServer1", "sub_IPAddr0:DHCPBasicCfg"))
+                ):
+                    try:
+                        import mesh_zte_engine
+                        mesh_zte_engine.update_ont_lan_dhcp(than, session_id=mesh_sid)
                     except Exception:
                         pass
             if sim["chi_tiet"]:
@@ -358,6 +498,21 @@ class Handler(BaseHTTPRequestHandler):
         tra 404 giong thiet bi that (da xac minh voi wan_internet_lua.lua).
         """
         sim = self._sim
+        if tag == "mesh_auto_sync":
+            if than:
+                try:
+                    import mesh_zte_engine
+                    cid = self._client_session_info()
+                    mesh_sid = cid if "__mn_" in str(cid or "") else None
+                    if any(k in than for k in ("IPAddr", "SubMask", "SubnetMask", "MinAddress", "MaxAddress", "DNSServer1", "DNSServer2", "ServerEnable", "DnsServerSource", "LeaseTime")):
+                        mesh_zte_engine.update_ont_lan_dhcp(than, session_id=mesh_sid)
+                    ssid = than.get("ESSID") or than.get("SSID")
+                    key = than.get("HiddenKeyPass") or than.get("KeyPass") or than.get("WPAKey")
+                    if ssid or key:
+                        mesh_zte_engine.update_ont_wifi(ssid, key, session_id=mesh_sid)
+                except Exception:
+                    pass
+            return self._gui('{"status":"ok"}', "application/json; charset=utf-8")
         if tag == "switchlang_entry":
             return self._gui('{"need_refresh":1}', "application/json; charset=utf-8")
         if sim["store"].co_data_tag(tag or ""):
