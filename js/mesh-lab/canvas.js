@@ -992,35 +992,48 @@
       const ch = canvas && canvas.clientHeight > 0 ? (canvas.clientHeight / z) : Math.max(220, (window.innerHeight / z) - 140);
       if (cw < 200) return false;
 
-      let separated = false;
-      for (let i = 0; i < nodes.length; i++) {
+      let hasOverlap = false;
+      for (let i = 0; i < nodes.length && !hasOverlap; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
-          const a = nodes[i];
-          const b = nodes[j];
-          if (Math.hypot((a.x || 0) - (b.x || 0), (a.y || 0) - (b.y || 0)) < 88) {
-            if (nodes.length === 2) {
-              const targetY = Math.max(58, Math.min(ch - 108, Math.round(ch * 0.36) - 42));
-              if (cw <= 560) {
-                a.x = Math.max(14, Math.round(cw * 0.21) - 46);
-                b.x = Math.max(a.x + 145, Math.min(cw - 108, Math.round(cw * 0.79) - 52));
-              } else {
-                a.x = Math.max(40, Math.round(cw * 0.32) - 55);
-                b.x = Math.min(cw - 130, Math.round(cw * 0.68) - 55);
-              }
-              a.y = targetY;
-              b.y = targetY;
-            } else {
-              b.x = Math.min(cw - 110, (a.x || 40) + 145);
-              if (Math.abs(b.x - a.x) < 90) {
-                b.x = Math.max(14, (a.x || 180) - 145);
-                b.y = Math.min(ch - 106, (a.y || 70) + 112);
-              }
-            }
-            separated = true;
+          if (Math.hypot((nodes[i].x || 0) - (nodes[j].x || 0), (nodes[i].y || 0) - (nodes[j].y || 0)) < 88) {
+            hasOverlap = true;
+            break;
           }
         }
       }
-      return separated;
+      if (!hasOverlap) return false;
+
+      const leftX = cw <= 560
+        ? Math.max(14, Math.round(cw * 0.21) - 46)
+        : Math.max(40, Math.round(cw * 0.30) - 55);
+      const rightX = cw <= 560
+        ? Math.max(leftX + 145, Math.min(cw - 108, Math.round(cw * 0.79) - 52))
+        : Math.min(cw - 130, Math.round(cw * 0.70) - 55);
+      const baseRowY = Math.max(56, Math.min(ch - 110, Math.round(ch * (nodes.length > 2 ? 0.26 : 0.36)) - 40));
+      const stepY = 114;
+
+      const slots = [];
+      for (let row = 0; row < 5; row++) {
+        const y = Math.max(48, Math.min(ch - 102, baseRowY + row * stepY));
+        slots.push({ x: leftX, y });
+        slots.push({ x: rightX, y });
+      }
+
+      nodes.forEach((n, idx) => {
+        const collidesWithPrev = nodes.slice(0, idx).some(prev => Math.hypot((prev.x || 0) - (n.x || 0), (prev.y || 0) - (n.y || 0)) < 88);
+        if (idx === 0 && nodes.slice(1).some(other => Math.hypot((other.x || 0) - (n.x || 0), (other.y || 0) - (n.y || 0)) < 88)) {
+          n.x = slots[0].x;
+          n.y = slots[0].y;
+          return;
+        }
+        if (!collidesWithPrev) return;
+        const freeSlot = slots.find(s => !nodes.slice(0, idx).some(prev => Math.hypot((prev.x || 0) - s.x, (prev.y || 0) - s.y) < 88));
+        if (freeSlot) {
+          n.x = freeSlot.x;
+          n.y = freeSlot.y;
+        }
+      });
+      return true;
     }
 
     function renderNodes() {
@@ -1071,6 +1084,12 @@
           if (!e.touches || e.touches.length !== 1) return;
           startNodeTouchInteraction(node.id, el, e);
         }, { passive: false });
+
+        el.oncontextmenu = (e) => {
+          if (window.innerWidth <= 900 || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)) {
+            e.preventDefault();
+          }
+        };
 
         el.ondblclick = () => { openDeviceWindow(node.id); };
 
@@ -1446,10 +1465,30 @@
 
       const isTargetSelection = !!(studioState.wireStartNodeId && studioState.wireStartNodeId !== nodeId && studioState.wireStartPortId);
       titleEl.textContent = isTargetSelection
-        ? `🔌 CẮM VÀO ${node.name}`
-        : `🔌 CHỌN CỔNG — ${node.name}`;
+        ? `🔌 BƯỚC 2/2: CẮM VÀO ${node.name}`
+        : `🔌 BƯỚC 1/2: CHỌN CỔNG — ${node.name}`;
 
       listEl.innerHTML = '';
+      if (isTargetSelection) {
+        const candidates = (studioState.nodes || []).filter(n => n.id !== studioState.wireStartNodeId && n.category !== 'core');
+        if (candidates.length > 1) {
+          const switchRow = document.createElement('div');
+          switchRow.style.cssText = 'display:flex;align-items:center;gap:4px;padding:4px 4px 6px;border-bottom:1px solid #1e293b;overflow-x:auto;';
+          candidates.forEach(cand => {
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            const isCur = cand.id === node.id;
+            pill.style.cssText = `padding:4px 8px;border-radius:4px;font-size:10.5px;font-weight:700;cursor:pointer;white-space:nowrap;border:1px solid ${isCur ? '#38bdf8' : '#334155'};background:${isCur ? '#0284c7' : '#1e293b'};color:${isCur ? '#fff' : '#cbd5e1'};`;
+            pill.textContent = `➔ ${cand.name}`;
+            pill.onclick = (ev) => {
+              ev.stopPropagation();
+              openCiscoPortPopup(cand.id);
+            };
+            switchRow.appendChild(pill);
+          });
+          listEl.appendChild(switchRow);
+        }
+      }
       dev.ports.forEach(p => {
         if (window._isEmbeddedPortalLesson && p.type !== 'eth') return;
         const existingLink = studioState.links.find(l =>
@@ -1514,6 +1553,19 @@
         }
 
         renderCanvas();
+        const isMobileTouchView = Boolean(
+          window.innerWidth <= 900 ||
+          window.innerHeight <= 500 ||
+          (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)
+        );
+        const otherTargets = (studioState.nodes || []).filter(n => n.id !== nodeId && n.category !== 'core');
+        if (isMobileTouchView && otherTargets.length >= 1) {
+          setTimeout(() => {
+            openCiscoPortPopup(otherTargets[0].id);
+          }, 60);
+          showToast(`🔌 Bước 2/2: Chọn cổng cắm vào ${otherTargets[0].name} bên dưới để hoàn tất nối cáp!`);
+          return;
+        }
         showToast(`🔌 Đã cắm đầu dây vào ${clickedNode.name} [${portObj.short || portObj.name}] ➔ Di chuột kéo dây tới thiết bị thứ 2!`);
         return;
       }

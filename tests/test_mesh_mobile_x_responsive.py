@@ -32,14 +32,17 @@ class TestMeshMobileXResponsive(unittest.TestCase):
         self.assertIn("if (window.innerWidth <= 900)", self.app_js)
 
     def test_2_mesh_canvas_touch_drag_and_non_overlapping_spawn(self):
-        """Verify touch drag updates coordinates without destroying DOM mid-gesture and smart spawn separates devices."""
+        """Verify touch drag updates coordinates without destroying DOM mid-gesture, blocks iOS callout, and smart spawn separates devices."""
         self.assertIn("touch-action: none;", self.mesh_html)
+        self.assertIn("-webkit-touch-callout: none;", self.mesh_html)
         self.assertIn("function computeSmartSpawnPosition()", self.canvas_js)
+        self.assertIn("function autoSeparateOverlappingNodes()", self.canvas_js)
         self.assertIn("function startNodeTouchInteraction(", self.canvas_js)
         self.assertIn("function onNodeTouchMove(", self.canvas_js)
         self.assertIn("function onNodeTouchEnd(", self.canvas_js)
         self.assertIn("function getRecommendedPaletteKeys()", self.canvas_js)
         self.assertIn("function clampNodesInsideCanvasViewport()", self.canvas_js)
+        self.assertIn("BƯỚC 2/2: CẮM VÀO", self.canvas_js)
         self.assertIn("palette-item-recommended", self.canvas_js)
 
     def test_3_device_window_mobile_fullscreen_quick_switcher_and_outer_iframe_scale(self):
@@ -208,13 +211,19 @@ assert(elements['device-sim-iframe'].style.transform.startsWith('scale(0.68'), '
 ctx.setMobileWebGuiScale('fit', 1);
 assert.strictEqual(elements['cisco-iframe-stage'].style.width, '375px', 'Fit mode stage width must match 375px viewport');
 
-// 5. Auto-unstack pre-existing overlapping nodes restored from an older session
+// 5. Auto-unstack 3 pre-existing overlapping nodes restored from an older session (like video 00:20)
 ctx.window.innerWidth = 375;
 ctx.window.innerHeight = 812;
-n1.x = 180; n1.y = 220;
-n2.x = 192; n2.y = 226;
+firstItem.onclick();
+assert.strictEqual(ctx.studioState.nodes.length, 3, 'Should have 3 nodes');
+const [m1, m2, m3] = ctx.studioState.nodes;
+m1.x = 180; m1.y = 220;
+m2.x = 188; m2.y = 224;
+m3.x = 195; m3.y = 228;
 ctx.renderNodes();
-assert(Math.hypot(n2.x - n1.x, n2.y - n1.y) >= 140, 'Overlapping restored nodes must auto-separate on renderNodes()');
+assert(Math.hypot(m2.x - m1.x, m2.y - m1.y) >= 88, 'Nodes 1 & 2 must separate');
+assert(Math.hypot(m3.x - m1.x, m3.y - m1.y) >= 88, 'Nodes 1 & 3 must separate');
+assert(Math.hypot(m3.x - m2.x, m3.y - m2.y) >= 88, 'Nodes 2 & 3 must separate');
 
 // 6. Desktop (1440x900) must leave iframe 100% untouched (no transform)
 ctx.window.innerWidth = 1440;

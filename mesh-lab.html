@@ -87,7 +87,9 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      -webkit-user-select: none;
       user-select: none;
+      -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -727,10 +729,17 @@
       border-color: rgba(37, 99, 235, 0.45);
     }
     .canvas-nodes-layer,
-    .node-device {
-      touch-action: none;
+    .node-device,
+    .net-canvas *,
+    .palette-shelf,
+    .palette-item {
       -webkit-user-select: none;
       user-select: none;
+      -webkit-touch-callout: none;
+    }
+    .canvas-nodes-layer,
+    .node-device {
+      touch-action: none;
     }
 
     .node-device.power-off { opacity: 0.65; }
@@ -3323,15 +3332,15 @@ Type '?' or 'help' for available commands. Press TAB to autocomplete.
   <div id="toast-box" class="toast-box">Thông báo</div>
 
   <!-- FPT NetLab Studio Modular Architecture -->
-  <script src="/js/mesh-lab/catalog.js?v=20261125mobilex2"></script>
-  <script src="/js/mesh-lab/physics-ns3.js?v=20261125mobilex2"></script>
-  <script src="/js/mesh-lab/network-stack.js?v=20261125mobilex2"></script>
-  <script src="/js/mesh-lab/canvas.js?v=20261125mobilex2"></script>
-  <script src="/js/mesh-lab/pdu-dispatcher.js?v=20261125mobilex2"></script>
-  <script src="/js/mesh-lab/chassis-view.js?v=20261125mobilex2"></script>
-  <script src="/js/mesh-lab/firmware-sync.js?v=20261125mobilex2"></script>
-  <script src="/js/mesh-lab/cli-terminal.js?v=20261125mobilex2"></script>
-  <script src="/js/mesh-lab/containerlab.js?v=20261125mobilex2"></script>
-  <script src="/js/mesh-lab/main.js?v=20261125mobilex2"></script>
+  <script src="/js/mesh-lab/catalog.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/physics-ns3.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/network-stack.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/canvas.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/pdu-dispatcher.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/chassis-view.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/firmware-sync.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/cli-terminal.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/containerlab.js?v=20261125mobilex3"></script>
+  <script src="/js/mesh-lab/main.js?v=20261125mobilex3"></script>
 </body>
 </html>
