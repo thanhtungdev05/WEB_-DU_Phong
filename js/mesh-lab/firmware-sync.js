@@ -1870,6 +1870,10 @@
         if (btn) btn.classList.toggle('active', k === tabKey);
         if (view) view.classList.toggle('active', k === tabKey);
       });
+      const zoomPills = getSlotEl('mobile-zoom-pills', slot);
+      if (zoomPills) {
+        zoomPills.style.display = (tabKey === 'webgui') ? 'inline-flex' : 'none';
+      }
       if (tabKey === 'webgui') {
         const nodeId = (studioState.activeWindowSlots && studioState.activeWindowSlots[slot]) || studioState.activeDeviceWindowNodeId;
         const activeNode = studioState.nodes.find(n => n.id === nodeId);
@@ -1878,6 +1882,9 @@
           propagateFirmwareStateAcrossLinks(true);
           if (iframe) injectLinkedStateIntoFirmwareDom(iframe, activeNode);
           renderFwLinkSyncOverlay(activeNode, slot);
+        }
+        if (typeof applyMobileWebGuiScale === 'function') {
+          requestAnimationFrame(() => applyMobileWebGuiScale(slot));
         }
       }
       if (typeof notifyParentTopologyChanged === 'function') {
@@ -2001,6 +2008,9 @@
       if (isAlreadySplit) {
         win1.classList.remove('split-left');
         win2.classList.remove('split-right');
+        if (typeof applyMobileWebGuiScale === 'function') {
+          requestAnimationFrame(() => { applyMobileWebGuiScale(1); applyMobileWebGuiScale(2); });
+        }
         showToast('🗗 Đã hoàn tác chế độ chia đôi màn hình 50/50');
         return;
       }
@@ -2041,6 +2051,10 @@
       win2.classList.add('split-right');
       win1.style.display = 'flex';
       win2.style.display = 'flex';
+      if (typeof renderMobileDevQuickbars === 'function') renderMobileDevQuickbars();
+      if (typeof applyMobileWebGuiScale === 'function') {
+        requestAnimationFrame(() => { applyMobileWebGuiScale(1); applyMobileWebGuiScale(2); });
+      }
 
       showToast('⚡ Đã xếp 2 cửa sổ song song (50/50) để đối soát & cấu hình Mesh trực tiếp!');
     }

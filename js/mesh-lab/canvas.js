@@ -129,9 +129,13 @@
         showToast('📄 Canvas Trống — Kéo thả bất kỳ thiết bị nào từ kệ 21 thiết bị bên dưới!');
       }
 
+      if (typeof populatePalette === 'function') {
+        populatePalette();
+      }
       renderPduScenarioTable();
       propagateFirmwareStateAcrossLinks(false);
       renderCanvas();
+      clampNodesInsideCanvasViewport();
       syncZteBackend();
     }
 
@@ -293,9 +297,13 @@
         showToast('⚡ Đã nạp mẫu Phần: Cấu Hình STATIC (IP 192.168.1.2, 0 DHCP, ONT Pool .10-.254)');
       }
 
+      if (typeof populatePalette === 'function') {
+        populatePalette();
+      }
       renderPduScenarioTable();
       propagateFirmwareStateAcrossLinks(false);
       renderCanvas();
+      clampNodesInsideCanvasViewport();
       syncZteBackend();
     }
     window.loadSamplePresetPair = loadSamplePresetPair;
@@ -948,10 +956,40 @@
       }
     }
 
+    function updateCanvasQuickGuideBanner() {
+      const guideEl = document.querySelector('.canvas-quick-guide');
+      if (!guideEl) return;
+      if (!guideEl.dataset.defaultHtml) {
+        guideEl.dataset.defaultHtml = guideEl.innerHTML;
+      }
+      if (studioState.currentTool === 'wire') {
+        guideEl.classList.add('wiring-active-banner');
+        if (studioState.wireStartNodeId) {
+          const srcNode = studioState.nodes.find(n => n.id === studioState.wireStartNodeId);
+          const srcName = srcNode ? srcNode.name : studioState.wireStartNodeId;
+          const portLabel = studioState.wireStartPortId || 'Auto';
+          guideEl.innerHTML = `<span>⚡ Đang cầm đầu dây từ <b>${srcName} [${portLabel}]</b> ➔ Hãy chạm vào <b>Thiết bị thứ 2</b> để cắm dây!</span>`;
+        } else {
+          guideEl.innerHTML = `<span>🔌 Chế độ nối cáp đang bật ➔ Hãy chạm vào <b>Thiết bị 1</b> trên sơ đồ để chọn cổng cắm cáp!</span>`;
+        }
+        return;
+      }
+      guideEl.classList.remove('wiring-active-banner');
+      if (window.innerWidth <= 640) {
+        guideEl.innerHTML = `<span>📌 <b>1:</b> Chạm kệ dưới thêm 2 thiết bị • <b>2:</b> Bấm <b>⚙️ Mở</b> cấu hình • <b>3:</b> Bấm <b>🔌 Cáp</b> nối dây • <b>4:</b> Nộp bài</span>`;
+      } else {
+        guideEl.innerHTML = guideEl.dataset.defaultHtml;
+      }
+    }
+
     function renderNodes() {
       const container = document.getElementById('canvas-nodes');
       if (!container) return;
       container.innerHTML = '';
+      updateCanvasQuickGuideBanner();
+      if (typeof renderMobileDevQuickbars === 'function') {
+        renderMobileDevQuickbars();
+      }
 
       studioState.nodes.forEach(node => {
         const el = document.createElement('div');
@@ -959,7 +997,8 @@
         el.dataset.nodeId = node.id;
         el.dataset.catalogKey = node.catalogKey || '';
         const isWiringSrc = studioState.wireStartNodeId === node.id;
-        el.className = `canvas-node node-device ${node.category} ${node.id === studioState.selectedNodeId ? 'selected' : ''} ${isWiringSrc ? 'wiring-source' : ''} ${!node.power ? 'power-off' : ''}`;
+        const isWiringTargetHint = Boolean(studioState.currentTool === 'wire' && studioState.wireStartNodeId && studioState.wireStartNodeId !== node.id);
+        el.className = `canvas-node node-device ${node.category} ${node.id === studioState.selectedNodeId ? 'selected' : ''} ${isWiringSrc ? 'wiring-source' : ''} ${isWiringTargetHint ? 'wiring-target-hint' : ''} ${!node.power ? 'power-off' : ''}`;
         el.style.left = node.x + 'px';
         el.style.top = node.y + 'px';
 
@@ -981,6 +1020,12 @@
             return;
           }
           startNodeDrag(node.id, e);
+        };
+
+        el.ontouchstart = (e) => {
+          if (e.target.closest('.nq-btn')) return;
+          if (!e.touches || e.touches.length !== 1) return;
+          startNodeTouchInteraction(node.id, el, e);
         };
 
         el.ondblclick = () => { openDeviceWindow(node.id); };
@@ -1094,8 +1139,11 @@
     function onNodeMouseMove(e) {
       if (!activeDragNode) return;
       const z = getCanvasZoom();
-      activeDragNode.x = Math.max(10, Math.min((window.innerWidth / z) - 150, (e.clientX / z) - dragOffset.x));
-      activeDragNode.y = Math.max(10, Math.min((window.innerHeight / z) - 210, (e.clientY / z) - dragOffset.y));
+      const canvas = document.getElementById('net-canvas');
+      const maxW = canvas ? (canvas.clientWidth / z) : (window.innerWidth / z);
+      const maxH = canvas ? (canvas.clientHeight / z) : ((window.innerHeight / z) - 100);
+      activeDragNode.x = Math.max(8, Math.min(Math.max(8, maxW - 115), (e.clientX / z) - dragOffset.x));
+      activeDragNode.y = Math.max(36, Math.min(Math.max(36, maxH - 102), (e.clientY / z) - dragOffset.y));
       renderCanvas();
     }
 
@@ -1103,6 +1151,95 @@
       activeDragNode = null;
       window.removeEventListener('mousemove', onNodeMouseMove);
       window.removeEventListener('mouseup', onNodeMouseUp);
+    }
+
+    // Hỗ trợ cảm ứng ngón tay (Touch Drag & Tap) mượt 60fps trên iPhone X / Android không hủy DOM giữa chừng
+    let activeTouchDrag = null;
+    let lastTouchTapInfo = { nodeId: null, time: 0 };
+
+    function startNodeTouchInteraction(nodeId, nodeEl, e) {
+      const t = e.touches[0];
+      if (!t) return;
+      const node = studioState.nodes.find(n => n.id === nodeId);
+      if (!node) return;
+      const z = getCanvasZoom();
+      activeTouchDrag = {
+        node: node,
+        el: nodeEl,
+        startClientX: t.clientX,
+        startClientY: t.clientY,
+        offsetX: (t.clientX / z) - node.x,
+        offsetY: (t.clientY / z) - node.y,
+        moved: false
+      };
+      window.addEventListener('touchmove', onNodeTouchMove, { passive: false });
+      window.addEventListener('touchend', onNodeTouchEnd, { passive: false });
+      window.addEventListener('touchcancel', onNodeTouchEnd, { passive: false });
+    }
+
+    function onNodeTouchMove(e) {
+      if (!activeTouchDrag || !e.touches || !e.touches[0]) return;
+      const t = e.touches[0];
+      const dist = Math.hypot(t.clientX - activeTouchDrag.startClientX, t.clientY - activeTouchDrag.startClientY);
+      if (!activeTouchDrag.moved && dist < 7) return;
+      if (studioState.currentTool !== 'select') return;
+      e.preventDefault();
+      if (!activeTouchDrag.moved) {
+        activeTouchDrag.moved = true;
+        closeCiscoPortPopup();
+        studioState.selectedNodeId = activeTouchDrag.node.id;
+      }
+      const z = getCanvasZoom();
+      const canvas = document.getElementById('net-canvas');
+      const maxW = canvas ? (canvas.clientWidth / z) : (window.innerWidth / z);
+      const maxH = canvas ? (canvas.clientHeight / z) : ((window.innerHeight / z) - 100);
+      activeTouchDrag.node.x = Math.max(8, Math.min(Math.max(8, maxW - 110), (t.clientX / z) - activeTouchDrag.offsetX));
+      activeTouchDrag.node.y = Math.max(36, Math.min(Math.max(36, maxH - 98), (t.clientY / z) - activeTouchDrag.offsetY));
+      if (activeTouchDrag.el) {
+        activeTouchDrag.el.style.left = activeTouchDrag.node.x + 'px';
+        activeTouchDrag.el.style.top = activeTouchDrag.node.y + 'px';
+      }
+      renderSvgWires();
+    }
+
+    function onNodeTouchEnd(e) {
+      window.removeEventListener('touchmove', onNodeTouchMove);
+      window.removeEventListener('touchend', onNodeTouchEnd);
+      window.removeEventListener('touchcancel', onNodeTouchEnd);
+      if (!activeTouchDrag) return;
+      const dragInfo = activeTouchDrag;
+      activeTouchDrag = null;
+
+      if (dragInfo.moved) {
+        renderCanvas();
+        return;
+      }
+
+      // Chạm 1 lần (Tap không kéo)
+      if (e && e.cancelable) e.preventDefault();
+      const nodeId = dragInfo.node.id;
+      if (studioState.currentTool === 'wire') {
+        handleWireToolNodeClick(nodeId, e);
+        return;
+      }
+      if (studioState.currentTool === 'pdu') {
+        handlePduToolNodeClick(nodeId);
+        return;
+      }
+      if (studioState.currentTool === 'delete') {
+        deleteNode(nodeId);
+        return;
+      }
+
+      const now = Date.now();
+      if (lastTouchTapInfo.nodeId === nodeId && (now - lastTouchTapInfo.time) < 340) {
+        lastTouchTapInfo = { nodeId: null, time: 0 };
+        openDeviceWindow(nodeId);
+        return;
+      }
+      lastTouchTapInfo = { nodeId: nodeId, time: now };
+      studioState.selectedNodeId = nodeId;
+      renderCanvas();
     }
 
     function handleCanvasMouseMove(e) {
@@ -1556,7 +1693,125 @@
       syncZteBackend();
     }
 
-    // 9. BOTTOM DEVICE SHELF
+    // 9. BOTTOM DEVICE SHELF & SMART NON-OVERLAPPING MOBILE PLACEMENT
+    function getRecommendedPaletteKeys() {
+      const sk = (typeof getCurrentScenarioKey === 'function')
+        ? getCurrentScenarioKey()
+        : (window._embeddedPortalScenario || studioState.currentScenario || '');
+      const map = {
+        p3_mesh_ax3000cv2: ['ax3000c'],
+        p3_mesh_ax3000gzv2: ['ax3000gz_v2', 'ax3000c'],
+        p3_mesh_ax3000hv2: ['ax3000hv2', 'ax3000c'],
+        p3_mesh: ['ax3000hv2', 'ax3000c'],
+        p3_mesh_ax1800gz: ['ax1800gz', 'ax3000c'],
+        p3_mesh_ax3000s: ['ax3000s', 'ax3000c'],
+        p3_mesh_zte: ['be12000', 'be15000']
+      };
+      if (map[sk]) return map[sk];
+      if (window._embeddedPortalDeviceId && FPT_CATALOG[window._embeddedPortalDeviceId]) {
+        return [window._embeddedPortalDeviceId, 'ax3000c'];
+      }
+      return [];
+    }
+
+    function computeSmartSpawnPosition() {
+      const canvas = document.getElementById('net-canvas');
+      const z = getCanvasZoom();
+      const cw = canvas && canvas.clientWidth > 0 ? (canvas.clientWidth / z) : (window.innerWidth / z);
+      const ch = canvas && canvas.clientHeight > 0 ? (canvas.clientHeight / z) : Math.max(220, (window.innerHeight / z) - 140);
+      const existing = studioState.nodes || [];
+
+      let candidates = [];
+      if (cw <= 560) {
+        // Màn hình dọc điện thoại (vd Mobile X 375px): Trạm 1 bên trái, Trạm 2 bên phải cách nhau ~205px (đủ vẽ dây cáp & nhãn cổng rõ nét, tuyệt đối không chồng đè)
+        const leftX = Math.max(14, Math.round(cw * 0.21) - 46);
+        const rightX = Math.max(leftX + 145, Math.min(cw - 108, Math.round(cw * 0.79) - 52));
+        const row1Y = Math.max(58, Math.min(ch - 110, Math.round(ch * 0.34) - 42));
+        const row2Y = Math.max(row1Y + 112, Math.min(ch - 104, Math.round(ch * 0.68) - 42));
+        candidates = [
+          { x: leftX, y: row1Y },
+          { x: rightX, y: row1Y },
+          { x: leftX, y: row2Y },
+          { x: rightX, y: row2Y }
+        ];
+      } else if (ch <= 460) {
+        // Màn hình xoay ngang điện thoại (vd Mobile X 812x375)
+        const midY = Math.max(44, Math.min(ch - 104, Math.round(ch * 0.44) - 40));
+        candidates = [
+          { x: Math.max(24, Math.round(cw * 0.28) - 52), y: midY },
+          { x: Math.min(cw - 120, Math.round(cw * 0.72) - 52), y: midY },
+          { x: Math.max(24, Math.round(cw * 0.50) - 52), y: midY }
+        ];
+      } else {
+        // Máy tính / Tablet rộng: Trạm 1 trái, Trạm 2 phải cân đối
+        const midY = Math.max(85, Math.min(ch - 120, Math.round(ch * 0.42) - 45));
+        candidates = [
+          { x: Math.max(60, Math.round(cw * 0.34) - 55), y: midY },
+          { x: Math.min(cw - 140, Math.round(cw * 0.66) - 55), y: midY },
+          { x: Math.max(60, Math.round(cw * 0.50) - 55), y: Math.min(ch - 115, midY + 135) }
+        ];
+      }
+
+      for (let i = 0; i < candidates.length; i++) {
+        const c = candidates[i];
+        const occupied = existing.some(n => Math.hypot((n.x || 0) - c.x, (n.y || 0) - c.y) < 95);
+        if (!occupied) return c;
+      }
+
+      const fallbackIdx = existing.length;
+      return {
+        x: Math.max(16, Math.min(cw - 115, 28 + ((fallbackIdx * 130) % Math.max(140, cw - 135)))),
+        y: Math.max(56, Math.min(ch - 106, 70 + (Math.floor(fallbackIdx / 2) * 110) % Math.max(110, ch - 140)))
+      };
+    }
+
+    function clampNodesInsideCanvasViewport() {
+      const canvas = document.getElementById('net-canvas');
+      if (!canvas || canvas.clientWidth <= 0 || canvas.clientHeight <= 0) return;
+      const z = getCanvasZoom();
+      const maxW = canvas.clientWidth / z;
+      const maxH = canvas.clientHeight / z;
+      let changed = false;
+      (studioState.nodes || []).forEach((n, idx) => {
+        const clampedX = Math.max(10, Math.min(Math.max(10, maxW - 110), n.x));
+        const clampedY = Math.max(42, Math.min(Math.max(42, maxH - 102), n.y));
+        if (clampedX !== n.x || clampedY !== n.y) {
+          n.x = clampedX;
+          n.y = clampedY;
+          changed = true;
+        }
+      });
+      // Nếu xoay từ ngang sang dọc làm 2 thiết bị bị dồn trùng vị trí ở mép phải, tự tách sang trái/phải
+      if (studioState.nodes && studioState.nodes.length === 2) {
+        const n0 = studioState.nodes[0];
+        const n1 = studioState.nodes[1];
+        if (Math.hypot(n0.x - n1.x, n0.y - n1.y) < 80 && maxW >= 260) {
+          n0.x = Math.max(14, Math.round(maxW * 0.21) - 46);
+          n1.x = Math.min(maxW - 108, Math.round(maxW * 0.79) - 52);
+          changed = true;
+        }
+      }
+      updateCanvasQuickGuideBanner();
+      if (changed) renderCanvas();
+    }
+
+    window.toggleMobileBottomDock = function() {
+      const collapsed = document.body.classList.toggle('mobile-dock-collapsed');
+      const btn = document.getElementById('mobile-dock-toggle-btn');
+      if (btn) {
+        btn.textContent = collapsed ? '▴ Mở kệ thiết bị' : '▾ Thu gọn kệ thiết bị';
+      }
+      setTimeout(clampNodesInsideCanvasViewport, 60);
+    };
+
+    window.addEventListener('resize', () => {
+      clampNodesInsideCanvasViewport();
+      if (typeof applyMobileWebGuiScale === 'function') {
+        applyMobileWebGuiScale(1);
+        applyMobileWebGuiScale(2);
+      }
+    });
+
     function populatePalette() {
       const shelf = document.getElementById('palette-shelf');
       if (!shelf) return;
@@ -1570,19 +1825,29 @@
         vigor2927: 1,
         mikrotik_hexs: 1
       };
-      Object.keys(FPT_CATALOG).forEach(k => {
+      const recommendedKeys = getRecommendedPaletteKeys();
+      const recommendedSet = new Set(recommendedKeys);
+      const orderedKeys = Object.keys(FPT_CATALOG).sort((a, b) => {
+        const ia = recommendedKeys.indexOf(a);
+        const ib = recommendedKeys.indexOf(b);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return 0;
+      });
+      orderedKeys.forEach(k => {
         if (window._isEmbeddedPortalLesson && hiddenInPortalEmbed[k]) return;
         const dev = FPT_CATALOG[k];
+        const isRec = recommendedSet.has(k);
         const item = document.createElement('div');
-        item.className = 'palette-item';
+        item.className = 'palette-item' + (isRec ? ' palette-item-recommended' : '');
         item.draggable = true;
         item.setAttribute('data-key', k);
         item.setAttribute('data-device', k);
         item.ondragstart = e => { e.dataTransfer.setData('text/plain', k); };
         item.onclick = () => {
-          const cx = Math.max(80, (window.innerWidth / 2) - 70 + Math.floor(Math.random() * 60 - 30));
-          const cy = Math.max(80, (window.innerHeight / 2) - 140 + Math.floor(Math.random() * 40 - 20));
-          spawnNode(k, cx, cy);
+          const pos = computeSmartSpawnPosition();
+          spawnNode(k, pos.x, pos.y);
           renderCanvas();
           syncZteBackend();
           showToast(`➕ Đã thêm ${dev.name}`);
@@ -1590,12 +1855,13 @@
         item.innerHTML = `
           <div class="palette-item-icon-box">${getDeviceSvgGraphic(dev, true)}</div>
           <div>
-            <span class="palette-item-name">${dev.model}</span>
-            <span class="palette-item-sub">${dev.roleLabel}</span>
+            <span class="palette-item-name">${dev.model}${isRec ? ' ⭐' : ''}</span>
+            <span class="palette-item-sub">${isRec ? 'Chạm để thêm' : dev.roleLabel}</span>
           </div>
         `;
         shelf.appendChild(item);
       });
+      shelf.scrollLeft = 0;
     }
 
     function filterPalette(cat, ev) {

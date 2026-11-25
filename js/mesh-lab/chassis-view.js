@@ -150,6 +150,85 @@
       return targetUrl;
     }
 
+    window._mobileWebGuiZoomMode = window._mobileWebGuiZoomMode || { 1: '75', 2: '75' };
+
+    function isMobileMeshViewport() {
+      return Boolean(window.innerWidth <= 900 || window.innerHeight <= 500);
+    }
+
+    function applyMobileWebGuiScale(slot = 1) {
+      const s = Number(slot) === 2 ? 2 : 1;
+      const stage = getSlotEl('cisco-iframe-stage', s);
+      const iframe = getSlotEl('device-sim-iframe', s);
+      const pillsWrap = getSlotEl('mobile-zoom-pills', s);
+      const mode = (window._mobileWebGuiZoomMode && window._mobileWebGuiZoomMode[s]) || '75';
+
+      if (pillsWrap) {
+        pillsWrap.querySelectorAll('.mobile-zoom-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-zoom') === mode);
+        });
+      }
+
+      if (!stage || !iframe) return;
+      if (!isMobileMeshViewport()) {
+        stage.style.width = '100%';
+        stage.style.height = '100%';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.transform = 'none';
+        return;
+      }
+
+      const wrap = stage.parentElement;
+      const wrapW = (wrap && wrap.clientWidth > 40) ? wrap.clientWidth : window.innerWidth;
+      const wrapH = (wrap && wrap.clientHeight > 40) ? wrap.clientHeight : Math.max(240, window.innerHeight - 74);
+      const virtualW = 1040;
+      let scale = 0.68;
+      if (mode === 'fit') {
+        scale = Math.max(0.33, Math.min(1.0, wrapW / virtualW));
+      } else if (mode === '100') {
+        scale = 1.0;
+      } else {
+        scale = wrapW >= 680 ? Math.max(0.74, Math.min(1.0, wrapW / virtualW)) : 0.68;
+      }
+      const virtualH = Math.max(820, Math.ceil(wrapH / scale));
+      stage.style.width = Math.round(virtualW * scale) + 'px';
+      stage.style.height = Math.round(virtualH * scale) + 'px';
+      iframe.style.width = virtualW + 'px';
+      iframe.style.height = virtualH + 'px';
+      iframe.style.transform = `scale(${scale})`;
+      iframe.style.transformOrigin = '0 0';
+    }
+    window.applyMobileWebGuiScale = applyMobileWebGuiScale;
+
+    function setMobileWebGuiScale(mode, slot = 1) {
+      const s = Number(slot) === 2 ? 2 : 1;
+      if (!window._mobileWebGuiZoomMode) window._mobileWebGuiZoomMode = { 1: '75', 2: '75' };
+      window._mobileWebGuiZoomMode[s] = mode;
+      applyMobileWebGuiScale(s);
+    }
+    window.setMobileWebGuiScale = setMobileWebGuiScale;
+
+    function renderMobileDevQuickbars() {
+      [1, 2].forEach(slot => {
+        const switcher = getSlotEl('mobile-dev-switcher', slot);
+        if (!switcher) return;
+        const activeNodeId = studioState.activeWindowSlots ? studioState.activeWindowSlots[slot] : null;
+        const nodes = (studioState.nodes || []).filter(n => n.category !== 'core');
+        if (nodes.length === 0) {
+          switcher.innerHTML = '';
+          return;
+        }
+        switcher.innerHTML = nodes.map((n, idx) => {
+          const isAct = String(n.id) === String(activeNodeId);
+          const dot = idx === 0 ? '🔵' : (idx === 1 ? '🟣' : '🟢');
+          const shortLabel = `Trạm ${idx + 1}: ${n.name}`;
+          return `<button type="button" class="mobile-dev-pill ${isAct ? 'active' : ''}" onclick="openDeviceWindow('${n.id}', null, ${slot})">${dot} ${shortLabel}</button>`;
+        }).join('');
+      });
+    }
+    window.renderMobileDevQuickbars = renderMobileDevQuickbars;
+
     function openDeviceWindow(nodeId, forceTab = null, targetSlot = null) {
       const node = studioState.nodes.find(n => n.id === nodeId);
       if (!node) return;
@@ -162,10 +241,14 @@
       const win2 = document.getElementById('cisco-device-window-2');
       const win1Open = win1 && win1.style.display === 'flex';
       const win2Open = win2 && win2.style.display === 'flex';
+      const isSplitActive = Boolean(win1 && win1.classList.contains('split-left'));
 
       let slot = 1;
       if (targetSlot === 1 || targetSlot === 2) {
         slot = targetSlot;
+      } else if (isMobileMeshViewport() && !isSplitActive) {
+        // Trên màn hình điện thoại (không ở chế độ chia đôi), dùng chung Cửa sổ 1 toàn màn hình để chuyển nhanh Trạm 1 ⇄ Trạm 2 và bấm Quay lại về thẳng Sơ đồ
+        slot = 1;
       } else if (studioState.activeWindowSlots[1] === nodeId) {
         slot = 1;
       } else if (studioState.activeWindowSlots[2] === nodeId) {
@@ -257,7 +340,10 @@
         } catch (_) {}
 
         // Initial subPage navigation
-        iframe.onload = () => { attachWebGuiTwoWayBridge(iframe, node); };
+        iframe.onload = () => {
+          attachWebGuiTwoWayBridge(iframe, node);
+          applyMobileWebGuiScale(slot);
+        };
         iframe.src = scopedUrl;
       };
 
@@ -311,6 +397,12 @@
         }
         win.style.display = 'flex';
       }
+      if (isMobileMeshViewport()) {
+        const fwOverlay = getSlotEl('fw-link-sync-overlay', slot);
+        if (fwOverlay) fwOverlay.classList.add('minimized');
+      }
+      renderMobileDevQuickbars();
+      requestAnimationFrame(() => applyMobileWebGuiScale(slot));
       if (typeof notifyParentTopologyChanged === 'function') {
         notifyParentTopologyChanged();
       }

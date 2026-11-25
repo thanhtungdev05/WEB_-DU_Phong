@@ -121,6 +121,8 @@
   function ensureMobileScrollAndTouchSupport(doc) {
     if (!doc) return;
     try {
+      // Giữ nguyên bố cục flex cố định và cảm ứng kéo thả trên bàn vẽ Mesh Studio (#net-canvas)
+      if (doc.getElementById && doc.getElementById('net-canvas')) return;
       const { isMobile } = detectMobilePlatform();
       if (!isMobile) return;
 
@@ -3066,6 +3068,7 @@
     heroScreen.style.display = 'flex';
     lessonScreen.classList.remove('visible');
     practiceScreen.classList.remove('visible');
+    document.body.classList.remove('practice-screen-active');
     hidePracticeBubble();
     if (sidebar && sidebar.classList) {
       sidebar.classList.remove('collapsed');
@@ -3076,13 +3079,18 @@
     releaseSimulatorIframeMemory();
     heroScreen.style.display = 'none';
     practiceScreen.classList.remove('visible');
+    document.body.classList.remove('practice-screen-active');
     lessonScreen.classList.remove('visible');
     void lessonScreen.offsetWidth;
     lessonScreen.classList.add('visible');
     lessonScreen.scrollTop = 0;
     hidePracticeBubble();
     if (sidebar && sidebar.classList) {
-      sidebar.classList.remove('collapsed');
+      if (window.innerWidth <= 900) {
+        sidebar.classList.add('collapsed');
+      } else {
+        sidebar.classList.remove('collapsed');
+      }
     }
   }
 
@@ -3092,10 +3100,22 @@
     practiceScreen.classList.remove('visible');
     void practiceScreen.offsetWidth;
     practiceScreen.classList.add('visible');
+    document.body.classList.add('practice-screen-active');
     if (sidebar && sidebar.classList) {
       sidebar.classList.add('collapsed');
     }
   }
+
+  // Trên màn hình điện thoại (<= 640px), chạm vào vùng nội dung bên phải sẽ tự đóng menu nổi #sidebar
+  (function bindMobileSidebarAutoDismiss() {
+    const contentEl = document.getElementById('content');
+    if (!contentEl || !sidebar) return;
+    contentEl.addEventListener('click', function () {
+      if (window.innerWidth <= 640 && !sidebar.classList.contains('collapsed')) {
+        sidebar.classList.add('collapsed');
+      }
+    });
+  })();
 
   function isAx3000gzV2Active() {
     return normalizeDeviceId(currentDeviceId) === 'ax3000gz_v2' || normalizeDeviceId(currentDeviceId) === 'ac1000z';
@@ -3344,10 +3364,17 @@
     practiceBubbleContainer.style.display = 'block';
 
     if (!practiceBubbleContainer.style.left) {
-      practiceBubbleContainer.style.right = '20px';
-      practiceBubbleContainer.style.top = '115px';
-      practiceBubbleContainer.style.bottom = 'auto';
-      practiceBubbleContainer.style.left = 'auto';
+      if (isMobileOrTouch() && document.body.classList.contains('mesh-lab-active')) {
+        practiceBubbleContainer.style.right = '12px';
+        practiceBubbleContainer.style.bottom = '82px';
+        practiceBubbleContainer.style.top = 'auto';
+        practiceBubbleContainer.style.left = 'auto';
+      } else {
+        practiceBubbleContainer.style.right = '20px';
+        practiceBubbleContainer.style.top = '115px';
+        practiceBubbleContainer.style.bottom = 'auto';
+        practiceBubbleContainer.style.left = 'auto';
+      }
     }
 
     // Mặc định luôn ở trạng thái thu gọn (icon tròn Messenger ở góc) khi vào bài mới
@@ -5351,10 +5378,11 @@
           }];
         }
         if (lesson.id === 'LAB_AX3000CV2_07' && step1DoneCanvas && step2DoneCanvas && !wiringDoneCanvas) {
+          const isNarrowDoc = (doc.documentElement && doc.documentElement.clientWidth > 0 && doc.documentElement.clientWidth <= 640);
           return [{
             selector: '.btn-back-canvas-embed',
             text: 'Bước 18: Bấm "⬅ Quay lại Sơ đồ Canvas"',
-            position: 'left'
+            position: isNarrowDoc ? 'bottom' : 'left'
           }];
         }
         return [];
@@ -5421,6 +5449,7 @@
       const portPopup = doc.getElementById('cpt-port-popup');
       if (portPopup && portPopup.style.display !== 'none') {
         const isZte = reqDevs.includes('be15000');
+        const isNarrowDoc = (doc.documentElement && doc.documentElement.clientWidth > 0 && doc.documentElement.clientWidth <= 768);
         const targetPortSel = (isZte && st && st.wireStartNodeId)
           ? '.cpt-port-popup-item[data-port-id*="WAN"], .cpt-port-popup-item'
           : '.cpt-port-popup-item[data-port-id*="LAN"], .cpt-port-popup-item';
@@ -5430,7 +5459,7 @@
             text: (!st || !st.wireStartNodeId)
               ? 'Bước 20: Chọn cổng LAN 1 trên Trạm chính'
               : 'Bước 21: Chọn cổng LAN 1 trên Trạm phụ',
-            position: 'right'
+            position: isNarrowDoc ? 'top' : 'right'
           }];
         }
         return [{
@@ -5438,7 +5467,7 @@
           text: isZte && st && st.wireStartNodeId
             ? 'Bước 3 (Đấu nối cáp Backhaul): Chọn cổng WAN trên thiết bị ZTE Agent (LAN ➔ WAN)'
             : 'Bước 3 (Đấu nối cáp Backhaul): Chọn cổng LAN 1 (1GE) để đấu nối đường trục LAN ➔ LAN',
-          position: 'right'
+          position: isNarrowDoc ? 'top' : 'right'
         }];
       }
 
@@ -5795,6 +5824,13 @@
           font-size: 11px !important;
           padding: 3px 6px !important;
           max-width: none !important;
+        }
+        @media (max-width: 520px) {
+          .ftc-guide-bubble {
+            max-width: calc(100vw - 14px) !important;
+            white-space: normal !important;
+            word-break: break-word !important;
+          }
         }
         .ftc-guide-bubble::before {
           content: '' !important;
